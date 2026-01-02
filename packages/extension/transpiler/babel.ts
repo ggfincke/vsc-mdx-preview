@@ -1,23 +1,36 @@
-import * as babel from "@babel/core";
+// packages/extension/transpiler/babel.ts
+// Babel configuration for transpiling user code in MDX files
 
-// can probably load directory .babelrc config from here?
+import * as babel from '@babel/core';
+
+// babel configuration (@babel/preset-env handles dynamic imports)
 const babelOptions = {
-  "presets": [
-    babel.createConfigItem([require("@babel/preset-env"), { exclude: ["transform-regenerator"] }]),
-    babel.createConfigItem(require("@babel/preset-react")),
+  presets: [
+    babel.createConfigItem([
+      require('@babel/preset-env'),
+      { exclude: ['transform-regenerator'] },
+    ]),
+    babel.createConfigItem(require('@babel/preset-react')),
   ],
-  "plugins": [
-    babel.createConfigItem(require("@babel/plugin-proposal-export-default-from")),
-    // selected plugins from https://github.com/babel/babel/blob/master/packages/babel-preset-stage-2/README.md
-    babel.createConfigItem(require("@babel/plugin-proposal-export-namespace-from")),
-    babel.createConfigItem(require("@babel/plugin-proposal-class-properties")),
-    babel.createConfigItem(require("@babel/plugin-proposal-optional-chaining")),
-    babel.createConfigItem(require("@babel/plugin-proposal-nullish-coalescing-operator")),
-    babel.createConfigItem(require("@babel/plugin-syntax-dynamic-import")),
-    babel.createConfigItem(require("babel-plugin-transform-dynamic-import")),
-  ]
+  plugins: [
+    // stage-1 proposal: export default from (kept for real-world compatibility)
+    babel.createConfigItem(
+      require('@babel/plugin-proposal-export-default-from')
+    ),
+    // standard ES2020+ transforms (renamed from deprecated plugin-proposal-* packages)
+    babel.createConfigItem(
+      require('@babel/plugin-transform-export-namespace-from')
+    ),
+    babel.createConfigItem(require('@babel/plugin-transform-class-properties')),
+    babel.createConfigItem(
+      require('@babel/plugin-transform-optional-chaining')
+    ),
+    babel.createConfigItem(
+      require('@babel/plugin-transform-nullish-coalescing-operator')
+    ),
+  ],
 };
 
-export const transformAsync = code => {
+export const transformAsync = (code) => {
   return babel.transformAsync(code, babelOptions);
 };

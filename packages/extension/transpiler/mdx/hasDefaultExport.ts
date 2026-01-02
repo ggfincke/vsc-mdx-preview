@@ -1,68 +1,20 @@
-// Code is from https://github.com/ChristopherBiscardi/gatsby-mdx/blob/master/packages/gatsby-mdx/loaders/mdx-loader.js#L40
-const grayMatter = require('gray-matter');
-const unified = require('unified');
-const toMDAST = require('remark-parse');
-const squeeze = require('remark-squeeze-paragraphs');
-const {
-  isImport,
-  isExport,
-  isExportDefault,
-  BLOCKS_REGEX,
-  EMPTY_NEWLINE,
-} = require('@mdx-js/mdx/util');
+// packages/extension/transpiler/mdx/hasDefaultExport.ts
+// check for default export in MDX content using regex patterns
 
-const DEFAULT_OPTIONS = {
-  footnotes: true,
-  mdPlugins: [],
-  hastPlugins: [],
-  compilers: [],
-  blocks: [BLOCKS_REGEX],
-};
+import grayMatter from 'gray-matter';
 
-const hasDefaultExport = (str, options = DEFAULT_OPTIONS) => {
-  let hasDefaultExportBool = false;
+// check if MDX source has default export (using regex patterns)
+const hasDefaultExport = (source: string): boolean => {
+  // strip frontmatter first
+  const { content } = grayMatter(source);
 
-  function getDefaultExportBlock(subvalue) {
-    const isDefault = isExportDefault(subvalue);
-    hasDefaultExportBool = hasDefaultExportBool || isDefault;
-    return isDefault;
-  }
-  const tokenizeEsSyntax = (eat, value) => {
-    const index = value.indexOf(EMPTY_NEWLINE);
-    const subvalue = value.slice(0, index);
+  // common default export patterns in MDX/JSX
+  const patterns = [
+    /^export\s+default\s+/m,
+    /^export\s*{\s*\w+\s+as\s+default\s*}/m,
+  ];
 
-    if (isExport(subvalue) || isImport(subvalue)) {
-      return eat(subvalue)({
-        type: isExport(subvalue) ? 'export' : 'import',
-        default: getDefaultExportBlock(subvalue),
-        value: subvalue,
-      });
-    }
-  };
-
-  tokenizeEsSyntax.locator = value => {
-    return isExport(value) || isImport(value) ? -1 : 1;
-  };
-
-  function esSyntax() {
-    var Parser = this.Parser;
-    var tokenizers = Parser.prototype.blockTokenizers;
-    var methods = Parser.prototype.blockMethods;
-
-    tokenizers.esSyntax = tokenizeEsSyntax;
-
-    methods.splice(methods.indexOf('paragraph'), 0, 'esSyntax');
-  }
-
-  const { content } = grayMatter(str);
-  unified()
-    .use(toMDAST, options)
-    .use(esSyntax)
-    .use(squeeze, options)
-    .parse(content)
-    .toString();
-
-  return hasDefaultExportBool;
+  return patterns.some((pattern) => pattern.test(content));
 };
 
 export default hasDefaultExport;
