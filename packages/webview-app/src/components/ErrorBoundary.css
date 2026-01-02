@@ -1,0 +1,128 @@
+.mdx-error-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--vscode-editor-background, #1e1e1e);
+  color: var(--vscode-editor-foreground, #d4d4d4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 9999;
+}
+
+.mdx-error-container {
+  max-width: 800px;
+  width: 100%;
+  background: var(--vscode-editorWidget-background, #252526);
+  border: 1px solid var(--vscode-editorWidget-border, #454545);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mdx-error-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--vscode-inputValidation-errorBackground, rgba(255, 0, 0, 0.1));
+  border-bottom: 1px solid var(--vscode-inputValidation-errorBorder, #be1100);
+}
+
+.mdx-error-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--vscode-inputValidation-errorBorder, #be1100);
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.mdx-error-header h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vscode-errorForeground, #f48771);
+}
+
+.mdx-error-content {
+  padding: 16px;
+  max-height: 400px;
+  overflow: auto;
+}
+
+.mdx-error-message {
+  margin: 0;
+  padding: 12px;
+  background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
+  border-radius: 4px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--vscode-errorForeground, #f48771);
+}
+
+.mdx-error-stack-details {
+  margin-top: 12px;
+}
+
+.mdx-error-stack-details summary {
+  cursor: pointer;
+  color: var(--vscode-descriptionForeground, #8b8b8b);
+  font-size: 12px;
+}
+
+.mdx-error-stack {
+  margin: 8px 0 0 0;
+  padding: 12px;
+  background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
+  border-radius: 4px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--vscode-descriptionForeground, #8b8b8b);
+  max-height: 200px;
+  overflow: auto;
+}
+
+.mdx-error-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  background: var(--vscode-editorWidget-background, #252526);
+  border-top: 1px solid var(--vscode-editorWidget-border, #454545);
+}
+
+.mdx-error-button {
+  padding: 6px 14px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 2px;
+  background: var(--vscode-button-secondaryBackground, #3a3d41);
+  color: var(--vscode-button-secondaryForeground, #cccccc);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mdx-error-button:hover {
+  background: var(--vscode-button-secondaryHoverBackground, #45494e);
+}
+
+.mdx-error-button.primary {
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, #ffffff);
+}
+
+.mdx-error-button.primary:hover {
+  background: var(--vscode-button-hoverBackground, #1177bb);
+}

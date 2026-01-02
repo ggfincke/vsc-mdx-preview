@@ -1,0 +1,259 @@
+/**
+ * MDX Preview App Styles
+ */
+
+.mdx-preview-container {
+  min-height: 100vh;
+  position: relative;
+}
+
+.mdx-preview-content {
+  padding: 16px;
+  padding-top: 40px; /* Space for mode badge */
+}
+
+/* Error Display */
+.mdx-preview-error {
+  padding: 20px;
+  margin: 20px;
+  background: var(
+    --vscode-inputValidation-errorBackground,
+    rgba(255, 0, 0, 0.1)
+  );
+  border: 1px solid var(--vscode-inputValidation-errorBorder, #be1100);
+  border-radius: 4px;
+}
+
+.mdx-error-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mdx-error-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--vscode-errorForeground, #f48771);
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.mdx-error-header h2 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--vscode-errorForeground, #f48771);
+}
+
+.mdx-error-message {
+  margin: 0;
+  padding: 12px;
+  background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  color: var(--vscode-editor-foreground);
+}
+
+.mdx-error-stack {
+  margin: 8px 0 0 0;
+  padding: 12px;
+  background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 11px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  color: var(--vscode-descriptionForeground);
+  max-height: 300px;
+  overflow: auto;
+}
+
+.mdx-retry-button {
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, white);
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.mdx-retry-button:hover {
+  background: var(--vscode-button-hoverBackground, #1177bb);
+}
+
+/* Trusted Preview Loading */
+.mdx-trusted-preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.mdx-loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--vscode-progressBar-background, #0e70c0);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Trusted Preview Container */
+.mdx-trusted-preview {
+  min-height: 100px;
+}
+
+/* Safe Preview Container */
+.mdx-safe-preview {
+  min-height: 100px;
+}
+
+/* Markdown Body Styles (VS Code compatible) */
+.markdown-body {
+  font-family: var(
+    --vscode-markdown-font-family,
+    var(
+      --vscode-editor-font-family,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe WPC',
+      'Segoe UI',
+      system-ui,
+      'Ubuntu',
+      'Droid Sans',
+      sans-serif
+    )
+  );
+  font-size: var(--vscode-markdown-font-size, 14px);
+  line-height: var(--vscode-markdown-line-height, 1.6);
+  color: var(--vscode-editor-foreground);
+}
+
+.markdown-body.mdx-force-light {
+  color: #000;
+  background: #fff;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown-body h1 {
+  font-size: 2em;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  padding-bottom: 0.3em;
+}
+
+.markdown-body h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  padding-bottom: 0.3em;
+}
+
+.markdown-body h3 {
+  font-size: 1.25em;
+}
+
+.markdown-body code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  background-color: var(--vscode-textCodeBlock-background);
+  border-radius: 3px;
+  font-family: var(--vscode-editor-font-family, monospace);
+}
+
+.markdown-body pre {
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  background-color: var(--vscode-textCodeBlock-background);
+  border-radius: 3px;
+}
+
+.markdown-body pre code {
+  padding: 0;
+  background-color: transparent;
+}
+
+.markdown-body blockquote {
+  padding: 0 1em;
+  color: var(--vscode-textBlockQuote-foreground);
+  border-left: 0.25em solid var(--vscode-textBlockQuote-border);
+  margin: 0 0 16px 0;
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  padding: 6px 13px;
+  border: 1px solid var(--vscode-panel-border);
+}
+
+.markdown-body table tr:nth-child(2n) {
+  background-color: var(--vscode-textCodeBlock-background);
+}
+
+.markdown-body img {
+  max-width: 100%;
+  box-sizing: content-box;
+}
+
+.markdown-body a {
+  color: var(--vscode-textLink-foreground);
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+.markdown-body hr {
+  height: 0.25em;
+  padding: 0;
+  margin: 24px 0;
+  background-color: var(--vscode-panel-border);
+  border: 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 2em;
+  margin: 0 0 16px 0;
+}
+
+.markdown-body li + li {
+  margin-top: 0.25em;
+}

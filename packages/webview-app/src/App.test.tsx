@@ -1,9 +1,15 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import { describe, it, expect, vi } from 'vitest';
+import { render } from '@testing-library/react';
 import App from './App';
 
-it('renders without crashing', () => {
-  const div = document.createElement('div');
-  ReactDOM.render(<App />, div);
-  ReactDOM.unmountComponentAtNode(div);
+// Mock the RPC module
+vi.mock('./rpc-webview', () => ({
+  registerWebviewHandlers: vi.fn(),
+}));
+
+describe('App', () => {
+  it('renders without crashing', () => {
+    const { container } = render(<App />);
+    expect(container).toBeTruthy();
+  });
 });

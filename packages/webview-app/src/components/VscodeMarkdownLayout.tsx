@@ -1,18 +1,20 @@
 /**
  * MDX implementation of VSCode Markdown Preview Styles
- * Styles are from:
+ *
+ * Styles are based on:
  * https://github.com/Microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css
  * Copyright (c) 2015 - present Microsoft Corporation
  *
  * Components customization list from:
  * https://github.com/ChristopherBiscardi/gatsby-mdx/tree/master/packages/gatsby-mdx#mdxprovider
  */
-import React, { useEffect, ReactElement } from 'react';
-const { MDXProvider } = require('@mdx-js/tag');
-import styled, { ThemeProvider } from 'styled-components';
+
+import React, { useEffect, type ReactNode } from 'react';
+import { MDXProvider } from '@mdx-js/react';
+import styled, { ThemeProvider, type DefaultTheme } from 'styled-components';
 
 const bodyStyles = `
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif;
   word-wrap: break-word;
 `;
 
@@ -21,7 +23,7 @@ const HR = styled.hr`
   border: 0;
   height: 2px;
   border-bottom: 2px solid;
-  border-color: ${props => props.theme.colorHeaderBorder};
+  border-color: ${(props) => props.theme.colorHeaderBorder};
 `;
 
 const components = {
@@ -38,7 +40,7 @@ const components = {
     ${bodyStyles}
     padding-bottom: 0.3em;
     line-height: 1.2;
-    border-color: ${props => props.theme.colorHeaderBorder};
+    border-color: ${(props) => props.theme.colorHeaderBorder};
     border-bottom-width: 1px;
     border-bottom-style: solid;
     font-weight: normal;
@@ -134,9 +136,9 @@ const components = {
   pre: styled.pre`
     ${bodyStyles}
     code {
-      color: ${props => props.theme.colorPreCode};
+      color: ${(props) => props.theme.colorPreCode};
     }
-    background-color: ${props => props.theme.colorPreBackground};
+    background-color: ${(props) => props.theme.colorPreBackground};
 
     /* wordWrap */
     white-space: pre-wrap;
@@ -204,10 +206,10 @@ const components = {
 
     /* dark */
     > thead > tr > th {
-      border-color: ${props => props.theme.colorTableHeaderBorder};
+      border-color: ${(props) => props.theme.colorTableHeaderBorder};
     }
     > tbody > tr + tr > td {
-      border-color: ${props => props.theme.colorHeaderBorder};
+      border-color: ${(props) => props.theme.colorHeaderBorder};
     }
     code {
       font-family: Menlo, Monaco, Consolas, 'Droid Sans Mono', 'Courier New',
@@ -243,7 +245,16 @@ const components = {
   `,
 };
 
-const vscodeLightTheme = {
+interface WebviewTheme extends DefaultTheme {
+  colorBodyForeground: string;
+  colorBodyBackground: string;
+  colorPreCode: string;
+  colorPreBackground: string;
+  colorTableHeaderBorder: string;
+  colorHeaderBorder: string;
+}
+
+const vscodeLightTheme: WebviewTheme = {
   colorBodyForeground: 'var(--vscode-editor-foreground)',
   colorBodyBackground: 'var(--vscode-editor-background)',
   colorPreCode: 'var(--vscode-editor-foreground)',
@@ -252,7 +263,7 @@ const vscodeLightTheme = {
   colorHeaderBorder: 'rgba(0, 0, 0, 0.18)',
 };
 
-const vscodeDarkTheme = {
+const vscodeDarkTheme: WebviewTheme = {
   colorBodyForeground: 'var(--vscode-editor-foreground)',
   colorBodyBackground: 'var(--vscode-editor-background)',
   colorPreCode: 'var(--vscode-editor-foreground)',
@@ -261,7 +272,7 @@ const vscodeDarkTheme = {
   colorHeaderBorder: 'rgba(255, 255, 255, 0.18)',
 };
 
-const vscodeHighContrastTheme = {
+const vscodeHighContrastTheme: WebviewTheme = {
   colorBodyForeground: 'var(--vscode-editor-foreground)',
   colorBodyBackground: 'var(--vscode-editor-background)',
   colorPreCode: 'var(--vscode-editor-foreground)',
@@ -270,10 +281,15 @@ const vscodeHighContrastTheme = {
   colorHeaderBorder: 'inherit',
 };
 
-const createLayout = ({ forceLightTheme }: { forceLightTheme?: boolean }) => {
+interface CreateLayoutOptions {
+  forceLightTheme?: boolean;
+}
+
+const createLayout = ({ forceLightTheme }: CreateLayoutOptions = {}) => {
   let webviewTheme = vscodeLightTheme;
+
   if (!forceLightTheme) {
-    // infer webview theme from document.body
+    // Infer webview theme from document.body
     if (document.body) {
       if (document.body.classList.contains('vscode-light')) {
         webviewTheme = vscodeLightTheme;
@@ -284,12 +300,19 @@ const createLayout = ({ forceLightTheme }: { forceLightTheme?: boolean }) => {
       }
     }
   } else {
-    webviewTheme.colorBodyForeground = 'black';
-    webviewTheme.colorBodyBackground = 'white';
-    webviewTheme.colorPreCode = 'black';
+    webviewTheme = {
+      ...vscodeLightTheme,
+      colorBodyForeground: 'black',
+      colorBodyBackground: 'white',
+      colorPreCode: 'black',
+    };
   }
-  
-  const Layout = ({ children }: { children: ReactElement }) => {
+
+  interface LayoutProps {
+    children: ReactNode;
+  }
+
+  const Layout = ({ children }: LayoutProps) => {
     useEffect(() => {
       const originalColorBodyForeground = document.body.style.color;
       const originalColorBodyBackground = document.body.style.backgroundColor;
@@ -309,6 +332,7 @@ const createLayout = ({ forceLightTheme }: { forceLightTheme?: boolean }) => {
       </ThemeProvider>
     );
   };
+
   return Layout;
 };
 

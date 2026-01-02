@@ -1,33 +1,53 @@
+/**
+ * Loading Bar Component
+ *
+ * Shows a VS Code-style progress bar during loading states.
+ */
+
 import React, { useState, useEffect } from 'react';
-import ValueSubscription from '../../lib/ValueSubscription';
-import { evaluationProgress, EvaluationProgress } from '../../evaluate';
 import './LoadingBar.css';
 
-const SHOW_AFTER_DURATION = 1500;
+/** Delay before showing loading bar to avoid flicker */
+const SHOW_AFTER_DURATION = 500;
 
-const LoadingBar = () => {
-  const [isPastDuration, setPastDuration] = useState(false);
+interface LoadingBarProps {
+  /** Whether to show the loading bar immediately */
+  immediate?: boolean;
+}
+
+const LoadingBar: React.FC<LoadingBarProps> = ({ immediate = false }) => {
+  const [shouldShow, setShouldShow] = useState(immediate);
+
   useEffect(() => {
-    setTimeout(() => {
-      setPastDuration(true);
+    if (immediate) {
+      setShouldShow(true);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShouldShow(true);
     }, SHOW_AFTER_DURATION);
-  }, [isPastDuration]);
+
+    return () => clearTimeout(timer);
+  }, [immediate]);
+
+  if (!shouldShow) {
+    return null;
+  }
+
   return (
-    <ValueSubscription source={evaluationProgress}>
-      {progress =>
-        progress === EvaluationProgress.IN_PROGRESS && isPastDuration ? (
-          <div className="monaco-progress-container active infinite">
-            <div
-              className="progress-bit"
-              style={{
-                backgroundColor: '#0E70C0',
-                opacity: 1,
-              }}
-            />
-          </div>
-        ) : null
-      }
-    </ValueSubscription>
+    <div className="mdx-loading-container">
+      <div className="monaco-progress-container active infinite">
+        <div
+          className="progress-bit"
+          style={{
+            backgroundColor: 'var(--vscode-progressBar-background, #0E70C0)',
+            opacity: 1,
+          }}
+        />
+      </div>
+      <p className="mdx-loading-text">Loading preview...</p>
+    </div>
   );
 };
 
