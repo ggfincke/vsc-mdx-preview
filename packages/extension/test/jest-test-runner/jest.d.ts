@@ -1,11 +1,4 @@
 declare module 'jest' {
-  /**
-   * Execute Jest and return a promise with the results.
-   *
-   * @see https://github.com/facebook/jest/blob/master/packages/jest-cli/src/cli/index.js
-   * @param jestConfig Jest configuration options.
-   * @param projects Paths to projects to run tests on.
-   */
   export function runCLI(
     jestConfig: object,
     projects: string[]
@@ -19,20 +12,21 @@ declare module 'jest' {
 }
 
 declare module 'jest-environment-node' {
-  export default class NodeEnvironment {
-    public global: any;
+  import type { JestEnvironmentConfig } from '@jest/environment';
 
-    constructor(config: any);
+  export default class NodeEnvironment {
+    public global: Record<string, unknown>;
+
+    constructor(config: JestEnvironmentConfig);
 
     public setup(): Promise<void>;
     public teardown(): Promise<void>;
-    public runScript(script: any): any;
+    public runScript(script: unknown): unknown;
   }
 }
 
-/* tslint:disable-next-line:no-namespace */
 declare namespace NodeJS {
   interface Global {
-    vscode: any;
+    vscode: typeof import('vscode');
   }
 }

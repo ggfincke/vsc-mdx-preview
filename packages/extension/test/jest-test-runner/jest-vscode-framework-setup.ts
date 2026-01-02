@@ -5,5 +5,10 @@
  * environment.
  *
  * @see jest-vscode-environment.ts
+ *
+ * Note: This file is used for VS Code integration tests and may still
+ * reference Jest APIs. Integration tests run in VS Code's extension host.
  */
-jest.mock('vscode', () => global.vscode, { virtual: true });
+import { vi } from 'vitest';
+
+vi.mock('vscode', () => (global as Record<string, unknown>).vscode);

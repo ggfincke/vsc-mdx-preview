@@ -12,17 +12,17 @@ export class InMemoryDocument implements vscode.TextDocument {
   constructor(
     public readonly uri: vscode.Uri,
     private readonly _contents: string,
-    public readonly version = 1,
+    public readonly version = 1
   ) {
     this._lines = this._contents.split(/\n/g);
   }
-
 
   isUntitled: boolean = false;
   languageId: string = '';
   isDirty: boolean = false;
   isClosed: boolean = false;
   eol: vscode.EndOfLine = vscode.EndOfLine.LF;
+  encoding: string = 'utf-8';
 
   get fileName(): string {
     return this.uri.fsPath;
@@ -32,14 +32,16 @@ export class InMemoryDocument implements vscode.TextDocument {
     return this._lines.length;
   }
 
-  lineAt(line: any): vscode.TextLine {
+  lineAt(lineOrPosition: number | vscode.Position): vscode.TextLine {
+    const line =
+      typeof lineOrPosition === 'number' ? lineOrPosition : lineOrPosition.line;
     return {
       lineNumber: line,
       text: this._lines[line],
       range: new vscode.Range(0, 0, 0, 0),
       firstNonWhitespaceCharacterIndex: 0,
       rangeIncludingLineBreak: new vscode.Range(0, 0, 0, 0),
-      isEmptyOrWhitespace: false
+      isEmptyOrWhitespace: false,
     };
   }
   offsetAt(_position: vscode.Position): never {
@@ -50,12 +52,18 @@ export class InMemoryDocument implements vscode.TextDocument {
     const newLines = before.match(/\n/g);
     const line = newLines ? newLines.length : 0;
     const preCharacters = before.match(/(\n|^).*$/g);
-    return new vscode.Position(line, preCharacters ? preCharacters[0].length : 0);
+    return new vscode.Position(
+      line,
+      preCharacters ? preCharacters[0].length : 0
+    );
   }
   getText(_range?: vscode.Range | undefined): string {
     return this._contents;
   }
-  getWordRangeAtPosition(_position: vscode.Position, _regex?: RegExp | undefined): never {
+  getWordRangeAtPosition(
+    _position: vscode.Position,
+    _regex?: RegExp | undefined
+  ): never {
     throw new Error('Method not implemented.');
   }
   validateRange(_range: vscode.Range): never {

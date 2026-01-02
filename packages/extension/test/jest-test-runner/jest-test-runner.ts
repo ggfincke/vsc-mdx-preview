@@ -1,104 +1,104 @@
 // Jest test runner is adapted from https://github.com/Unibeautify/vscode/blob/master/test/jest-test-runner.ts
 // Copyright (c) 2017 Unibeautify
-/**
- * Wires in Jest as the test runner in place of the default Mocha.
- */
-import { ResultsObject, runCLI } from 'jest';
-import * as path from 'path';
-import * as sourceMapSupport from 'source-map-support';
 
-const jestConfig = {
-    rootDir: '.',
-    roots: [ '<rootDir>/src' ],
-    verbose: true,
-    colors: true,
-    transform: JSON.stringify({ '^.+\\.ts$': 'ts-jest' }),
-    runInBand: true, // Required due to the way the "vscode" module is injected.
-    testRegex: '\\.test\\.ts$',
-    testEnvironment: path.join(__dirname, './jest-vscode-environment.js'),
-    setupTestFrameworkScriptFile: path.join(__dirname, './jest-vscode-framework-setup.js'),
-    moduleFileExtensions: [ 'ts', 'js', 'json' ],
-    globals: JSON.stringify({
-        'ts-jest': {
-            tsConfig: ''
-        }
-    })
+import { runCLI } from 'jest';
+import type { AggregatedResult } from '@jest/test-result';
+import * as path from 'path';
+
+interface JestConfig {
+  rootDir: string;
+  roots: string[];
+  verbose: boolean;
+  colors: boolean;
+  transform: string;
+  runInBand: boolean;
+  testRegex: string;
+  testEnvironment: string;
+  setupFilesAfterEnv: string[];
+  moduleFileExtensions: string[];
+  updateSnapshot?: boolean;
+}
+
+const jestConfig: JestConfig = {
+  rootDir: '.',
+  roots: ['<rootDir>/src'],
+  verbose: true,
+  colors: true,
+  transform: JSON.stringify({
+    '^.+\\.ts$': ['ts-jest', { tsconfig: '' }],
+  }),
+  runInBand: true,
+  testRegex: '\\.test\\.ts$',
+  testEnvironment: path.join(__dirname, './jest-vscode-environment.js'),
+  setupFilesAfterEnv: [
+    path.join(__dirname, './jest-vscode-framework-setup.js'),
+  ],
+  moduleFileExtensions: ['ts', 'js', 'json'],
 };
 
 interface JestTestRunnerConfig {
   rootDir: string;
-  roots: Array<string>;
+  roots: string[];
   tsConfig: string;
   updateSnapshot?: boolean;
 }
 
-export function configure(options: JestTestRunnerConfig) {
+export function configure(options: JestTestRunnerConfig): void {
   const { rootDir, roots, tsConfig, updateSnapshot } = options;
   Object.assign(jestConfig, {
     rootDir,
     roots,
-    globals: JSON.stringify({
-      'ts-jest': {
-        tsConfig,
-      },
+    transform: JSON.stringify({
+      '^.+\\.ts$': ['ts-jest', { tsconfig: tsConfig }],
     }),
-    updateSnapshot
+    updateSnapshot,
   });
 }
 
-export async function run(_testRoot: string, callback: TestRunnerCallback) {
-    // Enable source map support. This is done in the original Mocha test runner,
-    // so do it here. It is not clear if this is having any effect.
-    sourceMapSupport.install();
+export type TestRunnerCallback = (
+  error: Error | null,
+  failures?: string[]
+) => void;
 
-    // Forward logging from Jest to the Debug Console.
-    forwardStdoutStderrStreams();
+export async function run(
+  _testRoot: string,
+  callback: TestRunnerCallback
+): Promise<void> {
+  forwardStdoutStderrStreams();
 
-    try {
-        const { globalConfig, results } = await (runCLI as any)(jestConfig, [jestConfig.rootDir]);
-        const failures = collectTestFailureMessages(results);
+  try {
+    const { results } = (await runCLI(
+      jestConfig as Parameters<typeof runCLI>[0],
+      [jestConfig.rootDir]
+    )) as unknown as { results: AggregatedResult };
+    const failures = collectTestFailureMessages(results);
 
-        if (failures.length > 0) {
-            callback(null, failures);
-            return;
-        }
-
-        callback(null);
-    } catch (e) {
-        callback(e);
+    if (failures.length > 0) {
+      callback(null, failures);
+      return;
     }
+
+    callback(null);
+  } catch (e) {
+    callback(e instanceof Error ? e : new Error(String(e)));
+  }
 }
 
-/**
- * Collect failure messages from Jest test results.
- *
- * @param results Jest test results.
- */
-function collectTestFailureMessages(results: ResultsObject): string[] {
-    const failures = results.testResults.reduce<string[]>((acc, testResult) => {
-        if (testResult.failureMessage) {
-          acc.push(testResult.failureMessage);
-        }
-        return acc;
-    }, []);
-
-    return failures;
+function collectTestFailureMessages(results: AggregatedResult): string[] {
+  return results.testResults.reduce<string[]>((acc, testResult) => {
+    if (testResult.failureMessage) {
+      acc.push(testResult.failureMessage);
+    }
+    return acc;
+  }, []);
 }
 
-/**
- * Forward writes to process.stdout and process.stderr to console.log.
- *
- * For some reason this seems to be required for the Jest output to be streamed
- * to the Debug Console.
- */
-function forwardStdoutStderrStreams() {
-    const logger = (line: string) => {
-      console.log(line); // tslint:disable-line:no-console
-      return true;
-    };
+function forwardStdoutStderrStreams(): void {
+  const logger = (line: string): boolean => {
+    console.log(line);
+    return true;
+  };
 
-    process.stdout.write = logger;
-    process.stderr.write = logger;
+  process.stdout.write = logger as typeof process.stdout.write;
+  process.stderr.write = logger as typeof process.stderr.write;
 }
-
-export type TestRunnerCallback = (error: Error | null, failures?: any) => void;
