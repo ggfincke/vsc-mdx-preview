@@ -1,0 +1,39 @@
+# MDX Preview Example
+
+This is a simple example showing MDX Preview in action.
+
+## Interactive Component
+
+import MyComponent from './src/my-component'
+
+Try clicking the button below:
+
+<MyComponent />
+
+## Features Demonstrated
+
+- **Markdown rendering**: Headers, paragraphs, lists
+- **React components**: Interactive button with state
+- **Live preview**: Changes update instantly
+
+## Code Example
+
+```jsx
+import React from 'react';
+
+export default function MyComponent() {
+  const [count, setCount] = React.useState(0);
+
+  return (
+    <button onClick={() => setCount(c => c + 1)}>
+      Clicked {count} times
+    </button>
+  );
+}
+```
+
+## Getting Started
+
+1. Open this `README.mdx` file in VS Code
+2. Run **"MDX: Open Preview"** from the Command Palette
+3. Trust the workspace and enable scripts for interactive components
