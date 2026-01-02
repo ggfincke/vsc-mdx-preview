@@ -2,13 +2,31 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as typescript from 'typescript';
 import * as sass from 'sass';
+import resolve from 'resolve';
+import { init as initLexer, parse as parseImports } from 'es-module-lexer';
 import { Preview } from '../preview/preview-manager';
 import { transform } from './transform';
 import { checkFsPath, PathAccessDeniedError } from '../security/checkFsPath';
+import { error as logError } from '../logging';
 
-const resolveFrom = require('resolve-from');
+// Initialize es-module-lexer once at module load
+let lexerInitialized = false;
+async function ensureLexerInitialized(): Promise<void> {
+  if (!lexerInitialized) {
+    await initLexer;
+    lexerInitialized = true;
+  }
+}
 
-const precinct = require('precinct');
+/**
+ * Result of fetching a module.
+ */
+export interface FetchResult {
+  fsPath: string;
+  code: string;
+  dependencies: string[];
+  css?: string;
+}
 
 const NOOP_MODULE = `Object.defineProperty(exports, '__esModule', { value: true });
   function noop() {}
@@ -29,7 +47,6 @@ const NODE_CORE_MODULES = new Set([
   'tls',
 
   'crypto',
-  'exports', // precinct bug
 ]);
 
 const SHIMMABLE_NODE_CORE_MODULES = new Set([
@@ -54,14 +71,77 @@ const SHIMMABLE_NODE_CORE_MODULES = new Set([
   'vm',
   'zlib',
   'tty',
-  'domain'
+  'domain',
 ]);
 
-export async function fetchLocal(request, isBare, parentId, preview: Preview) {
+/**
+ * Resolve a module using the modern `resolve` package.
+ * Supports package.json "exports" field for ESM-first resolution.
+ *
+ * @param request - The module request (e.g., 'lodash', './utils', '../foo')
+ * @param basedir - The directory to resolve from
+ * @returns The resolved file path
+ */
+function resolveModule(request: string, basedir: string): string {
+  return resolve.sync(request, {
+    basedir,
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json'],
+    // Support package.json exports
+    packageFilter: (pkg) => {
+      // Prefer browser field when present (webview runtime)
+      if (typeof pkg.browser === 'string') {
+        pkg.main = pkg.browser;
+        return pkg;
+      }
+
+      // Prefer module field for ESM when present
+      if (pkg.module) {
+        pkg.main = pkg.module;
+      }
+      return pkg;
+    },
+  });
+}
+
+/**
+ * Extract imports from code using es-module-lexer.
+ * ESM-first approach - handles both static and dynamic imports.
+ *
+ * @param code - The code to parse
+ * @returns Array of import specifiers
+ */
+async function extractImports(code: string): Promise<string[]> {
+  await ensureLexerInitialized();
+
+  try {
+    const [imports] = parseImports(code);
+    return imports
+      .map((imp) => imp.n)
+      .filter((name): name is string => name !== undefined && name !== null);
+  } catch (error) {
+    // Fallback for code that can't be parsed (e.g., CJS)
+    // Try to extract require() calls with a simple regex
+    const requireMatches = code.matchAll(
+      /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g
+    );
+    return Array.from(requireMatches, (m) => m[1]);
+  }
+}
+
+export async function fetchLocal(
+  request: string,
+  isBare: boolean,
+  parentId: string,
+  preview: Preview
+): Promise<FetchResult | undefined> {
   try {
     const entryFsDirectory = preview.entryFsDirectory;
     if (!entryFsDirectory) {
-      return NOOP_MODULE;
+      return {
+        fsPath: '/noop',
+        code: NOOP_MODULE,
+        dependencies: [],
+      };
     }
 
     if (isBare && NODE_CORE_MODULES.has(request)) {
@@ -72,9 +152,15 @@ export async function fetchLocal(request, isBare, parentId, preview: Preview) {
       };
     }
 
-    let fsPath;
-    if (preview.typescriptConfiguration && !parentId.split(path.sep).includes('node_modules')) {
-      const { tsCompilerOptions, tsCompilerHost } = preview.typescriptConfiguration;
+    let fsPath: string | null = null;
+
+    // Try TypeScript resolution first (if available and not in node_modules)
+    if (
+      preview.typescriptConfiguration &&
+      !parentId.split(path.sep).includes('node_modules')
+    ) {
+      const { tsCompilerOptions, tsCompilerHost } =
+        preview.typescriptConfiguration;
       const resolvedModule = typescript.resolveModuleName(
         request,
         parentId,
@@ -89,12 +175,14 @@ export async function fetchLocal(request, isBare, parentId, preview: Preview) {
         }
       }
     }
+
+    // Fallback to modern resolver with ESM exports support
     if (!fsPath) {
       const basedir = path.dirname(parentId);
-      fsPath = resolveFrom(basedir, request);
+      fsPath = resolveModule(request, basedir);
     }
 
-    if(!checkFsPath(entryFsDirectory, fsPath)) {
+    if (!checkFsPath(entryFsDirectory, fsPath)) {
       if (SHIMMABLE_NODE_CORE_MODULES.has(request)) {
         return {
           fsPath: `/externalModules/${request}`,
@@ -108,12 +196,15 @@ export async function fetchLocal(request, isBare, parentId, preview: Preview) {
     preview.dependentFsPaths.add(fsPath);
 
     let code: string;
-    if (preview.configuration.previewOnChange
-      && preview.editingDoc
-      && preview.editingDoc.uri.fsPath === fsPath) {
+    if (
+      preview.configuration.previewOnChange &&
+      preview.editingDoc &&
+      preview.editingDoc.uri.fsPath === fsPath
+    ) {
       code = preview.editingDoc.getText();
     } else {
-      code = fs.readFileSync(fsPath).toString();
+      // ASYNC: Use fs.promises.readFile
+      code = await fs.promises.readFile(fsPath, 'utf-8');
     }
 
     const extname = path.extname(fsPath);
@@ -138,21 +229,32 @@ export async function fetchLocal(request, isBare, parentId, preview: Preview) {
       };
     }
     if (/\.(scss|sass)$/i.test(extname)) {
-      const css = sass.renderSync({
-        file: fsPath,
-        importer: function (url, prev, done) {
-          return { file: resolveFrom(path.dirname(fsPath), url) };
-        }
-      }).css;
+      // ASYNC: Use sass.compileAsync
+      const result = await sass.compileAsync(fsPath, {
+        importers: [
+          {
+            findFileUrl: (url: string) => {
+              const resolved = resolveModule(url, path.dirname(fsPath!));
+              return new URL(`file://${resolved}`);
+            },
+          },
+        ],
+      });
       return {
         fsPath,
-        css: css && css.toString(),
-        code: "",
+        css: result.css,
+        code: '',
         dependencies: [],
       };
     }
     if (/\.(gif|png|jpe?g|svg)$/i.test(extname)) {
-      const code = `module.exports = "vscode-resource://${fsPath}"`;
+      const webviewUri = preview.getWebviewUri(fsPath);
+      if (!webviewUri) {
+        throw new Error(
+          `Preview webview not initialized; cannot create webview URI for local image: ${fsPath}`
+        );
+      }
+      const code = `module.exports = "${webviewUri}"`;
       return {
         fsPath,
         code,
@@ -161,28 +263,17 @@ export async function fetchLocal(request, isBare, parentId, preview: Preview) {
     }
 
     code = await transform(code, fsPath, preview);
-    
-    // Figure out dependencies from code
-    // Don't care about dependency version ranges here, assuming user has already done
-    // yarn install or npm install.
-    const dependencyNames = precinct(code);
-    const dependencies = dependencyNames.map(dependencyName => {
-      // precinct returns undefined for dynamic import expression, TODO: refactor this
-      if (!dependencyName) {
-        return;
-      }
-      if (
-        !dependencyName.startsWith('/') &&
-        !dependencyName.startsWith('../') &&
-        !dependencyName.startsWith('./') &&
-        (dependencyName !== '.' && dependencyName !== '..')
-      ) {
-        // bare
-        return `npm://${dependencyName}`;
-      }
 
-      return dependencyName;
-    });
+    // Extract imports using es-module-lexer (ESM-first)
+    const importNames = await extractImports(code);
+    const dependencies = importNames
+      .map((dependencyName) => {
+        if (!dependencyName) {
+          return undefined;
+        }
+        return dependencyName;
+      })
+      .filter((dep): dep is string => dep !== undefined);
 
     return {
       fsPath,
@@ -190,7 +281,8 @@ export async function fetchLocal(request, isBare, parentId, preview: Preview) {
       dependencies,
     };
   } catch (error) {
-    console.error(error, request);
-    preview.webviewHandle.showPreviewError({ message: error.message });
+    logError('Module fetch failed', { request, error });
+    const message = error instanceof Error ? error.message : String(error);
+    preview.webviewHandle.showPreviewError({ message });
   }
 }
