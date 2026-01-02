@@ -1,107 +1,147 @@
-# [MDX Preview for Visual Studio Code](https://github.com/xyc/vscode-mdx-preview)
+# MDX Preview for Visual Studio Code
 
-**Please consider supporting the development of this project by [♡ GitHub Sponsorship](https://github.com/sponsors/xyc?frequency=one-time). You'll have profile badge displayed on the sponsors page!**
+Preview [MDX](https://mdxjs.com) files with live refresh and React component support directly in VS Code.
 
-**New in v0.2**: Type Script Preview and Hot Update https://vimeo.com/334605913
-
-MDX Preview lets you preview [MDX](https://mdxjs.com) seamlessly. Write markdown / JSX, see it live refresh and get instant visual feedback.
-
-![](./assets/example.gif)
+![MDX Preview Demo](./assets/example.gif)
 
 ## Features
 
-### Instant preview as you type without starting a dev server or building
+- **Live Preview**: See your MDX rendered instantly as you type
+- **React Components**: Full support for importing and rendering React components
+- **MDX 3 Support**: Built on the latest MDX compiler with modern React 18
+- **TypeScript Support**: Preview `.tsx` and `.ts` files that render to `#root`
+- **Security Model**: Safe Mode for untrusted content, Trusted Mode for full rendering
 
-To get started:
+## Quick Start
 
-1. Run `yarn install` or `npm install` if necessary so that you have the npm dependencies in your workspace, and navigate to your `md` or `mdx` file; or just create an untitled file, change language mode (from command palette) to mdx and type some mdx code.
-2. Open command palette, and type "MDX: Open Preview"; or click the magnifying glass.
+1. Open an `.mdx` or `.md` file in your workspace
+2. Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
+3. Run **"MDX: Open Preview"** or use `Cmd+K X` / `Ctrl+K X`
 
-Preview will automatically update when you change the file you are previewing or the files that currently previewed file depends on.
+## Security Model
 
-[MDX Extension](https://github.com/silvenon/vscode-mdx) is recommended for syntax highlighting of MDX files.
+MDX Preview has two security modes:
 
-### Custom Layout
+### Safe Mode (Default)
 
-You can apply custom layout to the MDX file by
+- Renders MDX as static HTML without JavaScript execution
+- Used automatically in untrusted workspaces
+- No custom React components or imports
 
-1. Exporting a default layout value using `export default`
+### Trusted Mode
 
-```jsx
-import Layout from '../components/Layout';
+Requires **both**:
 
-export default Layout
+1. A trusted workspace (VS Code Workspace Trust)
+2. `mdx-preview.preview.enableScripts` setting enabled
 
-## Hello
+In Trusted Mode:
+
+- Full MDX rendering with React components
+- JavaScript execution enabled
+- Import statements work
+
+> **Note**: Trusted Mode is only available for local workspaces. Remote environments (SSH, WSL, Dev Containers, Codespaces) always use Safe Mode.
+
+## Configuration
+
+| Setting                                        | Default    | Description                                              |
+| ---------------------------------------------- | ---------- | -------------------------------------------------------- |
+| `mdx-preview.preview.enableScripts`            | `false`    | Enable JavaScript execution (requires trusted workspace) |
+| `mdx-preview.preview.previewOnChange`          | `true`     | Preview on change (false = preview on save)              |
+| `mdx-preview.preview.useVscodeMarkdownStyles`  | `true`     | Apply VS Code's markdown styling                         |
+| `mdx-preview.preview.useWhiteBackground`       | `false`    | Force white background                                   |
+| `mdx-preview.preview.mdx.customLayoutFilePath` | `""`       | Path to custom layout component                          |
+| `mdx-preview.preview.security`                 | `"strict"` | CSP policy (`strict` or `disabled`)                      |
+| `mdx-preview.build.useSucraseTranspiler`       | `false`    | Use Sucrase instead of Babel                             |
+
+## Custom Layouts
+
+Apply custom layouts to your MDX in three ways:
+
+### 1. Export Default Layout
+
+```mdx
+import Layout from './components/Layout';
+
+export default Layout;
+
+# Hello World
+
+This content will be wrapped in Layout.
 ```
 
-2. Specifying a path to a custom layout config file in `mdx-preview.preview.mdx.customLayoutFilePath` extension setting. For example, the absolute path to the `../components/Layout` file above.
+### 2. Configuration Setting
 
-3. When nothing is specified, by default it will apply VS Code Markdown styles. You can turn that off by `mdx-preview.preview.useVscodeMarkdownStyles` extension settings or "MDX: Toggle VSCode Markdown Styles" command.
+Set `mdx-preview.preview.mdx.customLayoutFilePath` to the absolute path of your layout file.
 
-### MDX transclusion
-You can import other files with `.md` or `.mdx` extension.
+### 3. VS Code Markdown Styles (Default)
 
-```jsx
-import AnotherMDX from './AnotherMDX.mdx'
+When no custom layout is specified, VS Code's built-in markdown styling is applied.
 
-<AnotherMDX></AnotherMDX>
+## MDX Transclusion
+
+Import other MDX files as components:
+
+```mdx
+import Introduction from './Introduction.mdx';
+import Features from './Features.mdx';
+
+# Documentation
+
+<Introduction />
+
+<Features />
 ```
 
-### JavaScript/TypeScript Preview
-If you have a JavaScript or TypeScript file that renders to the `#root` element, you can also preview that using MDX Preview. For example, you can preview the `index.js` file from your react app:
+## JavaScript/TypeScript Preview
 
-```js
-// index.js
-import ReactDOM from 'react';
+Preview React apps that render to `#root`:
+
+```tsx
+// App.tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import App from './App';
-ReactDOM.render(
-  <App />,
-  document.getElementById('root')
-);
+
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+root.render(<App />);
 ```
 
-#### Note that VS Code webview has some limitations:
-- Service worker / Local storage are not available. 
-- Use `MemoryRouter` if you are using React Router.
+## Webview Limitations
 
-### Security
-Code will only be evaluated inside VS Code extension webview's isolated iframe. The MDX files can only require dependencies within your active workspace folders. By default, only HTTPS content is allowed within the webview. Of course, you still need to **make sure you trust the MDX file you preview, AND trust the files inside your workspace**. Note that with the default Content Security Policy, you would not be able to preview a LiveEditor. 
-You can change your security settings through `mdx-preview.preview.security` extension setting or "MDX: Change Security Settings" command.
+VS Code webviews have some inherent limitations:
 
-## Extension Settings
-This extension contributes the following settings:
+- No Service Workers or Local Storage
+- Use `MemoryRouter` instead of `BrowserRouter` for React Router
+- Some third-party components may not work
 
-* `mdx-preview.preview.previewOnChange`: If set to true, previews on file change; If set to false, previews on file save
-* `mdx-preview.preview.security`: Security policy settings
-* `mdx-preview.preview.useVscodeMarkdownStyles`: Use VS Code Markdown Styles for layout.
-* `mdx-preview.preview.useWhiteBackground`: Use white background regardless of current theme settings.
-* `mdx-preview.preview.mdx.customLayoutFilePath`: Path of custom layout file to use
-* `mdx-preview.build.useSucraseTranspiler`: Use [sucrase](https://sucrase.io) as transpiler (A faster alternative to babel) instead of Babel/TypeScript transpiler
+## Troubleshooting
 
-## FAQ
+### Component doesn't render?
 
-#### How it works
-MDX Preview transpiles your `.mdx` file using `@mdx-js/mdx`, sends the initial file to the webview, and recursively fetches local dependencies (from your workspace) and npm dependencies (from `node_modules` directory) from your workspace using [polestar](https://github.com/frontarm/polestar), a commonjs-ish module loader for browsers. MDX Preview has provided built-in dependencies for MDX rendering like `react`, `react-dom` and `@mdx-js/tag`.
+1. Open Command Palette and run **"Developer: Open Webview Developer Tools"**
+2. Check the console for errors
+3. Try enabling `mdx-preview.build.useSucraseTranspiler`
 
-#### Some components doesn't work?
-In most cases runtime errors will surface in react-error-overlay. If it doesn't, you can open "Developer: Open Webview Developer Tools" (from command palette) to inspect the error. Note that VS Code webview has some inherent limitations that might cause errors. For example, components that use local storage but without a try/catch block.
+### Preview shows "Safe Mode"?
 
-Build issues? Try checking `mdx-preview.build.useSucraseTranspiler` extension setting. It might solve it.
+1. Trust the workspace: Command Palette > **"Workspaces: Manage Workspace Trust"**
+2. Enable scripts: Set `mdx-preview.preview.enableScripts` to `true`
 
-## Road map
-- [x] TypeScript support
-- [ ] Scroll Sync
-- [ ] remark/rehype plugins
-- [ ] Integrations with gatsby / x0 /...
+## Requirements
 
-## Acknowledgements
-This extension is not possible without the help from [James](https://twitter.com/james_k_nelson) and the open source [polestar](https://github.com/frontarm/polestar) library.
+- VS Code 1.90.0 or higher
+- Node.js and npm for workspaces with dependencies
 
-Saying thanks to these awesome open source projects as well:
-- [Codesandbox preview for Atom](https://github.com/brumm/atom-codesandbox) for the idea of recursively resolving dependencies in the workspace and presenting in a preview.
-- [@mdx-js/mdx](https://github.com/mdx-js/mdx) for creating the authorable format
-- [gatsby-mdx](https://github.com/ChristopherBiscardi/gatsby-mdx) for properly doing MDX layout
-- [markdown-language-features](https://github.com/Microsoft/vscode/tree/master/extensions/markdown-language-features) for the markdown stylings and lessons on how to write a preview extension
-- [codesandbox](https://github.com/CompuIves/codesandbox-client) for inspirations on a rapid feedback loop
-- [mdx extension](https://github.com/silvenon/vscode-mdx) for mdx language contrib
+## Recommended Extensions
+
+- [MDX](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) - Modern MDX language support (syntax highlighting, validation)
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
+
+## License
+
+MIT
