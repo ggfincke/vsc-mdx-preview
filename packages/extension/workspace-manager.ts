@@ -1,38 +1,49 @@
+// packages/extension/workspace-manager.ts
+// initialize workspace event handlers for preview updates & folder changes
+
 import * as vscode from 'vscode';
 import { workspace, ExtensionContext } from 'vscode';
 
-import { currentPreview } from './preview/preview-manager';
+import { PreviewManager } from './preview/preview-manager';
 import { handleDidChangeWorkspaceFolders } from './security/checkFsPath';
 
-let disposables: vscode.Disposable[] = [];
+const disposables: vscode.Disposable[] = [];
 
-// https://code.visualstudio.com/docs/extensionAPI/vscode-api#_workspace
-// https://code.visualstudio.com/docs/extensionAPI/vscode-api#TextDocument
-export function initWorkspaceHandlers(context: ExtensionContext) {
-    workspace.onDidOpenTextDocument(event => { });
-    
-    workspace.onDidSaveTextDocument(event => {
-        if (currentPreview) {
-            currentPreview.handleDidSaveTextDocument(event.uri.fsPath);
-        }
-    }, null, disposables);
+// initialize workspace event handlers
+export function initWorkspaceHandlers(_context: ExtensionContext): void {
+  workspace.onDidSaveTextDocument(
+    (event) => {
+      const currentPreview = PreviewManager.getInstance().getCurrentPreview();
+      if (currentPreview) {
+        currentPreview.handleDidSaveTextDocument(event.uri.fsPath);
+      }
+    },
+    null,
+    disposables
+  );
 
-    workspace.onDidChangeTextDocument(event => {
-        if (currentPreview) {
-            currentPreview.handleDidChangeTextDocument(event.document.uri.fsPath, event.document);
-        }
-    }, null, disposables);
+  workspace.onDidChangeTextDocument(
+    (event) => {
+      const currentPreview = PreviewManager.getInstance().getCurrentPreview();
+      if (currentPreview) {
+        currentPreview.handleDidChangeTextDocument(
+          event.document.uri.fsPath,
+          event.document
+        );
+      }
+    },
+    null,
+    disposables
+  );
 
-    workspace.onDidChangeConfiguration(event => {
-        if (currentPreview) {
-            currentPreview.updateConfiguration();
-        }
-    });
+  workspace.onDidChangeConfiguration(() => {
+    const currentPreview = PreviewManager.getInstance().getCurrentPreview();
+    if (currentPreview) {
+      currentPreview.updateConfiguration();
+    }
+  });
 
-    workspace.onDidChangeWorkspaceFolders(() => {
-        handleDidChangeWorkspaceFolders();
-    });
-
-    // workspace.createFileSystemWatcher
-    // workspace.findFiles
+  workspace.onDidChangeWorkspaceFolders(() => {
+    handleDidChangeWorkspaceFolders();
+  });
 }
