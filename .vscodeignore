@@ -1,14 +1,13 @@
 .vscode/**
 .vscode-test/**
 build/extension/test/**
-build/extension/test/jest-test-runner/**
+coverage/**
+dev-docs/**
+node_modules/webview/**
+node_modules/webview
 # build/**/*.map
-src/**
-archive/**
 examples/**
 packages/**
 .gitignore
 tsconfig.json
-vsc-extension-quickstart.md
-tslint.json
-jest.config.js
+vitest.config.ts

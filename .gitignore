@@ -4,3 +4,5 @@ node_modules
 *.vsix
 *.log
 archive
+dev-docs/
+coverage/

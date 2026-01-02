@@ -1,0 +1,18 @@
+# Build outputs
+build/
+dist/
+node_modules/
+
+# Examples (outdated, not maintained)
+examples/
+
+# Package locks
+yarn.lock
+package-lock.json
+
+# Generated files
+*.min.js
+*.min.css
+
+# VS Code test environment
+.vscode-test/
