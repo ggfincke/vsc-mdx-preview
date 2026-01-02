@@ -1,43 +1,128 @@
+// packages/extension/preview/evaluate-in-webview.ts
+// * evaluate MDX content in webview (Trusted Mode w/ code execution or Safe Mode w/ static HTML)
+
 import * as fs from 'fs';
+import { performance } from 'perf_hooks';
+import { init as initLexer, parse as parseImports } from 'es-module-lexer';
 
 import { transformEntry } from '../module-fetcher/transform';
-
-const precinct = require("precinct");
-
-const { performance } = require('perf_hooks');
 import { Preview } from './preview-manager';
+import { TrustManager } from '../security/TrustManager';
+import { compileToSafeHTML } from '../transpiler/mdx/mdx-safe';
+import { error as logError, debug } from '../logging';
 
-/**
- * @param text text to preview
- * @param fsPath fsPath of current document
- */
-export default async function evaluateInWebview(preview: Preview, text: string, fsPath: string) {
+// initialize es-module-lexer once
+let lexerInitialized = false;
+async function ensureLexerInitialized(): Promise<void> {
+  if (!lexerInitialized) {
+    await initLexer;
+    lexerInitialized = true;
+  }
+}
+
+// extract imports from code using es-module-lexer (ESM) w/ CJS fallback
+async function extractImports(code: string): Promise<string[]> {
+  await ensureLexerInitialized();
+
+  try {
+    const [imports] = parseImports(code);
+    return imports
+      .map((imp) => imp.n)
+      .filter((name): name is string => name !== undefined && name !== null);
+  } catch {
+    // fallback for code that can't be parsed (CJS)
+    const requireMatches = code.matchAll(
+      /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g
+    );
+    return Array.from(requireMatches, (m) => m[1]);
+  }
+}
+
+// * evaluate content in webview (Trusted Mode: compiled code | Safe Mode: static HTML)
+export default async function evaluateInWebview(
+  preview: Preview,
+  text: string,
+  fsPath: string
+): Promise<void> {
+  debug(`[EVALUATE] evaluateInWebview called for: ${fsPath}`);
   const { webviewHandle } = preview;
+  // use document-specific trust check (includes remote/scheme checks)
+  const trustState = TrustManager.getInstance().getStateForDocument(
+    preview.doc.uri
+  );
+  debug(
+    `[EVALUATE] Trust state: canExecute=${trustState.canExecute}, workspaceTrusted=${trustState.workspaceTrusted}, scriptsEnabled=${trustState.scriptsEnabled}`
+  );
+
   try {
     performance.mark('preview/start');
 
-    const code = await transformEntry(text, fsPath, preview);
-    const entryFilePath = fs.realpathSync(fsPath);
-    const entryFileDependencies = precinct(code);
-
-    console.log(code);
-    console.log(entryFilePath);
-    console.log(entryFileDependencies);
-
+    debug('[EVALUATE] Waiting for webviewHandshakePromise...');
     await preview.webviewHandshakePromise;
-    if (webviewHandle && webviewHandle.updatePreview) {
-      webviewHandle.updatePreview(
-        code,
-        entryFilePath,
-        entryFileDependencies
-      );
+    debug('[EVALUATE] Handshake complete!');
+
+    // send trust state to webview
+    debug('[EVALUATE] Sending trust state to webview');
+    webviewHandle.setTrustState(trustState);
+
+    if (trustState.canExecute) {
+      // trusted mode: full code evaluation
+      debug('[EVALUATE] Using Trusted Mode');
+      await evaluateTrusted(preview, text, fsPath);
+    } else {
+      // safe mode: static HTML rendering
+      debug('[EVALUATE] Using Safe Mode');
+      await evaluateSafe(preview, text);
     }
+    debug('[EVALUATE] evaluateInWebview complete');
   } catch (error) {
-    console.error(error);
+    debug(
+      `[EVALUATE] ERROR: ${error instanceof Error ? error.message : String(error)}`
+    );
+    logError('Preview evaluation failed', error);
     if (webviewHandle) {
-      webviewHandle.showPreviewError({ 
-        message: error.message
-      });
+      const message = error instanceof Error ? error.message : String(error);
+      const stack = error instanceof Error ? error.stack : undefined;
+      webviewHandle.showPreviewError({ message, stack });
     }
   }
+}
+
+// evaluate in Trusted Mode (full code execution)
+async function evaluateTrusted(
+  preview: Preview,
+  text: string,
+  fsPath: string
+): Promise<void> {
+  debug('[EVALUATE] evaluateTrusted called');
+  const { webviewHandle } = preview;
+
+  debug('[EVALUATE] Transforming entry...');
+  const code = await transformEntry(text, fsPath, preview);
+  debug(`[EVALUATE] Transform complete, code length: ${code.length}`);
+
+  // use async fs.promises.realpath instead of sync version
+  const entryFilePath = await fs.promises.realpath(fsPath);
+  // use es-module-lexer for ESM-first import extraction
+  const entryFileDependencies = await extractImports(code);
+  debug(`[EVALUATE] Dependencies: ${entryFileDependencies.join(', ')}`);
+
+  debug('[EVALUATE] Calling webviewHandle.updatePreview');
+  webviewHandle.updatePreview(code, entryFilePath, entryFileDependencies);
+  debug('[EVALUATE] updatePreview called');
+}
+
+// evaluate in Safe Mode (static HTML only, no code execution)
+async function evaluateSafe(preview: Preview, text: string): Promise<void> {
+  debug('[EVALUATE] evaluateSafe called');
+  const { webviewHandle } = preview;
+
+  // compile MDX to safe HTML (no code execution)
+  debug('[EVALUATE] Compiling to safe HTML...');
+  const html = await compileToSafeHTML(text);
+  debug(`[EVALUATE] Safe HTML compiled, length: ${html.length}`);
+
+  debug('[EVALUATE] Calling webviewHandle.updatePreviewSafe');
+  webviewHandle.updatePreviewSafe(html);
+  debug('[EVALUATE] updatePreviewSafe called');
 }
