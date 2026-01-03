@@ -1,38 +1,68 @@
-# Change Log
-All notable changes to the "vscode-mdx-preview" extension will be documented in this file.
+# Changelog
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+All notable changes to the MDX Preview extension will be documented in this file.
 
-## [0.3.0] - 04/30/2020
-- Upgrade TypeScript to 3.8.3
-- Support SASS version `^1.26.3`
-- Bug fix: Don't resolve dependency path `..` as npm module
-- Update test scripts
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.2] - 09/21/2019
-- Fixes windows issue [#13](https://github.com/xyc/vscode-mdx-preview/issues/13)
+## [1.0.0-alpha.2] - 2025-01-03
 
-## [0.2.1] - 05/07/2019
-- TypeScript fix: tsconfig target default to ESNext
+### Added
 
-## [[0.2.0](https://twitter.com/chxy/status/1125667121071964161)] - 05/07/2019
-- Support TypeScript [#1](https://github.com/xyc/vscode-mdx-preview/issues/1)
-- Support dynamic imports [#3](https://github.com/xyc/vscode-mdx-preview/pull/3)
-- Hot update dependent files [#5](https://github.com/xyc/vscode-mdx-preview/issues/5)
+- **Table of Contents**: Automatic TOC generation from headings with collapsible sections
+- **Scroll Synchronization**: Bi-directional scroll sync between editor and preview
+- **Stale Content Indicator**: Visual indicator when preview content is outdated
+- **Trust Banner**: Informational banner explaining trust mode differences
+- **Source Position Tracking**: rehype-sourcepos plugin for accurate source mapping
+- **Theme Context**: Centralized theme management for webview components
+- **Heading Auto-linking**: Automatic ID generation and anchor links for all headings
 
-## [0.1.5] - 04/13/2019
-- Add a preview refresh Button
+### Changed
 
-## [0.1.4] - 04/08/2019
-- update webview DOM structure (default renders to #root)
+- **Module Resolution**: Enhanced error handling and logging for failed module loads
+- **Babel Transpilation**: Improved error messages and configuration handling
+- **Preview Manager**: Refactored to support TOC generation and scroll sync
+- **Workspace Manager**: Better lifecycle management and event handler disposal
+- **Test Infrastructure**: Added integration tests and webview component tests
 
-## [0.1.3] - 04/08/2019
-- Fixes [#2](https://github.com/xyc/vscode-mdx-preview/issues/2)
-- Update default React to 16.8.6
-- doc update
+### Fixed
 
-## [0.1.2] - 04/02/2019
-- Fix typo in document
+- Improved error handling in module fetcher for missing dependencies
+- Better workspace event cleanup on extension deactivation
+- Enhanced RPC communication reliability between extension and webview
 
-## [0.1.1] - 04/01/2019
-- Initial release
+## [1.0.0-alpha.1] - 2025-01-02
+
+### Added
+
+- **Safe Mode**: Static HTML rendering without JavaScript execution for untrusted workspaces
+- **Trusted Mode**: Full MDX component evaluation with live preview for trusted workspaces
+- **Workspace Trust Integration**: Respects VS Code's workspace trust model
+- **Security**: Content Security Policy (CSP) for webview protection
+- **Security**: Path traversal prevention for module loading
+- **Modern Build System**: Vite-based webview build with hot reload support
+
+### Changed
+
+- **MDX 3**: Upgraded from MDX 1/2 to MDX 3 with modern unified ecosystem
+- **React 18**: Upgraded from React 16/17 to React 18 with concurrent features
+- **TypeScript**: Upgraded to ES2022 target with strict mode enabled
+- **Module Resolution**: Switched to enhanced-resolve for proper `exports` field and browser condition support
+- **Test Infrastructure**: Unified on Vitest (removed Jest)
+
+### Fixed
+
+- Browser-aware module resolution now properly handles `exports` conditions
+- `node:` prefixed imports are now correctly recognized as core modules
+- React-DOM preloading now provides correct APIs for both `react-dom` and `react-dom/client`
+- Workspace event handlers are now properly disposed on extension deactivation
+
+### Security
+
+- Safe Mode prevents all script execution by default
+- Trusted Mode requires explicit opt-in via workspace trust + configuration
+- CSP restricts script sources and prevents inline script injection
+
+---
+
+_For changes prior to the 1.0.0 rewrite, see [CHANGELOG-legacy.md](./dev-docs/CHANGELOG-legacy.md)._
