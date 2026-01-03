@@ -6,6 +6,9 @@ import remarkParse from 'remark-parse';
 import remarkMdx from 'remark-mdx';
 import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
+import rehypeSourcepos from './rehype-sourcepos';
+import rehypeSlug from 'rehype-slug';
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import type { Root, Parent, RootContent } from 'mdast';
@@ -108,37 +111,19 @@ export async function compileToSafeHTML(mdxText: string): Promise<string> {
     .use(remarkStripMdx)
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true })
+    // Phase 2.2: Add sourcepos for scroll sync (must be before slug)
+    .use(rehypeSourcepos)
+    // Phase 2.4: Add heading anchors for TOC support
+    .use(rehypeSlug)
+    .use(rehypeAutolinkHeadings, {
+      behavior: 'append',
+      properties: {
+        className: ['anchor-link'],
+        ariaLabel: 'Link to this section',
+      },
+    })
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(content);
 
   return String(result);
-}
-
-// get CSS for Safe Mode placeholders (injected to make placeholders visible)
-export function getSafeModePlaceholderStyles(): string {
-  return `
-    .mdx-jsx-placeholder,
-    .mdx-expression-placeholder {
-      display: inline-block;
-      padding: 2px 6px;
-      margin: 2px;
-      background-color: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
-      border: 1px dashed var(--vscode-textBlockQuote-border, rgba(127, 127, 127, 0.3));
-      border-radius: 3px;
-      font-family: var(--vscode-editor-font-family, monospace);
-      font-size: 0.9em;
-      color: var(--vscode-descriptionForeground, #717171);
-      cursor: help;
-    }
-    
-    .mdx-jsx-placeholder::before {
-      content: "JSX: ";
-      opacity: 0.7;
-    }
-    
-    .mdx-expression-placeholder::before {
-      content: "Expression: ";
-      opacity: 0.7;
-    }
-  `;
 }

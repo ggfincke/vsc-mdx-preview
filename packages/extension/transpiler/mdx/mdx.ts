@@ -2,6 +2,9 @@
 // MDX transpilation w/ layout injection & React root wrapping
 
 import { compile } from '@mdx-js/mdx';
+import rehypeSlug from 'rehype-slug';
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import rehypeSourcepos from './rehype-sourcepos';
 import hasDefaultExport from './hasDefaultExport';
 import * as path from 'path';
 
@@ -42,14 +45,12 @@ ${mdxText}`;
 };
 
 // wrap compiled MDX output (webview owns single React root & handles rendering)
+// MDX w/ outputFormat: 'program' generates ES module w/ default export
 const wrapCompiledMdx = (compiledMDX: string): string => {
-  // all MDX exports component (webview's single React root handles rendering)
   return `
-// MDX 3 function-body compiled output
+// MDX 3 compiled output
 import React from 'react';
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from 'react/jsx-runtime';
 ${compiledMDX}
-export default MDXContent;
 `;
 };
 
@@ -67,11 +68,27 @@ export const mdxTranspileAsync = async (
   }
 
   const compiled = await compile(mdxTextToCompile, {
-    outputFormat: 'function-body',
+    outputFormat: 'program',
     development: false,
     jsx: false,
     jsxRuntime: 'automatic',
     jsxImportSource: 'react',
+    // Phase 2.2: Add sourcepos for scroll sync (must be before slug)
+    // Phase 2.4: Add heading anchors for TOC support
+    rehypePlugins: [
+      rehypeSourcepos,
+      rehypeSlug,
+      [
+        rehypeAutolinkHeadings,
+        {
+          behavior: 'append',
+          properties: {
+            className: ['anchor-link'],
+            ariaLabel: 'Link to this section',
+          },
+        },
+      ],
+    ],
   });
 
   return wrapCompiledMdx(compiled.toString());
