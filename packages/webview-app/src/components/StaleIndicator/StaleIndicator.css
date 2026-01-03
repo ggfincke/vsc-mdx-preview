@@ -1,0 +1,32 @@
+/* packages/webview-app/src/components/StaleIndicator/StaleIndicator.css */
+/* non-blocking badge indicating preview content is stale */
+
+.stale-indicator {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  background: var(--vscode-editorWarning-foreground, #cca700);
+  color: var(--vscode-editor-background, #1e1e1e);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--vscode-font-family, system-ui, sans-serif);
+  font-weight: 500;
+  opacity: 0.9;
+  z-index: 1000;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Slightly more prominent in light themes */
+.vscode-light .stale-indicator {
+  background: var(--vscode-editorWarning-foreground, #bf8803);
+  color: var(--vscode-editor-background, #ffffff);
+}
+
+/* High contrast mode */
+.vscode-high-contrast .stale-indicator {
+  background: var(--vscode-editorWarning-foreground, #ffcc00);
+  color: var(--vscode-editor-background, #000000);
+  border: 1px solid var(--vscode-contrastBorder, #ffffff);
+}
