@@ -142,6 +142,10 @@ VS Code webviews have some inherent limitations:
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
 
+## Credits
+
+This project is based on the original [vscode-mdx-preview](https://github.com/xyc/vscode-mdx-preview) by [Xiaoyi Chen](https://github.com/xyc), who created the original codebase, architecture, and UI.
+
 ## License
 
-MIT
+GPL-3.0

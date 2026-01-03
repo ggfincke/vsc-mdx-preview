@@ -5,7 +5,13 @@
   "version": "1.0.0-alpha.2",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
-  "repository": "https://github.com/xyc/vscode-mdx-preview",
+  "contributors": [
+    {
+      "name": "Xiaoyi Chen",
+      "url": "https://github.com/xyc"
+    }
+  ],
+  "repository": "https://github.com/ggfincke/vscode-mdx-preview",
   "workspaces": [
     "packages/*"
   ],

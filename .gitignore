@@ -6,3 +6,5 @@ node_modules
 archive
 dev-docs/
 coverage/
+AGENTS.md
+CLAUDE.md
