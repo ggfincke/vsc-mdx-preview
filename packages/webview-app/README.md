@@ -1,44 +1,89 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# MDX Preview Webview App
 
-## Available Scripts
+This is the React application that renders MDX content inside VS Code's webview panel.
 
-In the project directory, you can run:
+## Development
 
-### `npm start`
+```bash
+# Start development server (for standalone testing)
+npm run dev
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+# Run tests
+npm test
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+# Run tests in watch mode
+npm run test:watch
 
-### `npm test`
+# Build for production
+npm run build
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# Preview production build
+npm run preview
 
-### `npm run build`
+# Lint code
+npm run lint
+```
 
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Architecture
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite
+- **Testing**: Vitest with React Testing Library
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Preview Modes
 
-### `npm run eject`
+The webview operates in two modes based on workspace trust and configuration:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+1. **Safe Mode** (default)
+   - Renders MDX as static HTML
+   - No JavaScript execution
+   - JSX components shown as placeholders
+   - Works in untrusted workspaces
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+2. **Trusted Mode**
+   - Full MDX component evaluation
+   - Dynamic module loading from the workspace
+   - Requires trusted workspace + scripts enabled
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### Project Structure
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```
+src/
+  components/          # React components
+    ErrorBoundary.tsx  # Error boundary for graceful failures
+    LoadingBar/        # Loading indicator
+    TrustBanner/       # Trust mode indicator
+    ModeBadge.tsx      # Safe/Trusted mode badge
+  module-loader/       # Dynamic module system for Trusted Mode
+    ModuleRegistry.ts  # Module cache and resolution
+    evaluateModule.ts  # Safe eval for transpiled code
+    injectStyles.ts    # CSS injection handling
+  App.tsx              # Main application component
+  SafePreview.tsx      # Safe mode renderer (static HTML)
+  TrustedPreview.tsx   # Trusted mode renderer (full MDX)
+  rpc-webview.ts       # RPC communication with extension
+```
 
-## Learn More
+### Communication
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The webview communicates with the extension via VS Code's webview messaging API:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- **Extension -> Webview**: Content updates, trust state changes
+- **Webview -> Extension**: Module fetch requests, error reports
+
+## Testing
+
+Tests use Vitest with jsdom environment and React Testing Library:
+
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test -- --coverage
+```
+
+Key test files:
+
+- `App.test.tsx` - Main component rendering
+- `test/SafePreview.test.tsx` - XSS prevention tests
