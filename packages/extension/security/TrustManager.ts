@@ -4,12 +4,23 @@
 import * as vscode from 'vscode';
 import { error as logError } from '../logging';
 
+// security mode enum for explicit type safety
+export enum SecurityMode {
+  Safe = 'safe',
+  Trusted = 'trusted',
+}
+
 // ! trust state (canExecute=true requires: workspace trusted & scripts enabled & local env & file: scheme)
 export interface TrustState {
   workspaceTrusted: boolean;
   scriptsEnabled: boolean;
   canExecute: boolean;
   reason?: string;
+}
+
+// derive SecurityMode from TrustState
+export function getSecurityMode(state: TrustState): SecurityMode {
+  return state.canExecute ? SecurityMode.Trusted : SecurityMode.Safe;
 }
 
 // result of checking Trusted Mode availability for document
@@ -80,6 +91,11 @@ export class TrustManager {
   // check if code execution allowed (convenience for getState().canExecute)
   canExecute(): boolean {
     return this.getState().canExecute;
+  }
+
+  // get current security mode
+  getMode(): SecurityMode {
+    return getSecurityMode(this.getState());
   }
 
   // ! check if Trusted Mode can be used for specific document (validates 4 security rules)

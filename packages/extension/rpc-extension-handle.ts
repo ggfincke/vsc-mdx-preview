@@ -2,11 +2,16 @@
 // RPC handle exposed to webview (called via Comlink)
 
 import { performance } from 'perf_hooks';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { Preview } from './preview/preview-manager';
 import { fetchLocal, FetchResult } from './module-fetcher/module-fetcher';
 import { TrustManager } from './security/TrustManager';
+import { checkFsPath } from './security/checkFsPath';
 import { error as logError, warn as logWarn, debug } from './logging';
+
+// allowed URL schemes for openExternal
+const ALLOWED_EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
 
 // validate fetch request for security
 function validateFetchRequest(request: string): boolean {
@@ -121,6 +126,85 @@ class ExtensionHandle {
   manageTrust(): void {
     debug('[EXT-HANDLE] manageTrust called');
     vscode.commands.executeCommand('workbench.trust.manage');
+  }
+
+  // open external URL in default browser (Phase 2.3)
+  openExternal(url: string): void {
+    debug(`[EXT-HANDLE] openExternal: ${url}`);
+
+    // validate input type
+    if (typeof url !== 'string' || url.trim() === '') {
+      logWarn('openExternal: invalid URL', url);
+      return;
+    }
+
+    // validate URL scheme
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      logWarn('openExternal: failed to parse URL', url);
+      return;
+    }
+
+    if (!ALLOWED_EXTERNAL_SCHEMES.includes(parsed.protocol)) {
+      logWarn('openExternal: disallowed scheme', parsed.protocol);
+      return;
+    }
+
+    vscode.env.openExternal(vscode.Uri.parse(url));
+  }
+
+  // open document in editor (Phase 2.3)
+  async openDocument(relativePath: string): Promise<void> {
+    debug(`[EXT-HANDLE] openDocument: ${relativePath}`);
+
+    // validate input type
+    if (typeof relativePath !== 'string' || relativePath.trim() === '') {
+      logWarn('openDocument: invalid path', relativePath);
+      return;
+    }
+
+    // get current document directory from preview
+    const entryDir = this.preview.entryFsDirectory;
+    if (!entryDir) {
+      logWarn('openDocument: no entry directory');
+      return;
+    }
+
+    // resolve relative path
+    const resolvedPath = path.resolve(entryDir, relativePath);
+
+    // ! security check - ensure path is within workspace
+    if (!checkFsPath(entryDir, resolvedPath)) {
+      logWarn('openDocument: path outside workspace', resolvedPath);
+      vscode.window.showWarningMessage(
+        'Cannot open file outside workspace folder.'
+      );
+      return;
+    }
+
+    try {
+      const doc = await vscode.workspace.openTextDocument(resolvedPath);
+      await vscode.window.showTextDocument(doc);
+    } catch (err) {
+      logError('openDocument: failed to open', String(err));
+      vscode.window.showErrorMessage(`Could not open file: ${relativePath}`);
+    }
+  }
+
+  // Phase 2.2: Reveal line in editor (called from webview scroll)
+  revealLine(line: number): void {
+    debug(`[EXT-HANDLE] revealLine: ${line}`);
+
+    // validate input
+    if (typeof line !== 'number' || !isFinite(line) || line < 1) {
+      logWarn('revealLine: invalid line number', line);
+      return;
+    }
+
+    // delegate to preview's scroll handler
+    this.preview.handlePreviewScroll(line);
   }
 }
 

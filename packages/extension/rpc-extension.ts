@@ -26,6 +26,12 @@ interface MessageEvent {
   data: unknown;
 }
 
+// scroll sync configuration
+export interface ScrollSyncConfig {
+  enabled: boolean;
+  behavior: 'instant' | 'smooth';
+}
+
 // webview-side handle (methods extension can call)
 export interface WebviewRemoteHandle {
   setTrustState(state: TrustState): void;
@@ -37,6 +43,13 @@ export interface WebviewRemoteHandle {
   updatePreviewSafe(html: string): void;
   showPreviewError(error: { message: string; stack?: string }): void;
   invalidate(fsPath: string): Promise<void>;
+  // Phase 2.5: Stale indicator support
+  setStale(isStale: boolean): void;
+  // Phase 2.1: Custom CSS hot-reload
+  setCustomCss(css: string): void;
+  // Phase 2.2: Scroll sync
+  scrollToLine(line: number): void;
+  setScrollSyncConfig(config: ScrollSyncConfig): void;
 }
 
 class ExtensionEndpoint implements Endpoint {
