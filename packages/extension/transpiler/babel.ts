@@ -31,6 +31,8 @@ const babelOptions = {
   ],
 };
 
-export const transformAsync = (code) => {
+export const transformAsync = (
+  code: string
+): Promise<babel.BabelFileResult | null> => {
   return babel.transformAsync(code, babelOptions);
 };
