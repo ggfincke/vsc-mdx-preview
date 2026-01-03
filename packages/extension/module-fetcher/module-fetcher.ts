@@ -1,15 +1,19 @@
+// packages/extension/module-fetcher/module-fetcher.ts
+// browser-optimized module fetcher w/ ESM exports support & dependency resolution
+
 import * as fs from 'fs';
 import * as path from 'path';
 import * as typescript from 'typescript';
 import * as sass from 'sass';
-import resolve from 'resolve';
+import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve';
+import type { Resolver } from 'enhanced-resolve';
 import { init as initLexer, parse as parseImports } from 'es-module-lexer';
 import { Preview } from '../preview/preview-manager';
 import { transform } from './transform';
 import { checkFsPath, PathAccessDeniedError } from '../security/checkFsPath';
 import { error as logError } from '../logging';
 
-// Initialize es-module-lexer once at module load
+// initialize es-module-lexer once at module load
 let lexerInitialized = false;
 async function ensureLexerInitialized(): Promise<void> {
   if (!lexerInitialized) {
@@ -18,9 +22,7 @@ async function ensureLexerInitialized(): Promise<void> {
   }
 }
 
-/**
- * Result of fetching a module.
- */
+// result of fetching a module
 export interface FetchResult {
   fsPath: string;
   code: string;
@@ -34,8 +36,9 @@ const NOOP_MODULE = `Object.defineProperty(exports, '__esModule', { value: true 
 
 // https://github.com/calvinmetcalf/rollup-plugin-node-builtins
 // License: MIT except ES6 ports of browserify modules which are whatever the original library was.
-const NODE_CORE_MODULES = new Set([
-  // unshimmable
+
+// Node.js core modules that cannot be shimmed in a browser environment (return noop module)
+const UNSHIMMABLE_CORE_MODULES = new Set([
   'dns',
   'dgram',
   'child_process',
@@ -45,11 +48,11 @@ const NODE_CORE_MODULES = new Set([
   'readline',
   'repl',
   'tls',
-
   'crypto',
 ]);
 
-const SHIMMABLE_NODE_CORE_MODULES = new Set([
+// Node.js core modules that could theoretically be shimmed but return noop for security/simplicity in webview context
+const SHIMMABLE_CORE_MODULES = new Set([
   'process',
   'events',
   'util',
@@ -74,42 +77,53 @@ const SHIMMABLE_NODE_CORE_MODULES = new Set([
   'domain',
 ]);
 
-/**
- * Resolve a module using the modern `resolve` package.
- * Supports package.json "exports" field for ESM-first resolution.
- *
- * @param request - The module request (e.g., 'lodash', './utils', '../foo')
- * @param basedir - The directory to resolve from
- * @returns The resolved file path
- */
-function resolveModule(request: string, basedir: string): string {
-  return resolve.sync(request, {
-    basedir,
-    extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json'],
-    // Support package.json exports
-    packageFilter: (pkg) => {
-      // Prefer browser field when present (webview runtime)
-      if (typeof pkg.browser === 'string') {
-        pkg.main = pkg.browser;
-        return pkg;
-      }
+// combined set of all Node.js core modules for quick lookup
+const ALL_CORE_MODULES = new Set([
+  ...UNSHIMMABLE_CORE_MODULES,
+  ...SHIMMABLE_CORE_MODULES,
+]);
 
-      // Prefer module field for ESM when present
-      if (pkg.module) {
-        pkg.main = pkg.module;
-      }
-      return pkg;
-    },
-  });
+// normalize module request by stripping `node:` prefix if present (e.g., 'node:fs' -> 'fs')
+function normalizeNodePrefix(request: string): string {
+  return request.startsWith('node:') ? request.slice(5) : request;
 }
 
-/**
- * Extract imports from code using es-module-lexer.
- * ESM-first approach - handles both static and dynamic imports.
- *
- * @param code - The code to parse
- * @returns Array of import specifiers
- */
+// check if module request is for Node.js core module (handles both `node:fs` & `fs` forms)
+function isCoreModule(request: string): boolean {
+  const normalized = normalizeNodePrefix(request);
+  return ALL_CORE_MODULES.has(normalized);
+}
+
+// create browser-optimized module resolver using enhanced-resolve w/ exports field & browser condition support
+const cachedFs = new CachedInputFileSystem(fs, 4000);
+const browserResolver: Resolver = ResolverFactory.createResolver({
+  fileSystem: cachedFs,
+  extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json'],
+  // condition names for exports field resolution (priority: browser > import > require > default)
+  conditionNames: ['browser', 'import', 'require', 'default'],
+  // main field priority: browser > module > main
+  mainFields: ['browser', 'module', 'main'],
+  // enable exports/imports field processing
+  exportsFields: ['exports'],
+  importsFields: ['imports'],
+  // support browser field aliasing (e.g., {"./node.js": "./browser.js", "fs": false})
+  aliasFields: ['browser'],
+  modules: ['node_modules'],
+  mainFiles: ['index'],
+  symlinks: true,
+  useSyncFileSystemCalls: true,
+});
+
+// resolve module using enhanced-resolve w/ browser-aware resolution (exports field, browser conditions, & browser field aliasing)
+function resolveModule(request: string, basedir: string): string {
+  const resolved = browserResolver.resolveSync({}, basedir, request);
+  if (resolved === false || resolved === undefined) {
+    throw new Error(`Cannot resolve module: ${request} from ${basedir}`);
+  }
+  return resolved;
+}
+
+// extract imports from code using es-module-lexer (ESM-first, handles static & dynamic imports)
 async function extractImports(code: string): Promise<string[]> {
   await ensureLexerInitialized();
 
@@ -119,8 +133,7 @@ async function extractImports(code: string): Promise<string[]> {
       .map((imp) => imp.n)
       .filter((name): name is string => name !== undefined && name !== null);
   } catch (error) {
-    // Fallback for code that can't be parsed (e.g., CJS)
-    // Try to extract require() calls with a simple regex
+    // fallback for code that can't be parsed (e.g., CJS) - extract require() calls w/ regex
     const requireMatches = code.matchAll(
       /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g
     );
@@ -144,9 +157,11 @@ export async function fetchLocal(
       };
     }
 
-    if (isBare && NODE_CORE_MODULES.has(request)) {
+    // check for Node.js core modules early (handles both `fs` & `node:fs` forms)
+    const normalizedRequest = normalizeNodePrefix(request);
+    if (isBare && isCoreModule(request)) {
       return {
-        fsPath: `/externalModules/${request}`,
+        fsPath: `/externalModules/${normalizedRequest}`,
         code: NOOP_MODULE,
         dependencies: [],
       };
@@ -154,7 +169,7 @@ export async function fetchLocal(
 
     let fsPath: string | null = null;
 
-    // Try TypeScript resolution first (if available and not in node_modules)
+    // try TypeScript resolution first (if available & not in node_modules)
     if (
       preview.typescriptConfiguration &&
       !parentId.split(path.sep).includes('node_modules')
@@ -176,16 +191,17 @@ export async function fetchLocal(
       }
     }
 
-    // Fallback to modern resolver with ESM exports support
+    // fallback to modern resolver w/ ESM exports support
     if (!fsPath) {
       const basedir = path.dirname(parentId);
       fsPath = resolveModule(request, basedir);
     }
 
     if (!checkFsPath(entryFsDirectory, fsPath)) {
-      if (SHIMMABLE_NODE_CORE_MODULES.has(request)) {
+      // fallback check for core modules that resolved to paths outside allowed directories
+      if (isCoreModule(request)) {
         return {
-          fsPath: `/externalModules/${request}`,
+          fsPath: `/externalModules/${normalizedRequest}`,
           code: NOOP_MODULE,
           dependencies: [],
         };
@@ -196,21 +212,21 @@ export async function fetchLocal(
     preview.dependentFsPaths.add(fsPath);
 
     let code: string;
+    // in onType mode, use in-memory document if available
     if (
-      preview.configuration.previewOnChange &&
+      preview.configuration.updateMode === 'onType' &&
       preview.editingDoc &&
       preview.editingDoc.uri.fsPath === fsPath
     ) {
       code = preview.editingDoc.getText();
     } else {
-      // ASYNC: Use fs.promises.readFile
+      // use async fs.promises.readFile
       code = await fs.promises.readFile(fsPath, 'utf-8');
     }
 
     const extname = path.extname(fsPath);
     if (path.sep === '\\') {
-      // Always return forward slash paths for resolution
-      // https://github.com/xyc/vscode-mdx-preview/issues/13
+      // always return forward slash paths for resolution (https://github.com/xyc/vscode-mdx-preview/issues/13)
       fsPath = fsPath.replace(/\\/g, '/');
     }
     if (/\.json$/i.test(extname)) {
@@ -229,7 +245,7 @@ export async function fetchLocal(
       };
     }
     if (/\.(scss|sass)$/i.test(extname)) {
-      // ASYNC: Use sass.compileAsync
+      // use async sass.compileAsync
       const result = await sass.compileAsync(fsPath, {
         importers: [
           {
@@ -264,7 +280,7 @@ export async function fetchLocal(
 
     code = await transform(code, fsPath, preview);
 
-    // Extract imports using es-module-lexer (ESM-first)
+    // extract imports using es-module-lexer (ESM-first)
     const importNames = await extractImports(code);
     const dependencies = importNames
       .map((dependencyName) => {
@@ -284,5 +300,6 @@ export async function fetchLocal(
     logError('Module fetch failed', { request, error });
     const message = error instanceof Error ? error.message : String(error);
     preview.webviewHandle.showPreviewError({ message });
+    return undefined;
   }
 }
