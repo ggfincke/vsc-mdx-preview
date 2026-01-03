@@ -1,21 +1,16 @@
-/**
- * Shared types for MDX Preview webview.
- */
+// packages/webview-app/src/types.ts
+// shared types for MDX Preview webview
 
-/**
- * Trust state synchronized from the extension.
- */
+// trust state synchronized from extension
 export interface TrustState {
   workspaceTrusted: boolean;
   scriptsEnabled: boolean;
   canExecute: boolean;
-  /** Reason why Trusted Mode is not available (if canExecute is false) */
+  // reason why Trusted Mode is not available (if canExecute is false)
   reason?: string;
 }
 
-/**
- * Result from fetching a module via RPC.
- */
+// result from fetching module via RPC
 export interface FetchResult {
   fsPath: string;
   code: string;
@@ -23,9 +18,7 @@ export interface FetchResult {
   css?: string;
 }
 
-/**
- * Methods the extension exposes to the webview.
- */
+// methods extension exposes to webview
 export interface ExtensionHandleMethods {
   handshake(): void;
   reportPerformance(evaluationDuration: number): void;
@@ -36,11 +29,14 @@ export interface ExtensionHandleMethods {
   ): Promise<FetchResult | undefined>;
   openSettings(settingId?: string): void;
   manageTrust(): void;
+  // link handling
+  openExternal(url: string): void;
+  openDocument(relativePath: string): Promise<void>;
+  // scroll sync - webview reports visible line to extension
+  revealLine(line: number): void;
 }
 
-/**
- * Methods the webview exposes to the extension.
- */
+// methods webview exposes to extension
 export interface WebviewHandleMethods {
   setTrustState(state: TrustState): void;
   updatePreview(
@@ -51,11 +47,16 @@ export interface WebviewHandleMethods {
   updatePreviewSafe(html: string): void;
   showPreviewError(error: { message: string; stack?: string }): void;
   invalidate(fsPath: string): Promise<void>;
+  // stale indicator support
+  setStale(isStale: boolean): void;
+  // custom CSS hot-reload
+  setCustomCss(css: string): void;
+  // scroll sync - extension tells webview to scroll to line
+  scrollToLine(line: number): void;
+  setScrollSyncConfig(config: ScrollSyncConfig): void;
 }
 
-/**
- * Preview content for Trusted Mode.
- */
+// preview content for Trusted Mode
 export interface TrustedPreviewContent {
   mode: 'trusted';
   code: string;
@@ -63,30 +64,28 @@ export interface TrustedPreviewContent {
   dependencies: string[];
 }
 
-/**
- * Preview content for Safe Mode.
- */
+// preview content for Safe Mode
 export interface SafePreviewContent {
   mode: 'safe';
   html: string;
 }
 
-/**
- * Union type for preview content.
- */
+// union type for preview content
 export type PreviewContent = TrustedPreviewContent | SafePreviewContent;
 
-/**
- * Preview error state.
- */
+// preview error state
 export interface PreviewError {
   message: string;
   stack?: string;
 }
 
-/**
- * Complete preview state managed by the App component.
- */
+// scroll sync configuration
+export interface ScrollSyncConfig {
+  enabled: boolean;
+  behavior: 'instant' | 'smooth';
+}
+
+// complete preview state managed by App component
 export interface PreviewState {
   trustState: TrustState;
   content: PreviewContent | null;

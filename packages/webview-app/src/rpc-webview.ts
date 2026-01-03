@@ -1,19 +1,15 @@
-/**
- * RPC Webview Side
- *
- * Sets up bidirectional communication between webview and extension via Comlink.
- *
- * The new architecture uses React state for rendering. RPC handlers update
- * the App component's state rather than directly manipulating the DOM.
- */
+// packages/webview-app/src/rpc-webview.ts
+// * RPC webview side - bidirectional communication between webview & extension via Comlink (React state architecture)
 
 import * as comlink from 'comlink';
 import type { Endpoint } from 'comlink';
+import { debug } from './utils/debug';
 import type {
   ExtensionHandleMethods,
   FetchResult,
   TrustState,
   PreviewError,
+  ScrollSyncConfig,
 } from './types';
 
 declare const acquireVsCodeApi: () => {
@@ -24,12 +20,10 @@ declare const acquireVsCodeApi: () => {
 
 const vscodeApi = acquireVsCodeApi();
 
-/**
- * Comlink endpoint adapter for VS Code webview messaging.
- */
+// Comlink endpoint adapter for VS Code webview messaging
 class WebviewProxy implements Endpoint {
   postMessage(message: unknown): void {
-    console.log('[RPC-WEBVIEW] postMessage to extension');
+    debug('[RPC-WEBVIEW] postMessage to extension');
     vscodeApi.postMessage(message);
   }
 
@@ -37,10 +31,7 @@ class WebviewProxy implements Endpoint {
   removeEventListener = self.removeEventListener.bind(self);
 }
 
-/**
- * Typed extension handle.
- * Methods available to call on the extension.
- */
+// typed extension handle (methods available to call on extension)
 export interface ExtensionHandle extends ExtensionHandleMethods {
   handshake(): void;
   reportPerformance(evaluationDuration: number): void;
@@ -51,15 +42,15 @@ export interface ExtensionHandle extends ExtensionHandleMethods {
   ): Promise<FetchResult | undefined>;
   openSettings(settingId?: string): void;
   manageTrust(): void;
+  openExternal(url: string): void;
+  openDocument(relativePath: string): Promise<void>;
+  revealLine(line: number): void;
 }
 
 let extensionHandle: ExtensionHandle;
 let webviewEndpoint: WebviewProxy;
 
-/**
- * Handlers that update React state.
- * Registered by the App component on mount.
- */
+// handlers that update React state (registered by App component on mount)
 interface WebviewStateHandlers {
   setTrustState: (state: TrustState) => void;
   setSafeContent: (html: string) => void;
@@ -69,6 +60,10 @@ interface WebviewStateHandlers {
     dependencies: string[]
   ) => void;
   setError: (error: PreviewError) => void;
+  setStale: (isStale: boolean) => void;
+  // Phase 2.2: Scroll sync
+  scrollToLine?: (line: number) => void;
+  setScrollSyncConfig?: (config: ScrollSyncConfig) => void;
 }
 
 let stateHandlers: WebviewStateHandlers | null = null;
@@ -83,17 +78,18 @@ type PendingMessage =
         dependencies: string[];
       };
     }
-  | { type: 'error'; payload: PreviewError };
+  | { type: 'error'; payload: PreviewError }
+  | { type: 'stale'; payload: boolean };
 
 const pendingMessages: PendingMessage[] = [];
 
 function enqueueMessage(message: PendingMessage): void {
-  console.log(`[RPC-WEBVIEW] Enqueueing message: ${message.type}`);
+  debug(`[RPC-WEBVIEW] Enqueueing message: ${message.type}`);
   pendingMessages.push(message);
 }
 
 function flushPendingMessages(): void {
-  console.log(
+  debug(
     `[RPC-WEBVIEW] flushPendingMessages: ${pendingMessages.length} pending`
   );
   if (!stateHandlers || pendingMessages.length === 0) {
@@ -102,7 +98,7 @@ function flushPendingMessages(): void {
 
   const messages = pendingMessages.splice(0, pendingMessages.length);
   for (const message of messages) {
-    console.log(`[RPC-WEBVIEW] Flushing message: ${message.type}`);
+    debug(`[RPC-WEBVIEW] Flushing message: ${message.type}`);
     switch (message.type) {
       case 'trust':
         stateHandlers.setTrustState(message.payload);
@@ -120,20 +116,18 @@ function flushPendingMessages(): void {
       case 'error':
         stateHandlers.setError(message.payload);
         break;
+      case 'stale':
+        stateHandlers.setStale(message.payload);
+        break;
     }
   }
 }
 
-/**
- * RPC handle exposed to the extension.
- * Routes calls to React state handlers.
- */
+// RPC handle exposed to extension (routes calls to React state handlers)
 class RPCWebviewHandle {
-  /**
-   * Set the trust state.
-   */
+  // set trust state
   setTrustState(state: TrustState): void {
-    console.log('[RPC-WEBVIEW] setTrustState called', state);
+    debug('[RPC-WEBVIEW] setTrustState called', state);
     if (stateHandlers) {
       stateHandlers.setTrustState(state);
       return;
@@ -141,19 +135,17 @@ class RPCWebviewHandle {
     enqueueMessage({ type: 'trust', payload: state });
   }
 
-  /**
-   * Update preview in Trusted Mode.
-   */
+  // update preview in Trusted Mode
   updatePreview(
     code: string,
     entryFilePath: string,
     entryFileDependencies: string[]
   ): void {
-    console.log(
+    debug(
       `[RPC-WEBVIEW] updatePreview called, code length: ${code.length}, path: ${entryFilePath}`
     );
     if (stateHandlers) {
-      console.log('[RPC-WEBVIEW] Calling setTrustedContent directly');
+      debug('[RPC-WEBVIEW] Calling setTrustedContent directly');
       stateHandlers.setTrustedContent(
         code,
         entryFilePath,
@@ -161,7 +153,7 @@ class RPCWebviewHandle {
       );
       return;
     }
-    console.log('[RPC-WEBVIEW] No stateHandlers, enqueueing');
+    debug('[RPC-WEBVIEW] No stateHandlers, enqueueing');
     enqueueMessage({
       type: 'trusted',
       payload: {
@@ -172,27 +164,23 @@ class RPCWebviewHandle {
     });
   }
 
-  /**
-   * Update preview in Safe Mode.
-   */
+  // update preview in Safe Mode
   updatePreviewSafe(html: string): void {
-    console.log(
+    debug(
       `[RPC-WEBVIEW] updatePreviewSafe called, html length: ${html.length}`
     );
     if (stateHandlers) {
-      console.log('[RPC-WEBVIEW] Calling setSafeContent directly');
+      debug('[RPC-WEBVIEW] Calling setSafeContent directly');
       stateHandlers.setSafeContent(html);
       return;
     }
-    console.log('[RPC-WEBVIEW] No stateHandlers, enqueueing');
+    debug('[RPC-WEBVIEW] No stateHandlers, enqueueing');
     enqueueMessage({ type: 'safe', payload: html });
   }
 
-  /**
-   * Show a preview error.
-   */
+  // show preview error
   showPreviewError(error: { message: string; stack?: string }): void {
-    console.log('[RPC-WEBVIEW] showPreviewError called', error);
+    debug('[RPC-WEBVIEW] showPreviewError called', error);
     if (stateHandlers) {
       stateHandlers.setError(error);
       return;
@@ -200,53 +188,89 @@ class RPCWebviewHandle {
     enqueueMessage({ type: 'error', payload: error });
   }
 
-  /**
-   * Invalidate a cached module.
-   */
+  // invalidate cached module
   async invalidate(fsPath: string): Promise<void> {
-    console.log(`[RPC-WEBVIEW] invalidate called: ${fsPath}`);
+    debug(`[RPC-WEBVIEW] invalidate called: ${fsPath}`);
     // Import dynamically to avoid circular dependency
     const { invalidateModule } = await import('./module-loader');
     invalidateModule(fsPath);
   }
+
+  // set stale indicator state
+  setStale(isStale: boolean): void {
+    debug(`[RPC-WEBVIEW] setStale called: ${isStale}`);
+    if (stateHandlers) {
+      stateHandlers.setStale(isStale);
+      return;
+    }
+    enqueueMessage({ type: 'stale', payload: isStale });
+  }
+
+  // set custom CSS content (immediately updates style tag w/o preview refresh)
+  setCustomCss(css: string): void {
+    debug(`[RPC-WEBVIEW] setCustomCss called, length: ${css.length}`);
+
+    // find or create custom CSS style element
+    const STYLE_ID = 'mdx-preview-custom-css';
+    let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
+
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = STYLE_ID;
+      document.head.appendChild(styleEl);
+    }
+
+    styleEl.textContent = css;
+  }
+
+  // scroll to specific line (1-based from unified/remark)
+  scrollToLine(line: number): void {
+    debug(`[RPC-WEBVIEW] scrollToLine called: ${line}`);
+    if (stateHandlers?.scrollToLine) {
+      debug(`[RPC-WEBVIEW] scrollToLine: handler exists, calling`);
+      stateHandlers.scrollToLine(line);
+    } else {
+      debug(`[RPC-WEBVIEW] scrollToLine: NO handler registered!`);
+    }
+  }
+
+  // set scroll sync configuration
+  setScrollSyncConfig(config: ScrollSyncConfig): void {
+    debug(`[RPC-WEBVIEW] setScrollSyncConfig called`, config);
+    if (stateHandlers?.setScrollSyncConfig) {
+      stateHandlers.setScrollSyncConfig(config);
+    }
+  }
 }
 
-/**
- * Initialize RPC on the webview side.
- * Sets up bidirectional communication with the extension.
- */
+// initialize RPC on webview side (sets up bidirectional communication w/ extension)
 export function initRPCWebviewSide(): void {
-  console.log('[RPC-WEBVIEW] initRPCWebviewSide called');
+  debug('[RPC-WEBVIEW] initRPCWebviewSide called');
   webviewEndpoint = new WebviewProxy();
 
-  // Create proxy to call extension methods
-  console.log('[RPC-WEBVIEW] Wrapping extension handle');
+  // create proxy to call extension methods
+  debug('[RPC-WEBVIEW] Wrapping extension handle');
   extensionHandle = comlink.wrap<ExtensionHandle>(webviewEndpoint);
 
-  // Expose webview methods for extension to call
-  console.log('[RPC-WEBVIEW] Creating RPCWebviewHandle');
+  // expose webview methods for extension to call
+  debug('[RPC-WEBVIEW] Creating RPCWebviewHandle');
   const webviewHandle = new RPCWebviewHandle();
-  console.log('[RPC-WEBVIEW] Exposing RPCWebviewHandle via comlink');
+  debug('[RPC-WEBVIEW] Exposing RPCWebviewHandle via comlink');
   comlink.expose(webviewHandle, webviewEndpoint);
 
-  // Notify extension that webview is ready
-  console.log('[RPC-WEBVIEW] Calling handshake()');
+  // notify extension that webview is ready
+  debug('[RPC-WEBVIEW] Calling handshake()');
   extensionHandle.handshake();
-  console.log('[RPC-WEBVIEW] handshake() called');
+  debug('[RPC-WEBVIEW] handshake() called');
 }
 
-/**
- * Register React state handlers.
- * Called by the App component on mount.
- */
+// register React state handlers (called by App component on mount)
 export function registerWebviewHandlers(handlers: WebviewStateHandlers): void {
-  console.log('[RPC-WEBVIEW] registerWebviewHandlers called');
+  debug('[RPC-WEBVIEW] registerWebviewHandlers called');
   stateHandlers = handlers;
   flushPendingMessages();
-  console.log('[RPC-WEBVIEW] registerWebviewHandlers complete');
+  debug('[RPC-WEBVIEW] registerWebviewHandlers complete');
 }
 
-/**
- * Get the extension handle for calling extension methods.
- */
+// get extension handle for calling extension methods
 export { extensionHandle as ExtensionHandle };

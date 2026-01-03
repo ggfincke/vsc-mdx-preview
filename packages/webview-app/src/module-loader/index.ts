@@ -2,7 +2,8 @@
 // * custom ESM/CJS module loader for Trusted Mode (async fetching, caching, circular deps, CSS injection)
 
 import React, { ComponentType } from 'react';
-import * as ReactDOM from 'react-dom/client';
+import * as ReactDOM from 'react-dom';
+import * as ReactDOMClient from 'react-dom/client';
 import * as jsxRuntime from 'react/jsx-runtime';
 import { MDXProvider } from '@mdx-js/react';
 import { registry } from './ModuleRegistry';
@@ -53,12 +54,14 @@ export function initPreloadedModules(vscodeMarkdownLayout: any): void {
   registry.preload(PRELOADED_IDS.reactLatest, React);
   registry.preload('react', React);
 
-  // ReactDOM
+  // ReactDOM (full API including createPortal, flushSync, etc.)
   registry.preload(PRELOADED_IDS.reactDom, ReactDOM);
   registry.preload(PRELOADED_IDS.reactDomLatest, ReactDOM);
   registry.preload('react-dom', ReactDOM);
-  registry.preload(PRELOADED_IDS.reactDomClient, ReactDOM);
-  registry.preload('react-dom/client', ReactDOM);
+
+  // ReactDOM/client (createRoot, hydrateRoot)
+  registry.preload(PRELOADED_IDS.reactDomClient, ReactDOMClient);
+  registry.preload('react-dom/client', ReactDOMClient);
 
   // JSX Runtime
   registry.preload(PRELOADED_IDS.jsxRuntime, jsxRuntime);
@@ -82,6 +85,15 @@ function createSyncRequire(parentId: string): (request: string) => any {
     const cached = registry.get(request);
     if (cached) {
       return cached.exports;
+    }
+
+    // check resolution map for relative imports resolved from this parent
+    const resolvedPath = registry.getResolution(parentId, request);
+    if (resolvedPath) {
+      const resolvedModule = registry.get(resolvedPath);
+      if (resolvedModule) {
+        return resolvedModule.exports;
+      }
     }
 
     // check alias
@@ -116,8 +128,8 @@ export async function loadModule(
   fetcher: (
     request: string,
     isBare: boolean,
-  parentId: string
-): Promise<FetchResult | undefined>
+    parentId: string
+  ) => Promise<FetchResult | undefined>
 ): Promise<Module> {
   // check cache
   const cached = registry.get(id);
@@ -135,10 +147,14 @@ export async function loadModule(
   const modulePromise = (async (): Promise<Module> => {
     // load all dependencies
     for (const dep of dependencies) {
-      if (!dep) continue;
+      if (!dep) {
+        continue;
+      }
 
       // skip if already loaded
-      if (registry.has(dep)) continue;
+      if (registry.has(dep)) {
+        continue;
+      }
 
       // check aliases
       if (PRELOAD_ALIASES[dep] && registry.has(PRELOAD_ALIASES[dep])) {
@@ -157,6 +173,12 @@ export async function loadModule(
       if (!result) {
         console.warn(`Failed to fetch dependency: ${dep}`);
         continue;
+      }
+
+      // register resolution mapping: (parentId, request) -> fsPath
+      // this allows require() to find the module by request string
+      if (result.fsPath !== dep) {
+        registry.setResolution(id, dep, result.fsPath);
       }
 
       // handle CSS
@@ -228,21 +250,15 @@ export function resetModules(): void {
   clearInjectedStyles();
 }
 
-/**
- * Invalidate a specific module (for hot reload).
- */
+// invalidate specific module (for hot reload)
 export function invalidateModule(id: string): void {
   registry.invalidate(id);
 }
 
-/**
- * Track if preloaded modules have been initialized.
- */
+// track if preloaded modules have been initialized
 let preloadedModulesInitialized = false;
 
-/**
- * Import vscodeMarkdownLayout dynamically to avoid circular deps.
- */
+// import vscodeMarkdownLayout dynamically to avoid circular deps
 let vscodeMarkdownLayoutModule: any = null;
 
 type LayoutOptions = {
@@ -259,32 +275,28 @@ const fallbackLayoutModule = {
   },
 };
 
-/**
- * Set the vscodeMarkdownLayout module (called from App.tsx if needed).
- */
+// set vscodeMarkdownLayout module (called from App.tsx if needed)
 export function setVscodeMarkdownLayout(module: any): void {
   vscodeMarkdownLayoutModule = module;
 }
 
-/**
- * Ensure preloaded modules are initialized.
- */
+// ensure preloaded modules are initialized
 function ensurePreloadedModules(): void {
-  if (preloadedModulesInitialized) return;
+  if (preloadedModulesInitialized) {
+    return;
+  }
 
-  // Initialize with the layout module if available
+  // initialize w/ layout module if available
   if (vscodeMarkdownLayoutModule) {
     initPreloadedModules(vscodeMarkdownLayoutModule);
   } else {
-    // Initialize with a local markdown layout wrapper
+    // initialize w/ local markdown layout wrapper
     initPreloadedModules(fallbackLayoutModule);
   }
   preloadedModulesInitialized = true;
 }
 
-/**
- * RPC fetcher that delegates to extension via RPC.
- */
+// RPC fetcher that delegates to extension via RPC
 async function rpcFetcher(
   request: string,
   isBare: boolean,
@@ -293,18 +305,7 @@ async function rpcFetcher(
   return ExtensionHandle.fetch(request, isBare, parentId);
 }
 
-/**
- * Evaluate MDX code and return the React component.
- *
- * This is the main entry point for Trusted Mode rendering.
- * It loads all dependencies, evaluates the code, and returns
- * the default export (the MDX component).
- *
- * @param code - The transpiled MDX code
- * @param entryFilePath - Path to the entry file
- * @param dependencies - Array of dependency paths
- * @returns The React component exported by the MDX
- */
+// * evaluate MDX code & return React component (main entry point for Trusted Mode rendering)
 export async function evaluateModuleToComponent(
   code: string,
   entryFilePath: string,

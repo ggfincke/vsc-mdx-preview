@@ -90,6 +90,8 @@ const DOMPURIFY_CONFIG: Config = {
     'scope',
     'loading',
     'decoding',
+    // Phase 2.2: scroll sync sourcepos attribute
+    'data-sourcepos',
   ],
   ADD_ATTR: ['target', 'rel'],
   ALLOW_UNKNOWN_PROTOCOLS: false,
@@ -106,7 +108,9 @@ export function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      return;
+    }
 
     // sanitize HTML before rendering
     const sanitizedHTML = DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
@@ -135,7 +139,9 @@ function processLinks(container: HTMLElement): void {
   const links = container.querySelectorAll('a');
   links.forEach((link) => {
     const href = link.getAttribute('href');
-    if (!href) return;
+    if (!href) {
+      return;
+    }
 
     // internal anchor links
     if (href.startsWith('#')) {

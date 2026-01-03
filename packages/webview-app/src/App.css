@@ -257,3 +257,52 @@
 .markdown-body li + li {
   margin-top: 0.25em;
 }
+
+/* Phase 2.4: Heading anchor links */
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  position: relative;
+  scroll-margin-top: 60px; /* Offset for fixed header */
+}
+
+.markdown-body .anchor-link {
+  display: inline-block;
+  margin-left: 8px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  color: var(--vscode-textLink-foreground, #3794ff);
+  font-size: 0.85em;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.markdown-body .anchor-link::before {
+  content: '#';
+}
+
+.markdown-body h1:hover .anchor-link,
+.markdown-body h2:hover .anchor-link,
+.markdown-body h3:hover .anchor-link,
+.markdown-body h4:hover .anchor-link,
+.markdown-body h5:hover .anchor-link,
+.markdown-body h6:hover .anchor-link,
+.markdown-body .anchor-link:focus {
+  opacity: 1;
+}
+
+.markdown-body .anchor-link:hover {
+  text-decoration: underline;
+}
+
+/* Adjust content when TOC is visible */
+.mdx-preview-container.has-toc .mdx-preview-content {
+  padding-right: 236px; /* TOC width + margin */
+}
+
+.mdx-preview-container.has-toc.toc-collapsed .mdx-preview-content {
+  padding-right: 48px; /* Collapsed TOC width + margin */
+}

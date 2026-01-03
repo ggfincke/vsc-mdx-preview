@@ -7,6 +7,8 @@ export class ModuleRegistry {
   private cache: Map<string, Module> = new Map();
   private pendingFetches: Map<string, Promise<Module>> = new Map();
   private injectedStyles: Set<string> = new Set();
+  // map (parentId, request) -> resolved fsPath for relative imports
+  private resolutionMap: Map<string, string> = new Map();
 
   // preload module (for built-in modules like React)
   preload(id: string, exports: any): void {
@@ -61,12 +63,14 @@ export class ModuleRegistry {
       }
     }
     this.pendingFetches.clear();
+    this.resolutionMap.clear();
   }
 
   // clear all cached modules
   clear(): void {
     this.cache.clear();
     this.pendingFetches.clear();
+    this.resolutionMap.clear();
   }
 
   // check if CSS has been injected for module
@@ -82,6 +86,28 @@ export class ModuleRegistry {
   // clear injected styles tracking
   clearInjectedStyles(): void {
     this.injectedStyles.clear();
+  }
+
+  // create key for resolution map
+  private makeResolutionKey(parentId: string, request: string): string {
+    return `${parentId}\0${request}`;
+  }
+
+  // register a resolved path for a (parent, request) pair
+  setResolution(parentId: string, request: string, fsPath: string): void {
+    const key = this.makeResolutionKey(parentId, request);
+    this.resolutionMap.set(key, fsPath);
+  }
+
+  // get resolved fsPath for a (parent, request) pair
+  getResolution(parentId: string, request: string): string | undefined {
+    const key = this.makeResolutionKey(parentId, request);
+    return this.resolutionMap.get(key);
+  }
+
+  // clear resolution map (called on reset)
+  clearResolutions(): void {
+    this.resolutionMap.clear();
   }
 }
 
