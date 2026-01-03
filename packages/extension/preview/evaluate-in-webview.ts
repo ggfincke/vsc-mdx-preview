@@ -26,11 +26,21 @@ async function extractImports(code: string): Promise<string[]> {
 
   try {
     const [imports] = parseImports(code);
-    return imports
+    const esmImports = imports
       .map((imp) => imp.n)
       .filter((name): name is string => name !== undefined && name !== null);
+
+    // ESM lexer returns empty for CJS code, so also try regex fallback
+    if (esmImports.length === 0) {
+      const requireMatches = code.matchAll(
+        /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g
+      );
+      return Array.from(requireMatches, (m) => m[1]);
+    }
+
+    return esmImports;
   } catch {
-    // fallback for code that can't be parsed (CJS)
+    // fallback for code that can't be parsed
     const requireMatches = code.matchAll(
       /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g
     );
@@ -60,6 +70,9 @@ export default async function evaluateInWebview(
     debug('[EVALUATE] Waiting for webviewHandshakePromise...');
     await preview.webviewHandshakePromise;
     debug('[EVALUATE] Handshake complete!');
+
+    // Phase 2.2: Push initial config after handshake
+    preview.onWebviewReady();
 
     // send trust state to webview
     debug('[EVALUATE] Sending trust state to webview');

@@ -1,3 +1,6 @@
+// packages/extension/preview/webview-manager.ts
+// webview panel management & HTML generation for MDX preview
+
 import * as path from 'path';
 import * as vscode from 'vscode';
 
@@ -229,6 +232,8 @@ export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
       () => {
         debug('[WEBVIEW-MGR] Panel disposed');
         preview.active = false;
+        // reset rendered version to force re-render on reopen
+        preview.resetRenderedVersion();
         dispose();
       },
       null,
