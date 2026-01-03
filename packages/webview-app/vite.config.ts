@@ -23,7 +23,10 @@ export default defineConfig({
     manifest: true,
   },
   define: {
-    'process.env.NODE_ENV': JSON.stringify('production'),
+    // Only set NODE_ENV to production for build, not for tests
+    'process.env.NODE_ENV': JSON.stringify(
+      process.env.VITEST ? 'development' : 'production'
+    ),
   },
   test: {
     globals: true,

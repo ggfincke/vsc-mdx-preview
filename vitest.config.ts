@@ -5,7 +5,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['packages/extension/**/*.test.ts'],
-    exclude: ['**/node_modules/**', '**/transpiler.test.ts'],
+    // Exclude integration tests (*.integration.test.ts) - they run via vitest.integration.config.ts
+    exclude: ['**/node_modules/**', '**/*.integration.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

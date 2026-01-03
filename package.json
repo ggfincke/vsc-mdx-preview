@@ -2,7 +2,7 @@
   "name": "vscode-mdx-preview",
   "displayName": "MDX Preview",
   "description": "MDX Preview",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "repository": "https://github.com/xyc/vscode-mdx-preview",
@@ -30,7 +30,8 @@
     "onCommand:mdx-preview.commands.refreshPreview",
     "onCommand:mdx-preview.commands.toggleUseVscodeMarkdownStyles",
     "onCommand:mdx-preview.commands.toggleUseWhiteBackground",
-    "onCommand:mdx-preview.commands.changeSecuritySettings"
+    "onCommand:mdx-preview.commands.changeSecuritySettings",
+    "onCommand:mdx-preview.commands.toggleScripts"
   ],
   "main": "./build/extension/extension",
   "capabilities": {
@@ -89,6 +90,12 @@
         "command": "mdx-preview.commands.changeSecuritySettings",
         "title": "Change Security Settings",
         "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.toggleScripts",
+        "title": "Toggle Script Execution",
+        "category": "MDX",
+        "icon": "$(shield)"
       }
     ],
     "menus": {
@@ -159,10 +166,28 @@
           "markdownDescription": "Enable JavaScript execution in MDX preview. **Requires a trusted workspace.** When disabled, MDX is rendered as static HTML without executing any code.",
           "scope": "resource"
         },
-        "mdx-preview.preview.previewOnChange": {
-          "type": "boolean",
-          "default": true,
-          "description": "If set to true, previews on file change; If set to false, previews on file save",
+        "mdx-preview.preview.updateMode": {
+          "type": "string",
+          "enum": [
+            "onType",
+            "onSave",
+            "manual"
+          ],
+          "default": "onType",
+          "description": "When to update the preview",
+          "enumDescriptions": [
+            "Update preview as you type (debounced)",
+            "Update preview when file is saved",
+            "Only update when manually refreshed"
+          ],
+          "scope": "resource"
+        },
+        "mdx-preview.preview.debounceDelay": {
+          "type": "number",
+          "default": 300,
+          "minimum": 100,
+          "maximum": 1000,
+          "description": "Debounce delay in milliseconds for on-type updates",
           "scope": "resource"
         },
         "mdx-preview.preview.security": {
@@ -201,6 +226,38 @@
           "type": "string",
           "default": "",
           "description": "Path of custom layout file to use",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.customCss": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a custom CSS file for preview styling. Changes are applied immediately.",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.showToc": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show table of contents sidebar in the preview",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.scrollSync": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable bidirectional scroll synchronization between editor and preview",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.scrollBehavior": {
+          "type": "string",
+          "enum": [
+            "instant",
+            "smooth"
+          ],
+          "default": "instant",
+          "description": "Scroll behavior when synchronizing editor and preview",
+          "enumDescriptions": [
+            "Jump immediately to the target position",
+            "Animate smoothly to the target position"
+          ],
           "scope": "resource"
         }
       }
@@ -247,7 +304,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
-    "vscode:package": "npm run test && vsce package",
+    "vscode:package": "npm run test:all && vsce package",
     "build:extension": "tsc -p ./",
     "build": "npm run build:extension && npm run build:webview-app",
     "watch": "tsc -watch -p ./",
@@ -255,27 +312,28 @@
     "build:webview-app": "npm run build -w webview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "npm run build && node ./build/extension/test/runTest.js",
-    "lint": "eslint packages/extension",
-    "lint:fix": "eslint packages/extension --fix",
+    "test:webview": "npm run test -w webview",
+    "test:all": "vitest run && npm run test -w webview",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "lint": "eslint packages/extension && npm run lint -w webview",
+    "lint:fix": "eslint packages/extension --fix && npm run lint:fix -w webview",
     "format": "prettier --write \"packages/**/*.{ts,js,json}\" \"*.{md,json}\"",
     "format:check": "prettier --check \"packages/**/*.{ts,js,json}\" \"*.{md,json}\""
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
-    "@jest/environment": "^29.7.0",
-    "@jest/test-result": "^29.7.0",
+    "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^20.0.0",
     "@types/resolve": "^1.20.6",
     "@types/vscode": "^1.90.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "@vscode/test-electron": "^2.3.0",
     "eslint": "^9.0.0",
     "globals": "^15.0.0",
-    "jest": "^29.7.0",
     "prettier": "^3.0.0",
-    "ts-jest": "^29.2.0",
     "typescript-eslint": "^8.0.0",
-    "vitest": "^2.0.0"
+    "vitest": "^3.2.4",
+    "vitest-environment-vscode": "^0.1.2"
   },
   "dependencies": {
     "@babel/core": "^7.24.0",
@@ -288,9 +346,13 @@
     "@babel/preset-react": "^7.24.0",
     "@mdx-js/mdx": "^3.0.0",
     "comlink": "^4.4.1",
+    "enhanced-resolve": "^5.18.4",
     "es-module-lexer": "^2.0.0",
     "gray-matter": "^4.0.2",
     "is-module": "^1.0.0",
+    "lodash.debounce": "^4.0.8",
+    "rehype-autolink-headings": "^7.1.0",
+    "rehype-slug": "^6.0.0",
     "rehype-stringify": "^10.0.0",
     "remark-gfm": "^4.0.0",
     "remark-mdx": "^3.0.0",
