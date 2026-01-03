@@ -11,10 +11,69 @@ import {
   PreviewManager,
 } from './preview/preview-manager';
 import { selectSecurityPolicy } from './security/security';
-import { TrustManager } from './security/TrustManager';
+import { TrustManager, TrustState } from './security/TrustManager';
 import { initWebviewAppHTMLResources } from './preview/webview-manager';
 import { initWorkspaceHandlers } from './workspace-manager';
 import { info, debug, showOutput } from './logging';
+
+// status bar item for showing preview mode
+let statusBarItem: vscode.StatusBarItem | undefined;
+
+// create & initialize status bar item
+function createStatusBarItem(): vscode.StatusBarItem {
+  const item = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    100
+  );
+  item.command = 'mdx-preview.commands.toggleScripts';
+  updateStatusBarItem(item, TrustManager.getInstance().getState());
+  return item;
+}
+
+// update status bar item based on trust state
+function updateStatusBarItem(
+  item: vscode.StatusBarItem,
+  trustState: TrustState
+): void {
+  if (trustState.canExecute) {
+    item.text = '$(shield) MDX: Trusted';
+    item.tooltip =
+      'MDX Preview is in Trusted Mode. JavaScript execution is enabled. Click to manage settings.';
+    item.backgroundColor = undefined;
+  } else {
+    item.text = '$(shield) MDX: Safe';
+    item.tooltip = trustState.reason
+      ? `MDX Preview is in Safe Mode: ${trustState.reason}. Click to manage settings.`
+      : 'MDX Preview is in Safe Mode. JavaScript execution is disabled. Click to manage settings.';
+    item.backgroundColor = new vscode.ThemeColor(
+      'statusBarItem.warningBackground'
+    );
+  }
+}
+
+// show status bar when MDX preview is active
+function showStatusBarForMdxPreview(): void {
+  if (!statusBarItem) {
+    return;
+  }
+
+  const editor = vscode.window.activeTextEditor;
+  if (editor) {
+    const languageId = editor.document.languageId;
+    if (languageId === 'mdx' || languageId === 'markdown') {
+      statusBarItem.show();
+      return;
+    }
+  }
+
+  // also show if there are any active previews
+  const previewManager = PreviewManager.getInstance();
+  if (previewManager.hasActivePreviews()) {
+    statusBarItem.show();
+  } else {
+    statusBarItem.hide();
+  }
+}
 
 // show one-time safe mode notification in untrusted workspaces
 async function showSafeModeNotificationIfNeeded(
@@ -127,6 +186,10 @@ export async function activate(
   initWorkspaceHandlers(context);
   debug('[ACTIVATE] Workspace handlers initialized');
 
+  // Phase 2.2: Initialize scroll sync
+  PreviewManager.getInstance().initScrollSync(context);
+  debug('[ACTIVATE] Scroll sync initialized');
+
   info('Extension activated');
 
   // show output channel automatically for debugging
@@ -189,12 +252,77 @@ export async function activate(
     }
   );
 
+  // command to toggle scripts setting (only in trusted workspaces)
+  const toggleScriptsCommand = vscode.commands.registerCommand(
+    'mdx-preview.commands.toggleScripts',
+    async () => {
+      debug('[CMD] toggleScripts command triggered');
+
+      const trustManager = TrustManager.getInstance();
+      const trustState = trustManager.getState();
+
+      if (!trustState.workspaceTrusted) {
+        // workspace not trusted - offer to manage trust
+        const selection = await vscode.window.showWarningMessage(
+          'To enable scripts, you must first trust this workspace.',
+          'Manage Trust',
+          'Cancel'
+        );
+        if (selection === 'Manage Trust') {
+          await vscode.commands.executeCommand('workbench.trust.manage');
+        }
+        return;
+      }
+
+      // workspace is trusted - toggle scripts setting
+      const extensionConfig = vscode.workspace.getConfiguration('mdx-preview');
+      const scriptsEnabled = extensionConfig.get<boolean>(
+        'preview.enableScripts',
+        false
+      );
+
+      await extensionConfig.update(
+        'preview.enableScripts',
+        !scriptsEnabled,
+        vscode.ConfigurationTarget.Workspace
+      );
+
+      const newState = scriptsEnabled ? 'disabled' : 'enabled';
+      vscode.window.showInformationMessage(`MDX Preview scripts ${newState}.`);
+    }
+  );
+
+  // create and show status bar item
+  statusBarItem = createStatusBarItem();
+  context.subscriptions.push(statusBarItem);
+
+  // update status bar when active editor changes
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => {
+      showStatusBarForMdxPreview();
+    })
+  );
+
+  // update status bar when trust state changes
+  const trustManager = TrustManager.getInstance();
+  context.subscriptions.push(
+    trustManager.subscribe((newState) => {
+      if (statusBarItem) {
+        updateStatusBarItem(statusBarItem, newState);
+      }
+    })
+  );
+
+  // show status bar initially if MDX file is open
+  showStatusBarForMdxPreview();
+
   context.subscriptions.push(
     openPreviewCommand,
     refreshPreviewCommand,
     toggleUseVscodeMarkdownStylesCommand,
     toggleUseWhiteBackgroundCommand,
-    toggleChangeSecuritySettings
+    toggleChangeSecuritySettings,
+    toggleScriptsCommand
   );
 
   debug('[ACTIVATE] Extension activation complete');
