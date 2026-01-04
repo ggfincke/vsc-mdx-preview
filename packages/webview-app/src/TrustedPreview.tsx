@@ -1,8 +1,21 @@
 // packages/webview-app/src/TrustedPreview.tsx
 // render MDX content in Trusted Mode (evaluates transpiled code & renders React component)
 
-import { useEffect, useState, ComponentType } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useRef,
+  useCallback,
+  ComponentType,
+} from 'react';
+import { createPortal } from 'react-dom';
 import { evaluateModuleToComponent } from './module-loader';
+import { MermaidRenderer } from './components/MermaidRenderer';
+import {
+  findMermaidContainers,
+  MermaidDiagramInfo,
+} from './utils/findMermaidContainers';
 import type { TrustedPreviewContent, PreviewError } from './types';
 
 interface TrustedPreviewRendererProps {
@@ -20,6 +33,23 @@ export function TrustedPreviewRenderer({
   onError,
 }: TrustedPreviewRendererProps) {
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  // track mermaid diagrams for React portal rendering
+  const [mermaidDiagrams, setMermaidDiagrams] = useState<MermaidDiagramInfo[]>(
+    []
+  );
+
+  // scan for mermaid containers & update state (filter stale elements)
+  const scanMermaidContainers = useCallback(() => {
+    if (!containerRef.current) {
+      return;
+    }
+
+    const found = findMermaidContainers(containerRef.current);
+    // filter stale elements (removed from DOM during re-render)
+    const valid = found.filter((d) => containerRef.current!.contains(d.el));
+    setMermaidDiagrams(valid);
+  }, []);
 
   // evaluate code when content changes
   useEffect(() => {
@@ -65,6 +95,31 @@ export function TrustedPreviewRenderer({
     onError,
   ]);
 
+  // scan for mermaid containers after MDX renders
+  // useLayoutEffect to minimize "Loading diagram..." flash
+  useLayoutEffect(() => {
+    if (!evaluatedComponent) {
+      return;
+    }
+
+    // initial scan
+    scanMermaidContainers();
+
+    // MutationObserver for dynamic content (async rendering)
+    const observer = new MutationObserver(() => {
+      scanMermaidContainers();
+    });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    return () => observer.disconnect();
+  }, [evaluatedComponent, scanMermaidContainers]);
+
   // show loading state while evaluating
   if (isEvaluating || !evaluatedComponent) {
     return (
@@ -78,8 +133,19 @@ export function TrustedPreviewRenderer({
   // render evaluated component
   const MDXComponent = evaluatedComponent;
   return (
-    <div className="mdx-trusted-preview" data-mode="trusted">
+    <div ref={containerRef} className="mdx-trusted-preview" data-mode="trusted">
       <MDXComponent />
+      {/* render mermaid diagrams via React portals */}
+      {mermaidDiagrams.map((diagram) =>
+        createPortal(
+          <MermaidRenderer
+            key={diagram.id}
+            id={diagram.id}
+            code={diagram.code}
+          />,
+          diagram.el
+        )
+      )}
     </div>
   );
 }

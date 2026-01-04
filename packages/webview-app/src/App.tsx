@@ -13,6 +13,7 @@ import LoadingBar from './components/LoadingBar/LoadingBar';
 import { MDXErrorBoundary } from './components/ErrorBoundary';
 import { TrustBanner } from './components/TrustBanner/TrustBanner';
 import { StaleIndicator } from './components/StaleIndicator';
+import { FrontmatterDisplay } from './components/FrontmatterDisplay';
 import { SafePreviewRenderer } from './SafePreview';
 import { TrustedPreviewRenderer } from './TrustedPreview';
 import { registerWebviewHandlers, ExtensionHandle } from './rpc-webview';
@@ -87,26 +88,40 @@ function App() {
   }, []);
 
   // set Safe Mode content (called by RPC handler)
-  const setSafeContent = useCallback((html: string) => {
-    debug(`[APP] setSafeContent called, html length: ${html.length}`);
-    setState((prev) => ({
-      ...prev,
-      content: { mode: 'safe', html },
-      error: null,
-      isLoading: false,
-      evaluatedComponent: null,
-    }));
-  }, []);
+  const setSafeContent = useCallback(
+    (html: string, frontmatter?: Record<string, unknown>) => {
+      debug(`[APP] setSafeContent called, html length: ${html.length}`);
+      setState((prev) => ({
+        ...prev,
+        content: { mode: 'safe', html, frontmatter },
+        error: null,
+        isLoading: false,
+        evaluatedComponent: null,
+      }));
+    },
+    []
+  );
 
   // set Trusted Mode content (called by RPC handler) - component evaluation happens in TrustedPreviewRenderer
   const setTrustedContent = useCallback(
-    (code: string, entryFilePath: string, dependencies: string[]) => {
+    (
+      code: string,
+      entryFilePath: string,
+      dependencies: string[],
+      frontmatter?: Record<string, unknown>
+    ) => {
       debug(
         `[APP] setTrustedContent called, code length: ${code.length}, path: ${entryFilePath}`
       );
       setState((prev) => ({
         ...prev,
-        content: { mode: 'trusted', code, entryFilePath, dependencies },
+        content: {
+          mode: 'trusted',
+          code,
+          entryFilePath,
+          dependencies,
+          frontmatter,
+        },
         error: null,
         isLoading: false,
         evaluatedComponent: null, // will be set after evaluation
@@ -173,7 +188,7 @@ function App() {
     config: state.scrollSyncConfig,
   });
 
-  // handle link clicks - intercepts Ctrl/Cmd+clicks on anchors & routes appropriately (regular clicks not intercepted for text selection)
+  // handle link clicks - intercept Ctrl/Cmd+clicks on anchors & route appropriately (regular clicks not intercepted for text selection)
   const handleLinkClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
     // find closest anchor element
     const target = event.target as HTMLElement;
@@ -304,7 +319,7 @@ function App() {
       setTrustedContent,
       setError,
       setStale,
-      // Phase 2.2: Scroll sync handlers
+      // scroll sync handlers
       scrollToLine: handleScrollToLine,
       setScrollSyncConfig,
     });
@@ -319,20 +334,20 @@ function App() {
     setScrollSyncConfig,
   ]);
 
-  // Render based on state
+  // render based on state
   const { trustState, content, error, isLoading, evaluatedComponent, isStale } =
     state;
   debug(
     `[APP] Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
   );
 
-  // Show loading state
+  // show loading state
   if (isLoading && !content && !error) {
     debug('[APP] Rendering LoadingBar (initial loading)');
     return <LoadingBar />;
   }
 
-  // Show error state
+  // show error state
   if (error) {
     debug('[APP] Rendering error state');
     return (
@@ -357,14 +372,19 @@ function App() {
     );
   }
 
-  // No content yet
+  // no content yet
   if (!content) {
     debug('[APP] Rendering LoadingBar (no content)');
     return <LoadingBar />;
   }
 
-  // Render content based on mode
+  // render content based on mode
   debug(`[APP] Rendering content in ${content.mode} mode`);
+
+  // extract frontmatter for display
+  const frontmatter = content.frontmatter;
+  const hasFrontmatter = frontmatter && Object.keys(frontmatter).length > 0;
+
   return (
     <div className="mdx-preview-container" onClick={handleContentClick}>
       <StaleIndicator isStale={isStale} />
@@ -373,6 +393,8 @@ function App() {
         onError={(err) => setError({ message: err.message, stack: err.stack })}
       >
         <div ref={contentRef} className="mdx-preview-content">
+          {/* frontmatter display (collapsed by default) */}
+          {hasFrontmatter && <FrontmatterDisplay frontmatter={frontmatter} />}
           {content.mode === 'safe' ? (
             <SafePreviewRenderer html={content.html} />
           ) : (
