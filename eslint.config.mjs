@@ -15,7 +15,7 @@ export default tseslint.config(
       },
     },
     rules: {
-      // Migrated from tslint.json
+      // migrated from tslint.json
       'no-throw-literal': 'error',
       'no-unused-expressions': 'warn',
       curly: 'error',
@@ -27,7 +27,8 @@ export default tseslint.config(
         { argsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-require-imports': 'off', // Some dynamic requires are intentional
+      // some dynamic requires are intentional
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
   {
@@ -36,7 +37,10 @@ export default tseslint.config(
       'node_modules/**',
       'examples/**',
       '.vscode-test/**',
-      'packages/webview-app/**', // Has its own eslint.config.mjs
+      // has its own eslint.config.mjs
+      'packages/webview-app/**',
+      // plain JS files not in tsconfig
+      '**/*.mjs',
     ],
   }
 );
