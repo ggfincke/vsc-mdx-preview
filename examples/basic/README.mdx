@@ -146,7 +146,134 @@ Use horizontal rules to separate sections:
 
 ---
 
-## Formulas
+## Rich Content Features
+
+### Mermaid Diagrams
+
+Mermaid diagrams render as interactive visualizations. Here's a flowchart example:
+
+```mermaid
+graph TD
+  A[Start: MDX File] --> B{Is it Safe Mode?}
+  B -->|Yes| C[Render Static HTML]
+  B -->|No| D{Workspace Trusted?}
+  D -->|Yes| E[Execute React Components]
+  D -->|No| C
+  C --> F[Display in Preview Panel]
+  E --> F
+  F --> G[User reads content]
+```
+
+And here's a sequence diagram showing component interaction:
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Extension
+  participant Webview
+  participant Compiler
+
+  User->>Extension: Opens MDX file
+  Extension->>Compiler: Compile MDX
+  Compiler->>Webview: Send compiled content
+  Webview->>Webview: Render HTML/Components
+  Webview->>User: Display preview
+```
+
+A simple state diagram:
+
+```mermaid
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Loading: File opened
+  Loading --> Preview: Compiled
+  Preview --> Editing: User changes file
+  Editing --> Loading: Save detected
+  Loading --> Preview
+  Preview --> [*]
+```
+
+And a pie chart showing feature adoption:
+
+```mermaid
+pie title MDX Preview Feature Usage
+  "Markdown Rendering" : 95
+  "React Components" : 70
+  "Syntax Highlighting" : 88
+  "Math Expressions" : 45
+  "Mermaid Diagrams" : 60
+```
+
+### Math and LaTeX Expressions
+
+Inline math expressions: `E = mc²` is the famous mass-energy equivalence formula discovered by Einstein.
+
+The quadratic formula solves `ax² + bx + c = 0`:
+
+`x = (-b ± √(b² - 4ac)) / 2a`
+
+### Code Block Enhancements
+
+Here's a **code** block with line highlighting and a title:
+
+```typescript title="user-service.ts" {2,4-6}
+export class UserService {
+  async fetchUser(id: number): Promise<User> {
+    const response = await fetch(`/api/users/${id}`);
+    const data = await response.json();
+    this.cache.set(id, data);
+    return data;
+  }
+}
+```
+
+JavaScript with line numbers:
+
+```javascript
+function fibonacci(n: number): number {
+  if (n <= 1) return n;
+  
+  let prev = 0, curr = 1;
+  for (let i = 2; i <= n; i++) {
+    [prev, curr] = [curr, prev + curr];
+  }
+  return curr;
+}
+```
+
+Python code example:
+
+```python title="app.py"
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.route('/api/data')
+def get_data():
+    return jsonify({'status': 'success', 'data': []})
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+### GitHub Alerts/Callouts
+
+> [!NOTE]
+> This is a note providing helpful information. Use this for tips and general guidance that enhances understanding.
+
+> [!TIP]
+> Tips highlight best practices and clever techniques that can improve your workflow or code quality.
+
+> [!WARNING]
+> Warnings alert you to important considerations that could cause issues if overlooked.
+
+> [!CAUTION]
+> Use caution when following these instructions as they may have unintended side effects.
+
+> [!IMPORTANT]
+> This information is critical and should not be skipped. Pay close attention to these details.
+
+### Formulas and Math
 
 The famous equation `E = mc²` describes mass-energy equivalence.
 

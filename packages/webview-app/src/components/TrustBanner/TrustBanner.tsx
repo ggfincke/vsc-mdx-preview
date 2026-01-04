@@ -8,19 +8,16 @@ import './TrustBanner.css';
 
 interface TrustBannerProps {
   trustState: TrustState;
-  /** Whether the banner can be dismissed */
+  // whether the banner can be dismissed
   dismissible?: boolean;
 }
 
-/**
- * TrustBanner component - displays a warning banner in Safe Mode
- * with actions to enable Trusted Mode.
- *
- * States:
- * - Safe Mode (untrusted workspace): Shows warning with "Manage Trust" button
- * - Safe Mode (scripts disabled): Shows info with "Enable Scripts" button
- * - Trusted Mode: Hidden (no banner needed)
- */
+// TrustBanner component - display warning banner in Safe Mode w/ actions to enable Trusted Mode
+//
+// States:
+// - Safe Mode (untrusted workspace): show warning w/ "Manage Trust" button
+// - Safe Mode (scripts disabled): show info w/ "Enable Scripts" button
+// - Trusted Mode: hidden (no banner needed)
 export function TrustBanner({
   trustState,
   dismissible = true,
@@ -39,12 +36,12 @@ export function TrustBanner({
     setIsDismissed(true);
   }, []);
 
-  // Don't show banner if in Trusted Mode or dismissed
+  // don't show banner if in Trusted Mode or dismissed
   if (trustState.canExecute || isDismissed) {
     return null;
   }
 
-  // Determine banner type and message based on trust state
+  // determine banner type & message based on trust state
   const bannerConfig = getBannerConfig(trustState);
 
   return (
@@ -126,7 +123,7 @@ function getBannerConfig(trustState: TrustState): BannerConfig {
     };
   }
 
-  // Remote environment or other restriction
+  // remote environment or other restriction
   return {
     type: 'warning',
     icon: '\u26A0',

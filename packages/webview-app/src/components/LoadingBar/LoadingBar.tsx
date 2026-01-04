@@ -1,17 +1,14 @@
-/**
- * Loading Bar Component
- *
- * Shows a VS Code-style progress bar during loading states.
- */
+// packages/webview-app/src/components/LoadingBar/LoadingBar.tsx
+// show VS Code-style progress bar during loading states
 
 import React, { useState, useEffect } from 'react';
 import './LoadingBar.css';
 
-/** Delay before showing loading bar to avoid flicker */
+// delay before showing loading bar to avoid flicker
 const SHOW_AFTER_DURATION = 500;
 
 interface LoadingBarProps {
-  /** Whether to show the loading bar immediately */
+  // whether to show the loading bar immediately
   immediate?: boolean;
 }
 

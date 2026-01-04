@@ -307,7 +307,7 @@ export class Preview {
       ),
     };
 
-    // Phase 2.2: Read scroll sync settings
+    // read scroll sync settings
     this.scrollSyncEnabled = extensionConfig.get<boolean>(
       'preview.scrollSync',
       true
@@ -328,7 +328,7 @@ export class Preview {
     // Initialize custom CSS watcher
     this.setupCustomCssWatcher();
 
-    // Phase 2.2: Register with PreviewManager for scroll sync routing
+    // register w/ PreviewManager for scroll sync routing
     PreviewManager.getInstance().registerPreview(this);
 
     if (process.env.NODE_ENV === 'development') {
@@ -457,7 +457,7 @@ export class Preview {
     }
   }
 
-  // Phase 2.2: Handle editor visible ranges change (called by PreviewManager)
+  // handle editor visible ranges change (called by PreviewManager)
   handleEditorVisibleRangesChange(ranges: readonly vscode.Range[]): void {
     if (ranges.length === 0) {
       return;
@@ -467,7 +467,7 @@ export class Preview {
     this.debouncedEditorScroll();
   }
 
-  // Phase 2.2: Handle preview scroll (called via RPC from webview)
+  // handle preview scroll (called via RPC from webview)
   handlePreviewScroll(line: number): void {
     if (!this.scrollSyncEnabled || this.scrollSyncCooldown) {
       return;
@@ -493,7 +493,7 @@ export class Preview {
     }
   }
 
-  // Phase 2.2: Push scroll sync config to webview
+  // push scroll sync config to webview
   private pushScrollSyncConfig(): void {
     this.webviewHandle?.setScrollSyncConfig?.({
       enabled: this.scrollSyncEnabled,
@@ -501,9 +501,9 @@ export class Preview {
     });
   }
 
-  // Phase 2.1: Setup custom CSS file watcher
+  // setup custom CSS file watcher
   private setupCustomCssWatcher(): void {
-    // Clean up any existing watcher
+    // clean up any existing watcher
     this.disposeCustomCssWatcher();
 
     const cssPath = this.configuration.customCss;
@@ -688,7 +688,7 @@ export class Preview {
       SecurityPolicy.Strict
     );
 
-    // Phase 2.2: Read scroll sync settings
+    // read scroll sync settings
     const scrollSync = extensionConfig.get<boolean>('preview.scrollSync', true);
     const scrollBehavior = extensionConfig.get<'instant' | 'smooth'>(
       'preview.scrollBehavior',
@@ -701,7 +701,7 @@ export class Preview {
       customLayoutFilePath !== this.configuration.customLayoutFilePath ||
       securityPolicy !== this.configuration.securityPolicy;
 
-    // Phase 2.2: Push scroll sync config if changed
+    // push scroll sync config if changed
     if (
       scrollSync !== this.scrollSyncEnabled ||
       scrollBehavior !== this.scrollSyncBehavior
@@ -753,7 +753,7 @@ export class Preview {
   // dispose of resources held by this preview
   dispose(): void {
     this.disposeCustomCssWatcher();
-    // Phase 2.2: Unregister from PreviewManager
+    // unregister from PreviewManager
     PreviewManager.getInstance().unregisterPreview(this.doc.uri);
   }
 }

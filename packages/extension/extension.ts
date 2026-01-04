@@ -186,7 +186,7 @@ export async function activate(
   initWorkspaceHandlers(context);
   debug('[ACTIVATE] Workspace handlers initialized');
 
-  // Phase 2.2: Initialize scroll sync
+  // initialize scroll sync
   PreviewManager.getInstance().initScrollSync(context);
   debug('[ACTIVATE] Scroll sync initialized');
 

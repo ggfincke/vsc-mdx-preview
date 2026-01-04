@@ -72,7 +72,7 @@ interface MDXErrorBoundaryProps {
   onError?: (error: Error) => void;
 }
 
-// MDX error boundary (wraps content w/ React error boundary & sets up global error handlers)
+// MDX error boundary (wrap content w/ React error boundary & set up global error handlers)
 export function MDXErrorBoundary({ children, onError }: MDXErrorBoundaryProps) {
   const [globalError, setGlobalError] = useState<Error | null>(null);
 

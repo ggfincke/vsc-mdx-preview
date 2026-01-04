@@ -128,7 +128,7 @@ class ExtensionHandle {
     vscode.commands.executeCommand('workbench.trust.manage');
   }
 
-  // open external URL in default browser (Phase 2.3)
+  // open external URL in default browser
   openExternal(url: string): void {
     debug(`[EXT-HANDLE] openExternal: ${url}`);
 
@@ -155,7 +155,7 @@ class ExtensionHandle {
     vscode.env.openExternal(vscode.Uri.parse(url));
   }
 
-  // open document in editor (Phase 2.3)
+  // open document in editor
   async openDocument(relativePath: string): Promise<void> {
     debug(`[EXT-HANDLE] openDocument: ${relativePath}`);
 
@@ -193,7 +193,7 @@ class ExtensionHandle {
     }
   }
 
-  // Phase 2.2: Reveal line in editor (called from webview scroll)
+  // reveal line in editor (called from webview scroll)
   revealLine(line: number): void {
     debug(`[EXT-HANDLE] revealLine: ${line}`);
 
