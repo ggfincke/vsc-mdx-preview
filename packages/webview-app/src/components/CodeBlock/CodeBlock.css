@@ -1,0 +1,199 @@
+/* packages/webview-app/src/components/CodeBlock/CodeBlock.css */
+/* Phase 3.3: Shiki code block styles */
+
+/* Code block wrapper */
+.code-block-wrapper {
+  margin: 16px 0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Title bar (optional) */
+.code-title {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  background: var(
+    --vscode-editorGroupHeader-tabsBackground,
+    rgba(128, 128, 128, 0.2)
+  );
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  color: var(--vscode-foreground, inherit);
+}
+
+/* Shiki container */
+.shiki-container {
+  position: relative;
+}
+
+/* Theme-based visibility */
+body.vscode-dark .shiki-container .shiki-light,
+body.vscode-high-contrast .shiki-container .shiki-light {
+  display: none;
+}
+
+body.vscode-light .shiki-container .shiki-dark,
+body.vscode-high-contrast-light .shiki-container .shiki-dark {
+  display: none;
+}
+
+/* Default to dark if no body class (shouldn't happen) */
+.shiki-container .shiki-light {
+  display: none;
+}
+
+body.vscode-light .shiki-container .shiki-light {
+  display: block;
+}
+
+body.vscode-light .shiki-container .shiki-dark {
+  display: none;
+}
+
+/* Shiki pre styles */
+.shiki-container pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  border-radius: 0;
+}
+
+.code-block-wrapper > .shiki-container > pre:first-of-type,
+.code-title + .shiki-container > pre {
+  border-radius: 0;
+}
+
+.code-block-wrapper:not(:has(.code-title)) > .shiki-container > pre {
+  border-radius: 6px;
+}
+
+/* Code spans */
+.shiki-container pre code {
+  font-family: var(
+    --vscode-editor-font-family,
+    'Menlo',
+    'Monaco',
+    'Courier New',
+    monospace
+  );
+  background: transparent;
+  padding: 0;
+}
+
+/* Copy button */
+.code-copy-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 6px;
+  background: var(
+    --vscode-button-secondaryBackground,
+    rgba(255, 255, 255, 0.1)
+  );
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
+  color: var(--vscode-button-secondaryForeground, inherit);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.shiki-container:hover .code-copy-button {
+  opacity: 1;
+}
+
+.code-copy-button:hover {
+  background: var(
+    --vscode-button-secondaryHoverBackground,
+    rgba(255, 255, 255, 0.2)
+  );
+}
+
+.code-copy-button.copied {
+  color: var(--vscode-testing-iconPassed, #73c991);
+}
+
+/* Language badge */
+.code-language-badge {
+  position: absolute;
+  top: 8px;
+  right: 44px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: var(--vscode-font-family, sans-serif);
+  color: var(--vscode-descriptionForeground, #717171);
+  background: var(--vscode-badge-background, rgba(128, 128, 128, 0.2));
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.shiki-container:hover .code-language-badge {
+  opacity: 1;
+}
+
+/* Line numbers (opt-in via showLineNumbers) */
+.shiki-container.with-line-numbers pre code {
+  counter-reset: line;
+}
+
+.shiki-container.with-line-numbers .line::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 2.5em;
+  margin-right: 16px;
+  text-align: right;
+  color: var(--vscode-editorLineNumber-foreground, #858585);
+  user-select: none;
+}
+
+/* Line highlighting */
+.shiki-container .line.highlighted {
+  display: block;
+  margin: 0 -16px;
+  padding: 0 16px;
+  background: var(
+    --vscode-editor-lineHighlightBackground,
+    rgba(255, 255, 0, 0.1)
+  );
+  border-left: 3px solid
+    var(--vscode-editor-lineHighlightBorder, rgba(255, 255, 0, 0.4));
+  padding-left: 13px;
+}
+
+/* Ensure lines are block-level for highlighting */
+.shiki-container pre code .line {
+  display: inline;
+}
+
+.shiki-container.with-line-numbers pre code .line,
+.shiki-container pre code .line.highlighted {
+  display: block;
+}
+
+/* Diff highlighting (for language-diff) */
+.shiki-container[data-language='diff'] .line:has(.inserted) {
+  background: var(
+    --vscode-diffEditor-insertedLineBackground,
+    rgba(0, 255, 0, 0.1)
+  );
+}
+
+.shiki-container[data-language='diff'] .line:has(.deleted) {
+  background: var(
+    --vscode-diffEditor-removedLineBackground,
+    rgba(255, 0, 0, 0.1)
+  );
+}
