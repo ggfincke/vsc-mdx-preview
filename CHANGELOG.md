@@ -5,6 +5,30 @@ All notable changes to the MDX Preview extension will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.3] - 2025-01-04
+
+### Added
+
+- **Syntax Highlighting**: Shiki-based syntax highlighting for code blocks with theme support
+- **Mermaid Diagrams**: Client-side rendering of Mermaid diagrams (flowcharts, sequence diagrams, state diagrams, etc.)
+- **GitHub Alerts**: Support for GitHub-style alerts/callouts (NOTE, TIP, WARNING, CAUTION, IMPORTANT)
+- **Math Expressions**: KaTeX integration for rendering inline and block math expressions (via rehype-katex and remark-math)
+- **Frontmatter Display**: Visual display of YAML frontmatter metadata
+- **Code Block Component**: Enhanced code block rendering with language labels and styling
+- **Raw HTML Support**: rehype-raw plugin for HTML passthrough in safe mode
+
+### Changed
+
+- **MDX Transpiler**: Enhanced to extract and pass frontmatter metadata to webview
+- **Content Security Policy**: Updated to allow inline styles for Shiki and KaTeX
+- **Module Transform**: Improved handling of TypeScript and transpilation edge cases
+- **Webview Components**: Integrated new rendering components for rich content
+- **Build System**: Added esbuild configuration for extension bundling
+
+### Fixed
+
+- ESLint configuration now properly excludes .mjs files from type checking
+
 ## [1.0.0-alpha.2] - 2025-01-03
 
 ### Added

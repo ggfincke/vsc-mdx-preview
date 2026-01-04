@@ -2,7 +2,7 @@
   "name": "vscode-mdx-preview",
   "displayName": "MDX Preview",
   "description": "MDX Preview",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [
@@ -39,7 +39,7 @@
     "onCommand:mdx-preview.commands.changeSecuritySettings",
     "onCommand:mdx-preview.commands.toggleScripts"
   ],
-  "main": "./build/extension/extension",
+  "main": "./build/extension/extension.js",
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
@@ -265,6 +265,12 @@
             "Animate smoothly to the target position"
           ],
           "scope": "resource"
+        },
+        "mdx-preview.preview.showFrontmatter": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show frontmatter metadata at the top of the preview (collapsed by default)",
+          "scope": "resource"
         }
       }
     },
@@ -311,7 +317,8 @@
   "scripts": {
     "vscode:prepublish": "npm run build",
     "vscode:package": "npm run test:all && vsce package",
-    "build:extension": "tsc -p ./",
+    "build:extension": "node esbuild.config.mjs",
+    "build:extension:types": "tsc -p ./ --emitDeclarationOnly --declaration --outDir build/extension",
     "build": "npm run build:extension && npm run build:webview-app",
     "watch": "tsc -watch -p ./",
     "start:webview-app": "npm run start -w webview",
@@ -321,12 +328,14 @@
     "test:webview": "npm run test -w webview",
     "test:all": "vitest run && npm run test -w webview",
     "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:shiki-smoke": "node packages/extension/test/shiki-smoke.mjs",
     "lint": "eslint packages/extension && npm run lint -w webview",
     "lint:fix": "eslint packages/extension --fix && npm run lint:fix -w webview",
     "format": "prettier --write \"packages/**/*.{ts,js,json}\" \"*.{md,json}\"",
     "format:check": "prettier --check \"packages/**/*.{ts,js,json}\" \"*.{md,json}\""
   },
   "devDependencies": {
+    "@babel/preset-typescript": "^7.28.5",
     "@eslint/js": "^9.0.0",
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^20.0.0",
@@ -334,6 +343,7 @@
     "@types/vscode": "^1.90.0",
     "@vitest/coverage-v8": "^3.2.4",
     "@vscode/test-electron": "^2.3.0",
+    "esbuild": "^0.27.2",
     "eslint": "^9.0.0",
     "globals": "^15.0.0",
     "prettier": "^3.0.0",
@@ -355,17 +365,21 @@
     "enhanced-resolve": "^5.18.4",
     "es-module-lexer": "^2.0.0",
     "gray-matter": "^4.0.2",
+    "hast-util-from-html-isomorphic": "^2.0.0",
     "is-module": "^1.0.0",
     "lodash.debounce": "^4.0.8",
     "rehype-autolink-headings": "^7.1.0",
+    "rehype-katex": "^7.0.1",
     "rehype-slug": "^6.0.0",
     "rehype-stringify": "^10.0.0",
     "remark-gfm": "^4.0.0",
+    "remark-math": "^6.0.0",
     "remark-mdx": "^3.0.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.0.0",
     "resolve": "^1.22.11",
     "sass": "^1.80.0",
+    "shiki": "^1.29.2",
     "sucrase": "^3.35.0",
     "typescript": "^5.4.0",
     "unified": "^11.0.0",
