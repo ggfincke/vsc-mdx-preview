@@ -38,16 +38,19 @@ export interface WebviewRemoteHandle {
   updatePreview(
     code: string,
     entryFilePath: string,
-    entryFileDependencies: string[]
+    entryFileDependencies: string[],
+    // frontmatter data
+    frontmatter?: Record<string, unknown>
   ): void;
-  updatePreviewSafe(html: string): void;
+  // frontmatter parameter added
+  updatePreviewSafe(html: string, frontmatter?: Record<string, unknown>): void;
   showPreviewError(error: { message: string; stack?: string }): void;
   invalidate(fsPath: string): Promise<void>;
-  // Phase 2.5: Stale indicator support
+  // stale indicator support
   setStale(isStale: boolean): void;
-  // Phase 2.1: Custom CSS hot-reload
+  // custom CSS hot-reload
   setCustomCss(css: string): void;
-  // Phase 2.2: Scroll sync
+  // scroll sync
   scrollToLine(line: number): void;
   setScrollSyncConfig(config: ScrollSyncConfig): void;
 }

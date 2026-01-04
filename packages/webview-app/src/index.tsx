@@ -7,6 +7,8 @@ import { debug, debugError } from './utils/debug';
 import { ThemeProvider } from './context/ThemeContext';
 import App from './App';
 import './index.css';
+// KaTeX math rendering styles
+import 'katex/dist/katex.min.css';
 
 debug('[WEBVIEW] index.tsx loaded');
 

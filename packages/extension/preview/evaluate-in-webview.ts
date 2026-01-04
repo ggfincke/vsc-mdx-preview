@@ -71,7 +71,7 @@ export default async function evaluateInWebview(
     await preview.webviewHandshakePromise;
     debug('[EVALUATE] Handshake complete!');
 
-    // Phase 2.2: Push initial config after handshake
+    // push initial config after handshake
     preview.onWebviewReady();
 
     // send trust state to webview
@@ -111,7 +111,7 @@ async function evaluateTrusted(
   const { webviewHandle } = preview;
 
   debug('[EVALUATE] Transforming entry...');
-  const code = await transformEntry(text, fsPath, preview);
+  const { code } = await transformEntry(text, fsPath, preview);
   debug(`[EVALUATE] Transform complete, code length: ${code.length}`);
 
   // use async fs.promises.realpath instead of sync version

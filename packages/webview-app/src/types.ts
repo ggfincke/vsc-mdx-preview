@@ -10,6 +10,16 @@ export interface TrustState {
   reason?: string;
 }
 
+// frontmatter data parsed from YAML header
+export interface Frontmatter {
+  title?: string;
+  description?: string;
+  date?: string;
+  author?: string;
+  tags?: string[];
+  [key: string]: unknown;
+}
+
 // result from fetching module via RPC
 export interface FetchResult {
   fsPath: string;
@@ -62,12 +72,14 @@ export interface TrustedPreviewContent {
   code: string;
   entryFilePath: string;
   dependencies: string[];
+  frontmatter?: Frontmatter;
 }
 
 // preview content for Safe Mode
 export interface SafePreviewContent {
   mode: 'safe';
   html: string;
+  frontmatter?: Frontmatter;
 }
 
 // union type for preview content

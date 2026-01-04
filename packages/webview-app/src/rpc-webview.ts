@@ -53,15 +53,16 @@ let webviewEndpoint: WebviewProxy;
 // handlers that update React state (registered by App component on mount)
 interface WebviewStateHandlers {
   setTrustState: (state: TrustState) => void;
-  setSafeContent: (html: string) => void;
+  setSafeContent: (html: string, frontmatter?: Record<string, unknown>) => void;
   setTrustedContent: (
     code: string,
     entryFilePath: string,
-    dependencies: string[]
+    dependencies: string[],
+    frontmatter?: Record<string, unknown>
   ) => void;
   setError: (error: PreviewError) => void;
   setStale: (isStale: boolean) => void;
-  // Phase 2.2: Scroll sync
+  // scroll sync
   scrollToLine?: (line: number) => void;
   setScrollSyncConfig?: (config: ScrollSyncConfig) => void;
 }
@@ -69,13 +70,17 @@ interface WebviewStateHandlers {
 let stateHandlers: WebviewStateHandlers | null = null;
 type PendingMessage =
   | { type: 'trust'; payload: TrustState }
-  | { type: 'safe'; payload: string }
+  | {
+      type: 'safe';
+      payload: { html: string; frontmatter?: Record<string, unknown> };
+    }
   | {
       type: 'trusted';
       payload: {
         code: string;
         entryFilePath: string;
         dependencies: string[];
+        frontmatter?: Record<string, unknown>;
       };
     }
   | { type: 'error'; payload: PreviewError }
@@ -104,13 +109,19 @@ function flushPendingMessages(): void {
         stateHandlers.setTrustState(message.payload);
         break;
       case 'safe':
-        stateHandlers.setSafeContent(message.payload);
+        // pass frontmatter
+        stateHandlers.setSafeContent(
+          message.payload.html,
+          message.payload.frontmatter
+        );
         break;
       case 'trusted':
+        // pass frontmatter
         stateHandlers.setTrustedContent(
           message.payload.code,
           message.payload.entryFilePath,
-          message.payload.dependencies
+          message.payload.dependencies,
+          message.payload.frontmatter
         );
         break;
       case 'error':
@@ -139,7 +150,8 @@ class RPCWebviewHandle {
   updatePreview(
     code: string,
     entryFilePath: string,
-    entryFileDependencies: string[]
+    entryFileDependencies: string[],
+    frontmatter?: Record<string, unknown>
   ): void {
     debug(
       `[RPC-WEBVIEW] updatePreview called, code length: ${code.length}, path: ${entryFilePath}`
@@ -149,7 +161,8 @@ class RPCWebviewHandle {
       stateHandlers.setTrustedContent(
         code,
         entryFilePath,
-        entryFileDependencies
+        entryFileDependencies,
+        frontmatter
       );
       return;
     }
@@ -160,22 +173,23 @@ class RPCWebviewHandle {
         code,
         entryFilePath,
         dependencies: entryFileDependencies,
+        frontmatter,
       },
     });
   }
 
   // update preview in Safe Mode
-  updatePreviewSafe(html: string): void {
+  updatePreviewSafe(html: string, frontmatter?: Record<string, unknown>): void {
     debug(
       `[RPC-WEBVIEW] updatePreviewSafe called, html length: ${html.length}`
     );
     if (stateHandlers) {
       debug('[RPC-WEBVIEW] Calling setSafeContent directly');
-      stateHandlers.setSafeContent(html);
+      stateHandlers.setSafeContent(html, frontmatter);
       return;
     }
     debug('[RPC-WEBVIEW] No stateHandlers, enqueueing');
-    enqueueMessage({ type: 'safe', payload: html });
+    enqueueMessage({ type: 'safe', payload: { html, frontmatter } });
   }
 
   // show preview error
