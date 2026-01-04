@@ -1,0 +1,163 @@
+# Code Highlighting Test
+
+This document tests Shiki syntax highlighting features.
+
+## Basic Syntax Highlighting
+
+### TypeScript
+
+```typescript
+interface User {
+  name: string;
+  age: number;
+  email?: string;
+}
+
+function greet(user: User): string {
+  return `Hello, ${user.name}!`;
+}
+
+const user: User = { name: 'Alice', age: 30 };
+console.log(greet(user));
+```
+
+### JavaScript
+
+```javascript
+const fetchData = async () => {
+  const response = await fetch('/api/data');
+  const data = await response.json();
+  return data;
+};
+
+fetchData().then(console.log);
+```
+
+### JSX/TSX
+
+```tsx
+import React from 'react';
+
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+}
+
+export function Button({ label, onClick }: ButtonProps) {
+  return (
+    <button className="btn" onClick={onClick}>
+      {label}
+    </button>
+  );
+}
+```
+
+### JSON
+
+```json
+{
+  "name": "my-project",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "^18.0.0",
+    "typescript": "^5.0.0"
+  }
+}
+```
+
+### CSS
+
+```css
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-color);
+}
+
+.container:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+```
+
+### Bash
+
+```bash
+#!/bin/bash
+echo "Installing dependencies..."
+npm install
+npm run build
+npm test
+```
+
+### Python
+
+```python
+def fibonacci(n: int) -> list[int]:
+    """Generate Fibonacci sequence up to n terms."""
+    if n <= 0:
+        return []
+
+    fib = [0, 1]
+    while len(fib) < n:
+        fib.append(fib[-1] + fib[-2])
+
+    return fib[:n]
+
+print(fibonacci(10))
+```
+
+## Meta Features
+
+### Line Numbers
+
+```ts showLineNumbers
+const x = 1;
+const y = 2;
+const z = x + y;
+console.log(z);
+```
+
+### Line Highlighting
+
+```ts {2,4-5}
+function example() {
+  const highlighted = true; // This line is highlighted
+  const normal = false;
+  const alsoHighlighted = 1; // Highlighted
+  const andThis = 2; // Highlighted
+  const notThis = 3;
+}
+```
+
+### Title
+
+```ts title="utils/helpers.ts"
+export function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US');
+}
+```
+
+### Combined Meta
+
+```typescript showLineNumbers {1,3} title="config.ts"
+const API_URL = 'https://api.example.com'; // highlighted
+const TIMEOUT = 5000;
+const MAX_RETRIES = 3; // highlighted
+```
+
+## Unsupported Language (Falls Back to Plaintext)
+
+```foobar
+This is an unknown language.
+It should render as plain text.
+```
+
+## Diff
+
+```diff
+- const oldValue = 1;
++ const newValue = 2;
+  const unchanged = 3;
+```
