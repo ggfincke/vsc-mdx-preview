@@ -60,6 +60,17 @@ describe('CSP', () => {
         expect(csp).toContain(`'nonce-${testNonce}'`);
       });
 
+      test('includes webview.cspSource in script-src for dynamic chunk loading', () => {
+        const csp = getCSP(
+          mockWebview as never,
+          testNonce,
+          safeTrustState,
+          SecurityPolicy.Strict
+        );
+
+        expect(csp).toContain(`script-src ${mockWebview.cspSource}`);
+      });
+
       test('includes default-src none', () => {
         const csp = getCSP(
           mockWebview as never,
@@ -135,6 +146,17 @@ describe('CSP', () => {
         );
 
         expect(csp).toContain(`'nonce-${testNonce}'`);
+      });
+
+      test('includes webview.cspSource in script-src for dynamic chunk loading', () => {
+        const csp = getCSP(
+          mockWebview as never,
+          testNonce,
+          trustedState,
+          SecurityPolicy.Strict
+        );
+
+        expect(csp).toContain(`script-src ${mockWebview.cspSource}`);
       });
 
       test('includes default-src none', () => {

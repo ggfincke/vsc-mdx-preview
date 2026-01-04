@@ -10,19 +10,30 @@ import { transformAsync as babelTransformAsync } from '../transpiler/babel';
 import { transform as sucraseTransform } from '../transpiler/sucrase';
 import { debug } from '../logging';
 
+// result type for entry transformation (includes frontmatter)
+export interface TransformEntryResult {
+  code: string;
+  frontmatter: Record<string, unknown>;
+}
+
 // transform entry file (MDX → TS → Babel/Sucrase)
 async function transformEntry(
   code: string,
   fsPath: string,
   preview: Preview
-): Promise<string> {
+): Promise<TransformEntryResult> {
   const { languageId, uri } = preview.doc;
+  // track frontmatter from MDX compilation
+  let frontmatter: Record<string, unknown> = {};
+
   if (
     languageId === 'markdown' ||
     languageId === 'mdx' ||
     uri.scheme === 'untitled'
   ) {
-    code = await mdxTranspileAsync(code, true, preview);
+    const mdxResult = await mdxTranspileAsync(code, true, preview);
+    code = mdxResult.code;
+    frontmatter = mdxResult.frontmatter;
   }
 
   const useSucrase = preview.configuration.useSucraseTranspiler;
@@ -52,7 +63,7 @@ async function transformEntry(
     code = result?.code ?? code;
   }
 
-  return code;
+  return { code, frontmatter };
 }
 
 // transform dependency file (MDX → TS → Babel/Sucrase, skip node_modules unless ESM)
@@ -63,7 +74,9 @@ async function transform(
 ): Promise<string> {
   const extname = path.extname(fsPath);
   if (/\.mdx?$/i.test(extname)) {
-    code = await mdxTranspileAsync(code, false, preview);
+    // for dependencies, we only need the code (frontmatter is ignored)
+    const mdxResult = await mdxTranspileAsync(code, false, preview);
+    code = mdxResult.code;
   }
 
   const useSucrase = preview.configuration.useSucraseTranspiler;

@@ -20,7 +20,8 @@ function getStrictCSP(webview: vscode.Webview, nonce: string): string {
     "default-src 'none'",
     `img-src ${webview.cspSource} https: data:`,
     `style-src ${webview.cspSource} 'unsafe-inline'`,
-    `script-src 'nonce-${nonce}'`,
+    // * include cspSource to allow dynamic chunk imports (e.g. mermaid)
+    `script-src ${webview.cspSource} 'nonce-${nonce}'`,
     `font-src ${webview.cspSource}`,
   ].join('; ');
 }
@@ -31,7 +32,8 @@ function getTrustedCSP(webview: vscode.Webview, nonce: string): string {
     "default-src 'none'",
     `img-src ${webview.cspSource} https: data:`,
     `style-src ${webview.cspSource} 'unsafe-inline'`,
-    `script-src 'nonce-${nonce}' 'unsafe-eval'`,
+    // * include cspSource to allow dynamic chunk imports (e.g. mermaid)
+    `script-src ${webview.cspSource} 'nonce-${nonce}' 'unsafe-eval'`,
     `font-src ${webview.cspSource}`,
   ].join('; ');
 }
