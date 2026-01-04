@@ -5,10 +5,18 @@ import { compile } from '@mdx-js/mdx';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeSourcepos from './rehype-sourcepos';
+import rehypeMermaidPlaceholder from './rehype-mermaid-placeholder';
 import hasDefaultExport from './hasDefaultExport';
+import matter from 'gray-matter';
 import * as path from 'path';
 
 import { Preview } from '../../preview/preview-manager';
+
+// result type for MDX transpilation (includes frontmatter)
+export interface MdxTranspileResult {
+  code: string;
+  frontmatter: Record<string, unknown>;
+}
 
 // inject MDX layout styles based on configuration
 const injectMDXStyles = (mdxText: string, preview: Preview): string => {
@@ -44,7 +52,7 @@ ${mdxText}`;
   }
 };
 
-// wrap compiled MDX output (webview owns single React root & handles rendering)
+// wrap compiled MDX output (webview owns single React root & handle rendering)
 // MDX w/ outputFormat: 'program' generates ES module w/ default export
 const wrapCompiledMdx = (compiledMDX: string): string => {
   return `
@@ -59,12 +67,15 @@ export const mdxTranspileAsync = async (
   mdxText: string,
   _isEntry: boolean,
   preview: Preview
-): Promise<string> => {
+): Promise<MdxTranspileResult> => {
+  // extract frontmatter before compilation
+  const { content, data: frontmatter } = matter(mdxText);
+
   let mdxTextToCompile: string;
-  if (!hasDefaultExport(mdxText)) {
-    mdxTextToCompile = injectMDXStyles(mdxText, preview);
+  if (!hasDefaultExport(content)) {
+    mdxTextToCompile = injectMDXStyles(content, preview);
   } else {
-    mdxTextToCompile = mdxText;
+    mdxTextToCompile = content;
   }
 
   const compiled = await compile(mdxTextToCompile, {
@@ -73,10 +84,12 @@ export const mdxTranspileAsync = async (
     jsx: false,
     jsxRuntime: 'automatic',
     jsxImportSource: 'react',
-    // Phase 2.2: Add sourcepos for scroll sync (must be before slug)
-    // Phase 2.4: Add heading anchors for TOC support
+    // add sourcepos for scroll sync (must be before slug)
+    // add heading anchors for TOC support
     rehypePlugins: [
       rehypeSourcepos,
+      // convert mermaid code blocks to placeholders for client-side rendering
+      rehypeMermaidPlaceholder,
       rehypeSlug,
       [
         rehypeAutolinkHeadings,
@@ -91,5 +104,8 @@ export const mdxTranspileAsync = async (
     ],
   });
 
-  return wrapCompiledMdx(compiled.toString());
+  return {
+    code: wrapCompiledMdx(compiled.toString()),
+    frontmatter: frontmatter as Record<string, unknown>,
+  };
 };

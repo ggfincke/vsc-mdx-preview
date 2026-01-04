@@ -7,6 +7,7 @@ import remarkMdx from 'remark-mdx';
 import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import rehypeSourcepos from './rehype-sourcepos';
+import rehypeMermaidPlaceholder from './rehype-mermaid-placeholder';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeStringify from 'rehype-stringify';
@@ -111,9 +112,11 @@ export async function compileToSafeHTML(mdxText: string): Promise<string> {
     .use(remarkStripMdx)
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true })
-    // Phase 2.2: Add sourcepos for scroll sync (must be before slug)
+    // add sourcepos for scroll sync (must be before slug)
     .use(rehypeSourcepos)
-    // Phase 2.4: Add heading anchors for TOC support
+    // convert mermaid code blocks to placeholders for client-side rendering
+    .use(rehypeMermaidPlaceholder)
+    // add heading anchors for TOC support
     .use(rehypeSlug)
     .use(rehypeAutolinkHeadings, {
       behavior: 'append',
