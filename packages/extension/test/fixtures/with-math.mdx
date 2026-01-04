@@ -1,0 +1,60 @@
+# Math Test Document
+
+This document tests KaTeX math rendering.
+
+## Inline Math
+
+The quadratic formula is $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$ which solves $ax^2 + bx + c = 0$.
+
+Einstein's famous equation: $E = mc^2$
+
+## Block Math
+
+The integral of a function:
+
+$$
+\int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2}
+$$
+
+Matrix notation:
+
+$$
+\begin{bmatrix}
+a & b \\
+c & d
+\end{bmatrix}
+\begin{bmatrix}
+x \\
+y
+\end{bmatrix}
+=
+\begin{bmatrix}
+ax + by \\
+cx + dy
+\end{bmatrix}
+$$
+
+## Edge Cases
+
+Dollar signs in code should not render as math: `$variable` and `const price = $100`.
+
+```javascript
+const price = '$100';
+const template = `Total: $${amount}`;
+```
+
+Escaped dollars: \$50 should show as plain text.
+
+## Complex Expressions
+
+Sum notation:
+
+$$
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+$$
+
+Limit:
+
+$$
+\lim_{x \to \infty} \frac{1}{x} = 0
+$$
