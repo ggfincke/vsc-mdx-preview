@@ -111,7 +111,7 @@ async function evaluateTrusted(
   const { webviewHandle } = preview;
 
   debug('[EVALUATE] Transforming entry...');
-  const { code } = await transformEntry(text, fsPath, preview);
+  const { code, frontmatter } = await transformEntry(text, fsPath, preview);
   debug(`[EVALUATE] Transform complete, code length: ${code.length}`);
 
   // use async fs.promises.realpath instead of sync version
@@ -121,7 +121,7 @@ async function evaluateTrusted(
   debug(`[EVALUATE] Dependencies: ${entryFileDependencies.join(', ')}`);
 
   debug('[EVALUATE] Calling webviewHandle.updatePreview');
-  webviewHandle.updatePreview(code, entryFilePath, entryFileDependencies);
+  webviewHandle.updatePreview(code, entryFilePath, entryFileDependencies, frontmatter);
   debug('[EVALUATE] updatePreview called');
 }
 
@@ -132,10 +132,10 @@ async function evaluateSafe(preview: Preview, text: string): Promise<void> {
 
   // compile MDX to safe HTML (no code execution)
   debug('[EVALUATE] Compiling to safe HTML...');
-  const html = await compileToSafeHTML(text);
+  const { html, frontmatter } = await compileToSafeHTML(text);
   debug(`[EVALUATE] Safe HTML compiled, length: ${html.length}`);
 
   debug('[EVALUATE] Calling webviewHandle.updatePreviewSafe');
-  webviewHandle.updatePreviewSafe(html);
+  webviewHandle.updatePreviewSafe(html, frontmatter);
   debug('[EVALUATE] updatePreviewSafe called');
 }

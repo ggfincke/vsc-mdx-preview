@@ -5,15 +5,25 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMdx from 'remark-mdx';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import remarkGithubAlerts from './remark-github-alerts';
 import remarkRehype from 'remark-rehype';
 import rehypeSourcepos from './rehype-sourcepos';
 import rehypeMermaidPlaceholder from './rehype-mermaid-placeholder';
+import rehypeKatex from 'rehype-katex';
+import rehypeShiki from './rehype-shiki';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import type { Root, Parent, RootContent } from 'mdast';
 import matter from 'gray-matter';
+
+// result type for Safe Mode HTML compilation (includes frontmatter)
+export interface SafeHTMLResult {
+  html: string;
+  frontmatter: Record<string, unknown>;
+}
 
 // MDX JSX element node w/ name property
 interface MdxJsxElement {
@@ -101,21 +111,29 @@ function remarkStripMdx() {
 }
 
 // * compile MDX to safe static HTML (strips frontmatter, parses AST, removes dangerous nodes, converts to HTML)
-export async function compileToSafeHTML(mdxText: string): Promise<string> {
-  // strip frontmatter
-  const { content } = matter(mdxText);
+export async function compileToSafeHTML(mdxText: string): Promise<SafeHTMLResult> {
+  // extract frontmatter before compilation
+  const { content, data: frontmatter } = matter(mdxText);
 
   // process through unified pipeline
   const result = await unified()
     .use(remarkParse)
     .use(remarkMdx)
     .use(remarkStripMdx)
+    // transform GitHub-style blockquote alerts
+    .use(remarkGithubAlerts)
+    // parse math expressions ($...$ and $$...$$)
+    .use(remarkMath)
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true })
     // add sourcepos for scroll sync (must be before slug)
     .use(rehypeSourcepos)
     // convert mermaid code blocks to placeholders for client-side rendering
     .use(rehypeMermaidPlaceholder)
+    // render LaTeX math expressions
+    .use(rehypeKatex)
+    // syntax highlighting with Shiki
+    .use(rehypeShiki)
     // add heading anchors for TOC support
     .use(rehypeSlug)
     .use(rehypeAutolinkHeadings, {
@@ -128,5 +146,8 @@ export async function compileToSafeHTML(mdxText: string): Promise<string> {
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(content);
 
-  return String(result);
+  return {
+    html: String(result),
+    frontmatter: frontmatter as Record<string, unknown>,
+  };
 }

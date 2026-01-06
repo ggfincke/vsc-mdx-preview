@@ -2,7 +2,7 @@
   "name": "vscode-mdx-preview",
   "displayName": "MDX Preview",
   "description": "MDX Preview",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [

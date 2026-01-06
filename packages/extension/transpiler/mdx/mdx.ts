@@ -6,6 +6,12 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeSourcepos from './rehype-sourcepos';
 import rehypeMermaidPlaceholder from './rehype-mermaid-placeholder';
+import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
+import rehypeKatex from 'rehype-katex';
+import rehypeRaw from './rehype-raw';
+import rehypeShiki from './rehype-shiki';
+import remarkGithubAlerts from './remark-github-alerts';
 import hasDefaultExport from './hasDefaultExport';
 import matter from 'gray-matter';
 import * as path from 'path';
@@ -84,12 +90,20 @@ export const mdxTranspileAsync = async (
     jsx: false,
     jsxRuntime: 'automatic',
     jsxImportSource: 'react',
-    // add sourcepos for scroll sync (must be before slug)
-    // add heading anchors for TOC support
+    // remark plugins: GFM (tables, strikethrough, task lists), GitHub callouts & math
+    remarkPlugins: [remarkGithubAlerts, remarkGfm, remarkMath],
+    // rehype plugins: add sourcepos, mermaid, math rendering, syntax highlighting, heading anchors
     rehypePlugins: [
       rehypeSourcepos,
       // convert mermaid code blocks to placeholders for client-side rendering
       rehypeMermaidPlaceholder,
+      // render LaTeX math expressions
+      rehypeKatex,
+      // convert raw HTML from KaTeX to JSX
+      rehypeRaw,
+      // syntax highlighting with Shiki
+      rehypeShiki,
+      // heading anchors for TOC support
       rehypeSlug,
       [
         rehypeAutolinkHeadings,

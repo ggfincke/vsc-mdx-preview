@@ -5,6 +5,22 @@ All notable changes to the MDX Preview extension will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.4] - 2026-01-06
+
+### Added
+
+- **Safe Mode Parity**: Syntax highlighting, math expressions, and GitHub alerts now work in Safe Mode
+- **Frontmatter Passthrough**: Both Safe and Trusted modes now pass frontmatter to the webview
+
+### Changed
+
+- Updated transpiler pipelines with remark-math, rehype-katex, rehype-shiki, and remark-github-alerts
+- `compileToSafeHTML` now returns `SafeHTMLResult` with html and frontmatter fields
+
+### Fixed
+
+- Mermaid placeholder test assertions updated for container-based rendering
+
 ## [1.0.0-alpha.3] - 2025-01-04
 
 ### Added

@@ -84,7 +84,7 @@ sequenceDiagram
     expect(idMatches![0]).not.toBe(idMatches![1]);
   });
 
-  it('includes loading placeholder in output', async () => {
+  it('includes placeholder container with mermaid data in output', async () => {
     const markdown = `\`\`\`mermaid
 pie title Test
     "A" : 50
@@ -93,7 +93,10 @@ pie title Test
 `;
     const html = await compile(markdown);
 
-    expect(html).toContain('mermaid-loading');
-    expect(html).toContain('Loading diagram...');
+    // server-side plugin creates placeholder container with data attributes
+    // client-side MermaidRenderer component handles loading state and rendering
+    expect(html).toContain('mermaid-container');
+    expect(html).toContain('data-mermaid-chart');
+    expect(html).toContain('pie title Test');
   });
 });
