@@ -57,7 +57,7 @@ describe('htmlToHastFragment', () => {
     expect(rawCount).toBe(0);
   });
 
-  it('converts all style properties to objects', () => {
+  it('preserves style properties as strings for rehype-stringify', () => {
     const html = `<pre style="background-color: #1e1e1e">
       <code><span style="color: #569cd6">test</span></code>
     </pre>`;
@@ -74,6 +74,8 @@ describe('htmlToHastFragment', () => {
       });
     }
 
-    expect(stringStyleCount).toBe(0);
+    // styles should remain as strings for HTML output
+    // pre & span both have style attrs
+    expect(stringStyleCount).toBe(2);
   });
 });

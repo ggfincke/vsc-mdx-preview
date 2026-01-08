@@ -1,14 +1,12 @@
-/**
- * MDX Compilation Tests
- *
- * Note: The full transpiler tests (transpiler.test.ts) are excluded from Vitest
- * because @mdx-js/mdx v3 is ESM-only and has complex module resolution.
- *
- * The transpiler is tested via integration tests when running the extension
- * in VS Code (see test/runTest.ts).
- *
- * This file tests the helper functions that don't require @mdx-js/mdx imports.
- */
+// packages/extension/test/mdx-compile.test.ts
+// * MDX compilation tests
+//
+// ? note: full transpiler tests (transpiler.test.ts) are excluded from Vitest
+// because @mdx-js/mdx v3 is ESM-only & has complex module resolution.
+// the transpiler is tested via integration tests when running the extension
+// in VS Code (see test/runTest.ts).
+//
+// this file tests helper functions that don't require @mdx-js/mdx imports.
 
 import { describe, test, expect } from 'vitest';
 import * as path from 'path';
@@ -71,12 +69,10 @@ This is plain MDX content.`;
 });
 
 describe('MDX 3 Output Format', () => {
-  /**
-   * These tests document the expected output format from MDX 3 compilation.
-   * The wrapper should export a component and avoid touching the DOM.
-   */
+  // these tests document the expected output format from MDX 3 compilation
+  // the wrapper should export a component & avoid touching the DOM
 
-  test('wrapper exports component and avoids DOM rendering', () => {
+  test('wrapper exports component & avoids DOM rendering', () => {
     const expectedPatterns = [
       "import React from 'react'",
       'import { jsx as _jsx',

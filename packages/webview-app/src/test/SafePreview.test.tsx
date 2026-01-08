@@ -1,5 +1,5 @@
 // packages/webview-app/src/test/SafePreview.test.tsx
-// XSS and sanitization tests for Safe Mode rendering
+// XSS & sanitization tests for Safe Mode rendering
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
@@ -32,7 +32,8 @@ describe('SafePreview XSS Prevention', () => {
       render(<SafePreviewRenderer html={maliciousHTML} />);
 
       const button = document.querySelector('button');
-      expect(button).not.toBeInTheDocument(); // button not in allowed tags
+      // button not in allowed tags
+      expect(button).not.toBeInTheDocument();
     });
 
     test('strips onerror handlers on images', () => {
@@ -94,7 +95,7 @@ describe('SafePreview XSS Prevention', () => {
       render(<SafePreviewRenderer html={maliciousHTML} />);
 
       const link = document.querySelector('a');
-      // Should strip or sanitize the data URL with script
+      // should strip or sanitize the data URL w/ script
       if (link?.getAttribute('href')) {
         expect(link.getAttribute('href')).not.toContain('script');
       }
@@ -203,7 +204,7 @@ describe('SafePreview XSS Prevention', () => {
     });
 
     test('strips non-allowed attributes', () => {
-      // DOMPurify allows data-* by default, so test with a non-allowed attribute
+      // DOMPurify allows data-* by default, so test w/ a non-allowed attribute
       const html = '<p draggable="true" contenteditable="true">Text</p>';
       render(<SafePreviewRenderer html={html} />);
 

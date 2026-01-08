@@ -1,3 +1,6 @@
+// packages/extension/test/CSP.test.ts
+// unit tests for Content Security Policy generation
+
 import { describe, test, expect } from 'vitest';
 import { createMockWebview } from './__mocks__/vscode';
 import { generateNonce, getCSP } from '../security/CSP';

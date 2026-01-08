@@ -1,14 +1,11 @@
-/**
- * Tests for module-fetcher.ts image URI handling
- *
- * These tests verify:
- * 1. The source code uses preview.getWebviewUri() for images (not vscode-resource://)
- * 2. There's proper error handling when webview is not initialized
- *
- * Note: We test the source code content directly because module-fetcher.ts
- * has dependencies (typescript, sass) that are difficult to mock in unit tests.
- * Integration testing via the VS Code extension host covers actual behavior.
- */
+// packages/extension/test/module-fetcher.test.ts
+// tests for module-fetcher.ts image URI handling - verifies:
+// 1. source code uses preview.getWebviewUri() for images (not vscode-resource://)
+// 2. there's proper error handling when webview is not initialized
+//
+// ? note: we test source code content directly because module-fetcher.ts
+// has dependencies (typescript, sass) that are difficult to mock in unit tests.
+// integration testing via VS Code extension host covers actual behavior.
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';

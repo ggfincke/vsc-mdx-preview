@@ -72,7 +72,8 @@ describe('MermaidRenderer', () => {
 
     test('container is hidden while loading', () => {
       mockMermaid.default.render.mockImplementation(
-        () => new Promise(() => {}) // never resolves
+        // never resolves
+        () => new Promise(() => {})
       );
 
       const { container } = renderWithTheme(
@@ -102,7 +103,8 @@ describe('MermaidRenderer', () => {
   describe('loading state', () => {
     test('shows loading overlay initially', () => {
       mockMermaid.default.render.mockImplementation(
-        () => new Promise(() => {}) // never resolves
+        // never resolves
+        () => new Promise(() => {})
       );
 
       renderWithTheme(<MermaidRenderer code="flowchart TD" id="test-4" />);

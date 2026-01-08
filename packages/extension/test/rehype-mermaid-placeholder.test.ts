@@ -93,8 +93,8 @@ pie title Test
 `;
     const html = await compile(markdown);
 
-    // server-side plugin creates placeholder container with data attributes
-    // client-side MermaidRenderer component handles loading state and rendering
+    // server-side plugin creates placeholder container w/ data attributes
+    // client-side MermaidRenderer component handles loading state & rendering
     expect(html).toContain('mermaid-container');
     expect(html).toContain('data-mermaid-chart');
     expect(html).toContain('pie title Test');

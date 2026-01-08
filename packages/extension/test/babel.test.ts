@@ -1,11 +1,8 @@
-/**
- * Tests for babel.ts configuration
- *
- * These tests verify:
- * 1. Deprecated plugin-proposal-* plugins are NOT used (except export-default-from)
- * 2. Standard plugin-transform-* plugins ARE used
- * 3. Removed plugins are not present
- */
+// packages/extension/test/babel.test.ts
+// tests for babel.ts configuration - verifies:
+// 1. deprecated plugin-proposal-* plugins are NOT used (except export-default-from)
+// 2. standard plugin-transform-* plugins ARE used
+// 3. removed plugins are not present
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';

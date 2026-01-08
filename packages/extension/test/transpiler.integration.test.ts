@@ -1,3 +1,6 @@
+// packages/extension/test/transpiler.integration.test.ts
+// integration tests for MDX transpiler (layout injection, frontmatter extraction)
+
 import { describe, test, expect } from 'vitest';
 import * as vscode from 'vscode';
 import { InMemoryDocument } from './InMemoryDocument';
@@ -28,8 +31,8 @@ describe('Transpiler Tests', function () {
     );
   });
 
-  // with white background config adds the necessary params to layout
-  test('Transpiles entry mdx file with vscode markdown styles and white background config (no default export)', async function () {
+  // w/ white background config adds the necessary params to layout
+  test('Transpiles entry mdx file w/ vscode markdown styles & white background config (no default export)', async function () {
     const content = 'hello';
     const mockDoc = new InMemoryDocument(vscode.Uri.file('test.md'), content);
     const mockPreview = new Preview(mockDoc);
@@ -45,7 +48,7 @@ describe('Transpiler Tests', function () {
     expect(result.code).toContain('createLayout({ forceLightTheme: true })');
   });
 
-  test('Transpiles entry mdx file with no vscode markdown styles (no default export)', async function () {
+  test('Transpiles entry mdx file w/ no vscode markdown styles (no default export)', async function () {
     const content = 'hello';
     const mockDoc = new InMemoryDocument(vscode.Uri.file('test.md'), content);
     const mockPreview = new Preview(mockDoc);
@@ -58,7 +61,7 @@ describe('Transpiler Tests', function () {
   });
 
   // custom layout file takes precedence over vscode markdown styles
-  test('Transpiles entry mdx file with custom layout file (no default export)', async function () {
+  test('Transpiles entry mdx file w/ custom layout file (no default export)', async function () {
     const content = 'hello';
     const mockDoc = new InMemoryDocument(vscode.Uri.file('test.md'), content);
     const mockPreview = new Preview(mockDoc);
@@ -84,7 +87,7 @@ describe('Transpiler Tests', function () {
   });
 
   // default export takes precedence over custom layout file or vscode markdown styles
-  test('Transpiles entry mdx file (with default export)', async function () {
+  test('Transpiles entry mdx file (w/ default export)', async function () {
     const content = `import Layout from './layout';\n\nexport default Layout;\n\nhello`;
     const mockDoc = new InMemoryDocument(vscode.Uri.file('test.md'), content);
     const mockPreview = new Preview(mockDoc);

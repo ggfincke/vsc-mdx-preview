@@ -8,7 +8,7 @@ import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
 import rehypeSourcepos from '../transpiler/mdx/rehype-sourcepos';
 
-// helper to compile markdown and extract HTML
+// helper to compile markdown & extract HTML
 async function processMarkdown(md: string): Promise<string> {
   const result = await unified()
     .use(remarkParse)
@@ -129,7 +129,7 @@ Paragraph on line 3.`;
       const md = `> - nested
 >   - deeply`;
       const result = await processMarkdown(md);
-      // should not throw and should contain blockquote
+      // should not throw & should contain blockquote
       expect(result).toContain('<blockquote');
     });
   });

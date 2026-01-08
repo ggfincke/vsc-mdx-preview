@@ -1,3 +1,6 @@
+// packages/extension/test/security.test.ts
+// unit tests for filesystem path validation & security checks
+
 import { describe, test, expect, beforeEach } from 'vitest';
 import { __setMockWorkspaceFolders, __resetMocks } from './__mocks__/vscode';
 import {
@@ -8,7 +11,8 @@ import {
 describe('checkFsPath', () => {
   beforeEach(() => {
     __resetMocks();
-    handleDidChangeWorkspaceFolders(); // Clear cache
+    // clear cache
+    handleDidChangeWorkspaceFolders();
   });
 
   describe('workspace boundary enforcement', () => {

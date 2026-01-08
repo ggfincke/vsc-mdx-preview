@@ -1,3 +1,6 @@
+// packages/extension/test/TrustManager.test.ts
+// unit tests for TrustManager (workspace trust, script enablement, event handling)
+
 import { vi, describe, test, expect, beforeEach, afterEach } from 'vitest';
 import {
   __setMockTrusted,

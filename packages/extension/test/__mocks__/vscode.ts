@@ -1,7 +1,5 @@
-/**
- * VS Code API mock for Vitest tests.
- * Provides minimal implementations of VS Code APIs used by the extension.
- */
+// packages/extension/test/__mocks__/vscode.ts
+// VS Code API mock for Vitest tests - provides minimal implementations of VS Code APIs
 import { vi } from 'vitest';
 
 // Mock workspace trust state - can be modified in tests
@@ -161,10 +159,8 @@ export const window = {
   showErrorMessage: vi.fn(),
 };
 
-/**
- * Mock webview URI class that mimics VS Code's webview URI format.
- * Used by asWebviewUri to return a proper URI-like object.
- */
+// mock webview URI class that mimics VS Code's webview URI format
+// used by asWebviewUri to return a proper URI-like object
 class MockWebviewUri {
   private readonly _fsPath: string;
 

@@ -1,8 +1,7 @@
-// From https://github.com/Microsoft/vscode/blob/e325cce9bc3a7f3c1883dbd7c7eab31049b526db/extensions/markdown-language-features/src/test/inMemoryDocument.ts
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+// packages/extension/test/InMemoryDocument.ts
+// mock TextDocument for unit tests (from VS Code markdown-language-features)
+// https://github.com/Microsoft/vscode/blob/e325cce9bc3a7f3c1883dbd7c7eab31049b526db/extensions/markdown-language-features/src/test/inMemoryDocument.ts
+// Copyright (c) Microsoft Corporation. Licensed under the MIT License.
 
 import * as vscode from 'vscode';
 
