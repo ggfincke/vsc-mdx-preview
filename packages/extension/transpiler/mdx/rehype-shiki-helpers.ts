@@ -1,9 +1,8 @@
 // packages/extension/transpiler/mdx/rehype-shiki-helpers.ts
 // helpers for rehype-shiki: HTML->HAST parsing & style normalization
 
-import type { Element, ElementContent, Root } from 'hast';
+import type { ElementContent, Root } from 'hast';
 import { fromHtmlIsomorphic } from 'hast-util-from-html-isomorphic';
-import { visit } from 'unist-util-visit';
 
 export type StyleObject = Record<string, string>;
 
@@ -35,18 +34,9 @@ export function styleStringToObject(style: string): StyleObject {
   return out;
 }
 
-// parse HTML string into HAST fragment w/ style normalization
+// parse HTML string into HAST fragment
+// ! keep styles as strings for rehype-stringify compatibility
 export function htmlToHastFragment(html: string): ElementContent[] {
   const root = fromHtmlIsomorphic(html, { fragment: true }) as unknown as Root;
-
-  visit(root, 'element', (node) => {
-    const el = node as Element;
-    const props = (el.properties ??= {}) as Record<string, unknown>;
-
-    if (typeof props.style === 'string') {
-      props.style = styleStringToObject(props.style);
-    }
-  });
-
   return root.children as ElementContent[];
 }

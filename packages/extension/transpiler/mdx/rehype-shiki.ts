@@ -8,8 +8,8 @@ import {
   createHighlighter,
   type Highlighter,
   type BundledLanguage,
-  type BundledTheme,
 } from 'shiki';
+import { createCssVariablesTheme } from 'shiki/core';
 
 // common languages to pre-bundle (others fall back to plaintext)
 const COMMON_LANGUAGES: BundledLanguage[] = [
@@ -38,8 +38,14 @@ const COMMON_LANGUAGES: BundledLanguage[] = [
   'diff',
 ];
 
-// themes to bundle (dark-plus & light-plus for VS Code compatibility)
-const THEMES: BundledTheme[] = ['dark-plus', 'light-plus'];
+// Create CSS variables theme for dynamic theming
+// This theme outputs CSS variables instead of hardcoded colors
+const cssVariablesTheme = createCssVariablesTheme({
+  name: 'css-variables',
+  variablePrefix: '--shiki-',
+  variableDefaults: {},
+  fontStyle: true,
+});
 
 // cached highlighter instance
 let highlighterPromise: Promise<Highlighter> | null = null;
@@ -47,7 +53,7 @@ let highlighterPromise: Promise<Highlighter> | null = null;
 async function getHighlighter(): Promise<Highlighter> {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighter({
-      themes: THEMES,
+      themes: [cssVariablesTheme],
       langs: COMMON_LANGUAGES,
     });
   }
@@ -205,20 +211,15 @@ export default function rehypeShiki() {
         // use supported language or fall back to plaintext
         const highlightLang = isLanguageSupported(lang) ? lang : 'text';
 
-        // generate HTML for both themes (client will show appropriate one)
-        const htmlDark = highlighter.codeToHtml(code, {
+        // generate HTML w/ CSS variables (themeable via external CSS)
+        const html = highlighter.codeToHtml(code, {
           lang: highlightLang,
-          theme: 'dark-plus',
-        });
-        const htmlLight = highlighter.codeToHtml(code, {
-          lang: highlightLang,
-          theme: 'light-plus',
+          theme: 'css-variables',
         });
 
-        // create wrapper with both themed versions
+        // create wrapper w/ code block
         const wrapper = createCodeBlockWrapper({
-          htmlDark,
-          htmlLight,
+          html,
           lang,
           meta,
           code,
@@ -232,15 +233,14 @@ export default function rehypeShiki() {
   };
 }
 
-// create wrapper element w/ themed code blocks, title bar, etc.
+// create wrapper element w/ code block, title bar, etc.
 function createCodeBlockWrapper(options: {
-  htmlDark: string;
-  htmlLight: string;
+  html: string;
   lang: string;
   meta: CodeMeta;
   code: string;
 }): Element {
-  const { htmlDark, htmlLight, lang, meta, code } = options;
+  const { html, lang, meta, code } = options;
 
   const children: ElementContent[] = [];
 
@@ -254,7 +254,7 @@ function createCodeBlockWrapper(options: {
     });
   }
 
-  // code container w/ both themed versions
+  // code container w/ CSS variable-based highlighting
   const codeContainer: Element = {
     type: 'element',
     tagName: 'div',
@@ -264,20 +264,12 @@ function createCodeBlockWrapper(options: {
         meta.showLineNumbers ? 'with-line-numbers' : '',
       ].filter(Boolean),
       'data-language': lang,
-      'data-code': code, // for copy button
+      // for copy button
+      'data-code': code,
     },
     children: [
-      // dark theme version (parsed to HAST, no raw nodes)
-      ...htmlToHastFragment(
-        htmlDark.replace('<pre ', '<pre data-theme="dark" class="shiki-dark" ')
-      ),
-      // light theme version (parsed to HAST, no raw nodes)
-      ...htmlToHastFragment(
-        htmlLight.replace(
-          '<pre ',
-          '<pre data-theme="light" class="shiki-light" '
-        )
-      ),
+      // single themed version using CSS variables
+      ...htmlToHastFragment(html),
     ],
   };
 
