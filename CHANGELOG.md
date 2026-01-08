@@ -5,6 +5,24 @@ All notable changes to the MDX Preview extension will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.5] - 2026-01-07
+
+### Added
+
+- **Preview Themes**: MPE-style preview themes (GitHub, Atom, Solarized, etc.) via `mdx-preview.preview.previewTheme` setting
+- **Code Block Themes**: Configurable syntax highlighting themes (24 options) via `mdx-preview.preview.codeBlockTheme` setting
+- **Theme Commands**: Quick pick commands for selecting preview and code block themes
+- **Auto Theme Switching**: Automatically switch between light/dark themes based on VS Code color theme
+
+### Changed
+
+- **Shiki Theming**: Switched from bundled themes to CSS variable-based theming for flexible customization
+- **CSS Styling**: Updated preview CSS to better mirror VS Code's native markdown preview
+
+### Removed
+
+- **Scroll Sync**: Removed bidirectional scroll synchronization feature (simplifies architecture)
+
 ## [1.0.0-alpha.4] - 2026-01-06
 
 ### Added
