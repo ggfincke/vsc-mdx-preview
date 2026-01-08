@@ -15,6 +15,14 @@ import { TrustManager, TrustState } from './security/TrustManager';
 import { initWebviewAppHTMLResources } from './preview/webview-manager';
 import { initWorkspaceHandlers } from './workspace-manager';
 import { info, debug, showOutput } from './logging';
+import {
+  PREVIEW_THEMES,
+  CODE_BLOCK_THEMES,
+  PREVIEW_THEME_LABELS,
+  CODE_BLOCK_THEME_LABELS,
+  type PreviewTheme,
+  type CodeBlockTheme,
+} from './themes';
 
 // status bar item for showing preview mode
 let statusBarItem: vscode.StatusBarItem | undefined;
@@ -186,10 +194,6 @@ export async function activate(
   initWorkspaceHandlers(context);
   debug('[ACTIVATE] Workspace handlers initialized');
 
-  // initialize scroll sync
-  PreviewManager.getInstance().initScrollSync(context);
-  debug('[ACTIVATE] Scroll sync initialized');
-
   info('Extension activated');
 
   // show output channel automatically for debugging
@@ -292,7 +296,7 @@ export async function activate(
     }
   );
 
-  // create and show status bar item
+  // create & show status bar item
   statusBarItem = createStatusBarItem();
   context.subscriptions.push(statusBarItem);
 
@@ -316,13 +320,90 @@ export async function activate(
   // show status bar initially if MDX file is open
   showStatusBarForMdxPreview();
 
+  // listen for VS Code color theme changes to auto-switch preview theme
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveColorTheme(() => {
+      debug('[THEME] VS Code color theme changed, refreshing previews');
+      const previewManager = PreviewManager.getInstance();
+      previewManager.refreshAllPreviews();
+    })
+  );
+
+  // command to select preview theme
+  const selectPreviewThemeCommand = vscode.commands.registerCommand(
+    'mdx-preview.commands.selectPreviewTheme',
+    async () => {
+      debug('[CMD] selectPreviewTheme command triggered');
+
+      const config = vscode.workspace.getConfiguration('mdx-preview');
+      const currentTheme = config.get<PreviewTheme>('preview.previewTheme', 'none');
+
+      const items = PREVIEW_THEMES.map((theme) => ({
+        label: PREVIEW_THEME_LABELS[theme],
+        description: theme === currentTheme ? '(current)' : undefined,
+        theme,
+      }));
+
+      const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: 'Select preview theme',
+        matchOnDescription: true,
+      });
+
+      if (selected) {
+        await config.update(
+          'preview.previewTheme',
+          selected.theme,
+          vscode.ConfigurationTarget.Global
+        );
+        // refresh previews to apply theme
+        const previewManager = PreviewManager.getInstance();
+        previewManager.refreshAllPreviews();
+      }
+    }
+  );
+
+  // command to select code block theme
+  const selectCodeBlockThemeCommand = vscode.commands.registerCommand(
+    'mdx-preview.commands.selectCodeBlockTheme',
+    async () => {
+      debug('[CMD] selectCodeBlockTheme command triggered');
+
+      const config = vscode.workspace.getConfiguration('mdx-preview');
+      const currentTheme = config.get<CodeBlockTheme>('preview.codeBlockTheme', 'auto');
+
+      const items = CODE_BLOCK_THEMES.map((theme) => ({
+        label: CODE_BLOCK_THEME_LABELS[theme],
+        description: theme === currentTheme ? '(current)' : undefined,
+        theme,
+      }));
+
+      const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: 'Select code block theme',
+        matchOnDescription: true,
+      });
+
+      if (selected) {
+        await config.update(
+          'preview.codeBlockTheme',
+          selected.theme,
+          vscode.ConfigurationTarget.Global
+        );
+        // refresh previews to apply theme
+        const previewManager = PreviewManager.getInstance();
+        previewManager.refreshAllPreviews();
+      }
+    }
+  );
+
   context.subscriptions.push(
     openPreviewCommand,
     refreshPreviewCommand,
     toggleUseVscodeMarkdownStylesCommand,
     toggleUseWhiteBackgroundCommand,
     toggleChangeSecuritySettings,
-    toggleScriptsCommand
+    toggleScriptsCommand,
+    selectPreviewThemeCommand,
+    selectCodeBlockThemeCommand
   );
 
   debug('[ACTIVATE] Extension activation complete');

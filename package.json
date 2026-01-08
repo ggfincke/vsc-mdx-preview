@@ -102,6 +102,16 @@
         "title": "Toggle Script Execution",
         "category": "MDX",
         "icon": "$(shield)"
+      },
+      {
+        "command": "mdx-preview.commands.selectPreviewTheme",
+        "title": "Select Preview Theme",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.selectCodeBlockTheme",
+        "title": "Select Code Block Theme",
+        "category": "MDX"
       }
     ],
     "menus": {
@@ -246,30 +256,116 @@
           "description": "Show table of contents sidebar in the preview",
           "scope": "resource"
         },
-        "mdx-preview.preview.scrollSync": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable bidirectional scroll synchronization between editor and preview",
-          "scope": "resource"
-        },
-        "mdx-preview.preview.scrollBehavior": {
-          "type": "string",
-          "enum": [
-            "instant",
-            "smooth"
-          ],
-          "default": "instant",
-          "description": "Scroll behavior when synchronizing editor and preview",
-          "enumDescriptions": [
-            "Jump immediately to the target position",
-            "Animate smoothly to the target position"
-          ],
-          "scope": "resource"
-        },
         "mdx-preview.preview.showFrontmatter": {
           "type": "boolean",
           "default": true,
           "description": "Show frontmatter metadata at the top of the preview (collapsed by default)",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.previewTheme": {
+          "type": "string",
+          "default": "none",
+          "enum": [
+            "github-light",
+            "github-dark",
+            "atom-dark",
+            "atom-light",
+            "atom-material",
+            "one-dark",
+            "one-light",
+            "solarized-dark",
+            "solarized-light",
+            "gothic",
+            "medium",
+            "monokai",
+            "newsprint",
+            "night",
+            "none",
+            "vue"
+          ],
+          "enumDescriptions": [
+            "GitHub Light theme",
+            "GitHub Dark theme",
+            "Atom Dark theme",
+            "Atom Light theme",
+            "Atom Material theme",
+            "One Dark theme",
+            "One Light theme",
+            "Solarized Dark theme",
+            "Solarized Light theme",
+            "Gothic theme",
+            "Medium theme",
+            "Monokai theme",
+            "Newsprint theme",
+            "Night theme",
+            "No theme (inherit)",
+            "Vue theme"
+          ],
+          "markdownDescription": "Preview theme for markdown/MDX content rendering. Themes from [Markdown Preview Enhanced](https://shd101wyy.github.io/markdown-preview-enhanced/).",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.codeBlockTheme": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "default",
+            "atom-dark",
+            "atom-light",
+            "atom-material",
+            "coy",
+            "darcula",
+            "dark",
+            "funky",
+            "github",
+            "github-dark",
+            "hopscotch",
+            "monokai",
+            "okaidia",
+            "one-dark",
+            "one-light",
+            "pen-paper-coffee",
+            "pojoaque",
+            "solarized-dark",
+            "solarized-light",
+            "twilight",
+            "vs",
+            "vue",
+            "xonokai"
+          ],
+          "enumDescriptions": [
+            "Auto-select based on preview theme",
+            "Default syntax highlighting",
+            "Atom Dark syntax theme",
+            "Atom Light syntax theme",
+            "Atom Material syntax theme",
+            "Coy syntax theme",
+            "Darcula syntax theme",
+            "Dark syntax theme",
+            "Funky syntax theme",
+            "GitHub syntax theme",
+            "GitHub Dark syntax theme",
+            "Hopscotch syntax theme",
+            "Monokai syntax theme",
+            "Okaidia syntax theme",
+            "One Dark syntax theme",
+            "One Light syntax theme",
+            "Pen Paper Coffee syntax theme",
+            "Pojoaque syntax theme",
+            "Solarized Dark syntax theme",
+            "Solarized Light syntax theme",
+            "Twilight syntax theme",
+            "VS syntax theme",
+            "Vue syntax theme",
+            "Xonokai syntax theme"
+          ],
+          "markdownDescription": "Code block syntax highlighting theme. When set to `auto`, automatically selects a matching theme based on the preview theme.",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.autoTheme": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Automatically switch between light/dark preview themes based on VS Code's current color theme.",
           "scope": "resource"
         }
       }
