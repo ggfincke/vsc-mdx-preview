@@ -28,9 +28,8 @@ import type {
   PreviewContent,
   PreviewError,
   TrustedPreviewContent,
-  ScrollSyncConfig,
 } from './types';
-import { useScrollSync, parseSourcepos } from './hooks/useScrollSync';
+import { useTheme } from './context/ThemeContext';
 import './App.css';
 
 debug('[APP] App.tsx module loaded');
@@ -40,12 +39,6 @@ const INITIAL_TRUST_STATE: TrustState = {
   workspaceTrusted: false,
   scriptsEnabled: false,
   canExecute: false,
-};
-
-// default scroll sync config
-const DEFAULT_SCROLL_SYNC_CONFIG: ScrollSyncConfig = {
-  enabled: true,
-  behavior: 'instant',
 };
 
 // app state interface
@@ -58,8 +51,6 @@ interface AppState {
   evaluatedComponent: ComponentType | null;
   // whether preview content is stale
   isStale: boolean;
-  // scroll sync configuration
-  scrollSyncConfig: ScrollSyncConfig;
 }
 
 function App() {
@@ -72,7 +63,6 @@ function App() {
     isLoading: true,
     evaluatedComponent: null,
     isStale: false,
-    scrollSyncConfig: DEFAULT_SCROLL_SYNC_CONFIG,
   });
 
   // track if we've completed initial setup
@@ -80,6 +70,9 @@ function App() {
 
   // ref for content container (used by scroll sync)
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // get theme context for MPE preview themes
+  const { previewTheme, setPreviewThemeState } = useTheme();
 
   // set trust state (called by RPC handler)
   const setTrustState = useCallback((trustState: TrustState) => {
@@ -124,7 +117,8 @@ function App() {
         },
         error: null,
         isLoading: false,
-        evaluatedComponent: null, // will be set after evaluation
+        // will be set after evaluation
+        evaluatedComponent: null,
       }));
     },
     []
@@ -172,21 +166,6 @@ function App() {
       isStale,
     }));
   }, []);
-
-  // set scroll sync configuration
-  const setScrollSyncConfig = useCallback((config: ScrollSyncConfig) => {
-    debug('[APP] setScrollSyncConfig called', config);
-    setState((prev) => ({
-      ...prev,
-      scrollSyncConfig: config,
-    }));
-  }, []);
-
-  // initialize scroll sync hook
-  const { handleScrollToLine } = useScrollSync({
-    contentRef,
-    config: state.scrollSyncConfig,
-  });
 
   // handle link clicks - intercept Ctrl/Cmd+clicks on anchors & route appropriately (regular clicks not intercepted for text selection)
   const handleLinkClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
@@ -252,54 +231,6 @@ function App() {
     }
   }, []);
 
-  // handle click-to-source - Alt+click on element w/ data-sourcepos jumps to that line in editor
-  const handleClickToSource = useCallback(
-    (event: MouseEvent<HTMLDivElement>) => {
-      // require Alt key for click-to-source (avoids interfering with text selection)
-      if (!event.altKey) {
-        return;
-      }
-
-      const target = event.target as HTMLElement;
-
-      // find closest element with data-sourcepos attribute
-      const sourceElement = target.closest('[data-sourcepos]');
-      if (!sourceElement) {
-        return;
-      }
-
-      const sourcepos = sourceElement.getAttribute('data-sourcepos');
-      if (!sourcepos) {
-        return;
-      }
-
-      const line = parseSourcepos(sourcepos);
-      if (line === null) {
-        return;
-      }
-
-      event.preventDefault();
-      debug(`[APP] Alt+click to source: line ${line}`);
-      ExtensionHandle.revealLine(line);
-    },
-    []
-  );
-
-  // combined click handler for links & click-to-source
-  const handleContentClick = useCallback(
-    (event: MouseEvent<HTMLDivElement>) => {
-      // try click-to-source first (Alt+click)
-      if (event.altKey) {
-        handleClickToSource(event);
-        return;
-      }
-
-      // then handle link clicks
-      handleLinkClick(event);
-    },
-    [handleLinkClick, handleClickToSource]
-  );
-
   // register RPC handlers on mount
   useEffect(() => {
     debug(
@@ -319,9 +250,8 @@ function App() {
       setTrustedContent,
       setError,
       setStale,
-      // scroll sync handlers
-      scrollToLine: handleScrollToLine,
-      setScrollSyncConfig,
+      // theme handler
+      setTheme: setPreviewThemeState,
     });
     debug('[APP] Webview handlers registered');
   }, [
@@ -330,8 +260,7 @@ function App() {
     setTrustedContent,
     setError,
     setStale,
-    handleScrollToLine,
-    setScrollSyncConfig,
+    setPreviewThemeState,
   ]);
 
   // render based on state
@@ -386,7 +315,11 @@ function App() {
   const hasFrontmatter = frontmatter && Object.keys(frontmatter).length > 0;
 
   return (
-    <div className="mdx-preview-container" onClick={handleContentClick}>
+    <div
+      className="mdx-preview-container"
+      onClick={handleLinkClick}
+      data-mpe-theme-active={previewTheme !== 'none' ? 'true' : undefined}
+    >
       <StaleIndicator isStale={isStale} />
       {!trustState.canExecute && <TrustBanner trustState={trustState} />}
       <MDXErrorBoundary

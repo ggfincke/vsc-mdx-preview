@@ -8,8 +8,8 @@
 }
 
 .mdx-preview-content {
-  padding: 16px;
-  padding-top: 40px; /* Space for mode badge */
+  padding: 0 26px;
+  padding-top: 1em;
 }
 
 /* Error Display */
@@ -127,12 +127,13 @@
   min-height: 100px;
 }
 
-/* Markdown Body Styles (VS Code compatible) */
+/* Markdown Body Styles (mirrors VS Code markdown preview) */
 .markdown-body {
+  color: var(--vscode-editor-foreground);
   font-family: var(
     --vscode-markdown-font-family,
     var(
-      --vscode-editor-font-family,
+      --markdown-font-family,
       -apple-system,
       BlinkMacSystemFont,
       'Segoe WPC',
@@ -143,14 +144,31 @@
       sans-serif
     )
   );
-  font-size: var(--vscode-markdown-font-size, 14px);
-  line-height: var(--vscode-markdown-line-height, 1.6);
-  color: var(--vscode-editor-foreground);
+  font-size: var(--vscode-markdown-font-size, var(--markdown-font-size, 14px));
+  line-height: var(
+    --vscode-markdown-line-height,
+    var(--markdown-line-height, 22px)
+  );
+  word-wrap: break-word;
 }
 
 .markdown-body.mdx-force-light {
   color: #000;
   background: #fff;
+}
+
+/* Reset margin top for elements */
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6,
+.markdown-body p,
+.markdown-body ol,
+.markdown-body ul,
+.markdown-body pre {
+  margin-top: 0;
 }
 
 .markdown-body h1,
@@ -159,80 +177,37 @@
 .markdown-body h4,
 .markdown-body h5,
 .markdown-body h6 {
+  font-weight: 600;
   margin-top: 24px;
   margin-bottom: 16px;
-  font-weight: 600;
   line-height: 1.25;
 }
 
-.markdown-body h1 {
-  font-size: 2em;
-  border-bottom: 1px solid var(--vscode-panel-border);
-  padding-bottom: 0.3em;
+body.scrollBeyondLastLine .markdown-body {
+  margin-bottom: calc(100vh - 22px);
 }
 
-.markdown-body h2 {
-  font-size: 1.5em;
-  border-bottom: 1px solid var(--vscode-panel-border);
-  padding-bottom: 0.3em;
+
+/* Prevent `sub` and `sup` elements from affecting line height */
+.markdown-body sub,
+.markdown-body sup {
+  line-height: 0;
 }
 
-.markdown-body h3 {
-  font-size: 1.25em;
+.markdown-body ul ul:first-child,
+.markdown-body ul ol:first-child,
+.markdown-body ol ul:first-child,
+.markdown-body ol ol:first-child {
+  margin-bottom: 0;
 }
 
-.markdown-body code {
-  padding: 0.2em 0.4em;
-  margin: 0;
-  font-size: 85%;
-  background-color: var(--vscode-textCodeBlock-background);
-  border-radius: 3px;
-  font-family: var(--vscode-editor-font-family, monospace);
-}
-
-.markdown-body pre {
-  padding: 16px;
-  overflow: auto;
-  font-size: 85%;
-  line-height: 1.45;
-  background-color: var(--vscode-textCodeBlock-background);
-  border-radius: 3px;
-}
-
-.markdown-body pre code {
-  padding: 0;
-  background-color: transparent;
-}
-
-.markdown-body blockquote {
-  padding: 0 1em;
-  color: var(--vscode-textBlockQuote-foreground);
-  border-left: 0.25em solid var(--vscode-textBlockQuote-border);
-  margin: 0 0 16px 0;
-}
-
-.markdown-body table {
-  border-collapse: collapse;
-  margin: 16px 0;
-}
-
-.markdown-body table th,
-.markdown-body table td {
-  padding: 6px 13px;
-  border: 1px solid var(--vscode-panel-border);
-}
-
-.markdown-body table tr:nth-child(2n) {
-  background-color: var(--vscode-textCodeBlock-background);
-}
-
-.markdown-body img {
+.markdown-body img,
+.markdown-body video {
   max-width: 100%;
-  box-sizing: content-box;
+  max-height: 100%;
 }
 
 .markdown-body a {
-  color: var(--vscode-textLink-foreground);
   text-decoration: none;
 }
 
@@ -240,22 +215,176 @@
   text-decoration: underline;
 }
 
-.markdown-body hr {
-  height: 0.25em;
-  padding: 0;
-  margin: 24px 0;
-  background-color: var(--vscode-panel-border);
-  border: 0;
+.markdown-body a:focus,
+.markdown-body input:focus,
+.markdown-body select:focus,
+.markdown-body textarea:focus {
+  outline: 1px solid -webkit-focus-ring-color;
+  outline-offset: -1px;
+}
+
+.markdown-body p {
+  margin-bottom: 16px;
+}
+
+.markdown-body li p {
+  margin-bottom: 0.7em;
 }
 
 .markdown-body ul,
 .markdown-body ol {
+  margin-bottom: 0.7em;
   padding-left: 2em;
-  margin: 0 0 16px 0;
 }
 
-.markdown-body li + li {
-  margin-top: 0.25em;
+.markdown-body hr {
+  border: 0;
+  height: 1px;
+  border-bottom: 1px solid;
+}
+
+.markdown-body h1 {
+  font-size: 2em;
+  margin-top: 0;
+  padding-bottom: 0.3em;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+.markdown-body h2 {
+  font-size: 1.5em;
+  padding-bottom: 0.3em;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}
+
+.markdown-body h3 {
+  font-size: 1.25em;
+}
+
+.markdown-body h4 {
+  font-size: 1em;
+}
+
+.markdown-body h5 {
+  font-size: 0.875em;
+}
+
+.markdown-body h6 {
+  font-size: 0.85em;
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  margin-bottom: 0.7em;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  width: max-content;
+}
+
+.markdown-body th {
+  text-align: left;
+  border-bottom: 1px solid;
+  border-bottom-color: var(--vscode-panel-border, currentColor);
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 5px 10px;
+}
+
+.markdown-body table > tbody > tr + tr > td {
+  border-top: 1px solid;
+  border-top-color: var(--vscode-panel-border, currentColor);
+}
+
+.markdown-body blockquote {
+  margin: 0;
+  padding: 0 16px 0 10px;
+  border-left-width: 5px;
+  border-left-style: solid;
+  border-radius: 2px;
+  color: var(--vscode-textBlockQuote-foreground, inherit);
+  border-left-color: var(--vscode-textBlockQuote-border, currentColor);
+  background-color: transparent;
+}
+
+.markdown-body code {
+  font-family: var(
+    --vscode-editor-font-family,
+    'SF Mono',
+    Monaco,
+    Menlo,
+    Consolas,
+    'Ubuntu Mono',
+    'Liberation Mono',
+    'DejaVu Sans Mono',
+    'Courier New',
+    monospace
+  );
+  font-size: 1em;
+  line-height: 1.5;
+}
+
+.markdown-body :not(pre) > code {
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  background-color: var(
+    --vscode-textPreformat-background,
+    rgba(127, 127, 127, 0.12)
+  );
+  color: var(--vscode-textPreformat-foreground, inherit);
+}
+
+body.wordWrap .markdown-body pre {
+  white-space: pre-wrap;
+}
+
+.markdown-body pre:not(.hljs),
+.markdown-body pre.hljs code > div {
+  padding: 16px;
+  border-radius: 3px;
+  overflow: auto;
+}
+
+.markdown-body pre code {
+  display: inline-block;
+  color: var(--vscode-editor-foreground);
+  tab-size: 4;
+  background: none;
+}
+
+/** Theming */
+.markdown-body pre {
+  background-color: var(--vscode-textCodeBlock-background);
+  border: 1px solid var(--vscode-widget-border);
+}
+
+.vscode-high-contrast .markdown-body h1 {
+  border-color: rgb(0, 0, 0);
+}
+
+.vscode-light .markdown-body th {
+  border-color: var(--vscode-panel-border, rgba(0, 0, 0, 0.69));
+}
+
+.vscode-dark .markdown-body th {
+  border-color: var(--vscode-panel-border, rgba(255, 255, 255, 0.69));
+}
+
+.vscode-light .markdown-body h1,
+.vscode-light .markdown-body h2,
+.vscode-light .markdown-body hr,
+.vscode-light .markdown-body td {
+  border-color: var(--vscode-panel-border, rgba(0, 0, 0, 0.18));
+}
+
+.vscode-dark .markdown-body h1,
+.vscode-dark .markdown-body h2,
+.vscode-dark .markdown-body hr,
+.vscode-dark .markdown-body td {
+  border-color: var(--vscode-panel-border, rgba(255, 255, 255, 0.18));
 }
 
 /* Phase 2.4: Heading anchor links */
@@ -381,4 +510,25 @@
 
 .github-alert-content p + p {
   margin-top: 8px;
+}
+
+/* MPE Theme Styles - when active, let injected theme CSS control content styling */
+
+/* Extend theme background to full viewport */
+[data-mpe-theme-active='true'] {
+  min-height: 100vh;
+}
+
+[data-mpe-theme-active='true'] .markdown-body {
+  /* Ensure MPE theme background extends to edges */
+  min-height: 100vh;
+  margin: 0;
+  padding: 16px;
+  padding-top: 40px; /* Space for mode badge */
+}
+
+/* Remove default padding when MPE theme handles it */
+[data-mpe-theme-active='true'] .mdx-preview-content {
+  padding: 0;
+  background: transparent;
 }

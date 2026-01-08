@@ -4,8 +4,39 @@
 /* Code block wrapper */
 .code-block-wrapper {
   margin: 16px 0;
-  border-radius: 6px;
+  border-radius: 3px;
   overflow: hidden;
+}
+
+/* Code block border for MPE themes - creates card-like appearance */
+[data-mpe-theme-active='true'] .code-block-wrapper {
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 6px;
+}
+
+/* Lighter border for light themes */
+[data-mpe-preview-theme*='light']
+  [data-mpe-theme-active='true']
+  .code-block-wrapper,
+[data-mpe-preview-theme='github-light']
+  [data-mpe-theme-active='true']
+  .code-block-wrapper,
+[data-mpe-preview-theme='gothic']
+  [data-mpe-theme-active='true']
+  .code-block-wrapper,
+[data-mpe-preview-theme='medium']
+  [data-mpe-theme-active='true']
+  .code-block-wrapper,
+[data-mpe-preview-theme='newsprint']
+  [data-mpe-theme-active='true']
+  .code-block-wrapper,
+[data-mpe-preview-theme='vue']
+  [data-mpe-theme-active='true']
+  .code-block-wrapper,
+[data-mpe-preview-theme='none']
+  [data-mpe-theme-active='true']
+  .code-block-wrapper {
+  border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 /* Title bar (optional) */
@@ -26,38 +57,29 @@
   position: relative;
 }
 
-/* Theme-based visibility */
-body.vscode-dark .shiki-container .shiki-light,
-body.vscode-high-contrast .shiki-container .shiki-light {
-  display: none;
-}
-
-body.vscode-light .shiki-container .shiki-dark,
-body.vscode-high-contrast-light .shiki-container .shiki-dark {
-  display: none;
-}
-
-/* Default to dark if no body class (shouldn't happen) */
-.shiki-container .shiki-light {
-  display: none;
-}
-
-body.vscode-light .shiki-container .shiki-light {
-  display: block;
-}
-
-body.vscode-light .shiki-container .shiki-dark {
-  display: none;
-}
-
-/* Shiki pre styles */
+/* Shiki pre styles - uses CSS variables for theming */
 .shiki-container pre {
   margin: 0;
   padding: 16px;
   overflow-x: auto;
-  font-size: 13px;
-  line-height: 1.5;
-  border-radius: 0;
+  font-size: 1em;
+  line-height: 1.4;
+  border-radius: 3px;
+  background-color: var(--vscode-textCodeBlock-background);
+  color: var(--shiki-color-text, var(--vscode-editor-foreground));
+  border: 1px solid var(--vscode-widget-border);
+}
+
+/* When MPE preview theme is active, let it control code block backgrounds */
+[data-mpe-theme-active='true'] .shiki-container pre {
+  background-color: transparent;
+  color: inherit;
+  border: none;
+}
+
+/* Ensure code inherits color from preview theme when active */
+[data-mpe-theme-active='true'] .shiki-container pre code {
+  color: inherit;
 }
 
 .code-block-wrapper > .shiki-container > pre:first-of-type,
@@ -66,11 +88,20 @@ body.vscode-light .shiki-container .shiki-dark {
 }
 
 .code-block-wrapper:not(:has(.code-title)) > .shiki-container > pre {
+  border-radius: 3px;
+}
+
+[data-mpe-theme-active='true']
+  .code-block-wrapper:not(:has(.code-title))
+  > .shiki-container
+  > pre {
   border-radius: 6px;
 }
 
 /* Code spans */
 .shiki-container pre code {
+  display: block;
+  color: inherit;
   font-family: var(
     --vscode-editor-font-family,
     'Menlo',
@@ -173,11 +204,8 @@ body.vscode-light .shiki-container .shiki-dark {
   padding-left: 13px;
 }
 
-/* Ensure lines are block-level for highlighting */
-.shiki-container pre code .line {
-  display: inline;
-}
-
+/* Only use block display for line numbers & highlighting */
+/* ! don't set display:block on all .line - causes double spacing w/ preserved newlines */
 .shiki-container.with-line-numbers pre code .line,
 .shiki-container pre code .line.highlighted {
   display: block;
