@@ -46,7 +46,7 @@ export default function rehypeMermaidPlaceholder() {
       // generate unique ID for this diagram
       const diagramId = `mermaid-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-      // replace pre/code with placeholder div
+      // replace pre/code w/ placeholder div
       // uses data-mermaid-chart to store the diagram code
       const placeholder: Element = {
         type: 'element',

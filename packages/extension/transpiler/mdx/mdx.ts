@@ -101,7 +101,7 @@ export const mdxTranspileAsync = async (
       rehypeKatex,
       // convert raw HTML from KaTeX to JSX
       rehypeRaw,
-      // syntax highlighting with Shiki
+      // syntax highlighting w/ Shiki
       rehypeShiki,
       // heading anchors for TOC support
       rehypeSlug,

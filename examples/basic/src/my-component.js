@@ -1,9 +1,8 @@
+// examples/basic/src/my-component.js
+// simple button component demonstrating MDX Preview's ability to render custom React components
+
 import React from 'react';
 
-/**
- * A simple button component demonstrating MDX Preview's
- * ability to render custom React components.
- */
 export default function MyComponent() {
   const [count, setCount] = React.useState(0);
 

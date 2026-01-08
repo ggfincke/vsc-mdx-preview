@@ -1,3 +1,6 @@
+// vitest.config.ts
+// Vitest config for extension unit tests
+
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({

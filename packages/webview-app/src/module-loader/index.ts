@@ -317,7 +317,7 @@ export async function evaluateModuleToComponent(
   // Reset non-preloaded modules for fresh evaluation
   resetModules();
 
-  // Load the entry module and all dependencies
+  // load the entry module & all deps
   const module = await loadModule(
     entryFilePath,
     code,

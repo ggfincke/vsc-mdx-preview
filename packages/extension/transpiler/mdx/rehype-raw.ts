@@ -14,7 +14,7 @@ export default function rehypeRaw() {
         .replace(/"/g, '\\"')
         .replace(/\n/g, '\\n');
 
-      // * replace raw node with a JSX expression
+      // * replace raw node w/ a JSX expression
       // * dangerouslySetInnerHTML is required since KaTeX output is trusted
       const jsxNode: {
         type: string;

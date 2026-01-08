@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/TrustBanner/TrustBanner.tsx
-// banner displayed in Safe Mode to inform user and provide actions to enable Trusted Mode
+// banner displayed in Safe Mode to inform user & provide actions to enable Trusted Mode
 
 import { useState, useCallback } from 'react';
 import type { TrustState } from '../../types';

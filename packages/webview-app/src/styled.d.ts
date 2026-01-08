@@ -1,8 +1,8 @@
+// packages/webview-app/src/styled.d.ts
+// extend styled-components DefaultTheme w/ custom theme properties
+
 import 'styled-components';
 
-/**
- * Extend styled-components DefaultTheme with our custom theme properties.
- */
 declare module 'styled-components' {
   export interface DefaultTheme {
     colorBodyForeground: string;

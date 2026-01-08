@@ -94,7 +94,7 @@ export default function remarkGithubAlerts() {
         value: buildAlertHtml(config, node),
       };
 
-      // replace the blockquote with our alert HTML
+      // replace the blockquote w/ our alert HTML
       (parent as Parent).children[index] = alertHtml;
     });
   };

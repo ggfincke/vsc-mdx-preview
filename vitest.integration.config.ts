@@ -1,3 +1,6 @@
+// vitest.integration.config.ts
+// Vitest config for VS Code integration tests
+
 import { defineConfig } from 'vitest/config';
 import { vsCodeWorker } from 'vitest-environment-vscode';
 

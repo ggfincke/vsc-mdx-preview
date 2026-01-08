@@ -3,9 +3,7 @@
 
 export type Theme = 'light' | 'dark' | 'high-contrast';
 
-/**
- * Get the current VS Code theme from body class.
- */
+// get the current VS Code theme from body class
 export function getCurrentTheme(): Theme {
   const body = document.body;
   if (body.classList.contains('vscode-high-contrast')) {
@@ -17,10 +15,8 @@ export function getCurrentTheme(): Theme {
   return 'light';
 }
 
-/**
- * Subscribe to theme changes via MutationObserver on body class.
- * Returns a cleanup function to disconnect the observer.
- */
+// subscribe to theme changes via MutationObserver on body class
+// returns a cleanup function to disconnect the observer
 export function onThemeChange(callback: (theme: Theme) => void): () => void {
   let lastTheme = getCurrentTheme();
 

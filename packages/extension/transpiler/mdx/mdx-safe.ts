@@ -122,7 +122,7 @@ export async function compileToSafeHTML(mdxText: string): Promise<SafeHTMLResult
     .use(remarkStripMdx)
     // transform GitHub-style blockquote alerts
     .use(remarkGithubAlerts)
-    // parse math expressions ($...$ and $$...$$)
+    // parse math expressions ($...$ & $$...$$)
     .use(remarkMath)
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true })
@@ -132,7 +132,7 @@ export async function compileToSafeHTML(mdxText: string): Promise<SafeHTMLResult
     .use(rehypeMermaidPlaceholder)
     // render LaTeX math expressions
     .use(rehypeKatex)
-    // syntax highlighting with Shiki
+    // syntax highlighting w/ Shiki
     .use(rehypeShiki)
     // add heading anchors for TOC support
     .use(rehypeSlug)

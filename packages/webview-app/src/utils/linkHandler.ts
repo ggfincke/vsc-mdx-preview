@@ -9,9 +9,7 @@ const EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
 // file extensions that should open in editor
 const DOCUMENT_EXTENSIONS = ['.md', '.mdx', '.html', '.htm'];
 
-/**
- * Classify a link by its type.
- */
+// classify a link by its type
 export function classifyLink(href: string): LinkType {
   if (!href || href.trim() === '') {
     return 'unknown';
@@ -51,9 +49,7 @@ export function classifyLink(href: string): LinkType {
   return 'unknown';
 }
 
-/**
- * Check if a string looks like a relative file path.
- */
+// check if a string looks like a relative file path
 function looksLikeRelativePath(href: string): boolean {
   // starts w/ ./ or ../
   if (href.startsWith('./') || href.startsWith('../')) {
@@ -73,9 +69,7 @@ function looksLikeRelativePath(href: string): boolean {
   return false;
 }
 
-/**
- * Check if a URL has an allowed external scheme.
- */
+// check if a URL has an allowed external scheme
 export function isAllowedExternalScheme(url: string): boolean {
   try {
     const parsed = new URL(url);
@@ -85,10 +79,7 @@ export function isAllowedExternalScheme(url: string): boolean {
   }
 }
 
-/**
- * Normalize a relative path for file opening.
- * Removes fragments & query strings.
- */
+// normalize a relative path for file opening (removes fragments & query strings)
 export function normalizeRelativePath(href: string): string {
   // remove fragment
   const withoutFragment = href.split('#')[0];
@@ -97,9 +88,7 @@ export function normalizeRelativePath(href: string): string {
   return withoutQuery;
 }
 
-/**
- * Extract anchor/fragment from a link.
- */
+// extract anchor/fragment from a link
 export function extractAnchor(href: string): string | null {
   const hashIndex = href.indexOf('#');
   if (hashIndex === -1) {

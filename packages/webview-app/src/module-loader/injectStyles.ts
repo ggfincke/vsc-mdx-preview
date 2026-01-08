@@ -1,19 +1,11 @@
-/**
- * CSS Injection
- *
- * Handles injecting CSS from imported style files.
- */
+// packages/webview-app/src/module-loader/injectStyles.ts
+// CSS injection - handles injecting CSS from imported style files
 
 import { registry } from './ModuleRegistry';
 
-/**
- * Inject CSS into the document.
- *
- * @param id - The module ID (used for deduplication)
- * @param css - The CSS content to inject
- */
+// inject CSS into the document
 export function injectStyles(id: string, css: string): void {
-  // Don't inject the same styles twice
+  // don't inject the same styles twice
   if (registry.hasInjectedStyle(id)) {
     return;
   }
@@ -26,10 +18,7 @@ export function injectStyles(id: string, css: string): void {
   registry.markStyleInjected(id);
 }
 
-/**
- * Remove all injected styles.
- * Called when preview is refreshed.
- */
+// remove all injected styles (called when preview is refreshed)
 export function clearInjectedStyles(): void {
   const styles = document.querySelectorAll('style[data-module-id]');
   styles.forEach((style) => style.remove());

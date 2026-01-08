@@ -120,6 +120,11 @@ async function evaluateTrusted(
   const entryFileDependencies = await extractImports(code);
   debug(`[EVALUATE] Dependencies: ${entryFileDependencies.join(', ')}`);
 
+  // push theme state w/ frontmatter overrides
+  if (frontmatter) {
+    preview.pushThemeState(frontmatter);
+  }
+
   debug('[EVALUATE] Calling webviewHandle.updatePreview');
   webviewHandle.updatePreview(code, entryFilePath, entryFileDependencies, frontmatter);
   debug('[EVALUATE] updatePreview called');
@@ -134,6 +139,11 @@ async function evaluateSafe(preview: Preview, text: string): Promise<void> {
   debug('[EVALUATE] Compiling to safe HTML...');
   const { html, frontmatter } = await compileToSafeHTML(text);
   debug(`[EVALUATE] Safe HTML compiled, length: ${html.length}`);
+
+  // push theme state w/ frontmatter overrides
+  if (frontmatter) {
+    preview.pushThemeState(frontmatter);
+  }
 
   debug('[EVALUATE] Calling webviewHandle.updatePreviewSafe');
   webviewHandle.updatePreviewSafe(html, frontmatter);

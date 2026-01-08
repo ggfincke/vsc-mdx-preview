@@ -31,7 +31,7 @@ export async function initWebviewAppHTMLResources(
   debug('[WEBVIEW-MGR] initWebviewAppHTMLResources called');
   extensionUriCache = context.extensionUri;
 
-  // Vite manifest format - use Uri.joinPath and workspace.fs for extension resources
+  // Vite manifest format - use Uri.joinPath & workspace.fs for extension resources
   const manifestUri = vscode.Uri.joinPath(
     context.extensionUri,
     'build',
@@ -299,7 +299,7 @@ export function refreshPanel(preview: Preview): void {
   // Re-initialize handshake since we're resetting the webview HTML
   debug('[WEBVIEW-MGR] Reinitializing handshake for refresh');
   preview.initWebviewHandshakePromise();
-  // reveal in current column, and preserve focus
+  // reveal in current column & preserve focus
   panel.reveal(undefined, true);
   panel.webview.html = '';
   debug('[WEBVIEW-MGR] Setting new HTML');

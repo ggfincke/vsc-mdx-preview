@@ -51,10 +51,10 @@ const DOMPURIFY_CONFIG: Config = {
     'kbd',
     'samp',
     'var',
-    // Links and media
+    // links & media
     'a',
     'img',
-    // Quotes and citations
+    // quotes & citations
     'blockquote',
     'q',
     'cite',

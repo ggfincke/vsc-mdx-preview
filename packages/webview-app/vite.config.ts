@@ -1,3 +1,6 @@
+// packages/webview-app/vite.config.ts
+// Vite build config for webview React app
+
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';

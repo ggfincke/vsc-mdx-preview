@@ -1,5 +1,5 @@
 // esbuild.config.mjs
-// Bundle extension with ESM support
+// bundle extension w/ ESM support
 
 import * as esbuild from 'esbuild';
 import * as fs from 'fs';

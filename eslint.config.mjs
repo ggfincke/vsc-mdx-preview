@@ -1,3 +1,6 @@
+// eslint.config.mjs
+// ESLint configuration for extension & webview packages
+
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';

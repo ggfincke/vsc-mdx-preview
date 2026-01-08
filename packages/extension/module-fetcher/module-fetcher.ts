@@ -184,7 +184,7 @@ export async function fetchLocal(
       ).resolvedModule;
       if (resolvedModule) {
         fsPath = resolvedModule.resolvedFileName;
-        // don't resolve .d.ts file with tsCompilerHost
+        // don't resolve .d.ts file w/ tsCompilerHost
         if (fsPath.endsWith('.d.ts')) {
           fsPath = null;
         }
