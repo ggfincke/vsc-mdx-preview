@@ -1,5 +1,5 @@
 // packages/extension/rpc-extension.ts
-// RPC communication between extension & webview using Comlink
+// RPC communication between extension & webview via Comlink
 
 import * as comlink from 'comlink';
 import type { Endpoint, Remote } from 'comlink';
@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import ExtensionHandle from './rpc-extension-handle';
 import { Preview } from './preview/preview-manager';
 import type { TrustState } from './security/TrustManager';
+import type { WebviewThemeState } from './themes/types';
 import { debug } from './logging';
 
 type AllowedTypeForComlink = 'message';
@@ -24,12 +25,6 @@ type EventListenerOrEventListenerObject =
 // minimal MessageEvent-like interface for Comlink compatibility
 interface MessageEvent {
   data: unknown;
-}
-
-// scroll sync configuration
-export interface ScrollSyncConfig {
-  enabled: boolean;
-  behavior: 'instant' | 'smooth';
 }
 
 // webview-side handle (methods extension can call)
@@ -50,9 +45,8 @@ export interface WebviewRemoteHandle {
   setStale(isStale: boolean): void;
   // custom CSS hot-reload
   setCustomCss(css: string): void;
-  // scroll sync
-  scrollToLine(line: number): void;
-  setScrollSyncConfig(config: ScrollSyncConfig): void;
+  // theme
+  setTheme(state: WebviewThemeState): void;
 }
 
 class ExtensionEndpoint implements Endpoint {

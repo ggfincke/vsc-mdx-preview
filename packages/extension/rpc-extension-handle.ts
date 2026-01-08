@@ -193,19 +193,6 @@ class ExtensionHandle {
     }
   }
 
-  // reveal line in editor (called from webview scroll)
-  revealLine(line: number): void {
-    debug(`[EXT-HANDLE] revealLine: ${line}`);
-
-    // validate input
-    if (typeof line !== 'number' || !isFinite(line) || line < 1) {
-      logWarn('revealLine: invalid line number', line);
-      return;
-    }
-
-    // delegate to preview's scroll handler
-    this.preview.handlePreviewScroll(line);
-  }
 }
 
 export default ExtensionHandle;

@@ -1,5 +1,5 @@
 // packages/extension/preview/preview-manager.ts
-// * preview manager & preview instances w/ scroll sync, stale detection, & custom CSS support
+// * preview manager & preview instances w/ stale detection & custom CSS support
 
 import * as vscode from 'vscode';
 import * as fs from 'fs';
@@ -15,6 +15,7 @@ import debounce from 'lodash.debounce';
 import { error as logError, debug } from '../logging';
 
 import { SecurityPolicy } from '../security/security';
+import { ThemeManager } from '../themes';
 
 import { createOrShowPanel, refreshPanel } from './webview-manager';
 import evaluateInWebview from './evaluate-in-webview';
@@ -36,13 +37,10 @@ import type { WebviewHandleType } from '../rpc-extension';
 
 export type WebviewHandle = WebviewHandleType;
 
-// * preview manager singleton for managing all preview instances w/ scroll sync routing by URI
+// * preview manager singleton for managing all preview instances
 export class PreviewManager {
   private static instance: PreviewManager;
   private currentPreview: Preview | undefined;
-  // uri-keyed map for scroll sync routing
-  private previews = new Map<string, Preview>();
-  private scrollSyncDisposable?: vscode.Disposable;
 
   private constructor() {}
 
@@ -51,35 +49,6 @@ export class PreviewManager {
       PreviewManager.instance = new PreviewManager();
     }
     return PreviewManager.instance;
-  }
-
-  // initialize scroll sync subscription (call once at activation)
-  initScrollSync(context: vscode.ExtensionContext): void {
-    debug('[PREVIEW-MGR] initScrollSync called');
-    this.scrollSyncDisposable =
-      vscode.window.onDidChangeTextEditorVisibleRanges((event) => {
-        // route to correct preview by URI
-        const key = event.textEditor.document.uri.toString(true);
-        const preview = this.previews.get(key);
-        if (preview?.active) {
-          preview.handleEditorVisibleRangesChange(event.visibleRanges);
-        }
-      });
-    context.subscriptions.push(this.scrollSyncDisposable);
-  }
-
-  // register preview for scroll sync routing
-  registerPreview(preview: Preview): void {
-    const key = preview.doc.uri.toString(true);
-    debug(`[PREVIEW-MGR] registerPreview: ${key}`);
-    this.previews.set(key, preview);
-  }
-
-  // unregister preview from scroll sync routing
-  unregisterPreview(uri: vscode.Uri): void {
-    const key = uri.toString(true);
-    debug(`[PREVIEW-MGR] unregisterPreview: ${key}`);
-    this.previews.delete(key);
   }
 
   // get current preview
@@ -96,6 +65,13 @@ export class PreviewManager {
   refreshAllPreviews(): void {
     if (this.currentPreview?.active) {
       this.currentPreview.refreshWebview();
+    }
+  }
+
+  // push theme to all active previews without full refresh
+  pushThemeToAllPreviews(): void {
+    if (this.currentPreview?.active) {
+      this.currentPreview.pushThemeState();
     }
   }
 
@@ -136,23 +112,6 @@ export class Preview {
   // custom CSS file watcher
   private customCssWatcher?: vscode.FileSystemWatcher;
   private customCssDisposables: vscode.Disposable[] = [];
-
-  // scroll sync
-  private scrollSyncEnabled = true;
-  private scrollSyncBehavior: 'instant' | 'smooth' = 'instant';
-  private scrollSyncCooldown = false;
-  private latestVisibleLine = 0;
-
-  // debounced editor scroll handler (75ms trailing)
-  private debouncedEditorScroll = debounce(() => {
-    if (!this.scrollSyncEnabled || this.scrollSyncCooldown) {
-      return;
-    }
-    // convert 0-based (VS Code) to 1-based (unified)
-    const previewLine = this.latestVisibleLine + 1;
-    debug(`[PREVIEW] scrollToLine: ${previewLine}`);
-    this.webviewHandle?.scrollToLine?.(previewLine);
-  }, 75);
 
   getWebviewUri(fsPath: string): string | undefined {
     if (!this.webview) {
@@ -197,7 +156,8 @@ export class Preview {
       // This properly handles extends, paths, baseUrl, references, etc.
       const parsedConfig = typescript.getParsedCommandLineOfConfigFile(
         configFile,
-        {}, // existing options to merge
+        // existing options to merge
+        {},
         {
           ...typescript.sys,
           onUnRecoverableConfigFileDiagnostic: (diagnostic) => {
@@ -240,7 +200,8 @@ export class Preview {
 
   initWebviewHandshakePromise(): void {
     debug('[PREVIEW] initWebviewHandshakePromise called');
-    const HANDSHAKE_TIMEOUT_MS = 10000; // 10 seconds
+    // 10 seconds
+    const HANDSHAKE_TIMEOUT_MS = 10000;
 
     const handshakePromise = new Promise<void>((resolve) => {
       this.resolveWebviewHandshakePromise = () => {
@@ -307,16 +268,6 @@ export class Preview {
       ),
     };
 
-    // read scroll sync settings
-    this.scrollSyncEnabled = extensionConfig.get<boolean>(
-      'preview.scrollSync',
-      true
-    );
-    this.scrollSyncBehavior = extensionConfig.get<'instant' | 'smooth'>(
-      'preview.scrollBehavior',
-      'instant'
-    );
-
     // Create debounced update function
     this.debouncedUpdateWebview = debounce(
       () => this.updateWebview(),
@@ -327,9 +278,6 @@ export class Preview {
 
     // Initialize custom CSS watcher
     this.setupCustomCssWatcher();
-
-    // register w/ PreviewManager for scroll sync routing
-    PreviewManager.getInstance().registerPreview(this);
 
     if (process.env.NODE_ENV === 'development') {
       this.performanceObserver = new PerformanceObserver(
@@ -457,50 +405,6 @@ export class Preview {
     }
   }
 
-  // handle editor visible ranges change (called by PreviewManager)
-  handleEditorVisibleRangesChange(ranges: readonly vscode.Range[]): void {
-    if (ranges.length === 0) {
-      return;
-    }
-    // Coalesce: store latest, debounced send
-    this.latestVisibleLine = ranges[0].start.line;
-    this.debouncedEditorScroll();
-  }
-
-  // handle preview scroll (called via RPC from webview)
-  handlePreviewScroll(line: number): void {
-    if (!this.scrollSyncEnabled || this.scrollSyncCooldown) {
-      return;
-    }
-
-    // Set cooldown to prevent loop
-    this.scrollSyncCooldown = true;
-    setTimeout(() => {
-      this.scrollSyncCooldown = false;
-    }, 150);
-
-    // Convert 1-based (unified) to 0-based (VS Code)
-    const editorLine = line - 1;
-
-    // Reveal in active editor if it matches this preview's document
-    const editor = vscode.window.activeTextEditor;
-    if (
-      editor &&
-      editor.document.uri.toString(true) === this.doc.uri.toString(true)
-    ) {
-      const range = new vscode.Range(editorLine, 0, editorLine, 0);
-      editor.revealRange(range, vscode.TextEditorRevealType.AtTop);
-    }
-  }
-
-  // push scroll sync config to webview
-  private pushScrollSyncConfig(): void {
-    this.webviewHandle?.setScrollSyncConfig?.({
-      enabled: this.scrollSyncEnabled,
-      behavior: this.scrollSyncBehavior,
-    });
-  }
-
   // setup custom CSS file watcher
   private setupCustomCssWatcher(): void {
     // clean up any existing watcher
@@ -562,7 +466,7 @@ export class Preview {
     return null;
   }
 
-  // Load and send custom CSS to webview
+  // load & send custom CSS to webview
   private async loadAndSendCustomCss(cssPath: string): Promise<void> {
     try {
       const cssContent = await fs.promises.readFile(cssPath, 'utf-8');
@@ -688,28 +592,11 @@ export class Preview {
       SecurityPolicy.Strict
     );
 
-    // read scroll sync settings
-    const scrollSync = extensionConfig.get<boolean>('preview.scrollSync', true);
-    const scrollBehavior = extensionConfig.get<'instant' | 'smooth'>(
-      'preview.scrollBehavior',
-      'instant'
-    );
-
     const needsWebviewRefresh =
       useVscodeMarkdownStyles !== this.configuration.useVscodeMarkdownStyles ||
       useWhiteBackground !== this.configuration.useWhiteBackground ||
       customLayoutFilePath !== this.configuration.customLayoutFilePath ||
       securityPolicy !== this.configuration.securityPolicy;
-
-    // push scroll sync config if changed
-    if (
-      scrollSync !== this.scrollSyncEnabled ||
-      scrollBehavior !== this.scrollSyncBehavior
-    ) {
-      this.scrollSyncEnabled = scrollSync;
-      this.scrollSyncBehavior = scrollBehavior;
-      this.pushScrollSyncConfig();
-    }
 
     // Recreate debounced function if delay changed
     if (debounceDelay !== this.configuration.debounceDelay) {
@@ -737,7 +624,7 @@ export class Preview {
     });
 
     if (needsWebviewRefresh) {
-      // Fire and forget - don't block on refresh
+      // fire & forget - don't block on refresh
       this.refreshWebview().catch((err) =>
         logError('Failed to refresh preview', err)
       );
@@ -747,14 +634,42 @@ export class Preview {
   // called after webview handshake to push initial config
   onWebviewReady(): void {
     debug('[PREVIEW] onWebviewReady - pushing initial config');
-    this.pushScrollSyncConfig();
+    this.pushThemeState();
+  }
+
+  // push theme state to webview (public for theme refresh without full webview refresh)
+  // accepts optional frontmatter for theme overrides
+  pushThemeState(frontmatter?: Record<string, unknown>): void {
+    if (!this.webviewHandle) {
+      return;
+    }
+    const themeManager = ThemeManager.getInstance();
+    let themeState = themeManager.getWebviewThemeState(this.doc.uri);
+
+    // Apply frontmatter theme overrides if present
+    if (frontmatter) {
+      const frontmatterTheme = themeManager.extractThemeFromFrontmatter(frontmatter);
+      if (frontmatterTheme.previewTheme) {
+        themeState = {
+          ...themeState,
+          previewTheme: frontmatterTheme.previewTheme,
+        };
+      }
+      if (frontmatterTheme.codeBlockTheme) {
+        themeState = {
+          ...themeState,
+          codeBlockTheme: frontmatterTheme.codeBlockTheme,
+        };
+      }
+    }
+
+    debug('[PREVIEW] pushThemeState - pushing theme state', themeState);
+    this.webviewHandle.setTheme(themeState);
   }
 
   // dispose of resources held by this preview
   dispose(): void {
     this.disposeCustomCssWatcher();
-    // unregister from PreviewManager
-    PreviewManager.getInstance().unregisterPreview(this.doc.uri);
   }
 }
 

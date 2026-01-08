@@ -42,8 +42,6 @@ export interface ExtensionHandleMethods {
   // link handling
   openExternal(url: string): void;
   openDocument(relativePath: string): Promise<void>;
-  // scroll sync - webview reports visible line to extension
-  revealLine(line: number): void;
 }
 
 // methods webview exposes to extension
@@ -61,9 +59,6 @@ export interface WebviewHandleMethods {
   setStale(isStale: boolean): void;
   // custom CSS hot-reload
   setCustomCss(css: string): void;
-  // scroll sync - extension tells webview to scroll to line
-  scrollToLine(line: number): void;
-  setScrollSyncConfig(config: ScrollSyncConfig): void;
 }
 
 // preview content for Trusted Mode
@@ -89,12 +84,6 @@ export type PreviewContent = TrustedPreviewContent | SafePreviewContent;
 export interface PreviewError {
   message: string;
   stack?: string;
-}
-
-// scroll sync configuration
-export interface ScrollSyncConfig {
-  enabled: boolean;
-  behavior: 'instant' | 'smooth';
 }
 
 // complete preview state managed by App component

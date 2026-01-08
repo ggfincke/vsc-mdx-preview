@@ -9,8 +9,8 @@ import type {
   FetchResult,
   TrustState,
   PreviewError,
-  ScrollSyncConfig,
 } from './types';
+import type { WebviewThemeState } from './themes/types';
 
 declare const acquireVsCodeApi: () => {
   postMessage(message: unknown): void;
@@ -44,7 +44,6 @@ export interface ExtensionHandle extends ExtensionHandleMethods {
   manageTrust(): void;
   openExternal(url: string): void;
   openDocument(relativePath: string): Promise<void>;
-  revealLine(line: number): void;
 }
 
 let extensionHandle: ExtensionHandle;
@@ -62,9 +61,8 @@ interface WebviewStateHandlers {
   ) => void;
   setError: (error: PreviewError) => void;
   setStale: (isStale: boolean) => void;
-  // scroll sync
-  scrollToLine?: (line: number) => void;
-  setScrollSyncConfig?: (config: ScrollSyncConfig) => void;
+  // theme
+  setTheme?: (state: WebviewThemeState) => void;
 }
 
 let stateHandlers: WebviewStateHandlers | null = null;
@@ -237,22 +235,11 @@ class RPCWebviewHandle {
     styleEl.textContent = css;
   }
 
-  // scroll to specific line (1-based from unified/remark)
-  scrollToLine(line: number): void {
-    debug(`[RPC-WEBVIEW] scrollToLine called: ${line}`);
-    if (stateHandlers?.scrollToLine) {
-      debug(`[RPC-WEBVIEW] scrollToLine: handler exists, calling`);
-      stateHandlers.scrollToLine(line);
-    } else {
-      debug(`[RPC-WEBVIEW] scrollToLine: NO handler registered!`);
-    }
-  }
-
-  // set scroll sync configuration
-  setScrollSyncConfig(config: ScrollSyncConfig): void {
-    debug(`[RPC-WEBVIEW] setScrollSyncConfig called`, config);
-    if (stateHandlers?.setScrollSyncConfig) {
-      stateHandlers.setScrollSyncConfig(config);
+  // set preview theme (MPE-style themes)
+  setTheme(state: WebviewThemeState): void {
+    debug(`[RPC-WEBVIEW] setTheme called`, state);
+    if (stateHandlers?.setTheme) {
+      stateHandlers.setTheme(state);
     }
   }
 }
