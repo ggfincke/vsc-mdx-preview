@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@mdx-js/react": "^3.0.0",
+    "@mdx-preview/shared-types": "1.0.0-alpha.5",
     "comlink": "^4.4.1",
     "dompurify": "^3.0.0",
     "katex": "^0.16.27",
@@ -28,6 +29,7 @@
     "@eslint/js": "^9.0.0",
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/dompurify": "^3.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",

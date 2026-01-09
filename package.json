@@ -2,7 +2,7 @@
   "name": "vscode-mdx-preview",
   "displayName": "MDX Preview",
   "description": "MDX Preview",
-  "version": "1.0.0-alpha.5",
+  "version": "1.0.0-alpha.6",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [
@@ -112,6 +112,21 @@
         "command": "mdx-preview.commands.selectCodeBlockTheme",
         "title": "Select Code Block Theme",
         "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.zoomIn",
+        "title": "Zoom In",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.zoomOut",
+        "title": "Zoom Out",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.resetZoom",
+        "title": "Reset Zoom",
+        "category": "MDX"
       }
     ],
     "menus": {
@@ -170,6 +185,24 @@
         "command": "mdx-preview.commands.openPreview",
         "key": "ctrl+k x",
         "mac": "cmd+k x"
+      },
+      {
+        "command": "mdx-preview.commands.zoomIn",
+        "key": "ctrl+=",
+        "mac": "cmd+=",
+        "when": "mdxPreviewFocus"
+      },
+      {
+        "command": "mdx-preview.commands.zoomOut",
+        "key": "ctrl+-",
+        "mac": "cmd+-",
+        "when": "mdxPreviewFocus"
+      },
+      {
+        "command": "mdx-preview.commands.resetZoom",
+        "key": "ctrl+0",
+        "mac": "cmd+0",
+        "when": "mdxPreviewFocus"
       }
     ],
     "configuration": {

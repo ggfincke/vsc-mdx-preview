@@ -3,14 +3,13 @@
 
 import * as comlink from 'comlink';
 import type { Endpoint } from 'comlink';
-import { debug } from './utils/debug';
+import { debug, debugError } from './utils/debug';
 import type {
-  ExtensionHandleMethods,
-  FetchResult,
+  ExtensionRPC,
   TrustState,
   PreviewError,
-} from './types';
-import type { WebviewThemeState } from './themes/types';
+  WebviewThemeState,
+} from '@mdx-preview/shared-types';
 
 declare const acquireVsCodeApi: () => {
   postMessage(message: unknown): void;
@@ -32,19 +31,8 @@ class WebviewProxy implements Endpoint {
 }
 
 // typed extension handle (methods available to call on extension)
-export interface ExtensionHandle extends ExtensionHandleMethods {
-  handshake(): void;
-  reportPerformance(evaluationDuration: number): void;
-  fetch(
-    request: string,
-    isBare: boolean,
-    parentId: string
-  ): Promise<FetchResult | undefined>;
-  openSettings(settingId?: string): void;
-  manageTrust(): void;
-  openExternal(url: string): void;
-  openDocument(relativePath: string): Promise<void>;
-}
+// type alias for shared ExtensionRPC (used by Comlink)
+export type ExtensionHandle = ExtensionRPC;
 
 let extensionHandle: ExtensionHandle;
 let webviewEndpoint: WebviewProxy;
@@ -63,6 +51,10 @@ interface WebviewStateHandlers {
   setStale: (isStale: boolean) => void;
   // theme
   setTheme?: (state: WebviewThemeState) => void;
+  // zoom
+  zoomIn?: () => void;
+  zoomOut?: () => void;
+  resetZoom?: () => void;
 }
 
 let stateHandlers: WebviewStateHandlers | null = null;
@@ -242,6 +234,28 @@ class RPCWebviewHandle {
       stateHandlers.setTheme(state);
     }
   }
+
+  // zoom controls
+  zoomIn(): void {
+    debug('[RPC-WEBVIEW] zoomIn called');
+    if (stateHandlers?.zoomIn) {
+      stateHandlers.zoomIn();
+    }
+  }
+
+  zoomOut(): void {
+    debug('[RPC-WEBVIEW] zoomOut called');
+    if (stateHandlers?.zoomOut) {
+      stateHandlers.zoomOut();
+    }
+  }
+
+  resetZoom(): void {
+    debug('[RPC-WEBVIEW] resetZoom called');
+    if (stateHandlers?.resetZoom) {
+      stateHandlers.resetZoom();
+    }
+  }
 }
 
 // initialize RPC on webview side (sets up bidirectional communication w/ extension)
@@ -268,9 +282,26 @@ export function initRPCWebviewSide(): void {
 // register React state handlers (called by App component on mount)
 export function registerWebviewHandlers(handlers: WebviewStateHandlers): void {
   debug('[RPC-WEBVIEW] registerWebviewHandlers called');
-  stateHandlers = handlers;
-  flushPendingMessages();
-  debug('[RPC-WEBVIEW] registerWebviewHandlers complete');
+  try {
+    stateHandlers = handlers;
+    flushPendingMessages();
+    debug('[RPC-WEBVIEW] registerWebviewHandlers complete');
+  } catch (e) {
+    // ! registration failure is critical - retry after brief delay
+    debugError('[RPC-WEBVIEW] Handler registration failed, retrying...', e);
+    setTimeout(() => {
+      try {
+        stateHandlers = handlers;
+        flushPendingMessages();
+        debug('[RPC-WEBVIEW] registerWebviewHandlers retry successful');
+      } catch (retryError) {
+        debugError(
+          '[RPC-WEBVIEW] Handler registration retry failed',
+          retryError
+        );
+      }
+    }, 100);
+  }
 }
 
 // get extension handle for calling extension methods

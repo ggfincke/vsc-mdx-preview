@@ -41,6 +41,11 @@ const INITIAL_TRUST_STATE: TrustState = {
   canExecute: false,
 };
 
+// zoom constraints
+const MIN_ZOOM = 50;
+const MAX_ZOOM = 300;
+const ZOOM_STEP = 10;
+
 // app state interface
 interface AppState {
   trustState: TrustState;
@@ -51,6 +56,8 @@ interface AppState {
   evaluatedComponent: ComponentType | null;
   // whether preview content is stale
   isStale: boolean;
+  // zoom level (percentage, 100 = 100%)
+  zoomLevel: number;
 }
 
 function App() {
@@ -63,6 +70,7 @@ function App() {
     isLoading: true,
     evaluatedComponent: null,
     isStale: false,
+    zoomLevel: 100,
   });
 
   // track if we've completed initial setup
@@ -167,6 +175,31 @@ function App() {
     }));
   }, []);
 
+  // zoom controls
+  const zoomIn = useCallback(() => {
+    debug('[APP] zoomIn called');
+    setState((prev) => ({
+      ...prev,
+      zoomLevel: Math.min(MAX_ZOOM, prev.zoomLevel + ZOOM_STEP),
+    }));
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    debug('[APP] zoomOut called');
+    setState((prev) => ({
+      ...prev,
+      zoomLevel: Math.max(MIN_ZOOM, prev.zoomLevel - ZOOM_STEP),
+    }));
+  }, []);
+
+  const resetZoom = useCallback(() => {
+    debug('[APP] resetZoom called');
+    setState((prev) => ({
+      ...prev,
+      zoomLevel: 100,
+    }));
+  }, []);
+
   // handle link clicks - intercept Ctrl/Cmd+clicks on anchors & route appropriately (regular clicks not intercepted for text selection)
   const handleLinkClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
     // find closest anchor element
@@ -252,6 +285,10 @@ function App() {
       setStale,
       // theme handler
       setTheme: setPreviewThemeState,
+      // zoom handlers
+      zoomIn,
+      zoomOut,
+      resetZoom,
     });
     debug('[APP] Webview handlers registered');
   }, [
@@ -261,11 +298,21 @@ function App() {
     setError,
     setStale,
     setPreviewThemeState,
+    zoomIn,
+    zoomOut,
+    resetZoom,
   ]);
 
   // render based on state
-  const { trustState, content, error, isLoading, evaluatedComponent, isStale } =
-    state;
+  const {
+    trustState,
+    content,
+    error,
+    isLoading,
+    evaluatedComponent,
+    isStale,
+    zoomLevel,
+  } = state;
   debug(
     `[APP] Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
   );
@@ -325,7 +372,18 @@ function App() {
       <MDXErrorBoundary
         onError={(err) => setError({ message: err.message, stack: err.stack })}
       >
-        <div ref={contentRef} className="mdx-preview-content">
+        <div
+          ref={contentRef}
+          className="mdx-preview-content"
+          style={
+            zoomLevel !== 100
+              ? {
+                  transform: `scale(${zoomLevel / 100})`,
+                  transformOrigin: 'top center',
+                }
+              : undefined
+          }
+        >
           {/* frontmatter display (collapsed by default) */}
           {hasFrontmatter && <FrontmatterDisplay frontmatter={frontmatter} />}
           {content.mode === 'safe' ? (

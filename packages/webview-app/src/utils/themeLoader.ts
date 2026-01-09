@@ -2,14 +2,17 @@
 // theme loader utility for dynamic CSS injection
 
 import { previewThemes, codeBlockThemes } from '../themes';
-import type { PreviewTheme, CodeBlockTheme } from '../themes/types';
+import type { PreviewTheme, CodeBlockTheme } from '@mdx-preview/shared-types';
+import { isLightPreviewTheme } from '@mdx-preview/shared-types';
 
 const PREVIEW_THEME_STYLE_ID = 'mpe-preview-theme';
 const CODE_BLOCK_THEME_STYLE_ID = 'mpe-code-block-theme';
 
 // inject preview theme CSS into the document
 export function injectPreviewTheme(theme: PreviewTheme): void {
-  let styleEl = document.getElementById(PREVIEW_THEME_STYLE_ID) as HTMLStyleElement | null;
+  let styleEl = document.getElementById(
+    PREVIEW_THEME_STYLE_ID
+  ) as HTMLStyleElement | null;
 
   if (!styleEl) {
     styleEl = document.createElement('style');
@@ -32,7 +35,9 @@ export function injectCodeBlockTheme(
   theme: CodeBlockTheme,
   isLight: boolean
 ): void {
-  let styleEl = document.getElementById(CODE_BLOCK_THEME_STYLE_ID) as HTMLStyleElement | null;
+  let styleEl = document.getElementById(
+    CODE_BLOCK_THEME_STYLE_ID
+  ) as HTMLStyleElement | null;
 
   if (!styleEl) {
     styleEl = document.createElement('style');
@@ -48,7 +53,10 @@ export function injectCodeBlockTheme(
   styleEl.textContent = css || '';
 
   // set data attribute for theme detection
-  document.documentElement.setAttribute('data-mpe-code-block-theme', effectiveTheme);
+  document.documentElement.setAttribute(
+    'data-mpe-code-block-theme',
+    effectiveTheme
+  );
 }
 
 // get effective code block theme considering auto mode
@@ -80,10 +88,5 @@ export function clearThemeStyles(): void {
   document.documentElement.removeAttribute('data-mpe-code-block-theme');
 }
 
-// check if a preview theme is a light theme
-export function isLightPreviewTheme(theme: PreviewTheme): boolean {
-  return (
-    theme.includes('light') ||
-    ['medium', 'newsprint', 'gothic', 'none', 'vue'].includes(theme)
-  );
-}
+// re-export for backward compatibility
+export { isLightPreviewTheme };

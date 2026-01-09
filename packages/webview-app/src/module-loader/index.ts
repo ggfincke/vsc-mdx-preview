@@ -11,6 +11,7 @@ import { evaluateModule } from './evaluateModule';
 import { injectStyles, clearInjectedStyles } from './injectStyles';
 import type { FetchResult, Module, ModuleRuntime } from './types';
 import { ExtensionHandle } from '../rpc-webview';
+import { debugWarn } from '../utils/debug';
 
 // re-export for external use
 export { registry } from './ModuleRegistry';
@@ -171,7 +172,7 @@ export async function loadModule(
       // fetch dependency
       const result = await fetcher(dep, isBare, id);
       if (!result) {
-        console.warn(`Failed to fetch dependency: ${dep}`);
+        debugWarn(`[MODULE-LOADER] Failed to fetch dependency: ${dep}`);
         continue;
       }
 
