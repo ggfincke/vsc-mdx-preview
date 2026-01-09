@@ -5,7 +5,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "outDir": "build/extension",
-    "rootDir": "packages/extension",
+    "rootDir": "packages",
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -16,8 +16,11 @@
     "sourceMap": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@mdx-preview/shared-types": ["./packages/shared-types/index.ts"]
+    }
   },
-  "include": ["packages/extension"],
+  "include": ["packages/extension", "packages/shared-types"],
   "exclude": ["node_modules", ".vscode-test"]
 }

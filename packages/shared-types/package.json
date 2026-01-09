@@ -1,0 +1,7 @@
+{
+  "name": "@mdx-preview/shared-types",
+  "version": "1.0.0-alpha.5",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts"
+}
