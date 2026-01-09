@@ -11,13 +11,14 @@ Preview [MDX](https://mdxjs.com) files with live refresh and React component sup
 - **MDX 3 Support**: Built on the latest MDX compiler with modern React 18
 - **TypeScript Support**: Preview `.tsx` and `.ts` files that render to `#root`
 - **Security Model**: Safe Mode for untrusted content, Trusted Mode for full rendering
-- **Syntax Highlighting**: Shiki-based code highlighting with theme support matching VS Code
+- **Syntax Highlighting**: Shiki-based code highlighting with configurable themes
+- **Preview Themes**: 15+ preview themes (GitHub, Atom, Solarized, etc.) with auto light/dark switching
 - **Mermaid Diagrams**: Client-side rendering of flowcharts, sequence diagrams, state diagrams, and more
 - **GitHub Alerts**: Support for GitHub-style callouts (NOTE, TIP, WARNING, CAUTION, IMPORTANT)
 - **Math Expressions**: KaTeX integration for inline and block math expressions
 - **Table of Contents**: Automatic TOC generation with collapsible sections
-- **Scroll Sync**: Bi-directional scroll synchronization between editor and preview
 - **Frontmatter Display**: Visual display of YAML frontmatter metadata
+- **Zoom Controls**: Zoom in/out with keyboard shortcuts
 
 ## Quick Start
 
@@ -35,6 +36,11 @@ Alternatively, click the preview icon in the editor toolbar when viewing `.mdx`,
 - **MDX: Toggle Using VSCode Markdown Styles** - Toggle VS Code markdown styling
 - **MDX: Toggle Using White Background** - Toggle white background override
 - **MDX: Change Security Settings** - Modify Content Security Policy settings
+- **MDX: Select Preview Theme** - Choose a preview theme (GitHub, Atom, Solarized, etc.)
+- **MDX: Select Code Block Theme** - Choose a syntax highlighting theme for code blocks
+- **MDX: Zoom In** (`Cmd+=` / `Ctrl+=`) - Zoom in the preview
+- **MDX: Zoom Out** (`Cmd+-` / `Ctrl+-`) - Zoom out the preview
+- **MDX: Reset Zoom** (`Cmd+0` / `Ctrl+0`) - Reset preview zoom to default
 
 ## Security Model
 
@@ -73,9 +79,10 @@ In Trusted Mode:
 | `mdx-preview.preview.customCss`                | `""`        | Path to custom CSS file for preview styling              |
 | `mdx-preview.preview.mdx.customLayoutFilePath` | `""`        | Path to custom layout component                          |
 | `mdx-preview.preview.showToc`                  | `true`      | Show table of contents sidebar                           |
-| `mdx-preview.preview.scrollSync`               | `true`      | Enable scroll synchronization                            |
-| `mdx-preview.preview.scrollBehavior`           | `"instant"` | Scroll behavior (`instant` or `smooth`)                  |
 | `mdx-preview.preview.showFrontmatter`          | `true`      | Show frontmatter metadata at top of preview              |
+| `mdx-preview.preview.previewTheme`             | `"none"`    | Preview theme (github-light, atom-dark, solarized, etc.) |
+| `mdx-preview.preview.codeBlockTheme`           | `"auto"`    | Code block syntax theme (`auto` matches preview theme)   |
+| `mdx-preview.preview.autoTheme`                | `true`      | Auto-switch light/dark themes based on VS Code theme     |
 | `mdx-preview.preview.security`                 | `"strict"`  | CSP policy (`strict` or `disabled`)                      |
 | `mdx-preview.build.useSucraseTranspiler`       | `false`     | Use Sucrase instead of Babel                             |
 
@@ -232,7 +239,7 @@ VS Code webviews have some inherent limitations:
 
 ## Project Status
 
-This extension is currently in **alpha** (version 1.0.0-alpha.3). While it is functional and includes many powerful features, you may encounter bugs or limitations. Please report issues on [GitHub](https://github.com/ggfincke/vscode-mdx-preview/issues).
+This extension is currently in **alpha** (version 1.0.0-alpha.5). While it is functional and includes many powerful features, you may encounter bugs or limitations. Please report issues on [GitHub](https://github.com/ggfincke/vscode-mdx-preview/issues).
 
 ## Requirements
 

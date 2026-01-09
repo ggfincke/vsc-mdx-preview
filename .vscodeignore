@@ -5,6 +5,7 @@ coverage/**
 dev-docs/**
 node_modules/webview/**
 node_modules/webview
+node_modules/@mdx-preview/**
 # build/**/*.map
 examples/**
 packages/**

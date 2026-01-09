@@ -5,6 +5,30 @@ All notable changes to the MDX Preview extension will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.6] - 2026-01-08
+
+### Added
+
+- **Shared Types Package**: New `@mdx-preview/shared-types` package for type sharing between extension and webview
+- **Structured Errors**: Structured error types and user-friendly error messages in extension
+- **Clickable Stack Traces**: Error stack traces in webview now link to source file locations
+- **Image Lightbox**: Click images to view full-size with zoom support
+- **Zoom Controls**: Preview zoom commands (`Cmd+=`/`Ctrl+=` to zoom in, `Cmd+-`/`Ctrl+-` to zoom out, `Cmd+0`/`Ctrl+0` to reset)
+- **Lazy Image Loading**: Images now load lazily for better performance
+
+### Changed
+
+- **Preview Manager**: Extracted StatusBarManager, CustomCssWatcher, DocumentTracker, and TypeScriptConfigResolver into separate helper classes
+- **MDX Transpiler**: Extracted shared plugins into dedicated module; added rehype-lazy-images plugin
+- **Module Fetcher**: Integrated structured errors with improved logging
+- **Extension Lifecycle**: Improved lifecycle management with comprehensive test coverage
+- **Mermaid Rendering**: Extracted into reusable `useMermaidRendering` hook
+
+### Documentation
+
+- Updated README with new features and fixed repository URLs
+- Updated example MDX showcase with Calculator component
+
 ## [1.0.0-alpha.5] - 2026-01-07
 
 ### Added
