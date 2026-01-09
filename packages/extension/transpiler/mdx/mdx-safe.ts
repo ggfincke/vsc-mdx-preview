@@ -2,22 +2,20 @@
 // * safe MDX parser w/ AST transformation only (no code execution)
 
 import { unified } from 'unified';
+import type { Pluggable } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMdx from 'remark-mdx';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import remarkGithubAlerts from './remark-github-alerts';
 import remarkRehype from 'remark-rehype';
-import rehypeSourcepos from './rehype-sourcepos';
-import rehypeMermaidPlaceholder from './rehype-mermaid-placeholder';
-import rehypeKatex from 'rehype-katex';
-import rehypeShiki from './rehype-shiki';
-import rehypeSlug from 'rehype-slug';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import type { Root, Parent, RootContent } from 'mdast';
 import matter from 'gray-matter';
+import {
+  sharedRemarkPlugins,
+  sharedRehypePluginsPreMath,
+  sharedRehypePluginsPostMath,
+  rehypeKatex,
+} from './shared-plugins';
 
 // result type for Safe Mode HTML compilation (includes frontmatter)
 export interface SafeHTMLResult {
@@ -110,41 +108,53 @@ function remarkStripMdx() {
   };
 }
 
+// apply plugins from array to unified processor
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyPlugins(processor: any, plugins: Pluggable[]): any {
+  for (const plugin of plugins) {
+    if (Array.isArray(plugin)) {
+      // plugin w/ options: [pluginFn, options]
+      processor.use(plugin[0], plugin[1]);
+    } else {
+      processor.use(plugin);
+    }
+  }
+  return processor;
+}
+
 // * compile MDX to safe static HTML (strips frontmatter, parses AST, removes dangerous nodes, converts to HTML)
-export async function compileToSafeHTML(mdxText: string): Promise<SafeHTMLResult> {
+export async function compileToSafeHTML(
+  mdxText: string
+): Promise<SafeHTMLResult> {
   // extract frontmatter before compilation
   const { content, data: frontmatter } = matter(mdxText);
 
-  // process through unified pipeline
-  const result = await unified()
+  // build unified pipeline w/ shared plugins
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let processor: any = unified()
     .use(remarkParse)
     .use(remarkMdx)
-    .use(remarkStripMdx)
-    // transform GitHub-style blockquote alerts
-    .use(remarkGithubAlerts)
-    // parse math expressions ($...$ & $$...$$)
-    .use(remarkMath)
-    .use(remarkGfm)
-    .use(remarkRehype, { allowDangerousHtml: true })
-    // add sourcepos for scroll sync (must be before slug)
-    .use(rehypeSourcepos)
-    // convert mermaid code blocks to placeholders for client-side rendering
-    .use(rehypeMermaidPlaceholder)
-    // render LaTeX math expressions
-    .use(rehypeKatex)
-    // syntax highlighting w/ Shiki
-    .use(rehypeShiki)
-    // add heading anchors for TOC support
-    .use(rehypeSlug)
-    .use(rehypeAutolinkHeadings, {
-      behavior: 'append',
-      properties: {
-        className: ['anchor-link'],
-        ariaLabel: 'Link to this section',
-      },
-    })
-    .use(rehypeStringify, { allowDangerousHtml: true })
-    .process(content);
+    .use(remarkStripMdx);
+
+  // add shared remark plugins (GFM, GitHub alerts, math)
+  processor = applyPlugins(processor, sharedRemarkPlugins);
+
+  // convert to rehype
+  processor = processor.use(remarkRehype, { allowDangerousHtml: true });
+
+  // add pre-math rehype plugins (sourcepos, mermaid)
+  processor = applyPlugins(processor, sharedRehypePluginsPreMath);
+
+  // add KaTeX for math rendering
+  processor = processor.use(rehypeKatex);
+
+  // add post-math rehype plugins (shiki, slug, autolink, lazy images)
+  processor = applyPlugins(processor, sharedRehypePluginsPostMath);
+
+  // stringify to HTML
+  processor = processor.use(rehypeStringify, { allowDangerousHtml: true });
+
+  const result = await processor.process(content);
 
   return {
     html: String(result),

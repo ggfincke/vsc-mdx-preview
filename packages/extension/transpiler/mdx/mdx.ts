@@ -2,21 +2,18 @@
 // MDX transpilation w/ layout injection & React root wrapping
 
 import { compile } from '@mdx-js/mdx';
-import rehypeSlug from 'rehype-slug';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import rehypeSourcepos from './rehype-sourcepos';
-import rehypeMermaidPlaceholder from './rehype-mermaid-placeholder';
-import remarkMath from 'remark-math';
-import remarkGfm from 'remark-gfm';
-import rehypeKatex from 'rehype-katex';
 import rehypeRaw from './rehype-raw';
-import rehypeShiki from './rehype-shiki';
-import remarkGithubAlerts from './remark-github-alerts';
 import hasDefaultExport from './hasDefaultExport';
 import matter from 'gray-matter';
 import * as path from 'path';
 
 import { Preview } from '../../preview/preview-manager';
+import {
+  sharedRemarkPlugins,
+  sharedRehypePluginsPreMath,
+  sharedRehypePluginsPostMath,
+  rehypeKatex,
+} from './shared-plugins';
 
 // result type for MDX transpilation (includes frontmatter)
 export interface MdxTranspileResult {
@@ -90,31 +87,15 @@ export const mdxTranspileAsync = async (
     jsx: false,
     jsxRuntime: 'automatic',
     jsxImportSource: 'react',
-    // remark plugins: GFM (tables, strikethrough, task lists), GitHub callouts & math
-    remarkPlugins: [remarkGithubAlerts, remarkGfm, remarkMath],
-    // rehype plugins: add sourcepos, mermaid, math rendering, syntax highlighting, heading anchors
+    // remark plugins: GFM, GitHub alerts, math (shared w/ Safe Mode)
+    remarkPlugins: sharedRemarkPlugins,
+    // rehype plugins: sourcepos, mermaid, math, raw HTML, syntax, anchors, lazy images
     rehypePlugins: [
-      rehypeSourcepos,
-      // convert mermaid code blocks to placeholders for client-side rendering
-      rehypeMermaidPlaceholder,
-      // render LaTeX math expressions
+      ...sharedRehypePluginsPreMath,
       rehypeKatex,
-      // convert raw HTML from KaTeX to JSX
+      // Trusted-only: convert raw HTML from KaTeX to JSX
       rehypeRaw,
-      // syntax highlighting w/ Shiki
-      rehypeShiki,
-      // heading anchors for TOC support
-      rehypeSlug,
-      [
-        rehypeAutolinkHeadings,
-        {
-          behavior: 'append',
-          properties: {
-            className: ['anchor-link'],
-            ariaLabel: 'Link to this section',
-          },
-        },
-      ],
+      ...sharedRehypePluginsPostMath,
     ],
   });
 
