@@ -5,6 +5,8 @@ import { createRoot } from 'react-dom/client';
 import { initRPCWebviewSide } from './rpc-webview';
 import { debug, debugError } from './utils/debug';
 import { ThemeProvider } from './context/ThemeContext';
+import { LightboxProvider } from './context/LightboxContext';
+import { Lightbox } from './components/Lightbox';
 import App from './App';
 import './index.css';
 // KaTeX math rendering styles
@@ -26,10 +28,13 @@ if (!container) {
 
 debug('[WEBVIEW] Creating React root...');
 const root = createRoot(container);
-debug('[WEBVIEW] Rendering App with ThemeProvider...');
+debug('[WEBVIEW] Rendering App with ThemeProvider & LightboxProvider...');
 root.render(
   <ThemeProvider>
-    <App />
+    <LightboxProvider>
+      <App />
+      <Lightbox />
+    </LightboxProvider>
   </ThemeProvider>
 );
 debug('[WEBVIEW] App rendered');

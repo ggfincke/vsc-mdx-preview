@@ -8,14 +8,11 @@ import {
   useRef,
   useCallback,
   ComponentType,
+  MouseEvent,
 } from 'react';
-import { createPortal } from 'react-dom';
 import { evaluateModuleToComponent } from './module-loader';
-import { MermaidRenderer } from './components/MermaidRenderer';
-import {
-  findMermaidContainers,
-  MermaidDiagramInfo,
-} from './utils/findMermaidContainers';
+import { useLightbox } from './context/LightboxContext';
+import { useMermaidRendering } from './hooks';
 import type { TrustedPreviewContent, PreviewError } from './types';
 
 interface TrustedPreviewRendererProps {
@@ -34,22 +31,26 @@ export function TrustedPreviewRenderer({
 }: TrustedPreviewRendererProps) {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  // track mermaid diagrams for React portal rendering
-  const [mermaidDiagrams, setMermaidDiagrams] = useState<MermaidDiagramInfo[]>(
-    []
+  const { openLightbox } = useLightbox();
+
+  // use shared mermaid hook (before-paint mode w/ stale filtering for Trusted Mode)
+  const { renderPortals, scan } = useMermaidRendering(containerRef, {
+    mode: 'before-paint',
+    filterStale: true,
+  });
+
+  // handle image click to open lightbox
+  const handleImageClick = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'IMG') {
+        const img = target as HTMLImageElement;
+        e.preventDefault();
+        openLightbox(img.src, img.alt);
+      }
+    },
+    [openLightbox]
   );
-
-  // scan for mermaid containers & update state (filter stale elements)
-  const scanMermaidContainers = useCallback(() => {
-    if (!containerRef.current) {
-      return;
-    }
-
-    const found = findMermaidContainers(containerRef.current);
-    // filter stale elements (removed from DOM during re-render)
-    const valid = found.filter((d) => containerRef.current!.contains(d.el));
-    setMermaidDiagrams(valid);
-  }, []);
 
   // evaluate code when content changes
   useEffect(() => {
@@ -95,30 +96,13 @@ export function TrustedPreviewRenderer({
     onError,
   ]);
 
-  // scan for mermaid containers after MDX renders
-  // useLayoutEffect to minimize "Loading diagram..." flash
+  // trigger mermaid scan when component becomes available
+  // (hook's initial scan runs before container is rendered during loading state)
   useLayoutEffect(() => {
-    if (!evaluatedComponent) {
-      return;
+    if (evaluatedComponent && containerRef.current) {
+      scan();
     }
-
-    // initial scan
-    scanMermaidContainers();
-
-    // MutationObserver for dynamic content (async rendering)
-    const observer = new MutationObserver(() => {
-      scanMermaidContainers();
-    });
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current, {
-        childList: true,
-        subtree: true,
-      });
-    }
-
-    return () => observer.disconnect();
-  }, [evaluatedComponent, scanMermaidContainers]);
+  }, [evaluatedComponent, scan]);
 
   // show loading state while evaluating
   if (isEvaluating || !evaluatedComponent) {
@@ -133,19 +117,15 @@ export function TrustedPreviewRenderer({
   // render evaluated component
   const MDXComponent = evaluatedComponent;
   return (
-    <div ref={containerRef} className="mdx-trusted-preview" data-mode="trusted">
+    <div
+      ref={containerRef}
+      className="mdx-trusted-preview"
+      data-mode="trusted"
+      onClick={handleImageClick}
+    >
       <MDXComponent />
       {/* render mermaid diagrams via React portals */}
-      {mermaidDiagrams.map((diagram) =>
-        createPortal(
-          <MermaidRenderer
-            key={diagram.id}
-            id={diagram.id}
-            code={diagram.code}
-          />,
-          diagram.el
-        )
-      )}
+      {renderPortals()}
     </div>
   );
 }

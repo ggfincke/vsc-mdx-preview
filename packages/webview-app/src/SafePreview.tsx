@@ -1,15 +1,11 @@
 // packages/webview-app/src/SafePreview.tsx
 // render pre-sanitized HTML in Safe Mode (no JavaScript execution)
 
-import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useRef, useCallback } from 'react';
 import DOMPurify, { Config } from 'dompurify';
-import { MermaidRenderer } from './components/MermaidRenderer';
 import { enhanceCodeBlocks } from './components/CodeBlock';
-import {
-  findMermaidContainers,
-  MermaidDiagramInfo,
-} from './utils/findMermaidContainers';
+import { useLightbox } from './context/LightboxContext';
+import { useMermaidRendering } from './hooks';
 
 // DOMPurify configuration for safe rendering (only safe HTML elements & attributes)
 const DOMPURIFY_CONFIG: Config = {
@@ -250,9 +246,24 @@ interface SafePreviewRendererProps {
 // render sanitized HTML content in Safe Mode (use ref to set innerHTML after sanitization)
 export function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  // track mermaid diagrams for React portal rendering
-  const [mermaidDiagrams, setMermaidDiagrams] = useState<MermaidDiagramInfo[]>(
-    []
+  const { openLightbox } = useLightbox();
+
+  // use shared mermaid hook (after-paint mode for Safe Mode)
+  const { renderPortals } = useMermaidRendering(containerRef, {
+    mode: 'after-paint',
+  });
+
+  // handle image click to open lightbox
+  const handleImageClick = useCallback(
+    (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'IMG') {
+        const img = target as HTMLImageElement;
+        e.preventDefault();
+        openLightbox(img.src, img.alt);
+      }
+    },
+    [openLightbox]
   );
 
   useEffect(() => {
@@ -272,13 +283,25 @@ export function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
     // add safe mode styles
     ensureSafeModeStyles();
 
-    // extract mermaid diagrams for React rendering
-    const diagrams = findMermaidContainers(containerRef.current);
-    setMermaidDiagrams(diagrams);
+    // add clickable styles to images
+    processImages(containerRef.current);
 
     // enhance code blocks (copy button, language badge)
     enhanceCodeBlocks(containerRef.current);
   }, [html]);
+
+  // add image click event listener
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    container.addEventListener('click', handleImageClick);
+    return () => {
+      container.removeEventListener('click', handleImageClick);
+    };
+  }, [handleImageClick]);
 
   return (
     <div
@@ -287,18 +310,17 @@ export function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
       data-mode="safe"
     >
       {/* render mermaid diagrams via React portals */}
-      {mermaidDiagrams.map((diagram) =>
-        createPortal(
-          <MermaidRenderer
-            key={diagram.id}
-            id={diagram.id}
-            code={diagram.code}
-          />,
-          diagram.el
-        )
-      )}
+      {renderPortals()}
     </div>
   );
+}
+
+// add clickable cursor to images for lightbox
+function processImages(container: HTMLElement): void {
+  const images = container.querySelectorAll('img');
+  images.forEach((img) => {
+    img.style.cursor = 'zoom-in';
+  });
 }
 
 // process links to ensure they're safe (external links open in new tab w/ noopener noreferrer)
