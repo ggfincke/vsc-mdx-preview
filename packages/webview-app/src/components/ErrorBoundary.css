@@ -95,6 +95,57 @@
   overflow: auto;
 }
 
+.mdx-error-stack-frames {
+  margin: 8px 0 0 0;
+  padding: 8px;
+  background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
+  border-radius: 4px;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.mdx-error-stack-frame {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 2px 4px;
+  border-radius: 2px;
+  display: flex;
+  gap: 8px;
+  color: var(--vscode-descriptionForeground, #8b8b8b);
+}
+
+.mdx-error-stack-frame.navigable {
+  cursor: pointer;
+}
+
+.mdx-error-stack-frame.navigable:hover {
+  background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.1));
+}
+
+.mdx-error-stack-frame.user-code {
+  color: var(--vscode-editor-foreground, #d4d4d4);
+}
+
+.mdx-error-frame-function {
+  color: var(--vscode-symbolIcon-functionForeground, #b180d7);
+  flex-shrink: 0;
+}
+
+.mdx-error-frame-location {
+  color: var(--vscode-textLink-foreground, #3794ff);
+  text-decoration: underline;
+}
+
+.mdx-error-stack-frame.navigable:hover .mdx-error-frame-location {
+  color: var(--vscode-textLink-activeForeground, #3794ff);
+}
+
+.mdx-error-frame-raw {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .mdx-error-actions {
   display: flex;
   gap: 8px;
