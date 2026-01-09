@@ -4,7 +4,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as typescript from 'typescript';
 import { TextDecoder } from 'util';
 import {
   performance,
@@ -19,6 +18,13 @@ import { ThemeManager } from '../themes';
 
 import { createOrShowPanel, refreshPanel } from './webview-manager';
 import evaluateInWebview from './evaluate-in-webview';
+import {
+  resolveTypescriptConfig,
+  findTsConfig,
+  type TypeScriptConfiguration,
+} from './TypeScriptConfigResolver';
+import { DocumentTracker } from './DocumentTracker';
+import { CustomCssWatcher } from './CustomCssWatcher';
 
 // update mode for preview refresh behavior
 export type UpdateMode = 'onType' | 'onSave' | 'manual';
@@ -28,10 +34,8 @@ export interface StyleConfiguration {
   useWhiteBackground: boolean;
 }
 
-export interface TypeScriptConfiguration {
-  tsCompilerOptions: typescript.CompilerOptions;
-  tsCompilerHost: typescript.CompilerHost;
-}
+// re-export for backward compatibility
+export type { TypeScriptConfiguration } from './TypeScriptConfigResolver';
 
 import type { WebviewHandleType } from '../rpc-extension';
 
@@ -41,6 +45,7 @@ export type WebviewHandle = WebviewHandleType;
 export class PreviewManager {
   private static instance: PreviewManager;
   private currentPreview: Preview | undefined;
+  private subscribers: Set<() => void> = new Set();
 
   private constructor() {}
 
@@ -51,14 +56,24 @@ export class PreviewManager {
     return PreviewManager.instance;
   }
 
+  // static dispose for singleton cleanup
+  static dispose(): void {
+    if (PreviewManager.instance) {
+      PreviewManager.instance.dispose();
+      // @ts-expect-error reset singleton for dispose
+      PreviewManager.instance = undefined;
+    }
+  }
+
   // get current preview
   getCurrentPreview(): Preview | undefined {
     return this.currentPreview;
   }
 
-  // set current preview
+  // set current preview & notify subscribers
   setCurrentPreview(preview: Preview | undefined): void {
     this.currentPreview = preview;
+    this.notifySubscribers();
   }
 
   // refresh all active previews (e.g., when trust state changes)
@@ -79,6 +94,30 @@ export class PreviewManager {
   hasActivePreviews(): boolean {
     return this.currentPreview?.active ?? false;
   }
+
+  // subscribe to preview state changes (open/close)
+  subscribe(callback: () => void): vscode.Disposable {
+    this.subscribers.add(callback);
+    return {
+      dispose: () => {
+        this.subscribers.delete(callback);
+      },
+    };
+  }
+
+  // notify subscribers when preview state changes
+  private notifySubscribers(): void {
+    for (const callback of this.subscribers) {
+      callback();
+    }
+  }
+
+  // dispose current preview & cleanup
+  private dispose(): void {
+    this.currentPreview?.dispose();
+    this.currentPreview = undefined;
+    this.subscribers.clear();
+  }
 }
 
 // get current preview through manager (backward compatibility)
@@ -97,21 +136,17 @@ export class Preview {
 
   webview?: vscode.Webview;
 
-  // version tracking for stale detection
-  private lastRenderedVersion = -1;
-  private isStale = false;
-
-  // reset rendered version (called when panel is disposed to force re-render on reopen)
-  resetRenderedVersion(): void {
-    this.lastRenderedVersion = -1;
-  }
+  // composed modules for separation of concerns
+  private documentTracker = new DocumentTracker();
+  private customCssWatcher?: CustomCssWatcher;
 
   // debounced update function (created in constructor)
   private debouncedUpdateWebview: ReturnType<typeof debounce>;
 
-  // custom CSS file watcher
-  private customCssWatcher?: vscode.FileSystemWatcher;
-  private customCssDisposables: vscode.Disposable[] = [];
+  // reset rendered version (called when panel is disposed to force re-render)
+  resetRenderedVersion(): void {
+    this.documentTracker.resetRenderedVersion();
+  }
 
   getWebviewUri(fsPath: string): string | undefined {
     if (!this.webview) {
@@ -147,60 +182,8 @@ export class Preview {
     return { securityPolicy: this.configuration.securityPolicy };
   }
 
-  // generate TypeScript configuration from tsconfig.json (full resolution of extends, references, paths, baseUrl)
-  generateTypescriptConfiguration(configFile: string | null): void {
-    let tsCompilerOptions: typescript.CompilerOptions;
-
-    if (configFile) {
-      // Use getParsedCommandLineOfConfigFile for full tsconfig resolution
-      // This properly handles extends, paths, baseUrl, references, etc.
-      const parsedConfig = typescript.getParsedCommandLineOfConfigFile(
-        configFile,
-        // existing options to merge
-        {},
-        {
-          ...typescript.sys,
-          onUnRecoverableConfigFileDiagnostic: (diagnostic) => {
-            logError(
-              'TypeScript config error',
-              typescript.flattenDiagnosticMessageText(
-                diagnostic.messageText,
-                '\n'
-              )
-            );
-          },
-        }
-      );
-
-      if (parsedConfig) {
-        tsCompilerOptions = parsedConfig.options;
-      } else {
-        // Fallback if parsing fails
-        tsCompilerOptions = typescript.getDefaultCompilerOptions();
-      }
-    } else {
-      tsCompilerOptions = typescript.getDefaultCompilerOptions();
-    }
-
-    // Override certain options for preview purposes
-    delete tsCompilerOptions.emitDeclarationOnly;
-    delete tsCompilerOptions.declaration;
-    tsCompilerOptions.module = typescript.ModuleKind.ESNext;
-    tsCompilerOptions.target = typescript.ScriptTarget.ESNext;
-    tsCompilerOptions.noEmitHelpers = false;
-    tsCompilerOptions.importHelpers = false;
-
-    const tsCompilerHost = typescript.createCompilerHost(tsCompilerOptions);
-
-    this.typescriptConfiguration = {
-      tsCompilerHost,
-      tsCompilerOptions,
-    };
-  }
-
   initWebviewHandshakePromise(): void {
     debug('[PREVIEW] initWebviewHandshakePromise called');
-    // 10 seconds
     const HANDSHAKE_TIMEOUT_MS = 10000;
 
     const handshakePromise = new Promise<void>((resolve) => {
@@ -268,7 +251,7 @@ export class Preview {
       ),
     };
 
-    // Create debounced update function
+    // create debounced update function
     this.debouncedUpdateWebview = debounce(
       () => this.updateWebview(),
       debounceDelay
@@ -276,7 +259,7 @@ export class Preview {
 
     this.setDoc(doc);
 
-    // Initialize custom CSS watcher
+    // initialize custom CSS watcher
     this.setupCustomCssWatcher();
 
     if (process.env.NODE_ENV === 'development') {
@@ -298,15 +281,19 @@ export class Preview {
     this.doc = doc;
     this.dependentFsPaths = new Set([doc.uri.fsPath]);
 
-    const configFile = typescript.findConfigFile(
-      this.entryFsDirectory ?? '',
-      typescript.sys.fileExists
-    );
+    const configFile = findTsConfig(this.entryFsDirectory ?? '');
     if (configFile) {
-      this.generateTypescriptConfiguration(configFile);
+      this.typescriptConfiguration = resolveTypescriptConfig(configFile);
     } else {
       this.typescriptConfiguration = undefined;
     }
+  }
+
+  // set webview handle & connect it to composed modules
+  setWebviewHandle(handle: WebviewHandle): void {
+    this.webviewHandle = handle;
+    this.documentTracker.setNotifier(handle);
+    this.customCssWatcher?.setNotifier(handle);
   }
 
   get fsPath(): string {
@@ -336,11 +323,10 @@ export class Preview {
     const { scheme, fsPath } = uri;
     debug(`[PREVIEW] updateWebview scheme=${scheme}, fsPath=${fsPath}`);
 
-    // Track version for stale detection
     const currentVersion = this.doc.version;
 
-    // Skip if we've already rendered this version (unless forced)
-    if (!force && currentVersion === this.lastRenderedVersion) {
+    // skip if we've already rendered this version (unless forced)
+    if (!force && this.documentTracker.hasRenderedVersion(currentVersion)) {
       debug('[PREVIEW] Skipping update - same version');
       return;
     }
@@ -353,11 +339,9 @@ export class Preview {
       }
       case 'file': {
         debug('[PREVIEW] updateWebview: file scheme');
-        // In onType mode, use in-memory text; in onSave mode, read from disk
         if (this.configuration.updateMode === 'onType') {
           await evaluateInWebview(this, this.text, fsPath);
         } else {
-          // ASYNC: Use fs.promises.readFile instead of fs.readFileSync
           const text = await fs.promises.readFile(fsPath, { encoding: 'utf8' });
           await evaluateInWebview(this, text, fsPath);
         }
@@ -365,15 +349,12 @@ export class Preview {
       }
       default: {
         debug(`[PREVIEW] updateWebview: default scheme (${scheme})`);
-        // Non-file/virtual schemes (vscode-remote, git, vscode-userdata, etc.)
-        // Safe Mode should still render using document text.
         let text = this.text;
         if (this.configuration.updateMode !== 'onType') {
           try {
             const bytes = await vscode.workspace.fs.readFile(uri);
             text = new TextDecoder().decode(bytes);
           } catch {
-            // Fall back to in-memory text if readFile isn't supported
             text = this.text;
           }
         }
@@ -382,111 +363,37 @@ export class Preview {
       }
     }
 
-    // Update tracking after successful render
-    this.lastRenderedVersion = currentVersion;
-    this.markNotStale();
+    // update tracking after successful render
+    this.documentTracker.markRendered(currentVersion);
   }
 
-  // Mark preview as stale (document changed but not rendered)
+  // mark preview as stale (document changed but not rendered)
   markStale(): void {
-    if (!this.isStale) {
-      this.isStale = true;
-      // Notify webview of stale state
-      this.webviewHandle?.setStale?.(true);
-    }
-  }
-
-  // Mark preview as not stale (just rendered)
-  private markNotStale(): void {
-    if (this.isStale) {
-      this.isStale = false;
-      // Notify webview of not-stale state
-      this.webviewHandle?.setStale?.(false);
-    }
+    this.documentTracker.markStale();
   }
 
   // setup custom CSS file watcher
   private setupCustomCssWatcher(): void {
-    // clean up any existing watcher
-    this.disposeCustomCssWatcher();
+    this.customCssWatcher?.dispose();
 
     const cssPath = this.configuration.customCss;
     if (!cssPath) {
+      this.customCssWatcher = undefined;
       return;
     }
 
-    // Resolve path relative to workspace or document
-    const resolvedPath = this.resolveCustomCssPath(cssPath);
-    if (!resolvedPath) {
-      return;
-    }
-
-    // Initial load
-    this.loadAndSendCustomCss(resolvedPath);
-
-    // Watch for changes
-    this.customCssWatcher =
-      vscode.workspace.createFileSystemWatcher(resolvedPath);
-
-    this.customCssDisposables.push(
-      this.customCssWatcher.onDidChange(() => {
-        debug('[PREVIEW] Custom CSS file changed');
-        this.loadAndSendCustomCss(resolvedPath);
-      }),
-      this.customCssWatcher.onDidCreate(() => {
-        debug('[PREVIEW] Custom CSS file created');
-        this.loadAndSendCustomCss(resolvedPath);
-      }),
-      this.customCssWatcher.onDidDelete(() => {
-        debug('[PREVIEW] Custom CSS file deleted');
-        // Clear custom CSS
-        this.webviewHandle?.setCustomCss?.('');
-      }),
-      this.customCssWatcher
+    this.customCssWatcher = new CustomCssWatcher(
+      cssPath,
+      vscode.workspace.workspaceFolders,
+      this.entryFsDirectory
     );
-  }
 
-  // Resolve custom CSS path (relative to workspace or absolute)
-  private resolveCustomCssPath(cssPath: string): string | null {
-    if (path.isAbsolute(cssPath)) {
-      return cssPath;
+    // connect notifier if webview handle exists
+    if (this.webviewHandle) {
+      this.customCssWatcher.setNotifier(this.webviewHandle);
     }
 
-    // Try relative to workspace root
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (workspaceFolders && workspaceFolders.length > 0) {
-      return path.join(workspaceFolders[0].uri.fsPath, cssPath);
-    }
-
-    // Try relative to document
-    if (this.entryFsDirectory) {
-      return path.join(this.entryFsDirectory, cssPath);
-    }
-
-    return null;
-  }
-
-  // load & send custom CSS to webview
-  private async loadAndSendCustomCss(cssPath: string): Promise<void> {
-    try {
-      const cssContent = await fs.promises.readFile(cssPath, 'utf-8');
-      this.webviewHandle?.setCustomCss?.(cssContent);
-      debug(
-        `[PREVIEW] Loaded custom CSS: ${cssPath} (${cssContent.length} chars)`
-      );
-    } catch (err) {
-      debug(`[PREVIEW] Failed to load custom CSS: ${err}`);
-      // Silently fail - file might not exist yet
-    }
-  }
-
-  // Clean up custom CSS watcher
-  private disposeCustomCssWatcher(): void {
-    for (const disposable of this.customCssDisposables) {
-      disposable.dispose();
-    }
-    this.customCssDisposables = [];
-    this.customCssWatcher = undefined;
+    this.customCssWatcher.watch();
   }
 
   async refreshWebview(): Promise<void> {
@@ -506,28 +413,23 @@ export class Preview {
       return;
     }
 
-    // Only process if this is a dependent file
     if (!this.dependentFsPaths.has(fsPath)) {
       return;
     }
 
     this.editingDoc = doc;
 
-    // Handle based on update mode
     switch (this.configuration.updateMode) {
       case 'onType': {
-        // Mark as stale immediately, then debounced update
         this.markStale();
         if (fsPath !== this.fsPath) {
           await this.webviewHandle.invalidate(fsPath);
         }
-        // Use debounced update for on-type mode
         this.debouncedUpdateWebview();
         break;
       }
       case 'onSave':
       case 'manual': {
-        // Just mark as stale, don't update
         this.markStale();
         break;
       }
@@ -543,8 +445,6 @@ export class Preview {
       return;
     }
 
-    // In onSave mode, update on save; in onType mode, also update to ensure
-    // we have the disk version; in manual mode, just mark stale
     if (this.configuration.updateMode === 'manual') {
       this.markStale();
       return;
@@ -598,7 +498,7 @@ export class Preview {
       customLayoutFilePath !== this.configuration.customLayoutFilePath ||
       securityPolicy !== this.configuration.securityPolicy;
 
-    // Recreate debounced function if delay changed
+    // recreate debounced function if delay changed
     if (debounceDelay !== this.configuration.debounceDelay) {
       this.debouncedUpdateWebview = debounce(
         () => this.updateWebview(),
@@ -606,7 +506,7 @@ export class Preview {
       );
     }
 
-    // Reinitialize custom CSS watcher if path changed
+    // reinitialize custom CSS watcher if path changed
     if (customCss !== this.configuration.customCss) {
       this.configuration.customCss = customCss;
       this.setupCustomCssWatcher();
@@ -624,7 +524,6 @@ export class Preview {
     });
 
     if (needsWebviewRefresh) {
-      // fire & forget - don't block on refresh
       this.refreshWebview().catch((err) =>
         logError('Failed to refresh preview', err)
       );
@@ -637,8 +536,7 @@ export class Preview {
     this.pushThemeState();
   }
 
-  // push theme state to webview (public for theme refresh without full webview refresh)
-  // accepts optional frontmatter for theme overrides
+  // push theme state to webview (public for theme refresh w/o full webview refresh)
   pushThemeState(frontmatter?: Record<string, unknown>): void {
     if (!this.webviewHandle) {
       return;
@@ -646,9 +544,10 @@ export class Preview {
     const themeManager = ThemeManager.getInstance();
     let themeState = themeManager.getWebviewThemeState(this.doc.uri);
 
-    // Apply frontmatter theme overrides if present
+    // apply frontmatter theme overrides if present
     if (frontmatter) {
-      const frontmatterTheme = themeManager.extractThemeFromFrontmatter(frontmatter);
+      const frontmatterTheme =
+        themeManager.extractThemeFromFrontmatter(frontmatter);
       if (frontmatterTheme.previewTheme) {
         themeState = {
           ...themeState,
@@ -669,7 +568,7 @@ export class Preview {
 
   // dispose of resources held by this preview
   dispose(): void {
-    this.disposeCustomCssWatcher();
+    this.customCssWatcher?.dispose();
   }
 }
 
