@@ -53,8 +53,10 @@ describe('module-fetcher image URI handling', () => {
     });
 
     it('includes the file path in the error message', () => {
-      // Error should include fsPath for debugging
-      expect(moduleFetcherSource).toMatch(/throw new Error\([^)]*\$\{fsPath\}/);
+      // Error should include fsPath for debugging (uses ModuleFetchError)
+      expect(moduleFetcherSource).toMatch(
+        /throw new ModuleFetchError\([^)]*\$\{fsPath\}/
+      );
     });
   });
 });

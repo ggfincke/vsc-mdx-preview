@@ -10,8 +10,17 @@ import type { Resolver } from 'enhanced-resolve';
 import { init as initLexer, parse as parseImports } from 'es-module-lexer';
 import { Preview } from '../preview/preview-manager';
 import { transform } from './transform';
-import { checkFsPath, PathAccessDeniedError } from '../security/checkFsPath';
+import { checkFsPath } from '../security/checkFsPath';
+import {
+  ExtensionError,
+  ModuleFetchError,
+  PathAccessDeniedError,
+} from '../errors';
+import { formatUserError, formatLogError } from '../errors/messages';
 import { error as logError } from '../logging';
+import type { FetchResult } from '@mdx-preview/shared-types';
+
+export type { FetchResult } from '@mdx-preview/shared-types';
 
 // initialize es-module-lexer once at module load
 let lexerInitialized = false;
@@ -20,14 +29,6 @@ async function ensureLexerInitialized(): Promise<void> {
     await initLexer;
     lexerInitialized = true;
   }
-}
-
-// result of fetching a module
-export interface FetchResult {
-  fsPath: string;
-  code: string;
-  dependencies: string[];
-  css?: string;
 }
 
 const NOOP_MODULE = `Object.defineProperty(exports, '__esModule', { value: true });
@@ -118,7 +119,12 @@ const browserResolver: Resolver = ResolverFactory.createResolver({
 function resolveModule(request: string, basedir: string): string {
   const resolved = browserResolver.resolveSync({}, basedir, request);
   if (resolved === false || resolved === undefined) {
-    throw new Error(`Cannot resolve module: ${request} from ${basedir}`);
+    throw new ModuleFetchError(
+      `Cannot resolve module: ${request} from ${basedir}`,
+      'MODULE_NOT_FOUND',
+      request,
+      basedir
+    );
   }
   return resolved;
 }
@@ -132,7 +138,7 @@ async function extractImports(code: string): Promise<string[]> {
     return imports
       .map((imp) => imp.n)
       .filter((name): name is string => name !== undefined && name !== null);
-  } catch (error) {
+  } catch {
     // fallback for code that can't be parsed (e.g., CJS) - extract require() calls w/ regex
     const requireMatches = code.matchAll(
       /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g
@@ -266,8 +272,10 @@ export async function fetchLocal(
     if (/\.(gif|png|jpe?g|svg)$/i.test(extname)) {
       const webviewUri = preview.getWebviewUri(fsPath);
       if (!webviewUri) {
-        throw new Error(
-          `Preview webview not initialized; cannot create webview URI for local image: ${fsPath}`
+        throw new ModuleFetchError(
+          `Preview webview not initialized; cannot create webview URI for: ${fsPath}`,
+          'TRANSFORM_ERROR',
+          fsPath
         );
       }
       const code = `module.exports = "${webviewUri}"`;
@@ -297,9 +305,18 @@ export async function fetchLocal(
       dependencies,
     };
   } catch (error) {
-    logError('Module fetch failed', { request, error });
-    const message = error instanceof Error ? error.message : String(error);
-    preview.webviewHandle.showPreviewError({ message });
+    // handle all structured errors (ModuleFetchError, SecurityError, TranspileError)
+    if (error instanceof ExtensionError) {
+      logError('Module fetch failed', formatLogError(error));
+      preview.webviewHandle.showPreviewError({
+        message: formatUserError(error),
+        code: error.code,
+      });
+    } else {
+      const message = error instanceof Error ? error.message : String(error);
+      logError('Module fetch failed', { request, error: message });
+      preview.webviewHandle.showPreviewError({ message });
+    }
     return undefined;
   }
 }

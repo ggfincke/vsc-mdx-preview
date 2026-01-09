@@ -9,6 +9,7 @@ import { transpileModule as tsTranspileModule } from 'typescript';
 import { transformAsync as babelTransformAsync } from '../transpiler/babel';
 import { transform as sucraseTransform } from '../transpiler/sucrase';
 import { debug } from '../logging';
+import { resolveTypescriptConfig } from '../preview/TypeScriptConfigResolver';
 
 // result type for entry transformation (includes frontmatter)
 export interface TransformEntryResult {
@@ -37,14 +38,16 @@ async function transformEntry(
   }
 
   const useSucrase = preview.configuration.useSucraseTranspiler;
+  debug(`Transpiler: ${useSucrase ? 'Sucrase' : 'Babel'} selected for entry`);
+
   if (
     (languageId === 'typescript' || languageId === 'typescriptreact') &&
     !useSucrase
   ) {
     if (!preview.typescriptConfiguration) {
-      preview.generateTypescriptConfiguration(null);
+      preview.typescriptConfiguration = resolveTypescriptConfig(null);
     }
-    const { tsCompilerOptions } = preview.typescriptConfiguration!;
+    const { tsCompilerOptions } = preview.typescriptConfiguration;
     code = tsTranspileModule(code, {
       compilerOptions: tsCompilerOptions,
       fileName: fsPath,
@@ -54,7 +57,8 @@ async function transformEntry(
   if (useSucrase) {
     try {
       code = sucraseTransform(code).code;
-    } catch {
+    } catch (e) {
+      debug('Sucrase failed for entry, falling back to Babel', { error: e });
       const result = await babelTransformAsync(code);
       code = result?.code ?? code;
     }
@@ -82,9 +86,9 @@ async function transform(
   const useSucrase = preview.configuration.useSucraseTranspiler;
   if (/\.tsx?$/i.test(extname) && !useSucrase) {
     if (!preview.typescriptConfiguration) {
-      preview.generateTypescriptConfiguration(null);
+      preview.typescriptConfiguration = resolveTypescriptConfig(null);
     }
-    const { tsCompilerOptions } = preview.typescriptConfiguration!;
+    const { tsCompilerOptions } = preview.typescriptConfiguration;
     code = tsTranspileModule(code, {
       compilerOptions: tsCompilerOptions,
       fileName: fsPath,
@@ -93,11 +97,17 @@ async function transform(
 
   const isInNodeModules = fsPath.split(path.sep).includes('node_modules');
   if (!isInNodeModules || isModule(code)) {
-    debug(`Transpiling: ${fsPath}`);
+    const transpilerChoice =
+      isInNodeModules || useSucrase ? 'Sucrase' : 'Babel';
+    debug(`Transpiling dependency: ${fsPath} (${transpilerChoice})`);
     if (isInNodeModules || useSucrase) {
       try {
         code = sucraseTransform(code).code;
-      } catch {
+      } catch (e) {
+        debug('Sucrase failed for dependency, falling back to Babel', {
+          file: fsPath,
+          error: e,
+        });
         const result = await babelTransformAsync(code);
         code = result?.code ?? code;
       }
