@@ -1,286 +1,577 @@
-# MDX Preview Example
+---
+title: MDX Preview Feature Showcase
+author: MDX Preview Extension
+version: 1.0.0-alpha.5
+tags: [mdx, react, preview, vscode]
+date: 2025-01-08
+---
 
-This is a simple example showing MDX Preview in action.
+import Calculator from './src/calculator'
 
-## Interactive Component
+# MDX Preview Feature Showcase
 
-import MyComponent from './src/my-component'
+Welcome to MDX Preview! This document demonstrates all the powerful features available in the extension. Open this file in VS Code and use `Cmd+K X` (Mac) or `Ctrl+K X` (Windows/Linux) to see the live preview.
 
-Try clicking the button below:
+---
 
-<MyComponent />
+## Table of Contents
 
-## Features Demonstrated
+The sidebar on the right shows an auto-generated table of contents from your headings. Click any heading to navigate directly to that section.
 
-- **Markdown rendering**: Headers, paragraphs, lists
-- **React components**: Interactive button with state
-- **Live preview**: Changes update instantly
+---
 
-## Code Example
+## React Components (Trusted Mode)
 
-```jsx
-import React from 'react';
+In **Trusted Mode**, you can import and render React components directly in your MDX:
 
-export default function MyComponent() {
-  const [count, setCount] = React.useState(0);
+<Calculator />
 
-  return (
-    <button onClick={() => setCount(c => c + 1)}>
-      Clicked {count} times
-    </button>
-  );
-}
-```
+> [!TIP]
+> To enable React components, trust your workspace and set `mdx-preview.preview.enableScripts` to `true` in your settings.
 
-## Getting Started
+---
 
-1. Open this `README.mdx` file in VS Code
-2. Run **"MDX: Open Preview"** from the Command Palette
-3. Trust the workspace and enable scripts for interactive components
+## GitHub Alerts
 
-## What is MDX?
+MDX Preview supports GitHub-style alert callouts for highlighting important information:
 
-MDX is a format that lets you seamlessly write JSX in your Markdown documents. You can import components, such as interactive charts or alerts, and embed them within your content. This makes writing long-form content with components a blast.
+> [!NOTE]
+> **Notes** provide helpful context and additional information that enhances understanding.
 
-### Why MDX?
+> [!TIP]
+> **Tips** share best practices and clever techniques that improve your workflow.
 
-- **Component-based**: Use React components directly in your content
-- **Flexible**: Mix Markdown and JSX as needed
-- **Powerful**: Full access to JavaScript expressions
-- **Familiar**: If you know Markdown and React, you know MDX
+> [!IMPORTANT]
+> **Important** highlights critical information that users must not overlook.
 
-## Markdown Features
+> [!WARNING]
+> **Warnings** alert you to potential issues that could cause problems if ignored.
 
-### Text Formatting
+> [!CAUTION]
+> **Caution** advises about risks or actions that may have negative consequences.
 
-You can use **bold**, *italic*, ~~strikethrough~~, and `inline code` in your content.
+---
 
-### Blockquotes
+## Syntax Highlighting
 
-> MDX is an authorable format that lets you seamlessly write JSX in your Markdown documents.
-> 
-> It's perfect for documentation, blogs, and interactive tutorials.
+Code blocks feature Shiki-powered syntax highlighting with **copy buttons** and **language badges**:
 
-### Tables
-
-| Feature | Safe Mode | Trusted Mode |
-|---------|-----------|--------------|
-| Markdown rendering | Yes | Yes |
-| Syntax highlighting | Yes | Yes |
-| React components | No | Yes |
-| JavaScript execution | No | Yes |
-
-### Task Lists
-
-- [x] Install the extension
-- [x] Open an MDX file
-- [ ] Enable trusted mode
-- [ ] Try the interactive components
-
-## Advanced Usage
-
-### Nested Lists
-
-1. First level item
-   - Second level item
-   - Another second level item
-     - Third level item
-2. Back to first level
-   1. Numbered nested item
-   2. Another numbered nested item
-
-### Code Blocks with Syntax Highlighting
-
-Here's some TypeScript code:
+### TypeScript
 
 ```typescript
 interface User {
   id: number;
   name: string;
   email: string;
+  roles: string[];
 }
 
 async function fetchUser(id: number): Promise<User> {
   const response = await fetch(`/api/users/${id}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user: ${response.status}`);
+  }
   return response.json();
 }
 ```
 
-And some CSS:
+### React/JSX
 
-```css
-.button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  border-radius: 8px;
-  color: white;
-  padding: 12px 24px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+```tsx
+import { useState, useEffect } from 'react';
+
+interface CounterProps {
+  initialValue?: number;
 }
 
-.button:hover {
-  transform: translateY(-2px);
-}
-```
+export function Counter({ initialValue = 0 }: CounterProps) {
+  const [count, setCount] = useState(initialValue);
 
-## Links and References
-
-- [MDX Documentation](https://mdxjs.com/)
-- [React Documentation](https://react.dev/)
-- [VS Code Documentation](https://code.visualstudio.com/docs)
-
-### Internal Links
-
-You can link to [sections within this document](#what-is-mdx) using anchor links.
-
-## Images
-
-Images can be embedded using standard Markdown syntax:
-
-![Placeholder](https://via.placeholder.com/400x200?text=MDX+Preview)
-
-## Horizontal Rules
-
-Use horizontal rules to separate sections:
-
----
-
-## Rich Content Features
-
-### Mermaid Diagrams
-
-Mermaid diagrams render as interactive visualizations. Here's a flowchart example:
-
-```mermaid
-graph TD
-  A[Start: MDX File] --> B{Is it Safe Mode?}
-  B -->|Yes| C[Render Static HTML]
-  B -->|No| D{Workspace Trusted?}
-  D -->|Yes| E[Execute React Components]
-  D -->|No| C
-  C --> F[Display in Preview Panel]
-  E --> F
-  F --> G[User reads content]
-```
-
-And here's a sequence diagram showing component interaction:
-
-```mermaid
-sequenceDiagram
-  participant User
-  participant Extension
-  participant Webview
-  participant Compiler
-
-  User->>Extension: Opens MDX file
-  Extension->>Compiler: Compile MDX
-  Compiler->>Webview: Send compiled content
-  Webview->>Webview: Render HTML/Components
-  Webview->>User: Display preview
-```
-
-A simple state diagram:
-
-```mermaid
-stateDiagram-v2
-  [*] --> Idle
-  Idle --> Loading: File opened
-  Loading --> Preview: Compiled
-  Preview --> Editing: User changes file
-  Editing --> Loading: Save detected
-  Loading --> Preview
-  Preview --> [*]
-```
-
-And a pie chart showing feature adoption:
-
-```mermaid
-pie title MDX Preview Feature Usage
-  "Markdown Rendering" : 95
-  "React Components" : 70
-  "Syntax Highlighting" : 88
-  "Math Expressions" : 45
-  "Mermaid Diagrams" : 60
-```
-
-### Math and LaTeX Expressions
-
-Inline math expressions: `E = mc²` is the famous mass-energy equivalence formula discovered by Einstein.
-
-The quadratic formula solves `ax² + bx + c = 0`:
-
-`x = (-b ± √(b² - 4ac)) / 2a`
-
-### Code Block Enhancements
-
-Here's a **code** block with line highlighting and a title:
-
-```typescript title="user-service.ts" {2,4-6}
-export class UserService {
-  async fetchUser(id: number): Promise<User> {
-    const response = await fetch(`/api/users/${id}`);
-    const data = await response.json();
-    this.cache.set(id, data);
-    return data;
-  }
+  return (
+    <div className="counter">
+      <span>Count: {count}</span>
+      <button onClick={() => setCount(c => c + 1)}>+</button>
+      <button onClick={() => setCount(c => c - 1)}>-</button>
+    </div>
+  );
 }
 ```
 
-JavaScript with line numbers:
+### Line Highlighting
 
-```javascript
-function fibonacci(n: number): number {
-  if (n <= 1) return n;
-  
-  let prev = 0, curr = 1;
-  for (let i = 2; i <= n; i++) {
-    [prev, curr] = [curr, prev + curr];
-  }
-  return curr;
+Highlight specific lines to draw attention to important code:
+
+```typescript {2,5-7}
+function processData(items: string[]) {
+  const filtered = items.filter(Boolean); // highlighted
+
+  return filtered.map(item => {
+    const normalized = item.trim().toLowerCase(); // highlighted
+    const encoded = encodeURIComponent(normalized); // highlighted
+    return `processed_${encoded}`; // highlighted
+  });
 }
 ```
 
-Python code example:
+### Code with Title
 
-```python title="app.py"
-from flask import Flask, jsonify
+```python title="api/routes.py"
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-@app.route('/api/data')
-def get_data():
-    return jsonify({'status': 'success', 'data': []})
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 10, type=int)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    users = User.query.paginate(page=page, per_page=limit)
+    return jsonify([u.to_dict() for u in users.items])
 ```
 
-### GitHub Alerts/Callouts
+### Diff Highlighting
 
-> [!NOTE]
-> This is a note providing helpful information. Use this for tips and general guidance that enhances understanding.
+```diff
+- const oldImplementation = () => {
+-   return data.filter(x => x.active);
+- };
++ const newImplementation = () => {
++   return data
++     .filter(x => x.active)
++     .sort((a, b) => b.priority - a.priority);
++ };
+```
+
+### Multiple Languages
+
+<details>
+<summary>Click to see more language examples</summary>
+
+**CSS**
+```css
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 8px;
+  background: var(--card-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+```
+
+**JSON**
+```json
+{
+  "name": "mdx-preview-demo",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  }
+}
+```
+
+**Shell**
+```bash
+# Clone and setup
+git clone https://github.com/example/repo.git
+cd repo
+npm install
+
+# Development
+npm run dev
+
+# Production build
+npm run build && npm run preview
+```
+
+**SQL**
+```sql
+SELECT
+  u.id,
+  u.name,
+  COUNT(o.id) as order_count,
+  SUM(o.total) as total_spent
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.created_at > '2024-01-01'
+GROUP BY u.id, u.name
+HAVING COUNT(o.id) > 5
+ORDER BY total_spent DESC
+LIMIT 10;
+```
+
+</details>
+
+---
+
+## Math Expressions (KaTeX)
+
+MDX Preview renders mathematical expressions using KaTeX:
+
+### Inline Math
+
+The quadratic formula $x = \frac\{-b \pm \sqrt\{b^2 - 4ac\}\}\{2a\}$ solves equations of the form $ax^2 + bx + c = 0$.
+
+Einstein's mass-energy equivalence: $E = mc^2$
+
+### Block Math
+
+The Gaussian integral:
+
+$$
+\int_\{-\infty\}^\{\infty\} e^\{-x^2\} dx = \sqrt\{\pi\}
+$$
+
+Matrix multiplication:
+
+$$
+\begin\{bmatrix\}
+a & b \\
+c & d
+\end\{bmatrix\}
+\begin\{bmatrix\}
+x \\
+y
+\end\{bmatrix\}
+=
+\begin\{bmatrix\}
+ax + by \\
+cx + dy
+\end\{bmatrix\}
+$$
+
+Summation notation:
+
+$$
+\sum_\{i=1\}^\{n\} i = \frac\{n(n+1)\}\{2\}
+$$
+
+The limit definition of $e$:
+
+$$
+e = \lim_\{n \to \infty\} \left(1 + \frac\{1\}\{n\}\right)^n
+$$
+
+---
+
+## Mermaid Diagrams
+
+Create diagrams using Mermaid syntax:
+
+### Flowchart
+
+```mermaid
+graph TD
+    A[📄 MDX File] --> B{Mode?}
+    B -->|Safe Mode| C[🔒 Static HTML]
+    B -->|Trusted Mode| D[⚛️ React Components]
+    C --> E[Preview Panel]
+    D --> E
+    E --> F[👁️ Live Preview]
+
+    style A fill:#e1f5fe
+    style F fill:#c8e6c9
+```
+
+### Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant E as Extension
+    participant C as Compiler
+    participant W as Webview
+
+    U->>E: Open MDX file
+    E->>C: Compile MDX
+    C-->>E: JavaScript/HTML
+    E->>W: Send content
+    W->>W: Render preview
+    W-->>U: Display result
+
+    Note over U,W: Live updates on save or type
+```
+
+### State Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Compiling: File changed
+    Compiling --> Rendering: Success
+    Compiling --> Error: Failed
+    Rendering --> Ready: Complete
+    Error --> Idle: Fix & retry
+    Ready --> Compiling: File changed
+    Ready --> [*]: Close preview
+```
+
+### Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    USER ||--o{ POST : creates
+    USER ||--o{ COMMENT : writes
+    POST ||--o{ COMMENT : has
+    POST }o--|| CATEGORY : belongs_to
+
+    USER {
+        int id PK
+        string name
+        string email UK
+    }
+    POST {
+        int id PK
+        string title
+        text content
+        int user_id FK
+    }
+```
+
+### Pie Chart
+
+```mermaid
+pie showData
+    title Feature Usage
+    "Markdown" : 95
+    "Code Blocks" : 88
+    "React Components" : 65
+    "Math (KaTeX)" : 45
+    "Mermaid Diagrams" : 55
+```
+
+### Gantt Chart
+
+```mermaid
+gantt
+    title Project Timeline
+    dateFormat  YYYY-MM-DD
+    section Planning
+    Requirements     :a1, 2025-01-01, 7d
+    Design           :a2, after a1, 5d
+    section Development
+    Core Features    :b1, after a2, 14d
+    Testing          :b2, after b1, 7d
+    section Release
+    Documentation    :c1, after b1, 7d
+    Launch           :milestone, after b2, 0d
+```
+
+---
+
+## Frontmatter Display
+
+The YAML frontmatter at the top of this document is automatically parsed and displayed as a collapsible section. Click the "Frontmatter" header in the preview to see the metadata:
+
+```yaml
+---
+title: MDX Preview Feature Showcase
+author: MDX Preview Extension
+version: 1.0.0-alpha.5
+tags: [mdx, react, preview, vscode]
+date: 2025-01-08
+---
+```
+
+You can access frontmatter values in your content using the `frontmatter` object (Trusted Mode only):
+
+**Document Title:** {typeof frontmatter !== 'undefined' ? frontmatter.title : 'MDX Preview Feature Showcase'}
+
+---
+
+## Tables (GFM)
+
+GitHub Flavored Markdown tables are fully supported:
+
+| Feature | Safe Mode | Trusted Mode | Description |
+|---------|:---------:|:------------:|-------------|
+| Markdown rendering | ✅ | ✅ | Basic formatting, lists, links |
+| Syntax highlighting | ✅ | ✅ | Shiki-powered code highlighting |
+| Math expressions | ✅ | ✅ | KaTeX for LaTeX math |
+| Mermaid diagrams | ✅ | ✅ | Flowcharts, sequences, etc. |
+| GitHub alerts | ✅ | ✅ | Note, tip, warning callouts |
+| React components | ❌ | ✅ | Custom interactive components |
+| JavaScript execution | ❌ | ✅ | Full JS/TS support |
+| Module imports | ❌ | ✅ | npm packages & local files |
+
+---
+
+## Task Lists
+
+Track progress with interactive task lists:
+
+- [x] Install MDX Preview extension
+- [x] Open an MDX file
+- [x] View in preview panel
+- [ ] Enable Trusted Mode
+- [ ] Try interactive components
+- [ ] Customize with themes
+
+---
+
+## Images
+
+Images support click-to-zoom with a lightbox modal. Click any image to view it fullscreen:
+
+![VS Code MDX Preview](https://via.placeholder.com/600x300/0078d4/ffffff?text=MDX+Preview+for+VS+Code)
 
 > [!TIP]
-> Tips highlight best practices and clever techniques that can improve your workflow or code quality.
+> Press `Escape` or click outside the image to close the lightbox.
 
-> [!WARNING]
-> Warnings alert you to important considerations that could cause issues if overlooked.
+---
 
-> [!CAUTION]
-> Use caution when following these instructions as they may have unintended side effects.
+## Text Formatting
 
-> [!IMPORTANT]
-> This information is critical and should not be skipped. Pay close attention to these details.
+MDX Preview supports all standard Markdown formatting:
 
-### Formulas and Math
+- **Bold text** for emphasis
+- *Italic text* for subtle emphasis
+- ~~Strikethrough~~ for corrections
+- `inline code` for technical terms
+- [Links](https://mdxjs.com) to external resources
+- <mark>Highlighted text</mark> using HTML
 
-The famous equation `E = mc²` describes mass-energy equivalence.
+### Blockquotes
 
-Other common formulas include the quadratic formula and the Pythagorean theorem `a² + b² = c²`.
+> "The best way to predict the future is to invent it."
+>
+> — Alan Kay
 
-## Conclusion
+Nested blockquotes:
 
-This example demonstrates the rich feature set of MDX Preview. Whether you're writing documentation, tutorials, or interactive content, MDX provides a powerful way to combine the simplicity of Markdown with the flexibility of React components.
+> Level 1 quote
+>> Level 2 nested quote
+>>> Level 3 deeply nested
 
-**Happy writing!**
+---
+
+## Lists
+
+### Ordered Lists
+
+1. First item
+2. Second item
+   1. Nested item 2.1
+   2. Nested item 2.2
+3. Third item
+
+### Unordered Lists
+
+- Main point
+  - Sub-point
+    - Detailed item
+  - Another sub-point
+- Second main point
+
+### Definition Lists (HTML)
+
+<dl>
+  <dt>MDX</dt>
+  <dd>Markdown + JSX = Interactive documentation</dd>
+
+  <dt>Safe Mode</dt>
+  <dd>Static HTML rendering without JavaScript execution</dd>
+
+  <dt>Trusted Mode</dt>
+  <dd>Full React rendering with component support</dd>
+</dl>
+
+---
+
+## Keyboard Shortcuts
+
+Use these shortcuts to work efficiently:
+
+| Action | Mac | Windows/Linux |
+|--------|-----|---------------|
+| Open Preview | `Cmd+K X` | `Ctrl+K X` |
+| Zoom In | `Cmd+=` | `Ctrl+=` |
+| Zoom Out | `Cmd+-` | `Ctrl+-` |
+| Reset Zoom | `Cmd+0` | `Ctrl+0` |
+
+---
+
+## Theme Support
+
+MDX Preview supports multiple themes for both preview content and code blocks:
+
+**Preview Themes:** GitHub Light, GitHub Dark, Atom, Solarized, Monokai, and more
+
+**Code Block Themes:** 24+ syntax highlighting themes
+
+**Auto Theme:** Automatically matches your VS Code color theme (light/dark)
+
+> [!NOTE]
+> Use the Command Palette commands `MDX: Select Preview Theme` and `MDX: Select Code Block Theme` to customize appearance.
+
+---
+
+## MDX Transclusion
+
+Import other MDX files as components (Trusted Mode only):
+
+```mdx
+import Introduction from './Introduction.mdx';
+import Features from './Features.mdx';
+
+# Documentation
+
+<Introduction />
+
+## Features
+
+<Features />
+```
+
+---
+
+## Custom Layouts
+
+Wrap your content in custom React layouts:
+
+```mdx
+import DocsLayout from './components/DocsLayout';
+
+export default DocsLayout;
+
+# My Documentation
+
+This content will be wrapped in DocsLayout.
+```
+
+---
+
+## Getting Started
+
+1. **Install** the MDX Preview extension from the VS Code Marketplace
+2. **Open** any `.mdx` or `.md` file in your workspace
+3. **Preview** using `Cmd+K X` or the preview icon in the toolbar
+4. **Enable Trusted Mode** for React components:
+   - Trust your workspace (Command Palette → "Manage Workspace Trust")
+   - Enable scripts in settings: `mdx-preview.preview.enableScripts: true`
+
+---
+
+## Learn More
+
+- [MDX Documentation](https://mdxjs.com/)
+- [React Documentation](https://react.dev/)
+- [Mermaid Documentation](https://mermaid.js.org/)
+- [KaTeX Documentation](https://katex.org/)
+- [GitHub Flavored Markdown](https://github.github.com/gfm/)
+
+---
+
+**Happy writing with MDX Preview!** 🚀
