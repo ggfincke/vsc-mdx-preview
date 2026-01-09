@@ -1,64 +1,22 @@
 // packages/extension/themes/types.ts
 // theme type definitions for MPE-style theming
 
-// available preview themes (markdown content styling)
-export type PreviewTheme =
-  | 'github-light'
-  | 'github-dark'
-  | 'atom-dark'
-  | 'atom-light'
-  | 'atom-material'
-  | 'one-dark'
-  | 'one-light'
-  | 'solarized-dark'
-  | 'solarized-light'
-  | 'gothic'
-  | 'medium'
-  | 'monokai'
-  | 'newsprint'
-  | 'night'
-  | 'none'
-  | 'vue';
+// re-export shared types from @mdx-preview/shared-types
+export type {
+  PreviewTheme,
+  CodeBlockTheme,
+  WebviewThemeState,
+} from '@mdx-preview/shared-types';
 
-// available code block themes (syntax highlighting)
-export type CodeBlockTheme =
-  | 'auto'
-  | 'default'
-  | 'atom-dark'
-  | 'atom-light'
-  | 'atom-material'
-  | 'coy'
-  | 'darcula'
-  | 'dark'
-  | 'funky'
-  | 'github'
-  | 'github-dark'
-  | 'hopscotch'
-  | 'monokai'
-  | 'okaidia'
-  | 'one-dark'
-  | 'one-light'
-  | 'pen-paper-coffee'
-  | 'pojoaque'
-  | 'solarized-dark'
-  | 'solarized-light'
-  | 'twilight'
-  | 'vs'
-  | 'vue'
-  | 'xonokai';
+export { isLightPreviewTheme } from '@mdx-preview/shared-types';
 
-// theme configuration
+import type { PreviewTheme, CodeBlockTheme } from '@mdx-preview/shared-types';
+
+// theme configuration (extension-only)
 export interface ThemeConfiguration {
   previewTheme: PreviewTheme;
   codeBlockTheme: CodeBlockTheme;
   autoTheme: boolean;
-}
-
-// theme state sent to webview
-export interface WebviewThemeState {
-  previewTheme: PreviewTheme;
-  codeBlockTheme: CodeBlockTheme;
-  isLight: boolean;
 }
 
 // list of all preview themes
@@ -157,7 +115,10 @@ export const CODE_BLOCK_THEME_LABELS: Record<CodeBlockTheme, string> = {
 };
 
 // light/dark theme pairs for auto-switching
-export const THEME_PAIRS: Record<string, { light: PreviewTheme; dark: PreviewTheme }> = {
+export const THEME_PAIRS: Record<
+  string,
+  { light: PreviewTheme; dark: PreviewTheme }
+> = {
   github: { light: 'github-light', dark: 'github-dark' },
   atom: { light: 'atom-light', dark: 'atom-dark' },
   one: { light: 'one-light', dark: 'one-dark' },
@@ -165,16 +126,18 @@ export const THEME_PAIRS: Record<string, { light: PreviewTheme; dark: PreviewThe
 };
 
 // get the opposite theme for auto light/dark switching
-export function getOppositeTheme(theme: PreviewTheme, targetIsLight: boolean): PreviewTheme {
+export function getOppositeTheme(
+  theme: PreviewTheme,
+  targetIsLight: boolean
+): PreviewTheme {
   for (const pair of Object.values(THEME_PAIRS)) {
-    if (pair.light === theme && !targetIsLight) return pair.dark;
-    if (pair.dark === theme && targetIsLight) return pair.light;
+    if (pair.light === theme && !targetIsLight) {
+      return pair.dark;
+    }
+    if (pair.dark === theme && targetIsLight) {
+      return pair.light;
+    }
   }
   // no pair found, return as-is
   return theme;
-}
-
-// check if a theme is a light theme
-export function isLightPreviewTheme(theme: PreviewTheme): boolean {
-  return theme.includes('light') || ['medium', 'newsprint', 'gothic', 'none'].includes(theme);
 }

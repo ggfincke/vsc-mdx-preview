@@ -4,6 +4,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
+// re-export PathAccessDeniedError from centralized errors module
+export { PathAccessDeniedError } from '../errors';
+
 // check if path is inside another path (replaces deprecated path-is-inside package)
 function isPathInside(childPath: string, parentPath: string): boolean {
   const relative = path.relative(parentPath, childPath);
@@ -57,27 +60,4 @@ export function checkFsPath(entryFsDirectory: string, fsPath: string): boolean {
   }
 
   return isPathInside(fsPath, rootDirectory);
-}
-
-class CustomError extends Error {
-  constructor(...args: string[]) {
-    super(...args);
-    Object.setPrototypeOf(this, new.target.prototype);
-    this.name = new.target.name;
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, new.target);
-    }
-  }
-}
-
-// path access denied error (thrown when accessing files outside workspace)
-export class PathAccessDeniedError extends CustomError {
-  fsPath: string;
-
-  constructor(fsPath: string) {
-    super(
-      `Accessing ${fsPath} denied. This path is outside of your workspace folders. Please make sure you have all dependencies inside your workspace.`
-    );
-    this.fsPath = fsPath;
-  }
 }

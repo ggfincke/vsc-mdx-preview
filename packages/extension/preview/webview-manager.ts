@@ -256,11 +256,12 @@ export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
     preview.initWebviewHandshakePromise();
     preview.webview = panel.webview;
     debug('[WEBVIEW-MGR] Initializing RPC extension side');
-    preview.webviewHandle = initRPCExtensionSide(
+    const webviewHandle = initRPCExtensionSide(
       preview,
       panel.webview,
       disposables
     );
+    preview.setWebviewHandle(webviewHandle);
     debug('[WEBVIEW-MGR] RPC initialized');
   } else {
     debug(

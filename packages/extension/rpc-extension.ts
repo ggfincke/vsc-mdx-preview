@@ -7,8 +7,7 @@ import * as vscode from 'vscode';
 
 import ExtensionHandle from './rpc-extension-handle';
 import { Preview } from './preview/preview-manager';
-import type { TrustState } from './security/TrustManager';
-import type { WebviewThemeState } from './themes/types';
+import type { WebviewRPC } from '@mdx-preview/shared-types';
 import { debug } from './logging';
 
 type AllowedTypeForComlink = 'message';
@@ -28,26 +27,8 @@ interface MessageEvent {
 }
 
 // webview-side handle (methods extension can call)
-export interface WebviewRemoteHandle {
-  setTrustState(state: TrustState): void;
-  updatePreview(
-    code: string,
-    entryFilePath: string,
-    entryFileDependencies: string[],
-    // frontmatter data
-    frontmatter?: Record<string, unknown>
-  ): void;
-  // frontmatter parameter added
-  updatePreviewSafe(html: string, frontmatter?: Record<string, unknown>): void;
-  showPreviewError(error: { message: string; stack?: string }): void;
-  invalidate(fsPath: string): Promise<void>;
-  // stale indicator support
-  setStale(isStale: boolean): void;
-  // custom CSS hot-reload
-  setCustomCss(css: string): void;
-  // theme
-  setTheme(state: WebviewThemeState): void;
-}
+// type alias for shared WebviewRPC (used by Comlink)
+export type WebviewRemoteHandle = WebviewRPC;
 
 class ExtensionEndpoint implements Endpoint {
   webview: vscode.Webview;

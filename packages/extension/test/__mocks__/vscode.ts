@@ -86,6 +86,31 @@ export class Disposable {
   }
 }
 
+// Mock text document
+export const createMockTextDocument = (options: {
+  uri?: Uri;
+  getText?: () => string;
+  lineAt?: (line: number) => { text: string };
+}) => ({
+  uri: options.uri ?? Uri.file('/projects/test-workspace/test.mdx'),
+  getText: options.getText ?? (() => '# Test'),
+  lineAt: options.lineAt ?? (() => ({ text: '' })),
+  lineCount: 10,
+  fileName: options.uri?.fsPath ?? '/projects/test-workspace/test.mdx',
+  languageId: 'mdx',
+  version: 1,
+  isDirty: false,
+  isUntitled: false,
+  isClosed: false,
+  eol: EndOfLine.LF,
+  save: vi.fn(),
+  positionAt: vi.fn(() => new Position(0, 0)),
+  offsetAt: vi.fn(() => 0),
+  getWordRangeAtPosition: vi.fn(),
+  validateRange: vi.fn((range: Range) => range),
+  validatePosition: vi.fn((pos: Position) => pos),
+});
+
 // Workspace mock
 export const workspace = {
   get isTrusted(): boolean {
@@ -112,6 +137,11 @@ export const workspace = {
   fs: {
     readFile: vi.fn(async () => new Uint8Array()),
   },
+
+  openTextDocument: vi.fn(async (pathOrUri: string | Uri) => {
+    const fsPath = typeof pathOrUri === 'string' ? pathOrUri : pathOrUri.fsPath;
+    return createMockTextDocument({ uri: Uri.file(fsPath) });
+  }),
 
   onDidGrantWorkspaceTrust(listener: () => void): Disposable {
     trustGrantListeners.push(listener);
@@ -157,6 +187,28 @@ export const window = {
   showInformationMessage: vi.fn(),
   showWarningMessage: vi.fn(),
   showErrorMessage: vi.fn(),
+  showTextDocument: vi.fn(),
+  createStatusBarItem: vi.fn(() => ({
+    show: vi.fn(),
+    hide: vi.fn(),
+    dispose: vi.fn(),
+    text: '',
+    tooltip: '',
+    command: '',
+  })),
+};
+
+// Commands mock
+export const commands = {
+  executeCommand: vi.fn(),
+  registerCommand: vi.fn(() => new Disposable(() => {})),
+};
+
+// Env mock
+export const env = {
+  openExternal: vi.fn(),
+  uriScheme: 'vscode',
+  appName: 'Visual Studio Code',
 };
 
 // mock webview URI class that mimics VS Code's webview URI format
@@ -231,6 +283,39 @@ export const __resetMocks = (): void => {
   configChangeListeners.length = 0;
 };
 
+// create enhanced webview mock w/ event handling for RPC tests
+export const createMockWebviewWithEvents = () => {
+  const messageListeners: ((message: unknown) => void)[] = [];
+
+  return {
+    cspSource: 'https://file+.vscode-resource.vscode-cdn.net',
+    html: '',
+    options: {},
+    postMessage: vi.fn(),
+    asWebviewUri: vi.fn((uri: Uri) => new MockWebviewUri(uri.fsPath)),
+    onDidReceiveMessage: vi.fn(
+      (
+        listener: (message: unknown) => void,
+        _thisArg?: unknown,
+        _disposables?: Disposable[]
+      ) => {
+        messageListeners.push(listener);
+        return new Disposable(() => {
+          const index = messageListeners.indexOf(listener);
+          if (index > -1) {
+            messageListeners.splice(index, 1);
+          }
+        });
+      }
+    ),
+    // helper to simulate receiving a message from webview
+    __simulateMessage: (message: unknown) => {
+      messageListeners.forEach((listener) => listener(message));
+    },
+    __getMessageListeners: () => messageListeners,
+  };
+};
+
 // Export for module resolution
 export default {
   Uri,
@@ -240,4 +325,6 @@ export default {
   Disposable,
   workspace,
   window,
+  commands,
+  env,
 };

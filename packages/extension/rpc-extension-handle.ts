@@ -155,14 +155,30 @@ class ExtensionHandle {
     vscode.env.openExternal(vscode.Uri.parse(url));
   }
 
-  // open document in editor
-  async openDocument(relativePath: string): Promise<void> {
-    debug(`[EXT-HANDLE] openDocument: ${relativePath}`);
+  // open document in editor (optionally at specific line/column)
+  async openDocument(
+    relativePath: string,
+    line?: number,
+    column?: number
+  ): Promise<void> {
+    debug(
+      `[EXT-HANDLE] openDocument: ${relativePath}${line ? `:${line}` : ''}${column ? `:${column}` : ''}`
+    );
 
     // validate input type
     if (typeof relativePath !== 'string' || relativePath.trim() === '') {
       logWarn('openDocument: invalid path', relativePath);
       return;
+    }
+
+    // validate line/column if provided
+    if (line !== undefined && (typeof line !== 'number' || line < 1)) {
+      logWarn('openDocument: invalid line number', line);
+      line = undefined;
+    }
+    if (column !== undefined && (typeof column !== 'number' || column < 1)) {
+      logWarn('openDocument: invalid column number', column);
+      column = undefined;
     }
 
     // get current document directory from preview
@@ -186,7 +202,17 @@ class ExtensionHandle {
 
     try {
       const doc = await vscode.workspace.openTextDocument(resolvedPath);
-      await vscode.window.showTextDocument(doc);
+
+      // create selection if line is provided (VS Code uses 0-based indexing)
+      const options: vscode.TextDocumentShowOptions = {};
+      if (line !== undefined) {
+        const lineIndex = line - 1;
+        const colIndex = column !== undefined ? column - 1 : 0;
+        const position = new vscode.Position(lineIndex, colIndex);
+        options.selection = new vscode.Range(position, position);
+      }
+
+      await vscode.window.showTextDocument(doc, options);
     } catch (err) {
       logError('openDocument: failed to open', String(err));
       vscode.window.showErrorMessage(`Could not open file: ${relativePath}`);

@@ -3,19 +3,14 @@
 
 import * as vscode from 'vscode';
 import { error as logError } from '../logging';
+import type { TrustState } from '@mdx-preview/shared-types';
+
+export type { TrustState } from '@mdx-preview/shared-types';
 
 // security mode enum for explicit type safety
 export enum SecurityMode {
   Safe = 'safe',
   Trusted = 'trusted',
-}
-
-// ! trust state (canExecute=true requires: workspace trusted & scripts enabled & local env & file: scheme)
-export interface TrustState {
-  workspaceTrusted: boolean;
-  scriptsEnabled: boolean;
-  canExecute: boolean;
-  reason?: string;
 }
 
 // derive SecurityMode from TrustState
@@ -188,5 +183,14 @@ export class TrustManager {
     this.disposables.forEach((d) => d.dispose());
     this.disposables = [];
     this.listeners.clear();
+  }
+
+  // static dispose for singleton cleanup
+  static dispose(): void {
+    if (TrustManager.instance) {
+      TrustManager.instance.dispose();
+      // @ts-expect-error reset singleton for dispose
+      TrustManager.instance = undefined;
+    }
   }
 }

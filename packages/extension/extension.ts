@@ -11,77 +11,20 @@ import {
   PreviewManager,
 } from './preview/preview-manager';
 import { selectSecurityPolicy } from './security/security';
-import { TrustManager, TrustState } from './security/TrustManager';
+import { TrustManager } from './security/TrustManager';
 import { initWebviewAppHTMLResources } from './preview/webview-manager';
 import { initWorkspaceHandlers } from './workspace-manager';
-import { info, debug, showOutput } from './logging';
+import { info, debug, showOutput, disposeOutputChannel } from './logging';
+import { StatusBarManager } from './preview/StatusBarManager';
 import {
   PREVIEW_THEMES,
   CODE_BLOCK_THEMES,
   PREVIEW_THEME_LABELS,
   CODE_BLOCK_THEME_LABELS,
+  ThemeManager,
   type PreviewTheme,
   type CodeBlockTheme,
 } from './themes';
-
-// status bar item for showing preview mode
-let statusBarItem: vscode.StatusBarItem | undefined;
-
-// create & initialize status bar item
-function createStatusBarItem(): vscode.StatusBarItem {
-  const item = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Right,
-    100
-  );
-  item.command = 'mdx-preview.commands.toggleScripts';
-  updateStatusBarItem(item, TrustManager.getInstance().getState());
-  return item;
-}
-
-// update status bar item based on trust state
-function updateStatusBarItem(
-  item: vscode.StatusBarItem,
-  trustState: TrustState
-): void {
-  if (trustState.canExecute) {
-    item.text = '$(shield) MDX: Trusted';
-    item.tooltip =
-      'MDX Preview is in Trusted Mode. JavaScript execution is enabled. Click to manage settings.';
-    item.backgroundColor = undefined;
-  } else {
-    item.text = '$(shield) MDX: Safe';
-    item.tooltip = trustState.reason
-      ? `MDX Preview is in Safe Mode: ${trustState.reason}. Click to manage settings.`
-      : 'MDX Preview is in Safe Mode. JavaScript execution is disabled. Click to manage settings.';
-    item.backgroundColor = new vscode.ThemeColor(
-      'statusBarItem.warningBackground'
-    );
-  }
-}
-
-// show status bar when MDX preview is active
-function showStatusBarForMdxPreview(): void {
-  if (!statusBarItem) {
-    return;
-  }
-
-  const editor = vscode.window.activeTextEditor;
-  if (editor) {
-    const languageId = editor.document.languageId;
-    if (languageId === 'mdx' || languageId === 'markdown') {
-      statusBarItem.show();
-      return;
-    }
-  }
-
-  // also show if there are any active previews
-  const previewManager = PreviewManager.getInstance();
-  if (previewManager.hasActivePreviews()) {
-    statusBarItem.show();
-  } else {
-    statusBarItem.hide();
-  }
-}
 
 // show one-time safe mode notification in untrusted workspaces
 async function showSafeModeNotificationIfNeeded(
@@ -296,29 +239,10 @@ export async function activate(
     }
   );
 
-  // create & show status bar item
-  statusBarItem = createStatusBarItem();
-  context.subscriptions.push(statusBarItem);
-
-  // update status bar when active editor changes
-  context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => {
-      showStatusBarForMdxPreview();
-    })
-  );
-
-  // update status bar when trust state changes
-  const trustManager = TrustManager.getInstance();
-  context.subscriptions.push(
-    trustManager.subscribe((newState) => {
-      if (statusBarItem) {
-        updateStatusBarItem(statusBarItem, newState);
-      }
-    })
-  );
-
-  // show status bar initially if MDX file is open
-  showStatusBarForMdxPreview();
+  // initialize status bar manager (handles trust state display & visibility)
+  const statusBarManager = StatusBarManager.getInstance();
+  context.subscriptions.push(statusBarManager.getDisposable());
+  statusBarManager.updateVisibility();
 
   // listen for VS Code color theme changes to auto-switch preview theme
   context.subscriptions.push(
@@ -336,7 +260,10 @@ export async function activate(
       debug('[CMD] selectPreviewTheme command triggered');
 
       const config = vscode.workspace.getConfiguration('mdx-preview');
-      const currentTheme = config.get<PreviewTheme>('preview.previewTheme', 'none');
+      const currentTheme = config.get<PreviewTheme>(
+        'preview.previewTheme',
+        'none'
+      );
 
       const items = PREVIEW_THEMES.map((theme) => ({
         label: PREVIEW_THEME_LABELS[theme],
@@ -369,7 +296,10 @@ export async function activate(
       debug('[CMD] selectCodeBlockTheme command triggered');
 
       const config = vscode.workspace.getConfiguration('mdx-preview');
-      const currentTheme = config.get<CodeBlockTheme>('preview.codeBlockTheme', 'auto');
+      const currentTheme = config.get<CodeBlockTheme>(
+        'preview.codeBlockTheme',
+        'auto'
+      );
 
       const items = CODE_BLOCK_THEMES.map((theme) => ({
         label: CODE_BLOCK_THEME_LABELS[theme],
@@ -395,6 +325,43 @@ export async function activate(
     }
   );
 
+  // zoom commands
+  const zoomInCommand = vscode.commands.registerCommand(
+    'mdx-preview.commands.zoomIn',
+    async () => {
+      debug('[CMD] zoomIn command triggered');
+      const previewManager = PreviewManager.getInstance();
+      const preview = previewManager.getCurrentPreview();
+      if (preview?.webviewHandle) {
+        await preview.webviewHandle.zoomIn();
+      }
+    }
+  );
+
+  const zoomOutCommand = vscode.commands.registerCommand(
+    'mdx-preview.commands.zoomOut',
+    async () => {
+      debug('[CMD] zoomOut command triggered');
+      const previewManager = PreviewManager.getInstance();
+      const preview = previewManager.getCurrentPreview();
+      if (preview?.webviewHandle) {
+        await preview.webviewHandle.zoomOut();
+      }
+    }
+  );
+
+  const resetZoomCommand = vscode.commands.registerCommand(
+    'mdx-preview.commands.resetZoom',
+    async () => {
+      debug('[CMD] resetZoom command triggered');
+      const previewManager = PreviewManager.getInstance();
+      const preview = previewManager.getCurrentPreview();
+      if (preview?.webviewHandle) {
+        await preview.webviewHandle.resetZoom();
+      }
+    }
+  );
+
   context.subscriptions.push(
     openPreviewCommand,
     refreshPreviewCommand,
@@ -403,7 +370,10 @@ export async function activate(
     toggleChangeSecuritySettings,
     toggleScriptsCommand,
     selectPreviewThemeCommand,
-    selectCodeBlockThemeCommand
+    selectCodeBlockThemeCommand,
+    zoomInCommand,
+    zoomOutCommand,
+    resetZoomCommand
   );
 
   debug('[ACTIVATE] Extension activation complete');
@@ -411,5 +381,9 @@ export async function activate(
 
 // deactivate extension
 export function deactivate(): void {
-  TrustManager.getInstance().dispose();
+  StatusBarManager.dispose();
+  PreviewManager.dispose();
+  TrustManager.dispose();
+  ThemeManager.dispose();
+  disposeOutputChannel();
 }
