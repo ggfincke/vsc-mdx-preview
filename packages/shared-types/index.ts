@@ -110,10 +110,9 @@ export interface WebviewRPC {
   updatePreview(
     code: string,
     entryFilePath: string,
-    entryFileDependencies: string[],
-    frontmatter?: Record<string, unknown>
+    entryFileDependencies: string[]
   ): void;
-  updatePreviewSafe(html: string, frontmatter?: Record<string, unknown>): void;
+  updatePreviewSafe(html: string): void;
   showPreviewError(error: PreviewError): void;
   invalidate(fsPath: string): Promise<void>;
   setStale(isStale: boolean): void;
