@@ -9,6 +9,7 @@ import {
   openPreview,
   refreshPreview,
   PreviewManager,
+  disposeConfigWatchers,
 } from './preview/preview-manager';
 import { selectSecurityPolicy } from './security/security';
 import { TrustManager } from './security/TrustManager';
@@ -381,6 +382,7 @@ export async function activate(
 
 // deactivate extension
 export function deactivate(): void {
+  disposeConfigWatchers();
   StatusBarManager.dispose();
   PreviewManager.dispose();
   TrustManager.dispose();

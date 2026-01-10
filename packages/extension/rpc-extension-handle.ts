@@ -218,7 +218,6 @@ class ExtensionHandle {
       vscode.window.showErrorMessage(`Could not open file: ${relativePath}`);
     }
   }
-
 }
 
 export default ExtensionHandle;

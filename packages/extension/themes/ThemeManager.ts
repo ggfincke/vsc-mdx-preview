@@ -54,7 +54,10 @@ export class ThemeManager {
 
     return {
       previewTheme: config.get<PreviewTheme>('preview.previewTheme', 'none'),
-      codeBlockTheme: config.get<CodeBlockTheme>('preview.codeBlockTheme', 'auto'),
+      codeBlockTheme: config.get<CodeBlockTheme>(
+        'preview.codeBlockTheme',
+        'auto'
+      ),
       autoTheme: config.get<boolean>('preview.autoTheme', true),
     };
   }
@@ -110,7 +113,10 @@ export class ThemeManager {
       vue: 'vue',
     };
 
-    return themeMap[previewTheme] || (isLightPreviewTheme(previewTheme) ? 'github' : 'github-dark');
+    return (
+      themeMap[previewTheme] ||
+      (isLightPreviewTheme(previewTheme) ? 'github' : 'github-dark')
+    );
   }
 
   // get the complete webview theme state
@@ -168,7 +174,9 @@ export class ThemeManager {
     await config.update(
       'preview.previewTheme',
       theme,
-      global ? vscode.ConfigurationTarget.Global : vscode.ConfigurationTarget.Workspace
+      global
+        ? vscode.ConfigurationTarget.Global
+        : vscode.ConfigurationTarget.Workspace
     );
   }
 
@@ -178,7 +186,9 @@ export class ThemeManager {
     await config.update(
       'preview.codeBlockTheme',
       theme,
-      global ? vscode.ConfigurationTarget.Global : vscode.ConfigurationTarget.Workspace
+      global
+        ? vscode.ConfigurationTarget.Global
+        : vscode.ConfigurationTarget.Workspace
     );
   }
 }

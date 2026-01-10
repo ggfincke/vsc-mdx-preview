@@ -21,10 +21,17 @@ import evaluateInWebview from './evaluate-in-webview';
 import {
   resolveTypescriptConfig,
   findTsConfig,
+  resolveConfig,
+  onConfigChange,
+  disposeConfigWatchers,
   type TypeScriptConfiguration,
-} from './TypeScriptConfigResolver';
-import { DocumentTracker } from './DocumentTracker';
-import { CustomCssWatcher } from './CustomCssWatcher';
+  type ResolvedConfig,
+} from './config';
+import {
+  DocumentTracker,
+  CustomCssWatcher,
+  DependencyWatcher,
+} from './watchers';
 
 // update mode for preview refresh behavior
 export type UpdateMode = 'onType' | 'onSave' | 'manual';
@@ -35,7 +42,7 @@ export interface StyleConfiguration {
 }
 
 // re-export for backward compatibility
-export type { TypeScriptConfiguration } from './TypeScriptConfigResolver';
+export type { TypeScriptConfiguration } from './config';
 
 import type { WebviewHandleType } from '../rpc-extension';
 
@@ -139,6 +146,7 @@ export class Preview {
   // composed modules for separation of concerns
   private documentTracker = new DocumentTracker();
   private customCssWatcher?: CustomCssWatcher;
+  private dependencyWatcher?: DependencyWatcher;
 
   // debounced update function (created in constructor)
   private debouncedUpdateWebview: ReturnType<typeof debounce>;
@@ -167,6 +175,8 @@ export class Preview {
   };
 
   typescriptConfiguration?: TypeScriptConfiguration;
+  mdxPreviewConfig?: ResolvedConfig;
+  private configChangeDisposable?: vscode.Disposable;
   performanceObserver?: PerformanceObserver;
   evaluationDuration = 0;
   previewDuration = 0;
@@ -262,6 +272,9 @@ export class Preview {
     // initialize custom CSS watcher
     this.setupCustomCssWatcher();
 
+    // initialize dependency watcher for local imports
+    this.setupDependencyWatcher();
+
     if (process.env.NODE_ENV === 'development') {
       this.performanceObserver = new PerformanceObserver(
         (list: PerformanceObserverEntryList) => {
@@ -287,6 +300,42 @@ export class Preview {
     } else {
       this.typescriptConfiguration = undefined;
     }
+
+    // resolve MDX preview config file (.mdx-previewrc.json)
+    if (doc.uri.scheme === 'file') {
+      this.mdxPreviewConfig = resolveConfig(doc.uri.fsPath) ?? undefined;
+      this.setupConfigChangeListener();
+    } else {
+      this.mdxPreviewConfig = undefined;
+    }
+
+    // update dependency watcher's document directory
+    if (this.entryFsDirectory && this.dependencyWatcher) {
+      this.dependencyWatcher.setDocumentDir(this.entryFsDirectory);
+      this.dependencyWatcher.clear(); // clear old dependencies when switching documents
+    }
+  }
+
+  // setup listener for config file changes
+  private setupConfigChangeListener(): void {
+    this.configChangeDisposable?.dispose();
+
+    if (!this.mdxPreviewConfig) {
+      return;
+    }
+
+    const configPath = this.mdxPreviewConfig.configPath;
+    this.configChangeDisposable = onConfigChange((changedPath) => {
+      if (changedPath === configPath) {
+        debug('[PREVIEW] MDX config file changed, reloading...');
+        // re-resolve config
+        this.mdxPreviewConfig = resolveConfig(this.doc.uri.fsPath) ?? undefined;
+        // trigger full refresh since plugins may have changed
+        this.refreshWebview().catch((err) =>
+          logError('Failed to refresh after config change', err)
+        );
+      }
+    });
   }
 
   // set webview handle & connect it to composed modules
@@ -394,6 +443,29 @@ export class Preview {
     }
 
     this.customCssWatcher.watch();
+  }
+
+  // setup dependency watcher for local imports
+  private setupDependencyWatcher(): void {
+    this.dependencyWatcher?.dispose();
+
+    this.dependencyWatcher = new DependencyWatcher(async (fsPath) => {
+      debug(`[PREVIEW] Dependency changed: ${fsPath}`);
+      if (this.webviewHandle) {
+        await this.webviewHandle.invalidate(fsPath);
+      }
+      await this.updateWebview(true); // force refresh
+    });
+
+    // set document directory for resolving relative imports
+    if (this.entryFsDirectory) {
+      this.dependencyWatcher.setDocumentDir(this.entryFsDirectory);
+    }
+  }
+
+  // update dependency watcher with new imports (called from evaluate-in-webview)
+  updateDependencies(imports: string[]): void {
+    this.dependencyWatcher?.updateDependencies(imports);
   }
 
   async refreshWebview(): Promise<void> {
@@ -569,8 +641,13 @@ export class Preview {
   // dispose of resources held by this preview
   dispose(): void {
     this.customCssWatcher?.dispose();
+    this.configChangeDisposable?.dispose();
+    this.dependencyWatcher?.dispose();
   }
 }
+
+// dispose all config watchers (call during extension deactivation)
+export { disposeConfigWatchers };
 
 export async function openPreview(): Promise<void> {
   debug('[PREVIEW] openPreview called');

@@ -174,6 +174,13 @@ export const workspace = {
       }
     });
   },
+
+  createFileSystemWatcher: vi.fn((globPattern: string) => ({
+    onDidChange: vi.fn((listener: () => void) => new Disposable(() => {})),
+    onDidCreate: vi.fn((listener: () => void) => new Disposable(() => {})),
+    onDidDelete: vi.fn((listener: () => void) => new Disposable(() => {})),
+    dispose: vi.fn(),
+  })),
 };
 
 // Window mock

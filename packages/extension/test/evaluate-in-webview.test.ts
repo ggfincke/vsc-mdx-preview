@@ -77,6 +77,7 @@ const createMockPreview = (overrides: Partial<Preview> = {}): Preview => {
     webviewHandshakePromise: Promise.resolve(),
     onWebviewReady: vi.fn(),
     pushThemeState: vi.fn(),
+    updateDependencies: vi.fn(),
     ...overrides,
   } as unknown as Preview;
 };
@@ -394,8 +395,7 @@ describe('evaluateInWebview', () => {
       expect(mockPreview.webviewHandle.updatePreview).toHaveBeenCalledWith(
         'const Component = () => null; export default Component;',
         '/projects/test-workspace/README.mdx',
-        expect.any(Array),
-        { title: 'Test' }
+        expect.any(Array)
       );
     });
 
@@ -458,7 +458,10 @@ describe('evaluateInWebview', () => {
         '/projects/test-workspace/README.mdx'
       );
 
-      expect(compileToSafeHTML).toHaveBeenCalledWith(mdxText);
+      expect(compileToSafeHTML).toHaveBeenCalledWith(
+        mdxText,
+        mockPreview.mdxPreviewConfig
+      );
     });
 
     test('sends HTML to webview via updatePreviewSafe', async () => {
@@ -477,8 +480,7 @@ describe('evaluateInWebview', () => {
       );
 
       expect(mockPreview.webviewHandle.updatePreviewSafe).toHaveBeenCalledWith(
-        '<h1>Hello</h1><p>World</p>',
-        { title: 'Test' }
+        '<h1>Hello</h1><p>World</p>'
       );
     });
 

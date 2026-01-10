@@ -9,7 +9,7 @@ import { transpileModule as tsTranspileModule } from 'typescript';
 import { transformAsync as babelTransformAsync } from '../transpiler/babel';
 import { transform as sucraseTransform } from '../transpiler/sucrase';
 import { debug } from '../logging';
-import { resolveTypescriptConfig } from '../preview/TypeScriptConfigResolver';
+import { resolveTypescriptConfig } from '../preview/config';
 
 // result type for entry transformation (includes frontmatter)
 export interface TransformEntryResult {

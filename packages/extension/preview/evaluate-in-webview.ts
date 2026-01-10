@@ -120,13 +120,16 @@ async function evaluateTrusted(
   const entryFileDependencies = await extractImports(code);
   debug(`[EVALUATE] Dependencies: ${entryFileDependencies.join(', ')}`);
 
+  // update dependency watcher with local imports
+  preview.updateDependencies(entryFileDependencies);
+
   // push theme state w/ frontmatter overrides
   if (frontmatter) {
     preview.pushThemeState(frontmatter);
   }
 
   debug('[EVALUATE] Calling webviewHandle.updatePreview');
-  webviewHandle.updatePreview(code, entryFilePath, entryFileDependencies, frontmatter);
+  webviewHandle.updatePreview(code, entryFilePath, entryFileDependencies);
   debug('[EVALUATE] updatePreview called');
 }
 
@@ -137,7 +140,10 @@ async function evaluateSafe(preview: Preview, text: string): Promise<void> {
 
   // compile MDX to safe HTML (no code execution)
   debug('[EVALUATE] Compiling to safe HTML...');
-  const { html, frontmatter } = await compileToSafeHTML(text);
+  const { html, frontmatter } = await compileToSafeHTML(
+    text,
+    preview.mdxPreviewConfig
+  );
   debug(`[EVALUATE] Safe HTML compiled, length: ${html.length}`);
 
   // push theme state w/ frontmatter overrides
@@ -146,6 +152,6 @@ async function evaluateSafe(preview: Preview, text: string): Promise<void> {
   }
 
   debug('[EVALUATE] Calling webviewHandle.updatePreviewSafe');
-  webviewHandle.updatePreviewSafe(html, frontmatter);
+  webviewHandle.updatePreviewSafe(html);
   debug('[EVALUATE] updatePreviewSafe called');
 }
