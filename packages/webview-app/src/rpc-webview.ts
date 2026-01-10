@@ -40,12 +40,11 @@ let webviewEndpoint: WebviewProxy;
 // handlers that update React state (registered by App component on mount)
 interface WebviewStateHandlers {
   setTrustState: (state: TrustState) => void;
-  setSafeContent: (html: string, frontmatter?: Record<string, unknown>) => void;
+  setSafeContent: (html: string) => void;
   setTrustedContent: (
     code: string,
     entryFilePath: string,
-    dependencies: string[],
-    frontmatter?: Record<string, unknown>
+    dependencies: string[]
   ) => void;
   setError: (error: PreviewError) => void;
   setStale: (isStale: boolean) => void;
@@ -60,17 +59,13 @@ interface WebviewStateHandlers {
 let stateHandlers: WebviewStateHandlers | null = null;
 type PendingMessage =
   | { type: 'trust'; payload: TrustState }
-  | {
-      type: 'safe';
-      payload: { html: string; frontmatter?: Record<string, unknown> };
-    }
+  | { type: 'safe'; payload: { html: string } }
   | {
       type: 'trusted';
       payload: {
         code: string;
         entryFilePath: string;
         dependencies: string[];
-        frontmatter?: Record<string, unknown>;
       };
     }
   | { type: 'error'; payload: PreviewError }
@@ -99,19 +94,13 @@ function flushPendingMessages(): void {
         stateHandlers.setTrustState(message.payload);
         break;
       case 'safe':
-        // pass frontmatter
-        stateHandlers.setSafeContent(
-          message.payload.html,
-          message.payload.frontmatter
-        );
+        stateHandlers.setSafeContent(message.payload.html);
         break;
       case 'trusted':
-        // pass frontmatter
         stateHandlers.setTrustedContent(
           message.payload.code,
           message.payload.entryFilePath,
-          message.payload.dependencies,
-          message.payload.frontmatter
+          message.payload.dependencies
         );
         break;
       case 'error':
@@ -140,20 +129,14 @@ class RPCWebviewHandle {
   updatePreview(
     code: string,
     entryFilePath: string,
-    entryFileDependencies: string[],
-    frontmatter?: Record<string, unknown>
+    entryFileDependencies: string[]
   ): void {
     debug(
       `[RPC-WEBVIEW] updatePreview called, code length: ${code.length}, path: ${entryFilePath}`
     );
     if (stateHandlers) {
       debug('[RPC-WEBVIEW] Calling setTrustedContent directly');
-      stateHandlers.setTrustedContent(
-        code,
-        entryFilePath,
-        entryFileDependencies,
-        frontmatter
-      );
+      stateHandlers.setTrustedContent(code, entryFilePath, entryFileDependencies);
       return;
     }
     debug('[RPC-WEBVIEW] No stateHandlers, enqueueing');
@@ -163,23 +146,22 @@ class RPCWebviewHandle {
         code,
         entryFilePath,
         dependencies: entryFileDependencies,
-        frontmatter,
       },
     });
   }
 
   // update preview in Safe Mode
-  updatePreviewSafe(html: string, frontmatter?: Record<string, unknown>): void {
+  updatePreviewSafe(html: string): void {
     debug(
       `[RPC-WEBVIEW] updatePreviewSafe called, html length: ${html.length}`
     );
     if (stateHandlers) {
       debug('[RPC-WEBVIEW] Calling setSafeContent directly');
-      stateHandlers.setSafeContent(html, frontmatter);
+      stateHandlers.setSafeContent(html);
       return;
     }
     debug('[RPC-WEBVIEW] No stateHandlers, enqueueing');
-    enqueueMessage({ type: 'safe', payload: { html, frontmatter } });
+    enqueueMessage({ type: 'safe', payload: { html } });
   }
 
   // show preview error

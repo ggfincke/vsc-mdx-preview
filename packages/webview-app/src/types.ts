@@ -14,30 +14,18 @@ export type {
 import type { ExtensionRPC } from '@mdx-preview/shared-types';
 export type ExtensionHandleMethods = ExtensionRPC;
 
-// frontmatter data parsed from YAML header
-export interface Frontmatter {
-  title?: string;
-  description?: string;
-  date?: string;
-  author?: string;
-  tags?: string[];
-  [key: string]: unknown;
-}
-
 // preview content for Trusted Mode
 export interface TrustedPreviewContent {
   mode: 'trusted';
   code: string;
   entryFilePath: string;
   dependencies: string[];
-  frontmatter?: Frontmatter;
 }
 
 // preview content for Safe Mode
 export interface SafePreviewContent {
   mode: 'safe';
   html: string;
-  frontmatter?: Frontmatter;
 }
 
 // union type for preview content

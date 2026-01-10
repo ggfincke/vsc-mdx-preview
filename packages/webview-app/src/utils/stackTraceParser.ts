@@ -18,8 +18,7 @@ export interface StackFrame {
 
 // patterns for parsing different stack trace formats
 // Chrome/V8: "    at functionName (file:line:column)" or "    at file:line:column"
-const CHROME_PATTERN =
-  /^\s*at\s+(?:(.+?)\s+\()?([^()]+):(\d+):(\d+)\)?$/;
+const CHROME_PATTERN = /^\s*at\s+(?:(.+?)\s+\()?([^()]+):(\d+):(\d+)\)?$/;
 
 // Firefox: "functionName@file:line:column"
 const FIREFOX_PATTERN = /^(.+?)@(.+):(\d+):(\d+)$/;
@@ -181,10 +180,7 @@ export function isUserCode(filePath: string): boolean {
   }
 
   // skip webpack/vite internal paths
-  if (
-    filePath.includes('webpack://') ||
-    filePath.includes('__vite_')
-  ) {
+  if (filePath.includes('webpack://') || filePath.includes('__vite_')) {
     return false;
   }
 

@@ -125,27 +125,6 @@ describe('App', () => {
       expect(document.querySelector('.mdx-loading-container')).toBeFalsy();
     });
 
-    it('renders frontmatter when present', () => {
-      renderApp();
-
-      act(() => {
-        registeredHandlers.setSafeContent('<p>Content</p>', {
-          title: 'My Doc',
-        });
-      });
-
-      expect(screen.getByText('Frontmatter')).toBeInTheDocument();
-    });
-
-    it('does not render frontmatter display when empty', () => {
-      renderApp();
-
-      act(() => {
-        registeredHandlers.setSafeContent('<p>Content</p>', {});
-      });
-
-      expect(screen.queryByText('Frontmatter')).not.toBeInTheDocument();
-    });
   });
 
   describe('error handling', () => {
@@ -348,8 +327,7 @@ describe('App', () => {
         registeredHandlers.setTrustedContent(
           'export default function() { return null; }',
           '/path/to/file.mdx',
-          [],
-          { title: 'Test' }
+          []
         );
       });
 

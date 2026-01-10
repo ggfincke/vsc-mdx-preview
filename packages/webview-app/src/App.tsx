@@ -13,7 +13,6 @@ import LoadingBar from './components/LoadingBar/LoadingBar';
 import { MDXErrorBoundary } from './components/ErrorBoundary';
 import { TrustBanner } from './components/TrustBanner/TrustBanner';
 import { StaleIndicator } from './components/StaleIndicator';
-import { FrontmatterDisplay } from './components/FrontmatterDisplay';
 import { SafePreviewRenderer } from './SafePreview';
 import { TrustedPreviewRenderer } from './TrustedPreview';
 import { registerWebviewHandlers, ExtensionHandle } from './rpc-webview';
@@ -89,28 +88,20 @@ function App() {
   }, []);
 
   // set Safe Mode content (called by RPC handler)
-  const setSafeContent = useCallback(
-    (html: string, frontmatter?: Record<string, unknown>) => {
-      debug(`[APP] setSafeContent called, html length: ${html.length}`);
-      setState((prev) => ({
-        ...prev,
-        content: { mode: 'safe', html, frontmatter },
-        error: null,
-        isLoading: false,
-        evaluatedComponent: null,
-      }));
-    },
-    []
-  );
+  const setSafeContent = useCallback((html: string) => {
+    debug(`[APP] setSafeContent called, html length: ${html.length}`);
+    setState((prev) => ({
+      ...prev,
+      content: { mode: 'safe', html },
+      error: null,
+      isLoading: false,
+      evaluatedComponent: null,
+    }));
+  }, []);
 
   // set Trusted Mode content (called by RPC handler) - component evaluation happens in TrustedPreviewRenderer
   const setTrustedContent = useCallback(
-    (
-      code: string,
-      entryFilePath: string,
-      dependencies: string[],
-      frontmatter?: Record<string, unknown>
-    ) => {
+    (code: string, entryFilePath: string, dependencies: string[]) => {
       debug(
         `[APP] setTrustedContent called, code length: ${code.length}, path: ${entryFilePath}`
       );
@@ -121,7 +112,6 @@ function App() {
           code,
           entryFilePath,
           dependencies,
-          frontmatter,
         },
         error: null,
         isLoading: false,
@@ -357,10 +347,6 @@ function App() {
   // render content based on mode
   debug(`[APP] Rendering content in ${content.mode} mode`);
 
-  // extract frontmatter for display
-  const frontmatter = content.frontmatter;
-  const hasFrontmatter = frontmatter && Object.keys(frontmatter).length > 0;
-
   return (
     <div
       className="mdx-preview-container"
@@ -384,8 +370,6 @@ function App() {
               : undefined
           }
         >
-          {/* frontmatter display (collapsed by default) */}
-          {hasFrontmatter && <FrontmatterDisplay frontmatter={frontmatter} />}
           {content.mode === 'safe' ? (
             <SafePreviewRenderer html={content.html} />
           ) : (
