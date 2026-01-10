@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MDX Preview Configuration",
+  "description": "Configuration file for MDX Preview extension (.mdx-previewrc.json)",
+  "type": "object",
+  "properties": {
+    "remarkPlugins": {
+      "type": "array",
+      "description": "Custom remark plugins to add after built-in plugins. Only loaded in Trusted Mode.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Plugin package name (e.g., 'remark-toc')"
+          },
+          {
+            "type": "array",
+            "description": "Plugin with options: [packageName, options]",
+            "items": [
+              {
+                "type": "string",
+                "description": "Plugin package name"
+              },
+              {
+                "type": "object",
+                "description": "Plugin options",
+                "additionalProperties": true
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        ]
+      },
+      "examples": [
+        ["remark-toc"],
+        [["remark-toc", { "tight": true, "maxDepth": 3 }]]
+      ]
+    },
+    "rehypePlugins": {
+      "type": "array",
+      "description": "Custom rehype plugins to add after built-in plugins. Only loaded in Trusted Mode.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Plugin package name (e.g., 'rehype-external-links')"
+          },
+          {
+            "type": "array",
+            "description": "Plugin with options: [packageName, options]",
+            "items": [
+              {
+                "type": "string",
+                "description": "Plugin package name"
+              },
+              {
+                "type": "object",
+                "description": "Plugin options",
+                "additionalProperties": true
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        ]
+      },
+      "examples": [
+        ["rehype-external-links"],
+        [["rehype-external-links", { "target": "_blank", "rel": ["noopener"] }]]
+      ]
+    },
+    "components": {
+      "type": "object",
+      "description": "Map MDX component names to file paths. Only loaded in Trusted Mode.",
+      "additionalProperties": {
+        "type": "string",
+        "description": "Relative path to the component file"
+      },
+      "examples": [
+        {
+          "Callout": "./src/components/Callout.tsx",
+          "Tabs": "./src/components/Tabs.tsx"
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}
