@@ -16,6 +16,8 @@ import {
   sharedRehypePluginsPostMath,
   rehypeKatex,
 } from './shared-plugins';
+import { warn } from '../../logging';
+import type { ResolvedConfig } from '../../preview/config';
 
 // result type for Safe Mode HTML compilation (includes frontmatter)
 export interface SafeHTMLResult {
@@ -124,8 +126,24 @@ function applyPlugins(processor: any, plugins: Pluggable[]): any {
 
 // * compile MDX to safe static HTML (strips frontmatter, parses AST, removes dangerous nodes, converts to HTML)
 export async function compileToSafeHTML(
-  mdxText: string
+  mdxText: string,
+  config?: ResolvedConfig
 ): Promise<SafeHTMLResult> {
+  // warn if custom plugins are configured but will be ignored in Safe Mode
+  if (config) {
+    const { remarkPlugins, rehypePlugins, components } = config.config;
+    const hasCustomPlugins =
+      (remarkPlugins && remarkPlugins.length > 0) ||
+      (rehypePlugins && rehypePlugins.length > 0);
+    const hasComponents = components && Object.keys(components).length > 0;
+
+    if (hasCustomPlugins || hasComponents) {
+      warn(
+        'Custom plugins and components from .mdx-previewrc.json are ignored in Safe Mode. ' +
+          'Enable Trusted Mode to use custom plugins.'
+      );
+    }
+  }
   // extract frontmatter before compilation
   const { content, data: frontmatter } = matter(mdxText);
 

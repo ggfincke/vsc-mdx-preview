@@ -13,29 +13,76 @@ import { createCssVariablesTheme } from 'shiki/core';
 
 // common languages to pre-bundle (others fall back to plaintext)
 const COMMON_LANGUAGES: BundledLanguage[] = [
+  // Web fundamentals
   'typescript',
   'javascript',
   'tsx',
   'jsx',
   'json',
+  'jsonc',
   'css',
+  'scss',
+  'less',
   'html',
+  'vue',
+  'svelte',
+
+  // Shell & scripting
   'bash',
   'shell',
+  'powershell',
+
+  // Documentation & data
   'markdown',
   'mdx',
   'yaml',
-  'python',
-  'rust',
-  'go',
-  'java',
+  'toml',
+  'xml',
+  'graphql',
+  'sql',
+  'regex',
+
+  // Systems programming
   'c',
   'cpp',
+  'rust',
+  'go',
+  'zig',
+
+  // JVM languages
+  'java',
+  'kotlin',
+  'scala',
+
+  // Apple ecosystem
+  'swift',
+  'objective-c',
+
+  // Scripting languages
+  'python',
+  'ruby',
+  'php',
+  'lua',
+  'perl',
+  'r',
+
+  // .NET
   'csharp',
-  'sql',
-  'graphql',
-  'xml',
+  'fsharp',
+
+  // Functional
+  'haskell',
+  'elixir',
+  'clojure',
+
+  // DevOps & config
+  'dockerfile',
+  'nginx',
+  'ini',
+
+  // Other
   'diff',
+  'latex',
 ];
 
 // Create CSS variables theme for dynamic theming
