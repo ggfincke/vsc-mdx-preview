@@ -222,7 +222,7 @@ MDX Preview renders mathematical expressions using KaTeX:
 
 ### Inline Math
 
-The quadratic formula $x = \frac\{-b \pm \sqrt\{b^2 - 4ac\}\}\{2a\}$ solves equations of the form $ax^2 + bx + c = 0$.
+The quadratic formula $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$ solves equations of the form $ax^2 + bx + c = 0$.
 
 Einstein's mass-energy equivalence: $E = mc^2$
 
@@ -231,37 +231,37 @@ Einstein's mass-energy equivalence: $E = mc^2$
 The Gaussian integral:
 
 $$
-\int_\{-\infty\}^\{\infty\} e^\{-x^2\} dx = \sqrt\{\pi\}
+\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
 $$
 
 Matrix multiplication:
 
 $$
-\begin\{bmatrix\}
+\begin{bmatrix}
 a & b \\
 c & d
-\end\{bmatrix\}
-\begin\{bmatrix\}
+\end{bmatrix}
+\begin{bmatrix}
 x \\
 y
-\end\{bmatrix\}
+\end{bmatrix}
 =
-\begin\{bmatrix\}
+\begin{bmatrix}
 ax + by \\
 cx + dy
-\end\{bmatrix\}
+\end{bmatrix}
 $$
 
 Summation notation:
 
 $$
-\sum_\{i=1\}^\{n\} i = \frac\{n(n+1)\}\{2\}
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
 $$
 
-The limit definition of $e$:
+The limit definition of e:
 
 $$
-e = \lim_\{n \to \infty\} \left(1 + \frac\{1\}\{n\}\right)^n
+e = \lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n
 $$
 
 ---
@@ -368,26 +368,6 @@ gantt
     Documentation    :c1, after b1, 7d
     Launch           :milestone, after b2, 0d
 ```
-
----
-
-## Frontmatter Display
-
-The YAML frontmatter at the top of this document is automatically parsed and displayed as a collapsible section. Click the "Frontmatter" header in the preview to see the metadata:
-
-```yaml
----
-title: MDX Preview Feature Showcase
-author: MDX Preview Extension
-version: 1.0.0-alpha.5
-tags: [mdx, react, preview, vscode]
-date: 2025-01-08
----
-```
-
-You can access frontmatter values in your content using the `frontmatter` object (Trusted Mode only):
-
-**Document Title:** {typeof frontmatter !== 'undefined' ? frontmatter.title : 'MDX Preview Feature Showcase'}
 
 ---
 
