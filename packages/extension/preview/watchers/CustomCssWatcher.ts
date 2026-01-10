@@ -1,10 +1,10 @@
-// packages/extension/preview/CustomCssWatcher.ts
+// packages/extension/preview/watchers/CustomCssWatcher.ts
 // watch custom CSS file for changes & notify webview
 
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { debug } from '../logging';
+import { debug } from '../../logging';
 import type { WebviewRPC } from '@mdx-preview/shared-types';
 
 // webview handle w/ setCustomCss method
