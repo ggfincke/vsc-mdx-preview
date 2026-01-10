@@ -1,0 +1,55 @@
+# Custom Plugins and Components Example
+
+This example demonstrates using `.mdx-previewrc.json` for customization.
+
+## Table of Contents (via remark-toc)
+
+## Features
+
+### Custom Plugins
+
+- **remark-toc**: Automatically generates table of contents
+- **remark-emoji**: Converts `:smile:` to 😊 :smile:
+- **rehype-external-links**: Adds target="_blank" to external links
+
+[External link example](https://mdxjs.com)
+
+### Custom Components
+
+<Callout type="info">
+This Callout component is auto-imported via component mapping!
+</Callout>
+
+<Callout type="warning">
+Warning callouts use a different color scheme.
+</Callout>
+
+<Callout type="success">
+Success! This works great with custom components.
+</Callout>
+
+## Requirements
+
+This example requires **Trusted Mode**:
+
+1. Trust this workspace
+2. Enable scripts: `mdx-preview.preview.enableScripts: true`
+3. Install dependencies: `npm install`
+
+## Setup
+
+```bash
+npm install
+```
+
+Then open this file in MDX Preview (Cmd+K X / Ctrl+K X).
+
+## How It Works
+
+The `.mdx-previewrc.json` configuration file tells MDX Preview to:
+
+1. Load custom remark/rehype plugins from `node_modules`
+2. Auto-import the `Callout` component from `./src/components/Callout.tsx`
+3. Apply these transformations before rendering
+
+This keeps your MDX files clean while still using custom functionality!

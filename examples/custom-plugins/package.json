@@ -1,0 +1,12 @@
+{
+  "name": "mdx-preview-custom-plugins-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example showing custom plugins and component mapping",
+  "dependencies": {
+    "react": "^18.2.0",
+    "remark-toc": "^9.0.0",
+    "remark-emoji": "^4.0.1",
+    "rehype-external-links": "^3.0.0"
+  }
+}

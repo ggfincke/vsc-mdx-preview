@@ -1,0 +1,12 @@
+{
+  "remarkPlugins": [
+    "remark-toc",
+    ["remark-emoji", { "emoticon": true }]
+  ],
+  "rehypePlugins": [
+    ["rehype-external-links", { "target": "_blank", "rel": ["noopener", "noreferrer"] }]
+  ],
+  "components": {
+    "Callout": "./src/components/Callout.tsx"
+  }
+}
