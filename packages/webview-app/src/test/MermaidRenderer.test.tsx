@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/MermaidRenderer/MermaidRenderer.test.tsx
+// packages/webview-app/src/test/MermaidRenderer.test.tsx
 // unit tests for MermaidRenderer component
 
 import {
@@ -18,8 +18,8 @@ import {
   fireEvent,
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { MermaidRenderer } from './MermaidRenderer';
-import { ThemeProvider } from '../../context/ThemeContext';
+import { MermaidRenderer } from '../components/MermaidRenderer';
+import { ThemeProvider } from '../context/ThemeContext';
 
 // mock mermaid library
 vi.mock('mermaid', () => ({
