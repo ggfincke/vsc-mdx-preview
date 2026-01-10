@@ -69,22 +69,22 @@ In Trusted Mode:
 
 ## Configuration
 
-| Setting                                        | Default     | Description                                              |
-| ---------------------------------------------- | ----------- | -------------------------------------------------------- |
-| `mdx-preview.preview.enableScripts`            | `false`     | Enable JavaScript execution (requires trusted workspace) |
-| `mdx-preview.preview.updateMode`               | `"onType"`  | When to update preview (`onType`, `onSave`, `manual`)    |
-| `mdx-preview.preview.debounceDelay`            | `300`       | Debounce delay in milliseconds for on-type updates       |
-| `mdx-preview.preview.useVscodeMarkdownStyles`  | `true`      | Apply VS Code's markdown styling                         |
-| `mdx-preview.preview.useWhiteBackground`       | `false`     | Force white background                                   |
-| `mdx-preview.preview.customCss`                | `""`        | Path to custom CSS file for preview styling              |
-| `mdx-preview.preview.mdx.customLayoutFilePath` | `""`        | Path to custom layout component                          |
-| `mdx-preview.preview.showToc`                  | `true`      | Show table of contents sidebar                           |
-| `mdx-preview.preview.showFrontmatter`          | `true`      | Show frontmatter metadata at top of preview              |
-| `mdx-preview.preview.previewTheme`             | `"none"`    | Preview theme (github-light, atom-dark, solarized, etc.) |
-| `mdx-preview.preview.codeBlockTheme`           | `"auto"`    | Code block syntax theme (`auto` matches preview theme)   |
-| `mdx-preview.preview.autoTheme`                | `true`      | Auto-switch light/dark themes based on VS Code theme     |
-| `mdx-preview.preview.security`                 | `"strict"`  | CSP policy (`strict` or `disabled`)                      |
-| `mdx-preview.build.useSucraseTranspiler`       | `false`     | Use Sucrase instead of Babel                             |
+| Setting                                        | Default    | Description                                              |
+| ---------------------------------------------- | ---------- | -------------------------------------------------------- |
+| `mdx-preview.preview.enableScripts`            | `false`    | Enable JavaScript execution (requires trusted workspace) |
+| `mdx-preview.preview.updateMode`               | `"onType"` | When to update preview (`onType`, `onSave`, `manual`)    |
+| `mdx-preview.preview.debounceDelay`            | `300`      | Debounce delay in milliseconds for on-type updates       |
+| `mdx-preview.preview.useVscodeMarkdownStyles`  | `true`     | Apply VS Code's markdown styling                         |
+| `mdx-preview.preview.useWhiteBackground`       | `false`    | Force white background                                   |
+| `mdx-preview.preview.customCss`                | `""`       | Path to custom CSS file for preview styling              |
+| `mdx-preview.preview.mdx.customLayoutFilePath` | `""`       | Path to custom layout component                          |
+| `mdx-preview.preview.showToc`                  | `true`     | Show table of contents sidebar                           |
+| `mdx-preview.preview.showFrontmatter`          | `true`     | Show frontmatter metadata at top of preview              |
+| `mdx-preview.preview.previewTheme`             | `"none"`   | Preview theme (github-light, atom-dark, solarized, etc.) |
+| `mdx-preview.preview.codeBlockTheme`           | `"auto"`   | Code block syntax theme (`auto` matches preview theme)   |
+| `mdx-preview.preview.autoTheme`                | `true`     | Auto-switch light/dark themes based on VS Code theme     |
+| `mdx-preview.preview.security`                 | `"strict"` | CSP policy (`strict` or `disabled`)                      |
+| `mdx-preview.build.useSucraseTranspiler`       | `false`    | Use Sucrase instead of Babel                             |
 
 ## Custom Layouts
 
@@ -109,6 +109,82 @@ Set `mdx-preview.preview.mdx.customLayoutFilePath` to the absolute path of your 
 ### 3. VS Code Markdown Styles (Default)
 
 When no custom layout is specified, VS Code's built-in markdown styling is applied.
+
+## Configuration Files (Trusted Mode)
+
+MDX Preview supports project-level customization through `.mdx-previewrc.json` configuration files. This allows you to add custom remark/rehype plugins and define component mappings.
+
+### Requirements
+
+Configuration files only work in **Trusted Mode**:
+
+1. Workspace must be trusted (VS Code Workspace Trust)
+2. Enable scripts: Set `"mdx-preview.preview.enableScripts": true` in settings
+3. Local workspace only (not supported in remote environments)
+
+### Configuration File Format
+
+Create a `.mdx-previewrc.json` file in your workspace root or project directory:
+
+```json
+{
+  "remarkPlugins": [
+    "remark-toc",
+    ["remark-emoji", { "emoticon": true }]
+  ],
+  "rehypePlugins": [
+    "rehype-external-links"
+  ],
+  "components": {
+    "Callout": "./src/components/Callout.tsx",
+    "Card": "./src/components/Card.tsx"
+  }
+}
+```
+
+### Plugin Configuration
+
+Plugins must be installed in your project's `node_modules`:
+
+```bash
+npm install remark-toc remark-emoji rehype-external-links
+```
+
+**Plugin Formats**:
+- String: `"plugin-name"` (no options)
+- Tuple: `["plugin-name", { options }]` (with options)
+
+### Component Mapping
+
+Map component names to file paths for automatic imports:
+
+```json
+{
+  "components": {
+    "Button": "./components/Button.tsx"
+  }
+}
+```
+
+This allows you to use `<Button />` in MDX without explicit imports:
+
+```mdx
+# My Document
+
+<Button>Click me</Button>
+```
+
+The extension automatically prepends: `import Button from './components/Button.tsx'`
+
+### Config File Discovery
+
+MDX Preview searches for config files upward from the document directory to the workspace root. The first found config is used.
+
+### Security Note
+
+Custom plugins and components execute arbitrary code. They are **only available in Trusted Mode** for security. Untrusted workspaces will use Safe Mode, which ignores these settings.
+
+For more details, see [examples/custom-plugins/](examples/custom-plugins/).
 
 ## Advanced Features
 

@@ -5,6 +5,26 @@ All notable changes to the MDX Preview extension will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.7] - 2026-01-09
+
+### Added
+
+- **Configuration File Support**: Per-project customization via `.mdx-previewrc.json` files with JSON schema validation
+- **Custom Plugin Loading**: Load custom remark/rehype plugins from workspace `node_modules` (Trusted Mode only)
+- **Component Mapping**: Auto-generate import statements for custom components via config file
+- **Dependency Watching**: Automatic preview refresh when imported local files change
+
+### Changed
+
+- **Preview Subsystem**: Reorganized into `preview/config/` and `preview/watchers/` directories for better maintainability
+- **Webview Components**: Reorganized component directory structure (ErrorBoundary, LoadingBar, TrustBanner)
+- **MDX Transpiler**: Integrated plugin loader and component mapping support
+
+### Documentation
+
+- Added custom plugins example project (`examples/custom-plugins/`)
+- Updated basic example with component demo
+
 ## [1.0.0-alpha.6] - 2026-01-08
 
 ### Added
