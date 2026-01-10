@@ -2,7 +2,7 @@
   "name": "vscode-mdx-preview",
   "displayName": "MDX Preview",
   "description": "MDX Preview",
-  "version": "1.0.0-alpha.6",
+  "version": "1.0.0-alpha.7",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [
@@ -403,6 +403,15 @@
         }
       }
     },
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          ".mdx-previewrc.json",
+          ".mdx-previewrc"
+        ],
+        "url": "./schemas/mdx-previewrc.schema.json"
+      }
+    ],
     "walkthroughs": [
       {
         "id": "mdx-preview.gettingStarted",
