@@ -1,0 +1,252 @@
+/* packages/webview-app/src/styles/admonitions.css */
+/* Admonition styles for :::note, :::warning, etc. directive syntax */
+/* Compatible with Docusaurus and Starlight admonition styling */
+
+.admonition {
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  border-left: 4px solid;
+  border-radius: 0 4px 4px 0;
+  background-color: var(--admonition-bg, rgba(128, 128, 128, 0.1));
+}
+
+.admonition-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.025em;
+}
+
+.admonition-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admonition-icon svg {
+  width: 1.25em;
+  height: 1.25em;
+}
+
+.admonition-content {
+  font-size: 0.95rem;
+}
+
+.admonition-content > :first-child {
+  margin-top: 0;
+}
+
+.admonition-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* Note - blue */
+.admonition-note {
+  --admonition-color: #4285f4;
+  --admonition-bg: rgba(66, 133, 244, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.admonition-note .admonition-header {
+  color: var(--admonition-color);
+}
+
+.admonition-note .admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Info - blue (same as note) */
+.admonition-info {
+  --admonition-color: #4285f4;
+  --admonition-bg: rgba(66, 133, 244, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.admonition-info .admonition-header {
+  color: var(--admonition-color);
+}
+
+.admonition-info .admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Tip - green */
+.admonition-tip {
+  --admonition-color: #34a853;
+  --admonition-bg: rgba(52, 168, 83, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.admonition-tip .admonition-header {
+  color: var(--admonition-color);
+}
+
+.admonition-tip .admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Important - purple */
+.admonition-important {
+  --admonition-color: #a855f7;
+  --admonition-bg: rgba(168, 85, 247, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.admonition-important .admonition-header {
+  color: var(--admonition-color);
+}
+
+.admonition-important .admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Warning - yellow/amber */
+.admonition-warning {
+  --admonition-color: #f59e0b;
+  --admonition-bg: rgba(245, 158, 11, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.admonition-warning .admonition-header {
+  color: var(--admonition-color);
+}
+
+.admonition-warning .admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Caution - orange */
+.admonition-caution {
+  --admonition-color: #f97316;
+  --admonition-bg: rgba(249, 115, 22, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.admonition-caution .admonition-header {
+  color: var(--admonition-color);
+}
+
+.admonition-caution .admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Danger - red */
+.admonition-danger {
+  --admonition-color: #ef4444;
+  --admonition-bg: rgba(239, 68, 68, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.admonition-danger .admonition-header {
+  color: var(--admonition-color);
+}
+
+.admonition-danger .admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .admonition-note {
+    --admonition-bg: rgba(66, 133, 244, 0.15);
+  }
+
+  .admonition-info {
+    --admonition-bg: rgba(66, 133, 244, 0.15);
+  }
+
+  .admonition-tip {
+    --admonition-bg: rgba(52, 168, 83, 0.15);
+  }
+
+  .admonition-important {
+    --admonition-bg: rgba(168, 85, 247, 0.15);
+  }
+
+  .admonition-warning {
+    --admonition-bg: rgba(245, 158, 11, 0.15);
+  }
+
+  .admonition-caution {
+    --admonition-bg: rgba(249, 115, 22, 0.15);
+  }
+
+  .admonition-danger {
+    --admonition-bg: rgba(239, 68, 68, 0.15);
+  }
+}
+
+/* VS Code dark theme support */
+.vscode-dark .admonition-note,
+.vscode-high-contrast .admonition-note {
+  --admonition-bg: rgba(66, 133, 244, 0.15);
+}
+
+.vscode-dark .admonition-info,
+.vscode-high-contrast .admonition-info {
+  --admonition-bg: rgba(66, 133, 244, 0.15);
+}
+
+.vscode-dark .admonition-tip,
+.vscode-high-contrast .admonition-tip {
+  --admonition-bg: rgba(52, 168, 83, 0.15);
+}
+
+.vscode-dark .admonition-important,
+.vscode-high-contrast .admonition-important {
+  --admonition-bg: rgba(168, 85, 247, 0.15);
+}
+
+.vscode-dark .admonition-warning,
+.vscode-high-contrast .admonition-warning {
+  --admonition-bg: rgba(245, 158, 11, 0.15);
+}
+
+.vscode-dark .admonition-caution,
+.vscode-high-contrast .admonition-caution {
+  --admonition-bg: rgba(249, 115, 22, 0.15);
+}
+
+.vscode-dark .admonition-danger,
+.vscode-high-contrast .admonition-danger {
+  --admonition-bg: rgba(239, 68, 68, 0.15);
+}
+
+/* Nested content styling */
+.admonition-content code {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.vscode-dark .admonition-content code,
+.vscode-high-contrast .admonition-content code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.admonition-content pre {
+  margin: 0.75rem 0;
+}
+
+.admonition-content ul,
+.admonition-content ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.admonition-content p {
+  margin: 0.5rem 0;
+}
