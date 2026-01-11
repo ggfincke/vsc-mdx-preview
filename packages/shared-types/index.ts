@@ -24,6 +24,16 @@ export interface PreviewError {
   code?: string;
 }
 
+// type guard for PreviewError
+export function isPreviewError(value: unknown): value is PreviewError {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'message' in value &&
+    typeof (value as PreviewError).message === 'string'
+  );
+}
+
 // available preview themes (markdown content styling)
 export type PreviewTheme =
   | 'github-light'
@@ -83,6 +93,82 @@ export function isLightPreviewTheme(theme: PreviewTheme): boolean {
     theme.includes('light') ||
     ['medium', 'newsprint', 'gothic', 'none', 'vue'].includes(theme)
   );
+}
+
+// list of all preview themes
+export const PREVIEW_THEMES: PreviewTheme[] = [
+  'github-light',
+  'github-dark',
+  'atom-dark',
+  'atom-light',
+  'atom-material',
+  'one-dark',
+  'one-light',
+  'solarized-dark',
+  'solarized-light',
+  'gothic',
+  'medium',
+  'monokai',
+  'newsprint',
+  'night',
+  'none',
+  'vue',
+];
+
+// list of all code block themes
+export const CODE_BLOCK_THEMES: CodeBlockTheme[] = [
+  'auto',
+  'default',
+  'atom-dark',
+  'atom-light',
+  'atom-material',
+  'coy',
+  'darcula',
+  'dark',
+  'funky',
+  'github',
+  'github-dark',
+  'hopscotch',
+  'monokai',
+  'okaidia',
+  'one-dark',
+  'one-light',
+  'pen-paper-coffee',
+  'pojoaque',
+  'solarized-dark',
+  'solarized-light',
+  'twilight',
+  'vs',
+  'vue',
+  'xonokai',
+];
+
+// light/dark theme pairs for auto-switching
+export const THEME_PAIRS: Record<
+  string,
+  { light: PreviewTheme; dark: PreviewTheme }
+> = {
+  github: { light: 'github-light', dark: 'github-dark' },
+  atom: { light: 'atom-light', dark: 'atom-dark' },
+  one: { light: 'one-light', dark: 'one-dark' },
+  solarized: { light: 'solarized-light', dark: 'solarized-dark' },
+};
+
+// get the opposite theme for auto light/dark switching
+export function getOppositeTheme(
+  theme: PreviewTheme,
+  targetIsLight: boolean
+): PreviewTheme {
+  for (const pair of Object.values(THEME_PAIRS)) {
+    if (pair.light === theme && !targetIsLight) {
+      return pair.dark;
+    }
+    if (pair.dark === theme && targetIsLight) {
+      return pair.light;
+    }
+  }
+  // no pair found, return as-is
+  return theme;
 }
 
 // RPC: methods extension exposes to webview (callable by webview)
