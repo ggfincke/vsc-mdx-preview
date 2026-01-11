@@ -1,0 +1,199 @@
+// packages/extension/preview/PreviewDocumentHandler.ts
+// * Document state management and change handling for preview instances
+
+import * as vscode from 'vscode';
+import * as path from 'path';
+import { debug } from '../logging';
+import {
+  resolveTypescriptConfig,
+  findTsConfig,
+  resolveConfig,
+  type TypeScriptConfiguration,
+  type ResolvedConfig,
+} from './config';
+import { DocumentTracker, DependencyWatcher, WatcherManager } from './watchers';
+import type { UpdateMode } from './PreviewConfiguration';
+
+export interface DocumentState {
+  doc: vscode.TextDocument;
+  dependentFsPaths: Set<string>;
+  typescriptConfiguration?: TypeScriptConfiguration;
+  mdxPreviewConfig?: ResolvedConfig;
+}
+
+// Handles document state, tracking, & change events for a preview instance.
+export class PreviewDocumentHandler {
+  private _doc!: vscode.TextDocument;
+  private _dependentFsPaths: Set<string> = new Set();
+  private _typescriptConfiguration?: TypeScriptConfiguration;
+  private _mdxPreviewConfig?: ResolvedConfig;
+  private _editingDoc?: vscode.TextDocument;
+
+  get doc(): vscode.TextDocument {
+    return this._doc;
+  }
+
+  get dependentFsPaths(): Set<string> {
+    return this._dependentFsPaths;
+  }
+
+  get typescriptConfiguration(): TypeScriptConfiguration | undefined {
+    return this._typescriptConfiguration;
+  }
+
+  get mdxPreviewConfig(): ResolvedConfig | undefined {
+    return this._mdxPreviewConfig;
+  }
+
+  get editingDoc(): vscode.TextDocument | undefined {
+    return this._editingDoc;
+  }
+
+  get fsPath(): string {
+    return this._doc.uri.fsPath;
+  }
+
+  get text(): string {
+    return this._doc.getText();
+  }
+
+  get entryFsDirectory(): string | null {
+    if (this._doc.uri.scheme === 'untitled') {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders || workspaceFolders.length === 0) {
+        return null;
+      }
+      return workspaceFolders[0].uri.fsPath;
+    } else if (this._doc.uri.scheme === 'file') {
+      return path.dirname(this.fsPath);
+    }
+    return null;
+  }
+
+  // Set the document & resolve related configurations.
+  // Returns whether config watcher needs to be set up.
+  setDoc(
+    doc: vscode.TextDocument,
+    watcherManager: WatcherManager
+  ): { needsConfigWatcher: boolean } {
+    this._doc = doc;
+    this._dependentFsPaths = new Set([doc.uri.fsPath]);
+
+    const configFile = findTsConfig(this.entryFsDirectory ?? '');
+    if (configFile) {
+      this._typescriptConfiguration = resolveTypescriptConfig(configFile);
+    } else {
+      this._typescriptConfiguration = undefined;
+    }
+
+    // resolve MDX preview config file (.mdx-previewrc.json)
+    let needsConfigWatcher = false;
+    if (doc.uri.scheme === 'file') {
+      this._mdxPreviewConfig = resolveConfig(doc.uri.fsPath) ?? undefined;
+      needsConfigWatcher = true;
+    } else {
+      this._mdxPreviewConfig = undefined;
+      // remove config watcher if switching to non-file scheme
+      watcherManager.unregister('config');
+    }
+
+    // update dependency watcher's document directory
+    const dependencyWatcher =
+      watcherManager.get<DependencyWatcher>('dependency');
+    if (this.entryFsDirectory && dependencyWatcher) {
+      dependencyWatcher.setDocumentDir(this.entryFsDirectory);
+      dependencyWatcher.clear(); // clear old dependencies when switching documents
+    }
+
+    return { needsConfigWatcher };
+  }
+
+  // Update the MDX preview config (called after config file change).
+  reloadMdxConfig(): void {
+    this._mdxPreviewConfig = resolveConfig(this._doc.uri.fsPath) ?? undefined;
+  }
+
+  // Reset rendered version tracking (called when panel is disposed to force re-render).
+  resetRenderedVersion(watcherManager: WatcherManager): void {
+    const docTracker = watcherManager.get<DocumentTracker>('document');
+    docTracker?.resetRenderedVersion();
+  }
+
+  // Mark preview as stale (document changed but not rendered).
+  markStale(watcherManager: WatcherManager): void {
+    const docTracker = watcherManager.get<DocumentTracker>('document');
+    docTracker?.markStale();
+  }
+
+  // Update dependency watcher w/ new imports (called from evaluate-in-webview).
+  updateDependencies(imports: string[], watcherManager: WatcherManager): void {
+    const dependencyWatcher =
+      watcherManager.get<DependencyWatcher>('dependency');
+    dependencyWatcher?.updateDependencies(imports);
+  }
+
+  // Handle text document change event.
+  async handleDidChangeTextDocument(
+    fsPath: string,
+    doc: vscode.TextDocument,
+    active: boolean,
+    updateMode: UpdateMode,
+    markStaleFn: () => void,
+    invalidateFn: (fsPath: string) => Promise<void>,
+    debouncedUpdateFn: () => void
+  ): Promise<void> {
+    if (!active) {
+      return;
+    }
+
+    if (!this._dependentFsPaths.has(fsPath)) {
+      return;
+    }
+
+    this._editingDoc = doc;
+
+    switch (updateMode) {
+      case 'onType': {
+        markStaleFn();
+        if (fsPath !== this.fsPath) {
+          await invalidateFn(fsPath);
+        }
+        debouncedUpdateFn();
+        break;
+      }
+      case 'onSave':
+      case 'manual': {
+        markStaleFn();
+        break;
+      }
+    }
+  }
+
+  // Handle text document save event.
+  async handleDidSaveTextDocument(
+    fsPath: string,
+    active: boolean,
+    updateMode: UpdateMode,
+    markStaleFn: () => void,
+    invalidateFn: (fsPath: string) => Promise<void>,
+    updateWebviewFn: () => Promise<void>
+  ): Promise<void> {
+    if (!active) {
+      return;
+    }
+
+    if (!this._dependentFsPaths.has(fsPath)) {
+      return;
+    }
+
+    if (updateMode === 'manual') {
+      markStaleFn();
+      return;
+    }
+
+    if (fsPath !== this.fsPath) {
+      await invalidateFn(fsPath);
+    }
+    await updateWebviewFn();
+  }
+}
