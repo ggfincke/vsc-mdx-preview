@@ -1,0 +1,259 @@
+/* packages/webview-app/src/components/shims/docusaurus/styles.css */
+/* Docusaurus component shim styles */
+/* Designed to closely match Docusaurus default styling */
+
+/* ==================== Tabs ==================== */
+.docusaurus-tabs {
+  margin: 1rem 0;
+}
+
+.tabs-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 1px solid var(--vscode-panel-border, #e0e0e0);
+  margin-bottom: 0;
+}
+
+.tab-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--vscode-foreground, #333);
+  transition: all 0.2s ease;
+  margin-bottom: -1px;
+}
+
+.tab-button:hover {
+  color: var(--vscode-textLink-foreground, #0066cc);
+  background-color: var(--vscode-list-hoverBackground, rgba(0, 0, 0, 0.05));
+}
+
+.tab-button.active {
+  color: var(--vscode-textLink-foreground, #0066cc);
+  border-bottom-color: var(--vscode-textLink-foreground, #0066cc);
+}
+
+.tab-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--vscode-focusBorder, rgba(0, 102, 204, 0.3));
+}
+
+.tabs-content {
+  padding: 1rem 0;
+}
+
+.tab-panel {
+  animation: fadeIn 0.2s ease;
+}
+
+.tab-panel[hidden] {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==================== CodeBlock ==================== */
+.docusaurus-codeblock {
+  margin: 1rem 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: var(--vscode-editor-background, #f6f8fa);
+  border: 1px solid var(--vscode-panel-border, #e0e0e0);
+}
+
+.codeblock-title {
+  padding: 0.5rem 1rem;
+  background-color: var(--vscode-editorGroupHeader-tabsBackground, #f0f0f0);
+  border-bottom: 1px solid var(--vscode-panel-border, #e0e0e0);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--vscode-foreground, #333);
+}
+
+.codeblock-title-text {
+  font-family: var(--vscode-editor-font-family, monospace);
+}
+
+.codeblock-container {
+  position: relative;
+}
+
+.codeblock-copy-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background-color: var(--vscode-button-secondaryBackground, rgba(128, 128, 128, 0.2));
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  color: var(--vscode-button-secondaryForeground, #333);
+  z-index: 1;
+}
+
+.docusaurus-codeblock:hover .codeblock-copy-button {
+  opacity: 1;
+}
+
+.codeblock-copy-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground, rgba(128, 128, 128, 0.3));
+}
+
+.codeblock-copy-button.copied {
+  background-color: var(--vscode-testing-iconPassed, #34a853);
+  color: white;
+  opacity: 1;
+}
+
+.codeblock-language {
+  position: absolute;
+  top: 0.5rem;
+  right: 3rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--vscode-descriptionForeground, #666);
+  background-color: var(--vscode-badge-background, rgba(128, 128, 128, 0.15));
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.docusaurus-codeblock:hover .codeblock-language {
+  opacity: 1;
+}
+
+.docusaurus-codeblock pre {
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0;
+}
+
+.docusaurus-codeblock code {
+  font-family: var(--vscode-editor-font-family, 'Consolas', 'Monaco', monospace);
+  font-size: var(--vscode-editor-font-size, 13px);
+  line-height: 1.5;
+}
+
+/* Line numbers for code blocks */
+.docusaurus-codeblock pre[data-show-line-numbers="true"] {
+  counter-reset: line;
+}
+
+.docusaurus-codeblock pre[data-show-line-numbers="true"] code {
+  display: block;
+}
+
+/* ==================== Details ==================== */
+.docusaurus-details {
+  margin: 1rem 0;
+  border: 1px solid var(--vscode-panel-border, #e0e0e0);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.details-summary {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--vscode-list-hoverBackground, rgba(0, 0, 0, 0.03));
+  cursor: pointer;
+  font-weight: 500;
+  list-style: none;
+  user-select: none;
+}
+
+.details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.details-summary::marker {
+  display: none;
+}
+
+.details-summary:hover {
+  background-color: var(--vscode-list-activeSelectionBackground, rgba(0, 0, 0, 0.06));
+}
+
+.details-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.details-toggle-icon svg {
+  transition: transform 0.2s ease;
+}
+
+.details-toggle-icon svg.expanded {
+  transform: rotate(90deg);
+}
+
+.details-summary-text {
+  flex: 1;
+}
+
+.details-content {
+  padding: 1rem;
+  border-top: 1px solid var(--vscode-panel-border, #e0e0e0);
+}
+
+.details-content > :first-child {
+  margin-top: 0;
+}
+
+.details-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* ==================== Dark Mode Adjustments ==================== */
+.vscode-dark .docusaurus-tabs .tabs-header {
+  border-bottom-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .docusaurus-codeblock {
+  background-color: var(--vscode-editor-background, #1e1e1e);
+  border-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .codeblock-title {
+  background-color: var(--vscode-editorGroupHeader-tabsBackground, #252526);
+  border-bottom-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .docusaurus-details {
+  border-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .details-content {
+  border-top-color: var(--vscode-panel-border, #333);
+}
