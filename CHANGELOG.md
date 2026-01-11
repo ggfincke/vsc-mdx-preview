@@ -5,6 +5,22 @@ All notable changes to the MDX Preview extension will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.8] - 2026-01-11
+
+### Added
+
+- **Framework Support**: Auto-detect Docusaurus, Next.js, and Astro Starlight from workspace dependencies
+- **Component Shims**: Framework-compatible components (Tabs, Cards, Details, Image, Link) in Trusted Mode
+- **Admonitions**: Docusaurus-style admonitions (:::note, :::tip, :::warning, :::caution)
+- **Transpiler Fallback**: Automatic fallback from Sucrase to Babel for improved compatibility
+
+### Changed
+
+- **Module Fetcher**: Refactored into specialized handlers (CSS, SASS, Image, JSON, Script)
+- **Preview System**: Decomposed preview-manager into focused modules (Configuration, DocumentHandler, Initializer, Bridge)
+- **Theme System**: Reorganized into dedicated `/theme` module with improved structure
+- **Watcher System**: Added WatcherManager and ConfigWatcher for better coordination
+
 ## [1.0.0-alpha.7] - 2026-01-09
 
 ### Added
