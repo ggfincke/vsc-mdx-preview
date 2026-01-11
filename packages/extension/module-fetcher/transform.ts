@@ -6,8 +6,7 @@ import * as path from 'path';
 import isModule from 'is-module';
 import { mdxTranspileAsync } from '../transpiler/mdx/mdx';
 import { transpileModule as tsTranspileModule } from 'typescript';
-import { transformAsync as babelTransformAsync } from '../transpiler/babel';
-import { transform as sucraseTransform } from '../transpiler/sucrase';
+import { transpileWithFallback } from '../transpiler/transpiler-selector';
 import { debug } from '../logging';
 import { resolveTypescriptConfig } from '../preview/config';
 
@@ -54,18 +53,11 @@ async function transformEntry(
     }).outputText;
   }
 
-  if (useSucrase) {
-    try {
-      code = sucraseTransform(code).code;
-    } catch (e) {
-      debug('Sucrase failed for entry, falling back to Babel', { error: e });
-      const result = await babelTransformAsync(code);
-      code = result?.code ?? code;
-    }
-  } else {
-    const result = await babelTransformAsync(code);
-    code = result?.code ?? code;
-  }
+  code = await transpileWithFallback(code, {
+    useSucrase,
+    context: 'entry',
+    filePath: fsPath,
+  });
 
   return { code, frontmatter };
 }
@@ -97,24 +89,15 @@ async function transform(
 
   const isInNodeModules = fsPath.split(path.sep).includes('node_modules');
   if (!isInNodeModules || isModule(code)) {
-    const transpilerChoice =
-      isInNodeModules || useSucrase ? 'Sucrase' : 'Babel';
-    debug(`Transpiling dependency: ${fsPath} (${transpilerChoice})`);
-    if (isInNodeModules || useSucrase) {
-      try {
-        code = sucraseTransform(code).code;
-      } catch (e) {
-        debug('Sucrase failed for dependency, falling back to Babel', {
-          file: fsPath,
-          error: e,
-        });
-        const result = await babelTransformAsync(code);
-        code = result?.code ?? code;
-      }
-    } else {
-      const result = await babelTransformAsync(code);
-      code = result?.code ?? code;
-    }
+    const preferSucrase = isInNodeModules || useSucrase;
+    debug(
+      `Transpiling dependency: ${fsPath} (${preferSucrase ? 'Sucrase' : 'Babel'})`
+    );
+    code = await transpileWithFallback(code, {
+      useSucrase: preferSucrase,
+      context: 'dependency',
+      filePath: fsPath,
+    });
   }
 
   return code;
