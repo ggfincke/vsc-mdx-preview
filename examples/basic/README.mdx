@@ -352,12 +352,14 @@ pie showData
     "Mermaid Diagrams" : 55
 ```
 
-### Gantt Chart
+### Project Timeline
 
 ```mermaid
 gantt
     title Project Timeline
     dateFormat  YYYY-MM-DD
+    axisFormat  %b %d
+    tickInterval 1week
     section Planning
     Requirements     :a1, 2025-01-01, 7d
     Design           :a2, after a1, 5d
@@ -365,7 +367,7 @@ gantt
     Core Features    :b1, after a2, 14d
     Testing          :b2, after b1, 7d
     section Release
-    Documentation    :c1, after b1, 7d
+    Documentation    :c1, 2025-01-20, 14d
     Launch           :milestone, after b2, 0d
 ```
 

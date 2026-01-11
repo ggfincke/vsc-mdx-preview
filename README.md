@@ -128,13 +128,8 @@ Create a `.mdx-previewrc.json` file in your workspace root or project directory:
 
 ```json
 {
-  "remarkPlugins": [
-    "remark-toc",
-    ["remark-emoji", { "emoticon": true }]
-  ],
-  "rehypePlugins": [
-    "rehype-external-links"
-  ],
+  "remarkPlugins": ["remark-toc", ["remark-emoji", { "emoticon": true }]],
+  "rehypePlugins": ["rehype-external-links"],
   "components": {
     "Callout": "./src/components/Callout.tsx",
     "Card": "./src/components/Card.tsx"
@@ -151,6 +146,7 @@ npm install remark-toc remark-emoji rehype-external-links
 ```
 
 **Plugin Formats**:
+
 - String: `"plugin-name"` (no options)
 - Tuple: `["plugin-name", { options }]` (with options)
 

@@ -83,6 +83,38 @@
           "Tabs": "./src/components/Tabs.tsx"
         }
       ]
+    },
+    "framework": {
+      "type": "string",
+      "enum": ["generic", "docusaurus", "nextjs", "astro-starlight"],
+      "description": "Framework override. Overrides auto-detection from package.json.",
+      "examples": ["docusaurus", "nextjs"]
+    },
+    "frameworkOptions": {
+      "type": "object",
+      "description": "Framework-specific options for MDX Preview.",
+      "properties": {
+        "enableShims": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable framework component shims (e.g., @theme/Tabs for Docusaurus). Only works in Trusted Mode."
+        },
+        "customAliases": {
+          "type": "object",
+          "description": "Custom import path aliases (e.g., { \"@components\": \"./src/components\" }).",
+          "additionalProperties": {
+            "type": "string",
+            "description": "Relative path the alias resolves to"
+          },
+          "examples": [
+            {
+              "@components": "./src/components",
+              "@utils": "./src/utils"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
