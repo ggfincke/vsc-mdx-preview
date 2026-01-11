@@ -6,16 +6,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { debug } from '../../logging';
 import type { WebviewRPC } from '@mdx-preview/shared-types';
+import type { IWatcher } from './types';
 
 // webview handle w/ setCustomCss method
 type CssNotifier = Pick<WebviewRPC, 'setCustomCss'>;
 
 // watch custom CSS file & send updates to webview
-export class CustomCssWatcher {
+export class CustomCssWatcher implements IWatcher {
   private watcher?: vscode.FileSystemWatcher;
   private disposables: vscode.Disposable[] = [];
   private resolvedPath: string | null = null;
   private notifier?: CssNotifier;
+  private _isActive = false;
 
   constructor(
     private cssPath: string,
@@ -32,9 +34,9 @@ export class CustomCssWatcher {
     }
   }
 
-  // start watching the CSS file
-  watch(): void {
-    if (!this.cssPath) {
+  // IWatcher interface: start watching the CSS file
+  start(): void {
+    if (!this.cssPath || this._isActive) {
       return;
     }
 
@@ -42,6 +44,8 @@ export class CustomCssWatcher {
     if (!this.resolvedPath) {
       return;
     }
+
+    this._isActive = true;
 
     // initial load
     this.loadAndSendCss(this.resolvedPath);
@@ -68,6 +72,33 @@ export class CustomCssWatcher {
       }),
       this.watcher
     );
+
+    debug('[CSS] Started watching custom CSS file');
+  }
+
+  // IWatcher interface: stop watching without disposing
+  stop(): void {
+    if (!this._isActive) {
+      return;
+    }
+    this._isActive = false;
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+    this.disposables = [];
+    this.watcher = undefined;
+    this.resolvedPath = null;
+    debug('[CSS] Stopped watching custom CSS file');
+  }
+
+  // IWatcher interface: check if watching
+  isActive(): boolean {
+    return this._isActive;
+  }
+
+  // Alias for backward compatibility
+  watch(): void {
+    this.start();
   }
 
   // resolve CSS path (relative to workspace or absolute)
@@ -114,13 +145,8 @@ export class CustomCssWatcher {
     this.watch();
   }
 
-  // dispose all resources
+  // IWatcher interface: dispose all resources
   dispose(): void {
-    for (const disposable of this.disposables) {
-      disposable.dispose();
-    }
-    this.disposables = [];
-    this.watcher = undefined;
-    this.resolvedPath = null;
+    this.stop();
   }
 }

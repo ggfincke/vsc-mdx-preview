@@ -5,12 +5,15 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { debug } from '../../logging';
+import type { IWatcher } from './types';
 
-// watches local file dependencies (imports from MDX files) for changes (only relative imports, skips node_modules & external URLs)
-export class DependencyWatcher {
+// watch local file dependencies (imports from MDX files) for changes
+// only watches relative imports, skips node_modules & external URLs
+export class DependencyWatcher implements IWatcher {
   private watchers = new Map<string, vscode.FileSystemWatcher>();
   private documentDir: string = '';
   private onChangeCallback: (fsPath: string) => void;
+  private _isActive = false;
 
   constructor(onChange: (fsPath: string) => void) {
     this.onChangeCallback = onChange;
@@ -126,8 +129,24 @@ export class DependencyWatcher {
     this.watchers.clear();
   }
 
-  // dispose of all watchers
-  dispose(): void {
+  // IWatcher interface implementation
+
+  start(): void {
+    this._isActive = true;
+    debug('[DEP-WATCHER] Started');
+  }
+
+  stop(): void {
+    this._isActive = false;
     this.clear();
+    debug('[DEP-WATCHER] Stopped');
+  }
+
+  isActive(): boolean {
+    return this._isActive;
+  }
+
+  dispose(): void {
+    this.stop();
   }
 }
