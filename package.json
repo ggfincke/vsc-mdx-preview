@@ -2,7 +2,7 @@
   "name": "vscode-mdx-preview",
   "displayName": "MDX Preview",
   "description": "MDX Preview",
-  "version": "1.0.0-alpha.7",
+  "version": "1.0.0-alpha.8",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [
@@ -126,6 +126,11 @@
       {
         "command": "mdx-preview.commands.resetZoom",
         "title": "Reset Zoom",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.selectFramework",
+        "title": "Select Framework",
         "category": "MDX"
       }
     ],
@@ -400,6 +405,32 @@
           "default": true,
           "markdownDescription": "Automatically switch between light/dark preview themes based on VS Code's current color theme.",
           "scope": "resource"
+        },
+        "mdx-preview.framework": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "generic",
+            "docusaurus",
+            "nextjs",
+            "astro-starlight"
+          ],
+          "default": "auto",
+          "enumDescriptions": [
+            "Auto-detect framework from package.json",
+            "Generic MDX (no framework-specific features)",
+            "Docusaurus (@theme/* imports, admonitions)",
+            "Next.js (mdx-components.tsx support)",
+            "Astro Starlight (@astrojs/starlight/components)"
+          ],
+          "markdownDescription": "Framework for MDX rendering. When set to `auto`, detects framework from workspace `package.json` dependencies.",
+          "scope": "resource"
+        },
+        "mdx-preview.framework.componentShims": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable framework component shims (Tabs, Cards, etc.) in Trusted Mode. Provides preview-compatible versions of framework-specific components.",
+          "scope": "resource"
         }
       }
     },
@@ -510,6 +541,7 @@
     "rehype-katex": "^7.0.1",
     "rehype-slug": "^6.0.0",
     "rehype-stringify": "^10.0.0",
+    "remark-directive": "^3.0.0",
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0",
     "remark-mdx": "^3.0.0",
