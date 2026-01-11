@@ -1,9 +1,8 @@
-// packages/webview-app/src/utils/themeLoader.ts
-// theme loader utility for dynamic CSS injection
+// packages/webview-app/src/theme/loader.ts
+// theme CSS loading and injection for preview and code blocks
 
-import { previewThemes, codeBlockThemes } from '../themes';
-import type { PreviewTheme, CodeBlockTheme } from '@mdx-preview/shared-types';
-import { isLightPreviewTheme } from '@mdx-preview/shared-types';
+import { previewThemes, codeBlockThemes } from './css';
+import type { PreviewTheme, CodeBlockTheme } from './types';
 
 const PREVIEW_THEME_STYLE_ID = 'mpe-preview-theme';
 const CODE_BLOCK_THEME_STYLE_ID = 'mpe-code-block-theme';
@@ -87,6 +86,3 @@ export function clearThemeStyles(): void {
   document.documentElement.removeAttribute('data-mpe-preview-theme');
   document.documentElement.removeAttribute('data-mpe-code-block-theme');
 }
-
-// re-export for backward compatibility
-export { isLightPreviewTheme };
