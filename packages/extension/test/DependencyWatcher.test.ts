@@ -1,5 +1,5 @@
 // packages/extension/test/DependencyWatcher.test.ts
-// tests for DependencyWatcher - verifies import detection, resolution, and file watching
+// tests for DependencyWatcher - verifies import detection, resolution, & file watching
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DependencyWatcher } from '../preview/watchers/DependencyWatcher';
@@ -96,7 +96,7 @@ describe('DependencyWatcher', () => {
     it('should resolve with common extensions (.ts, .tsx, .js, .jsx)', () => {
       const imports = ['./component'];
 
-      // Mock file doesn't exist without extension, but exists with .tsx
+      // Mock file doesn't exist without extension, but exists w/ .tsx
       vi.spyOn(fs, 'existsSync').mockImplementation((path) => {
         return path.toString().endsWith('.tsx');
       });
@@ -115,7 +115,7 @@ describe('DependencyWatcher', () => {
     it('should detect index files', () => {
       const imports = ['./components'];
 
-      // Mock directory with index file
+      // Mock directory w/ index file
       vi.spyOn(fs, 'existsSync').mockImplementation((path) => {
         return (
           path.toString().includes('index.tsx') ||
@@ -213,7 +213,7 @@ describe('DependencyWatcher', () => {
     });
 
     it('should handle empty to non-empty transitions', () => {
-      // Start with no dependencies
+      // start w/ no dependencies
       watcher.updateDependencies([]);
 
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
@@ -227,7 +227,7 @@ describe('DependencyWatcher', () => {
     it('should handle non-empty to empty transitions', () => {
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
 
-      // Start with dependencies
+      // start w/ dependencies
       watcher.updateDependencies(['./component.tsx']);
 
       vi.clearAllMocks();
@@ -285,12 +285,7 @@ describe('DependencyWatcher', () => {
     });
 
     it('should handle malformed paths', () => {
-      const malformedPaths = [
-        './',
-        '../',
-        './/',
-        '/..//./component',
-      ];
+      const malformedPaths = ['./', '../', './/', '/..//./component'];
 
       vi.spyOn(fs, 'existsSync').mockReturnValue(false);
 

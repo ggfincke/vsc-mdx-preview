@@ -1,4 +1,4 @@
-// packages/webview-app/src/test/MermaidRenderer.test.tsx
+// packages/webview-app/src/components/MermaidRenderer/MermaidRenderer.test.tsx
 // unit tests for MermaidRenderer component
 
 import {
@@ -18,8 +18,8 @@ import {
   fireEvent,
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { MermaidRenderer } from '../components/MermaidRenderer';
-import { ThemeProvider } from '../context/ThemeContext';
+import { MermaidRenderer } from './MermaidRenderer';
+import { ThemeProvider } from '../../context/ThemeContext';
 
 // mock mermaid library
 vi.mock('mermaid', () => ({
@@ -29,10 +29,10 @@ vi.mock('mermaid', () => ({
   },
 }));
 
-// mock theme detection to control theme state
-vi.mock('../theme/detection', () => ({
-  getCurrentVSCodeTheme: vi.fn(() => 'light'),
-  onVSCodeThemeChange: vi.fn(() => () => {}),
+// mock theme utils to control theme state
+vi.mock('../../utils/theme', () => ({
+  getCurrentTheme: vi.fn(() => 'light'),
+  onThemeChange: vi.fn(() => () => {}),
 }));
 
 // helper to render w/ theme provider
@@ -71,8 +71,8 @@ describe('MermaidRenderer', () => {
     });
 
     test('container is hidden while loading', () => {
+      // never resolves
       mockMermaid.default.render.mockImplementation(
-        // never resolves
         () => new Promise(() => {})
       );
 
@@ -102,8 +102,8 @@ describe('MermaidRenderer', () => {
 
   describe('loading state', () => {
     test('shows loading overlay initially', () => {
+      // never resolves
       mockMermaid.default.render.mockImplementation(
-        // never resolves
         () => new Promise(() => {})
       );
 

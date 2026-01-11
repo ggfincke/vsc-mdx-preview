@@ -3,7 +3,12 @@
 
 import { describe, test, expect } from 'vitest';
 import { createMockWebview } from './__mocks__/vscode';
-import { generateNonce, getCSP } from '../security/CSP';
+import {
+  generateNonce,
+  generateCSP,
+  getCSP,
+  type CSPOptions,
+} from '../security/CSP';
 import { SecurityPolicy } from '../security/security';
 import type { TrustState } from '../security/TrustManager';
 
@@ -27,6 +32,87 @@ describe('CSP', () => {
     test('returns string of correct length', () => {
       const nonce = generateNonce();
       expect(nonce.length).toBe(32);
+    });
+  });
+
+  describe('generateCSP', () => {
+    const mockWebview = createMockWebview();
+    const testNonce = 'abc123def456789012345678901234ab';
+
+    test('excludes unsafe-eval when allowUnsafeEval is false', () => {
+      const options: CSPOptions = {
+        webview: mockWebview as never,
+        nonce: testNonce,
+        allowUnsafeEval: false,
+      };
+
+      const csp = generateCSP(options);
+
+      expect(csp).not.toContain("'unsafe-eval'");
+      expect(csp).toContain(`'nonce-${testNonce}'`);
+    });
+
+    test('includes unsafe-eval when allowUnsafeEval is true', () => {
+      const options: CSPOptions = {
+        webview: mockWebview as never,
+        nonce: testNonce,
+        allowUnsafeEval: true,
+      };
+
+      const csp = generateCSP(options);
+
+      expect(csp).toContain("'unsafe-eval'");
+      expect(csp).toContain(`'nonce-${testNonce}'`);
+    });
+
+    test('includes all required CSP directives', () => {
+      const options: CSPOptions = {
+        webview: mockWebview as never,
+        nonce: testNonce,
+        allowUnsafeEval: false,
+      };
+
+      const csp = generateCSP(options);
+
+      expect(csp).toContain("default-src 'none'");
+      expect(csp).toContain('img-src');
+      expect(csp).toContain('style-src');
+      expect(csp).toContain('script-src');
+      expect(csp).toContain('font-src');
+    });
+
+    test('uses webview cspSource in all relevant directives', () => {
+      const options: CSPOptions = {
+        webview: mockWebview as never,
+        nonce: testNonce,
+        allowUnsafeEval: false,
+      };
+
+      const csp = generateCSP(options);
+
+      // cspSource should appear in img-src, style-src, script-src, font-src
+      // escape special regex characters in cspSource (e.g., '+')
+      const escapedCspSource = mockWebview.cspSource.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        '\\$&'
+      );
+      const cspSourceOccurrences = (
+        csp.match(new RegExp(escapedCspSource, 'g')) || []
+      ).length;
+      expect(cspSourceOccurrences).toBeGreaterThanOrEqual(4);
+    });
+
+    test('allows data: and https: URIs for images', () => {
+      const options: CSPOptions = {
+        webview: mockWebview as never,
+        nonce: testNonce,
+        allowUnsafeEval: false,
+      };
+
+      const csp = generateCSP(options);
+
+      expect(csp).toContain('data:');
+      expect(csp).toContain('https:');
     });
   });
 

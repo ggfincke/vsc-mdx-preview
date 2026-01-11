@@ -62,7 +62,7 @@ vi.mock('typescript', () => ({
 
 // mock debounce
 vi.mock('lodash.debounce', () => ({
-  default: (fn: Function) => fn,
+  default: <T extends (...args: unknown[]) => unknown>(fn: T) => fn,
 }));
 
 // mock webview-manager to avoid enhanced-resolve dependency chain

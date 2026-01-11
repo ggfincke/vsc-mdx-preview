@@ -1,5 +1,5 @@
 // packages/extension/test/ConfigResolver.test.ts
-// tests for ConfigResolver - verifies config file discovery, validation, and caching
+// tests for ConfigResolver - verifies config file discovery, validation, & caching
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
@@ -38,9 +38,7 @@ describe('ConfigResolver', () => {
         return path.toString().endsWith('.mdx-previewrc.json');
       });
 
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(
-        JSON.stringify(validConfig)
-      );
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(validConfig));
 
       const result = resolveConfig('/workspace/src/test.mdx');
 
@@ -65,9 +63,7 @@ describe('ConfigResolver', () => {
         );
       });
 
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(
-        JSON.stringify(validConfig)
-      );
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(validConfig));
 
       const result = resolveConfig('/workspace/src/test.mdx');
 
@@ -144,9 +140,7 @@ describe('ConfigResolver', () => {
       };
 
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(
-        JSON.stringify(validConfig)
-      );
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(validConfig));
 
       const result = resolveConfig('/workspace/test.mdx');
 
@@ -164,9 +158,7 @@ describe('ConfigResolver', () => {
       };
 
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(
-        JSON.stringify(validConfig)
-      );
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(validConfig));
 
       const result = resolveConfig('/workspace/test.mdx');
 
@@ -223,9 +215,7 @@ describe('ConfigResolver', () => {
       };
 
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(
-        JSON.stringify(validConfig)
-      );
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(validConfig));
 
       const result = resolveConfig('/workspace/test.mdx');
 
@@ -346,12 +336,14 @@ describe('ConfigResolver', () => {
         );
       });
 
-      vi.spyOn(fs, 'readFileSync').mockImplementation((path: fs.PathOrFileDescriptor) => {
-        if (path.toString().includes('.mdx-previewrc.json')) {
-          return JSON.stringify(config1);
+      vi.spyOn(fs, 'readFileSync').mockImplementation(
+        (path: fs.PathOrFileDescriptor) => {
+          if (path.toString().includes('.mdx-previewrc.json')) {
+            return JSON.stringify(config1);
+          }
+          return JSON.stringify(config2);
         }
-        return JSON.stringify(config2);
-      });
+      );
 
       const result = resolveConfig('/workspace/test.mdx');
 

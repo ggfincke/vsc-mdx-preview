@@ -456,15 +456,6 @@ describe('SafePreview XSS Prevention', () => {
   });
 
   describe('data-* attribute handling', () => {
-    test('preserves data-sourcepos (needed for scroll sync)', () => {
-      const html = '<p data-sourcepos="1:1-1:10">Paragraph</p>';
-      renderWithProvider(html);
-
-      const p = document.querySelector('p');
-      expect(p).toBeInTheDocument();
-      expect(p?.getAttribute('data-sourcepos')).toBe('1:1-1:10');
-    });
-
     test('preserves data-mermaid-chart (needed for diagrams)', () => {
       const html = '<pre data-mermaid-chart="true"><code>graph TD</code></pre>';
       renderWithProvider(html);
@@ -486,24 +477,26 @@ describe('SafePreview XSS Prevention', () => {
 
     test('only explicitly allowed data-* attributes are preserved', () => {
       // DOMPurify w/ ALLOWED_ATTR config only allows explicitly listed attributes
-      // data-sourcepos, data-mermaid-chart, data-mermaid-id are in our allow list
-      const html = '<p data-sourcepos="1:1" data-mermaid-chart="true">Text</p>';
+      // data-mermaid-chart, data-mermaid-id, data-admonition-type are in our allow list
+      const html =
+        '<pre data-mermaid-chart="true" data-mermaid-id="abc">code</pre>';
       renderWithProvider(html);
 
-      const p = document.querySelector('p');
-      expect(p).toBeInTheDocument();
+      const pre = document.querySelector('pre');
+      expect(pre).toBeInTheDocument();
       // these are in our explicit allow list
-      expect(p?.getAttribute('data-sourcepos')).toBe('1:1');
-      expect(p?.getAttribute('data-mermaid-chart')).toBe('true');
+      expect(pre?.getAttribute('data-mermaid-chart')).toBe('true');
+      expect(pre?.getAttribute('data-mermaid-id')).toBe('abc');
     });
 
     test('data-* attributes cannot contain script content', () => {
       // even allowed data-* attrs should not execute as scripts
-      const html = '<p data-sourcepos="<script>alert(1)</script>">Text</p>';
+      const html =
+        '<pre data-mermaid-chart="<script>alert(1)</script>">Text</pre>';
       renderWithProvider(html);
 
-      const p = document.querySelector('p');
-      expect(p).toBeInTheDocument();
+      const pre = document.querySelector('pre');
+      expect(pre).toBeInTheDocument();
       // The value is sanitized or preserved as text, not executed
       expect(document.querySelector('script')).not.toBeInTheDocument();
     });

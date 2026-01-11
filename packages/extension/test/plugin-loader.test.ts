@@ -1,12 +1,12 @@
 // packages/extension/test/plugin-loader.test.ts
-// tests for plugin-loader - verifies plugin loading, component mapping, and trust enforcement
+// tests for plugin-loader - verifies plugin loading, component mapping, & trust enforcement
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   loadPluginsFromConfig,
-  generateComponentImports,
   mergePlugins,
 } from '../transpiler/plugin-loader';
+import { generateComponentImports } from '../transpiler/component-mapper';
 import { TrustManager, SecurityMode } from '../security/TrustManager';
 import type { ResolvedConfig } from '../preview/config';
 
@@ -86,7 +86,10 @@ describe('PluginLoader', () => {
     });
 
     it('should handle no config gracefully', async () => {
-      const result = await loadPluginsFromConfig(undefined, '/workspace/test.mdx');
+      const result = await loadPluginsFromConfig(
+        undefined,
+        '/workspace/test.mdx'
+      );
 
       expect(result.remarkPlugins).toEqual([]);
       expect(result.rehypePlugins).toEqual([]);
@@ -160,7 +163,9 @@ describe('PluginLoader', () => {
 
       expect(result.hasComponents).toBe(true);
       // Path should be normalized (forward slashes, relative)
-      expect(result.imports).toMatch(/from ['"]\.\.\/src\/MyComponent\.tsx['"]/);
+      expect(result.imports).toMatch(
+        /from ['"]\.\.\/src\/MyComponent\.tsx['"]/
+      );
     });
 
     it('should handle absolute paths', () => {
@@ -199,7 +204,10 @@ describe('PluginLoader', () => {
         configDir: '/workspace/project',
       };
 
-      const result = generateComponentImports(config, '/workspace/project/docs');
+      const result = generateComponentImports(
+        config,
+        '/workspace/project/docs'
+      );
 
       expect(result.hasComponents).toBe(true);
       expect(result.imports).toContain('_component_Component');

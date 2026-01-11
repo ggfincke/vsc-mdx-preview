@@ -9,7 +9,6 @@ describe('mdx-safe', () => {
     describe('basic markdown', () => {
       it('compiles paragraphs', async () => {
         const result = await compileToSafeHTML('Hello world');
-        // includes data-sourcepos for scroll sync
         expect(result.html).toContain('<p');
         expect(result.html).toContain('Hello world');
         expect(result.html).toContain('</p>');
