@@ -1,31 +1,53 @@
 // packages/extension/preview/StatusBarManager.ts
-// * manage MDX Preview status bar item w/ trust state display
+// * manage MDX Preview status bar items (trust state + framework display)
 
 import * as vscode from 'vscode';
 import { TrustManager, type TrustState } from '../security/TrustManager';
 import { PreviewManager } from './preview-manager';
+import {
+  FrameworkDetector,
+  type FrameworkInfo,
+} from '../framework/FrameworkDetector';
 
-// * status bar manager singleton for MDX preview trust state display
+// * status bar manager singleton for MDX preview status display
 export class StatusBarManager {
   private static instance: StatusBarManager | null = null;
-  private statusBarItem: vscode.StatusBarItem;
+  private trustStatusBarItem: vscode.StatusBarItem;
+  private frameworkStatusBarItem: vscode.StatusBarItem;
   private disposables: vscode.Disposable[] = [];
 
   private constructor() {
-    // create status bar item
-    this.statusBarItem = vscode.window.createStatusBarItem(
+    // create trust status bar item
+    this.trustStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
       100
     );
-    this.statusBarItem.command = 'mdx-preview.commands.toggleScripts';
+    this.trustStatusBarItem.command = 'mdx-preview.commands.toggleScripts';
+
+    // create framework status bar item
+    // slightly lower priority than trust item
+    this.frameworkStatusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Right,
+      99
+    );
+    this.frameworkStatusBarItem.command =
+      'mdx-preview.commands.selectFramework';
 
     // initial state
-    this.updateDisplay(TrustManager.getInstance().getState());
+    this.updateTrustDisplay(TrustManager.getInstance().getState());
+    this.updateFrameworkDisplay();
 
     // subscribe to trust state changes
     this.disposables.push(
       TrustManager.getInstance().subscribe((state) => {
-        this.updateDisplay(state);
+        this.updateTrustDisplay(state);
+      })
+    );
+
+    // subscribe to framework changes
+    this.disposables.push(
+      FrameworkDetector.getInstance().subscribe(() => {
+        this.updateFrameworkDisplay();
       })
     );
 
@@ -33,6 +55,7 @@ export class StatusBarManager {
     this.disposables.push(
       vscode.window.onDidChangeActiveTextEditor(() => {
         this.updateVisibility();
+        this.updateFrameworkDisplay();
       })
     );
 
@@ -61,22 +84,63 @@ export class StatusBarManager {
     }
   }
 
-  // update status bar text & tooltip based on trust state
-  private updateDisplay(trustState: TrustState): void {
+  // update trust status bar text & tooltip
+  private updateTrustDisplay(trustState: TrustState): void {
     if (trustState.canExecute) {
-      this.statusBarItem.text = '$(shield) MDX: Trusted';
-      this.statusBarItem.tooltip =
+      this.trustStatusBarItem.text = '$(shield) MDX: Trusted';
+      this.trustStatusBarItem.tooltip =
         'MDX Preview is in Trusted Mode. JavaScript execution is enabled. Click to manage settings.';
-      this.statusBarItem.backgroundColor = undefined;
+      this.trustStatusBarItem.backgroundColor = undefined;
     } else {
-      this.statusBarItem.text = '$(shield) MDX: Safe';
-      this.statusBarItem.tooltip = trustState.reason
+      this.trustStatusBarItem.text = '$(shield) MDX: Safe';
+      this.trustStatusBarItem.tooltip = trustState.reason
         ? `MDX Preview is in Safe Mode: ${trustState.reason}. Click to manage settings.`
         : 'MDX Preview is in Safe Mode. JavaScript execution is disabled. Click to manage settings.';
-      this.statusBarItem.backgroundColor = new vscode.ThemeColor(
+      this.trustStatusBarItem.backgroundColor = new vscode.ThemeColor(
         'statusBarItem.warningBackground'
       );
     }
+  }
+
+  // update framework status bar display
+  private updateFrameworkDisplay(): void {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      this.frameworkStatusBarItem.hide();
+      return;
+    }
+
+    const languageId = editor.document.languageId;
+    if (languageId !== 'mdx' && languageId !== 'markdown') {
+      this.frameworkStatusBarItem.hide();
+      return;
+    }
+
+    const frameworkDetector = FrameworkDetector.getInstance();
+    const info = frameworkDetector.getFramework(editor.document.uri);
+    const displayName = frameworkDetector.getFrameworkDisplayName(
+      info.framework
+    );
+
+    // use different icon based on framework
+    let icon = '$(symbol-misc)';
+    switch (info.framework) {
+      case 'docusaurus':
+        icon = '$(book)';
+        break;
+      case 'nextjs':
+        icon = '$(server)';
+        break;
+      case 'astro-starlight':
+        icon = '$(star)';
+        break;
+    }
+
+    this.frameworkStatusBarItem.text = `${icon} ${displayName}`;
+    this.frameworkStatusBarItem.tooltip = info.detected
+      ? `Framework: ${displayName} (auto-detected). Click to change.`
+      : `Framework: ${displayName} (manual). Click to change.`;
+    this.frameworkStatusBarItem.show();
   }
 
   // show/hide based on active editor language & preview state
@@ -85,7 +149,8 @@ export class StatusBarManager {
     if (editor) {
       const languageId = editor.document.languageId;
       if (languageId === 'mdx' || languageId === 'markdown') {
-        this.statusBarItem.show();
+        this.trustStatusBarItem.show();
+        this.frameworkStatusBarItem.show();
         return;
       }
     }
@@ -93,15 +158,17 @@ export class StatusBarManager {
     // also show if there are any active previews
     const previewManager = PreviewManager.getInstance();
     if (previewManager.hasActivePreviews()) {
-      this.statusBarItem.show();
+      this.trustStatusBarItem.show();
+      // framework item only shows for active mdx/md files
     } else {
-      this.statusBarItem.hide();
+      this.trustStatusBarItem.hide();
+      this.frameworkStatusBarItem.hide();
     }
   }
 
-  // get disposable for extension subscriptions (the status bar item itself)
-  getDisposable(): vscode.Disposable {
-    return this.statusBarItem;
+  // get disposables for extension subscriptions
+  getDisposables(): vscode.Disposable[] {
+    return [this.trustStatusBarItem, this.frameworkStatusBarItem];
   }
 
   // dispose all resources
@@ -110,6 +177,7 @@ export class StatusBarManager {
       disposable.dispose();
     }
     this.disposables = [];
-    this.statusBarItem.dispose();
+    this.trustStatusBarItem.dispose();
+    this.frameworkStatusBarItem.dispose();
   }
 }

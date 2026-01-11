@@ -14,26 +14,26 @@ export function generateNonce(): string {
   );
 }
 
-// get Safe Mode CSP (no eval, used when workspace untrusted or scripts disabled)
-function getStrictCSP(webview: vscode.Webview, nonce: string): string {
-  return [
-    "default-src 'none'",
-    `img-src ${webview.cspSource} https: data:`,
-    `style-src ${webview.cspSource} 'unsafe-inline'`,
-    // * include cspSource to allow dynamic chunk imports (e.g. mermaid)
-    `script-src ${webview.cspSource} 'nonce-${nonce}'`,
-    `font-src ${webview.cspSource}`,
-  ].join('; ');
+// options for CSP generation
+export interface CSPOptions {
+  webview: vscode.Webview;
+  nonce: string;
+  allowUnsafeEval: boolean;
 }
 
-// get Trusted Mode CSP (eval allowed for module execution, requires workspace trusted & scripts enabled)
-function getTrustedCSP(webview: vscode.Webview, nonce: string): string {
+// generate CSP string w/ configurable eval policy
+export function generateCSP(options: CSPOptions): string {
+  const { webview, nonce, allowUnsafeEval } = options;
+  // include cspSource to allow dynamic chunk imports (e.g. mermaid)
+  const scriptSrc = allowUnsafeEval
+    ? `${webview.cspSource} 'nonce-${nonce}' 'unsafe-eval'`
+    : `${webview.cspSource} 'nonce-${nonce}'`;
+
   return [
     "default-src 'none'",
     `img-src ${webview.cspSource} https: data:`,
     `style-src ${webview.cspSource} 'unsafe-inline'`,
-    // * include cspSource to allow dynamic chunk imports (e.g. mermaid)
-    `script-src ${webview.cspSource} 'nonce-${nonce}' 'unsafe-eval'`,
+    `script-src ${scriptSrc}`,
     `font-src ${webview.cspSource}`,
   ].join('; ');
 }
@@ -51,10 +51,9 @@ export function getCSP(
   }
 
   // only allow eval if workspace trusted & scripts enabled
-  if (trustState.canExecute) {
-    return getTrustedCSP(webview, nonce);
-  }
-
-  // default to strict CSP (no eval)
-  return getStrictCSP(webview, nonce);
+  return generateCSP({
+    webview,
+    nonce,
+    allowUnsafeEval: trustState.canExecute,
+  });
 }

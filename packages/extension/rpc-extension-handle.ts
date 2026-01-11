@@ -5,10 +5,11 @@ import { performance } from 'perf_hooks';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Preview } from './preview/preview-manager';
-import { fetchLocal, FetchResult } from './module-fetcher/module-fetcher';
+import { fetchLocal } from './module-fetcher/module-fetcher';
 import { TrustManager } from './security/TrustManager';
 import { checkFsPath } from './security/checkFsPath';
 import { error as logError, warn as logWarn, debug } from './logging';
+import type { ExtensionRPC, FetchResult } from '@mdx-preview/shared-types';
 
 // allowed URL schemes for openExternal
 const ALLOWED_EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
@@ -37,7 +38,7 @@ function validateFetchRequest(request: string): boolean {
 }
 
 // RPC handle exposed to webview (methods callable via Comlink)
-class ExtensionHandle {
+class ExtensionHandle implements ExtensionRPC {
   preview: Preview;
 
   constructor(preview: Preview) {

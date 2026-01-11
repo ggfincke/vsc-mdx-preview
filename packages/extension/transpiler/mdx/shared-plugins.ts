@@ -2,13 +2,15 @@
 // * shared remark/rehype plugin configurations for MDX pipelines
 //
 // ! plugin ordering is critical - do not reorder w/o testing both Safe & Trusted modes
+// ! remarkDirective must run first (parses ::: syntax)
+// ! remarkAdmonitions must run after remarkDirective (transforms directives)
 // ! remarkGithubAlerts must run before remarkGfm
-// ! rehypeSourcepos must run before structural changes (slug, autolink)
 
+import remarkDirective from 'remark-directive';
+import remarkAdmonitions from './remark-admonitions';
 import remarkGithubAlerts from './remark-github-alerts';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
-import rehypeSourcepos from './rehype-sourcepos';
 import rehypeMermaidPlaceholder from './rehype-mermaid-placeholder';
 import rehypeKatex from 'rehype-katex';
 import rehypeShiki from './rehype-shiki';
@@ -26,8 +28,15 @@ export const autolinkHeadingsConfig = {
   },
 };
 
-// shared remark plugins (order matters: GitHub alerts must come before GFM)
+// shared remark plugins (order matters!)
+// 1. remarkDirective parses ::: syntax into directive nodes
+// 2. remarkAdmonitions transforms directive nodes to admonition HTML
+// 3. remarkGithubAlerts handles [!NOTE] etc. (must come before GFM)
+// 4. remarkGfm adds GitHub Flavored Markdown
+// 5. remarkMath handles math expressions
 export const sharedRemarkPlugins: Pluggable[] = [
+  remarkDirective,
+  remarkAdmonitions,
   remarkGithubAlerts,
   remarkGfm,
   remarkMath,
@@ -35,7 +44,6 @@ export const sharedRemarkPlugins: Pluggable[] = [
 
 // shared rehype plugins before math rendering (same order in both pipelines)
 export const sharedRehypePluginsPreMath: Pluggable[] = [
-  rehypeSourcepos,
   rehypeMermaidPlaceholder,
 ];
 

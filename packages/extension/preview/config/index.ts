@@ -9,6 +9,7 @@ export {
   getConfigFileNames,
   type PluginSpec,
   type ComponentMapping,
+  type FrameworkOptions,
   type MdxPreviewConfig,
   type ResolvedConfig,
 } from './ConfigResolver';

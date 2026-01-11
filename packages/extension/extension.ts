@@ -26,6 +26,7 @@ import {
   type PreviewTheme,
   type CodeBlockTheme,
 } from './themes';
+import { FrameworkDetector, type Framework } from './framework';
 
 // show one-time safe mode notification in untrusted workspaces
 async function showSafeModeNotificationIfNeeded(
@@ -240,9 +241,9 @@ export async function activate(
     }
   );
 
-  // initialize status bar manager (handles trust state display & visibility)
+  // initialize status bar manager (handles trust state & framework display)
   const statusBarManager = StatusBarManager.getInstance();
-  context.subscriptions.push(statusBarManager.getDisposable());
+  context.subscriptions.push(...statusBarManager.getDisposables());
   statusBarManager.updateVisibility();
 
   // listen for VS Code color theme changes to auto-switch preview theme
@@ -363,6 +364,86 @@ export async function activate(
     }
   );
 
+  // command to select framework
+  const selectFrameworkCommand = vscode.commands.registerCommand(
+    'mdx-preview.commands.selectFramework',
+    async () => {
+      debug('[CMD] selectFramework command triggered');
+
+      const config = vscode.workspace.getConfiguration('mdx-preview');
+      const currentSetting = config.get<string>('framework', 'auto');
+      const frameworkDetector = FrameworkDetector.getInstance();
+
+      // get detected framework for display
+      const editor = vscode.window.activeTextEditor;
+      let detectedFramework: Framework = 'generic';
+      if (editor) {
+        const info = frameworkDetector.getFramework(editor.document.uri);
+        if (info.detected) {
+          detectedFramework = info.framework;
+        }
+      }
+
+      const frameworks: Array<{
+        label: string;
+        description?: string;
+        value: string;
+      }> = [
+        {
+          label: 'Auto-detect',
+          description:
+            currentSetting === 'auto'
+              ? `(current - detected: ${frameworkDetector.getFrameworkDisplayName(detectedFramework)})`
+              : `(detected: ${frameworkDetector.getFrameworkDisplayName(detectedFramework)})`,
+          value: 'auto',
+        },
+        {
+          label: 'Generic',
+          description: currentSetting === 'generic' ? '(current)' : undefined,
+          value: 'generic',
+        },
+        {
+          label: 'Docusaurus',
+          description:
+            currentSetting === 'docusaurus' ? '(current)' : undefined,
+          value: 'docusaurus',
+        },
+        {
+          label: 'Next.js',
+          description: currentSetting === 'nextjs' ? '(current)' : undefined,
+          value: 'nextjs',
+        },
+        {
+          label: 'Astro Starlight',
+          description:
+            currentSetting === 'astro-starlight' ? '(current)' : undefined,
+          value: 'astro-starlight',
+        },
+      ];
+
+      const selected = await vscode.window.showQuickPick(frameworks, {
+        placeHolder: 'Select MDX framework',
+        matchOnDescription: true,
+      });
+
+      if (selected) {
+        await config.update(
+          'framework',
+          selected.value,
+          vscode.ConfigurationTarget.Workspace
+        );
+
+        // refresh previews to apply framework changes
+        const previewManager = PreviewManager.getInstance();
+        previewManager.refreshAllPreviews();
+
+        vscode.window.showInformationMessage(
+          `MDX framework set to ${selected.label}.`
+        );
+      }
+    }
+  );
+
   context.subscriptions.push(
     openPreviewCommand,
     refreshPreviewCommand,
@@ -374,7 +455,8 @@ export async function activate(
     selectCodeBlockThemeCommand,
     zoomInCommand,
     zoomOutCommand,
-    resetZoomCommand
+    resetZoomCommand,
+    selectFrameworkCommand
   );
 
   debug('[ACTIVATE] Extension activation complete');
@@ -387,5 +469,6 @@ export function deactivate(): void {
   PreviewManager.dispose();
   TrustManager.dispose();
   ThemeManager.dispose();
+  FrameworkDetector.dispose();
   disposeOutputChannel();
 }

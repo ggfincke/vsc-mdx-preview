@@ -15,11 +15,8 @@ import {
   sharedRehypePluginsPostMath,
   rehypeKatex,
 } from './shared-plugins';
-import {
-  loadPluginsFromConfig,
-  mergePlugins,
-  generateComponentImports,
-} from '../plugin-loader';
+import { loadPluginsFromConfig, mergePlugins } from '../plugin-loader';
+import { generateComponentImports } from '../component-mapper';
 import { warn } from '../../logging';
 
 // result type for MDX transpilation (includes frontmatter)
@@ -70,7 +67,7 @@ const wrapCompiledMdx = (
   componentsObject?: string
 ): string => {
   if (componentsObject && componentsObject !== '{}') {
-    // wrap with MDXProvider to make custom components available as shortcodes
+    // wrap w/ MDXProvider to make custom components available as shortcodes
     return `
 // MDX 3 compiled output w/ custom components
 import React from 'react';
@@ -134,7 +131,7 @@ export const mdxTranspileAsync = async (
     mdxTextToCompile = componentImports.imports + '\n\n' + mdxTextToCompile;
   }
 
-  // merge built-in and custom plugins
+  // merge built-in & custom plugins
   const remarkPlugins: Pluggable[] = mergePlugins(
     sharedRemarkPlugins,
     customPlugins.remarkPlugins

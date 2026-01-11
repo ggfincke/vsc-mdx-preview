@@ -1,14 +1,20 @@
 // packages/extension/themes/types.ts
 // theme type definitions for MPE-style theming
 
-// re-export shared types from @mdx-preview/shared-types
+// re-export shared types & utilities from @mdx-preview/shared-types
 export type {
   PreviewTheme,
   CodeBlockTheme,
   WebviewThemeState,
 } from '@mdx-preview/shared-types';
 
-export { isLightPreviewTheme } from '@mdx-preview/shared-types';
+export {
+  isLightPreviewTheme,
+  PREVIEW_THEMES,
+  CODE_BLOCK_THEMES,
+  THEME_PAIRS,
+  getOppositeTheme,
+} from '@mdx-preview/shared-types';
 
 import type { PreviewTheme, CodeBlockTheme } from '@mdx-preview/shared-types';
 
@@ -19,55 +25,7 @@ export interface ThemeConfiguration {
   autoTheme: boolean;
 }
 
-// list of all preview themes
-export const PREVIEW_THEMES: PreviewTheme[] = [
-  'github-light',
-  'github-dark',
-  'atom-dark',
-  'atom-light',
-  'atom-material',
-  'one-dark',
-  'one-light',
-  'solarized-dark',
-  'solarized-light',
-  'gothic',
-  'medium',
-  'monokai',
-  'newsprint',
-  'night',
-  'none',
-  'vue',
-];
-
-// list of all code block themes
-export const CODE_BLOCK_THEMES: CodeBlockTheme[] = [
-  'auto',
-  'default',
-  'atom-dark',
-  'atom-light',
-  'atom-material',
-  'coy',
-  'darcula',
-  'dark',
-  'funky',
-  'github',
-  'github-dark',
-  'hopscotch',
-  'monokai',
-  'okaidia',
-  'one-dark',
-  'one-light',
-  'pen-paper-coffee',
-  'pojoaque',
-  'solarized-dark',
-  'solarized-light',
-  'twilight',
-  'vs',
-  'vue',
-  'xonokai',
-];
-
-// theme display names for UI
+// theme display names for UI (extension-only, for settings UI)
 export const PREVIEW_THEME_LABELS: Record<PreviewTheme, string> = {
   'github-light': 'GitHub Light',
   'github-dark': 'GitHub Dark',
@@ -113,31 +71,3 @@ export const CODE_BLOCK_THEME_LABELS: Record<CodeBlockTheme, string> = {
   vue: 'Vue',
   xonokai: 'Xonokai',
 };
-
-// light/dark theme pairs for auto-switching
-export const THEME_PAIRS: Record<
-  string,
-  { light: PreviewTheme; dark: PreviewTheme }
-> = {
-  github: { light: 'github-light', dark: 'github-dark' },
-  atom: { light: 'atom-light', dark: 'atom-dark' },
-  one: { light: 'one-light', dark: 'one-dark' },
-  solarized: { light: 'solarized-light', dark: 'solarized-dark' },
-};
-
-// get the opposite theme for auto light/dark switching
-export function getOppositeTheme(
-  theme: PreviewTheme,
-  targetIsLight: boolean
-): PreviewTheme {
-  for (const pair of Object.values(THEME_PAIRS)) {
-    if (pair.light === theme && !targetIsLight) {
-      return pair.dark;
-    }
-    if (pair.dark === theme && targetIsLight) {
-      return pair.light;
-    }
-  }
-  // no pair found, return as-is
-  return theme;
-}

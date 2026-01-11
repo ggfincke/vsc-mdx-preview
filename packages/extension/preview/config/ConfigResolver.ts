@@ -12,6 +12,14 @@ export type PluginSpec = string | [string, Record<string, unknown>];
 // component mapping: MDX component name -> relative path to component file (e.g., { "Callout": "./src/components/Callout.tsx" })
 export type ComponentMapping = Record<string, string>;
 
+// framework-specific options
+export interface FrameworkOptions {
+  // enable/disable component shims for this project
+  enableShims?: boolean;
+  // custom import aliases (e.g., { "@components": "./src/components" })
+  customAliases?: Record<string, string>;
+}
+
 // MDX Preview configuration file schema
 export interface MdxPreviewConfig {
   // custom remark plugins to add after built-in plugins
@@ -20,6 +28,10 @@ export interface MdxPreviewConfig {
   rehypePlugins?: PluginSpec[];
   // custom component mappings for MDX
   components?: ComponentMapping;
+  // framework override (overrides auto-detection)
+  framework?: 'generic' | 'docusaurus' | 'nextjs' | 'astro-starlight';
+  // framework-specific options
+  frameworkOptions?: FrameworkOptions;
 }
 
 // resolved configuration w/ metadata
@@ -113,7 +125,8 @@ function findConfigFile(startDir: string): string | undefined {
 
     const parentDir = path.dirname(currentDir);
     if (parentDir === currentDir) {
-      break; // reached filesystem root
+      // reached filesystem root
+      break;
     }
     currentDir = parentDir;
   }
@@ -172,6 +185,60 @@ function validateConfig(config: unknown): string[] {
       for (const [name, pathValue] of Object.entries(cfg.components)) {
         if (typeof pathValue !== 'string') {
           errors.push(`components.${name} must be a string path`);
+        }
+      }
+    }
+  }
+
+  // validate framework
+  if (cfg.framework !== undefined) {
+    const validFrameworks = [
+      'generic',
+      'docusaurus',
+      'nextjs',
+      'astro-starlight',
+    ];
+    if (
+      typeof cfg.framework !== 'string' ||
+      !validFrameworks.includes(cfg.framework)
+    ) {
+      errors.push(`framework must be one of: ${validFrameworks.join(', ')}`);
+    }
+  }
+
+  // validate frameworkOptions
+  if (cfg.frameworkOptions !== undefined) {
+    if (
+      typeof cfg.frameworkOptions !== 'object' ||
+      cfg.frameworkOptions === null
+    ) {
+      errors.push('frameworkOptions must be an object');
+    } else {
+      const opts = cfg.frameworkOptions as Record<string, unknown>;
+
+      // validate enableShims
+      if (
+        opts.enableShims !== undefined &&
+        typeof opts.enableShims !== 'boolean'
+      ) {
+        errors.push('frameworkOptions.enableShims must be a boolean');
+      }
+
+      // validate customAliases
+      if (opts.customAliases !== undefined) {
+        if (
+          typeof opts.customAliases !== 'object' ||
+          opts.customAliases === null
+        ) {
+          errors.push('frameworkOptions.customAliases must be an object');
+        } else {
+          for (const [alias, target] of Object.entries(opts.customAliases)) {
+            if (typeof target !== 'string') {
+              errors.push(
+                `frameworkOptions.customAliases.${alias} must be a string path`
+              );
+            }
+          }
         }
       }
     }
