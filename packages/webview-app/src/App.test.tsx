@@ -11,7 +11,7 @@ import { LightboxProvider } from './context/LightboxContext';
 import type { ReactElement } from 'react';
 
 // capture registered handlers
-let registeredHandlers: Record<string, Function> = {};
+let registeredHandlers: Record<string, (...args: unknown[]) => unknown> = {};
 
 // mock the RPC module
 vi.mock('./rpc-webview', () => ({

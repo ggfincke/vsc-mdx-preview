@@ -1,3 +1,6 @@
+// packages/webview-app/eslint.config.mjs
+// ESLint configuration for webview React app
+
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';

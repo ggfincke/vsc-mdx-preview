@@ -6,6 +6,7 @@ import type { Endpoint } from 'comlink';
 import { debug, debugError } from './utils/debug';
 import type {
   ExtensionRPC,
+  WebviewRPC,
   TrustState,
   PreviewError,
   WebviewThemeState,
@@ -114,7 +115,7 @@ function flushPendingMessages(): void {
 }
 
 // RPC handle exposed to extension (routes calls to React state handlers)
-class RPCWebviewHandle {
+class RPCWebviewHandle implements WebviewRPC {
   // set trust state
   setTrustState(state: TrustState): void {
     debug('[RPC-WEBVIEW] setTrustState called', state);
@@ -136,7 +137,11 @@ class RPCWebviewHandle {
     );
     if (stateHandlers) {
       debug('[RPC-WEBVIEW] Calling setTrustedContent directly');
-      stateHandlers.setTrustedContent(code, entryFilePath, entryFileDependencies);
+      stateHandlers.setTrustedContent(
+        code,
+        entryFilePath,
+        entryFileDependencies
+      );
       return;
     }
     debug('[RPC-WEBVIEW] No stateHandlers, enqueueing');

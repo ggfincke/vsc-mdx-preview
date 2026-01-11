@@ -13,6 +13,13 @@ import type { FetchResult, Module, ModuleRuntime } from './types';
 import { ExtensionHandle } from '../rpc-webview';
 import { debugWarn } from '../utils/debug';
 
+// Docusaurus component shims
+import * as DocusaurusShims from '../components/shims/docusaurus';
+// Starlight component shims
+import * as StarlightShims from '../components/shims/starlight';
+// Next.js component shims
+import * as NextjsShims from '../components/shims/nextjs';
+
 // re-export for external use
 export { registry } from './ModuleRegistry';
 export { clearInjectedStyles } from './injectStyles';
@@ -30,6 +37,26 @@ const PRELOADED_IDS = {
   mdxReactLatest: 'npm://@mdx-js/react@latest',
   vscodeLayout: 'npm://vscode-markdown-layout@0.1.0',
   vscodeLayoutLatest: 'npm://vscode-markdown-layout@latest',
+  // Docusaurus shims
+  docusaurusTabs: 'npm://@mdx-preview/shims-docusaurus/Tabs',
+  docusaurusTabItem: 'npm://@mdx-preview/shims-docusaurus/TabItem',
+  docusaurusCodeBlock: 'npm://@mdx-preview/shims-docusaurus/CodeBlock',
+  docusaurusDetails: 'npm://@mdx-preview/shims-docusaurus/Details',
+  // Starlight shims
+  starlightComponents: 'npm://@mdx-preview/shims-starlight/components',
+  starlightCard: 'npm://@mdx-preview/shims-starlight/Card',
+  starlightCardGrid: 'npm://@mdx-preview/shims-starlight/CardGrid',
+  starlightLinkCard: 'npm://@mdx-preview/shims-starlight/LinkCard',
+  starlightSteps: 'npm://@mdx-preview/shims-starlight/Steps',
+  starlightBadge: 'npm://@mdx-preview/shims-starlight/Badge',
+  starlightAside: 'npm://@mdx-preview/shims-starlight/Aside',
+  starlightTabs: 'npm://@mdx-preview/shims-starlight/Tabs',
+  starlightTabItem: 'npm://@mdx-preview/shims-starlight/TabItem',
+  starlightFileTree: 'npm://@mdx-preview/shims-starlight/FileTree',
+  starlightCode: 'npm://@mdx-preview/shims-starlight/Code',
+  // Next.js shims
+  nextjsImage: 'npm://@mdx-preview/shims-nextjs/Image',
+  nextjsLink: 'npm://@mdx-preview/shims-nextjs/Link',
 };
 
 // mapping from request strings to preloaded module IDs
@@ -46,6 +73,34 @@ const PRELOAD_ALIASES: Record<string, string> = {
   'npm://@mdx-js/react': PRELOADED_IDS.mdxReact,
   'vscode-markdown-layout': PRELOADED_IDS.vscodeLayout,
   'npm://vscode-markdown-layout': PRELOADED_IDS.vscodeLayout,
+  // Docusaurus @theme/* aliases
+  '@theme/Tabs': PRELOADED_IDS.docusaurusTabs,
+  '@theme/TabItem': PRELOADED_IDS.docusaurusTabItem,
+  '@theme/CodeBlock': PRELOADED_IDS.docusaurusCodeBlock,
+  '@theme/Details': PRELOADED_IDS.docusaurusDetails,
+  // Also support direct shim paths
+  '@mdx-preview/shims/docusaurus/Tabs': PRELOADED_IDS.docusaurusTabs,
+  '@mdx-preview/shims/docusaurus/TabItem': PRELOADED_IDS.docusaurusTabItem,
+  '@mdx-preview/shims/docusaurus/CodeBlock': PRELOADED_IDS.docusaurusCodeBlock,
+  '@mdx-preview/shims/docusaurus/Details': PRELOADED_IDS.docusaurusDetails,
+  // Starlight @astrojs/starlight/components alias (all-in-one import)
+  '@astrojs/starlight/components': PRELOADED_IDS.starlightComponents,
+  // Individual Starlight component aliases
+  '@mdx-preview/shims/starlight/Card': PRELOADED_IDS.starlightCard,
+  '@mdx-preview/shims/starlight/CardGrid': PRELOADED_IDS.starlightCardGrid,
+  '@mdx-preview/shims/starlight/LinkCard': PRELOADED_IDS.starlightLinkCard,
+  '@mdx-preview/shims/starlight/Steps': PRELOADED_IDS.starlightSteps,
+  '@mdx-preview/shims/starlight/Badge': PRELOADED_IDS.starlightBadge,
+  '@mdx-preview/shims/starlight/Aside': PRELOADED_IDS.starlightAside,
+  '@mdx-preview/shims/starlight/Tabs': PRELOADED_IDS.starlightTabs,
+  '@mdx-preview/shims/starlight/TabItem': PRELOADED_IDS.starlightTabItem,
+  '@mdx-preview/shims/starlight/FileTree': PRELOADED_IDS.starlightFileTree,
+  '@mdx-preview/shims/starlight/Code': PRELOADED_IDS.starlightCode,
+  // Next.js next/image & next/link aliases
+  'next/image': PRELOADED_IDS.nextjsImage,
+  'next/link': PRELOADED_IDS.nextjsLink,
+  '@mdx-preview/shims/nextjs/Image': PRELOADED_IDS.nextjsImage,
+  '@mdx-preview/shims/nextjs/Link': PRELOADED_IDS.nextjsLink,
 };
 
 // initialize preloaded modules (must be called before module loading)
@@ -77,6 +132,124 @@ export function initPreloadedModules(vscodeMarkdownLayout: any): void {
   registry.preload(PRELOADED_IDS.vscodeLayout, vscodeMarkdownLayout);
   registry.preload(PRELOADED_IDS.vscodeLayoutLatest, vscodeMarkdownLayout);
   registry.preload('vscode-markdown-layout', vscodeMarkdownLayout);
+
+  // Docusaurus component shims
+  const docusaurusTabsModule = {
+    default: DocusaurusShims.Tabs,
+    Tabs: DocusaurusShims.Tabs,
+  };
+  const docusaurusTabItemModule = {
+    default: DocusaurusShims.TabItem,
+    TabItem: DocusaurusShims.TabItem,
+  };
+  const docusaurusCodeBlockModule = {
+    default: DocusaurusShims.CodeBlock,
+    CodeBlock: DocusaurusShims.CodeBlock,
+  };
+  const docusaurusDetailsModule = {
+    default: DocusaurusShims.Details,
+    Details: DocusaurusShims.Details,
+  };
+
+  registry.preload(PRELOADED_IDS.docusaurusTabs, docusaurusTabsModule);
+  registry.preload('@theme/Tabs', docusaurusTabsModule);
+  registry.preload(PRELOADED_IDS.docusaurusTabItem, docusaurusTabItemModule);
+  registry.preload('@theme/TabItem', docusaurusTabItemModule);
+  registry.preload(
+    PRELOADED_IDS.docusaurusCodeBlock,
+    docusaurusCodeBlockModule
+  );
+  registry.preload('@theme/CodeBlock', docusaurusCodeBlockModule);
+  registry.preload(PRELOADED_IDS.docusaurusDetails, docusaurusDetailsModule);
+  registry.preload('@theme/Details', docusaurusDetailsModule);
+
+  // Starlight component shims
+  // All-in-one module for import { Card, Steps, ... } from '@astrojs/starlight/components'
+  const starlightComponentsModule = {
+    Card: StarlightShims.Card,
+    CardGrid: StarlightShims.CardGrid,
+    LinkCard: StarlightShims.LinkCard,
+    Steps: StarlightShims.Steps,
+    Badge: StarlightShims.Badge,
+    Aside: StarlightShims.Aside,
+    Tabs: StarlightShims.Tabs,
+    TabItem: StarlightShims.TabItem,
+    FileTree: StarlightShims.FileTree,
+    Code: StarlightShims.Code,
+  };
+  registry.preload(
+    PRELOADED_IDS.starlightComponents,
+    starlightComponentsModule
+  );
+  registry.preload('@astrojs/starlight/components', starlightComponentsModule);
+
+  // Individual Starlight component modules
+  const starlightCardModule = {
+    default: StarlightShims.Card,
+    Card: StarlightShims.Card,
+  };
+  const starlightCardGridModule = {
+    default: StarlightShims.CardGrid,
+    CardGrid: StarlightShims.CardGrid,
+  };
+  const starlightLinkCardModule = {
+    default: StarlightShims.LinkCard,
+    LinkCard: StarlightShims.LinkCard,
+  };
+  const starlightStepsModule = {
+    default: StarlightShims.Steps,
+    Steps: StarlightShims.Steps,
+  };
+  const starlightBadgeModule = {
+    default: StarlightShims.Badge,
+    Badge: StarlightShims.Badge,
+  };
+  const starlightAsideModule = {
+    default: StarlightShims.Aside,
+    Aside: StarlightShims.Aside,
+  };
+  const starlightTabsModule = {
+    default: StarlightShims.Tabs,
+    Tabs: StarlightShims.Tabs,
+  };
+  const starlightTabItemModule = {
+    default: StarlightShims.TabItem,
+    TabItem: StarlightShims.TabItem,
+  };
+  const starlightFileTreeModule = {
+    default: StarlightShims.FileTree,
+    FileTree: StarlightShims.FileTree,
+  };
+  const starlightCodeModule = {
+    default: StarlightShims.Code,
+    Code: StarlightShims.Code,
+  };
+
+  registry.preload(PRELOADED_IDS.starlightCard, starlightCardModule);
+  registry.preload(PRELOADED_IDS.starlightCardGrid, starlightCardGridModule);
+  registry.preload(PRELOADED_IDS.starlightLinkCard, starlightLinkCardModule);
+  registry.preload(PRELOADED_IDS.starlightSteps, starlightStepsModule);
+  registry.preload(PRELOADED_IDS.starlightBadge, starlightBadgeModule);
+  registry.preload(PRELOADED_IDS.starlightAside, starlightAsideModule);
+  registry.preload(PRELOADED_IDS.starlightTabs, starlightTabsModule);
+  registry.preload(PRELOADED_IDS.starlightTabItem, starlightTabItemModule);
+  registry.preload(PRELOADED_IDS.starlightFileTree, starlightFileTreeModule);
+  registry.preload(PRELOADED_IDS.starlightCode, starlightCodeModule);
+
+  // Next.js component shims
+  const nextjsImageModule = {
+    default: NextjsShims.Image,
+    Image: NextjsShims.Image,
+  };
+  const nextjsLinkModule = {
+    default: NextjsShims.Link,
+    Link: NextjsShims.Link,
+  };
+
+  registry.preload(PRELOADED_IDS.nextjsImage, nextjsImageModule);
+  registry.preload('next/image', nextjsImageModule);
+  registry.preload(PRELOADED_IDS.nextjsLink, nextjsLinkModule);
+  registry.preload('next/link', nextjsLinkModule);
 }
 
 // create synchronous require function (used for already-loaded modules)
@@ -246,6 +419,16 @@ export function resetModules(): void {
     'react/jsx-runtime',
     '@mdx-js/react',
     'vscode-markdown-layout',
+    // Docusaurus shims
+    '@theme/Tabs',
+    '@theme/TabItem',
+    '@theme/CodeBlock',
+    '@theme/Details',
+    // Starlight shims
+    '@astrojs/starlight/components',
+    // Next.js shims
+    'next/image',
+    'next/link',
   ];
   registry.clearNonPreloaded(preloadedIds);
   clearInjectedStyles();

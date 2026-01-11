@@ -30,6 +30,9 @@ import type {
 } from './types';
 import { useTheme } from './context/ThemeContext';
 import './App.css';
+import './styles/admonitions.css';
+import './components/shims/docusaurus/styles.css';
+import './components/shims/starlight/styles.css';
 
 debug('[APP] App.tsx module loaded');
 
@@ -74,9 +77,6 @@ function App() {
 
   // track if we've completed initial setup
   const initializedRef = useRef(false);
-
-  // ref for content container (used by scroll sync)
-  const contentRef = useRef<HTMLDivElement>(null);
 
   // get theme context for MPE preview themes
   const { previewTheme, setPreviewThemeState } = useTheme();
@@ -359,7 +359,6 @@ function App() {
         onError={(err) => setError({ message: err.message, stack: err.stack })}
       >
         <div
-          ref={contentRef}
           className="mdx-preview-content"
           style={
             zoomLevel !== 100
