@@ -4,7 +4,10 @@
 import { ImgHTMLAttributes } from 'react';
 
 // Next.js Image component props subset (relevant props for preview)
-export interface ImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'srcSet' | 'ref' | 'width' | 'height' | 'loading'> {
+export interface ImageProps extends Omit<
+  ImgHTMLAttributes<HTMLImageElement>,
+  'src' | 'srcSet' | 'ref' | 'width' | 'height' | 'loading'
+> {
   src: string | { src: string; height?: number; width?: number };
   alt: string;
   width?: number | string;
@@ -41,8 +44,10 @@ export function Image({
   const srcString = typeof src === 'string' ? src : src.src;
 
   // extract dimensions from src object if not provided
-  const actualWidth = width ?? (typeof src === 'object' ? src.width : undefined);
-  const actualHeight = height ?? (typeof src === 'object' ? src.height : undefined);
+  const actualWidth =
+    width ?? (typeof src === 'object' ? src.width : undefined);
+  const actualHeight =
+    height ?? (typeof src === 'object' ? src.height : undefined);
 
   // fill mode: image fills parent container
   const fillStyles: React.CSSProperties = fill

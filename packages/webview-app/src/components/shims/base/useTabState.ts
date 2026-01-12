@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/shims/base/useTabState.ts
-// Shared hook for tab state management across framework shims
+// shared hook for tab state management across framework shims
 
 import { useState, ReactNode, isValidElement, Children } from 'react';
 
@@ -10,7 +10,7 @@ export interface TabItem {
   content: ReactNode;
 }
 
-// Tab definition (value and label only)
+// Tab definition (value & label only)
 export interface TabDefinition {
   value: string;
   label: string;
@@ -39,12 +39,14 @@ export interface UseTabStateResult {
   tabItems: TabItem[];
 }
 
-// Extracts TabItem children w/ their props
+// extracts TabItem children w/ their props
 export function extractTabItems(children: ReactNode): TabItem[] {
   const items: TabItem[] = [];
 
   Children.forEach(children, (child) => {
-    if (!isValidElement(child)) {return;}
+    if (!isValidElement(child)) {
+      return;
+    }
 
     const props = child.props as TabItemProps;
     if (props.value !== undefined) {
@@ -59,7 +61,7 @@ export function extractTabItems(children: ReactNode): TabItem[] {
   return items;
 }
 
-// Finds the default tab value from children
+// finds the default tab value from children
 function findDefaultFromChildren(
   children: ReactNode,
   tabItems: TabItem[]
@@ -82,8 +84,8 @@ function findDefaultFromChildren(
   return undefined;
 }
 
-// Hook for managing tab state
-// Extracts tab items from children, determines initial active value,
+// hook for managing tab state
+// extracts tab items from children, determines initial active value,
 // & provides state management for tab selection.
 export function useTabState(options: UseTabStateOptions): UseTabStateResult {
   const { children, defaultValue, values } = options;

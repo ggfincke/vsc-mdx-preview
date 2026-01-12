@@ -1,5 +1,5 @@
 // packages/webview-app/src/security/index.ts
-// Security module exports
+// security module exports
 
 export {
   DOMPURIFY_CONFIG,

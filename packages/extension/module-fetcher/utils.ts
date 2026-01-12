@@ -1,17 +1,17 @@
 // packages/extension/module-fetcher/utils.ts
-// Shared utilities for module fetching & resolution
+// shared utilities for module fetching & resolution
 
 import { init as initLexer, parse as parseImports } from 'es-module-lexer';
 
-// Noop module for core/unshimmable modules (CommonJS export format)
+// noop module for core/unshimmable modules (CommonJS export format)
 export const NOOP_MODULE = `Object.defineProperty(exports, '__esModule', { value: true });
   function noop() {}
   exports.default = noop;`;
 
 // Node.js core modules that cannot be shimmed in a browser environment
-// These return noop module when requested
+// these return noop module when requested
 // https://github.com/calvinmetcalf/rollup-plugin-node-builtins
-// License: MIT except ES6 ports of browserify modules
+// license: MIT except ES6 ports of browserify modules
 export const UNSHIMMABLE_CORE_MODULES = new Set([
   'dns',
   'dgram',
@@ -52,7 +52,7 @@ export const SHIMMABLE_CORE_MODULES = new Set([
   'domain',
 ]);
 
-// Combined set of all Node.js core modules for quick lookup
+// combined set of all Node.js core modules for quick lookup
 export const ALL_CORE_MODULES = new Set([
   ...UNSHIMMABLE_CORE_MODULES,
   ...SHIMMABLE_CORE_MODULES,
@@ -91,7 +91,7 @@ export async function extractImports(code: string): Promise<string[]> {
       .map((imp) => imp.n)
       .filter((name): name is string => name !== undefined && name !== null);
   } catch {
-    // Fallback for code that can't be parsed (e.g., CJS) - extract require() calls
+    // fallback for code that can't be parsed (e.g., CJS) - extract require() calls
     const requireMatches = code.matchAll(
       /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g
     );

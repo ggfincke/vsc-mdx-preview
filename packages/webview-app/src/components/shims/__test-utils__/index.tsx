@@ -1,4 +1,4 @@
-// Shared test utilities for framework shim component tests
+// shared test utilities for framework shim component tests
 
 import { vi } from 'vitest';
 import React from 'react';
@@ -14,17 +14,15 @@ export function mockClipboard() {
   };
 }
 
-// Helper to create FileTree markup from a simple array notation
-// Each string represents a file/directory:
+// helper to create FileTree markup from a simple array notation
+// each string represents a file/directory:
 // - "filename.ext" - a file
 // - "dirname/" - a directory (no children)
 // - Indentation w/ spaces indicates nesting level
 // - "..." - placeholder
 // - "**bold**" - highlighted entry
 // - "name # comment" - entry w/ comment
-export function createFileTreeMarkup(
-  items: string[]
-): React.ReactElement {
+export function createFileTreeMarkup(items: string[]): React.ReactElement {
   interface TreeNode {
     name: string;
     isDir: boolean;

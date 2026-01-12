@@ -74,7 +74,9 @@ describe('Details', () => {
 
   describe('accessibility', () => {
     it('uses native details/summary elements', () => {
-      const { container } = render(<Details summary="Expand me">Content</Details>);
+      const { container } = render(
+        <Details summary="Expand me">Content</Details>
+      );
 
       expect(container.querySelector('details')).toBeInTheDocument();
       expect(container.querySelector('summary')).toBeInTheDocument();

@@ -124,7 +124,6 @@ describe('App', () => {
 
       expect(document.querySelector('.mdx-loading-container')).toBeFalsy();
     });
-
   });
 
   describe('error handling', () => {

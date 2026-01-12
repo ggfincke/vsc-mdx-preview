@@ -20,8 +20,12 @@ describe('Tabs', () => {
         </Tabs>
       );
 
-      expect(screen.getByRole('tab', { name: 'JavaScript' })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: 'TypeScript' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('tab', { name: 'JavaScript' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('tab', { name: 'TypeScript' })
+      ).toBeInTheDocument();
     });
 
     it('renders tab panels for each TabItem', () => {
@@ -264,7 +268,12 @@ describe('Tabs', () => {
 
     it('handles values prop override', () => {
       render(
-        <Tabs values={[{ value: 'a', label: 'Tab A' }, { value: 'b', label: 'Tab B' }]}>
+        <Tabs
+          values={[
+            { value: 'a', label: 'Tab A' },
+            { value: 'b', label: 'Tab B' },
+          ]}
+        >
           <TabItem value="a">Content A</TabItem>
           <TabItem value="b">Content B</TabItem>
         </Tabs>
@@ -290,9 +299,7 @@ describe('TabItem', () => {
   });
 
   it('applies tab-item class when outside context', () => {
-    const { container } = render(
-      <TabItem value="standalone">Content</TabItem>
-    );
+    const { container } = render(<TabItem value="standalone">Content</TabItem>);
 
     expect(container.querySelector('.tab-item')).toBeInTheDocument();
   });

@@ -1,5 +1,5 @@
 // packages/extension/module-fetcher/handlers/ScriptHandler.ts
-// Handler for JavaScript/TypeScript files - delegates to transform.ts
+// handler for JavaScript/TypeScript files - delegates to transform.ts
 
 import type { FetchResult } from '@mdx-preview/shared-types';
 import type { Preview } from '../../preview/preview-manager';
@@ -17,10 +17,10 @@ export class ScriptHandler implements FileTypeHandler {
     fsPath: string,
     preview: Preview
   ): Promise<FetchResult> {
-    // Transform the code (handles MDX, TypeScript, JSX, etc.)
+    // transform the code (handles MDX, TypeScript, JSX, etc.)
     const transformedCode = await transform(code, fsPath, preview);
 
-    // Extract import dependencies from transformed code
+    // extract import dependencies from transformed code
     const importNames = await extractImports(transformedCode);
     const dependencies = importNames.filter(
       (dep): dep is string => dep !== undefined && dep !== null

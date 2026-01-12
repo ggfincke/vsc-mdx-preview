@@ -91,7 +91,13 @@ describe('Image', () => {
 
     it('does not set width/height when fill={true}', () => {
       render(
-        <Image src="/fill.jpg" alt="Fill" fill={true} width={100} height={100} />
+        <Image
+          src="/fill.jpg"
+          alt="Fill"
+          fill={true}
+          width={100}
+          height={100}
+        />
       );
 
       const img = screen.getByRole('img');

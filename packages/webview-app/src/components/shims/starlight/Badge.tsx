@@ -1,11 +1,17 @@
 // packages/webview-app/src/components/shims/starlight/Badge.tsx
 // Starlight Badge component shim for MDX Preview
-// Provides preview-compatible version of @astrojs/starlight/components Badge
+// provides preview-compatible version of @astrojs/starlight/components Badge
 
 import React, { ReactNode, ReactElement } from 'react';
 
-// Badge variants
-export type BadgeVariant = 'note' | 'tip' | 'caution' | 'danger' | 'success' | 'default';
+// badge variants
+export type BadgeVariant =
+  | 'note'
+  | 'tip'
+  | 'caution'
+  | 'danger'
+  | 'success'
+  | 'default';
 
 // Badge props (compatible with Starlight)
 export interface BadgeProps {
@@ -14,7 +20,7 @@ export interface BadgeProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-// Badge component
+// badge component
 export function Badge({
   text,
   variant = 'default',

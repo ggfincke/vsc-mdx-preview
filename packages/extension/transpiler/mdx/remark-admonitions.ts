@@ -1,15 +1,15 @@
 // packages/extension/transpiler/mdx/remark-admonitions.ts
-// * remark plugin to transform directive syntax (:::note, :::warning, etc.) to admonition HTML
+// remark plugin to transform directive syntax (:::note, :::warning, etc.) to admonition HTML
 //
-// This plugin transforms container directives from remark-directive into admonition HTML.
-// It supports Docusaurus/Starlight-style admonition syntax:
+// this plugin transforms container directives from remark-directive into admonition HTML.
+// it supports Docusaurus/Starlight-style admonition syntax:
 //
 //   :::note
-//   This is a note
+//   this is a note
 //   :::
 //
 //   :::warning[Custom Title]
-//   This is a warning with a custom title
+//   this is a warning w/ a custom title
 //   :::
 
 import { visit } from 'unist-util-visit';
@@ -84,7 +84,7 @@ function extractCustomTitle(node: ContainerDirective): string | null {
   // check for directiveLabel in data
   const data = node.data as { directiveLabel?: boolean } | undefined;
   if (data?.directiveLabel) {
-    // the label is in the first child if it's a paragraph with directiveLabel
+    // the label is in the first child if it's a paragraph w/ directiveLabel
     const firstChild = node.children?.[0];
     if (
       firstChild &&
@@ -223,7 +223,7 @@ export default function remarkAdmonitions() {
           node.children as Array<BlockContent | PhrasingContent>
         );
 
-        // replace the directive node with the admonition node
+        // replace the directive node w/ the admonition node
         parent.children.splice(index, 1, admonitionNode);
       }
     );

@@ -1,10 +1,10 @@
 // packages/extension/preview/watchers/types.ts
-// Common interface for all watchers
+// common interface for all watchers
 
 import type { Disposable } from 'vscode';
 
-// Common interface for all watchers.
-// Provides unified lifecycle management (start/stop/dispose).
+// common interface for all watchers.
+// provides unified lifecycle management (start/stop/dispose).
 export interface IWatcher extends Disposable {
   // Start watching.
   // Called when the watcher should begin monitoring for changes.
@@ -19,7 +19,7 @@ export interface IWatcher extends Disposable {
   isActive(): boolean;
 }
 
-// Type guard for checking if an object implements IWatcher.
+// type guard for checking if an object implements IWatcher.
 export function isWatcher(obj: unknown): obj is IWatcher {
   return (
     typeof obj === 'object' &&

@@ -1,5 +1,5 @@
 // packages/extension/transpiler/component-mapper.ts
-// Generate import statements for custom component mappings from config
+// generate import statements for custom component mappings from config
 
 import * as path from 'path';
 import { warn, debug, info } from '../logging';
@@ -69,7 +69,7 @@ export function generateComponentImports(
     // normalize path separators for imports
     relativePath = relativePath.replace(/\\/g, '/');
 
-    // generate import statement using a safe variable name
+    // generate import statement w/ a safe variable name
     const safeVarName = `_component_${componentName.replace(/[^a-zA-Z0-9_]/g, '_')}`;
     importStatements.push(`import ${safeVarName} from '${relativePath}';`);
     componentEntries.push(`  ${componentName}: ${safeVarName}`);

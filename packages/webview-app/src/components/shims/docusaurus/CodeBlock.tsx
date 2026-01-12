@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/docusaurus/CodeBlock.tsx
 // Docusaurus CodeBlock component shim for MDX Preview
-// Provides preview-compatible version of @theme/CodeBlock
+// provides preview-compatible version of @theme/CodeBlock
 
 import React, { ReactNode, ReactElement, useState, useCallback } from 'react';
 
@@ -31,7 +31,7 @@ function extractTextContent(children: ReactNode): string {
   return '';
 }
 
-// CodeBlock component
+// code block component
 export function CodeBlock({
   children,
   language,
@@ -113,7 +113,10 @@ export function CodeBlock({
         {language && <span className="codeblock-language">{language}</span>}
 
         {/* Code block */}
-        <pre className={combinedClassName} data-show-line-numbers={showLineNumbers}>
+        <pre
+          className={combinedClassName}
+          data-show-line-numbers={showLineNumbers}
+        >
           <code className={combinedClassName}>{children}</code>
         </pre>
       </div>

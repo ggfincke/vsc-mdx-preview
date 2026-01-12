@@ -25,9 +25,7 @@ describe('BaseCard', () => {
   });
 
   it('renders as div by default', () => {
-    const { container } = render(
-      <BaseCard className="test">Content</BaseCard>
-    );
+    const { container } = render(<BaseCard className="test">Content</BaseCard>);
 
     expect(container.firstChild?.nodeName).toBe('DIV');
   });
@@ -67,7 +65,12 @@ describe('BaseCard', () => {
 
   it('does not add target="_blank" when openInNewTab is false', () => {
     const { container } = render(
-      <BaseCard className="test" as="a" href="https://example.com" openInNewTab={false}>
+      <BaseCard
+        className="test"
+        as="a"
+        href="https://example.com"
+        openInNewTab={false}
+      >
         Content
       </BaseCard>
     );
@@ -99,7 +102,9 @@ describe('CardHeader', () => {
   });
 
   it('renders optional icon', () => {
-    render(<CardHeader title="Title" icon={<span data-testid="icon">*</span>} />);
+    render(
+      <CardHeader title="Title" icon={<span data-testid="icon">*</span>} />
+    );
 
     expect(screen.getByTestId('icon')).toBeInTheDocument();
   });

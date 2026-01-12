@@ -1,5 +1,5 @@
 // packages/extension/transpiler/mdx/rehype-shiki.ts
-// * syntax highlighting w/ Shiki + meta parsing (line numbers, highlighting, title)
+// syntax highlighting w/ Shiki + meta parsing (line numbers, highlighting, title)
 
 import { visit } from 'unist-util-visit';
 import type { Root, Element, Text, ElementContent } from 'hast';
@@ -85,8 +85,8 @@ const COMMON_LANGUAGES: BundledLanguage[] = [
   'latex',
 ];
 
-// Create CSS variables theme for dynamic theming
-// This theme outputs CSS variables instead of hardcoded colors
+// create CSS variables theme for dynamic theming
+// this theme outputs CSS variables instead of hardcoded colors
 const cssVariablesTheme = createCssVariablesTheme({
   name: 'css-variables',
   variablePrefix: '--shiki-',

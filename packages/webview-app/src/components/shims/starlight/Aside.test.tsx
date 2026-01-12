@@ -10,7 +10,9 @@ describe('Aside', () => {
     it('renders children in content area', () => {
       render(<Aside>This is important information.</Aside>);
 
-      expect(screen.getByText('This is important information.')).toBeInTheDocument();
+      expect(
+        screen.getByText('This is important information.')
+      ).toBeInTheDocument();
     });
 
     it('applies starlight-aside class', () => {

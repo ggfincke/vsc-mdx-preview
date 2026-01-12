@@ -1,5 +1,5 @@
 // packages/extension/module-fetcher/handlers/CssHandler.ts
-// Handler for CSS files - returns CSS for webview injection
+// handler for CSS files - returns CSS for webview injection
 
 import type { FetchResult } from '@mdx-preview/shared-types';
 import type { Preview } from '../../preview/preview-manager';

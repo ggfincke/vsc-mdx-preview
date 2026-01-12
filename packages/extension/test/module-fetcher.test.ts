@@ -7,7 +7,7 @@
 // dependencies (typescript, sass) that are difficult to mock in unit tests.
 // integration testing via VS Code extension host covers actual behavior.
 //
-// The image handling logic is now in handlers/ImageHandler.ts
+// the image handling logic is now in handlers/ImageHandler.ts
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';

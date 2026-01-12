@@ -82,7 +82,7 @@ describe('MDX 3 Output Format', () => {
     const wrapper = `
 import React from 'react';
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from 'react/jsx-runtime';
-// MDX compiled content goes here
+// mdx compiled content goes here
 export default MDXContent;
 `;
 

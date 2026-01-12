@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/shims/base/index.ts
-// Barrel exports for base shim utilities
+// barrel exports for base shim utilities
 
 export {
   useTabState,

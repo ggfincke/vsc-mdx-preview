@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/LinkCard.tsx
 // Starlight LinkCard component shim for MDX Preview
-// Provides preview-compatible version of @astrojs/starlight/components LinkCard
+// provides preview-compatible version of @astrojs/starlight/components LinkCard
 
 import React, { ReactElement } from 'react';
 import { BaseCard, ArrowIcon } from '../base';
@@ -12,15 +12,14 @@ export interface LinkCardProps {
   href: string;
 }
 
-// LinkCard component
-export function LinkCard({ title, description, href }: LinkCardProps): ReactElement {
+// link card component
+export function LinkCard({
+  title,
+  description,
+  href,
+}: LinkCardProps): ReactElement {
   return (
-    <BaseCard
-      className="starlight-link-card"
-      as="a"
-      href={href}
-      openInNewTab
-    >
+    <BaseCard className="starlight-link-card" as="a" href={href} openInNewTab>
       <div className="starlight-link-card-content">
         <span className="starlight-link-card-title">{title}</span>
         {description && (

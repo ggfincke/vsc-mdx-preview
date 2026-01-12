@@ -4,7 +4,7 @@
 import type { ExtensionError } from './index';
 
 // message templates w/ {placeholder} syntax
-// ! placeholders must match actual field names on error classes
+// ! Placeholders must match actual field names on error classes
 const USER_MESSAGES: Record<string, string> = {
   // ModuleFetchError uses modulePath & parentModule
   MODULE_NOT_FOUND:

@@ -1,5 +1,5 @@
 // packages/extension/framework/index.ts
-// * re-exports for framework module
+// re-exports for framework module
 
 export {
   FrameworkDetector,

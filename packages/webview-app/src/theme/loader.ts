@@ -1,5 +1,5 @@
 // packages/webview-app/src/theme/loader.ts
-// theme CSS loading and injection for preview and code blocks
+// theme CSS loading & injection for preview & code blocks
 
 import { previewThemes, codeBlockThemes } from './css';
 import type { PreviewTheme, CodeBlockTheme } from './types';

@@ -11,7 +11,7 @@ import {
 import type { MdxPreviewConfig } from '../preview/config/ConfigResolver';
 import * as fs from 'fs';
 
-// Mock the fs module
+// mock the fs module
 vi.mock('fs');
 
 describe('ConfigResolver', () => {

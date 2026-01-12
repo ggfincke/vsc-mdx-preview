@@ -54,9 +54,7 @@ describe('LinkCard', () => {
   });
 
   it('renders arrow icon', () => {
-    const { container } = render(
-      <LinkCard title="With Arrow" href="/arrow" />
-    );
+    const { container } = render(<LinkCard title="With Arrow" href="/arrow" />);
 
     const arrowSpan = container.querySelector('.starlight-link-card-arrow');
     expect(arrowSpan).toBeInTheDocument();

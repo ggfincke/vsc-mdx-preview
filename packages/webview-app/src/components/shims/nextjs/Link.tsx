@@ -4,8 +4,13 @@
 import { AnchorHTMLAttributes, ReactNode } from 'react';
 
 // Next.js Link component props subset (relevant props for preview)
-export interface LinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> {
-  href: string | { pathname?: string; query?: Record<string, string>; hash?: string };
+export interface LinkProps extends Omit<
+  AnchorHTMLAttributes<HTMLAnchorElement>,
+  'href'
+> {
+  href:
+    | string
+    | { pathname?: string; query?: Record<string, string>; hash?: string };
   children: ReactNode;
   as?: string;
   replace?: boolean;

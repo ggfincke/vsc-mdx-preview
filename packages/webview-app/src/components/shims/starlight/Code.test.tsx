@@ -77,7 +77,9 @@ describe('Code', () => {
     });
 
     it('auto-detects terminal frame for powershell', () => {
-      const { container } = render(<Code code="Get-Process" lang="powershell" />);
+      const { container } = render(
+        <Code code="Get-Process" lang="powershell" />
+      );
 
       const codeDiv = container.querySelector('.starlight-code');
       expect(codeDiv).toHaveClass('starlight-code-terminal');

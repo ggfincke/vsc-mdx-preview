@@ -1,5 +1,5 @@
 // packages/extension/module-fetcher/handlers/SassHandler.ts
-// Handler for SASS/SCSS files - compiles to CSS
+// handler for SASS/SCSS files - compiles to CSS
 
 import * as path from 'path';
 import * as sass from 'sass';

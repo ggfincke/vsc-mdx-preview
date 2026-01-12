@@ -25,7 +25,9 @@ describe('CodeBlock', () => {
     it('does not render title bar when no title', () => {
       const { container } = render(<CodeBlock>code</CodeBlock>);
 
-      expect(container.querySelector('.codeblock-title')).not.toBeInTheDocument();
+      expect(
+        container.querySelector('.codeblock-title')
+      ).not.toBeInTheDocument();
     });
 
     it('renders language badge when language specified', () => {
@@ -145,11 +147,15 @@ describe('CodeBlock', () => {
     });
 
     it('handles clipboard error gracefully', async () => {
-      const mockWriteText = vi.fn().mockRejectedValue(new Error('Clipboard error'));
+      const mockWriteText = vi
+        .fn()
+        .mockRejectedValue(new Error('Clipboard error'));
       vi.stubGlobal('navigator', {
         clipboard: { writeText: mockWriteText },
       });
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       const { container } = render(<CodeBlock>code</CodeBlock>);
       const copyButton = container.querySelector(
@@ -209,9 +215,7 @@ describe('CodeBlock', () => {
         clipboard: { writeText: mockWriteText },
       });
 
-      const { container } = render(
-        <CodeBlock>{`  padded text  `}</CodeBlock>
-      );
+      const { container } = render(<CodeBlock>{`  padded text  `}</CodeBlock>);
 
       const copyButton = container.querySelector(
         '.codeblock-copy-button'

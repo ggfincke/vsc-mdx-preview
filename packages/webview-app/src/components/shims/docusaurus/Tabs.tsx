@@ -1,8 +1,13 @@
 // packages/webview-app/src/components/shims/docusaurus/Tabs.tsx
 // Docusaurus Tabs/TabItem component shim for MDX Preview
-// Provides preview-compatible versions of @theme/Tabs and @theme/TabItem
+// provides preview-compatible versions of @theme/Tabs & @theme/TabItem
 
-import React, { createContext, useContext, ReactNode, ReactElement } from 'react';
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  ReactElement,
+} from 'react';
 import {
   useTabState,
   type TabItemProps as BaseTabItemProps,
@@ -12,7 +17,7 @@ import {
 // Re-export TabItemProps for compatibility
 export type TabItemProps = BaseTabItemProps;
 
-// Context for TabItem to know if it's inside Tabs
+// context for TabItem to know if it's inside Tabs
 const TabsContext = createContext<boolean>(false);
 
 // Tabs props (compatible with Docusaurus)
@@ -26,7 +31,7 @@ export interface TabsProps {
   lazy?: boolean;
 }
 
-// Tabs component
+// tabs component
 export function Tabs({
   children,
   defaultValue,
@@ -94,5 +99,5 @@ export function TabItem({ children, value }: TabItemProps): ReactElement {
   return <>{children}</>;
 }
 
-// Default export for compatibility
+// default export for compatibility
 export default Tabs;

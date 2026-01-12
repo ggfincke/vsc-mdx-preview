@@ -43,7 +43,9 @@ interface ThemeProviderProps {
 // preview/code block themes are fully controlled by extension
 export function ThemeProvider({ children }: ThemeProviderProps) {
   // VS Code theme detection (local, for UI adjustments only)
-  const [vsCodeTheme, setVSCodeTheme] = useState<VSCodeTheme>(getCurrentVSCodeTheme);
+  const [vsCodeTheme, setVSCodeTheme] = useState<VSCodeTheme>(
+    getCurrentVSCodeTheme
+  );
 
   // preview themes (pushed from extension)
   const [previewTheme, setPreviewTheme] = useState<PreviewTheme>('none');

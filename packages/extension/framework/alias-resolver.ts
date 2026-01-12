@@ -1,5 +1,5 @@
 // packages/extension/framework/alias-resolver.ts
-// * resolve framework-specific import aliases (@theme/*, @astrojs/starlight/components, etc.)
+// resolve framework-specific import aliases (@theme/*, @astrojs/starlight/components, etc.)
 
 import * as path from 'path';
 import type { Framework } from './FrameworkDetector';

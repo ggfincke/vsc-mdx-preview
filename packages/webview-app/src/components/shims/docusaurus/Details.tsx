@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/docusaurus/Details.tsx
 // Docusaurus Details component shim for MDX Preview
-// Provides preview-compatible version of @theme/Details
+// provides preview-compatible version of @theme/Details
 
 import React, { ReactNode, ReactElement, useState } from 'react';
 
@@ -12,7 +12,7 @@ export interface DetailsProps {
   className?: string;
 }
 
-// Details component (collapsible section)
+// details component (collapsible section)
 export function Details({
   children,
   summary = 'Details',

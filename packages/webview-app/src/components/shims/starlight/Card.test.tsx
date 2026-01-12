@@ -27,7 +27,9 @@ describe('Card', () => {
   });
 
   it('renders children in content area', () => {
-    const { container } = render(<Card title="Card Title">Card body content</Card>);
+    const { container } = render(
+      <Card title="Card Title">Card body content</Card>
+    );
 
     expect(screen.getByText('Card body content')).toBeInTheDocument();
     const contentDiv = container.querySelector('.starlight-card-content');
@@ -38,6 +40,8 @@ describe('Card', () => {
   it('does not render icon when not provided', () => {
     const { container } = render(<Card title="No Icon Card">Content</Card>);
 
-    expect(container.querySelector('.starlight-card-icon')).not.toBeInTheDocument();
+    expect(
+      container.querySelector('.starlight-card-icon')
+    ).not.toBeInTheDocument();
   });
 });

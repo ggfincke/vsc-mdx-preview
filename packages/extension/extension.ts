@@ -1,5 +1,5 @@
 // packages/extension/extension.ts
-// * extension activation & deactivation w/ trust management & command registration
+// extension activation & deactivation w/ trust management & command registration
 
 'use strict';
 

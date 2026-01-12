@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/index.ts
 // Re-exports for Starlight component shims
-// Provides all components available in @astrojs/starlight/components
+// provides all components available in @astrojs/starlight/components
 
 export { Card } from './Card';
 export type { CardProps } from './Card';

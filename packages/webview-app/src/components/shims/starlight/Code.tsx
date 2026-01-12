@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/Code.tsx
 // Starlight Code component shim for MDX Preview
-// Provides preview-compatible version of @astrojs/starlight/components Code
+// provides preview-compatible version of @astrojs/starlight/components Code
 
 import React, { ReactElement, useState, useCallback } from 'react';
 
@@ -29,7 +29,7 @@ const COPY_ICON =
 const CHECK_ICON =
   '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 
-// Languages that should use terminal frame by default
+// languages that should use terminal frame by default
 const TERMINAL_LANGUAGES = new Set([
   'bash',
   'sh',
@@ -42,7 +42,7 @@ const TERMINAL_LANGUAGES = new Set([
   'batch',
 ]);
 
-// Code component
+// code component
 export function Code({
   code,
   lang,
@@ -102,7 +102,9 @@ export function Code({
           aria-label={copied ? 'Copied!' : 'Copy code'}
         >
           <span
-            dangerouslySetInnerHTML={{ __html: copied ? CHECK_ICON : COPY_ICON }}
+            dangerouslySetInnerHTML={{
+              __html: copied ? CHECK_ICON : COPY_ICON,
+            }}
           />
         </button>
 

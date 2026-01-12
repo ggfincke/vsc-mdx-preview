@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { transpileWithFallback } from '../transpiler/transpiler-selector';
 
-// Mock the transpilers
+// mock the transpilers
 vi.mock('../transpiler/babel', () => ({
   transformAsync: vi.fn(),
 }));

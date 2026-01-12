@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/shims/docusaurus/index.ts
-// Re-exports for Docusaurus component shims
+// re-exports for Docusaurus component shims
 
 export { Tabs, TabItem } from './Tabs';
 export type { TabsProps, TabItemProps } from './Tabs';

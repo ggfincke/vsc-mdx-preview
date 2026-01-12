@@ -126,7 +126,8 @@ describe('ThemeProvider', () => {
 
     // Simulate VS Code theme change
     vi.mocked(getCurrentVSCodeTheme).mockReturnValue('light');
-    const callback = (globalThis as Record<string, unknown>).__themeChangeCallback as (theme: string) => void;
+    const callback = (globalThis as Record<string, unknown>)
+      .__themeChangeCallback as (theme: string) => void;
 
     act(() => {
       callback?.('light');

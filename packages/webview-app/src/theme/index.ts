@@ -1,10 +1,10 @@
 // packages/webview-app/src/theme/index.ts
 // barrel exports for theme module
 
-// context and hooks
+// context & hooks
 export { ThemeProvider, useTheme } from './context';
 
-// theme types and constants
+// theme types & constants
 export type { PreviewTheme, CodeBlockTheme, WebviewThemeState } from './types';
 export {
   isLightPreviewTheme,

@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/shims/base/BaseCard.tsx
-// Shared base card component for framework shims
+// shared base card component for framework shims
 
 import React, { ReactNode, ReactElement } from 'react';
 
@@ -19,8 +19,8 @@ export interface BaseCardProps {
   containerProps?: Record<string, unknown>;
 }
 
-// Base card component that can render as div or anchor
-// Provides a flexible foundation for Card & LinkCard components
+// base card component that can render as div or anchor
+// provides a flexible foundation for Card & LinkCard components
 // across different framework shims.
 export function BaseCard({
   children,
@@ -51,7 +51,7 @@ export function BaseCard({
   );
 }
 
-// Common card header component
+// common card header component
 export interface CardHeaderProps {
   title: string;
   icon?: ReactNode;
@@ -60,7 +60,7 @@ export interface CardHeaderProps {
   iconClassName?: string;
 }
 
-// Reusable card header w/ optional icon
+// reusable card header w/ optional icon
 export function CardHeader({
   title,
   icon,
@@ -76,7 +76,7 @@ export function CardHeader({
   );
 }
 
-// Arrow icon for link cards
+// arrow icon for link cards
 export function ArrowIcon(): ReactElement {
   return (
     <svg

@@ -1,5 +1,5 @@
 // packages/webview-app/src/module-loader/index.ts
-// * custom ESM/CJS module loader for Trusted Mode (async fetching, caching, circular deps, CSS injection)
+// custom ESM/CJS module loader for Trusted Mode (async fetching, caching, circular deps, CSS injection)
 
 import React, { ComponentType } from 'react';
 import * as ReactDOM from 'react-dom';

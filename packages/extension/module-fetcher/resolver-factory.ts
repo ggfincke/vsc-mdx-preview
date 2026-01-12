@@ -1,5 +1,5 @@
 // packages/extension/module-fetcher/resolver-factory.ts
-// Unified resolver factory for module resolution (browser & node modes)
+// unified resolver factory for module resolution (browser & node modes)
 
 import * as fs from 'fs';
 import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve';
@@ -13,7 +13,7 @@ const cachedFs = new CachedInputFileSystem(fs, 4000);
 // - 'node': prioritizes Node.js exports for extension-side plugin loading
 export type ResolverMode = 'browser' | 'node';
 
-// Mode-specific configuration
+// mode-specific configuration
 interface ModeConfig {
   conditionNames: string[];
   mainFields: string[];
@@ -54,7 +54,7 @@ export function createResolver(mode: ResolverMode): Resolver {
     // ESM exports/imports field support
     exportsFields: ['exports'],
     importsFields: mode === 'browser' ? ['imports'] : [],
-    // Common settings
+    // common settings
     modules: ['node_modules'],
     mainFiles: ['index'],
     symlinks: true,
@@ -82,5 +82,5 @@ export function getNodeResolver(): Resolver {
   return _nodeResolver;
 }
 
-// Export cached filesystem for handlers that need SASS compilation
+// export cached filesystem for handlers that need SASS compilation
 export { cachedFs };

@@ -10,7 +10,7 @@ import { generateComponentImports } from '../transpiler/component-mapper';
 import { TrustManager, SecurityMode } from '../security/TrustManager';
 import type { ResolvedConfig } from '../preview/config';
 
-// Mock modules
+// mock modules
 vi.mock('../security/TrustManager');
 vi.mock('enhanced-resolve', () => ({
   CachedInputFileSystem: vi.fn(),

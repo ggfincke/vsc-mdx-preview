@@ -35,14 +35,18 @@ describe('Link', () => {
     });
 
     it('adds hash with # prefix', () => {
-      render(<Link href={{ pathname: '/page', hash: '#section' }}>Section</Link>);
+      render(
+        <Link href={{ pathname: '/page', hash: '#section' }}>Section</Link>
+      );
 
       const link = screen.getByRole('link');
       expect(link).toHaveAttribute('href', '/page#section');
     });
 
     it('adds hash without # prefix (prepends #)', () => {
-      render(<Link href={{ pathname: '/page', hash: 'section' }}>Section</Link>);
+      render(
+        <Link href={{ pathname: '/page', hash: 'section' }}>Section</Link>
+      );
 
       const link = screen.getByRole('link');
       expect(link).toHaveAttribute('href', '/page#section');

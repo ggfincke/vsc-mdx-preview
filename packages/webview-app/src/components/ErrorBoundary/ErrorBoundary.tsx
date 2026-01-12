@@ -26,14 +26,11 @@ interface ErrorDisplayProps {
 function ClickableStackTrace({ stack }: { stack: string }) {
   const frames = parseStackTrace(stack);
 
-  const handleFrameClick = useCallback(
-    (frame: StackFrame) => {
-      if (frame.isNavigable && frame.filePath && frame.line) {
-        ExtensionHandle.openDocument(frame.filePath, frame.line, frame.column);
-      }
-    },
-    []
-  );
+  const handleFrameClick = useCallback((frame: StackFrame) => {
+    if (frame.isNavigable && frame.filePath && frame.line) {
+      ExtensionHandle.openDocument(frame.filePath, frame.line, frame.column);
+    }
+  }, []);
 
   return (
     <div className="mdx-error-stack-frames">

@@ -1,5 +1,5 @@
 // packages/extension/module-fetcher/handlers/index.ts
-// File type handler registry & dispatch for module fetching
+// file type handler registry & dispatch for module fetching
 
 import type { FetchResult } from '@mdx-preview/shared-types';
 import type { Preview } from '../../preview/preview-manager';
@@ -13,14 +13,14 @@ export interface FileTypeHandler {
   handle(code: string, fsPath: string, preview: Preview): Promise<FetchResult>;
 }
 
-// Import individual handlers
+// import individual handlers
 import { JsonHandler } from './JsonHandler';
 import { CssHandler } from './CssHandler';
 import { SassHandler } from './SassHandler';
 import { ImageHandler } from './ImageHandler';
 import { ScriptHandler } from './ScriptHandler';
 
-// Handler instances
+// handler instances
 const handlers: FileTypeHandler[] = [
   new JsonHandler(),
   new CssHandler(),
@@ -29,7 +29,7 @@ const handlers: FileTypeHandler[] = [
   new ScriptHandler(),
 ];
 
-// Build extension -> handler lookup map
+// build extension -> handler lookup map
 const handlerMap = new Map<string, FileTypeHandler>();
 for (const handler of handlers) {
   for (const ext of handler.extensions) {

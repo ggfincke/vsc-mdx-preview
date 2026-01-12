@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/CardGrid.tsx
 // Starlight CardGrid component shim for MDX Preview
-// Provides preview-compatible version of @astrojs/starlight/components CardGrid
+// provides preview-compatible version of @astrojs/starlight/components CardGrid
 
 import React, { ReactNode, ReactElement } from 'react';
 
@@ -10,8 +10,11 @@ export interface CardGridProps {
   stagger?: boolean;
 }
 
-// CardGrid component
-export function CardGrid({ children, stagger = false }: CardGridProps): ReactElement {
+// card grid component
+export function CardGrid({
+  children,
+  stagger = false,
+}: CardGridProps): ReactElement {
   return (
     <div className={`starlight-card-grid${stagger ? ' stagger' : ''}`}>
       {children}

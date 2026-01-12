@@ -1,5 +1,5 @@
 // packages/extension/transpiler/transpiler-selector.ts
-// Unified transpiler selection with automatic fallback from Sucrase to Babel
+// unified transpiler selection w/ automatic fallback from Sucrase to Babel
 
 import { transformAsync as babelTransformAsync } from './babel';
 import { transform as sucraseTransform } from './sucrase';
@@ -14,9 +14,9 @@ export interface TranspileOptions {
   filePath?: string;
 }
 
-// Transpile code w/ automatic fallback from Sucrase to Babel.
-// When useSucrase is true, attempts Sucrase first & falls back to Babel on failure.
-// When useSucrase is false, uses Babel directly.
+// transpile code w/ automatic fallback from Sucrase to Babel.
+// when useSucrase is true, attempts Sucrase first & falls back to Babel on failure.
+// when useSucrase is false, uses Babel directly.
 export async function transpileWithFallback(
   code: string,
   options: TranspileOptions

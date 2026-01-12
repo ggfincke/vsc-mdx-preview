@@ -1,5 +1,5 @@
 // packages/extension/framework/FrameworkDetector.ts
-// * detect MDX framework from workspace package.json dependencies
+// detect MDX framework from workspace package.json dependencies
 
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -43,7 +43,7 @@ const FRAMEWORK_RULES: FrameworkRule[] = [
   },
 ];
 
-// * singleton framework detector
+// singleton framework detector
 export class FrameworkDetector {
   private static instance: FrameworkDetector | null = null;
   private cache: Map<string, FrameworkInfo> = new Map();
@@ -114,7 +114,7 @@ export class FrameworkDetector {
         const hasPrimary = rule.dependencies.some((dep) => dep in allDeps);
 
         if (hasPrimary) {
-          // for frameworks with secondary deps, at least one must be present
+          // for frameworks w/ secondary deps, at least one must be present
           if (rule.secondaryDependencies) {
             const hasSecondary = rule.secondaryDependencies.some(
               (dep) => dep in allDeps
@@ -172,7 +172,7 @@ export class FrameworkDetector {
       return cached;
     }
 
-    // detect and cache
+    // detect & cache
     const detected = this.detectFromPackageJson(workspaceRoot);
     this.cache.set(workspaceRoot, detected);
     return detected;
@@ -256,7 +256,7 @@ export class FrameworkDetector {
     this.cache.clear();
     debug('[FRAMEWORK] All caches invalidated');
 
-    // notify subscribers with current framework for active editor
+    // notify subscribers w/ current framework for active editor
     const editor = vscode.window.activeTextEditor;
     if (editor) {
       const info = this.getFramework(editor.document.uri);

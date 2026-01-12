@@ -11,7 +11,7 @@ import {
 } from './__mocks__/vscode';
 import { TrustManager } from '../security/TrustManager';
 
-// Reset singleton between tests
+// reset singleton between tests
 const resetTrustManager = (): void => {
   // Access private static instance to reset it
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

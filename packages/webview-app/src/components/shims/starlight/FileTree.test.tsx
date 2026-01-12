@@ -264,7 +264,9 @@ describe('FileTree', () => {
         </FileTree>
       );
 
-      expect(container.querySelector('summary.highlighted')).toBeInTheDocument();
+      expect(
+        container.querySelector('summary.highlighted')
+      ).toBeInTheDocument();
     });
   });
 
@@ -276,7 +278,9 @@ describe('FileTree', () => {
         </FileTree>
       );
 
-      expect(container.querySelector('.starlight-file-tree')).toBeInTheDocument();
+      expect(
+        container.querySelector('.starlight-file-tree')
+      ).toBeInTheDocument();
       expect(
         container.querySelector('.starlight-file-tree-file')
       ).not.toBeInTheDocument();
@@ -356,7 +360,9 @@ describe('FileTree', () => {
         </FileTree>
       );
 
-      expect(container.querySelector('.starlight-file-tree')).toBeInTheDocument();
+      expect(
+        container.querySelector('.starlight-file-tree')
+      ).toBeInTheDocument();
     });
   });
 });

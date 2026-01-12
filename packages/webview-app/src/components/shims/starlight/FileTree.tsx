@@ -1,10 +1,15 @@
 // packages/webview-app/src/components/shims/starlight/FileTree.tsx
 // Starlight FileTree component shim for MDX Preview
-// Provides preview-compatible version of @astrojs/starlight/components FileTree
+// provides preview-compatible version of @astrojs/starlight/components FileTree
 
-import React, { ReactNode, ReactElement, Children, isValidElement } from 'react';
+import React, {
+  ReactNode,
+  ReactElement,
+  Children,
+  isValidElement,
+} from 'react';
 
-// FileTree props (compatible with Starlight)
+// file tree props (compatible w/ Starlight)
 export interface FileTreeProps {
   children: ReactNode;
 }
@@ -29,7 +34,7 @@ const FOLDER_ICON =
 const FILE_ICON =
   '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
 
-// Extract text content from React children
+// extract text content from React children
 function extractTextContent(node: ReactNode): string {
   if (typeof node === 'string') {
     return node;
@@ -46,13 +51,15 @@ function extractTextContent(node: ReactNode): string {
   return '';
 }
 
-// Check if a child is a bold element (strong)
+// check if a child is a bold element (strong)
 function isBoldElement(node: ReactNode): boolean {
-  if (!isValidElement(node)) {return false;}
+  if (!isValidElement(node)) {
+    return false;
+  }
   return node.type === 'strong' || node.type === 'b';
 }
 
-// Parse li element content to extract name, highlight status, and comment
+// parse li element content to extract name, highlight status, & comment
 function parseLiContent(children: ReactNode): {
   name: string;
   isHighlighted: boolean;
@@ -88,7 +95,9 @@ function parseLiContent(children: ReactNode): {
     // Handle plain text
     if (typeof child === 'string') {
       const text = child.trim();
-      if (!text) {continue;}
+      if (!text) {
+        continue;
+      }
 
       if (!name) {
         // First text segment is the name
@@ -108,11 +117,15 @@ function parseLiContent(children: ReactNode): {
   return { name, isHighlighted, comment, nestedList };
 }
 
-// Parse a single <li> element into a FileTreeEntry
+// parse a single <li> element into a FileTreeEntry
 function parseLiElement(li: ReactElement): FileTreeEntry | null {
-  const { name, isHighlighted, comment, nestedList } = parseLiContent(li.props.children);
+  const { name, isHighlighted, comment, nestedList } = parseLiContent(
+    li.props.children
+  );
 
-  if (!name) {return null;}
+  if (!name) {
+    return null;
+  }
 
   // Check for placeholder
   if (name === '...' || name === '…') {
@@ -144,12 +157,14 @@ function parseLiElement(li: ReactElement): FileTreeEntry | null {
   };
 }
 
-// Parse children (unordered list) into structured entries
+// parse children (unordered list) into structured entries
 function parseFileTreeChildren(children: ReactNode): FileTreeEntry[] {
   const entries: FileTreeEntry[] = [];
 
   Children.forEach(children, (child) => {
-    if (!isValidElement(child)) {return;}
+    if (!isValidElement(child)) {
+      return;
+    }
 
     // Handle <ul> wrapper
     if (child.type === 'ul') {
@@ -160,14 +175,16 @@ function parseFileTreeChildren(children: ReactNode): FileTreeEntry[] {
     // Handle <li> items
     if (child.type === 'li') {
       const entry = parseLiElement(child);
-      if (entry) {entries.push(entry);}
+      if (entry) {
+        entries.push(entry);
+      }
     }
   });
 
   return entries;
 }
 
-// Render a single file tree entry
+// render a single file tree entry
 function FileTreeItem({ entry }: { entry: FileTreeEntry }): ReactElement {
   if (entry.isPlaceholder) {
     return (
@@ -209,14 +226,17 @@ function FileTreeItem({ entry }: { entry: FileTreeEntry }): ReactElement {
     <li
       className={`starlight-file-tree-file${entry.isHighlighted ? ' highlighted' : ''}`}
     >
-      <span className="icon file" dangerouslySetInnerHTML={{ __html: FILE_ICON }} />
+      <span
+        className="icon file"
+        dangerouslySetInnerHTML={{ __html: FILE_ICON }}
+      />
       <span className="name">{entry.name}</span>
       {entry.comment && <span className="comment">{entry.comment}</span>}
     </li>
   );
 }
 
-// FileTree component - renders a file/folder tree structure
+// file tree component - renders a file/folder tree structure
 export function FileTree({ children }: FileTreeProps): ReactElement {
   const entries = parseFileTreeChildren(children);
 
