@@ -2,7 +2,7 @@
 // MDX transpilation w/ layout injection & React root wrapping
 
 import { compile } from '@mdx-js/mdx';
-import rehypeRaw from './rehype-raw';
+import rehypeRawPkg from 'rehype-raw';
 import hasDefaultExport from './hasDefaultExport';
 import matter from 'gray-matter';
 import * as path from 'path';
@@ -139,10 +139,22 @@ export const mdxTranspileAsync = async (
 
   const rehypePlugins: Pluggable[] = mergePlugins(
     [
+      // Parse raw HTML into proper HAST elements (required for GitHub alerts, KaTeX, etc.)
+      // passThrough preserves MDX-specific nodes that shouldn't be parsed as HTML
+      [
+        rehypeRawPkg,
+        {
+          passThrough: [
+            'mdxJsxFlowElement',
+            'mdxJsxTextElement',
+            'mdxFlowExpression',
+            'mdxTextExpression',
+            'mdxjsEsm', // ESM import/export statements
+          ],
+        },
+      ],
       ...sharedRehypePluginsPreMath,
       rehypeKatex,
-      // Trusted-only: convert raw HTML from KaTeX to JSX
-      rehypeRaw,
       ...sharedRehypePluginsPostMath,
     ],
     customPlugins.rehypePlugins
@@ -156,7 +168,9 @@ export const mdxTranspileAsync = async (
     jsxImportSource: 'react',
     // remark plugins: GFM, GitHub alerts, math (shared w/ Safe Mode) + custom
     remarkPlugins,
-    // rehype plugins: sourcepos, mermaid, math, raw HTML, syntax, anchors, lazy images + custom
+    // Allow raw HTML to pass through remark-rehype (required for GitHub alerts, admonitions, etc.)
+    remarkRehypeOptions: { allowDangerousHtml: true },
+    // rehype plugins: raw HTML parsing, mermaid, math, syntax, anchors, lazy images + custom
     rehypePlugins,
   });
 
