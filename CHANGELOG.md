@@ -5,6 +5,27 @@ All notable changes to the MDX Preview extension will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.9] - 2026-01-12
+
+### Added
+
+- **Tailwind CSS Support**: Live compilation of Tailwind utility classes in MDX previews (Trusted Mode only)
+  - Auto-detection of Tailwind config and CSS entry files
+  - Support for both Tailwind v3 and v4
+  - Smart class extraction from MDX/JSX content and dependencies
+  - LRU caching with configurable TTL for compiled CSS
+  - Configuration via `mdx-preview.tailwind.*` settings
+- **Tailwind Config Watcher**: Auto-refresh preview when Tailwind config or entry CSS changes
+
+### Changed
+
+- **Import Resolution**: Extracted shared import resolution utility for dependency watching
+- **rehype-raw**: Switched to official `rehype-raw` package with proper MDX passThrough configuration
+
+### Fixed
+
+- **Raw HTML Parsing**: Fixed GitHub alerts and KaTeX output not rendering correctly in Trusted Mode
+
 ## [1.0.0-alpha.8] - 2026-01-11
 
 ### Added
