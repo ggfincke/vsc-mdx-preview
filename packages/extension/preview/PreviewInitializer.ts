@@ -1,5 +1,5 @@
 // packages/extension/preview/PreviewInitializer.ts
-// * Initialization logic for preview instances (watchers, handshake)
+// initialization logic for preview instances (watchers, handshake)
 
 import * as vscode from 'vscode';
 import { debug, error as logError } from '../logging';
@@ -8,21 +8,23 @@ import {
   CustomCssWatcher,
   DependencyWatcher,
   ConfigWatcher,
+  TailwindConfigWatcher,
   WatcherManager,
 } from './watchers';
 import { resolveConfig, type ResolvedConfig } from './config';
+import { TailwindProcessor } from '../tailwind';
 
 export interface HandshakeResult {
   promise: Promise<void>;
   resolve: () => void;
 }
 
-// Handles initialization logic for preview instances.
-// Creates & configures watchers & manages the webview handshake.
+// handles initialization logic for preview instances.
+// creates & configures watchers & manages the webview handshake.
 export class PreviewInitializer {
   private static readonly HANDSHAKE_TIMEOUT_MS = 10000;
 
-  // Create a webview handshake promise w/ timeout.
+  // create a webview handshake promise w/ timeout.
   createHandshake(): HandshakeResult {
     debug('[PREVIEW] initWebviewHandshakePromise called');
     let resolveHandshake: () => void;
@@ -138,5 +140,28 @@ export class PreviewInitializer {
 
     watcherManager.register('customCss', customCssWatcher);
     customCssWatcher.start();
+  }
+
+  // Setup Tailwind config watcher via WatcherManager.
+  setupTailwindConfigWatcher(
+    watcherManager: WatcherManager,
+    watchFiles: string[],
+    onChange: () => void
+  ): void {
+    watcherManager.unregister('tailwind');
+
+    if (watchFiles.length === 0) {
+      return;
+    }
+
+    const tailwindWatcher = new TailwindConfigWatcher(watchFiles, () => {
+      debug('[PREVIEW] Tailwind config changed, reloading...');
+      // Invalidate version cache when config changes (handles v3->v4 upgrades)
+      TailwindProcessor.getInstance().invalidateVersionCache();
+      onChange();
+    });
+
+    watcherManager.register('tailwind', tailwindWatcher);
+    tailwindWatcher.start();
   }
 }

@@ -20,6 +20,12 @@ export interface FrameworkOptions {
   customAliases?: Record<string, string>;
 }
 
+// Tailwind CSS options
+export interface TailwindOptions {
+  enabled?: 'auto' | 'enabled' | 'disabled';
+  configPath?: string;
+}
+
 // MDX Preview configuration file schema
 export interface MdxPreviewConfig {
   // custom remark plugins to add after built-in plugins
@@ -32,6 +38,8 @@ export interface MdxPreviewConfig {
   framework?: 'generic' | 'docusaurus' | 'nextjs' | 'astro-starlight';
   // framework-specific options
   frameworkOptions?: FrameworkOptions;
+  // Tailwind CSS options
+  tailwind?: TailwindOptions;
 }
 
 // resolved configuration w/ metadata
@@ -240,6 +248,31 @@ function validateConfig(config: unknown): string[] {
             }
           }
         }
+      }
+    }
+  }
+
+  // validate tailwind options
+  if (cfg.tailwind !== undefined) {
+    if (typeof cfg.tailwind !== 'object' || cfg.tailwind === null) {
+      errors.push('tailwind must be an object');
+    } else {
+      const tailwind = cfg.tailwind as Record<string, unknown>;
+      const validEnabled = ['auto', 'enabled', 'disabled'];
+      if (
+        tailwind.enabled !== undefined &&
+        (typeof tailwind.enabled !== 'string' ||
+          !validEnabled.includes(tailwind.enabled))
+      ) {
+        errors.push(
+          `tailwind.enabled must be one of: ${validEnabled.join(', ')}`
+        );
+      }
+      if (
+        tailwind.configPath !== undefined &&
+        typeof tailwind.configPath !== 'string'
+      ) {
+        errors.push('tailwind.configPath must be a string path');
       }
     }
   }

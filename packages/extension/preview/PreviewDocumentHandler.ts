@@ -1,5 +1,5 @@
 // packages/extension/preview/PreviewDocumentHandler.ts
-// * Document state management and change handling for preview instances
+// document state management & change handling for preview instances
 
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -21,7 +21,7 @@ export interface DocumentState {
   mdxPreviewConfig?: ResolvedConfig;
 }
 
-// Handles document state, tracking, & change events for a preview instance.
+// handles document state, tracking, & change events for a preview instance.
 export class PreviewDocumentHandler {
   private _doc!: vscode.TextDocument;
   private _dependentFsPaths: Set<string> = new Set();

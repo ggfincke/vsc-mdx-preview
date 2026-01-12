@@ -1,12 +1,12 @@
 // packages/extension/preview/watchers/WatcherManager.ts
-// Coordinate all watchers with unified lifecycle management
+// coordinate all watchers w/ unified lifecycle management
 
 import type { Disposable } from 'vscode';
 import { debug } from '../../logging';
 import type { IWatcher } from './types';
 
-// Coordinate all watchers w/ unified lifecycle management.
-// Provides a central place to register, start, stop, & dispose watchers.
+// coordinate all watchers w/ unified lifecycle management.
+// provides a central place to register, start, stop, & dispose watchers.
 export class WatcherManager implements Disposable {
   private watchers = new Map<string, IWatcher>();
 
@@ -14,7 +14,7 @@ export class WatcherManager implements Disposable {
   // @param name - Unique identifier for the watcher
   // @param watcher - The watcher instance to register
   register(name: string, watcher: IWatcher): void {
-    // Dispose existing watcher with same name if present
+    // dispose existing watcher w/ same name if present
     const existing = this.watchers.get(name);
     if (existing) {
       debug(`[WATCHER-MANAGER] Replacing existing watcher: ${name}`);

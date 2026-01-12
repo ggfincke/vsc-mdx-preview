@@ -121,6 +121,7 @@ export function getCurrentPreview(): Preview | undefined {
 export class Preview {
   active = false;
   private _webview?: vscode.Webview;
+  private tailwindRequestId = 0;
 
   get webview(): vscode.Webview | undefined {
     return this._webview;
@@ -272,6 +273,27 @@ export class Preview {
         );
       }
     );
+  }
+
+  updateTailwindWatchFiles(watchFiles: string[]): void {
+    this.initializer.setupTailwindConfigWatcher(
+      this.watcherManager,
+      watchFiles,
+      () => {
+        this.updateWebview(true).catch((err) =>
+          logError('Failed to refresh after Tailwind change', err)
+        );
+      }
+    );
+  }
+
+  nextTailwindRequestId(): number {
+    this.tailwindRequestId += 1;
+    return this.tailwindRequestId;
+  }
+
+  isTailwindRequestCurrent(requestId: number): boolean {
+    return requestId === this.tailwindRequestId;
   }
 
   resetRenderedVersion(): void {

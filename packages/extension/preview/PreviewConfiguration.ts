@@ -1,11 +1,12 @@
 // packages/extension/preview/PreviewConfiguration.ts
-// * Configuration management for preview instances
+// configuration management for preview instances
 
 import * as vscode from 'vscode';
 import debounce from 'lodash.debounce';
 import { SecurityPolicy } from '../security/security';
 
 export type UpdateMode = 'onType' | 'onSave' | 'manual';
+export type TailwindEnabledSetting = 'auto' | 'enabled' | 'disabled';
 
 export interface StyleConfiguration {
   useVscodeMarkdownStyles: boolean;
@@ -21,6 +22,7 @@ export interface ConfigurationState {
   customCss: string;
   useSucraseTranspiler: boolean;
   securityPolicy: SecurityPolicy;
+  tailwindEnabled: TailwindEnabledSetting;
 }
 
 export interface ConfigChangeResult {
@@ -30,8 +32,8 @@ export interface ConfigChangeResult {
   oldCssPath: string;
 }
 
-// Manages preview configuration state & updates.
-// Reads from VS Code settings & tracks changes that require preview refresh.
+// manages preview configuration state & updates.
+// reads from VS Code settings & tracks changes that require preview refresh.
 export class PreviewConfiguration {
   private _configuration: ConfigurationState;
   private _debouncedUpdateWebview: ReturnType<typeof debounce>;
@@ -73,6 +75,10 @@ export class PreviewConfiguration {
       securityPolicy: extensionConfig.get<SecurityPolicy>(
         'preview.security',
         SecurityPolicy.Strict
+      ),
+      tailwindEnabled: extensionConfig.get<TailwindEnabledSetting>(
+        'tailwind.enabled',
+        'enabled'
       ),
     };
 
@@ -138,12 +144,17 @@ export class PreviewConfiguration {
       'preview.security',
       SecurityPolicy.Strict
     );
+    const tailwindEnabled = extensionConfig.get<TailwindEnabledSetting>(
+      'tailwind.enabled',
+      'enabled'
+    );
 
     const needsWebviewRefresh =
       useVscodeMarkdownStyles !== this._configuration.useVscodeMarkdownStyles ||
       useWhiteBackground !== this._configuration.useWhiteBackground ||
       customLayoutFilePath !== this._configuration.customLayoutFilePath ||
-      securityPolicy !== this._configuration.securityPolicy;
+      securityPolicy !== this._configuration.securityPolicy ||
+      tailwindEnabled !== this._configuration.tailwindEnabled;
 
     const needsDebounceRecreate =
       debounceDelay !== this._configuration.debounceDelay;
@@ -164,6 +175,7 @@ export class PreviewConfiguration {
       customLayoutFilePath,
       customCss,
       securityPolicy,
+      tailwindEnabled,
     });
 
     return {
