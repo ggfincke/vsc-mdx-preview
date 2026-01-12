@@ -5,8 +5,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DependencyWatcher } from '../preview/watchers/DependencyWatcher';
 import * as fs from 'fs';
 
-// Mock fs module
-vi.mock('fs');
+// mock fs module with statSync (resolveImportSync uses statSync, not existsSync)
+vi.mock('fs', async () => {
+  const actual = await vi.importActual<typeof fs>('fs');
+  return {
+    ...actual,
+    statSync: vi.fn(),
+  };
+});
 
 describe('DependencyWatcher', () => {
   let watcher: DependencyWatcher;
@@ -23,25 +29,24 @@ describe('DependencyWatcher', () => {
     it('should detect local imports (./foo, ../bar)', () => {
       const localImports = ['./component', '../utils/helper', './lib/index'];
 
-      // Mock file existence
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      // Mock file existence - statSync returns stat object with isFile()
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       watcher.updateDependencies(localImports);
 
-      // Should have created watchers (indicated by vscode mock being called)
-      // We can't directly test private methods, but we can verify behavior
-      expect(fs.existsSync).toHaveBeenCalled();
+      // Should have called statSync to check files
+      expect(fs.statSync).toHaveBeenCalled();
     });
 
     it('should skip node_modules imports', () => {
       const nodeModulesImports = ['react', 'lodash', '@types/node'];
 
-      const existsSpy = vi.spyOn(fs, 'existsSync');
-
       watcher.updateDependencies(nodeModulesImports);
 
       // Should not attempt to resolve node_modules
-      expect(existsSpy).not.toHaveBeenCalled();
+      expect(fs.statSync).not.toHaveBeenCalled();
     });
 
     it('should skip http/https URLs', () => {
@@ -50,29 +55,23 @@ describe('DependencyWatcher', () => {
         'http://cdn.example.com/lib.js',
       ];
 
-      const existsSpy = vi.spyOn(fs, 'existsSync');
-
       watcher.updateDependencies(urlImports);
 
-      expect(existsSpy).not.toHaveBeenCalled();
+      expect(fs.statSync).not.toHaveBeenCalled();
     });
 
     it('should skip npm:// imports', () => {
       const npmImports = ['npm://package-name', 'npm://scoped/package'];
 
-      const existsSpy = vi.spyOn(fs, 'existsSync');
-
       watcher.updateDependencies(npmImports);
 
-      expect(existsSpy).not.toHaveBeenCalled();
+      expect(fs.statSync).not.toHaveBeenCalled();
     });
 
     it('should handle empty import list', () => {
-      const existsSpy = vi.spyOn(fs, 'existsSync');
-
       watcher.updateDependencies([]);
 
-      expect(existsSpy).not.toHaveBeenCalled();
+      expect(fs.statSync).not.toHaveBeenCalled();
     });
 
     it('should handle mixed import types', () => {
@@ -83,12 +82,14 @@ describe('DependencyWatcher', () => {
         '../another-local',
       ];
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       watcher.updateDependencies(mixedImports);
 
       // Should only check local files
-      expect(fs.existsSync).toHaveBeenCalled();
+      expect(fs.statSync).toHaveBeenCalled();
     });
   });
 
@@ -96,19 +97,21 @@ describe('DependencyWatcher', () => {
     it('should resolve with common extensions (.ts, .tsx, .js, .jsx)', () => {
       const imports = ['./component'];
 
-      // Mock file doesn't exist without extension, but exists w/ .tsx
-      vi.spyOn(fs, 'existsSync').mockImplementation((path) => {
-        return path.toString().endsWith('.tsx');
+      // Mock: file doesn't exist without extension, but exists w/ .tsx
+      vi.mocked(fs.statSync).mockImplementation((p) => {
+        const pathStr = String(p);
+        if (pathStr.endsWith('.tsx')) {
+          return { isFile: () => true } as fs.Stats;
+        }
+        throw new Error('ENOENT');
       });
 
       watcher.updateDependencies(imports);
 
       // Should have tried multiple extensions
-      expect(fs.existsSync).toHaveBeenCalled();
-      const calls = (fs.existsSync as any).mock.calls;
-      const extensions = calls.map((call: any) =>
-        call[0].toString().split('.').pop()
-      );
+      expect(fs.statSync).toHaveBeenCalled();
+      const calls = vi.mocked(fs.statSync).mock.calls;
+      const extensions = calls.map((call) => String(call[0]).split('.').pop());
       expect(extensions).toContain('tsx');
     });
 
@@ -116,64 +119,76 @@ describe('DependencyWatcher', () => {
       const imports = ['./components'];
 
       // Mock directory w/ index file
-      vi.spyOn(fs, 'existsSync').mockImplementation((path) => {
-        return (
-          path.toString().includes('index.tsx') ||
-          path.toString().includes('index.ts')
-        );
+      vi.mocked(fs.statSync).mockImplementation((p) => {
+        const pathStr = String(p);
+        if (pathStr.includes('index.tsx') || pathStr.includes('index.ts')) {
+          return { isFile: () => true } as fs.Stats;
+        }
+        throw new Error('ENOENT');
       });
 
       watcher.updateDependencies(imports);
 
-      expect(fs.existsSync).toHaveBeenCalled();
+      expect(fs.statSync).toHaveBeenCalled();
     });
 
     it('should return null for non-existent files', () => {
       const imports = ['./non-existent'];
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      // Mock: file doesn't exist (statSync throws)
+      vi.mocked(fs.statSync).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
 
       watcher.updateDependencies(imports);
 
       // Should have tried to resolve but not create watcher
-      expect(fs.existsSync).toHaveBeenCalled();
+      expect(fs.statSync).toHaveBeenCalled();
     });
 
     it('should skip paths in node_modules', () => {
       const imports = ['./../../node_modules/package'];
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       watcher.updateDependencies(imports);
 
       // Even if file exists, should skip node_modules paths
-      // Implementation detail: DependencyWatcher checks for node_modules in resolved path
+      // resolveImportSync checks for node_modules in resolved path
       expect(onChangeCallback).not.toHaveBeenCalled();
     });
 
     it('should handle files with existing extensions', () => {
       const imports = ['./component.tsx', './utils.ts'];
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       watcher.updateDependencies(imports);
 
-      expect(fs.existsSync).toHaveBeenCalled();
+      expect(fs.statSync).toHaveBeenCalled();
     });
   });
 
   describe('watcher lifecycle', () => {
     it('should add watchers for new dependencies', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       watcher.updateDependencies(['./component.tsx']);
 
-      // Should have called existsSync to check file
-      expect(fs.existsSync).toHaveBeenCalled();
+      // Should have called statSync to check file
+      expect(fs.statSync).toHaveBeenCalled();
     });
 
     it('should remove watchers for removed dependencies', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       // Add dependencies
       watcher.updateDependencies(['./component.tsx', './utils.ts']);
@@ -184,11 +199,13 @@ describe('DependencyWatcher', () => {
       watcher.updateDependencies(['./component.tsx']);
 
       // Should have checked for the remaining dependency
-      expect(fs.existsSync).toHaveBeenCalled();
+      expect(fs.statSync).toHaveBeenCalled();
     });
 
     it('should handle dependency list updates', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       // Initial dependencies
       watcher.updateDependencies(['./a.tsx', './b.tsx']);
@@ -199,11 +216,13 @@ describe('DependencyWatcher', () => {
       watcher.updateDependencies(['./b.tsx', './c.tsx']);
 
       // Should process new dependencies
-      expect(fs.existsSync).toHaveBeenCalled();
+      expect(fs.statSync).toHaveBeenCalled();
     });
 
     it('should dispose all watchers', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       watcher.updateDependencies(['./component.tsx']);
 
@@ -216,16 +235,20 @@ describe('DependencyWatcher', () => {
       // start w/ no dependencies
       watcher.updateDependencies([]);
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       // Add dependencies
       watcher.updateDependencies(['./component.tsx']);
 
-      expect(fs.existsSync).toHaveBeenCalled();
+      expect(fs.statSync).toHaveBeenCalled();
     });
 
     it('should handle non-empty to empty transitions', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       // start w/ dependencies
       watcher.updateDependencies(['./component.tsx']);
@@ -236,7 +259,7 @@ describe('DependencyWatcher', () => {
       watcher.updateDependencies([]);
 
       // Should not check any files
-      expect(fs.existsSync).not.toHaveBeenCalled();
+      expect(fs.statSync).not.toHaveBeenCalled();
     });
   });
 
@@ -244,22 +267,26 @@ describe('DependencyWatcher', () => {
     it('should allow changing document directory', () => {
       watcher.setDocumentDir('/new/path');
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       watcher.updateDependencies(['./component.tsx']);
 
       // Should use new directory for resolution
-      expect(fs.existsSync).toHaveBeenCalled();
+      expect(fs.statSync).toHaveBeenCalled();
     });
 
     it('should handle relative paths from new directory', () => {
       watcher.setDocumentDir('/workspace/docs');
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isFile: () => true,
+      } as fs.Stats);
 
       watcher.updateDependencies(['../src/component.tsx']);
 
-      expect(fs.existsSync).toHaveBeenCalled();
+      expect(fs.statSync).toHaveBeenCalled();
     });
   });
 
@@ -277,17 +304,17 @@ describe('DependencyWatcher', () => {
     });
 
     it('should handle empty string imports', () => {
-      const existsSpy = vi.spyOn(fs, 'existsSync');
-
       watcher.updateDependencies(['']);
 
-      expect(existsSpy).not.toHaveBeenCalled();
+      expect(fs.statSync).not.toHaveBeenCalled();
     });
 
     it('should handle malformed paths', () => {
       const malformedPaths = ['./', '../', './/', '/..//./component'];
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+      vi.mocked(fs.statSync).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
 
       expect(() => {
         watcher.updateDependencies(malformedPaths);

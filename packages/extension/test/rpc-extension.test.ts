@@ -15,6 +15,7 @@ vi.mock('comlink', () => ({
     invalidate: vi.fn(),
     setStale: vi.fn(),
     setCustomCss: vi.fn(),
+    setTailwindCss: vi.fn(),
     setTheme: vi.fn(),
     zoomIn: vi.fn(),
     zoomOut: vi.fn(),

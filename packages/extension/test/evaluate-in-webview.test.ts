@@ -22,12 +22,17 @@ vi.mock('../transpiler/mdx/mdx-safe', () => ({
   compileToSafeHTML: vi.fn(),
 }));
 
-// mock fs.promises
-vi.mock('fs', () => ({
-  promises: {
-    realpath: vi.fn(async (path: string) => path),
-  },
-}));
+// mock fs.promises - include all methods needed by dependencies (enhanced-resolve, etc.)
+vi.mock('fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('fs')>();
+  return {
+    ...actual,
+    promises: {
+      ...actual.promises,
+      realpath: vi.fn(async (path: string) => path),
+    },
+  };
+});
 
 // mock es-module-lexer
 vi.mock('es-module-lexer', () => ({
@@ -42,7 +47,27 @@ vi.mock('../logging', () => ({
   debug: vi.fn(),
 }));
 
-// Note: performance API is available in Node.js - we spy on it in tests rather than stubbing
+// mock resolver-factory to prevent CachedInputFileSystem from requiring fs methods
+vi.mock('../module-fetcher/resolver-factory', () => ({
+  getNodeResolver: vi.fn(() => ({
+    resolveSync: vi.fn(),
+  })),
+}));
+
+// mock Tailwind processor
+vi.mock('../tailwind/TailwindProcessor', () => ({
+  TailwindProcessor: {
+    getInstance: () => ({
+      process: vi.fn(async () => ({
+        css: '',
+        watchFiles: [],
+        enabled: false,
+      })),
+    }),
+  },
+}));
+
+// note: performance API is available in Node.js - we spy on it in tests rather than stubbing
 
 // import after mocks are set up
 import evaluateInWebview from '../preview/evaluate-in-webview';
@@ -60,6 +85,7 @@ const createMockWebviewHandle = () => ({
   invalidate: vi.fn(),
   setStale: vi.fn(),
   setCustomCss: vi.fn(),
+  setTailwindCss: vi.fn(),
   setTheme: vi.fn(),
   zoomIn: vi.fn(),
   zoomOut: vi.fn(),
@@ -69,6 +95,7 @@ const createMockWebviewHandle = () => ({
 // create mock Preview object
 const createMockPreview = (overrides: Partial<Preview> = {}): Preview => {
   const webviewHandle = createMockWebviewHandle();
+  let tailwindRequestId = 0;
   return {
     doc: {
       uri: Uri.file('/projects/test-workspace/README.mdx'),
@@ -78,6 +105,9 @@ const createMockPreview = (overrides: Partial<Preview> = {}): Preview => {
     onWebviewReady: vi.fn(),
     pushThemeState: vi.fn(),
     updateDependencies: vi.fn(),
+    updateTailwindWatchFiles: vi.fn(),
+    nextTailwindRequestId: vi.fn(() => ++tailwindRequestId),
+    isTailwindRequestCurrent: vi.fn(() => true),
     ...overrides,
   } as unknown as Preview;
 };

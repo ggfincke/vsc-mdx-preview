@@ -2,28 +2,28 @@
 // VS Code API mock for Vitest tests - provides minimal implementations of VS Code APIs
 import { vi } from 'vitest';
 
-// Mock workspace trust state - can be modified in tests
+// mock workspace trust state - can be modified in tests
 let mockIsTrusted = false;
 
-// Mock configuration values - can be modified in tests
+// mock configuration values - can be modified in tests
 const mockConfigValues: Record<string, unknown> = {
   'preview.enableScripts': false,
   'preview.security': 'strict',
 };
 
-// Mock workspace folders
+// mock workspace folders
 let mockWorkspaceFolders: { uri: { fsPath: string } }[] = [
   { uri: { fsPath: '/projects/test-workspace' } },
 ];
 
-// Event listeners storage
+// event listeners storage
 const trustChangeListeners: ((trusted: boolean) => void)[] = [];
 const trustGrantListeners: (() => void)[] = [];
 const configChangeListeners: ((e: {
   affectsConfiguration: (key: string) => boolean;
 }) => void)[] = [];
 
-// URI class mock
+// uri class mock
 export class Uri {
   readonly fsPath: string;
   readonly scheme: string;
@@ -48,7 +48,7 @@ export class Uri {
   }
 }
 
-// Position class mock
+// position class mock
 export class Position {
   constructor(
     public readonly line: number,
@@ -56,7 +56,7 @@ export class Position {
   ) {}
 }
 
-// Range class mock
+// range class mock
 export class Range {
   constructor(
     public readonly start: Position | number,
@@ -71,13 +71,13 @@ export class Range {
   }
 }
 
-// EndOfLine enum mock
+// endOfLine enum mock
 export enum EndOfLine {
   LF = 1,
   CRLF = 2,
 }
 
-// Disposable mock
+// disposable mock
 export class Disposable {
   constructor(private readonly callOnDispose: () => void) {}
 
@@ -86,7 +86,7 @@ export class Disposable {
   }
 }
 
-// Mock text document
+// mock text document
 export const createMockTextDocument = (options: {
   uri?: Uri;
   getText?: () => string;
@@ -111,7 +111,15 @@ export const createMockTextDocument = (options: {
   validatePosition: vi.fn((pos: Position) => pos),
 });
 
-// Workspace mock
+// relativePattern mock for workspace.findFiles
+export class RelativePattern {
+  constructor(
+    public readonly base: string,
+    public readonly pattern: string
+  ) {}
+}
+
+// workspace mock
 export const workspace = {
   get isTrusted(): boolean {
     return mockIsTrusted;
@@ -120,6 +128,17 @@ export const workspace = {
   get workspaceFolders() {
     return mockWorkspaceFolders;
   },
+
+  getWorkspaceFolder(uri: Uri): { uri: Uri } | undefined {
+    for (const folder of mockWorkspaceFolders) {
+      if (uri.fsPath.startsWith(folder.uri.fsPath)) {
+        return { uri: Uri.file(folder.uri.fsPath) };
+      }
+    }
+    return undefined;
+  },
+
+  findFiles: vi.fn(async () => [] as Uri[]),
 
   getConfiguration(section?: string) {
     return {
@@ -183,7 +202,7 @@ export const workspace = {
   })),
 };
 
-// Window mock
+// window mock
 export const window = {
   createOutputChannel: vi.fn(() => ({
     appendLine: vi.fn(),
@@ -205,13 +224,13 @@ export const window = {
   })),
 };
 
-// Commands mock
+// commands mock
 export const commands = {
   executeCommand: vi.fn(),
   registerCommand: vi.fn(() => new Disposable(() => {})),
 };
 
-// Env mock
+// env mock
 export const env = {
   openExternal: vi.fn(),
   uriScheme: 'vscode',
@@ -240,7 +259,7 @@ class MockWebviewUri {
   }
 }
 
-// Webview mock for CSP tests
+// webview mock for CSP tests
 export const createMockWebview = () => ({
   cspSource: 'https://file+.vscode-resource.vscode-cdn.net',
   html: '',
@@ -250,7 +269,7 @@ export const createMockWebview = () => ({
   asWebviewUri: vi.fn((uri: Uri) => new MockWebviewUri(uri.fsPath)),
 });
 
-// Helper functions for tests to manipulate mock state
+// helper functions for tests to manipulate mock state
 export const __setMockTrusted = (trusted: boolean): void => {
   mockIsTrusted = trusted;
 };
@@ -323,13 +342,14 @@ export const createMockWebviewWithEvents = () => {
   };
 };
 
-// Export for module resolution
+// export for module resolution
 export default {
   Uri,
   Position,
   Range,
   EndOfLine,
   Disposable,
+  RelativePattern,
   workspace,
   window,
   commands,
