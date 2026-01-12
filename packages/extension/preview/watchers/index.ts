@@ -5,8 +5,9 @@ export { DocumentTracker } from './DocumentTracker';
 export { DependencyWatcher } from './DependencyWatcher';
 export { CustomCssWatcher } from './CustomCssWatcher';
 export { ConfigWatcher } from './ConfigWatcher';
+export { TailwindConfigWatcher } from './TailwindConfigWatcher';
 export { WatcherManager } from './WatcherManager';
 
-// Types
+// types
 export type { IWatcher } from './types';
 export { isWatcher } from './types';
