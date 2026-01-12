@@ -2,7 +2,7 @@
   "name": "vscode-mdx-preview",
   "displayName": "MDX Preview",
   "description": "MDX Preview",
-  "version": "1.0.0-alpha.8",
+  "version": "1.0.0-alpha.9",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [
@@ -288,6 +288,47 @@
           "description": "Path to a custom CSS file for preview styling. Changes are applied immediately.",
           "scope": "resource"
         },
+        "mdx-preview.tailwind.enabled": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "enabled",
+            "disabled"
+          ],
+          "default": "enabled",
+          "description": "Enable Tailwind CSS compilation in MDX previews. Requires a trusted workspace with scripts enabled.",
+          "scope": "resource"
+        },
+        "mdx-preview.tailwind.maxFileSizeBytes": {
+          "type": "number",
+          "default": 10485760,
+          "description": "Maximum file size (in bytes) for scanning Tailwind classes in dependencies. Default: 10MB.",
+          "scope": "resource"
+        },
+        "mdx-preview.tailwind.compilationTimeout": {
+          "type": "number",
+          "default": 15000,
+          "description": "Timeout in milliseconds for Tailwind CSS compilation. Default: 15 seconds.",
+          "scope": "resource"
+        },
+        "mdx-preview.tailwind.maxCssFilesToSearch": {
+          "type": "number",
+          "default": 500,
+          "description": "Maximum number of CSS files to search when detecting Tailwind entry file. Default: 500.",
+          "scope": "resource"
+        },
+        "mdx-preview.tailwind.cacheMaxEntries": {
+          "type": "number",
+          "default": 50,
+          "description": "Maximum number of compiled CSS entries to cache. Default: 50.",
+          "scope": "resource"
+        },
+        "mdx-preview.tailwind.cacheTtlSeconds": {
+          "type": "number",
+          "default": 300,
+          "description": "Time-to-live for cached Tailwind CSS in seconds. Default: 300 (5 minutes).",
+          "scope": "resource"
+        },
         "mdx-preview.preview.showToc": {
           "type": "boolean",
           "default": true,
@@ -530,6 +571,7 @@
     "@babel/preset-env": "^7.24.0",
     "@babel/preset-react": "^7.24.0",
     "@mdx-js/mdx": "^3.0.0",
+    "@tailwindcss/postcss": "^4.0.0",
     "comlink": "^4.4.1",
     "enhanced-resolve": "^5.18.4",
     "es-module-lexer": "^2.0.0",
@@ -537,8 +579,10 @@
     "hast-util-from-html-isomorphic": "^2.0.0",
     "is-module": "^1.0.0",
     "lodash.debounce": "^4.0.8",
+    "postcss": "^8.5.3",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
     "rehype-slug": "^6.0.0",
     "rehype-stringify": "^10.0.0",
     "remark-directive": "^3.0.0",
@@ -551,6 +595,7 @@
     "sass": "^1.80.0",
     "shiki": "^1.29.2",
     "sucrase": "^3.35.0",
+    "tailwindcss": "^4.0.0",
     "typescript": "^5.4.0",
     "unified": "^11.0.0",
     "unist-util-visit": "^5.0.0"
