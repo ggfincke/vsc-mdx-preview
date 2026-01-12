@@ -214,6 +214,27 @@ class RPCWebviewHandle implements WebviewRPC {
     styleEl.textContent = css;
   }
 
+  // set Tailwind CSS content (keeps custom CSS last for overrides)
+  setTailwindCss(css: string): void {
+    debug(`[RPC-WEBVIEW] setTailwindCss called, length: ${css.length}`);
+
+    const STYLE_ID = 'mdx-preview-tailwind-css';
+    let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
+
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = STYLE_ID;
+      const customCssEl = document.getElementById('mdx-preview-custom-css');
+      if (customCssEl && customCssEl.parentNode) {
+        customCssEl.parentNode.insertBefore(styleEl, customCssEl);
+      } else {
+        document.head.appendChild(styleEl);
+      }
+    }
+
+    styleEl.textContent = css;
+  }
+
   // set preview theme (MPE-style themes)
   setTheme(state: WebviewThemeState): void {
     debug(`[RPC-WEBVIEW] setTheme called`, state);
