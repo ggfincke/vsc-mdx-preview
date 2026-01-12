@@ -115,6 +115,23 @@
         }
       },
       "additionalProperties": false
+    },
+    "tailwind": {
+      "type": "object",
+      "description": "Tailwind CSS options for MDX Preview.",
+      "properties": {
+        "enabled": {
+          "type": "string",
+          "enum": ["auto", "enabled", "disabled"],
+          "default": "enabled",
+          "description": "Enable Tailwind CSS compilation in previews."
+        },
+        "configPath": {
+          "type": "string",
+          "description": "Optional path to a Tailwind config file."
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

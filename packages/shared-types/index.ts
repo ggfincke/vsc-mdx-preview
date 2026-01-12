@@ -203,6 +203,7 @@ export interface WebviewRPC {
   invalidate(fsPath: string): Promise<void>;
   setStale(isStale: boolean): void;
   setCustomCss(css: string): void;
+  setTailwindCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
   zoomIn(): void;
   zoomOut(): void;
