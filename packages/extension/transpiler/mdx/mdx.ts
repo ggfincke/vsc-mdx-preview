@@ -2,20 +2,13 @@
 // MDX transpilation w/ layout injection & React root wrapping
 
 import { compile } from '@mdx-js/mdx';
-import rehypeRawPkg from 'rehype-raw';
 import hasDefaultExport from './hasDefaultExport';
 import matter from 'gray-matter';
 import * as path from 'path';
-import type { Pluggable } from 'unified';
 
 import { Preview } from '../../preview/preview-manager';
-import {
-  sharedRemarkPlugins,
-  sharedRehypePluginsPreMath,
-  sharedRehypePluginsPostMath,
-  rehypeKatex,
-} from './shared-plugins';
-import { loadPluginsFromConfig, mergePlugins } from '../plugin-loader';
+import { buildTrustedPluginPipeline } from './plugin-builder';
+import { loadPluginsFromConfig } from '../plugin-loader';
 import { generateComponentImports } from '../component-mapper';
 import { warn } from '../../logging';
 
@@ -131,34 +124,9 @@ export const mdxTranspileAsync = async (
     mdxTextToCompile = componentImports.imports + '\n\n' + mdxTextToCompile;
   }
 
-  // merge built-in & custom plugins
-  const remarkPlugins: Pluggable[] = mergePlugins(
-    sharedRemarkPlugins,
-    customPlugins.remarkPlugins
-  );
-
-  const rehypePlugins: Pluggable[] = mergePlugins(
-    [
-      // Parse raw HTML into proper HAST elements (required for GitHub alerts, KaTeX, etc.)
-      // passThrough preserves MDX-specific nodes that shouldn't be parsed as HTML
-      [
-        rehypeRawPkg,
-        {
-          passThrough: [
-            'mdxJsxFlowElement',
-            'mdxJsxTextElement',
-            'mdxFlowExpression',
-            'mdxTextExpression',
-            'mdxjsEsm', // ESM import/export statements
-          ],
-        },
-      ],
-      ...sharedRehypePluginsPreMath,
-      rehypeKatex,
-      ...sharedRehypePluginsPostMath,
-    ],
-    customPlugins.rehypePlugins
-  );
+  // build plugin pipeline (merges built-in & custom plugins)
+  const { remarkPlugins, rehypePlugins } =
+    buildTrustedPluginPipeline(customPlugins);
 
   const compiled = await compile(mdxTextToCompile, {
     outputFormat: 'program',
@@ -168,9 +136,8 @@ export const mdxTranspileAsync = async (
     jsxImportSource: 'react',
     // remark plugins: GFM, GitHub alerts, math (shared w/ Safe Mode) + custom
     remarkPlugins,
-    // Allow raw HTML to pass through remark-rehype (required for GitHub alerts, admonitions, etc.)
-    remarkRehypeOptions: { allowDangerousHtml: true },
-    // rehype plugins: raw HTML parsing, mermaid, math, syntax, anchors, lazy images + custom
+    // rehype plugins: raw HTML parsing (via rehype-raw), mermaid, math, syntax, anchors, lazy images + custom
+    // note: raw HTML support is handled by rehype-raw in the plugin pipeline
     rehypePlugins,
   });
 

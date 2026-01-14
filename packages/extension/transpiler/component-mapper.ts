@@ -4,7 +4,8 @@
 import * as path from 'path';
 import { warn, debug, info } from '../logging';
 import type { ResolvedConfig } from '../preview/config';
-import { TrustManager, SecurityMode } from '../security/TrustManager';
+import { SecurityMode } from '../security/TrustManager';
+import { getTrustManager } from '../services';
 
 // result of generating component imports
 export interface ComponentImportsResult {
@@ -37,7 +38,7 @@ export function generateComponentImports(
   }
 
   // check trust state
-  const trustManager = TrustManager.getInstance();
+  const trustManager = getTrustManager();
   const securityMode = trustManager.getMode();
 
   if (securityMode !== SecurityMode.Trusted) {

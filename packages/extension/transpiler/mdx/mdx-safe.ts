@@ -10,12 +10,7 @@ import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import type { Root, Parent, RootContent } from 'mdast';
 import matter from 'gray-matter';
-import {
-  sharedRemarkPlugins,
-  sharedRehypePluginsPreMath,
-  sharedRehypePluginsPostMath,
-  rehypeKatex,
-} from './shared-plugins';
+import { getSafeRemarkPlugins, getSafeRehypePluginSets } from './plugin-builder';
 import { warn } from '../../logging';
 import type { ResolvedConfig } from '../../preview/config';
 
@@ -147,7 +142,7 @@ export async function compileToSafeHTML(
   // extract frontmatter before compilation
   const { content, data: frontmatter } = matter(mdxText);
 
-  // build unified pipeline w/ shared plugins
+  // build unified pipeline w/ shared plugins via plugin-builder
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let processor: any = unified()
     .use(remarkParse)
@@ -155,19 +150,22 @@ export async function compileToSafeHTML(
     .use(remarkStripMdx);
 
   // add shared remark plugins (GFM, GitHub alerts, math)
-  processor = applyPlugins(processor, sharedRemarkPlugins);
+  processor = applyPlugins(processor, getSafeRemarkPlugins());
 
   // convert to rehype
   processor = processor.use(remarkRehype, { allowDangerousHtml: true });
 
-  // add pre-math rehype plugins (sourcepos, mermaid)
-  processor = applyPlugins(processor, sharedRehypePluginsPreMath);
+  // get rehype plugin sets from plugin-builder
+  const { preMath, math, postMath } = getSafeRehypePluginSets();
+
+  // add pre-math rehype plugins (mermaid placeholder)
+  processor = applyPlugins(processor, preMath);
 
   // add KaTeX for math rendering
-  processor = processor.use(rehypeKatex);
+  processor = processor.use(math);
 
   // add post-math rehype plugins (shiki, slug, autolink, lazy images)
-  processor = applyPlugins(processor, sharedRehypePluginsPostMath);
+  processor = applyPlugins(processor, postMath);
 
   // stringify to HTML
   processor = processor.use(rehypeStringify, { allowDangerousHtml: true });

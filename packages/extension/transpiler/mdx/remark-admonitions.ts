@@ -25,39 +25,40 @@ interface AdmonitionType {
 }
 
 // supported admonition types (Docusaurus + Starlight compatible)
+// CSS naming convention: mdx-preview-admonition-*
 const ADMONITION_TYPES: Record<string, AdmonitionType> = {
   note: {
-    className: 'admonition-note',
+    className: 'mdx-preview-admonition-note',
     label: 'Note',
     icon: ADMONITION_ICONS.note,
   },
   tip: {
-    className: 'admonition-tip',
+    className: 'mdx-preview-admonition-tip',
     label: 'Tip',
     icon: ADMONITION_ICONS.tip,
   },
   info: {
-    className: 'admonition-info',
+    className: 'mdx-preview-admonition-info',
     label: 'Info',
     icon: ADMONITION_ICONS.info,
   },
   warning: {
-    className: 'admonition-warning',
+    className: 'mdx-preview-admonition-warning',
     label: 'Warning',
     icon: ADMONITION_ICONS.warning,
   },
   danger: {
-    className: 'admonition-danger',
+    className: 'mdx-preview-admonition-danger',
     label: 'Danger',
     icon: ADMONITION_ICONS.danger,
   },
   caution: {
-    className: 'admonition-caution',
+    className: 'mdx-preview-admonition-caution',
     label: 'Caution',
     icon: ADMONITION_ICONS.caution,
   },
   important: {
-    className: 'admonition-important',
+    className: 'mdx-preview-admonition-important',
     label: 'Important',
     icon: ADMONITION_ICONS.important,
   },
@@ -150,7 +151,7 @@ function createAdmonitionNode(
     data: {
       hName: 'div',
       hProperties: {
-        className: ['admonition', type.className],
+        className: ['mdx-preview-admonition', type.className],
         'data-admonition-type': type.label.toLowerCase(),
       },
     },
@@ -160,13 +161,13 @@ function createAdmonitionNode(
         data: {
           hName: 'div',
           hProperties: {
-            className: ['admonition-header'],
+            className: ['mdx-preview-admonition-header'],
           },
         },
         children: [
           {
             type: 'html' as any,
-            value: `<span class="admonition-icon">${type.icon}</span>`,
+            value: `<span class="mdx-preview-admonition-icon">${type.icon}</span>`,
           },
           {
             type: 'text',
@@ -179,7 +180,7 @@ function createAdmonitionNode(
         data: {
           hName: 'div',
           hProperties: {
-            className: ['admonition-content'],
+            className: ['mdx-preview-admonition-content'],
           },
         },
         children: contentChildren,
@@ -224,7 +225,7 @@ export default function remarkAdmonitions() {
         );
 
         // replace the directive node w/ the admonition node
-        parent.children.splice(index, 1, admonitionNode);
+        parent.children.splice(index, 1, admonitionNode as typeof parent.children[number]);
       }
     );
   };

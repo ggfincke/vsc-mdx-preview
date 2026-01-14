@@ -5,7 +5,7 @@ import * as path from 'path';
 import type { Pluggable } from 'unified';
 import { warn, debug, info } from '../logging';
 import type { PluginSpec, ResolvedConfig } from '../preview/config';
-import { TrustManager, SecurityMode } from '../security/TrustManager';
+import { isSecurityModeTrusted } from '../security/validateTrust';
 import { getNodeResolver } from '../module-fetcher/resolver-factory';
 
 // get shared node resolver instance for plugin resolution
@@ -96,10 +96,7 @@ export async function loadPluginsFromConfig(
   }
 
   // check trust state - only load plugins in Trusted Mode
-  const trustManager = TrustManager.getInstance();
-  const securityMode = trustManager.getMode();
-
-  if (securityMode !== SecurityMode.Trusted) {
+  if (!isSecurityModeTrusted()) {
     const pluginCount =
       (remarkPlugins?.length ?? 0) + (rehypePlugins?.length ?? 0);
     warn(

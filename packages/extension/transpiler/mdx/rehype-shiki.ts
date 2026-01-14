@@ -313,7 +313,7 @@ function createCodeBlockWrapper(options: {
     children.push({
       type: 'element',
       tagName: 'div',
-      properties: { className: ['code-title'] },
+      properties: { className: ['mdx-preview-codeblock-title'] },
       children: [{ type: 'text', value: meta.title }],
     });
   }
@@ -324,7 +324,7 @@ function createCodeBlockWrapper(options: {
     tagName: 'div',
     properties: {
       className: [
-        'shiki-container',
+        'mdx-preview-codeblock-shiki',
         meta.showLineNumbers ? 'with-line-numbers' : '',
       ].filter(Boolean),
       'data-language': lang,
@@ -349,7 +349,7 @@ function createCodeBlockWrapper(options: {
   return {
     type: 'element',
     tagName: 'div',
-    properties: { className: ['code-block-wrapper'] },
+    properties: { className: ['mdx-preview-codeblock'] },
     children,
   };
 }
