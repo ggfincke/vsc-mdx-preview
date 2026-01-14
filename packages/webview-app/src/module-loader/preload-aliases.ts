@@ -1,0 +1,113 @@
+// packages/webview-app/src/module-loader/preload-aliases.ts
+// single source of truth for preloaded module IDs & aliases
+
+// module IDs for preloaded modules (npm:// prefixed canonical IDs)
+// these are the internal identifiers used by the registry
+export const PRELOADED_IDS = {
+  // React core
+  react: 'npm://react@18',
+  reactLatest: 'npm://react@latest',
+  reactDom: 'npm://react-dom@18',
+  reactDomLatest: 'npm://react-dom@latest',
+  reactDomClient: 'npm://react-dom/client@18',
+  jsxRuntime: 'npm://react/jsx-runtime@18',
+  // MDX
+  mdxReact: 'npm://@mdx-js/react@3',
+  mdxReactLatest: 'npm://@mdx-js/react@latest',
+  // Layout
+  vscodeLayout: 'npm://vscode-markdown-layout@0.1.0',
+  vscodeLayoutLatest: 'npm://vscode-markdown-layout@latest',
+  // Docusaurus shims
+  docusaurusTabs: 'npm://@mdx-preview/shims-docusaurus/Tabs',
+  docusaurusTabItem: 'npm://@mdx-preview/shims-docusaurus/TabItem',
+  docusaurusCodeBlock: 'npm://@mdx-preview/shims-docusaurus/CodeBlock',
+  docusaurusDetails: 'npm://@mdx-preview/shims-docusaurus/Details',
+  // Starlight shims
+  starlightComponents: 'npm://@mdx-preview/shims-starlight/components',
+  starlightCard: 'npm://@mdx-preview/shims-starlight/Card',
+  starlightCardGrid: 'npm://@mdx-preview/shims-starlight/CardGrid',
+  starlightLinkCard: 'npm://@mdx-preview/shims-starlight/LinkCard',
+  starlightSteps: 'npm://@mdx-preview/shims-starlight/Steps',
+  starlightBadge: 'npm://@mdx-preview/shims-starlight/Badge',
+  starlightAside: 'npm://@mdx-preview/shims-starlight/Aside',
+  starlightTabs: 'npm://@mdx-preview/shims-starlight/Tabs',
+  starlightTabItem: 'npm://@mdx-preview/shims-starlight/TabItem',
+  starlightFileTree: 'npm://@mdx-preview/shims-starlight/FileTree',
+  starlightCode: 'npm://@mdx-preview/shims-starlight/Code',
+  // Next.js shims
+  nextjsImage: 'npm://@mdx-preview/shims-nextjs/Image',
+  nextjsLink: 'npm://@mdx-preview/shims-nextjs/Link',
+} as const;
+
+// alias mappings: request string -> canonical preloaded ID
+// these allow various import formats to resolve to the same preloaded module
+export const PRELOAD_ALIASES: Record<string, string> = {
+  // React core aliases
+  react: PRELOADED_IDS.react,
+  'npm://react': PRELOADED_IDS.react,
+  'react-dom': PRELOADED_IDS.reactDom,
+  'npm://react-dom': PRELOADED_IDS.reactDom,
+  'react-dom/client': PRELOADED_IDS.reactDomClient,
+  'npm://react-dom/client': PRELOADED_IDS.reactDomClient,
+  'react/jsx-runtime': PRELOADED_IDS.jsxRuntime,
+  'npm://react/jsx-runtime': PRELOADED_IDS.jsxRuntime,
+  // MDX aliases
+  '@mdx-js/react': PRELOADED_IDS.mdxReact,
+  'npm://@mdx-js/react': PRELOADED_IDS.mdxReact,
+  // Layout aliases
+  'vscode-markdown-layout': PRELOADED_IDS.vscodeLayout,
+  'npm://vscode-markdown-layout': PRELOADED_IDS.vscodeLayout,
+  // Docusaurus @theme/* aliases
+  '@theme/Tabs': PRELOADED_IDS.docusaurusTabs,
+  '@theme/TabItem': PRELOADED_IDS.docusaurusTabItem,
+  '@theme/CodeBlock': PRELOADED_IDS.docusaurusCodeBlock,
+  '@theme/Details': PRELOADED_IDS.docusaurusDetails,
+  // Direct shim paths
+  '@mdx-preview/shims/docusaurus/Tabs': PRELOADED_IDS.docusaurusTabs,
+  '@mdx-preview/shims/docusaurus/TabItem': PRELOADED_IDS.docusaurusTabItem,
+  '@mdx-preview/shims/docusaurus/CodeBlock': PRELOADED_IDS.docusaurusCodeBlock,
+  '@mdx-preview/shims/docusaurus/Details': PRELOADED_IDS.docusaurusDetails,
+  // Starlight all-in-one import
+  '@astrojs/starlight/components': PRELOADED_IDS.starlightComponents,
+  // Individual Starlight component aliases
+  '@mdx-preview/shims/starlight/Card': PRELOADED_IDS.starlightCard,
+  '@mdx-preview/shims/starlight/CardGrid': PRELOADED_IDS.starlightCardGrid,
+  '@mdx-preview/shims/starlight/LinkCard': PRELOADED_IDS.starlightLinkCard,
+  '@mdx-preview/shims/starlight/Steps': PRELOADED_IDS.starlightSteps,
+  '@mdx-preview/shims/starlight/Badge': PRELOADED_IDS.starlightBadge,
+  '@mdx-preview/shims/starlight/Aside': PRELOADED_IDS.starlightAside,
+  '@mdx-preview/shims/starlight/Tabs': PRELOADED_IDS.starlightTabs,
+  '@mdx-preview/shims/starlight/TabItem': PRELOADED_IDS.starlightTabItem,
+  '@mdx-preview/shims/starlight/FileTree': PRELOADED_IDS.starlightFileTree,
+  '@mdx-preview/shims/starlight/Code': PRELOADED_IDS.starlightCode,
+  // Next.js aliases
+  'next/image': PRELOADED_IDS.nextjsImage,
+  'next/link': PRELOADED_IDS.nextjsLink,
+  '@mdx-preview/shims/nextjs/Image': PRELOADED_IDS.nextjsImage,
+  '@mdx-preview/shims/nextjs/Link': PRELOADED_IDS.nextjsLink,
+};
+
+// get list of all IDs that should be preserved during module reset
+// this includes both canonical IDs & short-form aliases
+export function getPreservedIds(): string[] {
+  return [
+    ...Object.values(PRELOADED_IDS),
+    // Short-form aliases that are also registered directly
+    'react',
+    'react-dom',
+    'react-dom/client',
+    'react/jsx-runtime',
+    '@mdx-js/react',
+    'vscode-markdown-layout',
+    // Docusaurus shims
+    '@theme/Tabs',
+    '@theme/TabItem',
+    '@theme/CodeBlock',
+    '@theme/Details',
+    // Starlight shims
+    '@astrojs/starlight/components',
+    // Next.js shims
+    'next/image',
+    'next/link',
+  ];
+}

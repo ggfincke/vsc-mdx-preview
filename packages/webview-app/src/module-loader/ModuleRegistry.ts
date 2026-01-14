@@ -9,6 +9,8 @@ export class ModuleRegistry {
   private injectedStyles: Set<string> = new Set();
   // map (parentId, request) -> resolved fsPath for relative imports
   private resolutionMap: Map<string, string> = new Map();
+  // reverse dependency graph: moduleId -> set of modules that depend on it
+  private dependents: Map<string, Set<string>> = new Map();
 
   // preload module (for built-in modules like React)
   preload(id: string, exports: any): void {
@@ -54,6 +56,46 @@ export class ModuleRegistry {
     this.cache.delete(id);
   }
 
+  // record that moduleId depends on dependsOnId
+  addDependency(moduleId: string, dependsOnId: string): void {
+    if (!this.dependents.has(dependsOnId)) {
+      this.dependents.set(dependsOnId, new Set());
+    }
+    this.dependents.get(dependsOnId)!.add(moduleId);
+  }
+
+  // invalidate module & all modules that depend on it (cascade)
+  invalidateWithDependents(id: string): Set<string> {
+    const invalidated = new Set<string>();
+    const queue = [id];
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      if (invalidated.has(current)) {continue;}
+
+      // delete from cache
+      this.cache.delete(current);
+      invalidated.add(current);
+
+      // queue all modules that depend on this one
+      const deps = this.dependents.get(current);
+      if (deps) {
+        for (const dep of deps) {
+          if (!invalidated.has(dep)) {
+            queue.push(dep);
+          }
+        }
+      }
+    }
+
+    return invalidated;
+  }
+
+  // clear the dependency graph (but keep module cache)
+  clearDependencies(): void {
+    this.dependents.clear();
+  }
+
   // clear all cached modules except preloaded ones
   clearNonPreloaded(preloadedIds: string[]): void {
     const preloadedSet = new Set(preloadedIds);
@@ -64,6 +106,7 @@ export class ModuleRegistry {
     }
     this.pendingFetches.clear();
     this.resolutionMap.clear();
+    this.dependents.clear();
   }
 
   // clear all cached modules
@@ -71,6 +114,7 @@ export class ModuleRegistry {
     this.cache.clear();
     this.pendingFetches.clear();
     this.resolutionMap.clear();
+    this.dependents.clear();
   }
 
   // check if CSS has been injected for module
