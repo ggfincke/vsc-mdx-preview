@@ -9,13 +9,12 @@ import {
   openPreview,
   refreshPreview,
   PreviewManager,
-  disposeConfigWatchers,
 } from './preview/preview-manager';
 import { selectSecurityPolicy } from './security/security';
 import { TrustManager } from './security/TrustManager';
 import { initWebviewAppHTMLResources } from './preview/webview-manager';
 import { initWorkspaceHandlers } from './workspace-manager';
-import { info, debug, showOutput, disposeOutputChannel } from './logging';
+import { info, debug, showOutput, getOutputChannel } from './logging';
 import { StatusBarManager } from './preview/StatusBarManager';
 import {
   PREVIEW_THEMES,
@@ -27,6 +26,19 @@ import {
   type CodeBlockTheme,
 } from './themes';
 import { FrameworkDetector, type Framework } from './framework';
+import {
+  ServiceRegistry,
+  ServiceNames,
+  getPreviewManager,
+  getTrustManager,
+  getStatusBarManager,
+  getFrameworkDetector,
+} from './services';
+import { TailwindProcessor } from './tailwind/TailwindProcessor';
+import { ErrorReporter } from './errors';
+import { PackageJsonWatcher } from './module-fetcher/PackageJsonWatcher';
+import { clearResolverCache } from './module-fetcher/resolver-factory';
+import { ConfigManager, ConfigCache } from './config';
 
 // show one-time safe mode notification in untrusted workspaces
 async function showSafeModeNotificationIfNeeded(
@@ -74,7 +86,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
   };
 
   const handleTrustChange = async (trusted: boolean): Promise<void> => {
-    const previewManager = PreviewManager.getInstance();
+    const previewManager = getPreviewManager();
 
     // refresh all previews to reflect new trust state
     previewManager.refreshAllPreviews();
@@ -118,8 +130,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('mdx-preview.preview.enableScripts')) {
-        const previewManager = PreviewManager.getInstance();
-        previewManager.refreshAllPreviews();
+        getPreviewManager().refreshAllPreviews();
       }
     })
   );
@@ -131,7 +142,48 @@ export async function activate(
 ): Promise<void> {
   debug('[ACTIVATE] Starting extension activation...');
 
-  // initialize resources (async)
+  // FIRST: register services w/ the registry for centralized lifecycle management
+  // This MUST happen before any code that uses service locators (getPreviewManager, etc.)
+  // order matters: services w/ no dependencies first, then dependent services
+  const registry = ServiceRegistry.getInstance();
+  registry.register(ServiceNames.CONFIG_MANAGER, () => ConfigManager.getInstance());
+  registry.register(ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance());
+  registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
+  registry.register(ServiceNames.THEME_MANAGER, () => ThemeManager.getInstance());
+  registry.register(
+    ServiceNames.PREVIEW_MANAGER,
+    () => PreviewManager.getInstance()
+  );
+  registry.register(
+    ServiceNames.FRAMEWORK_DETECTOR,
+    () => FrameworkDetector.getInstance()
+  );
+  registry.register(
+    ServiceNames.TAILWIND_PROCESSOR,
+    () => TailwindProcessor.getInstance()
+  );
+  registry.register(
+    ServiceNames.ERROR_REPORTER,
+    () => ErrorReporter.getInstance()
+  );
+  // OutputChannel wrapped for IService compatibility (uses shared channel from logging.ts)
+  registry.register(ServiceNames.OUTPUT_CHANNEL, () => {
+    const channel = getOutputChannel();
+    return {
+      channel,
+      dispose() {
+        channel.dispose();
+      },
+    };
+  });
+  // StatusBarManager depends on TrustManager, FrameworkDetector, PreviewManager
+  registry.register(
+    ServiceNames.STATUS_BAR_MANAGER,
+    () => StatusBarManager.getInstance()
+  );
+  debug('[ACTIVATE] Services registered');
+
+  // THEN: Initialize resources (now safe to call getPreviewManager())
   debug('[ACTIVATE] Initializing webview HTML resources...');
   await initWebviewAppHTMLResources(context);
   debug('[ACTIVATE] Webview HTML resources initialized');
@@ -207,8 +259,7 @@ export async function activate(
     async () => {
       debug('[CMD] toggleScripts command triggered');
 
-      const trustManager = TrustManager.getInstance();
-      const trustState = trustManager.getState();
+      const trustState = getTrustManager().getState();
 
       if (!trustState.workspaceTrusted) {
         // workspace not trusted - offer to manage trust
@@ -242,7 +293,7 @@ export async function activate(
   );
 
   // initialize status bar manager (handles trust state & framework display)
-  const statusBarManager = StatusBarManager.getInstance();
+  const statusBarManager = getStatusBarManager();
   context.subscriptions.push(...statusBarManager.getDisposables());
   statusBarManager.updateVisibility();
 
@@ -250,8 +301,7 @@ export async function activate(
   context.subscriptions.push(
     vscode.window.onDidChangeActiveColorTheme(() => {
       debug('[THEME] VS Code color theme changed, refreshing previews');
-      const previewManager = PreviewManager.getInstance();
-      previewManager.refreshAllPreviews();
+      getPreviewManager().refreshAllPreviews();
     })
   );
 
@@ -285,8 +335,7 @@ export async function activate(
           vscode.ConfigurationTarget.Global
         );
         // refresh previews to apply theme
-        const previewManager = PreviewManager.getInstance();
-        previewManager.refreshAllPreviews();
+        getPreviewManager().refreshAllPreviews();
       }
     }
   );
@@ -321,8 +370,7 @@ export async function activate(
           vscode.ConfigurationTarget.Global
         );
         // refresh previews to apply theme
-        const previewManager = PreviewManager.getInstance();
-        previewManager.refreshAllPreviews();
+        getPreviewManager().refreshAllPreviews();
       }
     }
   );
@@ -332,8 +380,7 @@ export async function activate(
     'mdx-preview.commands.zoomIn',
     async () => {
       debug('[CMD] zoomIn command triggered');
-      const previewManager = PreviewManager.getInstance();
-      const preview = previewManager.getCurrentPreview();
+      const preview = getPreviewManager().getCurrentPreview();
       if (preview?.webviewHandle) {
         await preview.webviewHandle.zoomIn();
       }
@@ -344,8 +391,7 @@ export async function activate(
     'mdx-preview.commands.zoomOut',
     async () => {
       debug('[CMD] zoomOut command triggered');
-      const previewManager = PreviewManager.getInstance();
-      const preview = previewManager.getCurrentPreview();
+      const preview = getPreviewManager().getCurrentPreview();
       if (preview?.webviewHandle) {
         await preview.webviewHandle.zoomOut();
       }
@@ -356,8 +402,7 @@ export async function activate(
     'mdx-preview.commands.resetZoom',
     async () => {
       debug('[CMD] resetZoom command triggered');
-      const previewManager = PreviewManager.getInstance();
-      const preview = previewManager.getCurrentPreview();
+      const preview = getPreviewManager().getCurrentPreview();
       if (preview?.webviewHandle) {
         await preview.webviewHandle.resetZoom();
       }
@@ -372,7 +417,7 @@ export async function activate(
 
       const config = vscode.workspace.getConfiguration('mdx-preview');
       const currentSetting = config.get<string>('framework', 'auto');
-      const frameworkDetector = FrameworkDetector.getInstance();
+      const frameworkDetector = getFrameworkDetector();
 
       // get detected framework for display
       const editor = vscode.window.activeTextEditor;
@@ -434,8 +479,7 @@ export async function activate(
         );
 
         // refresh previews to apply framework changes
-        const previewManager = PreviewManager.getInstance();
-        previewManager.refreshAllPreviews();
+        getPreviewManager().refreshAllPreviews();
 
         vscode.window.showInformationMessage(
           `MDX framework set to ${selected.label}.`
@@ -443,6 +487,24 @@ export async function activate(
       }
     }
   );
+
+  // command to manually refresh module cache (clears resolver cache)
+  const refreshModuleCacheCommand = vscode.commands.registerCommand(
+    'mdx-preview.commands.refreshModuleCache',
+    () => {
+      debug('[CMD] refreshModuleCache command triggered');
+      clearResolverCache();
+      vscode.window.showInformationMessage('MDX Preview module cache cleared.');
+    }
+  );
+
+  // start package.json watcher to auto-invalidate resolver cache
+  const packageJsonWatcher = new PackageJsonWatcher();
+  packageJsonWatcher.start(() => {
+    clearResolverCache();
+    debug('[WATCHER] Resolver cache cleared due to package file change');
+  });
+  context.subscriptions.push(packageJsonWatcher);
 
   context.subscriptions.push(
     openPreviewCommand,
@@ -456,7 +518,8 @@ export async function activate(
     zoomInCommand,
     zoomOutCommand,
     resetZoomCommand,
-    selectFrameworkCommand
+    selectFrameworkCommand,
+    refreshModuleCacheCommand
   );
 
   debug('[ACTIVATE] Extension activation complete');
@@ -464,11 +527,11 @@ export async function activate(
 
 // deactivate extension
 export function deactivate(): void {
-  disposeConfigWatchers();
-  StatusBarManager.dispose();
-  PreviewManager.dispose();
-  TrustManager.dispose();
-  ThemeManager.dispose();
-  FrameworkDetector.dispose();
-  disposeOutputChannel();
+  // clear resolver cache to prevent stale data on reload
+  clearResolverCache();
+
+  // dispose all registered services in reverse registration order
+  // (dependent services like StatusBarManager disposed before their dependencies)
+  // ConfigCache & OutputChannel are now managed by ServiceRegistry
+  ServiceRegistry.getInstance().dispose();
 }

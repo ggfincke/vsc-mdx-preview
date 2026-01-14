@@ -6,9 +6,17 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { Preview } from './preview/preview-manager';
 import { fetchLocal } from './module-fetcher/module-fetcher';
-import { TrustManager } from './security/TrustManager';
+import { isTrustedModeEnabled } from './security/validateTrust';
 import { checkFsPath } from './security/checkFsPath';
 import { error as logError, warn as logWarn, debug } from './logging';
+import {
+  validateString,
+  validateBoolean,
+  validateNumber,
+  validateUrl,
+  validateOptionalNumber,
+} from './utils/validation';
+import { MAX_FETCH_REQUEST_LENGTH } from './constants';
 import type { ExtensionRPC, FetchResult } from '@mdx-preview/shared-types';
 
 // allowed URL schemes for openExternal
@@ -29,7 +37,7 @@ function validateFetchRequest(request: string): boolean {
   }
 
   // reasonable length limit
-  if (request.length > 2048) {
+  if (request.length > MAX_FETCH_REQUEST_LENGTH) {
     logWarn('Fetch request too long', request.length);
     return false;
   }
@@ -49,23 +57,22 @@ class ExtensionHandle implements ExtensionRPC {
   // handshake to resolve when webview is ready
   handshake(): void {
     debug('[EXT-HANDLE] handshake() called from webview!');
-    this.preview.resolveWebviewHandshakePromise();
-    debug('[EXT-HANDLE] resolveWebviewHandshakePromise called');
+    this.preview.completeHandshake();
+    debug('[EXT-HANDLE] completeHandshake called');
   }
 
   // report performance metrics from webview
   reportPerformance(evaluationDuration: number): void {
     debug(`[EXT-HANDLE] reportPerformance: ${evaluationDuration}`);
-    // validate input
-    if (
-      typeof evaluationDuration !== 'number' ||
-      !isFinite(evaluationDuration)
-    ) {
-      logWarn('Invalid evaluation duration', evaluationDuration);
+    const validDuration = validateNumber(evaluationDuration, 'evaluationDuration', {
+      context: 'reportPerformance',
+      finite: true,
+    });
+    if (validDuration === undefined) {
       return;
     }
 
-    this.preview.evaluationDuration = evaluationDuration;
+    this.preview.evaluationDuration = validDuration;
     performance.mark('preview/end');
     performance.measure('preview duration', 'preview/start', 'preview/end');
   }
@@ -77,34 +84,36 @@ class ExtensionHandle implements ExtensionRPC {
     parentId: string
   ): Promise<FetchResult | undefined> {
     debug(`[EXT-HANDLE] fetch: request=${request}, isBare=${isBare}`);
-    // type validation
-    if (typeof request !== 'string') {
-      logError('fetch: request must be a string');
-      return undefined;
-    }
-    if (typeof isBare !== 'boolean') {
-      logError('fetch: isBare must be a boolean');
-      return undefined;
-    }
-    if (typeof parentId !== 'string') {
-      logError('fetch: parentId must be a string');
+
+    // type validation using utilities
+    const opts = { context: 'fetch', log: logError };
+    const validRequest = validateString(request, 'request', {
+      ...opts,
+      allowEmpty: true, // allow empty string, validateFetchRequest handles length
+    });
+    const validIsBare = validateBoolean(isBare, 'isBare', opts);
+    const validParentId = validateString(parentId, 'parentId', {
+      ...opts,
+      allowEmpty: true,
+    });
+
+    if (validRequest === undefined || validIsBare === undefined || validParentId === undefined) {
       return undefined;
     }
 
-    // request validation
-    if (!validateFetchRequest(request)) {
-      logError('fetch: invalid request', request);
+    // request validation (security checks)
+    if (!validateFetchRequest(validRequest)) {
+      logError('fetch: invalid request', validRequest);
       return undefined;
     }
 
     // trust check (only allow fetch when scripts enabled)
-    const trustState = TrustManager.getInstance().getState();
-    if (!trustState.canExecute) {
+    if (!isTrustedModeEnabled()) {
       logWarn('fetch: blocked - scripts not enabled');
       return undefined;
     }
 
-    return fetchLocal(request, isBare, parentId, this.preview);
+    return fetchLocal(validRequest, validIsBare, validParentId, this.preview);
   }
 
   // open VS Code settings (optionally to specific setting)
@@ -133,23 +142,13 @@ class ExtensionHandle implements ExtensionRPC {
   openExternal(url: string): void {
     debug(`[EXT-HANDLE] openExternal: ${url}`);
 
-    // validate input type
-    if (typeof url !== 'string' || url.trim() === '') {
-      logWarn('openExternal: invalid URL', url);
-      return;
-    }
+    // validate URL w/ allowed schemes
+    const parsed = validateUrl(url, 'URL', {
+      context: 'openExternal',
+      allowedSchemes: ALLOWED_EXTERNAL_SCHEMES,
+    });
 
-    // validate URL scheme
-    let parsed: URL;
-    try {
-      parsed = new URL(url);
-    } catch {
-      logWarn('openExternal: failed to parse URL', url);
-      return;
-    }
-
-    if (!ALLOWED_EXTERNAL_SCHEMES.includes(parsed.protocol)) {
-      logWarn('openExternal: disallowed scheme', parsed.protocol);
+    if (!parsed) {
       return;
     }
 
@@ -166,21 +165,17 @@ class ExtensionHandle implements ExtensionRPC {
       `[EXT-HANDLE] openDocument: ${relativePath}${line ? `:${line}` : ''}${column ? `:${column}` : ''}`
     );
 
-    // validate input type
-    if (typeof relativePath !== 'string' || relativePath.trim() === '') {
-      logWarn('openDocument: invalid path', relativePath);
+    const opts = { context: 'openDocument' };
+
+    // validate path (required)
+    const validPath = validateString(relativePath, 'path', opts);
+    if (!validPath) {
       return;
     }
 
-    // validate line/column if provided
-    if (line !== undefined && (typeof line !== 'number' || line < 1)) {
-      logWarn('openDocument: invalid line number', line);
-      line = undefined;
-    }
-    if (column !== undefined && (typeof column !== 'number' || column < 1)) {
-      logWarn('openDocument: invalid column number', column);
-      column = undefined;
-    }
+    // validate line/column if provided (optional, min 1)
+    const validLine = validateOptionalNumber(line, 'line number', { ...opts, min: 1 });
+    const validColumn = validateOptionalNumber(column, 'column number', { ...opts, min: 1 });
 
     // get current document directory from preview
     const entryDir = this.preview.entryFsDirectory;
@@ -190,7 +185,7 @@ class ExtensionHandle implements ExtensionRPC {
     }
 
     // resolve relative path
-    const resolvedPath = path.resolve(entryDir, relativePath);
+    const resolvedPath = path.resolve(entryDir, validPath);
 
     // ! security check - ensure path is within workspace
     if (!checkFsPath(entryDir, resolvedPath)) {
@@ -206,9 +201,9 @@ class ExtensionHandle implements ExtensionRPC {
 
       // create selection if line is provided (VS Code uses 0-based indexing)
       const options: vscode.TextDocumentShowOptions = {};
-      if (line !== undefined) {
-        const lineIndex = line - 1;
-        const colIndex = column !== undefined ? column - 1 : 0;
+      if (validLine !== undefined) {
+        const lineIndex = validLine - 1;
+        const colIndex = validColumn !== undefined ? validColumn - 1 : 0;
         const position = new vscode.Position(lineIndex, colIndex);
         options.selection = new vscode.Range(position, position);
       }

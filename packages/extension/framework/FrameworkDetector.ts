@@ -284,8 +284,8 @@ export class FrameworkDetector {
     }
   }
 
-  // dispose resources
-  private dispose(): void {
+  // dispose resources (public for IService interface)
+  dispose(): void {
     for (const disposable of this.disposables) {
       disposable.dispose();
     }

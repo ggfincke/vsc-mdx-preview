@@ -48,6 +48,11 @@ export class ThemeManager {
     }
   }
 
+  // instance dispose for IService interface compatibility
+  dispose(): void {
+    ThemeManager.dispose();
+  }
+
   // get theme configuration from settings
   getThemeConfiguration(docUri?: vscode.Uri): ThemeConfiguration {
     const config = vscode.workspace.getConfiguration('mdx-preview', docUri);

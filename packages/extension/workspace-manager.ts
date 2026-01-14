@@ -3,7 +3,7 @@
 
 import { workspace, ExtensionContext } from 'vscode';
 
-import { PreviewManager } from './preview/preview-manager';
+import { getPreviewManager } from './services';
 import { handleDidChangeWorkspaceFolders } from './security/checkFsPath';
 
 // initialize workspace event handlers & register w/ extension context (disposables added to context.subscriptions for automatic cleanup)
@@ -11,7 +11,7 @@ export function initWorkspaceHandlers(context: ExtensionContext): void {
   // handle document saves - refresh preview if saved file is relevant
   context.subscriptions.push(
     workspace.onDidSaveTextDocument((event) => {
-      const currentPreview = PreviewManager.getInstance().getCurrentPreview();
+      const currentPreview = getPreviewManager().getCurrentPreview();
       if (currentPreview) {
         currentPreview.handleDidSaveTextDocument(event.uri.fsPath);
       }
@@ -21,7 +21,7 @@ export function initWorkspaceHandlers(context: ExtensionContext): void {
   // handle document changes - refresh preview on edit (if configured)
   context.subscriptions.push(
     workspace.onDidChangeTextDocument((event) => {
-      const currentPreview = PreviewManager.getInstance().getCurrentPreview();
+      const currentPreview = getPreviewManager().getCurrentPreview();
       if (currentPreview) {
         currentPreview.handleDidChangeTextDocument(
           event.document.uri.fsPath,
@@ -34,7 +34,7 @@ export function initWorkspaceHandlers(context: ExtensionContext): void {
   // handle configuration changes - update preview settings
   context.subscriptions.push(
     workspace.onDidChangeConfiguration(() => {
-      const currentPreview = PreviewManager.getInstance().getCurrentPreview();
+      const currentPreview = getPreviewManager().getCurrentPreview();
       if (currentPreview) {
         currentPreview.updateConfiguration();
       }
