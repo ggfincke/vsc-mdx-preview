@@ -4,9 +4,11 @@
 import * as fs from 'fs';
 import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve';
 import type { Resolver } from 'enhanced-resolve';
+import { debug } from '../logging';
+import { RESOLVER_CACHE_TTL_MS } from '../constants';
 
-// shared cached file system for all resolvers (4 second cache)
-const cachedFs = new CachedInputFileSystem(fs, 4000);
+// shared cached file system for all resolvers
+const cachedFs = new CachedInputFileSystem(fs, RESOLVER_CACHE_TTL_MS);
 
 // resolver mode determines the resolution strategy
 // - 'browser': prioritizes browser-compatible exports for webview module loading
@@ -84,3 +86,16 @@ export function getNodeResolver(): Resolver {
 
 // export cached filesystem for handlers that need SASS compilation
 export { cachedFs };
+
+// clear resolver cache (invalidates all cached resolutions)
+// call when package.json changes or when manual refresh is requested
+export function clearResolverCache(): void {
+  // purge the cached file system (clears all file content & stat caches)
+  cachedFs.purge();
+
+  // reset resolver instances (forces recreation on next use)
+  _browserResolver = null;
+  _nodeResolver = null;
+
+  debug('[RESOLVER] Cache cleared');
+}

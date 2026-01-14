@@ -7,14 +7,14 @@ import * as typescript from 'typescript';
 import { Preview } from '../preview/preview-manager';
 import { checkFsPath } from '../security/checkFsPath';
 import {
-  ExtensionError,
   ModuleFetchError,
   PathAccessDeniedError,
+  ErrorContext,
 } from '../errors';
-import { formatUserError, formatLogError } from '../errors/messages';
-import { error as logError, debug } from '../logging';
+import { getErrorReporter, getFrameworkDetector } from '../services';
+import { debug } from '../logging';
 import type { FetchResult } from '@mdx-preview/shared-types';
-import { FrameworkDetector, resolveAlias, isBuiltInShim } from '../framework';
+import { resolveAlias, isBuiltInShim } from '../framework';
 
 // import from extracted modules
 import { getBrowserResolver } from './resolver-factory';
@@ -68,7 +68,7 @@ export async function fetchLocal(
     }
 
     // check for framework-specific import aliases (e.g., @theme/Tabs, @astrojs/starlight/components)
-    const frameworkDetector = FrameworkDetector.getInstance();
+    const frameworkDetector = getFrameworkDetector();
     const frameworkInfo = frameworkDetector.getFramework(preview.doc.uri);
     const workspaceRoot = preview.entryFsDirectory;
 
@@ -172,18 +172,13 @@ export async function fetchLocal(
     const scriptHandler = new ScriptHandler();
     return scriptHandler.handle(code, fsPath, preview);
   } catch (error) {
-    // handle all structured errors (ModuleFetchError, SecurityError, TranspileError)
-    if (error instanceof ExtensionError) {
-      logError('Module fetch failed', formatLogError(error));
-      preview.webviewHandle.showPreviewError({
-        message: formatUserError(error),
-        code: error.code,
-      });
-    } else {
-      const message = error instanceof Error ? error.message : String(error);
-      logError('Module fetch failed', { request, error: message });
-      preview.webviewHandle.showPreviewError({ message });
-    }
+    // report error via centralized ErrorReporter
+    getErrorReporter().report(error, {
+      context: ErrorContext.ModuleFetch,
+      showInWebview: true,
+      webviewHandle: preview.webviewHandle,
+      metadata: { request, parentId },
+    });
     return undefined;
   }
 }
