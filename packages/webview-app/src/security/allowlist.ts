@@ -1,5 +1,5 @@
-// packages/webview-app/src/security/domPurifyConfig.ts
-// DOMPurify configuration for Safe Mode HTML sanitization
+// packages/webview-app/src/security/allowlist.ts
+// DOMPurify allowlist configuration for Safe Mode HTML sanitization
 
 import type { Config } from 'dompurify';
 
@@ -234,62 +234,3 @@ export const DOMPURIFY_CONFIG: Config = {
   ALLOWED_URI_REGEXP:
     /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
 };
-
-// process links to ensure they're safe (external links open in new tab w/ noopener noreferrer)
-export function processLinks(container: HTMLElement): void {
-  const links = container.querySelectorAll('a');
-  links.forEach((link) => {
-    const href = link.getAttribute('href');
-    if (!href) {
-      return;
-    }
-
-    // internal anchor links
-    if (href.startsWith('#')) {
-      return;
-    }
-
-    // external links (open in new tab securely)
-    link.setAttribute('target', '_blank');
-    link.setAttribute('rel', 'noopener noreferrer');
-  });
-}
-
-// add clickable cursor to images for lightbox
-export function processImages(container: HTMLElement): void {
-  const images = container.querySelectorAll('img');
-  images.forEach((img) => {
-    img.style.cursor = 'zoom-in';
-  });
-}
-
-// ensure safe mode placeholder styles are present
-export function ensureSafeModeStyles(): void {
-  const styleId = 'mdx-safe-mode-styles';
-  if (document.getElementById(styleId)) {
-    return;
-  }
-
-  const style = document.createElement('style');
-  style.id = styleId;
-  style.textContent = `
-    .mdx-jsx-placeholder,
-    .mdx-expression-placeholder {
-      display: inline-block;
-      padding: 2px 6px;
-      margin: 2px;
-      background-color: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
-      border: 1px dashed var(--vscode-textBlockQuote-border, rgba(127, 127, 127, 0.3));
-      border-radius: 3px;
-      font-family: var(--vscode-editor-font-family, monospace);
-      font-size: 0.9em;
-      color: var(--vscode-descriptionForeground, #717171);
-      cursor: help;
-    }
-
-    .mdx-safe-preview {
-      padding: 16px;
-    }
-  `;
-  document.head.appendChild(style);
-}
