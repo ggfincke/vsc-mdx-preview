@@ -1,0 +1,23 @@
+/* packages/webview-app/src/components/PreviewContainer/PreviewContainer.css */
+/* Shared styles for PreviewContainer component */
+
+/* Base styles for preview containers */
+.mdx-preview-container-base {
+  min-height: 100px;
+}
+
+/* Safe Mode preview container */
+.mdx-safe-preview {
+  min-height: 100px;
+}
+
+/* Trusted Mode preview container */
+.mdx-trusted-preview {
+  min-height: 100px;
+}
+
+/* Clickable images for lightbox (both modes) */
+.mdx-safe-preview img,
+.mdx-trusted-preview img {
+  cursor: zoom-in;
+}
