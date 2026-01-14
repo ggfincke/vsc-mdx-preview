@@ -211,17 +211,28 @@
   display: block;
 }
 
-/* Diff highlighting (for language-diff) */
-.shiki-container[data-language='diff'] .line:has(.inserted) {
-  background: var(
-    --vscode-diffEditor-insertedLineBackground,
-    rgba(0, 255, 0, 0.1)
-  );
+/* Diff highlighting - inline background without disrupting line flow */
+.shiki-container[data-language='diff'] .line.diff-add,
+.shiki-container[data-language='diff'] .line.diff-remove {
+  position: relative;
 }
 
-.shiki-container[data-language='diff'] .line:has(.deleted) {
-  background: var(
-    --vscode-diffEditor-removedLineBackground,
-    rgba(255, 0, 0, 0.1)
-  );
+.shiki-container[data-language='diff'] .line.diff-add::before,
+.shiki-container[data-language='diff'] .line.diff-remove::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  right: -16px;
+  top: 0;
+  bottom: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.shiki-container[data-language='diff'] .line.diff-add::before {
+  background: var(--vscode-diffEditor-insertedLineBackground, rgba(35, 134, 54, 0.2));
+}
+
+.shiki-container[data-language='diff'] .line.diff-remove::before {
+  background: var(--vscode-diffEditor-removedLineBackground, rgba(248, 81, 73, 0.2));
 }

@@ -8,6 +8,7 @@ import {
   createHighlighter,
   type Highlighter,
   type BundledLanguage,
+  type ShikiTransformer,
 } from 'shiki';
 import { createCssVariablesTheme } from 'shiki/core';
 
@@ -93,6 +94,21 @@ const cssVariablesTheme = createCssVariablesTheme({
   variableDefaults: {},
   fontStyle: true,
 });
+
+// transformer to add diff-specific classes to lines
+const diffTransformer: ShikiTransformer = {
+  name: 'diff-highlight',
+  line(hast, lineNumber) {
+    const lines = this.source.split('\n');
+    const lineText = lines[lineNumber - 1] || '';
+
+    if (lineText.startsWith('+')) {
+      this.addClassToHast(hast, 'diff-add');
+    } else if (lineText.startsWith('-')) {
+      this.addClassToHast(hast, 'diff-remove');
+    }
+  },
+};
 
 // cached highlighter instance
 let highlighterPromise: Promise<Highlighter> | null = null;
@@ -262,6 +278,7 @@ export default function rehypeShiki() {
         const html = highlighter.codeToHtml(code, {
           lang: highlightLang,
           theme: 'css-variables',
+          transformers: highlightLang === 'diff' ? [diffTransformer] : [],
         });
 
         // create wrapper w/ code block

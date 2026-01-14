@@ -350,7 +350,6 @@ body.wordWrap .markdown-body pre {
 
 .markdown-body pre code {
   display: inline-block;
-  color: var(--vscode-editor-foreground);
   tab-size: 4;
   background: none;
 }
