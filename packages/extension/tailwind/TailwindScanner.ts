@@ -7,14 +7,14 @@
 // - Large files are skipped w/ debug log (not errors)
 // - File resolution uses fallback chain: exact path → extensions → index files
 
-import * as fs from 'fs';
 import * as path from 'path';
 import { debug } from '../logging';
 import {
   isLocalImport,
   resolveImportAsync,
 } from '../module-fetcher/resolve-import';
-import { SCANNER_MAX_RECURSION_DEPTH } from './constants';
+import { CLASS_TOKEN_RE, SCANNER_MAX_RECURSION_DEPTH } from './constants';
+import { FileScanValidator } from './FileScanValidator';
 
 // static class attribute: className="..." or class='...'
 const CLASS_ATTR_RE = /\bclass(Name)?\s*=\s*("([^"]*)"|'([^']*)')/g;
@@ -32,8 +32,6 @@ const APPLY_RE = /@apply\s+([^;]+);/g;
 const LAYER_RE = /@layer\s+(?:utilities|components)\s*\{/g;
 // CSS class selector pattern (matches .class-name in CSS)
 const CSS_CLASS_SELECTOR_RE = /\.([A-Za-z_-][A-Za-z0-9_-]*)/g;
-// valid Tailwind class token pattern
-const CLASS_TOKEN_RE = /^[A-Za-z0-9:_/.\-[\]()%,#=!]+$/;
 
 export interface TailwindScanOptions {
   includeDependencies: boolean;
@@ -60,6 +58,8 @@ export interface TailwindScanResult {
 // - truly dynamic classes: `text-${size}`, className={styles[variant]}
 // - computed property keys: { [dynamicKey]: true }
 export class TailwindScanner {
+  private readonly validator = new FileScanValidator();
+
   async scan(
     text: string,
     options: TailwindScanOptions
@@ -83,38 +83,15 @@ export class TailwindScanner {
 
       const sizeLimit = options.maxFileSizeBytes ?? 1024 * 1024;
 
-      // read all dependency files in parallel
-      const fileReadPromises = resolved.map(
-        async (
-          fsPath
-        ): Promise<{
-          fsPath: string;
-          content: string | null;
-        }> => {
-          try {
-            const stat = await fs.promises.stat(fsPath);
-            if (stat.size > sizeLimit) {
-              debug(`[TAILWIND] Skipping large file: ${fsPath}`);
-              return { fsPath, content: null };
-            }
-            const content = await fs.promises.readFile(fsPath, 'utf-8');
-            return { fsPath, content };
-          } catch (err) {
-            debug(
-              `[TAILWIND] Skipping unreadable dependency: ${fsPath} (${err instanceof Error ? err.message : String(err)})`
-            );
-            return { fsPath, content: null };
-          }
-        }
+      // read all dependency files in parallel using FileScanValidator
+      const fileContents = await this.validator.readValidFiles(
+        resolved,
+        sizeLimit
       );
 
-      const fileResults = await Promise.all(fileReadPromises);
-
-      for (const { fsPath, content } of fileResults) {
-        if (content !== null) {
-          this.extractFromText(content, classSet);
-          scannedFiles.push(fsPath);
-        }
+      for (const [fsPath, content] of fileContents) {
+        this.extractFromText(content, classSet);
+        scannedFiles.push(fsPath);
       }
     }
 

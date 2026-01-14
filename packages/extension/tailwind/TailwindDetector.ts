@@ -314,7 +314,7 @@ export class TailwindDetector {
       resolved = undefined;
     }
 
-    if (!resolved || resolved === false) {
+    if (!resolved) {
       debug(`[TAILWIND] Tailwind CSS not found in workspace: ${workspaceRoot}`);
       const info: TailwindVersionInfo = { version: null, major: null };
       this.versionCache.set(cacheKey, {

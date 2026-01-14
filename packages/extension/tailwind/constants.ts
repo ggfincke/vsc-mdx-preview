@@ -66,3 +66,16 @@ export const MAX_KNOWN_TAILWIND_VERSION = 4;
 // debounce delay in milliseconds for Tailwind config file watcher
 // prevents rapid recompilations when files are saved multiple times in quick succession
 export const CONFIG_WATCHER_DEBOUNCE_MS = 300;
+
+// =============================================================================
+// class extraction patterns
+// =============================================================================
+
+// valid Tailwind class token pattern
+// matches common Tailwind patterns including:
+// - basic classes: flex, gap-4, text-sm
+// - responsive/state variants: sm:flex, hover:bg-blue-500
+// - arbitrary values: w-[100px], bg-[#ff0000]
+// - negative values: -mt-4
+// - fractions: w-1/2
+export const CLASS_TOKEN_RE = /^[A-Za-z0-9:_/.\-[\]()%,#=!]+$/;

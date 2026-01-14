@@ -234,6 +234,22 @@ export class TailwindProcessor {
     this.detector.invalidateVersionCache(workspaceRoot);
   }
 
+  // dispose resources held by the processor - clears caches & any held references
+  dispose(): void {
+    this.cache.clear();
+    this.detector.invalidateVersionCache();
+    debug('[TAILWIND] TailwindProcessor disposed');
+  }
+
+  // static dispose for singleton cleanup
+  static dispose(): void {
+    if (TailwindProcessor.instance) {
+      TailwindProcessor.instance.dispose();
+      // @ts-expect-error - reset singleton for dispose
+      TailwindProcessor.instance = undefined;
+    }
+  }
+
   private buildWatchFiles(
     configPath: string | null,
     entryCssPath: string | null
