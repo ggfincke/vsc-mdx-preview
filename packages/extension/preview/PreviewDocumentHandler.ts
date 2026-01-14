@@ -3,7 +3,6 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { debug } from '../logging';
 import {
   resolveTypescriptConfig,
   findTsConfig,
@@ -41,6 +40,10 @@ export class PreviewDocumentHandler {
     return this._typescriptConfiguration;
   }
 
+  set typescriptConfiguration(value: TypeScriptConfiguration | undefined) {
+    this._typescriptConfiguration = value;
+  }
+
   get mdxPreviewConfig(): ResolvedConfig | undefined {
     return this._mdxPreviewConfig;
   }
@@ -71,11 +74,7 @@ export class PreviewDocumentHandler {
   }
 
   // Set the document & resolve related configurations.
-  // Returns whether config watcher needs to be set up.
-  setDoc(
-    doc: vscode.TextDocument,
-    watcherManager: WatcherManager
-  ): { needsConfigWatcher: boolean } {
+  setDoc(doc: vscode.TextDocument, watcherManager: WatcherManager): void {
     this._doc = doc;
     this._dependentFsPaths = new Set([doc.uri.fsPath]);
 
@@ -87,14 +86,10 @@ export class PreviewDocumentHandler {
     }
 
     // resolve MDX preview config file (.mdx-previewrc.json)
-    let needsConfigWatcher = false;
     if (doc.uri.scheme === 'file') {
       this._mdxPreviewConfig = resolveConfig(doc.uri.fsPath) ?? undefined;
-      needsConfigWatcher = true;
     } else {
       this._mdxPreviewConfig = undefined;
-      // remove config watcher if switching to non-file scheme
-      watcherManager.unregister('config');
     }
 
     // update dependency watcher's document directory
@@ -104,8 +99,6 @@ export class PreviewDocumentHandler {
       dependencyWatcher.setDocumentDir(this.entryFsDirectory);
       dependencyWatcher.clear(); // clear old dependencies when switching documents
     }
-
-    return { needsConfigWatcher };
   }
 
   // Update the MDX preview config (called after config file change).

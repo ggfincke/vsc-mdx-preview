@@ -4,32 +4,29 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { Preview, StyleConfiguration } from './preview-manager';
+import {
+  Preview,
+  StyleConfiguration,
+  type WebviewAppUris,
+} from './preview-manager';
 import { getCSP, generateNonce } from '../security/CSP';
-import { TrustManager } from '../security/TrustManager';
 import { initRPCExtensionSide } from '../rpc-extension';
+import { getPreviewManager, getTrustManager } from '../services';
 import { debug } from '../logging';
+import { CSP_DEBUG_PREVIEW_LENGTH } from '../constants';
 
 const VIEW_TYPE = 'mdx.preview';
 const MDX_PREVIEW_FOCUS_CONTEXT_KEY = 'mdxPreviewFocus';
 
-let panel: vscode.WebviewPanel | undefined;
-let panelDoc: vscode.TextDocument | undefined;
-const disposables: vscode.Disposable[] = [];
-
-interface WebviewAppUris {
-  mainScript: vscode.Uri;
-  mainStyle: vscode.Uri | undefined;
-}
-
-let webviewAppUris: WebviewAppUris | undefined;
-let extensionUriCache: vscode.Uri | undefined;
+// NOTE: panel, panelDoc, disposables, & URI state have been moved to PreviewManager
+// for better testability & lifecycle management
 
 export async function initWebviewAppHTMLResources(
   context: vscode.ExtensionContext
 ): Promise<void> {
   debug('[WEBVIEW-MGR] initWebviewAppHTMLResources called');
-  extensionUriCache = context.extensionUri;
+  const manager = getPreviewManager();
+  manager.setExtensionUri(context.extensionUri);
 
   // Vite manifest format - use Uri.joinPath & workspace.fs for extension resources
   const manifestUri = vscode.Uri.joinPath(
@@ -58,12 +55,13 @@ export async function initWebviewAppHTMLResources(
     'webview-app'
   );
 
-  webviewAppUris = {
+  const webviewAppUris: WebviewAppUris = {
     mainScript: vscode.Uri.joinPath(webviewAppBaseUri, entry.file),
     mainStyle: entry.css?.[0]
       ? vscode.Uri.joinPath(webviewAppBaseUri, entry.css[0])
       : undefined,
   };
+  manager.setWebviewAppUris(webviewAppUris);
   debug(`[WEBVIEW-MGR] Loaded mainScript: ${webviewAppUris.mainScript.fsPath}`);
   debug(
     `[WEBVIEW-MGR] Loaded mainStyle: ${webviewAppUris.mainStyle?.fsPath ?? 'none'}`
@@ -77,6 +75,7 @@ function getWebviewAppHTML(
   contentSecurityPolicy: string,
   styleConfiguration: StyleConfiguration
 ): string | undefined {
+  const webviewAppUris = getPreviewManager().getWebviewAppUris();
   if (!webviewAppUris) {
     debug('[WEBVIEW-MGR] getWebviewAppHTML: webviewAppUris is undefined!');
     return undefined;
@@ -129,18 +128,12 @@ function getWebviewAppHTML(
 
 function dispose(): void {
   debug('[WEBVIEW-MGR] dispose called');
-  panel?.dispose();
-  while (disposables.length) {
-    const disposable = disposables.pop();
-    if (disposable) {
-      disposable.dispose();
-    }
-  }
-  panel = undefined;
+  getPreviewManager().clearPanel();
 }
 
 function setPanelHTMLFromPreview(preview: Preview): void {
   debug('[WEBVIEW-MGR] setPanelHTMLFromPreview called');
+  const panel = getPreviewManager().getPanel();
   if (!panel) {
     debug('[WEBVIEW-MGR] setPanelHTMLFromPreview: no panel!');
     return;
@@ -150,7 +143,7 @@ function setPanelHTMLFromPreview(preview: Preview): void {
   const previewBaseHref = panel.webview.asWebviewUri(doc.uri).toString(true);
 
   // Get current trust state (document-specific, includes remote/scheme checks)
-  const trustState = TrustManager.getInstance().getStateForDocument(doc.uri);
+  const trustState = getTrustManager().getStateForDocument(doc.uri);
   debug(
     `[WEBVIEW-MGR] Trust state: canExecute=${trustState.canExecute}, workspaceTrusted=${trustState.workspaceTrusted}, scriptsEnabled=${trustState.scriptsEnabled}`
   );
@@ -165,7 +158,7 @@ function setPanelHTMLFromPreview(preview: Preview): void {
     trustState,
     preview.securityConfiguration.securityPolicy
   );
-  debug(`[WEBVIEW-MGR] CSP: ${csp.substring(0, 100)}...`);
+  debug(`[WEBVIEW-MGR] CSP: ${csp.substring(0, CSP_DEBUG_PREVIEW_LENGTH)}...`);
 
   const webviewAppHTML = getWebviewAppHTML(
     panel.webview,
@@ -187,18 +180,25 @@ function setPanelHTMLFromPreview(preview: Preview): void {
 
 export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
   debug('[WEBVIEW-MGR] createOrShowPanel called');
+  const manager = getPreviewManager();
+
   // Use ViewColumn.Beside to open preview next to the active editor
   // This is the modern VS Code approach that handles edge cases better
   const previewColumn = vscode.ViewColumn.Beside;
   const previewTitle = `Preview ${path.basename(preview.doc.fileName)}`;
 
+  let panel = manager.getPanel();
+  const panelDoc = manager.getPanelDoc();
+  const disposables = manager.getPanelDisposables();
+
   if (!panel) {
     debug('[WEBVIEW-MGR] Creating new webview panel');
     // Set up local resource roots for security
     const localResourceRoots: vscode.Uri[] = [];
-    if (extensionUriCache) {
+    const extensionUri = manager.getExtensionUri();
+    if (extensionUri) {
       localResourceRoots.push(
-        vscode.Uri.joinPath(extensionUriCache, 'build', 'webview-app')
+        vscode.Uri.joinPath(extensionUri, 'build', 'webview-app')
       );
     }
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -218,7 +218,8 @@ export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
         localResourceRoots,
       }
     );
-    panelDoc = preview.doc;
+    manager.setPanel(panel);
+    manager.setPanelDoc(preview.doc);
     debug('[WEBVIEW-MGR] Panel created, setting HTML');
     setPanelHTMLFromPreview(preview);
 
@@ -273,7 +274,7 @@ export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
       preview.initWebviewHandshakePromise();
       panel.title = previewTitle;
       setPanelHTMLFromPreview(preview);
-      panelDoc = preview.doc;
+      manager.setPanelDoc(preview.doc);
     } else {
       debug('[WEBVIEW-MGR] Same doc, just revealing panel');
     }
@@ -293,6 +294,7 @@ export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
 
 export function refreshPanel(preview: Preview): void {
   debug('[WEBVIEW-MGR] refreshPanel called');
+  const panel = getPreviewManager().getPanel();
   if (!panel) {
     debug('[WEBVIEW-MGR] refreshPanel: no panel');
     return;

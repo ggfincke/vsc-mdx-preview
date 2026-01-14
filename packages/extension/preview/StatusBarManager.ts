@@ -2,12 +2,16 @@
 // * manage MDX Preview status bar items (trust state + framework display)
 
 import * as vscode from 'vscode';
-import { TrustManager, type TrustState } from '../security/TrustManager';
-import { PreviewManager } from './preview-manager';
+import type { TrustState } from '../security/TrustManager';
 import {
-  FrameworkDetector,
-  type FrameworkInfo,
-} from '../framework/FrameworkDetector';
+  getTrustManager,
+  getPreviewManager,
+  getFrameworkDetector,
+} from '../services';
+import {
+  STATUS_BAR_TRUST_PRIORITY,
+  STATUS_BAR_FRAMEWORK_PRIORITY,
+} from '../constants';
 
 // * status bar manager singleton for MDX preview status display
 export class StatusBarManager {
@@ -20,33 +24,32 @@ export class StatusBarManager {
     // create trust status bar item
     this.trustStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
-      100
+      STATUS_BAR_TRUST_PRIORITY
     );
     this.trustStatusBarItem.command = 'mdx-preview.commands.toggleScripts';
 
-    // create framework status bar item
-    // slightly lower priority than trust item
+    // create framework status bar item (slightly lower priority than trust item)
     this.frameworkStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
-      99
+      STATUS_BAR_FRAMEWORK_PRIORITY
     );
     this.frameworkStatusBarItem.command =
       'mdx-preview.commands.selectFramework';
 
     // initial state
-    this.updateTrustDisplay(TrustManager.getInstance().getState());
+    this.updateTrustDisplay(getTrustManager().getState());
     this.updateFrameworkDisplay();
 
     // subscribe to trust state changes
     this.disposables.push(
-      TrustManager.getInstance().subscribe((state) => {
+      getTrustManager().subscribe((state) => {
         this.updateTrustDisplay(state);
       })
     );
 
     // subscribe to framework changes
     this.disposables.push(
-      FrameworkDetector.getInstance().subscribe(() => {
+      getFrameworkDetector().subscribe(() => {
         this.updateFrameworkDisplay();
       })
     );
@@ -61,7 +64,7 @@ export class StatusBarManager {
 
     // subscribe to preview state changes
     this.disposables.push(
-      PreviewManager.getInstance().subscribe(() => {
+      getPreviewManager().subscribe(() => {
         this.updateVisibility();
       })
     );
@@ -116,7 +119,7 @@ export class StatusBarManager {
       return;
     }
 
-    const frameworkDetector = FrameworkDetector.getInstance();
+    const frameworkDetector = getFrameworkDetector();
     const info = frameworkDetector.getFramework(editor.document.uri);
     const displayName = frameworkDetector.getFrameworkDisplayName(
       info.framework
@@ -156,7 +159,7 @@ export class StatusBarManager {
     }
 
     // also show if there are any active previews
-    const previewManager = PreviewManager.getInstance();
+    const previewManager = getPreviewManager();
     if (previewManager.hasActivePreviews()) {
       this.trustStatusBarItem.show();
       // framework item only shows for active mdx/md files
@@ -171,8 +174,8 @@ export class StatusBarManager {
     return [this.trustStatusBarItem, this.frameworkStatusBarItem];
   }
 
-  // dispose all resources
-  private dispose(): void {
+  // dispose all resources (public for IService interface)
+  dispose(): void {
     for (const disposable of this.disposables) {
       disposable.dispose();
     }

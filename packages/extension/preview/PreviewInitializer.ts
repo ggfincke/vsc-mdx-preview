@@ -2,7 +2,8 @@
 // initialization logic for preview instances (watchers, handshake)
 
 import * as vscode from 'vscode';
-import { debug, error as logError } from '../logging';
+import { debug } from '../logging';
+import { WEBVIEW_HANDSHAKE_TIMEOUT_MS } from '../constants';
 import {
   DocumentTracker,
   CustomCssWatcher,
@@ -11,8 +12,8 @@ import {
   TailwindConfigWatcher,
   WatcherManager,
 } from './watchers';
-import { resolveConfig, type ResolvedConfig } from './config';
-import { TailwindProcessor } from '../tailwind';
+import type { ResolvedConfig } from './config';
+import { getTailwindProcessor } from '../services';
 
 export interface HandshakeResult {
   promise: Promise<void>;
@@ -22,8 +23,6 @@ export interface HandshakeResult {
 // handles initialization logic for preview instances.
 // creates & configures watchers & manages the webview handshake.
 export class PreviewInitializer {
-  private static readonly HANDSHAKE_TIMEOUT_MS = 10000;
-
   // create a webview handshake promise w/ timeout.
   createHandshake(): HandshakeResult {
     debug('[PREVIEW] initWebviewHandshakePromise called');
@@ -44,7 +43,7 @@ export class PreviewInitializer {
             'Webview handshake timeout - the preview failed to initialize within 10 seconds'
           )
         );
-      }, PreviewInitializer.HANDSHAKE_TIMEOUT_MS);
+      }, WEBVIEW_HANDSHAKE_TIMEOUT_MS);
     });
 
     const promise = Promise.race([handshakePromise, timeoutPromise]);
@@ -55,19 +54,27 @@ export class PreviewInitializer {
     };
   }
 
-  // Initialize all watchers via WatcherManager.
-  initializeWatchers(
+  // Create all watchers via WatcherManager without starting them.
+  // Call startWatchers() after document directory is set.
+  createWatchers(
     customCssPath: string,
-    onDependencyChange: (fsPath: string) => Promise<void>
+    onDependencyChange: (fsPath: string) => Promise<void>,
+    webviewReadyPromise?: Promise<void>
   ): WatcherManager {
     const watcherManager = new WatcherManager();
+
+    // set ready gate to prevent callbacks from firing before webview is ready
+    if (webviewReadyPromise) {
+      watcherManager.setReadyGate(webviewReadyPromise);
+    }
 
     // document tracker for version tracking
     const documentTracker = new DocumentTracker();
     watcherManager.register('document', documentTracker);
 
-    // dependency watcher for local imports
+    // dependency watcher for local imports - callback waits for ready gate
     const dependencyWatcher = new DependencyWatcher(async (fsPath) => {
+      await watcherManager.waitForGate();
       debug(`[PREVIEW] Dependency changed: ${fsPath}`);
       await onDependencyChange(fsPath);
     });
@@ -83,23 +90,40 @@ export class PreviewInitializer {
       watcherManager.register('customCss', customCssWatcher);
     }
 
-    // start all watchers
-    watcherManager.startAll();
-
+    // NOTE: watchers are NOT started here - call startWatchers() after setup
     return watcherManager;
   }
 
-  // Setup config file watcher via WatcherManager.
+  // Start all watchers after document directory is set.
+  async startWatchers(watcherManager: WatcherManager): Promise<void> {
+    await watcherManager.startAll();
+  }
+
+  // Initialize all watchers via WatcherManager (backward compatible).
+  // Prefer createWatchers() + startWatchers() for new code.
+  initializeWatchers(
+    customCssPath: string,
+    onDependencyChange: (fsPath: string) => Promise<void>
+  ): WatcherManager {
+    const watcherManager = this.createWatchers(customCssPath, onDependencyChange);
+    // Start asynchronously (fire-and-forget for backward compatibility)
+    void watcherManager.startAll();
+    return watcherManager;
+  }
+
+  // Setup or teardown config file watcher based on document scheme.
+  // Consolidates all config watcher logic in one place.
   setupConfigWatcher(
     watcherManager: WatcherManager,
+    docScheme: string,
     mdxPreviewConfig: ResolvedConfig | undefined,
-    docFsPath: string,
     onConfigChange: () => void
   ): void {
-    // remove existing config watcher
+    // always remove existing config watcher first
     watcherManager.unregister('config');
 
-    if (!mdxPreviewConfig) {
+    // only set up watcher for file scheme documents w/ valid config
+    if (docScheme !== 'file' || !mdxPreviewConfig) {
       return;
     }
 
@@ -157,7 +181,7 @@ export class PreviewInitializer {
     const tailwindWatcher = new TailwindConfigWatcher(watchFiles, () => {
       debug('[PREVIEW] Tailwind config changed, reloading...');
       // Invalidate version cache when config changes (handles v3->v4 upgrades)
-      TailwindProcessor.getInstance().invalidateVersionCache();
+      getTailwindProcessor().invalidateVersionCache();
       onChange();
     });
 

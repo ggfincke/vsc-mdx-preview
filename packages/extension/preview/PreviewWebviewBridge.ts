@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
-import { ThemeManager } from '../themes';
+import { getThemeManager } from '../services';
 import { DocumentTracker, CustomCssWatcher, WatcherManager } from './watchers';
 import type { WebviewHandleType } from '../rpc-extension';
 
@@ -59,7 +59,7 @@ export class PreviewWebviewBridge {
     if (!this.webviewHandle) {
       return;
     }
-    const themeManager = ThemeManager.getInstance();
+    const themeManager = getThemeManager();
     let themeState = themeManager.getWebviewThemeState(docUri);
 
     // apply frontmatter theme overrides if present

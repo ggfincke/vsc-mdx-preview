@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { warn, info, debug } from '../../logging';
+import { ConfigCache } from '../../config/ConfigCache';
 
 // plugin specification format: string (e.g., "remark-toc") or [string, options] tuple (e.g., ["remark-toc", { tight: true }])
 export type PluginSpec = string | [string, Record<string, unknown>];
@@ -55,27 +56,24 @@ export interface ResolvedConfig {
 // config file names to search for (in order of priority)
 const CONFIG_FILE_NAMES = ['.mdx-previewrc.json', '.mdx-previewrc'];
 
-// cache config per workspace folder to avoid repeated file system reads
-const configCache = new Map<string, ResolvedConfig | null>();
-
-// file system watchers for config files
-const configWatchers = new Map<string, vscode.FileSystemWatcher>();
-
-// subscribers for config change notifications
-const configChangeSubscribers = new Set<(configPath: string) => void>();
+// get ConfigCache instance (lazy - avoids circular dependency issues)
+function getCache(): ConfigCache {
+  return ConfigCache.getInstance();
+}
 
 // find & parse .mdx-previewrc.json config file for document (searches from document's directory upward to workspace root)
 export function resolveConfig(documentPath: string): ResolvedConfig | null {
   const documentDir = path.dirname(documentPath);
+  const cache = getCache();
 
   // check cache first
-  if (configCache.has(documentDir)) {
-    return configCache.get(documentDir) ?? null;
+  if (cache.has(documentDir)) {
+    return cache.get(documentDir) ?? null;
   }
 
   const configPath = findConfigFile(documentDir);
   if (!configPath) {
-    configCache.set(documentDir, null);
+    cache.set(documentDir, null);
     return null;
   }
 
@@ -87,7 +85,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
     const validationErrors = validateConfig(config);
     if (validationErrors.length > 0) {
       warn(`Invalid config in ${configPath}:`, validationErrors.join(', '));
-      configCache.set(documentDir, null);
+      cache.set(documentDir, null);
       return null;
     }
 
@@ -97,7 +95,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
       configDir: path.dirname(configPath),
     };
 
-    configCache.set(documentDir, resolved);
+    cache.set(documentDir, resolved);
     setupConfigWatcher(configPath);
 
     info(`Loaded MDX config from ${configPath}`);
@@ -106,7 +104,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
     return resolved;
   } catch (err) {
     warn(`Failed to parse config file ${configPath}:`, err);
-    configCache.set(documentDir, null);
+    cache.set(documentDir, null);
     return null;
   }
 }
@@ -299,7 +297,9 @@ function isValidPluginSpec(value: unknown): value is PluginSpec {
 
 // setup file watcher for config file changes
 function setupConfigWatcher(configPath: string): void {
-  if (configWatchers.has(configPath)) {
+  const cache = getCache();
+
+  if (cache.hasWatcher(configPath)) {
     return; // already watching
   }
 
@@ -307,75 +307,42 @@ function setupConfigWatcher(configPath: string): void {
 
   const handleChange = () => {
     debug(`Config file changed: ${configPath}`);
-    invalidateConfigCache(configPath);
-    notifyConfigChange(configPath);
+    cache.invalidate(configPath);
+    cache.notifyChange(configPath);
   };
 
   watcher.onDidChange(handleChange);
   watcher.onDidCreate(handleChange);
   watcher.onDidDelete(() => {
     debug(`Config file deleted: ${configPath}`);
-    invalidateConfigCache(configPath);
-    notifyConfigChange(configPath);
+    cache.invalidate(configPath);
+    cache.notifyChange(configPath);
     // clean up watcher
-    watcher.dispose();
-    configWatchers.delete(configPath);
+    cache.removeWatcher(configPath);
   });
 
-  configWatchers.set(configPath, watcher);
-}
-
-// invalidate cached config for given config file path
-function invalidateConfigCache(configPath: string): void {
-  const configDir = path.dirname(configPath);
-
-  // remove all cache entries that could be affected by this config file
-  for (const [cachedDir, resolved] of configCache.entries()) {
-    if (
-      resolved?.configPath === configPath ||
-      cachedDir.startsWith(configDir)
-    ) {
-      configCache.delete(cachedDir);
-    }
-  }
-}
-
-// notify subscribers of config change
-function notifyConfigChange(configPath: string): void {
-  for (const callback of configChangeSubscribers) {
-    try {
-      callback(configPath);
-    } catch (err) {
-      warn('Error in config change callback:', err);
-    }
-  }
+  cache.setWatcher(configPath, watcher);
 }
 
 // subscribe to config file changes
 export function onConfigChange(
   callback: (configPath: string) => void
 ): vscode.Disposable {
-  configChangeSubscribers.add(callback);
-  return {
-    dispose: () => {
-      configChangeSubscribers.delete(callback);
-    },
-  };
+  return getCache().subscribe(callback);
 }
 
 // clear all cached configs (for testing or manual refresh)
 export function clearConfigCache(): void {
-  configCache.clear();
+  getCache().clear();
 }
 
 // dispose all config watchers (call during extension deactivation)
+// Note: This is now handled by ConfigCache.dispose() via ServiceRegistry,
+// but we keep this for backward compatibility w/ extension.ts
 export function disposeConfigWatchers(): void {
-  for (const watcher of configWatchers.values()) {
-    watcher.dispose();
-  }
-  configWatchers.clear();
-  configChangeSubscribers.clear();
-  configCache.clear();
+  // ConfigCache handles cleanup via dispose(), which is called by ServiceRegistry
+  // This function is kept for backward compatibility but delegates to clear()
+  getCache().clear();
 }
 
 // get list of config file names (for schema registration)

@@ -13,7 +13,7 @@ import { error as logError, debug } from '../logging';
 
 import { createOrShowPanel, refreshPanel } from './webview-manager';
 import evaluateInWebview from './evaluate-in-webview';
-import { disposeConfigWatchers, type ResolvedConfig } from './config';
+import { disposeConfigWatchers, type ResolvedConfig, type TypeScriptConfiguration } from './config';
 import { WatcherManager, DocumentTracker } from './watchers';
 
 // extracted modules
@@ -34,11 +34,26 @@ import { PreviewInitializer } from './PreviewInitializer';
 export type { UpdateMode, StyleConfiguration, WebviewHandle };
 export type { TypeScriptConfiguration } from './config';
 
+// webview app URIs (loaded from Vite manifest)
+export interface WebviewAppUris {
+  mainScript: vscode.Uri;
+  mainStyle: vscode.Uri | undefined;
+}
+
 // * preview manager singleton for managing all preview instances
 export class PreviewManager {
   private static instance: PreviewManager;
   private currentPreview: Preview | undefined;
   private subscribers: Set<() => void> = new Set();
+
+  // panel state (moved from webview-manager.ts module-level for better testability)
+  private _panel: vscode.WebviewPanel | undefined;
+  private _panelDoc: vscode.TextDocument | undefined;
+  private _panelDisposables: vscode.Disposable[] = [];
+
+  // webview URI state (moved from webview-manager.ts for lifecycle management)
+  private _webviewAppUris: WebviewAppUris | undefined;
+  private _extensionUri: vscode.Uri | undefined;
 
   private constructor() {}
 
@@ -98,6 +113,57 @@ export class PreviewManager {
     };
   }
 
+  // panel state accessors
+  getPanel(): vscode.WebviewPanel | undefined {
+    return this._panel;
+  }
+
+  setPanel(panel: vscode.WebviewPanel | undefined): void {
+    this._panel = panel;
+  }
+
+  getPanelDoc(): vscode.TextDocument | undefined {
+    return this._panelDoc;
+  }
+
+  setPanelDoc(doc: vscode.TextDocument | undefined): void {
+    this._panelDoc = doc;
+  }
+
+  getPanelDisposables(): vscode.Disposable[] {
+    return this._panelDisposables;
+  }
+
+  // webview URI state accessors
+  getWebviewAppUris(): WebviewAppUris | undefined {
+    return this._webviewAppUris;
+  }
+
+  setWebviewAppUris(uris: WebviewAppUris): void {
+    this._webviewAppUris = uris;
+  }
+
+  getExtensionUri(): vscode.Uri | undefined {
+    return this._extensionUri;
+  }
+
+  setExtensionUri(uri: vscode.Uri): void {
+    this._extensionUri = uri;
+  }
+
+  // clear panel state (called when panel is disposed)
+  clearPanel(): void {
+    this._panel?.dispose();
+    while (this._panelDisposables.length) {
+      const disposable = this._panelDisposables.pop();
+      if (disposable) {
+        disposable.dispose();
+      }
+    }
+    this._panel = undefined;
+    this._panelDoc = undefined;
+  }
+
   // notify subscribers when preview state changes
   private notifySubscribers(): void {
     for (const callback of this.subscribers) {
@@ -105,8 +171,9 @@ export class PreviewManager {
     }
   }
 
-  // dispose current preview & cleanup
-  private dispose(): void {
+  // dispose current preview & cleanup (public for IService interface)
+  dispose(): void {
+    this.clearPanel();
     this.currentPreview?.dispose();
     this.currentPreview = undefined;
     this.subscribers.clear();
@@ -147,6 +214,11 @@ export class Preview {
   webviewHandshakePromise!: Promise<void>;
   private resolveWebviewHandshakePromise!: () => void;
 
+  // public method for RPC handle to complete handshake
+  completeHandshake(): void {
+    this.resolveWebviewHandshakePromise();
+  }
+
   // performance tracking
   performanceObserver?: PerformanceObserver;
   evaluationDuration = 0;
@@ -179,6 +251,10 @@ export class Preview {
 
   get typescriptConfiguration() {
     return this.documentHandler.typescriptConfiguration;
+  }
+
+  set typescriptConfiguration(value: TypeScriptConfiguration | undefined) {
+    this.documentHandler.typescriptConfiguration = value;
   }
 
   get mdxPreviewConfig(): ResolvedConfig | undefined {
@@ -217,17 +293,22 @@ export class Preview {
     this.webviewHandshakePromise = handshake.promise;
     this.resolveWebviewHandshakePromise = handshake.resolve;
 
-    // initialize watchers
-    this.watcherManager = this.initializer.initializeWatchers(
+    // create watchers w/ ready gate (callbacks wait for webview handshake)
+    // NOTE: watchers are created but NOT started yet
+    this.watcherManager = this.initializer.createWatchers(
       this.configManager.configuration.customCss,
       async (fsPath) => {
         await this.webviewBridge.invalidate(fsPath);
         await this.updateWebview(true);
-      }
+      },
+      this.webviewHandshakePromise // ready gate - callbacks wait for this
     );
 
-    // set document
+    // set document FIRST (sets document directory for watchers)
     this.setDoc(doc);
+
+    // THEN start watchers (now document directory is set)
+    void this.initializer.startWatchers(this.watcherManager);
 
     // setup performance observer in development
     if (process.env.NODE_ENV === 'development') {
@@ -252,20 +333,16 @@ export class Preview {
   }
 
   setDoc(doc: vscode.TextDocument): void {
-    const { needsConfigWatcher } = this.documentHandler.setDoc(
-      doc,
-      this.watcherManager
-    );
-    if (needsConfigWatcher) {
-      this.setupConfigWatcher();
-    }
+    this.documentHandler.setDoc(doc, this.watcherManager);
+    this.setupConfigWatcher();
   }
 
   private setupConfigWatcher(): void {
+    // config watcher setup/teardown is handled in one place by PreviewInitializer
     this.initializer.setupConfigWatcher(
       this.watcherManager,
+      this.doc.uri.scheme,
       this.documentHandler.mdxPreviewConfig,
-      this.documentHandler.fsPath,
       () => {
         this.documentHandler.reloadMdxConfig();
         this.refreshWebview().catch((err) =>

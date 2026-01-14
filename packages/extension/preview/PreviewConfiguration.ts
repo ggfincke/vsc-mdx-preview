@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import debounce from 'lodash.debounce';
 import { SecurityPolicy } from '../security/security';
+import { PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS } from '../constants';
 
 export type UpdateMode = 'onType' | 'onSave' | 'manual';
 export type TailwindEnabledSetting = 'auto' | 'enabled' | 'disabled';
@@ -46,7 +47,7 @@ export class PreviewConfiguration {
 
     const debounceDelay = extensionConfig.get<number>(
       'preview.debounceDelay',
-      300
+      PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS
     );
 
     this._configuration = {
@@ -121,7 +122,7 @@ export class PreviewConfiguration {
     );
     const debounceDelay = extensionConfig.get<number>(
       'preview.debounceDelay',
-      300
+      PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS
     );
     const useSucraseTranspiler = extensionConfig.get<boolean>(
       'build.useSucraseTranspiler',
