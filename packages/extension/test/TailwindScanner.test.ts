@@ -89,11 +89,11 @@ describe('TailwindScanner', () => {
     });
 
     it('should extract static parts AND interpolated strings from template literals', async () => {
-      // Enhanced: Now extracts both static parts and string literals inside ${}
+      // enhanced: now extracts both static parts & string literals inside ${}
       const text =
         '<div className={`flex ${active ? "bg-blue" : "bg-gray"} gap-2`}></div>';
       const result = await scanner.scan(text, defaultOptions);
-      // Static parts before and after interpolation
+      // static parts before & after interpolation
       expect(result.classList).toContain('flex');
       expect(result.classList).toContain('gap-2');
       // String literals from inside the interpolation
@@ -157,7 +157,7 @@ describe('TailwindScanner', () => {
     });
 
     it('should extract cn() call inside template literal interpolation', async () => {
-      // Both the className expression and the nested cn() call are extracted
+      // both the className expression & the nested cn() call are extracted
       const text =
         '<div className={`base-class ${cn("flex", condition && "gap-2")}`}></div>';
       const result = await scanner.scan(text, defaultOptions);
@@ -651,7 +651,7 @@ describe('TailwindScanner', () => {
       const text =
         '<div className={`flex ${{ active: true } ? "bg-blue" : ""}`}></div>';
       const result = await scanner.scan(text, defaultOptions);
-      // Now extracts static parts and string literals inside interpolations
+      // now extracts static parts & string literals inside interpolations
       expect(result.classList).toContain('flex');
       expect(result.classList).toContain('bg-blue');
     });
@@ -664,7 +664,7 @@ describe('TailwindScanner', () => {
       const result = await scanner.scan(text, defaultOptions);
       // Static parts from outer template are extracted
       expect(result.classList).toContain('outer');
-      // LIMITATION: nested template literals and their else branches may not be fully extracted
+      // LIMITATION: nested template literals & their else branches may not be fully extracted
       // Use separate string literals instead of nested template literals when possible
     });
 
@@ -680,7 +680,7 @@ describe('TailwindScanner', () => {
       const text =
         '<div className={`flex ${getClasses("primary", { large: true })}`}></div>';
       const result = await scanner.scan(text, defaultOptions);
-      // Now extracts both static parts and string literals from interpolation
+      // now extracts both static parts & string literals from interpolation
       expect(result.classList).toContain('flex');
       expect(result.classList).toContain('primary');
     });
@@ -690,7 +690,7 @@ describe('TailwindScanner', () => {
       // This is a fundamental limitation - use Tailwind's safelist for these
       const text = '<div className={`text-${size} bg-${color}-500`}></div>';
       const result = await scanner.scan(text, defaultOptions);
-      // These are dynamic and cannot be extracted statically
+      // these are dynamic & cannot be extracted statically
       expect(result.classList).not.toContain('text-sm');
       expect(result.classList).not.toContain('text-lg');
       // Document: Use Tailwind's safelist configuration for dynamic classes
@@ -707,7 +707,7 @@ describe('TailwindScanner', () => {
       // Ternary string literals are extracted
       expect(result.classList).toContain('bg-blue-500');
       expect(result.classList).toContain('bg-gray-500');
-      // text-${size} is dynamic and not extracted
+      // text-${size} is dynamic & not extracted
     });
   });
 
@@ -804,13 +804,13 @@ describe('TailwindScanner', () => {
       // String concatenation doesn't match className/class or clsx/cn patterns
       const text = 'const cls = "flex " + "items-center" + " gap-2";';
       const result = await scanner.scan(text, defaultOptions);
-      // No pattern matches variable assignment with string concatenation
+      // no pattern matches variable assignment w/ string concatenation
       expect(result.classList).toHaveLength(0);
     });
 
     it('should handle deeply nested template literals without stack overflow', async () => {
-      // Create pathological input with 15 levels of nesting (exceeds MAX_RECURSION_DEPTH of 10)
-      // The extraction should not throw and should extract classes up to the depth limit
+      // create pathological input w/ 15 levels of nesting (exceeds MAX_RECURSION_DEPTH of 10)
+      // the extraction should not throw & should extract classes up to the depth limit
       let nested = '"innermost-class"';
       for (let i = 0; i < 15; i++) {
         nested = `\`level${i} \${${nested}}\``;
@@ -823,7 +823,7 @@ describe('TailwindScanner', () => {
       // Should have extracted at least the outer levels (classes up to depth limit)
       expect(result.classList).toBeDefined();
       expect(Array.isArray(result.classList)).toBe(true);
-      // Note: Due to regex limitations with nested backticks, extraction may be partial,
+      // Note: Due to regex limitations w/ nested backticks, extraction may be partial,
       // but the important thing is it doesn't crash
     });
 
@@ -832,10 +832,10 @@ describe('TailwindScanner', () => {
       const text = `<div className={\`flex \${condition ? \`gap-2 \${"text-sm"}\` : "hidden"}\`}></div>`;
       const result = await scanner.scan(text, defaultOptions);
 
-      // Static parts and nested string literals should be extracted
+      // static parts & nested string literals should be extracted
       expect(result.classList).toContain('flex');
       expect(result.classList).toContain('hidden');
-      // Note: Inner nested template literals with backticks are limited by regex
+      // Note: inner nested template literals w/ backticks are limited by regex
     });
   });
 
@@ -861,7 +861,7 @@ describe('TailwindScanner', () => {
       const text =
         '<div className="flex gap-2 items-center mt-4 bg-blue-500"></div>';
 
-      // Run multiple times and verify consistency
+      // run multiple times & verify consistency
       const results = await Promise.all([
         scanner.scan(text, defaultOptions),
         scanner.scan(text, defaultOptions),
@@ -925,9 +925,9 @@ describe('TailwindScanner', () => {
         // Add random delay to simulate non-deterministic I/O
         await new Promise((resolve) => setTimeout(resolve, Math.random() * 10));
         const pathStr = String(p);
-        if (pathStr.includes('comp-z')) return 'className="zebra-class"';
-        if (pathStr.includes('comp-a')) return 'className="alpha-class"';
-        if (pathStr.includes('comp-m')) return 'className="middle-class"';
+        if (pathStr.includes('comp-z')) {return 'className="zebra-class"';}
+        if (pathStr.includes('comp-a')) {return 'className="alpha-class"';}
+        if (pathStr.includes('comp-m')) {return 'className="middle-class"';}
         return '';
       });
 

@@ -18,7 +18,7 @@ describe('LinkCard', () => {
 
     expect(screen.getByText('Documentation')).toBeInTheDocument();
     const titleElement = screen.getByText('Documentation');
-    expect(titleElement).toHaveClass('starlight-link-card-title');
+    expect(titleElement).toHaveClass('mdx-preview-starlight-link-card-title');
   });
 
   it('renders description when provided', () => {
@@ -32,7 +32,7 @@ describe('LinkCard', () => {
 
     expect(screen.getByText('Complete API documentation')).toBeInTheDocument();
     const descElement = screen.getByText('Complete API documentation');
-    expect(descElement).toHaveClass('starlight-link-card-description');
+    expect(descElement).toHaveClass('mdx-preview-starlight-link-card-description');
   });
 
   it('does not render description when not provided', () => {
@@ -41,7 +41,7 @@ describe('LinkCard', () => {
     );
 
     expect(
-      container.querySelector('.starlight-link-card-description')
+      container.querySelector('.mdx-preview-starlight-link-card-description')
     ).not.toBeInTheDocument();
   });
 
@@ -56,15 +56,15 @@ describe('LinkCard', () => {
   it('renders arrow icon', () => {
     const { container } = render(<LinkCard title="With Arrow" href="/arrow" />);
 
-    const arrowSpan = container.querySelector('.starlight-link-card-arrow');
+    const arrowSpan = container.querySelector('.mdx-preview-starlight-link-card-arrow');
     expect(arrowSpan).toBeInTheDocument();
     expect(arrowSpan?.querySelector('svg')).toBeInTheDocument();
   });
 
-  it('applies starlight-link-card class', () => {
+  it('applies mdx-preview-starlight-link-card class', () => {
     render(<LinkCard title="Styled Card" href="/styled" />);
 
     const link = screen.getByRole('link');
-    expect(link).toHaveClass('starlight-link-card');
+    expect(link).toHaveClass('mdx-preview-starlight-link-card');
   });
 });

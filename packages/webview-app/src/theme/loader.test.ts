@@ -1,4 +1,4 @@
-// Tests for theme CSS loading and injection utilities
+// tests for theme CSS loading & injection utilities
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {

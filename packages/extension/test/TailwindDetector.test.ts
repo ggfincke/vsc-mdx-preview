@@ -63,7 +63,7 @@ describe('TailwindDetector', () => {
     it('should use entryDir to find workspace when docUri does not match', () => {
       __setMockWorkspaceFolders([{ uri: { fsPath: '/workspace' } }]);
 
-      // Create a Uri with non-file scheme
+      // create a Uri w/ non-file scheme
       const docUri = {
         scheme: 'untitled',
         fsPath: '/temp/untitled.mdx',
@@ -386,7 +386,7 @@ describe('TailwindDetector', () => {
         cssUri1,
         cssUri2,
       ]);
-      // Mock to throw ENOENT for common locations, EACCES for unreadable, and return Tailwind for readable
+      // mock to throw ENOENT for common locations, EACCES for unreadable, & return Tailwind for readable
       vi.spyOn(fs.promises, 'readFile').mockImplementation(async (filePath) => {
         if (filePath === '/workspace/unreadable.css') {
           throw new Error('EACCES');

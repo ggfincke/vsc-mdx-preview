@@ -30,7 +30,7 @@ This is a note.
 :::`;
       const html = await processMarkdown(input);
 
-      expect(html).toContain('class="admonition admonition-note"');
+      expect(html).toContain('class="mdx-preview-admonition mdx-preview-admonition-note"');
       expect(html).toContain('data-admonition-type="note"');
       expect(html).toContain('This is a note.');
     });
@@ -507,7 +507,7 @@ Back to outer.
 :::`;
       const html = await processMarkdown(input);
 
-      // Should at least not crash and produce valid HTML
+      // should at least not crash & produce valid HTML
       expect(html).toBeDefined();
       expect(html).toContain('admonition');
     });
@@ -700,7 +700,7 @@ Regular paragraph.`;
     });
 
     it('handles mismatched colon counts (4 vs 3)', async () => {
-      // Opening with 4 colons but closing with 3
+      // opening w/ 4 colons but closing w/ 3
       const input = `::::note
 Content here.
 :::`;
@@ -742,7 +742,7 @@ Is this a warning?
     });
 
     it('handles completely empty directive marker', async () => {
-      // Just colons with no type name
+      // just colons w/ no type name
       const input = `:::
 No type specified.
 :::`;

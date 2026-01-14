@@ -69,7 +69,7 @@ describe('TailwindCache', () => {
 
       vi.advanceTimersByTime(2000);
 
-      // First access should delete and return null
+      // first access should delete & return null
       expect(cache.get('key1')).toBeNull();
       // Second access also returns null (entry was deleted)
       expect(cache.get('key1')).toBeNull();
@@ -143,7 +143,7 @@ describe('TailwindCache', () => {
       cache.set('key4', 'css4');
       cache.set('key5', 'css5');
 
-      // key2 and key3 should be evicted, key1 kept
+      // key2 & key3 should be evicted, key1 kept
       expect(cache.get('key1')).toBe('css1');
       expect(cache.get('key2')).toBeNull();
       expect(cache.get('key3')).toBeNull();
@@ -195,7 +195,7 @@ describe('TailwindCache', () => {
       // Change TTL to 1 minute
       cache.updateSettings({ ttlMs: 1 * 60 * 1000 });
 
-      // Add new entry with new TTL
+      // add new entry w/ new TTL
       cache.set('key2', 'css2');
 
       // Advance 2 minutes
@@ -212,7 +212,7 @@ describe('TailwindCache', () => {
       cache.set('key1', 'css1');
       cache.set('key2', 'css2');
 
-      // Call updateSettings with same values
+      // call updateSettings w/ same values
       cache.updateSettings({ maxEntries: 5, ttlMs: 60000 });
 
       // Entries should still exist
@@ -244,7 +244,7 @@ describe('TailwindCache', () => {
 
     it('should use default values when no options provided', () => {
       const cache = new TailwindCache();
-      // Fill with 20 entries (default maxEntries)
+      // fill w/ 20 entries (default maxEntries)
       for (let i = 0; i < 20; i++) {
         cache.set(`key${i}`, `css${i}`);
       }

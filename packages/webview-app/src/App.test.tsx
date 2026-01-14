@@ -6,7 +6,7 @@ import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import App from './App';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider } from './theme';
 import { LightboxProvider } from './context/LightboxContext';
 import type { ReactElement } from 'react';
 

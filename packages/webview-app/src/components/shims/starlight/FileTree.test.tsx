@@ -32,7 +32,7 @@ describe('FileTree', () => {
       );
 
       // Directory should have the directory class
-      const dirItem = container.querySelector('.starlight-file-tree-directory');
+      const dirItem = container.querySelector('.mdx-preview-starlight-file-tree-directory');
       expect(dirItem).toBeInTheDocument();
       expect(screen.getByText('src')).toBeInTheDocument();
     });
@@ -51,7 +51,7 @@ describe('FileTree', () => {
         </FileTree>
       );
 
-      const dirItem = container.querySelector('.starlight-file-tree-directory');
+      const dirItem = container.querySelector('.mdx-preview-starlight-file-tree-directory');
       expect(dirItem).toBeInTheDocument();
       expect(screen.getByText('Button.tsx')).toBeInTheDocument();
     });
@@ -81,7 +81,7 @@ describe('FileTree', () => {
       );
 
       const highlightedFile = container.querySelector(
-        '.starlight-file-tree-file.highlighted'
+        '.mdx-preview-starlight-file-tree-file.highlighted'
       );
       expect(highlightedFile).toBeInTheDocument();
     });
@@ -97,7 +97,7 @@ describe('FileTree', () => {
       );
 
       const placeholder = container.querySelector(
-        '.starlight-file-tree-placeholder'
+        '.mdx-preview-starlight-file-tree-placeholder'
       );
       expect(placeholder).toBeInTheDocument();
     });
@@ -113,7 +113,7 @@ describe('FileTree', () => {
       );
 
       const placeholder = container.querySelector(
-        '.starlight-file-tree-placeholder'
+        '.mdx-preview-starlight-file-tree-placeholder'
       );
       expect(placeholder).toBeInTheDocument();
     });
@@ -130,7 +130,7 @@ describe('FileTree', () => {
       );
 
       const fileIcon = container.querySelector(
-        '.starlight-file-tree-file .icon.file'
+        '.mdx-preview-starlight-file-tree-file .icon.file'
       );
       expect(fileIcon).toBeInTheDocument();
       expect(fileIcon?.innerHTML).toContain('svg');
@@ -146,7 +146,7 @@ describe('FileTree', () => {
       );
 
       const folderIcon = container.querySelector(
-        '.starlight-file-tree-directory .icon.folder'
+        '.mdx-preview-starlight-file-tree-directory .icon.folder'
       );
       expect(folderIcon).toBeInTheDocument();
       expect(folderIcon?.innerHTML).toContain('svg');
@@ -162,7 +162,7 @@ describe('FileTree', () => {
       );
 
       const chevron = container.querySelector(
-        '.starlight-file-tree-directory .icon.chevron'
+        '.mdx-preview-starlight-file-tree-directory .icon.chevron'
       );
       expect(chevron).toBeInTheDocument();
       expect(chevron?.innerHTML).toContain('svg');
@@ -185,7 +185,7 @@ describe('FileTree', () => {
       );
 
       const details = container.querySelector(
-        '.starlight-file-tree-directory details'
+        '.mdx-preview-starlight-file-tree-directory details'
       );
       expect(details).toBeInTheDocument();
       expect(details).toHaveAttribute('open');
@@ -246,7 +246,7 @@ describe('FileTree', () => {
       );
 
       expect(
-        container.querySelector('.starlight-file-tree-file.highlighted')
+        container.querySelector('.mdx-preview-starlight-file-tree-file.highlighted')
       ).toBeInTheDocument();
     });
 
@@ -279,10 +279,10 @@ describe('FileTree', () => {
       );
 
       expect(
-        container.querySelector('.starlight-file-tree')
+        container.querySelector('.mdx-preview-starlight-file-tree')
       ).toBeInTheDocument();
       expect(
-        container.querySelector('.starlight-file-tree-file')
+        container.querySelector('.mdx-preview-starlight-file-tree-file')
       ).not.toBeInTheDocument();
     });
 
@@ -302,8 +302,8 @@ describe('FileTree', () => {
         </FileTree>
       );
 
-      const files = container.querySelectorAll('.starlight-file-tree-file');
-      const dirs = container.querySelectorAll('.starlight-file-tree-directory');
+      const files = container.querySelectorAll('.mdx-preview-starlight-file-tree-file');
+      const dirs = container.querySelectorAll('.mdx-preview-starlight-file-tree-directory');
 
       expect(files).toHaveLength(3); // README.md, index.ts, package.json
       expect(dirs).toHaveLength(1); // src
@@ -351,7 +351,7 @@ describe('FileTree', () => {
       expect(screen.getByText('deep.txt')).toBeInTheDocument();
     });
 
-    it('applies starlight-file-tree wrapper class', () => {
+    it('applies mdx-preview-starlight-file-tree wrapper class', () => {
       const { container } = render(
         <FileTree>
           <ul>
@@ -361,7 +361,7 @@ describe('FileTree', () => {
       );
 
       expect(
-        container.querySelector('.starlight-file-tree')
+        container.querySelector('.mdx-preview-starlight-file-tree')
       ).toBeInTheDocument();
     });
   });

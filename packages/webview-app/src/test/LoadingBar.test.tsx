@@ -62,7 +62,7 @@ describe('LoadingBar', () => {
     it('renders loading container', () => {
       render(<LoadingBar immediate />);
 
-      const container = document.querySelector('.mdx-loading-container');
+      const container = document.querySelector('.mdx-preview-loading-container');
       expect(container).toBeInTheDocument();
     });
 

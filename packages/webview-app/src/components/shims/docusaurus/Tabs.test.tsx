@@ -301,6 +301,6 @@ describe('TabItem', () => {
   it('applies tab-item class when outside context', () => {
     const { container } = render(<TabItem value="standalone">Content</TabItem>);
 
-    expect(container.querySelector('.tab-item')).toBeInTheDocument();
+    expect(container.querySelector('.mdx-preview-tabs-item')).toBeInTheDocument();
   });
 });

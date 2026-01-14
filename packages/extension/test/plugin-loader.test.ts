@@ -1,22 +1,28 @@
 // packages/extension/test/plugin-loader.test.ts
 // tests for plugin-loader - verifies plugin loading, component mapping, & trust enforcement
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import {
+  __setMockTrusted,
+  __setMockConfig,
+  __resetMocks,
+} from './__mocks__/vscode';
 import {
   loadPluginsFromConfig,
   mergePlugins,
 } from '../transpiler/plugin-loader';
 import { generateComponentImports } from '../transpiler/component-mapper';
-import { TrustManager, SecurityMode } from '../security/TrustManager';
+import { TrustManager } from '../security/TrustManager';
+import { ServiceRegistry } from '../services/ServiceRegistry';
+import { ServiceNames } from '../services/service-names';
 import type { ResolvedConfig } from '../preview/config';
 
 // mock modules
-vi.mock('../security/TrustManager');
 vi.mock('enhanced-resolve', () => ({
   CachedInputFileSystem: vi.fn(),
   ResolverFactory: {
     createResolver: vi.fn(() => ({
-      resolveSync: vi.fn((context, basedir, module) => {
+      resolveSync: vi.fn((_context, _basedir, module) => {
         // Simple mock resolution
         if (module === 'remark-toc' || module === 'remark-emoji') {
           return `/node_modules/${module}/index.js`;
@@ -27,20 +33,40 @@ vi.mock('enhanced-resolve', () => ({
   },
 }));
 
+// reset TrustManager singleton between tests
+const resetTrustManager = (): void => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (TrustManager as any).instance = undefined;
+};
+
 describe('PluginLoader', () => {
   beforeEach(() => {
-    // Reset all mocks
+    __resetMocks();
+    resetTrustManager();
+    ServiceRegistry.reset();
     vi.clearAllMocks();
-    // Reset TrustManager singleton
-    (TrustManager as any).instance = undefined;
+
+    // register TrustManager w/ ServiceRegistry
+    const registry = ServiceRegistry.getInstance();
+    registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
+  });
+
+  afterEach(() => {
+    try {
+      TrustManager.getInstance().dispose();
+    } catch {
+      // ignore if already disposed
+    }
+    resetTrustManager();
+    ServiceRegistry.reset();
+    __resetMocks();
   });
 
   describe('loadPluginsFromConfig - Trust Enforcement', () => {
     it('should return empty arrays in Safe Mode', async () => {
-      // Mock TrustManager to return Safe Mode
-      vi.spyOn(TrustManager, 'getInstance').mockReturnValue({
-        getMode: () => SecurityMode.Safe,
-      } as any);
+      // Set up Safe Mode (workspace not trusted)
+      __setMockTrusted(false);
+      __setMockConfig('preview.enableScripts', false);
 
       const config: ResolvedConfig = {
         config: {
@@ -59,10 +85,9 @@ describe('PluginLoader', () => {
     });
 
     it('should load plugins in Trusted Mode', async () => {
-      // Mock TrustManager to return Trusted Mode
-      vi.spyOn(TrustManager, 'getInstance').mockReturnValue({
-        getMode: () => SecurityMode.Trusted,
-      } as any);
+      // Set up Trusted Mode
+      __setMockTrusted(true);
+      __setMockConfig('preview.enableScripts', true);
 
       // Mock require to return a plugin function
       const mockPluginFn = vi.fn(() => vi.fn());
@@ -97,9 +122,9 @@ describe('PluginLoader', () => {
     });
 
     it('should handle empty plugin arrays', async () => {
-      vi.spyOn(TrustManager, 'getInstance').mockReturnValue({
-        getMode: () => SecurityMode.Trusted,
-      } as any);
+      // Set up Trusted Mode
+      __setMockTrusted(true);
+      __setMockConfig('preview.enableScripts', true);
 
       const config: ResolvedConfig = {
         config: {
@@ -120,9 +145,9 @@ describe('PluginLoader', () => {
 
   describe('generateComponentImports', () => {
     it('should generate imports for components', () => {
-      vi.spyOn(TrustManager, 'getInstance').mockReturnValue({
-        getMode: () => SecurityMode.Trusted,
-      } as any);
+      // Set up Trusted Mode
+      __setMockTrusted(true);
+      __setMockConfig('preview.enableScripts', true);
 
       const config: ResolvedConfig = {
         config: {
@@ -145,9 +170,9 @@ describe('PluginLoader', () => {
     });
 
     it('should normalize paths for imports', () => {
-      vi.spyOn(TrustManager, 'getInstance').mockReturnValue({
-        getMode: () => SecurityMode.Trusted,
-      } as any);
+      // Set up Trusted Mode
+      __setMockTrusted(true);
+      __setMockConfig('preview.enableScripts', true);
 
       const config: ResolvedConfig = {
         config: {
@@ -169,9 +194,9 @@ describe('PluginLoader', () => {
     });
 
     it('should handle absolute paths', () => {
-      vi.spyOn(TrustManager, 'getInstance').mockReturnValue({
-        getMode: () => SecurityMode.Trusted,
-      } as any);
+      // Set up Trusted Mode
+      __setMockTrusted(true);
+      __setMockConfig('preview.enableScripts', true);
 
       const config: ResolvedConfig = {
         config: {
@@ -190,9 +215,9 @@ describe('PluginLoader', () => {
     });
 
     it('should handle relative paths from config dir', () => {
-      vi.spyOn(TrustManager, 'getInstance').mockReturnValue({
-        getMode: () => SecurityMode.Trusted,
-      } as any);
+      // Set up Trusted Mode
+      __setMockTrusted(true);
+      __setMockConfig('preview.enableScripts', true);
 
       const config: ResolvedConfig = {
         config: {
@@ -214,9 +239,9 @@ describe('PluginLoader', () => {
     });
 
     it('should return empty in Safe Mode', () => {
-      vi.spyOn(TrustManager, 'getInstance').mockReturnValue({
-        getMode: () => SecurityMode.Safe,
-      } as any);
+      // Set up Safe Mode
+      __setMockTrusted(false);
+      __setMockConfig('preview.enableScripts', false);
 
       const config: ResolvedConfig = {
         config: {
@@ -236,9 +261,9 @@ describe('PluginLoader', () => {
     });
 
     it('should handle no components', () => {
-      vi.spyOn(TrustManager, 'getInstance').mockReturnValue({
-        getMode: () => SecurityMode.Trusted,
-      } as any);
+      // Set up Trusted Mode
+      __setMockTrusted(true);
+      __setMockConfig('preview.enableScripts', true);
 
       const config: ResolvedConfig = {
         config: {},
@@ -262,9 +287,9 @@ describe('PluginLoader', () => {
     });
 
     it('should sanitize component names for variable names', () => {
-      vi.spyOn(TrustManager, 'getInstance').mockReturnValue({
-        getMode: () => SecurityMode.Trusted,
-      } as any);
+      // Set up Trusted Mode
+      __setMockTrusted(true);
+      __setMockConfig('preview.enableScripts', true);
 
       const config: ResolvedConfig = {
         config: {
@@ -288,8 +313,9 @@ describe('PluginLoader', () => {
 
   describe('mergePlugins', () => {
     it('should merge custom plugins after built-ins', () => {
-      const builtIns = ['plugin-1', 'plugin-2'];
-      const custom = ['custom-1', 'custom-2'];
+      // Use any[] for test data since we're testing the merge logic, not actual plugins
+      const builtIns = ['plugin-1', 'plugin-2'] as any[];
+      const custom = ['custom-1', 'custom-2'] as any[];
 
       const result = mergePlugins(builtIns, custom);
 
@@ -297,7 +323,7 @@ describe('PluginLoader', () => {
     });
 
     it('should return built-ins if no custom plugins', () => {
-      const builtIns = ['plugin-1', 'plugin-2'];
+      const builtIns = ['plugin-1', 'plugin-2'] as any[];
       const custom: any[] = [];
 
       const result = mergePlugins(builtIns, custom);
@@ -308,7 +334,7 @@ describe('PluginLoader', () => {
 
     it('should handle empty built-ins', () => {
       const builtIns: any[] = [];
-      const custom = ['custom-1'];
+      const custom = ['custom-1'] as any[];
 
       const result = mergePlugins(builtIns, custom);
 
@@ -316,8 +342,8 @@ describe('PluginLoader', () => {
     });
 
     it('should handle plugin tuples', () => {
-      const builtIns = [['plugin-1', { option: true }]];
-      const custom = [['custom-1', { custom: 'yes' }]];
+      const builtIns = [['plugin-1', { option: true }]] as any[];
+      const custom = [['custom-1', { custom: 'yes' }]] as any[];
 
       const result = mergePlugins(builtIns, custom);
 
@@ -330,9 +356,9 @@ describe('PluginLoader', () => {
 
   describe('error handling', () => {
     it('should collect errors for failed plugin loads', async () => {
-      vi.spyOn(TrustManager, 'getInstance').mockReturnValue({
-        getMode: () => SecurityMode.Trusted,
-      } as any);
+      // Set up Trusted Mode
+      __setMockTrusted(true);
+      __setMockConfig('preview.enableScripts', true);
 
       const config: ResolvedConfig = {
         config: {

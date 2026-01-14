@@ -4,10 +4,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  FrameworkDetector,
-  type Framework,
-} from '../framework/FrameworkDetector';
+import { FrameworkDetector } from '../framework/FrameworkDetector';
 
 // mock fs module
 vi.mock('fs', () => ({
@@ -632,7 +629,7 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // Still detects framework even with null version
+        // still detects framework even w/ null version
         expect(result.framework).toBe('docusaurus');
         // Version is undefined when not a string
         expect(result.version).toBeUndefined();
@@ -698,7 +695,7 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // Framework detected even with boolean value
+        // framework detected even w/ boolean value
         expect(result.framework).toBe('docusaurus');
         // Version is undefined for non-string values
         expect(result.version).toBeUndefined();
@@ -784,7 +781,7 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // Should still detect framework with file: reference
+        // should still detect framework w/ file: reference
         expect(result.framework).toBe('docusaurus');
         expect(result.version).toBe('file:../packages/docusaurus');
       });
@@ -847,7 +844,7 @@ describe('FrameworkDetector', () => {
           return p === path.join('/workspace', 'package.json');
         });
 
-        // Calling with nested path
+        // calling w/ nested path
         const result = detector.detectFromPackageJson(
           '/workspace/packages/app'
         );
@@ -971,7 +968,7 @@ describe('FrameworkDetector', () => {
       });
 
       it('handles extremely large package.json without crashing', () => {
-        // Create package.json with 10,000 dependencies
+        // create package.json w/ 10,000 dependencies
         const manyDeps: Record<string, string> = {};
         for (let i = 0; i < 10000; i++) {
           manyDeps[`package-${i}`] = '1.0.0';

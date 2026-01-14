@@ -211,7 +211,7 @@ describe('resolve-import', () => {
 
       await resolveImportAsync('/workspace/src', './Component');
 
-      // Verify access was called with extensions in order
+      // verify access was called w/ extensions in order
       const accessCalls = vi.mocked(fs.promises.access).mock.calls;
       expect(accessCalls[0][0]).toBe('/workspace/src/Component.ts');
       expect(accessCalls[1][0]).toBe('/workspace/src/Component.tsx');

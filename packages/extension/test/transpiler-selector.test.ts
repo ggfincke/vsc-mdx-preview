@@ -1,5 +1,5 @@
 // packages/extension/test/transpiler-selector.test.ts
-// tests for transpiler-selector - verifies Sucrase/Babel selection and fallback behavior
+// tests for transpiler-selector - verifies Sucrase/Babel selection & fallback behavior
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { transpileWithFallback } from '../transpiler/transpiler-selector';

@@ -56,7 +56,7 @@ describe('TailwindCompiler', () => {
     it('should compile with default entry CSS (no @tailwind base)', async () => {
       await compiler.compile(v3Options);
 
-      // Check that process was called with correct input CSS
+      // check that process was called w/ correct input CSS
       expect(mockProcess).toHaveBeenCalled();
       const processCall = mockProcess.mock.calls[0];
       const inputCss = processCall[0];
@@ -297,7 +297,7 @@ describe('TailwindCompiler', () => {
       // Create a new compiler without mocking loadModule to test validation
       const validatingCompiler = new TailwindCompiler();
 
-      // Access private method through type assertion and mock require to return non-function
+      // access private method through type assertion & mock require to return non-function
       vi.spyOn(
         validatingCompiler as unknown as {
           loadModule: (id: string) => Promise<unknown>;

@@ -20,7 +20,7 @@ describe('Steps', () => {
     expect(screen.getByText('Step two')).toBeInTheDocument();
   });
 
-  it('applies starlight-steps class', () => {
+  it('applies mdx-preview-starlight-steps class', () => {
     const { container } = render(
       <Steps>
         <ol>
@@ -29,7 +29,7 @@ describe('Steps', () => {
       </Steps>
     );
 
-    const stepsDiv = container.querySelector('.starlight-steps');
+    const stepsDiv = container.querySelector('.mdx-preview-starlight-steps');
     expect(stepsDiv).toBeInTheDocument();
   });
 });

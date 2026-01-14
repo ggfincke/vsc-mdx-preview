@@ -13,6 +13,8 @@ import {
   window,
 } from './__mocks__/vscode';
 import { TrustManager } from '../security/TrustManager';
+import { ServiceRegistry } from '../services/ServiceRegistry';
+import { ServiceNames } from '../services/service-names';
 import { handleDidChangeWorkspaceFolders } from '../security/checkFsPath';
 
 // mock module-fetcher
@@ -37,7 +39,7 @@ import type { Preview } from '../preview/preview-manager';
 const createMockPreview = (overrides: Partial<Preview> = {}): Preview =>
   ({
     entryFsDirectory: '/projects/test-workspace/src',
-    resolveWebviewHandshakePromise: vi.fn(),
+    completeHandshake: vi.fn(),
     evaluationDuration: 0,
     ...overrides,
   }) as unknown as Preview;
@@ -55,6 +57,7 @@ describe('ExtensionHandle', () => {
   beforeEach(() => {
     __resetMocks();
     resetTrustManager();
+    ServiceRegistry.reset();
     handleDidChangeWorkspaceFolders();
     vi.clearAllMocks();
 
@@ -62,6 +65,10 @@ describe('ExtensionHandle', () => {
       { uri: { fsPath: '/projects/test-workspace' } },
     ]);
     handleDidChangeWorkspaceFolders();
+
+    // register TrustManager w/ ServiceRegistry
+    const registry = ServiceRegistry.getInstance();
+    registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
 
     mockPreview = createMockPreview();
     handle = new ExtensionHandle(mockPreview);
@@ -74,14 +81,13 @@ describe('ExtensionHandle', () => {
       // ignore if already disposed
     }
     resetTrustManager();
+    ServiceRegistry.reset();
   });
 
   describe('handshake', () => {
     test('resolves preview handshake promise', () => {
       handle.handshake();
-      expect(mockPreview.resolveWebviewHandshakePromise).toHaveBeenCalledTimes(
-        1
-      );
+      expect(mockPreview.completeHandshake).toHaveBeenCalledTimes(1);
     });
   });
 

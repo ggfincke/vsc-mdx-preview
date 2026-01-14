@@ -29,21 +29,21 @@ describe('Code', () => {
 
       expect(screen.getByText('example.ts')).toBeInTheDocument();
       const titleElement = screen.getByText('example.ts');
-      expect(titleElement).toHaveClass('starlight-code-title');
+      expect(titleElement).toHaveClass('mdx-preview-starlight-code-title');
     });
 
     it('does not render title bar when no title', () => {
       const { container } = render(<Code code="code" />);
 
       expect(
-        container.querySelector('.starlight-code-header')
+        container.querySelector('.mdx-preview-starlight-code-header')
       ).not.toBeInTheDocument();
     });
 
-    it('applies starlight-code class', () => {
+    it('applies mdx-preview-starlight-code class', () => {
       const { container } = render(<Code code="code" />);
 
-      expect(container.querySelector('.starlight-code')).toBeInTheDocument();
+      expect(container.querySelector('.mdx-preview-starlight-code')).toBeInTheDocument();
     });
   });
 
@@ -51,29 +51,29 @@ describe('Code', () => {
     it('auto-detects terminal frame for bash', () => {
       const { container } = render(<Code code="npm install" lang="bash" />);
 
-      const codeDiv = container.querySelector('.starlight-code');
-      expect(codeDiv).toHaveClass('starlight-code-terminal');
+      const codeDiv = container.querySelector('.mdx-preview-starlight-code');
+      expect(codeDiv).toHaveClass('mdx-preview-starlight-code-terminal');
     });
 
     it('auto-detects terminal frame for sh', () => {
       const { container } = render(<Code code="echo hello" lang="sh" />);
 
-      const codeDiv = container.querySelector('.starlight-code');
-      expect(codeDiv).toHaveClass('starlight-code-terminal');
+      const codeDiv = container.querySelector('.mdx-preview-starlight-code');
+      expect(codeDiv).toHaveClass('mdx-preview-starlight-code-terminal');
     });
 
     it('auto-detects terminal frame for zsh', () => {
       const { container } = render(<Code code="source ~/.zshrc" lang="zsh" />);
 
-      const codeDiv = container.querySelector('.starlight-code');
-      expect(codeDiv).toHaveClass('starlight-code-terminal');
+      const codeDiv = container.querySelector('.mdx-preview-starlight-code');
+      expect(codeDiv).toHaveClass('mdx-preview-starlight-code-terminal');
     });
 
     it('auto-detects terminal frame for shell', () => {
       const { container } = render(<Code code="ls -la" lang="shell" />);
 
-      const codeDiv = container.querySelector('.starlight-code');
-      expect(codeDiv).toHaveClass('starlight-code-terminal');
+      const codeDiv = container.querySelector('.mdx-preview-starlight-code');
+      expect(codeDiv).toHaveClass('mdx-preview-starlight-code-terminal');
     });
 
     it('auto-detects terminal frame for powershell', () => {
@@ -81,8 +81,8 @@ describe('Code', () => {
         <Code code="Get-Process" lang="powershell" />
       );
 
-      const codeDiv = container.querySelector('.starlight-code');
-      expect(codeDiv).toHaveClass('starlight-code-terminal');
+      const codeDiv = container.querySelector('.mdx-preview-starlight-code');
+      expect(codeDiv).toHaveClass('mdx-preview-starlight-code-terminal');
     });
 
     it('uses code frame for non-terminal languages', () => {
@@ -90,9 +90,9 @@ describe('Code', () => {
         <Code code="const x = 1;" lang="typescript" />
       );
 
-      const codeDiv = container.querySelector('.starlight-code');
-      expect(codeDiv).toHaveClass('starlight-code-code');
-      expect(codeDiv).not.toHaveClass('starlight-code-terminal');
+      const codeDiv = container.querySelector('.mdx-preview-starlight-code');
+      expect(codeDiv).toHaveClass('mdx-preview-starlight-code-code');
+      expect(codeDiv).not.toHaveClass('mdx-preview-starlight-code-terminal');
     });
 
     it('respects explicit frame="terminal" override', () => {
@@ -100,8 +100,8 @@ describe('Code', () => {
         <Code code="const x = 1;" lang="javascript" frame="terminal" />
       );
 
-      const codeDiv = container.querySelector('.starlight-code');
-      expect(codeDiv).toHaveClass('starlight-code-terminal');
+      const codeDiv = container.querySelector('.mdx-preview-starlight-code');
+      expect(codeDiv).toHaveClass('mdx-preview-starlight-code-terminal');
     });
 
     it('respects explicit frame="code" override', () => {
@@ -109,16 +109,16 @@ describe('Code', () => {
         <Code code="npm install" lang="bash" frame="code" />
       );
 
-      const codeDiv = container.querySelector('.starlight-code');
-      expect(codeDiv).toHaveClass('starlight-code-code');
+      const codeDiv = container.querySelector('.mdx-preview-starlight-code');
+      expect(codeDiv).toHaveClass('mdx-preview-starlight-code-code');
     });
 
     it('respects frame="none" (no frame class)', () => {
       const { container } = render(<Code code="code" frame="none" />);
 
-      const codeDiv = container.querySelector('.starlight-code');
-      expect(codeDiv).not.toHaveClass('starlight-code-terminal');
-      expect(codeDiv).not.toHaveClass('starlight-code-code');
+      const codeDiv = container.querySelector('.mdx-preview-starlight-code');
+      expect(codeDiv).not.toHaveClass('mdx-preview-starlight-code-terminal');
+      expect(codeDiv).not.toHaveClass('mdx-preview-starlight-code-code');
     });
 
     it('shows terminal dots in terminal frame with title', () => {
@@ -148,7 +148,7 @@ describe('Code', () => {
     it('shows copy button', () => {
       const { container } = render(<Code code="code" />);
 
-      const copyButton = container.querySelector('.starlight-code-copy');
+      const copyButton = container.querySelector('.mdx-preview-starlight-code-copy');
       expect(copyButton).toBeInTheDocument();
     });
 
@@ -161,7 +161,7 @@ describe('Code', () => {
       const { container } = render(<Code code="const x = 42;" />);
 
       const copyButton = container.querySelector(
-        '.starlight-code-copy'
+        '.mdx-preview-starlight-code-copy'
       ) as HTMLButtonElement;
       copyButton.click();
 
@@ -179,7 +179,7 @@ describe('Code', () => {
       const { container } = render(<Code code="code" />);
 
       const copyButton = container.querySelector(
-        '.starlight-code-copy'
+        '.mdx-preview-starlight-code-copy'
       ) as HTMLButtonElement;
       copyButton.click();
 
@@ -199,7 +199,7 @@ describe('Code', () => {
       const { container } = render(<Code code="code" />);
 
       const copyButton = container.querySelector(
-        '.starlight-code-copy'
+        '.mdx-preview-starlight-code-copy'
       ) as HTMLButtonElement;
 
       await act(async () => {
@@ -224,7 +224,7 @@ describe('Code', () => {
 
       expect(screen.getByText('typescript')).toBeInTheDocument();
       const badge = screen.getByText('typescript');
-      expect(badge).toHaveClass('starlight-code-lang');
+      expect(badge).toHaveClass('mdx-preview-starlight-code-lang');
     });
 
     it('hides language badge when title is present', () => {
@@ -233,7 +233,7 @@ describe('Code', () => {
       );
 
       expect(
-        container.querySelector('.starlight-code-lang')
+        container.querySelector('.mdx-preview-starlight-code-lang')
       ).not.toBeInTheDocument();
     });
 
@@ -241,7 +241,7 @@ describe('Code', () => {
       const { container } = render(<Code code="npm install" lang="bash" />);
 
       expect(
-        container.querySelector('.starlight-code-lang')
+        container.querySelector('.mdx-preview-starlight-code-lang')
       ).not.toBeInTheDocument();
     });
 
@@ -249,7 +249,7 @@ describe('Code', () => {
       const { container } = render(<Code code="plain text" />);
 
       expect(
-        container.querySelector('.starlight-code-lang')
+        container.querySelector('.mdx-preview-starlight-code-lang')
       ).not.toBeInTheDocument();
     });
   });

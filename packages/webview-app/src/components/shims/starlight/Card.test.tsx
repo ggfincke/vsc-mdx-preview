@@ -11,7 +11,7 @@ describe('Card', () => {
 
     expect(screen.getByText('Test Title')).toBeInTheDocument();
     const titleElement = screen.getByText('Test Title');
-    expect(titleElement).toHaveClass('starlight-card-title');
+    expect(titleElement).toHaveClass('mdx-preview-starlight-card-title');
   });
 
   it('renders icon when provided', () => {
@@ -23,7 +23,7 @@ describe('Card', () => {
 
     expect(screen.getByText('rocket')).toBeInTheDocument();
     const iconElement = screen.getByText('rocket');
-    expect(iconElement).toHaveClass('starlight-card-icon');
+    expect(iconElement).toHaveClass('mdx-preview-starlight-card-icon');
   });
 
   it('renders children in content area', () => {
@@ -32,7 +32,7 @@ describe('Card', () => {
     );
 
     expect(screen.getByText('Card body content')).toBeInTheDocument();
-    const contentDiv = container.querySelector('.starlight-card-content');
+    const contentDiv = container.querySelector('.mdx-preview-starlight-card-content');
     expect(contentDiv).toBeInTheDocument();
     expect(contentDiv).toHaveTextContent('Card body content');
   });
@@ -41,7 +41,7 @@ describe('Card', () => {
     const { container } = render(<Card title="No Icon Card">Content</Card>);
 
     expect(
-      container.querySelector('.starlight-card-icon')
+      container.querySelector('.mdx-preview-starlight-card-icon')
     ).not.toBeInTheDocument();
   });
 });

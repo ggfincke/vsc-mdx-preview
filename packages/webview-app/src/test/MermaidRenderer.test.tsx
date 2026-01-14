@@ -19,7 +19,7 @@ import {
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MermaidRenderer } from '../components/MermaidRenderer';
-import { ThemeProvider } from '../context/ThemeContext';
+import { ThemeProvider } from '../theme';
 
 // mock mermaid library
 vi.mock('mermaid', () => ({
@@ -66,7 +66,7 @@ describe('MermaidRenderer', () => {
       );
 
       // container div should exist immediately, even while loading
-      const diagramDiv = container.querySelector('.mermaid-diagram');
+      const diagramDiv = container.querySelector('.mdx-preview-mermaid-diagram');
       expect(diagramDiv).toBeInTheDocument();
     });
 
@@ -80,7 +80,7 @@ describe('MermaidRenderer', () => {
         <MermaidRenderer code="flowchart TD" id="test-2" />
       );
 
-      const diagramDiv = container.querySelector('.mermaid-diagram');
+      const diagramDiv = container.querySelector('.mdx-preview-mermaid-diagram');
       expect(diagramDiv).toHaveStyle({ visibility: 'hidden' });
     });
 
@@ -94,7 +94,7 @@ describe('MermaidRenderer', () => {
       );
 
       await waitFor(() => {
-        const diagramDiv = container.querySelector('.mermaid-diagram');
+        const diagramDiv = container.querySelector('.mdx-preview-mermaid-diagram');
         expect(diagramDiv).toHaveStyle({ visibility: 'visible' });
       });
     });
@@ -111,7 +111,7 @@ describe('MermaidRenderer', () => {
 
       expect(screen.getByText('Loading diagram...')).toBeInTheDocument();
       expect(
-        document.querySelector('.mermaid-loading-spinner')
+        document.querySelector('.mdx-preview-mermaid-spinner')
       ).toBeInTheDocument();
     });
 
@@ -140,7 +140,7 @@ describe('MermaidRenderer', () => {
       );
 
       await waitFor(() => {
-        const diagramDiv = container.querySelector('.mermaid-diagram');
+        const diagramDiv = container.querySelector('.mdx-preview-mermaid-diagram');
         expect(diagramDiv?.innerHTML).toContain('data-testid="mermaid-svg"');
       });
     });
@@ -182,7 +182,7 @@ describe('MermaidRenderer', () => {
 
       await waitFor(() => {
         expect(
-          container.querySelector('.mermaid-error-icon')
+          container.querySelector('.mdx-preview-mermaid-error-icon')
         ).toBeInTheDocument();
       });
     });
@@ -214,7 +214,7 @@ describe('MermaidRenderer', () => {
       fireEvent.click(screen.getByRole('button', { name: /show source/i }));
 
       // source is rendered as text w/ newlines preserved
-      const codeEl = document.querySelector('.mermaid-source code');
+      const codeEl = document.querySelector('.mdx-preview-mermaid-source code');
       expect(codeEl?.textContent).toBe(testCode);
     });
 

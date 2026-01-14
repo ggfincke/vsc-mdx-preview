@@ -10,7 +10,10 @@ import {
   Uri,
 } from './__mocks__/vscode';
 import { TrustManager } from '../security/TrustManager';
+import { ServiceRegistry } from '../services/ServiceRegistry';
+import { ServiceNames } from '../services/service-names';
 import { handleDidChangeWorkspaceFolders } from '../security/checkFsPath';
+import { ErrorReporter } from '../errors/ErrorReporter';
 
 // mock module-fetcher/transform
 vi.mock('../module-fetcher/transform', () => ({
@@ -124,6 +127,7 @@ describe('evaluateInWebview', () => {
   beforeEach(() => {
     __resetMocks();
     resetTrustManager();
+    ServiceRegistry.reset();
     handleDidChangeWorkspaceFolders();
     vi.clearAllMocks();
 
@@ -131,6 +135,11 @@ describe('evaluateInWebview', () => {
       { uri: { fsPath: '/projects/test-workspace' } },
     ]);
     handleDidChangeWorkspaceFolders();
+
+    // register services w/ ServiceRegistry
+    const registry = ServiceRegistry.getInstance();
+    registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
+    registry.register(ServiceNames.ERROR_REPORTER, () => ErrorReporter.getInstance());
 
     mockPreview = createMockPreview();
   });
@@ -142,6 +151,9 @@ describe('evaluateInWebview', () => {
       // ignore if already disposed
     }
     resetTrustManager();
+    ServiceRegistry.reset();
+    // reset ErrorReporter to clear dedupe cache between tests
+    ErrorReporter.dispose();
   });
 
   describe('routing based on trust state', () => {
@@ -343,10 +355,12 @@ describe('evaluateInWebview', () => {
         '/projects/test-workspace/README.mdx'
       );
 
-      expect(mockPreview.webviewHandle.showPreviewError).toHaveBeenCalledWith({
-        message: 'Transform failed',
-        stack: 'Error: Transform failed\n    at test.ts:1:1',
-      });
+      // ErrorReporter sends error w/ message, code, & stack
+      expect(mockPreview.webviewHandle.showPreviewError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Transform failed',
+        })
+      );
     });
 
     test('handles non-Error throws', async () => {
@@ -361,10 +375,12 @@ describe('evaluateInWebview', () => {
         '/projects/test-workspace/README.mdx'
       );
 
-      expect(mockPreview.webviewHandle.showPreviewError).toHaveBeenCalledWith({
-        message: 'String error',
-        stack: undefined,
-      });
+      // ErrorReporter wraps non-Error throws in Error, which creates a stack
+      expect(mockPreview.webviewHandle.showPreviewError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'String error',
+        })
+      );
     });
 
     test('handles Safe Mode compilation errors', async () => {

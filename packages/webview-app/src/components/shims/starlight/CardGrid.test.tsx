@@ -25,7 +25,7 @@ describe('CardGrid', () => {
       </CardGrid>
     );
 
-    const gridDiv = container.querySelector('.starlight-card-grid');
+    const gridDiv = container.querySelector('.mdx-preview-starlight-card-grid');
     expect(gridDiv).toHaveClass('stagger');
   });
 
@@ -36,7 +36,7 @@ describe('CardGrid', () => {
       </CardGrid>
     );
 
-    const gridDiv = container.querySelector('.starlight-card-grid');
+    const gridDiv = container.querySelector('.mdx-preview-starlight-card-grid');
     expect(gridDiv).not.toHaveClass('stagger');
   });
 });

@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DependencyWatcher } from '../preview/watchers/DependencyWatcher';
 import * as fs from 'fs';
 
-// mock fs module with statSync (resolveImportSync uses statSync, not existsSync)
+// mock fs module w/ statSync (resolveImportSync uses statSync, not existsSync)
 vi.mock('fs', async () => {
   const actual = await vi.importActual<typeof fs>('fs');
   return {
@@ -29,7 +29,7 @@ describe('DependencyWatcher', () => {
     it('should detect local imports (./foo, ../bar)', () => {
       const localImports = ['./component', '../utils/helper', './lib/index'];
 
-      // Mock file existence - statSync returns stat object with isFile()
+      // mock file existence - statSync returns stat object w/ isFile()
       vi.mocked(fs.statSync).mockReturnValue({
         isFile: () => true,
       } as fs.Stats);

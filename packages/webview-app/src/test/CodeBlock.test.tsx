@@ -18,73 +18,73 @@ describe('CodeBlock', () => {
   });
 
   describe('enhanceCodeBlocks', () => {
-    it('adds copy button to shiki-container', () => {
+    it('adds copy button to mdx-preview-codeblock-shiki', () => {
       container.innerHTML = `
-        <div class="shiki-container" data-code="const x = 1;">
+        <div class="mdx-preview-codeblock-shiki" data-code="const x = 1;">
           <pre><code>const x = 1;</code></pre>
         </div>
       `;
 
       enhanceCodeBlocks(container);
 
-      const copyBtn = container.querySelector('.code-copy-button');
+      const copyBtn = container.querySelector('.mdx-preview-codeblock-copy');
       expect(copyBtn).not.toBeNull();
     });
 
     it('sets aria-label on copy button', () => {
       container.innerHTML = `
-        <div class="shiki-container" data-code="const x = 1;">
+        <div class="mdx-preview-codeblock-shiki" data-code="const x = 1;">
           <pre><code>const x = 1;</code></pre>
         </div>
       `;
 
       enhanceCodeBlocks(container);
 
-      const copyBtn = container.querySelector('.code-copy-button');
+      const copyBtn = container.querySelector('.mdx-preview-codeblock-copy');
       expect(copyBtn?.getAttribute('aria-label')).toBe('Copy code');
     });
 
     it('adds language badge when data-language is present', () => {
       container.innerHTML = `
-        <div class="shiki-container" data-code="const x = 1;" data-language="javascript">
+        <div class="mdx-preview-codeblock-shiki" data-code="const x = 1;" data-language="javascript">
           <pre><code>const x = 1;</code></pre>
         </div>
       `;
 
       enhanceCodeBlocks(container);
 
-      const badge = container.querySelector('.code-language-badge');
+      const badge = container.querySelector('.mdx-preview-codeblock-lang');
       expect(badge).not.toBeNull();
       expect(badge?.textContent).toBe('javascript');
     });
 
     it('does not add badge for plaintext language', () => {
       container.innerHTML = `
-        <div class="shiki-container" data-code="some text" data-language="plaintext">
+        <div class="mdx-preview-codeblock-shiki" data-code="some text" data-language="plaintext">
           <pre><code>some text</code></pre>
         </div>
       `;
 
       enhanceCodeBlocks(container);
 
-      expect(container.querySelector('.code-language-badge')).toBeNull();
+      expect(container.querySelector('.mdx-preview-codeblock-lang')).toBeNull();
     });
 
     it('does not add badge for text language', () => {
       container.innerHTML = `
-        <div class="shiki-container" data-code="some text" data-language="text">
+        <div class="mdx-preview-codeblock-shiki" data-code="some text" data-language="text">
           <pre><code>some text</code></pre>
         </div>
       `;
 
       enhanceCodeBlocks(container);
 
-      expect(container.querySelector('.code-language-badge')).toBeNull();
+      expect(container.querySelector('.mdx-preview-codeblock-lang')).toBeNull();
     });
 
     it('skips already enhanced blocks', () => {
       container.innerHTML = `
-        <div class="shiki-container" data-code="const x = 1;">
+        <div class="mdx-preview-codeblock-shiki" data-code="const x = 1;">
           <pre><code>const x = 1;</code></pre>
         </div>
       `;
@@ -94,23 +94,23 @@ describe('CodeBlock', () => {
       enhanceCodeBlocks(container);
 
       // should only have one copy button
-      const copyBtns = container.querySelectorAll('.code-copy-button');
+      const copyBtns = container.querySelectorAll('.mdx-preview-codeblock-copy');
       expect(copyBtns.length).toBe(1);
     });
 
     it('enhances multiple code blocks', () => {
       container.innerHTML = `
-        <div class="shiki-container" data-code="code1">
+        <div class="mdx-preview-codeblock-shiki" data-code="code1">
           <pre><code>code1</code></pre>
         </div>
-        <div class="shiki-container" data-code="code2">
+        <div class="mdx-preview-codeblock-shiki" data-code="code2">
           <pre><code>code2</code></pre>
         </div>
       `;
 
       enhanceCodeBlocks(container);
 
-      const copyBtns = container.querySelectorAll('.code-copy-button');
+      const copyBtns = container.querySelectorAll('.mdx-preview-codeblock-copy');
       expect(copyBtns.length).toBe(2);
     });
   });
@@ -118,7 +118,7 @@ describe('CodeBlock', () => {
   describe('line highlighting', () => {
     it('applies highlighted class to specified lines', () => {
       container.innerHTML = `
-        <div class="shiki-container" data-code="line1\nline2\nline3" data-highlight-lines="1,3">
+        <div class="mdx-preview-codeblock-shiki" data-code="line1\nline2\nline3" data-highlight-lines="1,3">
           <pre>
             <code>
               <span class="line">line1</span>
@@ -139,7 +139,7 @@ describe('CodeBlock', () => {
 
     it('handles single line highlight', () => {
       container.innerHTML = `
-        <div class="shiki-container" data-code="line1\nline2" data-highlight-lines="2">
+        <div class="mdx-preview-codeblock-shiki" data-code="line1\nline2" data-highlight-lines="2">
           <pre>
             <code>
               <span class="line">line1</span>
@@ -165,7 +165,7 @@ describe('CodeBlock', () => {
       });
 
       container.innerHTML = `
-        <div class="shiki-container" data-code="const x = 1;">
+        <div class="mdx-preview-codeblock-shiki" data-code="const x = 1;">
           <pre><code>const x = 1;</code></pre>
         </div>
       `;
@@ -173,7 +173,7 @@ describe('CodeBlock', () => {
       enhanceCodeBlocks(container);
 
       const copyBtn = container.querySelector(
-        '.code-copy-button'
+        '.mdx-preview-codeblock-copy'
       ) as HTMLButtonElement;
       copyBtn.click();
 
@@ -192,7 +192,7 @@ describe('CodeBlock', () => {
       });
 
       container.innerHTML = `
-        <div class="shiki-container" data-code="test">
+        <div class="mdx-preview-codeblock-shiki" data-code="test">
           <pre><code>test</code></pre>
         </div>
       `;
@@ -200,7 +200,7 @@ describe('CodeBlock', () => {
       enhanceCodeBlocks(container);
 
       const copyBtn = container.querySelector(
-        '.code-copy-button'
+        '.mdx-preview-codeblock-copy'
       ) as HTMLButtonElement;
       copyBtn.click();
 

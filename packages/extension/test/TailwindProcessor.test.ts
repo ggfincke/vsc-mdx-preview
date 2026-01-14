@@ -7,6 +7,35 @@ import {
 } from './__mocks__/vscode';
 import type { Preview } from '../preview/preview-manager';
 import type * as vscode from 'vscode';
+import type { TrustState } from '../security/TrustManager';
+import type { ConfigurationState } from '../preview/PreviewConfiguration';
+
+// helper to create mock TrustState with required properties
+const mockTrustState = (
+  canExecute: boolean,
+  reason: string = ''
+): TrustState => ({
+  workspaceTrusted: canExecute,
+  scriptsEnabled: canExecute,
+  canExecute,
+  reason,
+});
+
+// helper to create mock ConfigurationState with required properties
+const mockConfigState = (
+  tailwindEnabled: 'auto' | 'enabled' | 'disabled'
+): ConfigurationState =>
+  ({
+    updateMode: 'onType',
+    debounceDelay: 300,
+    useVscodeMarkdownStyles: true,
+    useWhiteBackground: false,
+    customLayoutFilePath: '',
+    customCss: '',
+    useSucraseTranspiler: false,
+    securityPolicy: 'strict',
+    tailwindEnabled,
+  }) as ConfigurationState;
 
 vi.mock('fs');
 vi.mock('../logging', () => ({
@@ -62,14 +91,13 @@ import { warn } from '../logging';
 // helper to create mock Preview
 const createMockPreview = (overrides: Partial<Preview> = {}): Preview => {
   let tailwindRequestId = 0;
+  const defaultConfig = mockConfigState('auto');
   return {
     doc: {
       uri: Uri.file('/workspace/src/page.mdx'),
     } as vscode.TextDocument,
     entryFsDirectory: '/workspace/src',
-    configuration: {
-      tailwindEnabled: 'auto',
-    },
+    configuration: defaultConfig,
     mdxPreviewConfig: null,
     webviewHandle: {},
     webviewHandshakePromise: Promise.resolve(),
@@ -144,7 +172,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: false, reason: 'Untrusted workspace' },
+        trustState: mockTrustState(false, 'Untrusted workspace'),
       });
 
       expect(result).toEqual({
@@ -165,7 +193,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result.enabled).toBe(true);
@@ -183,7 +211,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(mockCache.updateSettings).toHaveBeenCalledWith({
@@ -208,7 +236,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result).toEqual({
@@ -233,7 +261,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result.enabled).toBe(false);
@@ -253,7 +281,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(warn).toHaveBeenCalledWith(
@@ -277,7 +305,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(mockCompiler.compile).toHaveBeenCalledWith(
@@ -302,7 +330,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(mockCompiler.compile).toHaveBeenCalledWith(
@@ -328,7 +356,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result.enabled).toBe(true);
@@ -347,7 +375,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result.css).toBe('.cached { color: red; }');
@@ -366,7 +394,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result.css).toBe('.compiled { color: blue; }');
@@ -392,7 +420,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       // Should have called compiler (not cached due to error stamp)
@@ -412,7 +440,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(fs.promises.stat).toHaveBeenCalledWith(
@@ -428,7 +456,7 @@ describe('TailwindProcessor', () => {
     it('should return early when tailwind disabled', async () => {
       const processor = TailwindProcessor.getInstance();
       const preview = createMockPreview({
-        configuration: { tailwindEnabled: 'disabled' },
+        configuration: mockConfigState('disabled'),
       });
 
       const result = await processor.process({
@@ -436,7 +464,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result.enabled).toBe(false);
@@ -449,7 +477,7 @@ describe('TailwindProcessor', () => {
 
       const processor = TailwindProcessor.getInstance();
       const preview = createMockPreview({
-        configuration: { tailwindEnabled: 'auto' },
+        configuration: mockConfigState('auto'),
       });
 
       const result = await processor.process({
@@ -457,7 +485,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result.enabled).toBe(false);
@@ -469,7 +497,7 @@ describe('TailwindProcessor', () => {
 
       const processor = TailwindProcessor.getInstance();
       const preview = createMockPreview({
-        configuration: { tailwindEnabled: 'auto' },
+        configuration: mockConfigState('auto'),
       });
 
       const result = await processor.process({
@@ -477,7 +505,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result.enabled).toBe(true);
@@ -494,7 +522,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result.watchFiles).toContain('/workspace/tailwind.config.js');
@@ -507,7 +535,7 @@ describe('TailwindProcessor', () => {
 
       const processor = TailwindProcessor.getInstance();
       const preview = createMockPreview({
-        configuration: { tailwindEnabled: 'enabled' },
+        configuration: mockConfigState('enabled'),
       });
 
       const result = await processor.process({
@@ -515,7 +543,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result.watchFiles).toEqual([]);
@@ -538,7 +566,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       // Should be sorted alphabetically
@@ -561,7 +589,7 @@ describe('TailwindProcessor', () => {
         mdxText: '# Hello',
         entryFilePath: '/workspace/src/page.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, reason: '' },
+        trustState: mockTrustState(true),
       });
 
       expect(result).toEqual({

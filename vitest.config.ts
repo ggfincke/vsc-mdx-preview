@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['packages/extension/**/*.test.ts'],
+    include: ['packages/extension/**/*.test.ts', 'packages/shared-types/**/*.test.ts'],
     // Exclude integration tests (*.integration.test.ts) - they run via vitest.integration.config.ts
     exclude: ['**/node_modules/**', '**/*.integration.test.ts'],
     coverage: {

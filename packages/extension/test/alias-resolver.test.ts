@@ -478,7 +478,7 @@ describe('alias-resolver', () => {
         const step2 = resolveAlias(step1!, 'docusaurus', '/workspace');
         expect(step2).toBeNull();
 
-        // Even trying with different framework returns null
+        // even trying w/ different framework returns null
         const step3 = resolveAlias(step1!, 'nextjs', '/workspace');
         expect(step3).toBeNull();
       });
@@ -563,7 +563,7 @@ describe('alias-resolver', () => {
       });
 
       it('no state leak between frameworks', () => {
-        // Resolve with docusaurus
+        // resolve w/ docusaurus
         resolveAlias('@theme/Tabs', 'docusaurus', '/workspace');
 
         // Switch to nextjs - should work independently

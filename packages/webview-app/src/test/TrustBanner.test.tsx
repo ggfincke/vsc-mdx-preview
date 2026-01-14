@@ -57,7 +57,7 @@ describe('TrustBanner', () => {
     it('shows warning banner type', () => {
       render(<TrustBanner trustState={untrustedState} />);
 
-      const banner = document.querySelector('.trust-banner--warning');
+      const banner = document.querySelector('.mdx-preview-trust-banner--warning');
       expect(banner).toBeInTheDocument();
     });
 
@@ -99,7 +99,7 @@ describe('TrustBanner', () => {
     it('shows info banner type', () => {
       render(<TrustBanner trustState={scriptsDisabledState} />);
 
-      const banner = document.querySelector('.trust-banner--info');
+      const banner = document.querySelector('.mdx-preview-trust-banner--info');
       expect(banner).toBeInTheDocument();
     });
 

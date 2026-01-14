@@ -15,10 +15,10 @@ describe('Aside', () => {
       ).toBeInTheDocument();
     });
 
-    it('applies starlight-aside class', () => {
+    it('applies mdx-preview-starlight-aside class', () => {
       const { container } = render(<Aside>Content</Aside>);
 
-      expect(container.querySelector('.starlight-aside')).toBeInTheDocument();
+      expect(container.querySelector('.mdx-preview-starlight-aside')).toBeInTheDocument();
     });
   });
 
@@ -27,35 +27,35 @@ describe('Aside', () => {
       const { container } = render(<Aside>Note content</Aside>);
 
       const aside = container.querySelector('aside');
-      expect(aside).toHaveClass('starlight-aside-note');
+      expect(aside).toHaveClass('mdx-preview-starlight-aside-note');
     });
 
     it('applies note type class', () => {
       const { container } = render(<Aside type="note">Note</Aside>);
 
       const aside = container.querySelector('aside');
-      expect(aside).toHaveClass('starlight-aside-note');
+      expect(aside).toHaveClass('mdx-preview-starlight-aside-note');
     });
 
     it('applies tip type class', () => {
       const { container } = render(<Aside type="tip">Tip</Aside>);
 
       const aside = container.querySelector('aside');
-      expect(aside).toHaveClass('starlight-aside-tip');
+      expect(aside).toHaveClass('mdx-preview-starlight-aside-tip');
     });
 
     it('applies caution type class', () => {
       const { container } = render(<Aside type="caution">Caution</Aside>);
 
       const aside = container.querySelector('aside');
-      expect(aside).toHaveClass('starlight-aside-caution');
+      expect(aside).toHaveClass('mdx-preview-starlight-aside-caution');
     });
 
     it('applies danger type class', () => {
       const { container } = render(<Aside type="danger">Danger</Aside>);
 
       const aside = container.querySelector('aside');
-      expect(aside).toHaveClass('starlight-aside-danger');
+      expect(aside).toHaveClass('mdx-preview-starlight-aside-danger');
     });
   });
 
@@ -100,7 +100,7 @@ describe('Aside', () => {
     it('renders type-specific icon', () => {
       const { container } = render(<Aside type="note">Content</Aside>);
 
-      const iconSpan = container.querySelector('.starlight-aside-icon');
+      const iconSpan = container.querySelector('.mdx-preview-starlight-aside-icon');
       expect(iconSpan).toBeInTheDocument();
       // SVG is injected via dangerouslySetInnerHTML
       expect(iconSpan?.innerHTML).toContain('svg');
@@ -112,8 +112,8 @@ describe('Aside', () => {
       );
       const { container: tipContainer } = render(<Aside type="tip">Tip</Aside>);
 
-      const noteIcon = noteContainer.querySelector('.starlight-aside-icon');
-      const tipIcon = tipContainer.querySelector('.starlight-aside-icon');
+      const noteIcon = noteContainer.querySelector('.mdx-preview-starlight-aside-icon');
+      const tipIcon = tipContainer.querySelector('.mdx-preview-starlight-aside-icon');
 
       expect(noteIcon?.innerHTML).not.toBe(tipIcon?.innerHTML);
     });

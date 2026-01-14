@@ -28,11 +28,17 @@ export class Uri {
   readonly fsPath: string;
   readonly scheme: string;
   readonly path: string;
+  readonly authority: string;
+  readonly query: string;
+  readonly fragment: string;
 
   private constructor(fsPath: string) {
     this.fsPath = fsPath;
     this.scheme = 'file';
     this.path = fsPath;
+    this.authority = '';
+    this.query = '';
+    this.fragment = '';
   }
 
   static file(path: string): Uri {
@@ -41,6 +47,28 @@ export class Uri {
 
   static parse(value: string): Uri {
     return new Uri(value);
+  }
+
+  with(_change: {
+    scheme?: string;
+    authority?: string;
+    path?: string;
+    query?: string;
+    fragment?: string;
+  }): Uri {
+    // Return self for simplicity in tests
+    return this;
+  }
+
+  toJSON(): unknown {
+    return {
+      fsPath: this.fsPath,
+      scheme: this.scheme,
+      path: this.path,
+      authority: this.authority,
+      query: this.query,
+      fragment: this.fragment,
+    };
   }
 
   toString(): string {
@@ -194,10 +222,10 @@ export const workspace = {
     });
   },
 
-  createFileSystemWatcher: vi.fn((globPattern: string) => ({
-    onDidChange: vi.fn((listener: () => void) => new Disposable(() => {})),
-    onDidCreate: vi.fn((listener: () => void) => new Disposable(() => {})),
-    onDidDelete: vi.fn((listener: () => void) => new Disposable(() => {})),
+  createFileSystemWatcher: vi.fn((_globPattern: string) => ({
+    onDidChange: vi.fn((_listener: () => void) => new Disposable(() => {})),
+    onDidCreate: vi.fn((_listener: () => void) => new Disposable(() => {})),
+    onDidDelete: vi.fn((_listener: () => void) => new Disposable(() => {})),
     dispose: vi.fn(),
   })),
 };
@@ -210,9 +238,9 @@ export const window = {
     dispose: vi.fn(),
   })),
   showQuickPick: vi.fn(),
-  showInformationMessage: vi.fn(),
-  showWarningMessage: vi.fn(),
-  showErrorMessage: vi.fn(),
+  showInformationMessage: vi.fn(() => Promise.resolve(undefined)),
+  showWarningMessage: vi.fn(() => Promise.resolve(undefined)),
+  showErrorMessage: vi.fn(() => Promise.resolve(undefined)),
   showTextDocument: vi.fn(),
   createStatusBarItem: vi.fn(() => ({
     show: vi.fn(),
@@ -294,13 +322,19 @@ export const __triggerTrustChange = (trusted = mockIsTrusted): void => {
 export const __triggerConfigChange = (affectedKey: string): void => {
   configChangeListeners.forEach((listener) =>
     listener({
-      affectsConfiguration: (key: string) => key === affectedKey,
+      // support both exact match & prefix match (e.g., 'mdx-preview' matches 'mdx-preview.preview.enableScripts')
+      affectsConfiguration: (key: string) =>
+        key === affectedKey || affectedKey.startsWith(key + '.'),
     })
   );
 };
 
 export const __resetMocks = (): void => {
   mockIsTrusted = false;
+  // clear all config values & reset to defaults
+  for (const key of Object.keys(mockConfigValues)) {
+    delete mockConfigValues[key];
+  }
   mockConfigValues['preview.enableScripts'] = false;
   mockConfigValues['preview.security'] = 'strict';
   mockWorkspaceFolders = [{ uri: { fsPath: '/projects/test-workspace' } }];
