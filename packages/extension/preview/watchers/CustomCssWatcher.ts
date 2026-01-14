@@ -35,7 +35,7 @@ export class CustomCssWatcher implements IWatcher {
   }
 
   // IWatcher interface: start watching the CSS file
-  start(): void {
+  async start(): Promise<void> {
     if (!this.cssPath || this._isActive) {
       return;
     }
@@ -48,7 +48,7 @@ export class CustomCssWatcher implements IWatcher {
     this._isActive = true;
 
     // initial load
-    this.loadAndSendCss(this.resolvedPath);
+    await this.loadAndSendCss(this.resolvedPath);
 
     // watch for changes
     this.watcher = vscode.workspace.createFileSystemWatcher(this.resolvedPath);
@@ -94,6 +94,12 @@ export class CustomCssWatcher implements IWatcher {
   // IWatcher interface: check if watching
   isActive(): boolean {
     return this._isActive;
+  }
+
+  // IWatcher interface: check if ready
+  isReady(): boolean {
+    // ready when active & path is resolved
+    return this._isActive && this.resolvedPath !== null;
   }
 
   // Alias for backward compatibility

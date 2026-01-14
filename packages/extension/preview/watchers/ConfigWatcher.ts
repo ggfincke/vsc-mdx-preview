@@ -30,7 +30,7 @@ export class ConfigWatcher implements IWatcher {
 
   // IWatcher interface implementation
 
-  start(): void {
+  async start(): Promise<void> {
     if (this._isActive || !this.configPath) {
       return;
     }
@@ -60,6 +60,11 @@ export class ConfigWatcher implements IWatcher {
   }
 
   isActive(): boolean {
+    return this._isActive;
+  }
+
+  isReady(): boolean {
+    // ready when active (synchronous watcher)
     return this._isActive;
   }
 

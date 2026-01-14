@@ -56,7 +56,7 @@ export class DocumentTracker implements IWatcher {
   // IWatcher interface implementation
   // (no-ops since this is a state tracker, not a file watcher)
 
-  start(): void {
+  async start(): Promise<void> {
     this._isActive = true;
   }
 
@@ -65,6 +65,11 @@ export class DocumentTracker implements IWatcher {
   }
 
   isActive(): boolean {
+    return this._isActive;
+  }
+
+  isReady(): boolean {
+    // always ready once active (state tracker, no async initialization)
     return this._isActive;
   }
 

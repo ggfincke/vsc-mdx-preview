@@ -8,7 +8,8 @@ import type { Disposable } from 'vscode';
 export interface IWatcher extends Disposable {
   // Start watching.
   // Called when the watcher should begin monitoring for changes.
-  start(): void;
+  // Returns a promise that resolves when the watcher is fully initialized.
+  start(): Promise<void>;
 
   // Stop watching without disposing resources.
   // Can be restarted later w/ start().
@@ -17,6 +18,10 @@ export interface IWatcher extends Disposable {
   // Check if the watcher is currently active.
   // @returns true if watching, false if stopped
   isActive(): boolean;
+
+  // check if the watcher is fully initialized & ready to handle events
+  // @returns true if ready to receive & process events
+  isReady(): boolean;
 }
 
 // type guard for checking if an object implements IWatcher.
@@ -27,10 +32,12 @@ export function isWatcher(obj: unknown): obj is IWatcher {
     'start' in obj &&
     'stop' in obj &&
     'isActive' in obj &&
+    'isReady' in obj &&
     'dispose' in obj &&
     typeof (obj as IWatcher).start === 'function' &&
     typeof (obj as IWatcher).stop === 'function' &&
     typeof (obj as IWatcher).isActive === 'function' &&
+    typeof (obj as IWatcher).isReady === 'function' &&
     typeof (obj as IWatcher).dispose === 'function'
   );
 }

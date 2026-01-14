@@ -36,7 +36,7 @@ export class TailwindConfigWatcher implements IWatcher {
     }
   }
 
-  start(): void {
+  async start(): Promise<void> {
     if (this._isActive || this.watchFiles.length === 0) {
       return;
     }
@@ -93,6 +93,11 @@ export class TailwindConfigWatcher implements IWatcher {
   }
 
   isActive(): boolean {
+    return this._isActive;
+  }
+
+  isReady(): boolean {
+    // ready when active (synchronous watcher)
     return this._isActive;
   }
 

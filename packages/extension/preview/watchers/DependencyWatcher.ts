@@ -87,7 +87,7 @@ export class DependencyWatcher implements IWatcher {
 
   // IWatcher interface implementation
 
-  start(): void {
+  async start(): Promise<void> {
     this._isActive = true;
     debug('[DEP-WATCHER] Started');
   }
@@ -100,6 +100,11 @@ export class DependencyWatcher implements IWatcher {
 
   isActive(): boolean {
     return this._isActive;
+  }
+
+  isReady(): boolean {
+    // ready when active & document directory is set
+    return this._isActive && this.documentDir !== '';
   }
 
   dispose(): void {

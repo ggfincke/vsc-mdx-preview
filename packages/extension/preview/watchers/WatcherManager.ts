@@ -9,6 +9,7 @@ import type { IWatcher } from './types';
 // provides a central place to register, start, stop, & dispose watchers.
 export class WatcherManager implements Disposable {
   private watchers = new Map<string, IWatcher>();
+  private readyGate: Promise<void> | null = null;
 
   // Register a watcher w/ a unique name.
   // @param name - Unique identifier for the watcher
@@ -53,12 +54,52 @@ export class WatcherManager implements Disposable {
   }
 
   // Start all registered watchers.
-  startAll(): void {
-    for (const [name, watcher] of this.watchers) {
-      if (!watcher.isActive()) {
-        watcher.start();
+  // Returns a promise that resolves when all watchers have started.
+  async startAll(): Promise<void> {
+    const startPromises = Array.from(this.watchers.entries())
+      .filter(([, watcher]) => !watcher.isActive())
+      .map(async ([name, watcher]) => {
+        await watcher.start();
         debug(`[WATCHER-MANAGER] Started: ${name}`);
+      });
+    await Promise.all(startPromises);
+  }
+
+  // Wait for all watchers to report ready.
+  async waitForAllReady(): Promise<void> {
+    const waitPromises = Array.from(this.watchers.entries()).map(
+      async ([name, watcher]) => {
+        // poll until ready (simple approach for synchronous watchers)
+        while (!watcher.isReady()) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+        debug(`[WATCHER-MANAGER] Ready: ${name}`);
       }
+    );
+    await Promise.all(waitPromises);
+  }
+
+  // Get the ready state of all watchers.
+  getReadyState(): Map<string, boolean> {
+    return new Map(
+      Array.from(this.watchers.entries()).map(([name, watcher]) => [
+        name,
+        watcher.isReady(),
+      ])
+    );
+  }
+
+  // Set a ready gate that watcher callbacks should wait for.
+  // Used to prevent callbacks from firing before webview is ready.
+  setReadyGate(gate: Promise<void>): void {
+    this.readyGate = gate;
+  }
+
+  // Wait for the ready gate to resolve.
+  // Watcher callbacks should call this before processing events.
+  async waitForGate(): Promise<void> {
+    if (this.readyGate) {
+      await this.readyGate;
     }
   }
 
