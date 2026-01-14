@@ -3,3 +3,5 @@
 
 export { useMermaidRendering } from './useMermaidRendering';
 export type { MermaidScanMode } from './useMermaidRendering';
+export { useImageLightbox } from './useImageLightbox';
+export { useSafeModeProcessing } from './useSafeModeProcessing';
