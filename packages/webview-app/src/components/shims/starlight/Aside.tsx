@@ -8,7 +8,7 @@ import React, { ReactNode, ReactElement } from 'react';
 // Aside types (same as admonitions)
 export type AsideType = 'note' | 'tip' | 'caution' | 'danger';
 
-// Aside props (compatible with Starlight)
+// Aside props (compatible w/ Starlight)
 export interface AsideProps {
   children: ReactNode;
   type?: AsideType;
@@ -42,15 +42,15 @@ export function Aside({
   const displayTitle = title || ASIDE_TITLES[type];
 
   return (
-    <aside className={`starlight-aside starlight-aside-${type}`}>
-      <div className="starlight-aside-header">
+    <aside className={`mdx-preview-starlight-aside mdx-preview-starlight-aside-${type}`}>
+      <div className="mdx-preview-starlight-aside-header">
         <span
-          className="starlight-aside-icon"
+          className="mdx-preview-starlight-aside-icon"
           dangerouslySetInnerHTML={{ __html: ASIDE_ICONS[type] }}
         />
-        <span className="starlight-aside-title">{displayTitle}</span>
+        <span className="mdx-preview-starlight-aside-title">{displayTitle}</span>
       </div>
-      <div className="starlight-aside-content">{children}</div>
+      <div className="mdx-preview-starlight-aside-content">{children}</div>
     </aside>
   );
 }

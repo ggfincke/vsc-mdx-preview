@@ -5,7 +5,7 @@
 import React, { ReactNode, ReactElement } from 'react';
 import { BaseCard } from '../base';
 
-// Card props (compatible with Starlight)
+// Card props (compatible w/ Starlight)
 export interface CardProps {
   children: ReactNode;
   title: string;
@@ -15,12 +15,12 @@ export interface CardProps {
 // card component
 export function Card({ children, title, icon }: CardProps): ReactElement {
   return (
-    <BaseCard className="starlight-card">
-      <div className="starlight-card-header">
-        {icon && <span className="starlight-card-icon">{icon}</span>}
-        <span className="starlight-card-title">{title}</span>
+    <BaseCard className="mdx-preview-starlight-card">
+      <div className="mdx-preview-starlight-card-header">
+        {icon && <span className="mdx-preview-starlight-card-icon">{icon}</span>}
+        <span className="mdx-preview-starlight-card-title">{title}</span>
       </div>
-      <div className="starlight-card-content">{children}</div>
+      <div className="mdx-preview-starlight-card-content">{children}</div>
     </BaseCard>
   );
 }

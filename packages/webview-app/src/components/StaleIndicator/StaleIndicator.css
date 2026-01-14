@@ -1,7 +1,8 @@
 /* packages/webview-app/src/components/StaleIndicator/StaleIndicator.css */
 /* non-blocking badge indicating preview content is stale */
+/* CSS naming convention: mdx-preview-stale-indicator */
 
-.stale-indicator {
+.mdx-preview-stale-indicator {
   position: fixed;
   top: 8px;
   right: 8px;
@@ -19,13 +20,13 @@
 }
 
 /* Slightly more prominent in light themes */
-.vscode-light .stale-indicator {
+.vscode-light .mdx-preview-stale-indicator {
   background: var(--vscode-editorWarning-foreground, #bf8803);
   color: var(--vscode-editor-background, #ffffff);
 }
 
 /* High contrast mode */
-.vscode-high-contrast .stale-indicator {
+.vscode-high-contrast .mdx-preview-stale-indicator {
   background: var(--vscode-editorWarning-foreground, #ffcc00);
   color: var(--vscode-editor-background, #000000);
   border: 1px solid var(--vscode-contrastBorder, #ffffff);

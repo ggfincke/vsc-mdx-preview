@@ -3,9 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import './LoadingBar.css';
-
-// delay before showing loading bar to avoid flicker
-const SHOW_AFTER_DURATION = 500;
+import { LOADING_BAR_SHOW_DELAY_MS } from '../../constants';
 
 interface LoadingBarProps {
   // whether to show the loading bar immediately
@@ -23,7 +21,7 @@ const LoadingBar: React.FC<LoadingBarProps> = ({ immediate = false }) => {
 
     const timer = setTimeout(() => {
       setShouldShow(true);
-    }, SHOW_AFTER_DURATION);
+    }, LOADING_BAR_SHOW_DELAY_MS);
 
     return () => clearTimeout(timer);
   }, [immediate]);
@@ -33,7 +31,7 @@ const LoadingBar: React.FC<LoadingBarProps> = ({ immediate = false }) => {
   }
 
   return (
-    <div className="mdx-loading-container">
+    <div className="mdx-preview-loading-container">
       <div className="monaco-progress-container active infinite">
         <div
           className="progress-bit"
@@ -43,7 +41,7 @@ const LoadingBar: React.FC<LoadingBarProps> = ({ immediate = false }) => {
           }}
         />
       </div>
-      <p className="mdx-loading-text">Loading preview...</p>
+      <p className="mdx-preview-loading-text">Loading preview...</p>
     </div>
   );
 };

@@ -33,28 +33,28 @@ function ClickableStackTrace({ stack }: { stack: string }) {
   }, []);
 
   return (
-    <div className="mdx-error-stack-frames">
+    <div className="mdx-preview-error-stack-frames">
       {frames.map((frame, index) => (
         <div
           key={index}
-          className={`mdx-error-stack-frame ${frame.isNavigable ? 'navigable' : ''} ${frame.filePath && isUserCode(frame.filePath) ? 'user-code' : ''}`}
+          className={`mdx-preview-error-stack-frame ${frame.isNavigable ? 'navigable' : ''} ${frame.filePath && isUserCode(frame.filePath) ? 'user-code' : ''}`}
           onClick={() => frame.isNavigable && handleFrameClick(frame)}
         >
           {frame.isNavigable ? (
             <>
               {frame.functionName && (
-                <span className="mdx-error-frame-function">
+                <span className="mdx-preview-error-frame-function">
                   {frame.functionName}
                 </span>
               )}
-              <span className="mdx-error-frame-location">
+              <span className="mdx-preview-error-frame-location">
                 {getDisplayPath(frame.filePath || '')}
                 {frame.line && `:${frame.line}`}
                 {frame.column && `:${frame.column}`}
               </span>
             </>
           ) : (
-            <span className="mdx-error-frame-raw">{frame.raw}</span>
+            <span className="mdx-preview-error-frame-raw">{frame.raw}</span>
           )}
         </div>
       ))}
@@ -87,32 +87,32 @@ function ErrorDisplay({
   }, [firstLocation]);
 
   return (
-    <div className="mdx-error-overlay">
-      <div className="mdx-error-container">
-        <div className="mdx-error-header">
-          <span className="mdx-error-icon">!</span>
+    <div className="mdx-preview-error-overlay">
+      <div className="mdx-preview-error-container">
+        <div className="mdx-preview-error-header">
+          <span className="mdx-preview-error-icon">!</span>
           <h2>{title}</h2>
         </div>
-        <div className="mdx-error-content">
-          <pre className="mdx-error-message">{error.message}</pre>
+        <div className="mdx-preview-error-content">
+          <pre className="mdx-preview-error-message">{error.message}</pre>
           {error.stack && (
-            <details className="mdx-error-stack-details" open>
+            <details className="mdx-preview-error-stack-details" open>
               <summary>Stack Trace (click to navigate)</summary>
               <ClickableStackTrace stack={error.stack} />
             </details>
           )}
         </div>
-        <div className="mdx-error-actions">
+        <div className="mdx-preview-error-actions">
           {firstLocation && (
-            <button onClick={handleOpenInEditor} className="mdx-error-button">
+            <button onClick={handleOpenInEditor} className="mdx-preview-error-button">
               Open in Editor
             </button>
           )}
-          <button onClick={handleCopy} className="mdx-error-button">
+          <button onClick={handleCopy} className="mdx-preview-error-button">
             Copy Error
           </button>
           {onReset && (
-            <button onClick={onReset} className="mdx-error-button primary">
+            <button onClick={onReset} className="mdx-preview-error-button primary">
               Retry
             </button>
           )}

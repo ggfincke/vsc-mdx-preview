@@ -3,8 +3,9 @@
 // provides preview-compatible version of @theme/CodeBlock
 
 import React, { ReactNode, ReactElement, useState, useCallback } from 'react';
+import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../../constants';
 
-// CodeBlock props (compatible with Docusaurus)
+// CodeBlock props (compatible w/ Docusaurus)
 export interface CodeBlockProps {
   children: ReactNode;
   language?: string;
@@ -49,7 +50,7 @@ export function CodeBlock({
     try {
       await navigator.clipboard.writeText(codeText);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), CODE_COPY_FEEDBACK_DURATION_MS);
     } catch (err) {
       console.error('Failed to copy code:', err);
     }

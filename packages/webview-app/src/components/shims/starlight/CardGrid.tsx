@@ -4,7 +4,7 @@
 
 import React, { ReactNode, ReactElement } from 'react';
 
-// CardGrid props (compatible with Starlight)
+// CardGrid props (compatible w/ Starlight)
 export interface CardGridProps {
   children: ReactNode;
   stagger?: boolean;
@@ -16,7 +16,7 @@ export function CardGrid({
   stagger = false,
 }: CardGridProps): ReactElement {
   return (
-    <div className={`starlight-card-grid${stagger ? ' stagger' : ''}`}>
+    <div className={`mdx-preview-starlight-card-grid${stagger ? ' stagger' : ''}`}>
       {children}
     </div>
   );

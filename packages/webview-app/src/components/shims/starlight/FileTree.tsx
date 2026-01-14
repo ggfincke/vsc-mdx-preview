@@ -188,7 +188,7 @@ function parseFileTreeChildren(children: ReactNode): FileTreeEntry[] {
 function FileTreeItem({ entry }: { entry: FileTreeEntry }): ReactElement {
   if (entry.isPlaceholder) {
     return (
-      <li className="starlight-file-tree-placeholder">
+      <li className="mdx-preview-starlight-file-tree-placeholder">
         <span className="placeholder-dots">...</span>
       </li>
     );
@@ -196,7 +196,7 @@ function FileTreeItem({ entry }: { entry: FileTreeEntry }): ReactElement {
 
   if (entry.isDirectory) {
     return (
-      <li className="starlight-file-tree-directory">
+      <li className="mdx-preview-starlight-file-tree-directory">
         <details open>
           <summary className={entry.isHighlighted ? 'highlighted' : ''}>
             <span
@@ -224,7 +224,7 @@ function FileTreeItem({ entry }: { entry: FileTreeEntry }): ReactElement {
 
   return (
     <li
-      className={`starlight-file-tree-file${entry.isHighlighted ? ' highlighted' : ''}`}
+      className={`mdx-preview-starlight-file-tree-file${entry.isHighlighted ? ' highlighted' : ''}`}
     >
       <span
         className="icon file"
@@ -241,7 +241,7 @@ export function FileTree({ children }: FileTreeProps): ReactElement {
   const entries = parseFileTreeChildren(children);
 
   return (
-    <div className="starlight-file-tree">
+    <div className="mdx-preview-starlight-file-tree">
       <ul>
         {entries.map((entry, i) => (
           <FileTreeItem key={i} entry={entry} />

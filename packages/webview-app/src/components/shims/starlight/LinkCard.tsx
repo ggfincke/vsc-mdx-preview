@@ -5,7 +5,7 @@
 import React, { ReactElement } from 'react';
 import { BaseCard, ArrowIcon } from '../base';
 
-// LinkCard props (compatible with Starlight)
+// LinkCard props (compatible w/ Starlight)
 export interface LinkCardProps {
   title: string;
   description?: string;
@@ -19,14 +19,14 @@ export function LinkCard({
   href,
 }: LinkCardProps): ReactElement {
   return (
-    <BaseCard className="starlight-link-card" as="a" href={href} openInNewTab>
-      <div className="starlight-link-card-content">
-        <span className="starlight-link-card-title">{title}</span>
+    <BaseCard className="mdx-preview-starlight-link-card" as="a" href={href} openInNewTab>
+      <div className="mdx-preview-starlight-link-card-content">
+        <span className="mdx-preview-starlight-link-card-title">{title}</span>
         {description && (
-          <span className="starlight-link-card-description">{description}</span>
+          <span className="mdx-preview-starlight-link-card-description">{description}</span>
         )}
       </div>
-      <span className="starlight-link-card-arrow">
+      <span className="mdx-preview-starlight-link-card-arrow">
         <ArrowIcon />
       </span>
     </BaseCard>

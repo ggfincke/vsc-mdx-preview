@@ -2,7 +2,7 @@
 // * lazy-loaded mermaid diagram renderer w/ error handling & source toggle
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../theme';
 import './MermaidRenderer.css';
 
 // gated debug logging (enable via localStorage.setItem('mdxPreviewDebug', '1'))
@@ -106,22 +106,22 @@ export function MermaidRenderer({ code, id }: Props) {
   // error state w/ show source toggle
   if (error) {
     return (
-      <div className="mermaid-error">
-        <div className="mermaid-error-header">
-          <span className="mermaid-error-icon">!</span>
-          <span className="mermaid-error-message">
+      <div className="mdx-preview-mermaid-error">
+        <div className="mdx-preview-mermaid-error-header">
+          <span className="mdx-preview-mermaid-error-icon">!</span>
+          <span className="mdx-preview-mermaid-error-msg">
             Mermaid parse error: {error}
           </span>
         </div>
         <button
           onClick={toggleSource}
-          className="mermaid-toggle-source"
+          className="mdx-preview-mermaid-toggle"
           type="button"
         >
           {showSource ? 'Hide source' : 'Show source'}
         </button>
         {showSource && (
-          <pre className="mermaid-source">
+          <pre className="mdx-preview-mermaid-source">
             <code>{code}</code>
           </pre>
         )}
@@ -132,16 +132,16 @@ export function MermaidRenderer({ code, id }: Props) {
   // * always render container so ref is available for mermaid.render()
   // show loading overlay on top while loading, hide diagram until ready
   return (
-    <div className="mermaid-container">
+    <div className="mdx-preview-mermaid">
       {isLoading && (
-        <div className="mermaid-loading-overlay">
-          <div className="mermaid-loading-spinner" />
+        <div className="mdx-preview-mermaid-loading">
+          <div className="mdx-preview-mermaid-spinner" />
           <span>Loading diagram...</span>
         </div>
       )}
       <div
         ref={containerRef}
-        className="mermaid-diagram"
+        className="mdx-preview-mermaid-diagram"
         style={{ visibility: isLoading ? 'hidden' : 'visible' }}
       />
     </div>

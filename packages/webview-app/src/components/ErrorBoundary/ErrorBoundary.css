@@ -1,4 +1,4 @@
-.mdx-error-overlay {
+.mdx-preview-error-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -13,7 +13,7 @@
   z-index: 9999;
 }
 
-.mdx-error-container {
+.mdx-preview-error-container {
   max-width: 800px;
   width: 100%;
   background: var(--vscode-editorWidget-background, #252526);
@@ -22,7 +22,7 @@
   overflow: hidden;
 }
 
-.mdx-error-header {
+.mdx-preview-error-header {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -31,7 +31,7 @@
   border-bottom: 1px solid var(--vscode-inputValidation-errorBorder, #be1100);
 }
 
-.mdx-error-icon {
+.mdx-preview-error-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,20 +44,20 @@
   font-size: 14px;
 }
 
-.mdx-error-header h2 {
+.mdx-preview-error-header h2 {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
   color: var(--vscode-errorForeground, #f48771);
 }
 
-.mdx-error-content {
+.mdx-preview-error-content {
   padding: 16px;
   max-height: 400px;
   overflow: auto;
 }
 
-.mdx-error-message {
+.mdx-preview-error-message {
   margin: 0;
   padding: 12px;
   background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
@@ -70,17 +70,17 @@
   color: var(--vscode-errorForeground, #f48771);
 }
 
-.mdx-error-stack-details {
+.mdx-preview-error-stack-details {
   margin-top: 12px;
 }
 
-.mdx-error-stack-details summary {
+.mdx-preview-error-stack-details summary {
   cursor: pointer;
   color: var(--vscode-descriptionForeground, #8b8b8b);
   font-size: 12px;
 }
 
-.mdx-error-stack {
+.mdx-preview-error-stack {
   margin: 8px 0 0 0;
   padding: 12px;
   background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
@@ -95,7 +95,7 @@
   overflow: auto;
 }
 
-.mdx-error-stack-frames {
+.mdx-preview-error-stack-frames {
   margin: 8px 0 0 0;
   padding: 8px;
   background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
@@ -104,7 +104,7 @@
   overflow: auto;
 }
 
-.mdx-error-stack-frame {
+.mdx-preview-error-stack-frame {
   font-family: var(--vscode-editor-font-family, monospace);
   font-size: 11px;
   line-height: 1.6;
@@ -115,38 +115,38 @@
   color: var(--vscode-descriptionForeground, #8b8b8b);
 }
 
-.mdx-error-stack-frame.navigable {
+.mdx-preview-error-stack-frame.navigable {
   cursor: pointer;
 }
 
-.mdx-error-stack-frame.navigable:hover {
+.mdx-preview-error-stack-frame.navigable:hover {
   background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.1));
 }
 
-.mdx-error-stack-frame.user-code {
+.mdx-preview-error-stack-frame.user-code {
   color: var(--vscode-editor-foreground, #d4d4d4);
 }
 
-.mdx-error-frame-function {
+.mdx-preview-error-frame-function {
   color: var(--vscode-symbolIcon-functionForeground, #b180d7);
   flex-shrink: 0;
 }
 
-.mdx-error-frame-location {
+.mdx-preview-error-frame-location {
   color: var(--vscode-textLink-foreground, #3794ff);
   text-decoration: underline;
 }
 
-.mdx-error-stack-frame.navigable:hover .mdx-error-frame-location {
+.mdx-preview-error-stack-frame.navigable:hover .mdx-preview-error-frame-location {
   color: var(--vscode-textLink-activeForeground, #3794ff);
 }
 
-.mdx-error-frame-raw {
+.mdx-preview-error-frame-raw {
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-.mdx-error-actions {
+.mdx-preview-error-actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
@@ -155,7 +155,7 @@
   border-top: 1px solid var(--vscode-editorWidget-border, #454545);
 }
 
-.mdx-error-button {
+.mdx-preview-error-button {
   padding: 6px 14px;
   border: 1px solid var(--vscode-button-border, transparent);
   border-radius: 2px;
@@ -165,15 +165,15 @@
   cursor: pointer;
 }
 
-.mdx-error-button:hover {
+.mdx-preview-error-button:hover {
   background: var(--vscode-button-secondaryHoverBackground, #45494e);
 }
 
-.mdx-error-button.primary {
+.mdx-preview-error-button.primary {
   background: var(--vscode-button-background, #0e639c);
   color: var(--vscode-button-foreground, #ffffff);
 }
 
-.mdx-error-button.primary:hover {
+.mdx-preview-error-button.primary:hover {
   background: var(--vscode-button-hoverBackground, #1177bb);
 }

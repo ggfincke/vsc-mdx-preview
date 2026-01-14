@@ -46,21 +46,21 @@ export function TrustBanner({
 
   return (
     <div
-      className={`trust-banner trust-banner--${bannerConfig.type}`}
+      className={`mdx-preview-trust-banner mdx-preview-trust-banner--${bannerConfig.type}`}
       role="alert"
       aria-live="polite"
     >
-      <div className="trust-banner__icon" aria-hidden="true">
+      <div className="mdx-preview-trust-banner__icon" aria-hidden="true">
         {bannerConfig.icon}
       </div>
-      <div className="trust-banner__content">
-        <span className="trust-banner__title">{bannerConfig.title}</span>
-        <span className="trust-banner__message">{bannerConfig.message}</span>
+      <div className="mdx-preview-trust-banner__content">
+        <span className="mdx-preview-trust-banner__title">{bannerConfig.title}</span>
+        <span className="mdx-preview-trust-banner__message">{bannerConfig.message}</span>
       </div>
-      <div className="trust-banner__actions">
+      <div className="mdx-preview-trust-banner__actions">
         {!trustState.workspaceTrusted && (
           <button
-            className="trust-banner__button trust-banner__button--primary"
+            className="mdx-preview-trust-banner__button mdx-preview-trust-banner__button--primary"
             onClick={handleManageTrust}
             type="button"
           >
@@ -69,7 +69,7 @@ export function TrustBanner({
         )}
         {trustState.workspaceTrusted && !trustState.scriptsEnabled && (
           <button
-            className="trust-banner__button trust-banner__button--primary"
+            className="mdx-preview-trust-banner__button mdx-preview-trust-banner__button--primary"
             onClick={handleEnableScripts}
             type="button"
           >
@@ -78,7 +78,7 @@ export function TrustBanner({
         )}
         {dismissible && (
           <button
-            className="trust-banner__button trust-banner__button--secondary"
+            className="mdx-preview-trust-banner__button mdx-preview-trust-banner__button--secondary"
             onClick={handleDismiss}
             type="button"
             aria-label="Dismiss banner"

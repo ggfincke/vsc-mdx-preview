@@ -13,7 +13,7 @@ export type BadgeVariant =
   | 'success'
   | 'default';
 
-// Badge props (compatible with Starlight)
+// Badge props (compatible w/ Starlight)
 export interface BadgeProps {
   text: ReactNode;
   variant?: BadgeVariant;
@@ -28,7 +28,7 @@ export function Badge({
 }: BadgeProps): ReactElement {
   return (
     <span
-      className={`starlight-badge starlight-badge-${variant} starlight-badge-${size}`}
+      className={`mdx-preview-starlight-badge mdx-preview-starlight-badge-${variant} mdx-preview-starlight-badge-${size}`}
     >
       {text}
     </span>

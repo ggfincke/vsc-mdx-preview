@@ -1,13 +1,14 @@
 /* packages/webview-app/src/components/shims/docusaurus/styles.css */
 /* Docusaurus component shim styles */
 /* Designed to closely match Docusaurus default styling */
+/* CSS naming convention: mdx-preview-* for generic classes, docusaurus-* for wrapper classes */
 
 /* ==================== Tabs ==================== */
 .docusaurus-tabs {
   margin: 1rem 0;
 }
 
-.tabs-header {
+.mdx-preview-tabs-header {
   display: flex;
   flex-wrap: wrap;
   gap: 0;
@@ -15,7 +16,7 @@
   margin-bottom: 0;
 }
 
-.tab-button {
+.mdx-preview-tabs-button {
   display: inline-flex;
   align-items: center;
   padding: 0.75rem 1rem;
@@ -30,34 +31,38 @@
   margin-bottom: -1px;
 }
 
-.tab-button:hover {
+.mdx-preview-tabs-button:hover {
   color: var(--vscode-textLink-foreground, #0066cc);
   background-color: var(--vscode-list-hoverBackground, rgba(0, 0, 0, 0.05));
 }
 
-.tab-button.active {
+.mdx-preview-tabs-button.active {
   color: var(--vscode-textLink-foreground, #0066cc);
   border-bottom-color: var(--vscode-textLink-foreground, #0066cc);
 }
 
-.tab-button:focus {
+.mdx-preview-tabs-button:focus {
   outline: none;
   box-shadow: 0 0 0 2px var(--vscode-focusBorder, rgba(0, 102, 204, 0.3));
 }
 
-.tabs-content {
+.mdx-preview-tabs-content {
   padding: 1rem 0;
 }
 
-.tab-panel {
-  animation: fadeIn 0.2s ease;
+.mdx-preview-tabs-panel {
+  animation: mdx-preview-tabs-fadeIn 0.2s ease;
 }
 
-.tab-panel[hidden] {
+.mdx-preview-tabs-panel[hidden] {
   display: none;
 }
 
-@keyframes fadeIn {
+.mdx-preview-tabs-item {
+  padding: 0.5rem 0;
+}
+
+@keyframes mdx-preview-tabs-fadeIn {
   from {
     opacity: 0;
     transform: translateY(-4px);
@@ -236,7 +241,7 @@
 }
 
 /* ==================== Dark Mode Adjustments ==================== */
-.vscode-dark .docusaurus-tabs .tabs-header {
+.vscode-dark .docusaurus-tabs .mdx-preview-tabs-header {
   border-bottom-color: var(--vscode-panel-border, #333);
 }
 

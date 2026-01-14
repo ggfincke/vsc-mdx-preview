@@ -1,7 +1,7 @@
 /* packages/webview-app/src/components/Lightbox/Lightbox.css */
 /* Fullscreen image lightbox styles */
 
-.mdx-lightbox-overlay {
+.mdx-preview-lightbox-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -25,7 +25,7 @@
   }
 }
 
-.mdx-lightbox-close {
+.mdx-preview-lightbox-close {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -45,16 +45,16 @@
   z-index: 10001;
 }
 
-.mdx-lightbox-close:hover {
+.mdx-preview-lightbox-close:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.mdx-lightbox-close:focus {
+.mdx-preview-lightbox-close:focus {
   outline: 2px solid var(--vscode-focusBorder, #007acc);
   outline-offset: 2px;
 }
 
-.mdx-lightbox-image {
+.mdx-preview-lightbox-image {
   max-width: 90vw;
   max-height: 85vh;
   object-fit: contain;
@@ -74,7 +74,7 @@
   }
 }
 
-.mdx-lightbox-caption {
+.mdx-preview-lightbox-caption {
   position: absolute;
   bottom: 24px;
   left: 50%;

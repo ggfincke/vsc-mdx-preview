@@ -2,16 +2,17 @@
 // * post-process code blocks to add copy button, language badge, & line highlighting
 
 import { useCallback } from 'react';
+import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../constants';
 import './CodeBlock.css';
 
 // post-process all code blocks in a container to add enhancements
 export function enhanceCodeBlocks(container: HTMLElement): void {
   // find all shiki containers
-  const codeContainers = container.querySelectorAll('.shiki-container');
+  const codeContainers = container.querySelectorAll('.mdx-preview-codeblock-shiki');
 
   codeContainers.forEach((shikiContainer) => {
     // skip if already enhanced
-    if (shikiContainer.querySelector('.code-copy-button')) {
+    if (shikiContainer.querySelector('.mdx-preview-codeblock-copy')) {
       return;
     }
 
@@ -21,7 +22,7 @@ export function enhanceCodeBlocks(container: HTMLElement): void {
 
     // add copy button
     const copyBtn = document.createElement('button');
-    copyBtn.className = 'code-copy-button';
+    copyBtn.className = 'mdx-preview-codeblock-copy';
     copyBtn.setAttribute('aria-label', 'Copy code');
     copyBtn.setAttribute('title', 'Copy code');
     copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
@@ -42,7 +43,7 @@ export function enhanceCodeBlocks(container: HTMLElement): void {
             <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
           </svg>`;
           copyBtn.classList.remove('copied');
-        }, 2000);
+        }, CODE_COPY_FEEDBACK_DURATION_MS);
       } catch {
         // clipboard API failed
       }
@@ -53,7 +54,7 @@ export function enhanceCodeBlocks(container: HTMLElement): void {
     // add language badge if language is specified
     if (lang && lang !== 'plaintext' && lang !== 'text') {
       const badge = document.createElement('span');
-      badge.className = 'code-language-badge';
+      badge.className = 'mdx-preview-codeblock-lang';
       badge.textContent = lang;
       shikiContainer.appendChild(badge);
     }

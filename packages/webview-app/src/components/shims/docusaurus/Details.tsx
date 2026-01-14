@@ -4,7 +4,7 @@
 
 import React, { ReactNode, ReactElement, useState } from 'react';
 
-// Details props (compatible with Docusaurus)
+// Details props (compatible w/ Docusaurus)
 export interface DetailsProps {
   children: ReactNode;
   summary?: ReactNode;

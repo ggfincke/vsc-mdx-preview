@@ -13,7 +13,7 @@ export function StaleIndicator({ isStale }: StaleIndicatorProps) {
   }
 
   return (
-    <div className="stale-indicator" role="status" aria-live="polite">
+    <div className="mdx-preview-stale-indicator" role="status" aria-live="polite">
       Outdated
     </div>
   );

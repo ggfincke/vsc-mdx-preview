@@ -46,26 +46,26 @@ export function Lightbox() {
 
   return (
     <div
-      className="mdx-lightbox-overlay"
+      className="mdx-preview-lightbox-overlay"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-label={currentImage.alt || 'Image preview'}
     >
       <button
-        className="mdx-lightbox-close"
+        className="mdx-preview-lightbox-close"
         onClick={closeLightbox}
         aria-label="Close lightbox"
       >
         &times;
       </button>
       <img
-        className="mdx-lightbox-image"
+        className="mdx-preview-lightbox-image"
         src={currentImage.src}
         alt={currentImage.alt || ''}
       />
       {currentImage.alt && (
-        <div className="mdx-lightbox-caption">{currentImage.alt}</div>
+        <div className="mdx-preview-lightbox-caption">{currentImage.alt}</div>
       )}
     </div>
   );

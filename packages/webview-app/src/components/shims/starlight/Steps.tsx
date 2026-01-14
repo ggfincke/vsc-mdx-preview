@@ -4,14 +4,14 @@
 
 import React, { ReactNode, ReactElement } from 'react';
 
-// Steps props (compatible with Starlight)
+// Steps props (compatible w/ Starlight)
 export interface StepsProps {
   children: ReactNode;
 }
 
 // steps component - renders numbered steps from ordered list children
 export function Steps({ children }: StepsProps): ReactElement {
-  return <div className="starlight-steps">{children}</div>;
+  return <div className="mdx-preview-starlight-steps">{children}</div>;
 }
 
 export default Steps;

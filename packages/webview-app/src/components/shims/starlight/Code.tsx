@@ -3,8 +3,9 @@
 // provides preview-compatible version of @astrojs/starlight/components Code
 
 import React, { ReactElement, useState, useCallback } from 'react';
+import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../../constants';
 
-// Code props (compatible with Starlight/Expressive Code)
+// Code props (compatible w/ Starlight/Expressive Code)
 export interface CodeProps {
   // Required: plaintext code content
   code: string;
@@ -57,7 +58,7 @@ export function Code({
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), CODE_COPY_FEEDBACK_DURATION_MS);
     } catch (err) {
       console.error('Failed to copy code:', err);
     }
@@ -74,13 +75,13 @@ export function Code({
   // Build class names
   const langClass = lang ? `language-${lang}` : '';
   const frameClass =
-    effectiveFrame !== 'none' ? `starlight-code-${effectiveFrame}` : '';
+    effectiveFrame !== 'none' ? `mdx-preview-starlight-code-${effectiveFrame}` : '';
 
   return (
-    <div className={`starlight-code ${frameClass}`.trim()}>
+    <div className={`mdx-preview-starlight-code ${frameClass}`.trim()}>
       {/* Title bar (only shown if title is provided) */}
       {title && (
-        <div className="starlight-code-header">
+        <div className="mdx-preview-starlight-code-header">
           {effectiveFrame === 'terminal' && (
             <span className="terminal-dots">
               <span className="dot red" />
@@ -88,15 +89,15 @@ export function Code({
               <span className="dot green" />
             </span>
           )}
-          <span className="starlight-code-title">{title}</span>
+          <span className="mdx-preview-starlight-code-title">{title}</span>
         </div>
       )}
 
       {/* Code container */}
-      <div className="starlight-code-container">
+      <div className="mdx-preview-starlight-code-container">
         {/* Copy button */}
         <button
-          className={`starlight-code-copy${copied ? ' copied' : ''}`}
+          className={`mdx-preview-starlight-code-copy${copied ? ' copied' : ''}`}
           onClick={handleCopy}
           title={copied ? 'Copied!' : 'Copy code'}
           aria-label={copied ? 'Copied!' : 'Copy code'}
@@ -110,7 +111,7 @@ export function Code({
 
         {/* Language badge (code frame only, no title bar) */}
         {lang && effectiveFrame === 'code' && !title && (
-          <span className="starlight-code-lang">{lang}</span>
+          <span className="mdx-preview-starlight-code-lang">{lang}</span>
         )}
 
         {/* Code block */}

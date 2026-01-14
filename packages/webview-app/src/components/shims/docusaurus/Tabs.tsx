@@ -20,7 +20,7 @@ export type TabItemProps = BaseTabItemProps;
 // context for TabItem to know if it's inside Tabs
 const TabsContext = createContext<boolean>(false);
 
-// Tabs props (compatible with Docusaurus)
+// Tabs props (compatible w/ Docusaurus)
 export interface TabsProps {
   children: ReactNode;
   defaultValue?: string;
@@ -52,12 +52,12 @@ export function Tabs({
         data-group-id={groupId}
       >
         {/* Tab headers */}
-        <div className="tabs-header" role="tablist">
+        <div className="mdx-preview-tabs-header" role="tablist">
           {tabs.map((tab) => (
             <button
               key={tab.value}
               role="tab"
-              className={`tab-button${tab.value === activeValue ? ' active' : ''}`}
+              className={`mdx-preview-tabs-button${tab.value === activeValue ? ' active' : ''}`}
               aria-selected={tab.value === activeValue}
               onClick={() => setActiveValue(tab.value)}
               tabIndex={tab.value === activeValue ? 0 : -1}
@@ -68,12 +68,12 @@ export function Tabs({
         </div>
 
         {/* Tab content */}
-        <div className="tabs-content">
+        <div className="mdx-preview-tabs-content">
           {tabItems.map((item) => (
             <div
               key={item.value}
               role="tabpanel"
-              className={`tab-panel${item.value === activeValue ? ' active' : ''}`}
+              className={`mdx-preview-tabs-panel${item.value === activeValue ? ' active' : ''}`}
               hidden={item.value !== activeValue}
             >
               {item.content}
@@ -91,7 +91,7 @@ export function TabItem({ children, value }: TabItemProps): ReactElement {
 
   // If used outside of Tabs context, render directly
   if (!isInsideTabs) {
-    return <div className="tab-item">{children}</div>;
+    return <div className="mdx-preview-tabs-item">{children}</div>;
   }
 
   // When inside Tabs, content is rendered by parent
