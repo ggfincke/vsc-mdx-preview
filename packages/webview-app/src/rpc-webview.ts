@@ -1,9 +1,33 @@
 // packages/webview-app/src/rpc-webview.ts
-// * RPC webview side - bidirectional communication between webview & extension via Comlink (React state architecture)
+// * RPC webview side - bidirectional communication between webview & extension via Comlink
+//
+// Message Queue Architecture
+// ==========================
+//
+// The webview receives Comlink RPC messages immediately on load, but React
+// may not have mounted yet. This creates a timing race:
+//
+// Timeline:
+// 1. Webview HTML loads
+// 2. initRPCWebviewSide() - Comlink endpoint ready
+// 3. Extension sends initial messages (trust state, preview content)
+// 4. React begins mounting (async)
+// 5. App calls registerWebviewHandlers()
+// 6. Pending messages flushed to React state
+//
+// The pendingMessages queue buffers messages between steps 3-5.
+//
+// Queued message types: trust, safe, trusted, error, stale
+// Direct (not queued): theme, zoom, CSS, Tailwind (update DOM directly)
 
 import * as comlink from 'comlink';
 import type { Endpoint } from 'comlink';
 import { debug, debugError } from './utils/debug';
+import { StyleInjector, STYLE_IDS } from './utils/StyleInjector';
+import {
+  RPC_HANDLER_RETRY_DELAY_MS,
+  RPC_PENDING_MESSAGES_WARNING_THRESHOLD,
+} from './constants';
 import type {
   ExtensionRPC,
   WebviewRPC,
@@ -72,6 +96,11 @@ type PendingMessage =
   | { type: 'error'; payload: PreviewError }
   | { type: 'stale'; payload: boolean };
 
+// Compile-time exhaustiveness check for message types
+function assertNever(x: never): never {
+  throw new Error(`Unexpected message type: ${JSON.stringify(x)}`);
+}
+
 const pendingMessages: PendingMessage[] = [];
 
 function enqueueMessage(message: PendingMessage): void {
@@ -110,6 +139,8 @@ function flushPendingMessages(): void {
       case 'stale':
         stateHandlers.setStale(message.payload);
         break;
+      default:
+        assertNever(message);
     }
   }
 }
@@ -200,39 +231,15 @@ class RPCWebviewHandle implements WebviewRPC {
   // set custom CSS content (immediately updates style tag w/o preview refresh)
   setCustomCss(css: string): void {
     debug(`[RPC-WEBVIEW] setCustomCss called, length: ${css.length}`);
-
-    // find or create custom CSS style element
-    const STYLE_ID = 'mdx-preview-custom-css';
-    let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-
-    if (!styleEl) {
-      styleEl = document.createElement('style');
-      styleEl.id = STYLE_ID;
-      document.head.appendChild(styleEl);
-    }
-
-    styleEl.textContent = css;
+    StyleInjector.inject(STYLE_IDS.CUSTOM_CSS, css);
   }
 
   // set Tailwind CSS content (keeps custom CSS last for overrides)
   setTailwindCss(css: string): void {
     debug(`[RPC-WEBVIEW] setTailwindCss called, length: ${css.length}`);
-
-    const STYLE_ID = 'mdx-preview-tailwind-css';
-    let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-
-    if (!styleEl) {
-      styleEl = document.createElement('style');
-      styleEl.id = STYLE_ID;
-      const customCssEl = document.getElementById('mdx-preview-custom-css');
-      if (customCssEl && customCssEl.parentNode) {
-        customCssEl.parentNode.insertBefore(styleEl, customCssEl);
-      } else {
-        document.head.appendChild(styleEl);
-      }
-    }
-
-    styleEl.textContent = css;
+    StyleInjector.inject(STYLE_IDS.TAILWIND_CSS, css, {
+      insertBefore: STYLE_IDS.CUSTOM_CSS,
+    });
   }
 
   // set preview theme (MPE-style themes)
@@ -292,6 +299,14 @@ export function registerWebviewHandlers(handlers: WebviewStateHandlers): void {
   debug('[RPC-WEBVIEW] registerWebviewHandlers called');
   try {
     stateHandlers = handlers;
+
+    // Warn if many messages accumulated (potential timing issue)
+    if (pendingMessages.length > RPC_PENDING_MESSAGES_WARNING_THRESHOLD) {
+      debugError(
+        `[RPC-WEBVIEW] Warning: ${pendingMessages.length} pending messages accumulated`
+      );
+    }
+
     flushPendingMessages();
     debug('[RPC-WEBVIEW] registerWebviewHandlers complete');
   } catch (e) {
@@ -308,7 +323,7 @@ export function registerWebviewHandlers(handlers: WebviewStateHandlers): void {
           retryError
         );
       }
-    }, 100);
+    }, RPC_HANDLER_RETRY_DELAY_MS);
   }
 }
 

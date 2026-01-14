@@ -1,17 +1,13 @@
 // packages/webview-app/src/SafePreview.tsx
 // render pre-sanitized HTML in Safe Mode (no JavaScript execution)
 
-import { useEffect, useRef, useCallback } from 'react';
-import DOMPurify from 'dompurify';
-import { enhanceCodeBlocks } from './components/CodeBlock';
-import { useLightbox } from './context/LightboxContext';
-import { useMermaidRendering } from './hooks';
+import { useEffect, useRef } from 'react';
 import {
-  DOMPURIFY_CONFIG,
-  processLinks,
-  processImages,
-  ensureSafeModeStyles,
-} from './security';
+  useMermaidRendering,
+  useImageLightbox,
+  useSafeModeProcessing,
+} from './hooks';
+import { PreviewContainer } from './components/PreviewContainer';
 
 interface SafePreviewRendererProps {
   html: string;
@@ -20,51 +16,17 @@ interface SafePreviewRendererProps {
 // render sanitized HTML content in Safe Mode (use ref to set innerHTML after sanitization)
 export function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { openLightbox } = useLightbox();
+  const { handleImageClick } = useImageLightbox();
 
   // use shared mermaid hook (after-paint mode for Safe Mode)
   const { renderPortals } = useMermaidRendering(containerRef, {
     mode: 'after-paint',
   });
 
-  // handle image click to open lightbox
-  const handleImageClick = useCallback(
-    (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'IMG') {
-        const img = target as HTMLImageElement;
-        e.preventDefault();
-        openLightbox(img.src, img.alt);
-      }
-    },
-    [openLightbox]
-  );
+  // process Safe Mode HTML (sanitize, post-process links/images, enhance code blocks)
+  useSafeModeProcessing(containerRef, html);
 
-  useEffect(() => {
-    if (!containerRef.current) {
-      return;
-    }
-
-    // sanitize HTML before rendering
-    const sanitizedHTML = DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
-
-    // set sanitized content
-    containerRef.current.innerHTML = sanitizedHTML as string;
-
-    // post-process links for security
-    processLinks(containerRef.current);
-
-    // add safe mode styles
-    ensureSafeModeStyles();
-
-    // add clickable styles to images
-    processImages(containerRef.current);
-
-    // enhance code blocks (copy button, language badge)
-    enhanceCodeBlocks(containerRef.current);
-  }, [html]);
-
-  // add image click event listener
+  // add image click event listener (imperative for Safe Mode since HTML is injected)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) {
@@ -78,14 +40,12 @@ export function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
   }, [handleImageClick]);
 
   return (
-    <div
-      ref={containerRef}
-      className="mdx-safe-preview markdown-body"
-      data-mode="safe"
-    >
-      {/* render mermaid diagrams via React portals */}
-      {renderPortals()}
-    </div>
+    <PreviewContainer
+      containerRef={containerRef}
+      mode="safe"
+      mermaidPortals={renderPortals()}
+      className="markdown-body"
+    />
   );
 }
 

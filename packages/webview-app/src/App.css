@@ -24,14 +24,14 @@
   border-radius: 4px;
 }
 
-.mdx-error-header {
+.mdx-preview-error-header {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
 }
 
-.mdx-error-icon {
+.mdx-preview-error-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,13 +44,13 @@
   font-size: 14px;
 }
 
-.mdx-error-header h2 {
+.mdx-preview-error-header h2 {
   margin: 0;
   font-size: 16px;
   color: var(--vscode-errorForeground, #f48771);
 }
 
-.mdx-error-message {
+.mdx-preview-error-message {
   margin: 0;
   padding: 12px;
   background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
@@ -62,7 +62,7 @@
   color: var(--vscode-editor-foreground);
 }
 
-.mdx-error-stack {
+.mdx-preview-error-stack {
   margin: 8px 0 0 0;
   padding: 12px;
   background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
@@ -76,7 +76,7 @@
   overflow: auto;
 }
 
-.mdx-retry-button {
+.mdx-preview-retry-button {
   margin-top: 12px;
   padding: 6px 12px;
   background: var(--vscode-button-background, #0e639c);
@@ -87,7 +87,7 @@
   font-size: 13px;
 }
 
-.mdx-retry-button:hover {
+.mdx-preview-retry-button:hover {
   background: var(--vscode-button-hoverBackground, #1177bb);
 }
 

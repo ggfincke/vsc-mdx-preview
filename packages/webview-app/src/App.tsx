@@ -28,7 +28,13 @@ import type {
   PreviewError,
   TrustedPreviewContent,
 } from './types';
-import { useTheme } from './context/ThemeContext';
+import { useTheme } from './theme';
+import {
+  ZOOM_MIN_PERCENT,
+  ZOOM_MAX_PERCENT,
+  ZOOM_STEP_PERCENT,
+  ZOOM_DEFAULT_PERCENT,
+} from './constants';
 import './App.css';
 import './styles/admonitions.css';
 import './components/shims/docusaurus/styles.css';
@@ -42,11 +48,6 @@ const INITIAL_TRUST_STATE: TrustState = {
   scriptsEnabled: false,
   canExecute: false,
 };
-
-// zoom constraints
-const MIN_ZOOM = 50;
-const MAX_ZOOM = 300;
-const ZOOM_STEP = 10;
 
 // app state interface
 interface AppState {
@@ -72,7 +73,7 @@ function App() {
     isLoading: true,
     evaluatedComponent: null,
     isStale: false,
-    zoomLevel: 100,
+    zoomLevel: ZOOM_DEFAULT_PERCENT,
   });
 
   // track if we've completed initial setup
@@ -170,7 +171,7 @@ function App() {
     debug('[APP] zoomIn called');
     setState((prev) => ({
       ...prev,
-      zoomLevel: Math.min(MAX_ZOOM, prev.zoomLevel + ZOOM_STEP),
+      zoomLevel: Math.min(ZOOM_MAX_PERCENT, prev.zoomLevel + ZOOM_STEP_PERCENT),
     }));
   }, []);
 
@@ -178,7 +179,7 @@ function App() {
     debug('[APP] zoomOut called');
     setState((prev) => ({
       ...prev,
-      zoomLevel: Math.max(MIN_ZOOM, prev.zoomLevel - ZOOM_STEP),
+      zoomLevel: Math.max(ZOOM_MIN_PERCENT, prev.zoomLevel - ZOOM_STEP_PERCENT),
     }));
   }, []);
 
@@ -186,7 +187,7 @@ function App() {
     debug('[APP] resetZoom called');
     setState((prev) => ({
       ...prev,
-      zoomLevel: 100,
+      zoomLevel: ZOOM_DEFAULT_PERCENT,
     }));
   }, []);
 
@@ -319,18 +320,18 @@ function App() {
     return (
       <div className="mdx-preview-container">
         <div className="mdx-preview-error">
-          <div className="mdx-error-header">
-            <span className="mdx-error-icon">!</span>
+          <div className="mdx-preview-error-header">
+            <span className="mdx-preview-error-icon">!</span>
             <h2>Preview Error</h2>
           </div>
-          <pre className="mdx-error-message">{error.message}</pre>
+          <pre className="mdx-preview-error-message">{error.message}</pre>
           {error.stack && (
             <details>
               <summary>Stack Trace</summary>
-              <pre className="mdx-error-stack">{error.stack}</pre>
+              <pre className="mdx-preview-error-stack">{error.stack}</pre>
             </details>
           )}
-          <button onClick={clearError} className="mdx-retry-button">
+          <button onClick={clearError} className="mdx-preview-retry-button">
             Dismiss
           </button>
         </div>
@@ -361,9 +362,9 @@ function App() {
         <div
           className="mdx-preview-content"
           style={
-            zoomLevel !== 100
+            zoomLevel !== ZOOM_DEFAULT_PERCENT
               ? {
-                  transform: `scale(${zoomLevel / 100})`,
+                  transform: `scale(${zoomLevel / ZOOM_DEFAULT_PERCENT})`,
                   transformOrigin: 'top center',
                 }
               : undefined

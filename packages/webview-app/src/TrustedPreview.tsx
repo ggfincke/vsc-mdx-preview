@@ -6,13 +6,11 @@ import {
   useLayoutEffect,
   useState,
   useRef,
-  useCallback,
   ComponentType,
-  MouseEvent,
 } from 'react';
 import { evaluateModuleToComponent } from './module-loader';
-import { useLightbox } from './context/LightboxContext';
-import { useMermaidRendering } from './hooks';
+import { useMermaidRendering, useImageLightbox } from './hooks';
+import { PreviewContainer } from './components/PreviewContainer';
 import type { TrustedPreviewContent, PreviewError } from './types';
 
 interface TrustedPreviewRendererProps {
@@ -31,26 +29,13 @@ export function TrustedPreviewRenderer({
 }: TrustedPreviewRendererProps) {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { openLightbox } = useLightbox();
+  const { handleImageClick } = useImageLightbox();
 
   // use shared mermaid hook (before-paint mode w/ stale filtering for Trusted Mode)
   const { renderPortals, scan } = useMermaidRendering(containerRef, {
     mode: 'before-paint',
     filterStale: true,
   });
-
-  // handle image click to open lightbox
-  const handleImageClick = useCallback(
-    (e: MouseEvent<HTMLDivElement>) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'IMG') {
-        const img = target as HTMLImageElement;
-        e.preventDefault();
-        openLightbox(img.src, img.alt);
-      }
-    },
-    [openLightbox]
-  );
 
   // evaluate code when content changes
   useEffect(() => {
@@ -117,16 +102,14 @@ export function TrustedPreviewRenderer({
   // render evaluated component
   const MDXComponent = evaluatedComponent;
   return (
-    <div
-      ref={containerRef}
-      className="mdx-trusted-preview"
-      data-mode="trusted"
-      onClick={handleImageClick}
+    <PreviewContainer
+      containerRef={containerRef}
+      mode="trusted"
+      onImageClick={handleImageClick}
+      mermaidPortals={renderPortals()}
     >
       <MDXComponent />
-      {/* render mermaid diagrams via React portals */}
-      {renderPortals()}
-    </div>
+    </PreviewContainer>
   );
 }
 

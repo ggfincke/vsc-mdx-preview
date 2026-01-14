@@ -4,10 +4,10 @@
 export {
   ThemeProvider,
   useTheme,
-  type Theme,
   type PreviewTheme,
   type CodeBlockTheme,
   type WebviewThemeState,
-} from './ThemeContext';
+} from '../theme';
+export type { VSCodeTheme as Theme } from '../theme/detection';
 
 export { LightboxProvider, useLightbox } from './LightboxContext';

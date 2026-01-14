@@ -4,7 +4,7 @@
 import { createRoot } from 'react-dom/client';
 import { initRPCWebviewSide } from './rpc-webview';
 import { debug, debugError } from './utils/debug';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider } from './theme';
 import { LightboxProvider } from './context/LightboxContext';
 import { Lightbox } from './components/Lightbox';
 import App from './App';

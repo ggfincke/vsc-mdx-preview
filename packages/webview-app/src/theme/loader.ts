@@ -2,30 +2,17 @@
 // theme CSS loading & injection for preview & code blocks
 
 import { previewThemes, codeBlockThemes } from './css';
+import { StyleInjector, STYLE_IDS } from '../utils/StyleInjector';
 import type { PreviewTheme, CodeBlockTheme } from './types';
-
-const PREVIEW_THEME_STYLE_ID = 'mpe-preview-theme';
-const CODE_BLOCK_THEME_STYLE_ID = 'mpe-code-block-theme';
 
 // inject preview theme CSS into the document
 export function injectPreviewTheme(theme: PreviewTheme): void {
-  let styleEl = document.getElementById(
-    PREVIEW_THEME_STYLE_ID
-  ) as HTMLStyleElement | null;
-
-  if (!styleEl) {
-    styleEl = document.createElement('style');
-    styleEl.id = PREVIEW_THEME_STYLE_ID;
-    document.head.appendChild(styleEl);
-  }
-
   const css = previewThemes[theme];
-  if (css) {
-    styleEl.textContent = css;
-  }
-
-  // set data attribute for theme detection
-  document.documentElement.setAttribute('data-mpe-preview-theme', theme);
+  // always inject to create the style element & set data attribute
+  // Only set CSS content if truthy (matches original behavior)
+  StyleInjector.inject(STYLE_IDS.PREVIEW_THEME, css || '', {
+    dataAttribute: { name: 'data-mpe-preview-theme', value: theme },
+  });
 }
 
 // inject code block theme CSS into the document
@@ -34,28 +21,14 @@ export function injectCodeBlockTheme(
   theme: CodeBlockTheme,
   isLight: boolean
 ): void {
-  let styleEl = document.getElementById(
-    CODE_BLOCK_THEME_STYLE_ID
-  ) as HTMLStyleElement | null;
-
-  if (!styleEl) {
-    styleEl = document.createElement('style');
-    styleEl.id = CODE_BLOCK_THEME_STYLE_ID;
-    document.head.appendChild(styleEl);
-  }
-
   // handle 'auto' theme by selecting appropriate light/dark variant
   const effectiveTheme = getEffectiveCodeBlockTheme(theme, isLight);
 
   // inject CSS variables for the code block theme
   const css = codeBlockThemes[effectiveTheme];
-  styleEl.textContent = css || '';
-
-  // set data attribute for theme detection
-  document.documentElement.setAttribute(
-    'data-mpe-code-block-theme',
-    effectiveTheme
-  );
+  StyleInjector.inject(STYLE_IDS.CODE_BLOCK_THEME, css || '', {
+    dataAttribute: { name: 'data-mpe-code-block-theme', value: effectiveTheme },
+  });
 }
 
 // get effective code block theme considering auto mode
@@ -73,16 +46,8 @@ function getEffectiveCodeBlockTheme(
 
 // remove all injected theme styles
 export function clearThemeStyles(): void {
-  const previewStyle = document.getElementById(PREVIEW_THEME_STYLE_ID);
-  const codeBlockStyle = document.getElementById(CODE_BLOCK_THEME_STYLE_ID);
-
-  if (previewStyle) {
-    previewStyle.remove();
-  }
-  if (codeBlockStyle) {
-    codeBlockStyle.remove();
-  }
-
-  document.documentElement.removeAttribute('data-mpe-preview-theme');
-  document.documentElement.removeAttribute('data-mpe-code-block-theme');
+  StyleInjector.remove(STYLE_IDS.PREVIEW_THEME);
+  StyleInjector.remove(STYLE_IDS.CODE_BLOCK_THEME);
+  StyleInjector.removeDataAttribute('data-mpe-preview-theme');
+  StyleInjector.removeDataAttribute('data-mpe-code-block-theme');
 }
