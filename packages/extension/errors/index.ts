@@ -1,6 +1,14 @@
 // packages/extension/errors/index.ts
 // structured error classes for extension w/ error codes & context
 
+export {
+  ErrorReporter,
+  ErrorSeverity,
+  ErrorContext,
+  type WebviewErrorHandle,
+  type ReportOptions,
+} from './ErrorReporter';
+
 // base error class w/ error code for programmatic handling
 export class ExtensionError extends Error {
   constructor(
