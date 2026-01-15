@@ -5,6 +5,38 @@ All notable changes to the MDX Preview extension will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.10] - 2026-01-14
+
+### Added
+
+- **Service Registry**: Centralized service lifecycle management with lazy initialization and ordered disposal
+- **ConfigManager**: Type-safe configuration access with caching and change notifications
+- **ErrorReporter**: Centralized error handling with context-aware reporting and notifications
+- **EvaluationEngine**: Extracted MDX evaluation logic for better testability and separation of concerns
+- **PreviewContainer**: New webview component for unified preview content rendering
+- **FileScanValidator**: Improved Tailwind class extraction with validation
+- **Plugin Builder**: Configurable MDX pipeline with custom plugin support
+- **PackageJsonWatcher**: Watch package.json changes for dependency tracking
+
+### Changed
+
+- **Module Loader**: Split webview module-loader into focused modules (loadModule, preload, require, aliases)
+- **Security Module**: Reorganized DOMPurify config into allowlist, processors, and safeModeStyles modules
+- **Preview System**: Integrated service registry throughout preview subsystem
+- **Watcher System**: Updated all watchers to use service registry pattern
+- **Extension Core**: Refactored extension activation to use service registry
+- **Hook Extraction**: Extracted `useImageLightbox` and `useSafeModeProcessing` hooks for reusability
+
+### Removed
+
+- **ThemeContext**: Removed unused ThemeContext in favor of direct theme management
+- **domPurifyConfig**: Split into separate focused modules (allowlist, processors, safeModeStyles)
+
+### Style
+
+- Updated CSS across all webview components for consistency
+- Improved framework shim component styles (Docusaurus, Starlight)
+
 ## [1.0.0-alpha.9] - 2026-01-12
 
 ### Added

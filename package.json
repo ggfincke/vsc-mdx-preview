@@ -2,7 +2,7 @@
   "name": "vscode-mdx-preview",
   "displayName": "MDX Preview",
   "description": "MDX Preview",
-  "version": "1.0.0-alpha.9",
+  "version": "1.0.0-alpha.10",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [
@@ -131,6 +131,11 @@
       {
         "command": "mdx-preview.commands.selectFramework",
         "title": "Select Framework",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.refreshModuleCache",
+        "title": "Refresh Module Cache",
         "category": "MDX"
       }
     ],
@@ -527,9 +532,12 @@
   "scripts": {
     "vscode:prepublish": "npm run build",
     "vscode:package": "npm run test:all && vsce package",
-    "build:extension": "node esbuild.config.mjs",
+    "typecheck": "tsc --noEmit",
+    "build:extension": "npm run typecheck && node esbuild.config.mjs",
+    "build:extension:fast": "node esbuild.config.mjs",
     "build:extension:types": "tsc -p ./ --emitDeclarationOnly --declaration --outDir build/extension",
     "build": "npm run build:extension && npm run build:webview-app",
+    "build:fast": "npm run build:extension:fast && npm run build:webview-app",
     "watch": "tsc -watch -p ./",
     "start:webview-app": "npm run start -w webview",
     "build:webview-app": "npm run build -w webview",
