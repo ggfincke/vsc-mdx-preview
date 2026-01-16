@@ -8,6 +8,8 @@ import {
   TranspileError,
   SecurityError,
   PathAccessDeniedError,
+  ConfigError,
+  PluginError,
 } from '../errors';
 import { formatUserError, formatLogError } from '../errors/messages';
 
@@ -99,6 +101,64 @@ describe('formatUserError', () => {
       "Cannot access '/external/file.js' - outside workspace folders"
     );
   });
+
+  it('replaces {configPath} for CONFIG_PARSE_ERROR', () => {
+    const error = new ConfigError(
+      'Parse failed',
+      'CONFIG_PARSE_ERROR',
+      '/path/to/.mdx-previewrc.json'
+    );
+    const result = formatUserError(error);
+    expect(result).toBe(
+      "Failed to parse config file '/path/to/.mdx-previewrc.json'"
+    );
+  });
+
+  it('replaces {configPath} for CONFIG_VALIDATION_ERROR', () => {
+    const error = new ConfigError(
+      'Validation failed',
+      'CONFIG_VALIDATION_ERROR',
+      '/path/to/.mdx-previewrc.json'
+    );
+    const result = formatUserError(error);
+    expect(result).toBe(
+      "Invalid configuration in '/path/to/.mdx-previewrc.json'"
+    );
+  });
+
+  it('replaces {pluginName} for PLUGIN_NOT_FOUND', () => {
+    const error = new PluginError(
+      'Plugin not found',
+      'PLUGIN_NOT_FOUND',
+      'remark-gfm'
+    );
+    const result = formatUserError(error);
+    expect(result).toBe(
+      "Cannot find plugin 'remark-gfm'. Ensure it's installed."
+    );
+  });
+
+  it('replaces {pluginName} for PLUGIN_LOAD_ERROR', () => {
+    const error = new PluginError(
+      'Load failed',
+      'PLUGIN_LOAD_ERROR',
+      'my-plugin'
+    );
+    const result = formatUserError(error);
+    expect(result).toBe("Failed to load plugin 'my-plugin'");
+  });
+
+  it('replaces {pluginName} for PLUGIN_INVALID_EXPORT', () => {
+    const error = new PluginError(
+      'Invalid export',
+      'PLUGIN_INVALID_EXPORT',
+      'bad-plugin'
+    );
+    const result = formatUserError(error);
+    expect(result).toBe(
+      "Plugin 'bad-plugin' does not export a valid function"
+    );
+  });
 });
 
 describe('formatLogError', () => {
@@ -180,5 +240,47 @@ describe('formatLogError', () => {
       code: 'UNKNOWN',
       message: 'Simple error',
     });
+  });
+
+  it('includes ConfigError configPath', () => {
+    const error = new ConfigError(
+      'Parse failed',
+      'CONFIG_PARSE_ERROR',
+      '/path/to/config.json'
+    );
+    const result = formatLogError(error);
+    expect(result.configPath).toBe('/path/to/config.json');
+    expect(result.code).toBe('CONFIG_PARSE_ERROR');
+  });
+
+  it('includes PluginError pluginName', () => {
+    const error = new PluginError('Load failed', 'PLUGIN_LOAD_ERROR', 'my-plugin');
+    const result = formatLogError(error);
+    expect(result.pluginName).toBe('my-plugin');
+    expect(result.code).toBe('PLUGIN_LOAD_ERROR');
+  });
+
+  it('includes ConfigError cause when present', () => {
+    const cause = new SyntaxError('Unexpected token');
+    const error = new ConfigError(
+      'Parse failed',
+      'CONFIG_PARSE_ERROR',
+      '/path/to/config.json',
+      cause
+    );
+    const result = formatLogError(error);
+    expect(result.cause).toBe('Unexpected token');
+  });
+
+  it('includes PluginError cause when present', () => {
+    const cause = new Error('Module not found');
+    const error = new PluginError(
+      'Load failed',
+      'PLUGIN_LOAD_ERROR',
+      'my-plugin',
+      cause
+    );
+    const result = formatLogError(error);
+    expect(result.cause).toBe('Module not found');
   });
 });

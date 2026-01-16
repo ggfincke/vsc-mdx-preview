@@ -6,6 +6,8 @@ import {
   __setMockTrusted,
   __setMockConfig,
   __resetMocks,
+  __getMockConfig,
+  Uri,
 } from './__mocks__/vscode';
 import {
   loadPluginsFromConfig,
@@ -16,6 +18,29 @@ import { TrustManager } from '../security/TrustManager';
 import { ServiceRegistry } from '../services/ServiceRegistry';
 import { ServiceNames } from '../services/service-names';
 import type { ResolvedConfig } from '../preview/config';
+
+// mock getConfigManager and getErrorReporter to use vscode mock's config store
+vi.mock('../services', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../services')>();
+  return {
+    ...original,
+    getConfigManager: () => ({
+      get: (key: string, scope?: unknown) => {
+        return __getMockConfig(key) ?? false;
+      },
+      set: vi.fn(),
+    }),
+    getErrorReporter: () => ({
+      report: vi.fn(),
+      reportSilent: vi.fn(),
+      reportToUser: vi.fn(),
+      reportConfigError: vi.fn(),
+      reportPluginError: vi.fn(),
+      reportWithActions: vi.fn(),
+      reportWebviewError: vi.fn(),
+    }),
+  };
+});
 
 // mock modules
 vi.mock('enhanced-resolve', () => ({
@@ -77,7 +102,7 @@ describe('PluginLoader', () => {
         configDir: '/workspace',
       };
 
-      const result = await loadPluginsFromConfig(config, '/workspace/test.mdx');
+      const result = await loadPluginsFromConfig(config, Uri.file('/workspace/test.mdx'));
 
       expect(result.remarkPlugins).toEqual([]);
       expect(result.rehypePlugins).toEqual([]);
@@ -103,7 +128,7 @@ describe('PluginLoader', () => {
         configDir: '/workspace',
       };
 
-      const result = await loadPluginsFromConfig(config, '/workspace/test.mdx');
+      const result = await loadPluginsFromConfig(config, Uri.file('/workspace/test.mdx'));
 
       // Should attempt to load plugins (may fail due to mock limitations)
       // The important thing is it didn't return empty arrays
@@ -113,7 +138,7 @@ describe('PluginLoader', () => {
     it('should handle no config gracefully', async () => {
       const result = await loadPluginsFromConfig(
         undefined,
-        '/workspace/test.mdx'
+        Uri.file('/workspace/test.mdx')
       );
 
       expect(result.remarkPlugins).toEqual([]);
@@ -135,7 +160,7 @@ describe('PluginLoader', () => {
         configDir: '/workspace',
       };
 
-      const result = await loadPluginsFromConfig(config, '/workspace/test.mdx');
+      const result = await loadPluginsFromConfig(config, Uri.file('/workspace/test.mdx'));
 
       expect(result.remarkPlugins).toEqual([]);
       expect(result.rehypePlugins).toEqual([]);
@@ -260,8 +285,8 @@ describe('PluginLoader', () => {
       expect(result.componentsObject).toBe('{}');
     });
 
-    it('should handle no components', () => {
-      // Set up Trusted Mode
+    it('should handle no components when builtins disabled', () => {
+      // Set up Trusted Mode with builtins disabled
       __setMockTrusted(true);
       __setMockConfig('preview.enableScripts', true);
 
@@ -271,11 +296,66 @@ describe('PluginLoader', () => {
         configDir: '/workspace',
       };
 
-      const result = generateComponentImports(config, '/workspace/src');
+      const result = generateComponentImports(config, '/workspace/src', {
+        builtinsEnabled: false,
+      });
 
       expect(result.hasComponents).toBe(false);
       expect(result.imports).toBe('');
       expect(result.componentsObject).toBe('{}');
+    });
+
+    it('should inject builtin shims when builtins enabled and no user components', () => {
+      // Set up Trusted Mode with builtins enabled
+      __setMockTrusted(true);
+      __setMockConfig('preview.enableScripts', true);
+
+      const config: ResolvedConfig = {
+        config: {},
+        configPath: '/workspace/.mdx-previewrc.json',
+        configDir: '/workspace',
+      };
+
+      const result = generateComponentImports(config, '/workspace/src', {
+        builtinsEnabled: true,
+      });
+
+      expect(result.hasComponents).toBe(true);
+      // Should include all builtin components
+      expect(result.imports).toContain("import _builtin_Callout from 'Callout';");
+      expect(result.imports).toContain("import _builtin_Tabs from 'Tabs';");
+      expect(result.imports).toContain("import _builtin_Collapsible from 'Collapsible';");
+      expect(result.componentsObject).toContain('Callout: _builtin_Callout');
+      expect(result.componentsObject).toContain('Tabs: _builtin_Tabs');
+    });
+
+    it('should allow user config to override builtin shims', () => {
+      // Set up Trusted Mode with builtins enabled
+      __setMockTrusted(true);
+      __setMockConfig('preview.enableScripts', true);
+
+      const config: ResolvedConfig = {
+        config: {
+          components: {
+            Callout: './custom/Callout.tsx', // Override builtin Callout
+          },
+        },
+        configPath: '/workspace/.mdx-previewrc.json',
+        configDir: '/workspace',
+      };
+
+      // Use same directory as config for simpler path resolution
+      const result = generateComponentImports(config, '/workspace', {
+        builtinsEnabled: true,
+      });
+
+      expect(result.hasComponents).toBe(true);
+      // User's Callout should be used, not builtin
+      expect(result.imports).toContain('_component_Callout');
+      expect(result.imports).toContain('custom/Callout.tsx');
+      expect(result.imports).not.toContain("import _builtin_Callout");
+      // Other builtins should still be included
+      expect(result.imports).toContain("import _builtin_Tabs from 'Tabs';");
     });
 
     it('should handle undefined config', () => {
@@ -368,7 +448,7 @@ describe('PluginLoader', () => {
         configDir: '/workspace',
       };
 
-      const result = await loadPluginsFromConfig(config, '/workspace/test.mdx');
+      const result = await loadPluginsFromConfig(config, Uri.file('/workspace/test.mdx'));
 
       // Should have errors but not throw
       expect(result.errors.length).toBeGreaterThan(0);

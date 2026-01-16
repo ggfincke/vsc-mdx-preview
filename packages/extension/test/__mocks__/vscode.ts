@@ -16,6 +16,9 @@ let mockWorkspaceFolders: { uri: { fsPath: string } }[] = [
   { uri: { fsPath: '/projects/test-workspace' } },
 ];
 
+// mock remote name (for testing remote environment detection)
+let mockRemoteName: string | undefined = undefined;
+
 // event listeners storage
 const trustChangeListeners: ((trusted: boolean) => void)[] = [];
 const trustGrantListeners: (() => void)[] = [];
@@ -250,6 +253,9 @@ export const window = {
     tooltip: '',
     command: '',
   })),
+  onDidChangeActiveColorTheme: vi.fn(
+    (_listener: (theme: { kind: number }) => void) => new Disposable(() => {})
+  ),
 };
 
 // commands mock
@@ -263,6 +269,9 @@ export const env = {
   openExternal: vi.fn(),
   uriScheme: 'vscode',
   appName: 'Visual Studio Code',
+  get remoteName(): string | undefined {
+    return mockRemoteName;
+  },
 };
 
 // mock webview URI class that mimics VS Code's webview URI format
@@ -306,10 +315,20 @@ export const __setMockConfig = (key: string, value: unknown): void => {
   mockConfigValues[key] = value;
 };
 
+// get a mock config value (for use by services mock)
+export const __getMockConfig = (key: string): unknown => {
+  // Return the mocked value or undefined (let caller provide default)
+  return mockConfigValues[key];
+};
+
 export const __setMockWorkspaceFolders = (
   folders: { uri: { fsPath: string } }[]
 ): void => {
   mockWorkspaceFolders = folders;
+};
+
+export const __setMockRemoteName = (name: string | undefined): void => {
+  mockRemoteName = name;
 };
 
 export const __triggerTrustChange = (trusted = mockIsTrusted): void => {
@@ -331,6 +350,7 @@ export const __triggerConfigChange = (affectedKey: string): void => {
 
 export const __resetMocks = (): void => {
   mockIsTrusted = false;
+  mockRemoteName = undefined;
   // clear all config values & reset to defaults
   for (const key of Object.keys(mockConfigValues)) {
     delete mockConfigValues[key];
@@ -375,6 +395,38 @@ export const createMockWebviewWithEvents = () => {
     __getMessageListeners: () => messageListeners,
   };
 };
+
+// Default config values (mirrors ConfigManager defaults)
+export const CONFIG_DEFAULTS: Record<string, unknown> = {
+  'preview.updateMode': 'onType',
+  'preview.debounceDelay': 300,
+  'preview.enableScripts': false,
+  'preview.security': 'strict',
+  'preview.useVscodeMarkdownStyles': true,
+  'preview.useWhiteBackground': false,
+  'preview.customCss': '',
+  'preview.mdx.customLayoutFilePath': '',
+  'preview.previewTheme': 'none',
+  'preview.codeBlockTheme': 'auto',
+  'preview.autoTheme': true,
+  'build.useSucraseTranspiler': false,
+  'tailwind.enabled': 'enabled',
+  framework: 'auto',
+  'framework.componentShims': true,
+  'components.builtins': true,
+  'components.unknownBehavior': 'placeholder',
+};
+
+// create a mock ConfigManager for use in tests
+export const createMockConfigManager = () => ({
+  get: (key: string, scope?: unknown) => {
+    const value = mockConfigValues[key];
+    return value !== undefined ? value : CONFIG_DEFAULTS[key];
+  },
+  set: vi.fn(),
+  getAll: vi.fn(() => ({ ...CONFIG_DEFAULTS, ...mockConfigValues })),
+  onDidChangeConfiguration: vi.fn(() => new Disposable(() => {})),
+});
 
 // export for module resolution
 export default {

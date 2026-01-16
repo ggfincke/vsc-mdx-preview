@@ -3,41 +3,89 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DependencyWatcher } from '../preview/watchers/DependencyWatcher';
-import * as fs from 'fs';
 
-// mock fs module w/ statSync (resolveImportSync uses statSync, not existsSync)
-vi.mock('fs', async () => {
-  const actual = await vi.importActual<typeof fs>('fs');
-  return {
-    ...actual,
-    statSync: vi.fn(),
-  };
-});
+// mock UnifiedResolver instead of fs (avoids module load time issues with enhanced-resolve)
+const mockResolveSync = vi.fn();
+const mockShouldResolve = vi.fn();
+const mockIsRelativeImport = vi.fn();
+
+vi.mock('../module-fetcher/UnifiedResolver', () => ({
+  getUnifiedResolver: () => ({
+    resolveSync: mockResolveSync,
+    shouldResolve: mockShouldResolve,
+    isRelativeImport: mockIsRelativeImport,
+  }),
+}));
 
 describe('DependencyWatcher', () => {
   let watcher: DependencyWatcher;
   let onChangeCallback: ReturnType<typeof vi.fn>;
+
+  // helper to configure mock for a specific specifier
+  function mockSpecifier(
+    specifier: string,
+    shouldResolve: boolean,
+    isRelative: boolean,
+    resolvedPath: string | null
+  ) {
+    mockShouldResolve.mockImplementation((s: string) => {
+      if (s === specifier) return shouldResolve;
+      // default behavior for other specifiers
+      return s && !s.startsWith('http') && !s.startsWith('npm://');
+    });
+    mockIsRelativeImport.mockImplementation((s: string) => {
+      if (s === specifier) return isRelative;
+      return s?.startsWith('./') || s?.startsWith('../');
+    });
+    mockResolveSync.mockImplementation((s: string) => {
+      if (s === specifier && resolvedPath) {
+        return { fsPath: resolvedPath, isBuiltInShim: false, specifier: s };
+      }
+      return null;
+    });
+  }
+
+  // helper to configure mock for multiple relative imports that resolve
+  function mockRelativeImports(specifiers: string[]) {
+    mockShouldResolve.mockImplementation((s: string) => {
+      return s && !s.startsWith('http') && !s.startsWith('npm://');
+    });
+    mockIsRelativeImport.mockImplementation((s: string) => {
+      return s?.startsWith('./') || s?.startsWith('../');
+    });
+    mockResolveSync.mockImplementation((s: string) => {
+      if (specifiers.includes(s)) {
+        return { fsPath: `/workspace/src/${s.replace(/^\.\//, '')}`, isBuiltInShim: false, specifier: s };
+      }
+      return null;
+    });
+  }
 
   beforeEach(() => {
     vi.clearAllMocks();
     onChangeCallback = vi.fn();
     watcher = new DependencyWatcher(onChangeCallback);
     watcher.setDocumentDir('/workspace/src');
+
+    // default mock behavior
+    mockShouldResolve.mockImplementation((s: string) => {
+      return s && !s.startsWith('http') && !s.startsWith('npm://');
+    });
+    mockIsRelativeImport.mockImplementation((s: string) => {
+      return s?.startsWith('./') || s?.startsWith('../');
+    });
+    mockResolveSync.mockReturnValue(null);
   });
 
   describe('import classification', () => {
     it('should detect local imports (./foo, ../bar)', () => {
       const localImports = ['./component', '../utils/helper', './lib/index'];
-
-      // mock file existence - statSync returns stat object w/ isFile()
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
+      mockRelativeImports(localImports);
 
       watcher.updateDependencies(localImports);
 
-      // Should have called statSync to check files
-      expect(fs.statSync).toHaveBeenCalled();
+      // Should have called resolveSync for local imports
+      expect(mockResolveSync).toHaveBeenCalled();
     });
 
     it('should skip node_modules imports', () => {
@@ -45,8 +93,9 @@ describe('DependencyWatcher', () => {
 
       watcher.updateDependencies(nodeModulesImports);
 
-      // Should not attempt to resolve node_modules
-      expect(fs.statSync).not.toHaveBeenCalled();
+      // Should check shouldResolve but not call resolveSync (not relative)
+      expect(mockShouldResolve).toHaveBeenCalled();
+      expect(mockResolveSync).not.toHaveBeenCalled();
     });
 
     it('should skip http/https URLs', () => {
@@ -57,7 +106,8 @@ describe('DependencyWatcher', () => {
 
       watcher.updateDependencies(urlImports);
 
-      expect(fs.statSync).not.toHaveBeenCalled();
+      // shouldResolve returns false for URLs
+      expect(mockResolveSync).not.toHaveBeenCalled();
     });
 
     it('should skip npm:// imports', () => {
@@ -65,13 +115,13 @@ describe('DependencyWatcher', () => {
 
       watcher.updateDependencies(npmImports);
 
-      expect(fs.statSync).not.toHaveBeenCalled();
+      expect(mockResolveSync).not.toHaveBeenCalled();
     });
 
     it('should handle empty import list', () => {
       watcher.updateDependencies([]);
 
-      expect(fs.statSync).not.toHaveBeenCalled();
+      expect(mockResolveSync).not.toHaveBeenCalled();
     });
 
     it('should handle mixed import types', () => {
@@ -82,147 +132,118 @@ describe('DependencyWatcher', () => {
         '../another-local',
       ];
 
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
+      mockRelativeImports(['./local-file', '../another-local']);
 
       watcher.updateDependencies(mixedImports);
 
-      // Should only check local files
-      expect(fs.statSync).toHaveBeenCalled();
+      // Should only resolve local files
+      expect(mockResolveSync).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('import resolution', () => {
-    it('should resolve with common extensions (.ts, .tsx, .js, .jsx)', () => {
+    it('should resolve imports via UnifiedResolver', () => {
       const imports = ['./component'];
-
-      // Mock: file doesn't exist without extension, but exists w/ .tsx
-      vi.mocked(fs.statSync).mockImplementation((p) => {
-        const pathStr = String(p);
-        if (pathStr.endsWith('.tsx')) {
-          return { isFile: () => true } as fs.Stats;
-        }
-        throw new Error('ENOENT');
-      });
+      mockRelativeImports(imports);
 
       watcher.updateDependencies(imports);
 
-      // Should have tried multiple extensions
-      expect(fs.statSync).toHaveBeenCalled();
-      const calls = vi.mocked(fs.statSync).mock.calls;
-      const extensions = calls.map((call) => String(call[0]).split('.').pop());
-      expect(extensions).toContain('tsx');
+      // Should call resolveSync with context
+      expect(mockResolveSync).toHaveBeenCalledWith(
+        './component',
+        expect.objectContaining({ baseDir: '/workspace/src' }),
+        'dependency'
+      );
     });
 
-    it('should detect index files', () => {
+    it('should detect index files (via resolver)', () => {
       const imports = ['./components'];
-
-      // Mock directory w/ index file
-      vi.mocked(fs.statSync).mockImplementation((p) => {
-        const pathStr = String(p);
-        if (pathStr.includes('index.tsx') || pathStr.includes('index.ts')) {
-          return { isFile: () => true } as fs.Stats;
-        }
-        throw new Error('ENOENT');
-      });
+      mockRelativeImports(imports);
 
       watcher.updateDependencies(imports);
 
-      expect(fs.statSync).toHaveBeenCalled();
+      expect(mockResolveSync).toHaveBeenCalled();
     });
 
-    it('should return null for non-existent files', () => {
+    it('should handle unresolved files', () => {
       const imports = ['./non-existent'];
 
-      // Mock: file doesn't exist (statSync throws)
-      vi.mocked(fs.statSync).mockImplementation(() => {
-        throw new Error('ENOENT');
+      // mockResolveSync returns null by default
+      watcher.updateDependencies(imports);
+
+      // Should have tried to resolve
+      expect(mockResolveSync).toHaveBeenCalled();
+      // But no watchers created (null result)
+    });
+
+    it('should skip built-in shims', () => {
+      const imports = ['./some-shim'];
+      mockResolveSync.mockReturnValue({
+        fsPath: 'shim://built-in',
+        isBuiltInShim: true,
+        specifier: './some-shim',
       });
 
       watcher.updateDependencies(imports);
 
-      // Should have tried to resolve but not create watcher
-      expect(fs.statSync).toHaveBeenCalled();
-    });
-
-    it('should skip paths in node_modules', () => {
-      const imports = ['./../../node_modules/package'];
-
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
-
-      watcher.updateDependencies(imports);
-
-      // Even if file exists, should skip node_modules paths
-      // resolveImportSync checks for node_modules in resolved path
-      expect(onChangeCallback).not.toHaveBeenCalled();
+      // Should resolve but not create watcher for shim
+      expect(mockResolveSync).toHaveBeenCalled();
     });
 
     it('should handle files with existing extensions', () => {
       const imports = ['./component.tsx', './utils.ts'];
-
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
+      mockRelativeImports(imports);
 
       watcher.updateDependencies(imports);
 
-      expect(fs.statSync).toHaveBeenCalled();
+      expect(mockResolveSync).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('watcher lifecycle', () => {
     it('should add watchers for new dependencies', () => {
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
+      mockRelativeImports(['./component.tsx']);
 
       watcher.updateDependencies(['./component.tsx']);
 
-      // Should have called statSync to check file
-      expect(fs.statSync).toHaveBeenCalled();
+      // Should have called resolveSync
+      expect(mockResolveSync).toHaveBeenCalled();
     });
 
     it('should remove watchers for removed dependencies', () => {
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
+      mockRelativeImports(['./component.tsx', './utils.ts']);
 
       // Add dependencies
       watcher.updateDependencies(['./component.tsx', './utils.ts']);
 
       vi.clearAllMocks();
+      mockRelativeImports(['./component.tsx']);
 
       // Remove one dependency
       watcher.updateDependencies(['./component.tsx']);
 
       // Should have checked for the remaining dependency
-      expect(fs.statSync).toHaveBeenCalled();
+      expect(mockResolveSync).toHaveBeenCalled();
     });
 
     it('should handle dependency list updates', () => {
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
+      mockRelativeImports(['./a.tsx', './b.tsx']);
 
       // Initial dependencies
       watcher.updateDependencies(['./a.tsx', './b.tsx']);
 
       vi.clearAllMocks();
+      mockRelativeImports(['./b.tsx', './c.tsx']);
 
       // Updated dependencies
       watcher.updateDependencies(['./b.tsx', './c.tsx']);
 
       // Should process new dependencies
-      expect(fs.statSync).toHaveBeenCalled();
+      expect(mockResolveSync).toHaveBeenCalled();
     });
 
     it('should dispose all watchers', () => {
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
+      mockRelativeImports(['./component.tsx']);
 
       watcher.updateDependencies(['./component.tsx']);
 
@@ -235,20 +256,16 @@ describe('DependencyWatcher', () => {
       // start w/ no dependencies
       watcher.updateDependencies([]);
 
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
+      mockRelativeImports(['./component.tsx']);
 
       // Add dependencies
       watcher.updateDependencies(['./component.tsx']);
 
-      expect(fs.statSync).toHaveBeenCalled();
+      expect(mockResolveSync).toHaveBeenCalled();
     });
 
     it('should handle non-empty to empty transitions', () => {
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
+      mockRelativeImports(['./component.tsx']);
 
       // start w/ dependencies
       watcher.updateDependencies(['./component.tsx']);
@@ -258,35 +275,67 @@ describe('DependencyWatcher', () => {
       // Remove all dependencies
       watcher.updateDependencies([]);
 
-      // Should not check any files
-      expect(fs.statSync).not.toHaveBeenCalled();
+      // Should not call resolveSync for empty list
+      expect(mockResolveSync).not.toHaveBeenCalled();
     });
   });
 
   describe('setDocumentDir', () => {
     it('should allow changing document directory', () => {
       watcher.setDocumentDir('/new/path');
-
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
+      mockRelativeImports(['./component.tsx']);
 
       watcher.updateDependencies(['./component.tsx']);
 
       // Should use new directory for resolution
-      expect(fs.statSync).toHaveBeenCalled();
+      expect(mockResolveSync).toHaveBeenCalledWith(
+        './component.tsx',
+        expect.objectContaining({ baseDir: '/new/path' }),
+        'dependency'
+      );
     });
 
     it('should handle relative paths from new directory', () => {
       watcher.setDocumentDir('/workspace/docs');
-
-      vi.mocked(fs.statSync).mockReturnValue({
-        isFile: () => true,
-      } as fs.Stats);
+      mockRelativeImports(['../src/component.tsx']);
 
       watcher.updateDependencies(['../src/component.tsx']);
 
-      expect(fs.statSync).toHaveBeenCalled();
+      expect(mockResolveSync).toHaveBeenCalled();
+    });
+  });
+
+  describe('setResolutionContext', () => {
+    it('should use resolution context when set', () => {
+      const context = {
+        baseDir: '/custom/base',
+        workspaceRoot: '/workspace',
+      };
+      watcher.setResolutionContext(context);
+      mockRelativeImports(['./component.tsx']);
+
+      watcher.updateDependencies(['./component.tsx']);
+
+      expect(mockResolveSync).toHaveBeenCalledWith(
+        './component.tsx',
+        context,
+        'dependency'
+      );
+    });
+
+    it('should prefer resolution context over documentDir', () => {
+      watcher.setDocumentDir('/old/path');
+      const context = { baseDir: '/new/context/path' };
+      watcher.setResolutionContext(context);
+      mockRelativeImports(['./component.tsx']);
+
+      watcher.updateDependencies(['./component.tsx']);
+
+      expect(mockResolveSync).toHaveBeenCalledWith(
+        './component.tsx',
+        context,
+        'dependency'
+      );
     });
   });
 
@@ -306,15 +355,11 @@ describe('DependencyWatcher', () => {
     it('should handle empty string imports', () => {
       watcher.updateDependencies(['']);
 
-      expect(fs.statSync).not.toHaveBeenCalled();
+      expect(mockResolveSync).not.toHaveBeenCalled();
     });
 
     it('should handle malformed paths', () => {
       const malformedPaths = ['./', '../', './/', '/..//./component'];
-
-      vi.mocked(fs.statSync).mockImplementation(() => {
-        throw new Error('ENOENT');
-      });
 
       expect(() => {
         watcher.updateDependencies(malformedPaths);

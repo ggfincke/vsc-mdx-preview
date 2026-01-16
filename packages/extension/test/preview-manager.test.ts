@@ -77,8 +77,36 @@ vi.mock('../preview/evaluate-in-webview', () => ({
   default: vi.fn(),
 }));
 
+// mock getConfigManager
+vi.mock('../services', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../services')>();
+  return {
+    ...original,
+    getConfigManager: () => ({
+      get: (key: string, scope?: unknown) => {
+        const defaults: Record<string, unknown> = {
+          'preview.updateMode': 'onType',
+          'preview.debounceDelay': 300,
+          'preview.security': 'strict',
+          'preview.useVscodeMarkdownStyles': true,
+          'preview.useWhiteBackground': false,
+          'preview.customCss': '',
+          'preview.mdx.customLayoutFilePath': '',
+          'build.useSucraseTranspiler': false,
+          'tailwind.enabled': 'enabled',
+        };
+        return defaults[key];
+      },
+      set: vi.fn(),
+    }),
+  };
+});
+
 // import after mocking
 import { PreviewManager, Preview } from '../preview/preview-manager';
+import { ServiceRegistry } from '../services/ServiceRegistry';
+import { ServiceNames } from '../services/service-names';
+import { ConfigCache } from '../config/ConfigCache';
 
 describe('PreviewManager', () => {
   beforeEach(() => {
@@ -201,6 +229,18 @@ describe('Preview', () => {
     getText: () => '# Test',
     version: 1,
     ...overrides,
+  });
+
+  beforeEach(() => {
+    // Register ConfigCache service (required by ConfigResolver)
+    const registry = ServiceRegistry.getInstance();
+    registry.register(ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance());
+  });
+
+  afterEach(() => {
+    // Clean up services - use reset() to clear disposed flag
+    ConfigCache.dispose();
+    ServiceRegistry.reset();
   });
 
   describe('constructor', () => {

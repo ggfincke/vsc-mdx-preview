@@ -70,6 +70,33 @@ vi.mock('../tailwind/TailwindProcessor', () => ({
   },
 }));
 
+// mock getConfigManager for TrustManager dependency
+// Uses dynamic import to access vscode mock's config store at test runtime
+vi.mock('../services', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../services')>();
+  const vscode = await import('./__mocks__/vscode');
+  return {
+    ...original,
+    getConfigManager: () => ({
+      get: (key: string, scope?: unknown) => {
+        // Dynamically read from vscode mock's config store (set via __setMockConfig)
+        const value = vscode.__getMockConfig(key);
+        return value !== undefined ? value : vscode.CONFIG_DEFAULTS[key];
+      },
+      set: vi.fn(),
+    }),
+    getErrorReporter: () => ({
+      report: vi.fn(),
+      reportSilent: vi.fn(),
+      reportToUser: vi.fn(),
+      reportConfigError: vi.fn(),
+      reportPluginError: vi.fn(),
+      reportWithActions: vi.fn(),
+      reportWebviewError: vi.fn(),
+    }),
+  };
+});
+
 // note: performance API is available in Node.js - we spy on it in tests rather than stubbing
 
 // import after mocks are set up

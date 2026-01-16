@@ -2,10 +2,20 @@
 // unit tests for PreviewConfiguration
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Uri, __resetMocks, __setMockConfig } from './__mocks__/vscode';
+import {
+  Uri,
+  __resetMocks,
+  __setMockConfig,
+  createMockConfigManager,
+} from './__mocks__/vscode';
 import { PreviewConfiguration } from '../preview/PreviewConfiguration';
 import { SecurityPolicy } from '../security/security';
 import { PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS } from '../constants';
+
+// Mock getConfigManager to use the vscode mock's config store with defaults
+vi.mock('../services', () => ({
+  getConfigManager: () => createMockConfigManager(),
+}));
 
 describe('PreviewConfiguration', () => {
   const mockDocUri = Uri.file('/projects/test-workspace/test.mdx');

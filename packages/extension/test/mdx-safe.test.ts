@@ -1,8 +1,22 @@
 // packages/extension/test/mdx-safe.test.ts
 // tests for Safe Mode MDX compilation
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { compileToSafeHTML } from '../transpiler/mdx/mdx-safe';
+
+// mock getConfigManager to provide default config values
+vi.mock('../services', () => ({
+  getConfigManager: () => ({
+    get: (key: string, scope?: unknown) => {
+      const defaults: Record<string, unknown> = {
+        'components.builtins': true,
+        'components.unknownBehavior': 'placeholder',
+      };
+      return defaults[key];
+    },
+    set: vi.fn(),
+  }),
+}));
 
 describe('mdx-safe', () => {
   describe('compileToSafeHTML', () => {
@@ -108,7 +122,8 @@ Content`;
       it('replaces JSX flow elements with placeholder', async () => {
         const result = await compileToSafeHTML('<MyComponent />');
 
-        expect(result.html).toContain('mdx-jsx-placeholder');
+        // flow elements use the new unknown component placeholder format
+        expect(result.html).toContain('mdx-unknown-component-placeholder');
         expect(result.html).toContain('&lt;MyComponent');
         expect(result.html).not.toContain('<MyComponent');
       });
@@ -118,6 +133,7 @@ Content`;
           'Hello <Highlight>world</Highlight>'
         );
 
+        // inline text elements use mdx-jsx-placeholder
         expect(result.html).toContain('mdx-jsx-placeholder');
         expect(result.html).toContain('&lt;Highlight');
       });
@@ -127,6 +143,8 @@ Content`;
           '<Button variant="primary">Click</Button>'
         );
 
+        // single-line components may be parsed as text elements (inline)
+        // which use the simpler mdx-jsx-placeholder format
         expect(result.html).toContain('mdx-jsx-placeholder');
         expect(result.html).toContain('&lt;Button');
       });
@@ -134,7 +152,9 @@ Content`;
       it('handles self-closing components', async () => {
         const result = await compileToSafeHTML('<Icon name="star" />');
 
-        expect(result.html).toContain('mdx-jsx-placeholder');
+        // self-closing components on their own line are parsed as flow elements
+        // and use the unknown component placeholder format
+        expect(result.html).toContain('mdx-unknown-component-placeholder');
         expect(result.html).toContain('&lt;Icon');
       });
     });

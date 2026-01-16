@@ -3,8 +3,6 @@
 
 import { vi, describe, test, expect, beforeEach, afterEach } from 'vitest';
 import {
-  __setMockTrusted,
-  __setMockConfig,
   __setMockWorkspaceFolders,
   __resetMocks,
   commands,
@@ -12,9 +10,6 @@ import {
   workspace,
   window,
 } from './__mocks__/vscode';
-import { TrustManager } from '../security/TrustManager';
-import { ServiceRegistry } from '../services/ServiceRegistry';
-import { ServiceNames } from '../services/service-names';
 import { handleDidChangeWorkspaceFolders } from '../security/checkFsPath';
 
 // mock module-fetcher
@@ -30,10 +25,52 @@ vi.mock('../logging', () => ({
   debug: vi.fn(),
 }));
 
+// mock getConfigManager for TrustManager dependency
+// Use vi.hoisted to create mock functions that are properly hoisted
+const {
+  mockGetConfigManager,
+  mockGetTrustManager,
+  mockGetErrorReporter,
+  mockErrorReporter,
+} = vi.hoisted(() => {
+  const errorReporter = {
+    report: vi.fn(),
+    reportSilent: vi.fn(),
+    reportToUser: vi.fn(),
+    reportConfigError: vi.fn(),
+    reportPluginError: vi.fn(),
+    reportWithActions: vi.fn(),
+    reportWebviewError: vi.fn(),
+  };
+  return {
+    mockGetConfigManager: vi.fn(),
+    mockGetTrustManager: vi.fn(),
+    mockGetErrorReporter: vi.fn(() => errorReporter),
+    mockErrorReporter: errorReporter,
+  };
+});
+
+vi.mock('../services', () => ({
+  ServiceRegistry: {
+    getInstance: vi.fn(() => ({
+      get: vi.fn(),
+      has: vi.fn(),
+      register: vi.fn(),
+      reset: vi.fn(),
+    })),
+    reset: vi.fn(),
+  },
+  ServiceNames: {},
+  getConfigManager: mockGetConfigManager,
+  getTrustManager: mockGetTrustManager,
+  getErrorReporter: mockGetErrorReporter,
+}));
+
 // import after mocks are set up
 import ExtensionHandle from '../rpc-extension-handle';
 import { fetchLocal } from '../module-fetcher/module-fetcher';
 import type { Preview } from '../preview/preview-manager';
+import { Uri, __getMockConfig, CONFIG_DEFAULTS } from './__mocks__/vscode';
 
 // create mock Preview object
 const createMockPreview = (overrides: Partial<Preview> = {}): Preview =>
@@ -41,14 +78,19 @@ const createMockPreview = (overrides: Partial<Preview> = {}): Preview =>
     entryFsDirectory: '/projects/test-workspace/src',
     completeHandshake: vi.fn(),
     evaluationDuration: 0,
+    doc: {
+      uri: Uri.file('/projects/test-workspace/src/test.mdx'),
+    },
     ...overrides,
   }) as unknown as Preview;
 
-// reset TrustManager singleton between tests
-const resetTrustManager = (): void => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (TrustManager as any).instance = undefined;
-};
+// Helper to create a mock trust state
+const createMockTrustState = (canExecute: boolean, reason?: string) => ({
+  workspaceTrusted: canExecute,
+  scriptsEnabled: canExecute,
+  canExecute,
+  reason,
+});
 
 describe('ExtensionHandle', () => {
   let handle: ExtensionHandle;
@@ -56,8 +98,6 @@ describe('ExtensionHandle', () => {
 
   beforeEach(() => {
     __resetMocks();
-    resetTrustManager();
-    ServiceRegistry.reset();
     handleDidChangeWorkspaceFolders();
     vi.clearAllMocks();
 
@@ -66,22 +106,30 @@ describe('ExtensionHandle', () => {
     ]);
     handleDidChangeWorkspaceFolders();
 
-    // register TrustManager w/ ServiceRegistry
-    const registry = ServiceRegistry.getInstance();
-    registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
+    // Configure mock ConfigManager
+    mockGetConfigManager.mockReturnValue({
+      get: (key: string) => {
+        const value = __getMockConfig(key);
+        return value !== undefined ? value : CONFIG_DEFAULTS[key];
+      },
+      set: vi.fn(),
+    });
+
+    // Configure mock TrustManager - default to trusted state
+    mockGetTrustManager.mockReturnValue({
+      getState: () => createMockTrustState(true),
+      getStateForDocument: () => createMockTrustState(true),
+      canUseTrustedMode: () => ({ allowed: true }),
+      subscribe: vi.fn(() => ({ dispose: vi.fn() })),
+      dispose: vi.fn(),
+    });
 
     mockPreview = createMockPreview();
     handle = new ExtensionHandle(mockPreview);
   });
 
   afterEach(() => {
-    try {
-      TrustManager.getInstance().dispose();
-    } catch {
-      // ignore if already disposed
-    }
-    resetTrustManager();
-    ServiceRegistry.reset();
+    vi.clearAllMocks();
   });
 
   describe('handshake', () => {
@@ -125,11 +173,7 @@ describe('ExtensionHandle', () => {
   });
 
   describe('fetch - input validation', () => {
-    beforeEach(() => {
-      // enable trust so we can test input validation
-      __setMockTrusted(true);
-      __setMockConfig('preview.enableScripts', true);
-    });
+    // Note: beforeEach in parent describe already configures trust as enabled
 
     test('rejects when request is not a string', async () => {
       // @ts-expect-error testing invalid input
@@ -262,8 +306,14 @@ describe('ExtensionHandle', () => {
 
   describe('fetch - trust gating', () => {
     test('returns undefined when canExecute is false (workspace not trusted)', async () => {
-      __setMockTrusted(false);
-      __setMockConfig('preview.enableScripts', true);
+      // Configure mock to return untrusted state
+      mockGetTrustManager.mockReturnValue({
+        getState: () => createMockTrustState(false),
+        getStateForDocument: () => createMockTrustState(false, 'Workspace not trusted'),
+        canUseTrustedMode: () => ({ allowed: false, reason: 'Workspace not trusted' }),
+        subscribe: vi.fn(() => ({ dispose: vi.fn() })),
+        dispose: vi.fn(),
+      });
 
       const result = await handle.fetch('./module.js', false, '/parent.js');
       expect(result).toBeUndefined();
@@ -271,8 +321,14 @@ describe('ExtensionHandle', () => {
     });
 
     test('returns undefined when canExecute is false (scripts disabled)', async () => {
-      __setMockTrusted(true);
-      __setMockConfig('preview.enableScripts', false);
+      // Configure mock to return scripts disabled state
+      mockGetTrustManager.mockReturnValue({
+        getState: () => createMockTrustState(false),
+        getStateForDocument: () => createMockTrustState(false, 'Scripts disabled'),
+        canUseTrustedMode: () => ({ allowed: false, reason: 'Scripts disabled' }),
+        subscribe: vi.fn(() => ({ dispose: vi.fn() })),
+        dispose: vi.fn(),
+      });
 
       const result = await handle.fetch('./module.js', false, '/parent.js');
       expect(result).toBeUndefined();
@@ -280,8 +336,14 @@ describe('ExtensionHandle', () => {
     });
 
     test('calls fetchLocal when trust conditions are met', async () => {
-      __setMockTrusted(true);
-      __setMockConfig('preview.enableScripts', true);
+      // beforeEach already sets up trusted state, but be explicit
+      mockGetTrustManager.mockReturnValue({
+        getState: () => createMockTrustState(true),
+        getStateForDocument: () => createMockTrustState(true),
+        canUseTrustedMode: () => ({ allowed: true }),
+        subscribe: vi.fn(() => ({ dispose: vi.fn() })),
+        dispose: vi.fn(),
+      });
 
       vi.mocked(fetchLocal).mockResolvedValueOnce({
         fsPath: '/projects/test-workspace/src/module.js',
@@ -432,15 +494,15 @@ describe('ExtensionHandle', () => {
     test('rejects paths outside workspace (path traversal)', async () => {
       await handle.openDocument('../../../etc/passwd');
       expect(workspace.openTextDocument).not.toHaveBeenCalled();
-      expect(window.showWarningMessage).toHaveBeenCalledWith(
-        'Cannot open file outside workspace folder.'
-      );
+      // Now uses ErrorReporter instead of direct window call
+      expect(mockErrorReporter.report).toHaveBeenCalled();
     });
 
     test('rejects absolute paths outside workspace', async () => {
       await handle.openDocument('/etc/passwd');
       expect(workspace.openTextDocument).not.toHaveBeenCalled();
-      expect(window.showWarningMessage).toHaveBeenCalled();
+      // Now uses ErrorReporter instead of direct window call
+      expect(mockErrorReporter.report).toHaveBeenCalled();
     });
 
     test('accepts valid relative paths within workspace', async () => {
@@ -488,15 +550,14 @@ describe('ExtensionHandle', () => {
   });
 
   describe('openDocument - error handling', () => {
-    test('shows error message when document open fails', async () => {
+    test('reports error when document open fails', async () => {
       vi.mocked(workspace.openTextDocument).mockRejectedValueOnce(
         new Error('File not found')
       );
 
       await handle.openDocument('./nonexistent.ts');
-      expect(window.showErrorMessage).toHaveBeenCalledWith(
-        'Could not open file: ./nonexistent.ts'
-      );
+      // Now uses ErrorReporter.reportToUser instead of direct window call
+      expect(mockErrorReporter.reportToUser).toHaveBeenCalled();
     });
   });
 });

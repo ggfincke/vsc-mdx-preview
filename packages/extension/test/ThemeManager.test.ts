@@ -4,21 +4,28 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ThemeManager } from '../themes/ThemeManager';
 
+// mock config values for tests
+const mockConfigValues: Record<string, unknown> = {
+  'preview.previewTheme': 'github-light',
+  'preview.codeBlockTheme': 'auto',
+  'preview.autoTheme': true,
+};
+
 // mock vscode module
 vi.mock('vscode', () => ({
   window: {
     activeColorTheme: { kind: 1 }, // Light theme
     onDidChangeActiveColorTheme: vi.fn(() => ({ dispose: vi.fn() })),
+    createOutputChannel: vi.fn(() => ({
+      appendLine: vi.fn(),
+      show: vi.fn(),
+      dispose: vi.fn(),
+    })),
   },
   workspace: {
     getConfiguration: vi.fn(() => ({
       get: vi.fn((key: string, defaultValue: unknown) => {
-        const config: Record<string, unknown> = {
-          'preview.previewTheme': 'github-light',
-          'preview.codeBlockTheme': 'auto',
-          'preview.autoTheme': true,
-        };
-        return config[key] ?? defaultValue;
+        return mockConfigValues[key] ?? defaultValue;
       }),
     })),
     onDidChangeConfiguration: vi.fn(() => ({ dispose: vi.fn() })),
@@ -34,6 +41,16 @@ vi.mock('vscode', () => ({
       this.fn();
     }
   },
+}));
+
+// mock getConfigManager to use same config values
+vi.mock('../services', () => ({
+  getConfigManager: () => ({
+    get: (key: string, scope?: unknown) => {
+      return mockConfigValues[key];
+    },
+    set: vi.fn(),
+  }),
 }));
 
 describe('ThemeManager', () => {

@@ -8,6 +8,11 @@ import {
   validateNumber,
   validateUrl,
   validateOptionalNumber,
+  validateArray,
+  validateObject,
+  validateRecord,
+  validateEnumValue,
+  validateFunction,
 } from '../utils/validation';
 
 describe('validation', () => {
@@ -200,6 +205,227 @@ describe('validation', () => {
     it('returns undefined for non-number input', () => {
       const log = vi.fn();
       expect(validateOptionalNumber('42', 'line', { log })).toBeUndefined();
+    });
+  });
+
+  describe('validateArray', () => {
+    it('returns array for valid array input', () => {
+      const result = validateArray([1, 2, 3], 'numbers');
+      expect(result).toEqual([1, 2, 3]);
+    });
+
+    it('returns undefined for non-array', () => {
+      const log = vi.fn();
+      const result = validateArray('not array', 'value', undefined, { log });
+      expect(result).toBeUndefined();
+      expect(log).toHaveBeenCalledWith('value must be an array', 'not array');
+    });
+
+    it('validates elements with custom validator', () => {
+      const result = validateArray(
+        ['a', 'b'],
+        'strings',
+        (el) => (typeof el === 'string' ? el : undefined)
+      );
+      expect(result).toEqual(['a', 'b']);
+    });
+
+    it('returns undefined if any element fails validation', () => {
+      const log = vi.fn();
+      const result = validateArray(
+        ['a', 123],
+        'strings',
+        (el) => (typeof el === 'string' ? el : undefined),
+        { log }
+      );
+      expect(result).toBeUndefined();
+    });
+
+    it('returns empty array for empty input', () => {
+      const result = validateArray([], 'items');
+      expect(result).toEqual([]);
+    });
+
+    it('includes context in error message', () => {
+      const log = vi.fn();
+      validateArray('invalid', 'items', undefined, { log, context: 'config' });
+      expect(log).toHaveBeenCalledWith('config: items must be an array', 'invalid');
+    });
+  });
+
+  describe('validateObject', () => {
+    it('returns object for valid plain object', () => {
+      const result = validateObject({ a: 1 }, 'obj');
+      expect(result).toEqual({ a: 1 });
+    });
+
+    it('returns empty object for empty object', () => {
+      const result = validateObject({}, 'obj');
+      expect(result).toEqual({});
+    });
+
+    it('returns undefined for null', () => {
+      const log = vi.fn();
+      const result = validateObject(null, 'obj', { log });
+      expect(result).toBeUndefined();
+      expect(log).toHaveBeenCalledWith('obj must be an object', null);
+    });
+
+    it('returns undefined for array', () => {
+      const log = vi.fn();
+      const result = validateObject([1, 2], 'obj', { log });
+      expect(result).toBeUndefined();
+      expect(log).toHaveBeenCalledWith('obj must be an object', [1, 2]);
+    });
+
+    it('returns undefined for primitive types', () => {
+      const log = vi.fn();
+      expect(validateObject('string', 'obj', { log })).toBeUndefined();
+      expect(validateObject(123, 'obj', { log })).toBeUndefined();
+      expect(validateObject(true, 'obj', { log })).toBeUndefined();
+    });
+
+    it('includes context in error message', () => {
+      const log = vi.fn();
+      validateObject(null, 'config', { log, context: 'parsing' });
+      expect(log).toHaveBeenCalledWith('parsing: config must be an object', null);
+    });
+  });
+
+  describe('validateRecord', () => {
+    it('validates all values in record', () => {
+      const result = validateRecord(
+        { a: '1', b: '2' },
+        'rec',
+        (v) => (typeof v === 'string' ? v : undefined)
+      );
+      expect(result).toEqual({ a: '1', b: '2' });
+    });
+
+    it('returns undefined if any value fails validation', () => {
+      const log = vi.fn();
+      const result = validateRecord(
+        { a: '1', b: 123 },
+        'rec',
+        (v) => (typeof v === 'string' ? v : undefined),
+        { log }
+      );
+      expect(result).toBeUndefined();
+    });
+
+    it('returns undefined for non-object input', () => {
+      const log = vi.fn();
+      const result = validateRecord('invalid', 'rec', (v) => v as string, {
+        log,
+      });
+      expect(result).toBeUndefined();
+    });
+
+    it('returns empty record for empty object', () => {
+      const result = validateRecord({}, 'rec', (v) => v as string);
+      expect(result).toEqual({});
+    });
+
+    it('passes key to validator function', () => {
+      const validator = vi.fn((v: unknown, key: string) =>
+        key.startsWith('valid_') ? (v as string) : undefined
+      );
+      const result = validateRecord(
+        { valid_a: 'x', invalid_b: 'y' },
+        'rec',
+        validator
+      );
+      expect(result).toBeUndefined();
+      expect(validator).toHaveBeenCalledWith('x', 'valid_a');
+      expect(validator).toHaveBeenCalledWith('y', 'invalid_b');
+    });
+  });
+
+  describe('validateEnumValue', () => {
+    it('returns value if in allowed values', () => {
+      const result = validateEnumValue('a', 'val', ['a', 'b', 'c'] as const);
+      expect(result).toBe('a');
+    });
+
+    it('returns undefined for invalid value', () => {
+      const log = vi.fn();
+      const result = validateEnumValue('d', 'val', ['a', 'b', 'c'] as const, {
+        log,
+      });
+      expect(result).toBeUndefined();
+      expect(log).toHaveBeenCalledWith(
+        'val must be one of: a, b, c',
+        'd'
+      );
+    });
+
+    it('returns undefined for non-string', () => {
+      const log = vi.fn();
+      const result = validateEnumValue(123, 'val', ['a', 'b', 'c'] as const, {
+        log,
+      });
+      expect(result).toBeUndefined();
+      expect(log).toHaveBeenCalledWith('val must be a string', 123);
+    });
+
+    it('includes context in error message', () => {
+      const log = vi.fn();
+      validateEnumValue('invalid', 'mode', ['on', 'off'] as const, {
+        log,
+        context: 'config',
+      });
+      expect(log).toHaveBeenCalledWith(
+        'config: mode must be one of: on, off',
+        'invalid'
+      );
+    });
+  });
+
+  describe('validateFunction', () => {
+    it('returns function for valid function', () => {
+      const fn = () => {};
+      const result = validateFunction(fn, 'fn');
+      expect(result).toBe(fn);
+    });
+
+    it('returns arrow function', () => {
+      const fn = (x: number) => x * 2;
+      const result = validateFunction(fn, 'fn');
+      expect(result).toBe(fn);
+    });
+
+    it('returns async function', () => {
+      const fn = async () => {};
+      const result = validateFunction(fn, 'fn');
+      expect(result).toBe(fn);
+    });
+
+    it('returns undefined for non-function', () => {
+      const log = vi.fn();
+      const result = validateFunction('not a function', 'fn', { log });
+      expect(result).toBeUndefined();
+      expect(log).toHaveBeenCalledWith('fn must be a function', 'string');
+    });
+
+    it('returns undefined for null', () => {
+      const log = vi.fn();
+      const result = validateFunction(null, 'fn', { log });
+      expect(result).toBeUndefined();
+    });
+
+    it('returns undefined for undefined', () => {
+      const log = vi.fn();
+      const result = validateFunction(undefined, 'fn', { log });
+      expect(result).toBeUndefined();
+    });
+
+    it('includes context in error message', () => {
+      const log = vi.fn();
+      validateFunction({}, 'plugin', { log, context: 'loading' });
+      expect(log).toHaveBeenCalledWith(
+        'loading: plugin must be a function',
+        'object'
+      );
     });
   });
 });

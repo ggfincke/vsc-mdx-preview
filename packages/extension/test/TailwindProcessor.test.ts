@@ -43,6 +43,17 @@ vi.mock('../logging', () => ({
   error: vi.fn(),
   warn: vi.fn(),
 }));
+vi.mock('../services', () => ({
+  getErrorReporter: () => ({
+    report: vi.fn(),
+    reportSilent: vi.fn(),
+    reportToUser: vi.fn(),
+    reportConfigError: vi.fn(),
+    reportPluginError: vi.fn(),
+    reportWithActions: vi.fn(),
+    reportWebviewError: vi.fn(),
+  }),
+}));
 
 // mock sub-modules
 const mockDetector = {

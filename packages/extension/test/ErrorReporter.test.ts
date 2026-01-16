@@ -8,7 +8,7 @@ import {
   ErrorSeverity,
   ErrorContext,
 } from '../errors/ErrorReporter';
-import { ExtensionError } from '../errors';
+import { ExtensionError, ConfigError, PluginError } from '../errors';
 
 // reset ErrorReporter singleton between tests
 const resetErrorReporter = (): void => {
@@ -301,6 +301,93 @@ describe('ErrorReporter', () => {
         expect(window.showErrorMessage).toHaveBeenCalledWith(
           expect.stringContaining('User error')
         );
+      });
+    });
+
+    describe('reportConfigError', () => {
+      it('reports with Config context and Warning severity', () => {
+        const reporter = ErrorReporter.getInstance();
+        const error = new ConfigError(
+          'Invalid config',
+          'CONFIG_PARSE_ERROR',
+          '/path/to/config.json'
+        );
+
+        reporter.reportConfigError(error, '/path/to/config.json');
+
+        expect(window.showWarningMessage).toHaveBeenCalledWith(
+          expect.stringContaining('Config')
+        );
+      });
+
+      it('includes configPath in metadata', () => {
+        const reporter = ErrorReporter.getInstance();
+        const error = new Error('Config error');
+
+        reporter.reportConfigError(error, '/path/to/config.json', {
+          extra: 'metadata',
+        });
+
+        expect(window.showWarningMessage).toHaveBeenCalled();
+      });
+    });
+
+    describe('reportPluginError', () => {
+      it('logs but does not show notification', () => {
+        const reporter = ErrorReporter.getInstance();
+        const error = new PluginError(
+          'Plugin failed',
+          'PLUGIN_LOAD_ERROR',
+          'my-plugin'
+        );
+
+        reporter.reportPluginError(error, 'my-plugin');
+
+        // Plugin errors should not show notifications
+        expect(window.showErrorMessage).not.toHaveBeenCalled();
+        expect(window.showWarningMessage).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('reportWithActions', () => {
+      it('shows warning with action buttons', async () => {
+        const reporter = ErrorReporter.getInstance();
+        const error = new Error('Action required');
+        const action = vi.fn();
+
+        // Mock showWarningMessage to return 'Perform Action'
+        (window.showWarningMessage as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+          'Perform Action'
+        );
+
+        await reporter.reportWithActions(error, ErrorContext.Security, [
+          { label: 'Perform Action', action },
+          { label: 'Cancel', action: vi.fn() },
+        ]);
+
+        expect(window.showWarningMessage).toHaveBeenCalledWith(
+          expect.stringContaining('Action required'),
+          'Perform Action',
+          'Cancel'
+        );
+        expect(action).toHaveBeenCalled();
+      });
+
+      it('does not call action if user cancels', async () => {
+        const reporter = ErrorReporter.getInstance();
+        const error = new Error('Action required');
+        const action = vi.fn();
+
+        // Mock showWarningMessage to return undefined (dialog dismissed)
+        (window.showWarningMessage as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+          undefined
+        );
+
+        await reporter.reportWithActions(error, ErrorContext.Security, [
+          { label: 'Perform Action', action },
+        ]);
+
+        expect(action).not.toHaveBeenCalled();
       });
     });
   });

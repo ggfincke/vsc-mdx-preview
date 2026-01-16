@@ -6,6 +6,19 @@ import {
   type TailwindScanResult,
 } from '../tailwind';
 
+// mock UnifiedResolver for dependency resolution tests
+const mockResolveAsync = vi.fn();
+const mockShouldResolve = vi.fn();
+const mockIsRelativeImport = vi.fn();
+
+vi.mock('../module-fetcher/UnifiedResolver', () => ({
+  getUnifiedResolver: () => ({
+    resolveAsync: mockResolveAsync,
+    shouldResolve: mockShouldResolve,
+    isRelativeImport: mockIsRelativeImport,
+  }),
+}));
+
 vi.mock('fs');
 vi.mock('../logging', () => ({
   debug: vi.fn(),
@@ -17,9 +30,37 @@ describe('TailwindScanner', () => {
     includeDependencies: false,
   };
 
+  // helper to configure resolver mocks for dependency tests
+  function mockResolverForRelativeImports(
+    importToPath: Record<string, string | null>
+  ) {
+    mockShouldResolve.mockImplementation((s: string) => {
+      return s && !s.startsWith('http') && !s.startsWith('npm://');
+    });
+    mockIsRelativeImport.mockImplementation((s: string) => {
+      return s?.startsWith('./') || s?.startsWith('../');
+    });
+    mockResolveAsync.mockImplementation(async (specifier: string) => {
+      const fsPath = importToPath[specifier];
+      if (fsPath) {
+        return { fsPath, isBuiltInShim: false, specifier };
+      }
+      return null;
+    });
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
     scanner = new TailwindScanner();
+
+    // default resolver mock behavior
+    mockShouldResolve.mockImplementation((s: string) => {
+      return s && !s.startsWith('http') && !s.startsWith('npm://');
+    });
+    mockIsRelativeImport.mockImplementation((s: string) => {
+      return s?.startsWith('./') || s?.startsWith('../');
+    });
+    mockResolveAsync.mockResolvedValue(null);
   });
 
   describe('basic className extraction', () => {
@@ -462,6 +503,13 @@ describe('TailwindScanner', () => {
     };
 
     it('should resolve and scan relative imports', async () => {
+      // Mock resolver to resolve imports to file paths
+      mockResolverForRelativeImports({
+        './Component.tsx': '/workspace/src/Component.tsx',
+        './utils.ts': '/workspace/src/utils.ts',
+      });
+
+      // Mock fs for FileScanValidator
       vi.spyOn(fs.promises, 'stat').mockImplementation(async (p) => {
         if (
           p === '/workspace/src/Component.tsx' ||
@@ -494,8 +542,6 @@ describe('TailwindScanner', () => {
     });
 
     it('should skip node_modules imports', async () => {
-      const statSpy = vi.spyOn(fs.promises, 'stat');
-
       const options: TailwindScanOptions = {
         includeDependencies: true,
         entryFilePath: '/workspace/src/page.mdx',
@@ -504,27 +550,20 @@ describe('TailwindScanner', () => {
 
       await scanner.scan('', options);
 
-      expect(statSpy).not.toHaveBeenCalled();
+      // Resolver should not be called for non-relative imports (isRelativeImport returns false)
+      expect(mockResolveAsync).not.toHaveBeenCalled();
     });
 
-    it('should resolve index files', async () => {
-      vi.spyOn(fs.promises, 'stat').mockImplementation(async (p) => {
-        // Direct path is a directory (not a file)
-        if (p === '/workspace/src/components') {
-          return { size: 0, isFile: () => false } as fs.Stats;
-        }
-        // Resolved index file exists
-        if (p === '/workspace/src/components/index.tsx') {
-          return { size: 100, isFile: () => true } as fs.Stats;
-        }
-        throw new Error('ENOENT');
+    it('should resolve index files (via resolver)', async () => {
+      // Mock resolver to resolve to index file
+      mockResolverForRelativeImports({
+        './components': '/workspace/src/components/index.tsx',
       });
-      vi.spyOn(fs.promises, 'access').mockImplementation(async (p) => {
-        if (p === '/workspace/src/components/index.tsx') {
-          return undefined;
-        }
-        throw new Error('ENOENT');
-      });
+
+      vi.spyOn(fs.promises, 'stat').mockResolvedValue({
+        size: 100,
+        isFile: () => true,
+      } as fs.Stats);
       vi.spyOn(fs.promises, 'readFile').mockResolvedValue(
         'className="from-index"'
       );
@@ -541,21 +580,16 @@ describe('TailwindScanner', () => {
       );
     });
 
-    it('should try multiple extensions', async () => {
-      const accessSpy = vi
-        .spyOn(fs.promises, 'access')
-        .mockImplementation(async (p) => {
-          if (p === '/workspace/src/Component.tsx') {
-            return undefined;
-          }
-          throw new Error('ENOENT');
-        });
-      vi.spyOn(fs.promises, 'stat').mockImplementation(async (p) => {
-        if (p === '/workspace/src/Component.tsx') {
-          return { size: 100, isFile: () => true } as fs.Stats;
-        }
-        throw new Error('ENOENT');
+    it('should use resolver for extension resolution', async () => {
+      // Mock resolver to resolve ./Component to ./Component.tsx
+      mockResolverForRelativeImports({
+        './Component': '/workspace/src/Component.tsx',
       });
+
+      vi.spyOn(fs.promises, 'stat').mockResolvedValue({
+        size: 100,
+        isFile: () => true,
+      } as fs.Stats);
       vi.spyOn(fs.promises, 'readFile').mockResolvedValue('className="found"');
 
       const options: TailwindScanOptions = {
@@ -564,14 +598,22 @@ describe('TailwindScanner', () => {
         entryFileDependencies: ['./Component'],
       };
 
-      await scanner.scan('', options);
+      const result = await scanner.scan('', options);
 
-      // Should try extensions (stat fails for base path, then access tries extensions)
-      expect(accessSpy).toHaveBeenCalledWith('/workspace/src/Component.ts');
-      expect(accessSpy).toHaveBeenCalledWith('/workspace/src/Component.tsx');
+      // Resolver should be called for resolution
+      expect(mockResolveAsync).toHaveBeenCalledWith(
+        './Component',
+        expect.objectContaining({ baseDir: '/workspace/src' }),
+        'dependency'
+      );
+      expect(result.scannedFiles).toContain('/workspace/src/Component.tsx');
     });
 
     it('should skip files over maxFileSizeBytes', async () => {
+      mockResolverForRelativeImports({
+        './large-file.tsx': '/workspace/src/large-file.tsx',
+      });
+
       vi.spyOn(fs.promises, 'stat').mockResolvedValue({
         size: 2 * 1024 * 1024, // 2MB
         isFile: () => true,
@@ -592,6 +634,10 @@ describe('TailwindScanner', () => {
     });
 
     it('should gracefully handle unreadable files', async () => {
+      mockResolverForRelativeImports({
+        './unreadable.tsx': '/workspace/src/unreadable.tsx',
+      });
+
       vi.spyOn(fs.promises, 'stat').mockResolvedValue({
         size: 100,
         isFile: () => true,
@@ -613,8 +659,6 @@ describe('TailwindScanner', () => {
     });
 
     it('should not scan without required options', async () => {
-      const statSpy = vi.spyOn(fs.promises, 'stat');
-
       // Missing entryFilePath
       await scanner.scan('', {
         includeDependencies: true,
@@ -634,7 +678,8 @@ describe('TailwindScanner', () => {
         entryFileDependencies: [],
       });
 
-      expect(statSpy).not.toHaveBeenCalled();
+      // Resolver should not be called when required options missing
+      expect(mockResolveAsync).not.toHaveBeenCalled();
     });
   });
 
@@ -878,6 +923,13 @@ describe('TailwindScanner', () => {
     });
 
     it('should return scannedFiles in sorted order', async () => {
+      // Mock resolver for all three imports
+      mockResolverForRelativeImports({
+        './z-component.tsx': '/workspace/src/z-component.tsx',
+        './a-component.tsx': '/workspace/src/a-component.tsx',
+        './m-component.tsx': '/workspace/src/m-component.tsx',
+      });
+
       vi.spyOn(fs.promises, 'stat').mockImplementation(async (p) => {
         const pathStr = String(p);
         if (
@@ -913,6 +965,13 @@ describe('TailwindScanner', () => {
     });
 
     it('should produce deterministic order even with parallel file reads', async () => {
+      // Mock resolver for all three imports
+      mockResolverForRelativeImports({
+        './comp-z.tsx': '/workspace/src/comp-z.tsx',
+        './comp-a.tsx': '/workspace/src/comp-a.tsx',
+        './comp-m.tsx': '/workspace/src/comp-m.tsx',
+      });
+
       // Simulate parallel file reads completing in random order
       vi.spyOn(fs.promises, 'stat').mockImplementation(async (p) => {
         const pathStr = String(p);

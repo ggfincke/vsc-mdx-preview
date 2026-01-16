@@ -1,11 +1,12 @@
 // packages/extension/test/validateTrust.test.ts
 // unit tests for trust validation utilities
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   __setMockTrusted,
   __setMockConfig,
   __resetMocks,
+  __getMockConfig,
   Uri,
 } from './__mocks__/vscode';
 import {
@@ -18,6 +19,20 @@ import {
 import { TrustManager } from '../security/TrustManager';
 import { ServiceRegistry } from '../services/ServiceRegistry';
 import { ServiceNames } from '../services/service-names';
+
+// mock getConfigManager to use vscode mock's config store
+vi.mock('../services', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../services')>();
+  return {
+    ...original,
+    getConfigManager: () => ({
+      get: (key: string, scope?: unknown) => {
+        return __getMockConfig(key) ?? false;
+      },
+      set: vi.fn(),
+    }),
+  };
+});
 
 // reset TrustManager singleton between tests (same pattern as TrustManager.test.ts)
 const resetTrustManager = (): void => {

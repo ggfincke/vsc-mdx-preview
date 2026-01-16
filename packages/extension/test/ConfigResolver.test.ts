@@ -10,12 +10,36 @@ import {
 } from '../preview/config/ConfigResolver';
 import type { MdxPreviewConfig } from '../preview/config/ConfigResolver';
 import * as fs from 'fs';
+import { ServiceRegistry } from '../services/ServiceRegistry';
+import { ServiceNames } from '../services/service-names';
+import { ConfigCache } from '../config/ConfigCache';
 
 // mock the fs module
 vi.mock('fs');
 
+// mock services module to include getErrorReporter
+vi.mock('../services', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../services')>();
+  return {
+    ...original,
+    getErrorReporter: () => ({
+      report: vi.fn(),
+      reportSilent: vi.fn(),
+      reportToUser: vi.fn(),
+      reportConfigError: vi.fn(),
+      reportPluginError: vi.fn(),
+      reportWithActions: vi.fn(),
+      reportWebviewError: vi.fn(),
+    }),
+  };
+});
+
 describe('ConfigResolver', () => {
   beforeEach(() => {
+    // Register ConfigCache service
+    const registry = ServiceRegistry.getInstance();
+    registry.register(ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance());
+
     // Clear cache before each test
     clearConfigCache();
     vi.clearAllMocks();
@@ -24,6 +48,9 @@ describe('ConfigResolver', () => {
   afterEach(() => {
     // Clean up watchers after each test
     disposeConfigWatchers();
+    // Clean up services - use reset() to clear disposed flag
+    ConfigCache.dispose();
+    ServiceRegistry.reset();
   });
 
   describe('resolveConfig', () => {

@@ -12,6 +12,22 @@ vi.mock('fs', () => ({
   readFileSync: vi.fn(),
 }));
 
+// mock services module
+vi.mock('../services', () => ({
+  getConfigManager: vi.fn(() => ({
+    get: vi.fn().mockReturnValue('auto'),
+  })),
+  getErrorReporter: vi.fn(() => ({
+    report: vi.fn(),
+    reportSilent: vi.fn(),
+    reportToUser: vi.fn(),
+    reportConfigError: vi.fn(),
+    reportPluginError: vi.fn(),
+    reportWithActions: vi.fn(),
+    reportWebviewError: vi.fn(),
+  })),
+}));
+
 // helper to create mock package.json content
 function createPackageJson(
   deps: Record<string, string> = {},

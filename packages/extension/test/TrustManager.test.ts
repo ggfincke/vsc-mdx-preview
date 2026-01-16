@@ -8,8 +8,19 @@ import {
   __resetMocks,
   __triggerTrustChange,
   __triggerConfigChange,
+  __getMockConfig,
 } from './__mocks__/vscode';
 import { TrustManager } from '../security/TrustManager';
+
+// mock getConfigManager to use vscode mock's config store
+vi.mock('../services', () => ({
+  getConfigManager: () => ({
+    get: (key: string, scope?: unknown) => {
+      return __getMockConfig(key) ?? false;
+    },
+    set: vi.fn(),
+  }),
+}));
 
 // reset singleton between tests
 const resetTrustManager = (): void => {
