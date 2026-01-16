@@ -6,9 +6,10 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { Preview } from './preview/preview-manager';
 import { fetchLocal } from './module-fetcher/module-fetcher';
-import { isTrustedModeEnabled } from './security/validateTrust';
 import { checkFsPath } from './security/checkFsPath';
+import { getTrustManager, getErrorReporter } from './services';
 import { error as logError, warn as logWarn, debug } from './logging';
+import { SecurityError, ErrorContext, ErrorSeverity } from './errors';
 import {
   validateString,
   validateBoolean,
@@ -107,9 +108,11 @@ class ExtensionHandle implements ExtensionRPC {
       return undefined;
     }
 
-    // trust check (only allow fetch when scripts enabled)
-    if (!isTrustedModeEnabled()) {
-      logWarn('fetch: blocked - scripts not enabled');
+    // document-aware trust check (validates workspace trust, scripts, remote env, scheme)
+    const docUri = this.preview.doc.uri;
+    const trustState = getTrustManager().getStateForDocument(docUri);
+    if (!trustState.canExecute) {
+      logWarn(`fetch: blocked - ${trustState.reason || 'not in Trusted Mode'}`);
       return undefined;
     }
 
@@ -189,9 +192,13 @@ class ExtensionHandle implements ExtensionRPC {
 
     // ! security check - ensure path is within workspace
     if (!checkFsPath(entryDir, resolvedPath)) {
-      logWarn('openDocument: path outside workspace', resolvedPath);
-      vscode.window.showWarningMessage(
-        'Cannot open file outside workspace folder.'
+      getErrorReporter().report(
+        new SecurityError(
+          'Cannot open file outside workspace folder',
+          'PATH_TRAVERSAL',
+          resolvedPath
+        ),
+        { context: ErrorContext.Security, severity: ErrorSeverity.Warning }
       );
       return;
     }
@@ -210,8 +217,10 @@ class ExtensionHandle implements ExtensionRPC {
 
       await vscode.window.showTextDocument(doc, options);
     } catch (err) {
-      logError('openDocument: failed to open', String(err));
-      vscode.window.showErrorMessage(`Could not open file: ${relativePath}`);
+      getErrorReporter().reportToUser(
+        new Error(`Could not open file: ${relativePath}`),
+        ErrorContext.Extension
+      );
     }
   }
 }

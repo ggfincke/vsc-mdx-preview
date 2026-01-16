@@ -10,6 +10,7 @@ import {
   PerformanceObserverEntryList,
 } from 'perf_hooks';
 import { error as logError, debug } from '../logging';
+import { SingletonService } from '../services/SingletonService';
 
 import { createOrShowPanel, refreshPanel } from './webview-manager';
 import evaluateInWebview from './evaluate-in-webview';
@@ -41,8 +42,10 @@ export interface WebviewAppUris {
 }
 
 // * preview manager singleton for managing all preview instances
-export class PreviewManager {
-  private static instance: PreviewManager;
+export class PreviewManager extends SingletonService<PreviewManager> {
+  protected static override instance: PreviewManager | undefined;
+  protected readonly logTag = 'PREVIEW-MANAGER';
+
   private currentPreview: Preview | undefined;
   private subscribers: Set<() => void> = new Set();
 
@@ -55,23 +58,10 @@ export class PreviewManager {
   private _webviewAppUris: WebviewAppUris | undefined;
   private _extensionUri: vscode.Uri | undefined;
 
-  private constructor() {}
-
-  static getInstance(): PreviewManager {
-    if (!PreviewManager.instance) {
-      PreviewManager.instance = new PreviewManager();
-    }
-    return PreviewManager.instance;
+  protected constructor() {
+    super();
   }
 
-  // static dispose for singleton cleanup
-  static dispose(): void {
-    if (PreviewManager.instance) {
-      PreviewManager.instance.dispose();
-      // @ts-expect-error reset singleton for dispose
-      PreviewManager.instance = undefined;
-    }
-  }
 
   // get current preview
   getCurrentPreview(): Preview | undefined {
@@ -171,8 +161,8 @@ export class PreviewManager {
     }
   }
 
-  // dispose current preview & cleanup (public for IService interface)
-  dispose(): void {
+  // custom cleanup - clear panel, preview, and subscribers
+  protected override onDispose(): void {
     this.clearPanel();
     this.currentPreview?.dispose();
     this.currentPreview = undefined;

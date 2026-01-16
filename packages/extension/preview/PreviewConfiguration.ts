@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import debounce from 'lodash.debounce';
 import { SecurityPolicy } from '../security/security';
-import { PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS } from '../constants';
+import { getConfigManager } from '../services';
 
 export type UpdateMode = 'onType' | 'onSave' | 'manual';
 export type TailwindEnabledSetting = 'auto' | 'enabled' | 'disabled';
@@ -40,47 +40,20 @@ export class PreviewConfiguration {
   private _debouncedUpdateWebview: ReturnType<typeof debounce>;
 
   constructor(docUri: vscode.Uri, updateWebviewFn: () => void) {
-    const extensionConfig = vscode.workspace.getConfiguration(
-      'mdx-preview',
-      docUri
-    );
+    const configManager = getConfigManager();
 
-    const debounceDelay = extensionConfig.get<number>(
-      'preview.debounceDelay',
-      PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS
-    );
+    const debounceDelay = configManager.get('preview.debounceDelay', docUri);
 
     this._configuration = {
-      updateMode: extensionConfig.get<UpdateMode>(
-        'preview.updateMode',
-        'onType'
-      ),
+      updateMode: configManager.get('preview.updateMode', docUri),
       debounceDelay,
-      useSucraseTranspiler: extensionConfig.get<boolean>(
-        'build.useSucraseTranspiler',
-        false
-      ),
-      useVscodeMarkdownStyles: extensionConfig.get<boolean>(
-        'preview.useVscodeMarkdownStyles',
-        true
-      ),
-      useWhiteBackground: extensionConfig.get<boolean>(
-        'preview.useWhiteBackground',
-        false
-      ),
-      customLayoutFilePath: extensionConfig.get<string>(
-        'preview.mdx.customLayoutFilePath',
-        ''
-      ),
-      customCss: extensionConfig.get<string>('preview.customCss', ''),
-      securityPolicy: extensionConfig.get<SecurityPolicy>(
-        'preview.security',
-        SecurityPolicy.Strict
-      ),
-      tailwindEnabled: extensionConfig.get<TailwindEnabledSetting>(
-        'tailwind.enabled',
-        'enabled'
-      ),
+      useSucraseTranspiler: configManager.get('build.useSucraseTranspiler', docUri),
+      useVscodeMarkdownStyles: configManager.get('preview.useVscodeMarkdownStyles', docUri),
+      useWhiteBackground: configManager.get('preview.useWhiteBackground', docUri),
+      customLayoutFilePath: configManager.get('preview.mdx.customLayoutFilePath', docUri),
+      customCss: configManager.get('preview.customCss', docUri),
+      securityPolicy: configManager.get('preview.security', docUri),
+      tailwindEnabled: configManager.get('tailwind.enabled', docUri),
     };
 
     this._debouncedUpdateWebview = debounce(updateWebviewFn, debounceDelay);
@@ -111,44 +84,17 @@ export class PreviewConfiguration {
     docUri: vscode.Uri,
     updateWebviewFn: () => void
   ): ConfigChangeResult {
-    const extensionConfig = vscode.workspace.getConfiguration(
-      'mdx-preview',
-      docUri
-    );
+    const configManager = getConfigManager();
 
-    const updateMode = extensionConfig.get<UpdateMode>(
-      'preview.updateMode',
-      'onType'
-    );
-    const debounceDelay = extensionConfig.get<number>(
-      'preview.debounceDelay',
-      PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS
-    );
-    const useSucraseTranspiler = extensionConfig.get<boolean>(
-      'build.useSucraseTranspiler',
-      false
-    );
-    const useVscodeMarkdownStyles = extensionConfig.get<boolean>(
-      'preview.useVscodeMarkdownStyles',
-      true
-    );
-    const useWhiteBackground = extensionConfig.get<boolean>(
-      'preview.useWhiteBackground',
-      false
-    );
-    const customLayoutFilePath = extensionConfig.get<string>(
-      'preview.mdx.customLayoutFilePath',
-      ''
-    );
-    const customCss = extensionConfig.get<string>('preview.customCss', '');
-    const securityPolicy = extensionConfig.get<SecurityPolicy>(
-      'preview.security',
-      SecurityPolicy.Strict
-    );
-    const tailwindEnabled = extensionConfig.get<TailwindEnabledSetting>(
-      'tailwind.enabled',
-      'enabled'
-    );
+    const updateMode = configManager.get('preview.updateMode', docUri);
+    const debounceDelay = configManager.get('preview.debounceDelay', docUri);
+    const useSucraseTranspiler = configManager.get('build.useSucraseTranspiler', docUri);
+    const useVscodeMarkdownStyles = configManager.get('preview.useVscodeMarkdownStyles', docUri);
+    const useWhiteBackground = configManager.get('preview.useWhiteBackground', docUri);
+    const customLayoutFilePath = configManager.get('preview.mdx.customLayoutFilePath', docUri);
+    const customCss = configManager.get('preview.customCss', docUri);
+    const securityPolicy = configManager.get('preview.security', docUri);
+    const tailwindEnabled = configManager.get('tailwind.enabled', docUri);
 
     const needsWebviewRefresh =
       useVscodeMarkdownStyles !== this._configuration.useVscodeMarkdownStyles ||

@@ -1,18 +1,15 @@
 // packages/extension/tailwind/TailwindProcessor.ts
 // orchestrate Tailwind detection, scanning, compilation, & caching
-//
-// error handling strategy:
-// - this is the orchestrator - catches all errors from child modules
-// - Compilation failures are logged at ERROR level (user-facing) via logError()
-// - Returns safe defaults { css: '', watchFiles: [], enabled: false } on failure
-// - File stat errors in cache key building are silently handled (non-critical)
 
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { performance } from 'perf_hooks';
 import * as vscode from 'vscode';
-import { debug, error as logError, warn } from '../logging';
+import { debug, warn } from '../logging';
+import { SingletonService } from '../services/SingletonService';
+import { getErrorReporter } from '../services';
+import { ErrorContext, ErrorSeverity } from '../errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
 import { TailwindCache } from './TailwindCache';
@@ -71,18 +68,17 @@ export interface TailwindProcessResult {
   enabled: boolean;
 }
 
-export class TailwindProcessor {
-  private static instance: TailwindProcessor;
+export class TailwindProcessor extends SingletonService<TailwindProcessor> {
+  protected static override instance: TailwindProcessor | undefined;
+  protected readonly logTag = 'TAILWIND';
+
   private detector = new TailwindDetector();
   private scanner = new TailwindScanner();
   private cache = new TailwindCache();
   private compiler = new TailwindCompiler();
 
-  static getInstance(): TailwindProcessor {
-    if (!TailwindProcessor.instance) {
-      TailwindProcessor.instance = new TailwindProcessor();
-    }
-    return TailwindProcessor.instance;
+  protected constructor() {
+    super();
   }
 
   async process(
@@ -223,7 +219,15 @@ export class TailwindProcessor {
         enabled: true,
       };
     } catch (error) {
-      logError('Tailwind compilation failed', error);
+      getErrorReporter().report(
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          context: ErrorContext.Tailwind,
+          severity: ErrorSeverity.Warning,
+          showNotification: false, // Tailwind errors are non-blocking
+          metadata: { operation: 'compilation' },
+        }
+      );
       return { css: '', watchFiles: [], enabled: false };
     }
   }
@@ -234,20 +238,10 @@ export class TailwindProcessor {
     this.detector.invalidateVersionCache(workspaceRoot);
   }
 
-  // dispose resources held by the processor - clears caches & any held references
-  dispose(): void {
+  // custom cleanup - clear caches
+  protected override onDispose(): void {
     this.cache.clear();
     this.detector.invalidateVersionCache();
-    debug('[TAILWIND] TailwindProcessor disposed');
-  }
-
-  // static dispose for singleton cleanup
-  static dispose(): void {
-    if (TailwindProcessor.instance) {
-      TailwindProcessor.instance.dispose();
-      // @ts-expect-error - reset singleton for dispose
-      TailwindProcessor.instance = undefined;
-    }
   }
 
   private buildWatchFiles(

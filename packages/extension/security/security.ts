@@ -2,6 +2,7 @@
 // security policy selection for CSP (strict or disabled)
 
 import * as vscode from 'vscode';
+import { getConfigManager } from '../services';
 
 export const enum SecurityPolicy {
   Strict = 'strict',
@@ -10,11 +11,8 @@ export const enum SecurityPolicy {
 
 // select security policy via Quick Pick
 const selectSecurityPolicy = async () => {
-  const extensionConfig = vscode.workspace.getConfiguration('mdx-preview');
-  const securityPolicy = extensionConfig.get<SecurityPolicy>(
-    'preview.security',
-    SecurityPolicy.Strict
-  );
+  const configManager = getConfigManager();
+  const securityPolicy = configManager.get('preview.security');
 
   const pickItems = [
     {
@@ -39,7 +37,7 @@ const selectSecurityPolicy = async () => {
   const selectedSecurityPolicyItem =
     await vscode.window.showQuickPick(pickItems);
   if (selectedSecurityPolicyItem) {
-    extensionConfig.update('preview.security', selectedSecurityPolicyItem.type);
+    await configManager.set('preview.security', selectedSecurityPolicyItem.type);
   }
 };
 

@@ -3,6 +3,8 @@
 
 import * as vscode from 'vscode';
 import { error as logError } from '../logging';
+import { SingletonService } from '../services/SingletonService';
+import { getConfigManager } from '../services';
 import type { TrustState } from '@mdx-preview/shared-types';
 
 export type { TrustState } from '@mdx-preview/shared-types';
@@ -25,26 +27,28 @@ export interface TrustedModeCheck {
 }
 
 // * manage trust state for MDX preview
-export class TrustManager {
-  private static instance: TrustManager;
-  private listeners: Set<(state: TrustState) => void> = new Set();
-  private disposables: vscode.Disposable[] = [];
+export class TrustManager extends SingletonService<TrustManager> {
+  protected static override instance: TrustManager | undefined;
+  protected readonly logTag = 'TRUST-MANAGER';
 
-  private constructor() {
+  private listeners: Set<(state: TrustState) => void> = new Set();
+
+  protected constructor() {
+    super();
     const workspaceWithTrust = vscode.workspace as typeof vscode.workspace & {
       onDidChangeWorkspaceTrust?: vscode.Event<boolean>;
     };
 
     if (workspaceWithTrust.onDidChangeWorkspaceTrust) {
       // listen for workspace trust changes (grant & revoke)
-      this.disposables.push(
+      this.addDisposable(
         workspaceWithTrust.onDidChangeWorkspaceTrust(() => {
           this.notifyListeners();
         })
       );
     } else {
       // fallback for older VS Code versions (grant only)
-      this.disposables.push(
+      this.addDisposable(
         vscode.workspace.onDidGrantWorkspaceTrust(() => {
           this.notifyListeners();
         })
@@ -52,7 +56,7 @@ export class TrustManager {
     }
 
     // listen for configuration changes
-    this.disposables.push(
+    this.addDisposable(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('mdx-preview.preview.enableScripts')) {
           this.notifyListeners();
@@ -61,20 +65,11 @@ export class TrustManager {
     );
   }
 
-  // get singleton instance
-  static getInstance(): TrustManager {
-    if (!TrustManager.instance) {
-      TrustManager.instance = new TrustManager();
-    }
-    return TrustManager.instance;
-  }
-
   // get current trust state (always reads fresh values, don't cache)
   getState(): TrustState {
     // fresh read every time (don't rely on cached values)
     const workspaceTrusted = vscode.workspace.isTrusted;
-    const config = vscode.workspace.getConfiguration('mdx-preview');
-    const scriptsEnabled = config.get<boolean>('preview.enableScripts', false);
+    const scriptsEnabled = getConfigManager().get('preview.enableScripts');
 
     return {
       workspaceTrusted,
@@ -105,8 +100,7 @@ export class TrustManager {
     }
 
     // rule 2: scripts must be enabled
-    const config = vscode.workspace.getConfiguration('mdx-preview');
-    const scriptsEnabled = config.get<boolean>('preview.enableScripts', false);
+    const scriptsEnabled = getConfigManager().get('preview.enableScripts');
     if (!scriptsEnabled) {
       return {
         allowed: false,
@@ -178,19 +172,8 @@ export class TrustManager {
     });
   }
 
-  // dispose all resources
-  dispose(): void {
-    this.disposables.forEach((d) => d.dispose());
-    this.disposables = [];
+  // custom cleanup - clear listeners (disposables handled by base class)
+  protected override onDispose(): void {
     this.listeners.clear();
-  }
-
-  // static dispose for singleton cleanup
-  static dispose(): void {
-    if (TrustManager.instance) {
-      TrustManager.instance.dispose();
-      // @ts-expect-error reset singleton for dispose
-      TrustManager.instance = undefined;
-    }
   }
 }

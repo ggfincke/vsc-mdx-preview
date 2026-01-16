@@ -2,6 +2,8 @@
 // * ThemeManager - singleton for managing MPE-style themes
 
 import * as vscode from 'vscode';
+import { SingletonService } from '../services/SingletonService';
+import { getConfigManager } from '../services';
 import type {
   PreviewTheme,
   CodeBlockTheme,
@@ -10,21 +12,23 @@ import type {
 } from './types';
 import { getOppositeTheme, isLightPreviewTheme } from './types';
 
-export class ThemeManager {
-  private static instance: ThemeManager | null = null;
-  private disposables: vscode.Disposable[] = [];
+export class ThemeManager extends SingletonService<ThemeManager> {
+  protected static override instance: ThemeManager | undefined;
+  protected readonly logTag = 'THEME-MANAGER';
+
   private subscribers: Set<(state: WebviewThemeState) => void> = new Set();
 
-  private constructor() {
+  protected constructor() {
+    super();
     // listen for VS Code theme changes
-    this.disposables.push(
+    this.addDisposable(
       vscode.window.onDidChangeActiveColorTheme(() => {
         this.notifySubscribers();
       })
     );
 
     // listen for configuration changes
-    this.disposables.push(
+    this.addDisposable(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('mdx-preview.preview')) {
           this.notifySubscribers();
@@ -33,37 +37,18 @@ export class ThemeManager {
     );
   }
 
-  static getInstance(): ThemeManager {
-    if (!ThemeManager.instance) {
-      ThemeManager.instance = new ThemeManager();
-    }
-    return ThemeManager.instance;
-  }
-
-  static dispose(): void {
-    if (ThemeManager.instance) {
-      ThemeManager.instance.disposables.forEach((d) => d.dispose());
-      ThemeManager.instance.subscribers.clear();
-      ThemeManager.instance = null;
-    }
-  }
-
-  // instance dispose for IService interface compatibility
-  dispose(): void {
-    ThemeManager.dispose();
+  // custom cleanup - clear subscribers (disposables handled by base class)
+  protected override onDispose(): void {
+    this.subscribers.clear();
   }
 
   // get theme configuration from settings
   getThemeConfiguration(docUri?: vscode.Uri): ThemeConfiguration {
-    const config = vscode.workspace.getConfiguration('mdx-preview', docUri);
-
+    const configManager = getConfigManager();
     return {
-      previewTheme: config.get<PreviewTheme>('preview.previewTheme', 'none'),
-      codeBlockTheme: config.get<CodeBlockTheme>(
-        'preview.codeBlockTheme',
-        'auto'
-      ),
-      autoTheme: config.get<boolean>('preview.autoTheme', true),
+      previewTheme: configManager.get('preview.previewTheme', docUri) as PreviewTheme,
+      codeBlockTheme: configManager.get('preview.codeBlockTheme', docUri) as CodeBlockTheme,
+      autoTheme: configManager.get('preview.autoTheme', docUri),
     };
   }
 
@@ -175,8 +160,7 @@ export class ThemeManager {
 
   // update theme setting
   async setPreviewTheme(theme: PreviewTheme, global = true): Promise<void> {
-    const config = vscode.workspace.getConfiguration('mdx-preview');
-    await config.update(
+    await getConfigManager().set(
       'preview.previewTheme',
       theme,
       global
@@ -187,8 +171,7 @@ export class ThemeManager {
 
   // update code block theme setting
   async setCodeBlockTheme(theme: CodeBlockTheme, global = true): Promise<void> {
-    const config = vscode.workspace.getConfiguration('mdx-preview');
-    await config.update(
+    await getConfigManager().set(
       'preview.codeBlockTheme',
       theme,
       global

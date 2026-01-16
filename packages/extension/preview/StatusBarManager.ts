@@ -12,15 +12,19 @@ import {
   STATUS_BAR_TRUST_PRIORITY,
   STATUS_BAR_FRAMEWORK_PRIORITY,
 } from '../constants';
+import { SingletonService } from '../services/SingletonService';
 
 // * status bar manager singleton for MDX preview status display
-export class StatusBarManager {
-  private static instance: StatusBarManager | null = null;
+export class StatusBarManager extends SingletonService<StatusBarManager> {
+  protected static override instance: StatusBarManager | undefined;
+  protected readonly logTag = 'STATUS-BAR';
+
   private trustStatusBarItem: vscode.StatusBarItem;
   private frameworkStatusBarItem: vscode.StatusBarItem;
-  private disposables: vscode.Disposable[] = [];
 
-  private constructor() {
+  protected constructor() {
+    super();
+
     // create trust status bar item
     this.trustStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
@@ -41,21 +45,21 @@ export class StatusBarManager {
     this.updateFrameworkDisplay();
 
     // subscribe to trust state changes
-    this.disposables.push(
+    this.addDisposable(
       getTrustManager().subscribe((state) => {
         this.updateTrustDisplay(state);
       })
     );
 
     // subscribe to framework changes
-    this.disposables.push(
+    this.addDisposable(
       getFrameworkDetector().subscribe(() => {
         this.updateFrameworkDisplay();
       })
     );
 
     // subscribe to active editor changes
-    this.disposables.push(
+    this.addDisposable(
       vscode.window.onDidChangeActiveTextEditor(() => {
         this.updateVisibility();
         this.updateFrameworkDisplay();
@@ -63,28 +67,11 @@ export class StatusBarManager {
     );
 
     // subscribe to preview state changes
-    this.disposables.push(
+    this.addDisposable(
       getPreviewManager().subscribe(() => {
         this.updateVisibility();
       })
     );
-  }
-
-  // get singleton instance
-  static getInstance(): StatusBarManager {
-    if (!StatusBarManager.instance) {
-      StatusBarManager.instance = new StatusBarManager();
-    }
-    return StatusBarManager.instance;
-  }
-
-  // static dispose for singleton cleanup
-  static dispose(): void {
-    if (StatusBarManager.instance) {
-      StatusBarManager.instance.dispose();
-      // @ts-expect-error reset singleton for dispose
-      StatusBarManager.instance = undefined;
-    }
   }
 
   // update trust status bar text & tooltip
@@ -174,12 +161,8 @@ export class StatusBarManager {
     return [this.trustStatusBarItem, this.frameworkStatusBarItem];
   }
 
-  // dispose all resources (public for IService interface)
-  dispose(): void {
-    for (const disposable of this.disposables) {
-      disposable.dispose();
-    }
-    this.disposables = [];
+  // custom cleanup - dispose status bar items
+  protected override onDispose(): void {
     this.trustStatusBarItem.dispose();
     this.frameworkStatusBarItem.dispose();
   }

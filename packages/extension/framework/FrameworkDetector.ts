@@ -4,7 +4,10 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { debug, warn } from '../logging';
+import { debug } from '../logging';
+import { SingletonService } from '../services/SingletonService';
+import { getConfigManager, getErrorReporter } from '../services';
+import { ErrorContext } from '../errors';
 
 // supported frameworks
 export type Framework = 'generic' | 'docusaurus' | 'nextjs' | 'astro-starlight';
@@ -44,14 +47,17 @@ const FRAMEWORK_RULES: FrameworkRule[] = [
 ];
 
 // singleton framework detector
-export class FrameworkDetector {
-  private static instance: FrameworkDetector | null = null;
+export class FrameworkDetector extends SingletonService<FrameworkDetector> {
+  protected static override instance: FrameworkDetector | undefined;
+  protected readonly logTag = 'FRAMEWORK';
+
   private cache: Map<string, FrameworkInfo> = new Map();
   private subscriptions: Set<(info: FrameworkInfo) => void> = new Set();
-  private disposables: vscode.Disposable[] = [];
   private fileWatcher: vscode.FileSystemWatcher | null = null;
 
-  private constructor() {
+  protected constructor() {
+    super();
+
     // watch for package.json changes
     this.fileWatcher = vscode.workspace.createFileSystemWatcher(
       '**/package.json',
@@ -60,36 +66,24 @@ export class FrameworkDetector {
       false // delete
     );
 
-    this.disposables.push(
-      this.fileWatcher.onDidChange((uri) => this.onPackageJsonChange(uri)),
-      this.fileWatcher.onDidCreate((uri) => this.onPackageJsonChange(uri)),
+    this.addDisposable(
+      this.fileWatcher.onDidChange((uri) => this.onPackageJsonChange(uri))
+    );
+    this.addDisposable(
+      this.fileWatcher.onDidCreate((uri) => this.onPackageJsonChange(uri))
+    );
+    this.addDisposable(
       this.fileWatcher.onDidDelete((uri) => this.onPackageJsonChange(uri))
     );
 
     // watch for setting changes
-    this.disposables.push(
+    this.addDisposable(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('mdx-preview.framework')) {
           this.invalidateAllCaches();
         }
       })
     );
-  }
-
-  // get singleton instance
-  static getInstance(): FrameworkDetector {
-    if (!FrameworkDetector.instance) {
-      FrameworkDetector.instance = new FrameworkDetector();
-    }
-    return FrameworkDetector.instance;
-  }
-
-  // static dispose for singleton cleanup
-  static dispose(): void {
-    if (FrameworkDetector.instance) {
-      FrameworkDetector.instance.dispose();
-      FrameworkDetector.instance = null;
-    }
   }
 
   // detect framework from package.json in workspace root
@@ -137,7 +131,11 @@ export class FrameworkDetector {
       debug('[FRAMEWORK] No framework detected, using generic');
       return { framework: 'generic', detected: true };
     } catch (error) {
-      warn('[FRAMEWORK] Error reading package.json:', error);
+      getErrorReporter().reportSilent(
+        error instanceof Error ? error : new Error(String(error)),
+        ErrorContext.Extension,
+        { operation: 'framework-detection', file: packageJsonPath }
+      );
       return { framework: 'generic', detected: true };
     }
   }
@@ -145,11 +143,7 @@ export class FrameworkDetector {
   // get framework for a document (respects manual override)
   getFramework(documentUri: vscode.Uri): FrameworkInfo {
     // check manual override setting first
-    const config = vscode.workspace.getConfiguration(
-      'mdx-preview',
-      documentUri
-    );
-    const manualFramework = config.get<string>('framework', 'auto');
+    const manualFramework = getConfigManager().get('framework', documentUri);
 
     if (manualFramework !== 'auto') {
       return {
@@ -195,11 +189,7 @@ export class FrameworkDetector {
 
   // check if component shims are enabled
   areShimsEnabled(documentUri: vscode.Uri): boolean {
-    const config = vscode.workspace.getConfiguration(
-      'mdx-preview',
-      documentUri
-    );
-    return config.get<boolean>('framework.componentShims', true);
+    return getConfigManager().get('framework.componentShims', documentUri);
   }
 
   // find mdx-components.tsx file (for Next.js)
@@ -240,7 +230,11 @@ export class FrameworkDetector {
       try {
         callback(info);
       } catch (error) {
-        warn('[FRAMEWORK] Subscriber error:', error);
+        getErrorReporter().reportSilent(
+          error instanceof Error ? error : new Error(String(error)),
+          ErrorContext.Extension,
+          { operation: 'framework-subscriber-notify' }
+        );
       }
     }
   }
@@ -284,13 +278,8 @@ export class FrameworkDetector {
     }
   }
 
-  // dispose resources (public for IService interface)
-  dispose(): void {
-    for (const disposable of this.disposables) {
-      disposable.dispose();
-    }
-    this.disposables = [];
-
+  // custom cleanup - clear file watcher, cache, and subscriptions
+  protected override onDispose(): void {
     if (this.fileWatcher) {
       this.fileWatcher.dispose();
       this.fileWatcher = null;
