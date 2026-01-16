@@ -5,40 +5,30 @@
 
 import * as vscode from 'vscode';
 
-import {
-  openPreview,
-  refreshPreview,
-  PreviewManager,
-} from './preview/preview-manager';
-import { selectSecurityPolicy } from './security/security';
+import { PreviewManager } from './preview/preview-manager';
 import { TrustManager } from './security/TrustManager';
 import { initWebviewAppHTMLResources } from './preview/webview-manager';
 import { initWorkspaceHandlers } from './workspace-manager';
 import { info, debug, showOutput, getOutputChannel } from './logging';
 import { StatusBarManager } from './preview/StatusBarManager';
-import {
-  PREVIEW_THEMES,
-  CODE_BLOCK_THEMES,
-  PREVIEW_THEME_LABELS,
-  CODE_BLOCK_THEME_LABELS,
-  ThemeManager,
-  type PreviewTheme,
-  type CodeBlockTheme,
-} from './themes';
-import { FrameworkDetector, type Framework } from './framework';
+import { ThemeManager } from './themes';
+import { FrameworkDetector } from './framework';
 import {
   ServiceRegistry,
   ServiceNames,
   getPreviewManager,
-  getTrustManager,
   getStatusBarManager,
-  getFrameworkDetector,
 } from './services';
 import { TailwindProcessor } from './tailwind/TailwindProcessor';
 import { ErrorReporter } from './errors';
 import { PackageJsonWatcher } from './module-fetcher/PackageJsonWatcher';
 import { clearResolverCache } from './module-fetcher/resolver-factory';
 import { ConfigManager, ConfigCache } from './config';
+import {
+  ComponentDiagnostics,
+  registerComponentCodeActions,
+} from './diagnostics';
+import { registerAllCommands } from './commands';
 
 // show one-time safe mode notification in untrusted workspaces
 async function showSafeModeNotificationIfNeeded(
@@ -181,6 +171,11 @@ export async function activate(
     ServiceNames.STATUS_BAR_MANAGER,
     () => StatusBarManager.getInstance()
   );
+  // ComponentDiagnostics for unknown component warnings
+  registry.register(
+    ServiceNames.COMPONENT_DIAGNOSTICS,
+    () => ComponentDiagnostics.getInstance()
+  );
   debug('[ACTIVATE] Services registered');
 
   // THEN: Initialize resources (now safe to call getPreviewManager())
@@ -202,95 +197,11 @@ export async function activate(
   // set up trust event handlers
   setupTrustHandlers(context);
 
-  // register commands
-  const openPreviewCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.openPreview',
-    () => {
-      debug('[CMD] openPreview command triggered');
-      openPreview();
-    }
-  );
+  // register component diagnostics code actions
+  registerComponentCodeActions(context);
 
-  const refreshPreviewCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.refreshPreview',
-    () => {
-      debug('[CMD] refreshPreview command triggered');
-      refreshPreview();
-    }
-  );
-
-  const toggleUseVscodeMarkdownStylesCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.toggleUseVscodeMarkdownStyles',
-    () => {
-      const extensionConfig = vscode.workspace.getConfiguration('mdx-preview');
-      const useVscodeMarkdownStyles = extensionConfig.get<boolean>(
-        'preview.useVscodeMarkdownStyles',
-        false
-      );
-      extensionConfig.update(
-        'preview.useVscodeMarkdownStyles',
-        !useVscodeMarkdownStyles
-      );
-    }
-  );
-
-  const toggleUseWhiteBackgroundCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.toggleUseWhiteBackground',
-    () => {
-      const extensionConfig = vscode.workspace.getConfiguration('mdx-preview');
-      const useWhiteBackground = extensionConfig.get<boolean>(
-        'preview.useWhiteBackground',
-        false
-      );
-      extensionConfig.update('preview.useWhiteBackground', !useWhiteBackground);
-    }
-  );
-
-  const toggleChangeSecuritySettings = vscode.commands.registerCommand(
-    'mdx-preview.commands.changeSecuritySettings',
-    () => {
-      selectSecurityPolicy();
-    }
-  );
-
-  // command to toggle scripts setting (only in trusted workspaces)
-  const toggleScriptsCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.toggleScripts',
-    async () => {
-      debug('[CMD] toggleScripts command triggered');
-
-      const trustState = getTrustManager().getState();
-
-      if (!trustState.workspaceTrusted) {
-        // workspace not trusted - offer to manage trust
-        const selection = await vscode.window.showWarningMessage(
-          'To enable scripts, you must first trust this workspace.',
-          'Manage Trust',
-          'Cancel'
-        );
-        if (selection === 'Manage Trust') {
-          await vscode.commands.executeCommand('workbench.trust.manage');
-        }
-        return;
-      }
-
-      // workspace is trusted - toggle scripts setting
-      const extensionConfig = vscode.workspace.getConfiguration('mdx-preview');
-      const scriptsEnabled = extensionConfig.get<boolean>(
-        'preview.enableScripts',
-        false
-      );
-
-      await extensionConfig.update(
-        'preview.enableScripts',
-        !scriptsEnabled,
-        vscode.ConfigurationTarget.Workspace
-      );
-
-      const newState = scriptsEnabled ? 'disabled' : 'enabled';
-      vscode.window.showInformationMessage(`MDX Preview scripts ${newState}.`);
-    }
-  );
+  // register all commands (extracted to commands/ directory)
+  context.subscriptions.push(...registerAllCommands());
 
   // initialize status bar manager (handles trust state & framework display)
   const statusBarManager = getStatusBarManager();
@@ -305,199 +216,6 @@ export async function activate(
     })
   );
 
-  // command to select preview theme
-  const selectPreviewThemeCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.selectPreviewTheme',
-    async () => {
-      debug('[CMD] selectPreviewTheme command triggered');
-
-      const config = vscode.workspace.getConfiguration('mdx-preview');
-      const currentTheme = config.get<PreviewTheme>(
-        'preview.previewTheme',
-        'none'
-      );
-
-      const items = PREVIEW_THEMES.map((theme) => ({
-        label: PREVIEW_THEME_LABELS[theme],
-        description: theme === currentTheme ? '(current)' : undefined,
-        theme,
-      }));
-
-      const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: 'Select preview theme',
-        matchOnDescription: true,
-      });
-
-      if (selected) {
-        await config.update(
-          'preview.previewTheme',
-          selected.theme,
-          vscode.ConfigurationTarget.Global
-        );
-        // refresh previews to apply theme
-        getPreviewManager().refreshAllPreviews();
-      }
-    }
-  );
-
-  // command to select code block theme
-  const selectCodeBlockThemeCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.selectCodeBlockTheme',
-    async () => {
-      debug('[CMD] selectCodeBlockTheme command triggered');
-
-      const config = vscode.workspace.getConfiguration('mdx-preview');
-      const currentTheme = config.get<CodeBlockTheme>(
-        'preview.codeBlockTheme',
-        'auto'
-      );
-
-      const items = CODE_BLOCK_THEMES.map((theme) => ({
-        label: CODE_BLOCK_THEME_LABELS[theme],
-        description: theme === currentTheme ? '(current)' : undefined,
-        theme,
-      }));
-
-      const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: 'Select code block theme',
-        matchOnDescription: true,
-      });
-
-      if (selected) {
-        await config.update(
-          'preview.codeBlockTheme',
-          selected.theme,
-          vscode.ConfigurationTarget.Global
-        );
-        // refresh previews to apply theme
-        getPreviewManager().refreshAllPreviews();
-      }
-    }
-  );
-
-  // zoom commands
-  const zoomInCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.zoomIn',
-    async () => {
-      debug('[CMD] zoomIn command triggered');
-      const preview = getPreviewManager().getCurrentPreview();
-      if (preview?.webviewHandle) {
-        await preview.webviewHandle.zoomIn();
-      }
-    }
-  );
-
-  const zoomOutCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.zoomOut',
-    async () => {
-      debug('[CMD] zoomOut command triggered');
-      const preview = getPreviewManager().getCurrentPreview();
-      if (preview?.webviewHandle) {
-        await preview.webviewHandle.zoomOut();
-      }
-    }
-  );
-
-  const resetZoomCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.resetZoom',
-    async () => {
-      debug('[CMD] resetZoom command triggered');
-      const preview = getPreviewManager().getCurrentPreview();
-      if (preview?.webviewHandle) {
-        await preview.webviewHandle.resetZoom();
-      }
-    }
-  );
-
-  // command to select framework
-  const selectFrameworkCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.selectFramework',
-    async () => {
-      debug('[CMD] selectFramework command triggered');
-
-      const config = vscode.workspace.getConfiguration('mdx-preview');
-      const currentSetting = config.get<string>('framework', 'auto');
-      const frameworkDetector = getFrameworkDetector();
-
-      // get detected framework for display
-      const editor = vscode.window.activeTextEditor;
-      let detectedFramework: Framework = 'generic';
-      if (editor) {
-        const info = frameworkDetector.getFramework(editor.document.uri);
-        if (info.detected) {
-          detectedFramework = info.framework;
-        }
-      }
-
-      const frameworks: Array<{
-        label: string;
-        description?: string;
-        value: string;
-      }> = [
-        {
-          label: 'Auto-detect',
-          description:
-            currentSetting === 'auto'
-              ? `(current - detected: ${frameworkDetector.getFrameworkDisplayName(detectedFramework)})`
-              : `(detected: ${frameworkDetector.getFrameworkDisplayName(detectedFramework)})`,
-          value: 'auto',
-        },
-        {
-          label: 'Generic',
-          description: currentSetting === 'generic' ? '(current)' : undefined,
-          value: 'generic',
-        },
-        {
-          label: 'Docusaurus',
-          description:
-            currentSetting === 'docusaurus' ? '(current)' : undefined,
-          value: 'docusaurus',
-        },
-        {
-          label: 'Next.js',
-          description: currentSetting === 'nextjs' ? '(current)' : undefined,
-          value: 'nextjs',
-        },
-        {
-          label: 'Astro Starlight',
-          description:
-            currentSetting === 'astro-starlight' ? '(current)' : undefined,
-          value: 'astro-starlight',
-        },
-      ];
-
-      const selected = await vscode.window.showQuickPick(frameworks, {
-        placeHolder: 'Select MDX framework',
-        matchOnDescription: true,
-      });
-
-      if (selected) {
-        await config.update(
-          'framework',
-          selected.value,
-          vscode.ConfigurationTarget.Workspace
-        );
-
-        // refresh previews to apply framework changes
-        getPreviewManager().refreshAllPreviews();
-
-        vscode.window.showInformationMessage(
-          `MDX framework set to ${selected.label}.`
-        );
-      }
-    }
-  );
-
-  // command to manually refresh module cache (clears resolver cache)
-  const refreshModuleCacheCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.refreshModuleCache',
-    () => {
-      debug('[CMD] refreshModuleCache command triggered');
-      clearResolverCache();
-      vscode.window.showInformationMessage('MDX Preview module cache cleared.');
-    }
-  );
-
   // start package.json watcher to auto-invalidate resolver cache
   const packageJsonWatcher = new PackageJsonWatcher();
   packageJsonWatcher.start(() => {
@@ -505,22 +223,6 @@ export async function activate(
     debug('[WATCHER] Resolver cache cleared due to package file change');
   });
   context.subscriptions.push(packageJsonWatcher);
-
-  context.subscriptions.push(
-    openPreviewCommand,
-    refreshPreviewCommand,
-    toggleUseVscodeMarkdownStylesCommand,
-    toggleUseWhiteBackgroundCommand,
-    toggleChangeSecuritySettings,
-    toggleScriptsCommand,
-    selectPreviewThemeCommand,
-    selectCodeBlockThemeCommand,
-    zoomInCommand,
-    zoomOutCommand,
-    resetZoomCommand,
-    selectFrameworkCommand,
-    refreshModuleCacheCommand
-  );
 
   debug('[ACTIVATE] Extension activation complete');
 }
