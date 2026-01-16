@@ -9,6 +9,8 @@ export {
   type ReportOptions,
 } from './ErrorReporter';
 
+export { ErrorCode } from './error-codes';
+
 // base error class w/ error code for programmatic handling
 export class ExtensionError extends Error {
   constructor(
@@ -81,5 +83,36 @@ export class PathAccessDeniedError extends SecurityError {
       fsPath
     );
     this.fsPath = fsPath;
+  }
+}
+
+// config errors
+export type ConfigErrorCode = 'CONFIG_PARSE_ERROR' | 'CONFIG_VALIDATION_ERROR';
+
+export class ConfigError extends ExtensionError {
+  constructor(
+    message: string,
+    code: ConfigErrorCode,
+    public readonly configPath?: string,
+    cause?: Error
+  ) {
+    super(message, code, cause);
+  }
+}
+
+// plugin errors
+export type PluginErrorCode =
+  | 'PLUGIN_NOT_FOUND'
+  | 'PLUGIN_LOAD_ERROR'
+  | 'PLUGIN_INVALID_EXPORT';
+
+export class PluginError extends ExtensionError {
+  constructor(
+    message: string,
+    code: PluginErrorCode,
+    public readonly pluginName: string,
+    cause?: Error
+  ) {
+    super(message, code, cause);
   }
 }

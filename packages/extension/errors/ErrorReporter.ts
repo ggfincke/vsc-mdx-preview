@@ -10,6 +10,7 @@ import {
   debug as logDebug,
 } from '../logging';
 import { ERROR_DEDUPE_WINDOW_DEFAULT_MS } from '../constants';
+import { SingletonService } from '../services/SingletonService';
 
 // error severity determines handling behavior
 export enum ErrorSeverity {
@@ -79,18 +80,15 @@ export interface ReportOptions {
 // - configurable user notifications
 // - webview error display integration
 // - duplicate error suppression
-export class ErrorReporter {
-  private static instance: ErrorReporter | undefined;
+export class ErrorReporter extends SingletonService<ErrorReporter> {
+  protected static override instance: ErrorReporter | undefined;
+  protected readonly logTag = 'ERROR-REPORTER';
+
   private recentErrors = new Map<string, number>();
   private readonly DEFAULT_DEDUPE_WINDOW = ERROR_DEDUPE_WINDOW_DEFAULT_MS;
 
-  private constructor() {}
-
-  static getInstance(): ErrorReporter {
-    if (!ErrorReporter.instance) {
-      ErrorReporter.instance = new ErrorReporter();
-    }
-    return ErrorReporter.instance;
+  protected constructor() {
+    super();
   }
 
   // * main error reporting method
@@ -157,6 +155,65 @@ export class ErrorReporter {
       severity: ErrorSeverity.Error,
       showNotification: true,
     });
+  }
+
+  // convenience method for config errors - logs & shows warning notification
+  reportConfigError(
+    error: Error | ExtensionError | unknown,
+    configPath?: string,
+    metadata?: Record<string, unknown>
+  ): void {
+    this.report(error, {
+      context: ErrorContext.Config,
+      severity: ErrorSeverity.Warning,
+      showNotification: true,
+      metadata: { configPath, ...metadata },
+    });
+  }
+
+  // convenience method for plugin errors - logs but does NOT show notification
+  // plugin errors are expected in Safe Mode and should not interrupt user
+  reportPluginError(
+    error: Error | ExtensionError | unknown,
+    pluginName: string
+  ): void {
+    this.report(error, {
+      context: ErrorContext.Plugin,
+      severity: ErrorSeverity.Warning,
+      showNotification: false,
+      metadata: { pluginName },
+    });
+  }
+
+  // convenience method for interactive errors w/ action buttons
+  // logs the error and shows a warning with clickable actions
+  async reportWithActions(
+    error: Error | ExtensionError | unknown,
+    context: ErrorContext,
+    actions: { label: string; action: () => void | Promise<void> }[]
+  ): Promise<void> {
+    const normalizedError = this.normalizeError(error);
+    const message =
+      normalizedError instanceof ExtensionError
+        ? formatUserError(normalizedError)
+        : normalizedError.message;
+
+    // log the error
+    this.logError(normalizedError, ErrorSeverity.Warning, { context });
+
+    // show warning with action buttons
+    const actionLabels = actions.map((a) => a.label);
+    const prefix = this.getContextPrefix(context);
+    const selection = await vscode.window.showWarningMessage(
+      `${prefix}: ${message}`,
+      ...actionLabels
+    );
+
+    // execute selected action
+    const selectedAction = actions.find((a) => a.label === selection);
+    if (selectedAction) {
+      await selectedAction.action();
+    }
   }
 
   // normalize any error type to ExtensionError or Error
@@ -344,17 +401,8 @@ export class ErrorReporter {
     }
   }
 
-  // dispose instance resources
-  dispose(): void {
+  // custom cleanup - clear recent errors map
+  protected override onDispose(): void {
     this.recentErrors.clear();
-    logDebug('[ERROR-REPORTER] ErrorReporter disposed');
-  }
-
-  // dispose singleton for cleanup
-  static dispose(): void {
-    if (ErrorReporter.instance) {
-      ErrorReporter.instance.dispose();
-      ErrorReporter.instance = undefined;
-    }
   }
 }
