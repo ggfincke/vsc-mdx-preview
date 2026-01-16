@@ -18,6 +18,16 @@ const USER_MESSAGES: Record<string, string> = {
   PATH_TRAVERSAL: "Access denied: '{attemptedPath}' is outside workspace",
   TRUST_VIOLATION:
     'Operation blocked - workspace not trusted or scripts disabled',
+  // ConfigError uses configPath
+  CONFIG_PARSE_ERROR: "Failed to parse config file '{configPath}'",
+  CONFIG_VALIDATION_ERROR: "Invalid configuration in '{configPath}'",
+  // PluginError uses pluginName
+  PLUGIN_NOT_FOUND: "Cannot find plugin '{pluginName}'. Ensure it's installed.",
+  PLUGIN_LOAD_ERROR: "Failed to load plugin '{pluginName}'",
+  PLUGIN_INVALID_EXPORT:
+    "Plugin '{pluginName}' does not export a valid function",
+  // Tailwind errors
+  TAILWIND_COMPILATION_ERROR: 'Tailwind CSS compilation failed',
 };
 
 // format error for user display (replaces placeholders w/ error context)
