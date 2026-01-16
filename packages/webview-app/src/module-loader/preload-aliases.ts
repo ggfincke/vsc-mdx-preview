@@ -37,6 +37,16 @@ export const PRELOADED_IDS = {
   // Next.js shims
   nextjsImage: 'npm://@mdx-preview/shims-nextjs/Image',
   nextjsLink: 'npm://@mdx-preview/shims-nextjs/Link',
+  // Generic shims (built-in, no framework dependency)
+  genericCallout: 'npm://@mdx-preview/shims-generic/Callout',
+  genericAlert: 'npm://@mdx-preview/shims-generic/Alert',
+  genericAdmonition: 'npm://@mdx-preview/shims-generic/Admonition',
+  genericCollapsible: 'npm://@mdx-preview/shims-generic/Collapsible',
+  genericAccordion: 'npm://@mdx-preview/shims-generic/Accordion',
+  genericTabs: 'npm://@mdx-preview/shims-generic/Tabs',
+  genericTabItem: 'npm://@mdx-preview/shims-generic/TabItem',
+  genericTab: 'npm://@mdx-preview/shims-generic/Tab',
+  genericCodeGroup: 'npm://@mdx-preview/shims-generic/CodeGroup',
 } as const;
 
 // alias mappings: request string -> canonical preloaded ID
@@ -85,6 +95,23 @@ export const PRELOAD_ALIASES: Record<string, string> = {
   'next/link': PRELOADED_IDS.nextjsLink,
   '@mdx-preview/shims/nextjs/Image': PRELOADED_IDS.nextjsImage,
   '@mdx-preview/shims/nextjs/Link': PRELOADED_IDS.nextjsLink,
+  // Generic shim aliases (direct component names for Trusted Mode)
+  Callout: PRELOADED_IDS.genericCallout,
+  Alert: PRELOADED_IDS.genericAlert,
+  Admonition: PRELOADED_IDS.genericAdmonition,
+  Collapsible: PRELOADED_IDS.genericCollapsible,
+  Accordion: PRELOADED_IDS.genericAccordion,
+  // Note: Tabs/TabItem/Tab may conflict with framework shims, use explicit paths
+  '@mdx-preview/shims/generic/Callout': PRELOADED_IDS.genericCallout,
+  '@mdx-preview/shims/generic/Alert': PRELOADED_IDS.genericAlert,
+  '@mdx-preview/shims/generic/Admonition': PRELOADED_IDS.genericAdmonition,
+  '@mdx-preview/shims/generic/Collapsible': PRELOADED_IDS.genericCollapsible,
+  '@mdx-preview/shims/generic/Accordion': PRELOADED_IDS.genericAccordion,
+  '@mdx-preview/shims/generic/Tabs': PRELOADED_IDS.genericTabs,
+  '@mdx-preview/shims/generic/TabItem': PRELOADED_IDS.genericTabItem,
+  '@mdx-preview/shims/generic/Tab': PRELOADED_IDS.genericTab,
+  '@mdx-preview/shims/generic/CodeGroup': PRELOADED_IDS.genericCodeGroup,
+  CodeGroup: PRELOADED_IDS.genericCodeGroup,
 };
 
 // get list of all IDs that should be preserved during module reset
@@ -109,5 +136,12 @@ export function getPreservedIds(): string[] {
     // Next.js shims
     'next/image',
     'next/link',
+    // Generic shims (direct component names)
+    'Callout',
+    'Alert',
+    'Admonition',
+    'Collapsible',
+    'Accordion',
+    'CodeGroup',
   ];
 }

@@ -13,6 +13,7 @@ import { PRELOADED_IDS } from './preload-aliases';
 import * as DocusaurusShims from '../components/shims/docusaurus';
 import * as StarlightShims from '../components/shims/starlight';
 import * as NextjsShims from '../components/shims/nextjs';
+import * as GenericShims from '../components/shims/generic';
 
 export interface LayoutOptions {
   forceLightTheme?: boolean;
@@ -76,6 +77,9 @@ export function initPreloadedModules(vscodeMarkdownLayout: unknown): void {
   initDocusaurusShims();
   initStarlightShims();
   initNextjsShims();
+
+  // Initialize generic shims (built-in, no framework dependency)
+  initGenericShims();
 }
 
 // initialize Docusaurus component shims
@@ -167,4 +171,56 @@ function initNextjsShims(): void {
   registry.preload('next/image', imageModule);
   registry.preload(PRELOADED_IDS.nextjsLink, linkModule);
   registry.preload('next/link', linkModule);
+}
+
+// initialize generic component shims (built-in, no framework dependency)
+// these provide common component patterns that work in any MDX context
+function initGenericShims(): void {
+  // Callout variants (Callout, Alert, Admonition all use the same base component)
+  const calloutModule = createComponentModule(GenericShims.Callout, 'Callout');
+  const alertModule = createComponentModule(GenericShims.Alert, 'Alert');
+  const admonitionModule = createComponentModule(
+    GenericShims.Admonition,
+    'Admonition'
+  );
+
+  registry.preload(PRELOADED_IDS.genericCallout, calloutModule);
+  registry.preload('Callout', calloutModule);
+  registry.preload(PRELOADED_IDS.genericAlert, alertModule);
+  registry.preload('Alert', alertModule);
+  registry.preload(PRELOADED_IDS.genericAdmonition, admonitionModule);
+  registry.preload('Admonition', admonitionModule);
+
+  // Collapsible variants (Collapsible, Accordion)
+  const collapsibleModule = createComponentModule(
+    GenericShims.Collapsible,
+    'Collapsible'
+  );
+  const accordionModule = createComponentModule(
+    GenericShims.Accordion,
+    'Accordion'
+  );
+
+  registry.preload(PRELOADED_IDS.genericCollapsible, collapsibleModule);
+  registry.preload('Collapsible', collapsibleModule);
+  registry.preload(PRELOADED_IDS.genericAccordion, accordionModule);
+  registry.preload('Accordion', accordionModule);
+
+  // Tab components
+  const tabsModule = createComponentModule(GenericShims.Tabs, 'Tabs');
+  const tabItemModule = createComponentModule(GenericShims.TabItem, 'TabItem');
+  const tabModule = createComponentModule(GenericShims.Tab, 'Tab');
+
+  registry.preload(PRELOADED_IDS.genericTabs, tabsModule);
+  registry.preload(PRELOADED_IDS.genericTabItem, tabItemModule);
+  registry.preload(PRELOADED_IDS.genericTab, tabModule);
+
+  // CodeGroup
+  const codeGroupModule = createComponentModule(
+    GenericShims.CodeGroup,
+    'CodeGroup'
+  );
+
+  registry.preload(PRELOADED_IDS.genericCodeGroup, codeGroupModule);
+  registry.preload('CodeGroup', codeGroupModule);
 }

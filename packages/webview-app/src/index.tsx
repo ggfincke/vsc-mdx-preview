@@ -11,6 +11,8 @@ import App from './App';
 import './index.css';
 // KaTeX math rendering styles
 import 'katex/dist/katex.min.css';
+// Safe Mode component styles (Callout, Collapsible, Tabs transforms)
+import './styles/safe-components.css';
 
 debug('[WEBVIEW] index.tsx loaded');
 
