@@ -4,20 +4,23 @@
 import * as vscode from 'vscode';
 import { debug } from '../../logging';
 import {
-  isLocalImport,
-  resolveImportSync,
-} from '../../module-fetcher/resolve-import';
-import type { IWatcher } from './types';
+  getUnifiedResolver,
+  type ResolutionContext,
+} from '../../module-fetcher/UnifiedResolver';
+import { BaseWatcher } from './BaseWatcher';
 
 // watch local file dependencies (imports from MDX files) for changes
 // only watches relative imports, skips node_modules & external URLs
-export class DependencyWatcher implements IWatcher {
+export class DependencyWatcher extends BaseWatcher {
+  protected readonly logTag = 'DEP-WATCHER';
   private watchers = new Map<string, vscode.FileSystemWatcher>();
   private documentDir: string = '';
   private onChangeCallback: (fsPath: string) => void;
-  private _isActive = false;
+  private resolver = getUnifiedResolver();
+  private resolutionContext: ResolutionContext | null = null;
 
   constructor(onChange: (fsPath: string) => void) {
+    super();
     this.onChangeCallback = onChange;
   }
 
@@ -26,20 +29,35 @@ export class DependencyWatcher implements IWatcher {
     this.documentDir = dir;
   }
 
+  // set resolution context for enhanced resolution capabilities
+  setResolutionContext(context: ResolutionContext): void {
+    this.resolutionContext = context;
+  }
+
   // update watched dependencies from import list (adds watchers for new dependencies & removes watchers for old ones)
   updateDependencies(imports: string[]): void {
     const newPaths = new Set<string>();
 
+    // Build resolution context - use stored context or fallback to simple baseDir
+    const context: ResolutionContext = this.resolutionContext ?? {
+      baseDir: this.documentDir,
+    };
+
     for (const imp of imports) {
-      // Use shared utility for import classification (handles null, URLs, npm://)
-      if (!isLocalImport(imp) || !this.documentDir) {
+      // Use UnifiedResolver's shouldResolve (handles URLs, npm://, empty)
+      if (!this.resolver.shouldResolve(imp)) {
         continue;
       }
 
-      // Use shared utility for import resolution
-      const resolved = resolveImportSync(this.documentDir, imp);
-      if (resolved) {
-        newPaths.add(resolved);
+      // Only watch local imports (relative paths)
+      if (!this.resolver.isRelativeImport(imp)) {
+        continue;
+      }
+
+      // Use UnifiedResolver for resolution
+      const result = this.resolver.resolveSync(imp, context, 'dependency');
+      if (result && !result.isBuiltInShim) {
+        newPaths.add(result.fsPath);
       }
     }
 
@@ -79,35 +97,19 @@ export class DependencyWatcher implements IWatcher {
 
   // clear all dependencies & dispose watchers
   clear(): void {
-    for (const watcher of this.watchers.values()) {
-      watcher.dispose();
-    }
-    this.watchers.clear();
+    this.disposeWatcherMap(this.watchers);
   }
 
-  // IWatcher interface implementation
-
-  async start(): Promise<void> {
-    this._isActive = true;
-    debug('[DEP-WATCHER] Started');
+  protected onStart(): void {
+    // no initial setup - watchers created dynamically via updateDependencies()
   }
 
-  stop(): void {
-    this._isActive = false;
+  protected onStop(): void {
     this.clear();
-    debug('[DEP-WATCHER] Stopped');
   }
 
-  isActive(): boolean {
-    return this._isActive;
-  }
-
-  isReady(): boolean {
-    // ready when active & document directory is set
-    return this._isActive && this.documentDir !== '';
-  }
-
-  dispose(): void {
-    this.stop();
+  protected checkReadiness(): boolean {
+    // Either have explicit context or documentDir fallback
+    return this.resolutionContext !== null || this.documentDir !== '';
   }
 }

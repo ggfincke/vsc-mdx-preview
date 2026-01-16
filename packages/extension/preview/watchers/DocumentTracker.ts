@@ -2,19 +2,26 @@
 // track document versions & stale state for preview updates
 
 import type { WebviewRPC } from '@mdx-preview/shared-types';
-import type { IWatcher } from './types';
+import { BaseWatcher } from './BaseWatcher';
 
 // webview handle w/ setStale method
 type StaleNotifier = Pick<WebviewRPC, 'setStale'>;
 
 // track document version & stale state
-// implements IWatcher for consistency, though start/stop are no-ops
+// extends BaseWatcher for consistency, though start/stop are no-ops
 // since this is a state tracker rather than a file watcher
-export class DocumentTracker implements IWatcher {
-  private _isActive = true;
+export class DocumentTracker extends BaseWatcher {
+  protected readonly logTag = 'DOC-TRACKER';
+
   private lastRenderedVersion = -1;
   private _isStale = false;
   private notifier?: StaleNotifier;
+
+  constructor() {
+    super();
+    // state trackers start active by default
+    this._isActive = true;
+  }
 
   // set notifier for stale state changes (webview handle)
   setNotifier(notifier: StaleNotifier): void {
@@ -53,28 +60,12 @@ export class DocumentTracker implements IWatcher {
     this.lastRenderedVersion = -1;
   }
 
-  // IWatcher interface implementation
-  // (no-ops since this is a state tracker, not a file watcher)
+  // BaseWatcher abstract methods (no-ops for state tracker)
+  protected onStart(): void {}
+  protected onStop(): void {}
 
-  async start(): Promise<void> {
-    this._isActive = true;
-  }
-
-  stop(): void {
-    this._isActive = false;
-  }
-
-  isActive(): boolean {
-    return this._isActive;
-  }
-
-  isReady(): boolean {
-    // always ready once active (state tracker, no async initialization)
-    return this._isActive;
-  }
-
-  dispose(): void {
-    this.stop();
+  // custom cleanup - clear notifier
+  protected override onDispose(): void {
     this.notifier = undefined;
   }
 }

@@ -4,17 +4,19 @@
 import * as vscode from 'vscode';
 import { debug } from '../../logging';
 import { onConfigChange } from '../config';
-import type { IWatcher } from './types';
+import { BaseWatcher } from './BaseWatcher';
 
 // watch for changes to the MDX preview config file & trigger callback when modified
-export class ConfigWatcher implements IWatcher {
+export class ConfigWatcher extends BaseWatcher {
+  protected readonly logTag = 'CONFIG-WATCHER';
   private configChangeDisposable?: vscode.Disposable;
-  private _isActive = false;
 
   constructor(
     private configPath: string,
     private onConfigChanged: () => void
-  ) {}
+  ) {
+    super();
+  }
 
   // update the config path being watched (automatically restarts watching if currently active)
   setConfigPath(configPath: string): void {
@@ -28,47 +30,22 @@ export class ConfigWatcher implements IWatcher {
     }
   }
 
-  // IWatcher interface implementation
+  protected canStart(): boolean {
+    return !!this.configPath;
+  }
 
-  async start(): Promise<void> {
-    if (this._isActive || !this.configPath) {
-      return;
-    }
-
-    this._isActive = true;
-
+  protected onStart(): void {
     this.configChangeDisposable = onConfigChange((changedPath) => {
       if (changedPath === this.configPath) {
         debug('[CONFIG-WATCHER] Config file changed, triggering reload...');
         this.onConfigChanged();
       }
     });
-
-    debug(`[CONFIG-WATCHER] Started watching: ${this.configPath}`);
+    debug(`[CONFIG-WATCHER] Watching: ${this.configPath}`);
   }
 
-  stop(): void {
-    if (!this._isActive) {
-      return;
-    }
-
-    this._isActive = false;
+  protected onStop(): void {
     this.configChangeDisposable?.dispose();
     this.configChangeDisposable = undefined;
-
-    debug('[CONFIG-WATCHER] Stopped');
-  }
-
-  isActive(): boolean {
-    return this._isActive;
-  }
-
-  isReady(): boolean {
-    // ready when active (synchronous watcher)
-    return this._isActive;
-  }
-
-  dispose(): void {
-    this.stop();
   }
 }

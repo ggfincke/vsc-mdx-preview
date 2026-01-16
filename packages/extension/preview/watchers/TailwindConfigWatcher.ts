@@ -1,27 +1,22 @@
 // packages/extension/preview/watchers/TailwindConfigWatcher.ts
-// Watch Tailwind config & entry CSS files for changes
-//
-// Error Handling Strategy:
-// - Try/catch around all watcher callbacks to prevent silent failures
-// - Debug logging for watcher lifecycle events
-// - Note: VS Code's FileSystemWatcher does not expose an error event;
-//   errors in glob patterns or filesystem access are handled internally by VS Code
+// watch Tailwind config & entry CSS files for changes
 
 import debounce from 'lodash.debounce';
 import * as vscode from 'vscode';
 import { debug } from '../../logging';
 import { CONFIG_WATCHER_DEBOUNCE_MS } from '../../tailwind/constants';
-import type { IWatcher } from './types';
+import { BaseWatcher } from './BaseWatcher';
 
-export class TailwindConfigWatcher implements IWatcher {
+export class TailwindConfigWatcher extends BaseWatcher {
+  protected readonly logTag = 'TAILWIND-WATCHER';
   private watchers: vscode.FileSystemWatcher[] = [];
-  private _isActive = false;
   private _debouncedOnChange: ReturnType<typeof debounce>;
 
   constructor(
     private watchFiles: string[],
     onChange: () => void
   ) {
+    super();
     this._debouncedOnChange = debounce(onChange, CONFIG_WATCHER_DEBOUNCE_MS);
   }
 
@@ -36,13 +31,11 @@ export class TailwindConfigWatcher implements IWatcher {
     }
   }
 
-  async start(): Promise<void> {
-    if (this._isActive || this.watchFiles.length === 0) {
-      return;
-    }
+  protected canStart(): boolean {
+    return this.watchFiles.length > 0;
+  }
 
-    this._isActive = true;
-
+  protected onStart(): void {
     for (const file of this.watchFiles) {
       debug(`[TAILWIND-WATCHER] Creating watcher for: ${file}`);
       const watcher = vscode.workspace.createFileSystemWatcher(file);
@@ -72,36 +65,11 @@ export class TailwindConfigWatcher implements IWatcher {
       });
       this.watchers.push(watcher);
     }
-
-    debug(
-      `[TAILWIND-WATCHER] Started watching ${this.watchFiles.length} file(s)`
-    );
+    debug(`[TAILWIND-WATCHER] Watching ${this.watchFiles.length} file(s)`);
   }
 
-  stop(): void {
-    if (!this._isActive) {
-      return;
-    }
-
-    this._isActive = false;
+  protected onStop(): void {
     this._debouncedOnChange.cancel();
-    for (const watcher of this.watchers) {
-      watcher.dispose();
-    }
-    this.watchers = [];
-    debug('[TAILWIND-WATCHER] Stopped');
-  }
-
-  isActive(): boolean {
-    return this._isActive;
-  }
-
-  isReady(): boolean {
-    // ready when active (synchronous watcher)
-    return this._isActive;
-  }
-
-  dispose(): void {
-    this.stop();
+    this.disposeWatcherArray(this.watchers);
   }
 }

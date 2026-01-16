@@ -6,24 +6,26 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { debug } from '../../logging';
 import type { WebviewRPC } from '@mdx-preview/shared-types';
-import type { IWatcher } from './types';
+import { BaseWatcher } from './BaseWatcher';
 
 // webview handle w/ setCustomCss method
 type CssNotifier = Pick<WebviewRPC, 'setCustomCss'>;
 
 // watch custom CSS file & send updates to webview
-export class CustomCssWatcher implements IWatcher {
+export class CustomCssWatcher extends BaseWatcher {
+  protected readonly logTag = 'CSS';
   private watcher?: vscode.FileSystemWatcher;
   private disposables: vscode.Disposable[] = [];
   private resolvedPath: string | null = null;
   private notifier?: CssNotifier;
-  private _isActive = false;
 
   constructor(
     private cssPath: string,
     private workspaceFolders: readonly vscode.WorkspaceFolder[] | undefined,
     private documentDirectory: string | null
-  ) {}
+  ) {
+    super();
+  }
 
   // set notifier for CSS updates (webview handle)
   setNotifier(notifier: CssNotifier): void {
@@ -34,18 +36,18 @@ export class CustomCssWatcher implements IWatcher {
     }
   }
 
-  // IWatcher interface: start watching the CSS file
-  async start(): Promise<void> {
-    if (!this.cssPath || this._isActive) {
-      return;
+  protected canStart(): boolean {
+    if (!this.cssPath) {
+      return false;
     }
-
     this.resolvedPath = this.resolvePath(this.cssPath);
+    return this.resolvedPath !== null;
+  }
+
+  protected async onStart(): Promise<void> {
     if (!this.resolvedPath) {
       return;
     }
-
-    this._isActive = true;
 
     // initial load
     await this.loadAndSendCss(this.resolvedPath);
@@ -73,33 +75,17 @@ export class CustomCssWatcher implements IWatcher {
       this.watcher
     );
 
-    debug('[CSS] Started watching custom CSS file');
+    debug('[CSS] Watching custom CSS file');
   }
 
-  // IWatcher interface: stop watching without disposing
-  stop(): void {
-    if (!this._isActive) {
-      return;
-    }
-    this._isActive = false;
-    for (const disposable of this.disposables) {
-      disposable.dispose();
-    }
-    this.disposables = [];
+  protected onStop(): void {
+    this.disposeAll(this.disposables);
     this.watcher = undefined;
     this.resolvedPath = null;
-    debug('[CSS] Stopped watching custom CSS file');
   }
 
-  // IWatcher interface: check if watching
-  isActive(): boolean {
-    return this._isActive;
-  }
-
-  // IWatcher interface: check if ready
-  isReady(): boolean {
-    // ready when active & path is resolved
-    return this._isActive && this.resolvedPath !== null;
+  protected checkReadiness(): boolean {
+    return this.resolvedPath !== null;
   }
 
   // Alias for backward compatibility
@@ -149,10 +135,5 @@ export class CustomCssWatcher implements IWatcher {
     this.workspaceFolders = workspaceFolders;
     this.documentDirectory = documentDirectory;
     this.watch();
-  }
-
-  // IWatcher interface: dispose all resources
-  dispose(): void {
-    this.stop();
   }
 }
