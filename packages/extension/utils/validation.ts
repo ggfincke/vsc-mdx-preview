@@ -127,3 +127,122 @@ export function validateOptionalNumber(
 
   return validateNumber(value, name, opts);
 }
+
+// validates value is an array, optionally validating each element
+// elementValidator receives each element and its index, returns validated value or undefined
+export function validateArray<T>(
+  value: unknown,
+  name: string,
+  elementValidator?: (el: unknown, index: number) => T | undefined,
+  opts?: ValidationOptions
+): T[] | undefined {
+  const log = opts?.log ?? logWarn;
+  const ctx = opts?.context ? `${opts.context}: ` : '';
+
+  if (!Array.isArray(value)) {
+    log(`${ctx}${name} must be an array`, value);
+    return undefined;
+  }
+
+  if (!elementValidator) {
+    return value as T[];
+  }
+
+  const result: T[] = [];
+  for (let i = 0; i < value.length; i++) {
+    const validated = elementValidator(value[i], i);
+    if (validated === undefined) {
+      log(`${ctx}${name}[${i}] is invalid`);
+      return undefined;
+    }
+    result.push(validated);
+  }
+
+  return result;
+}
+
+// validates value is a plain object (not null, not array)
+export function validateObject(
+  value: unknown,
+  name: string,
+  opts?: ValidationOptions
+): Record<string, unknown> | undefined {
+  const log = opts?.log ?? logWarn;
+  const ctx = opts?.context ? `${opts.context}: ` : '';
+
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    log(`${ctx}${name} must be an object`, value);
+    return undefined;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+// validates value is a Record<string, T> with value type checking
+// valueValidator receives each value and its key, returns validated value or undefined
+export function validateRecord<T>(
+  value: unknown,
+  name: string,
+  valueValidator: (v: unknown, key: string) => T | undefined,
+  opts?: ValidationOptions
+): Record<string, T> | undefined {
+  const obj = validateObject(value, name, opts);
+  if (!obj) return undefined;
+
+  const log = opts?.log ?? logWarn;
+  const ctx = opts?.context ? `${opts.context}: ` : '';
+  const result: Record<string, T> = {};
+
+  for (const [key, val] of Object.entries(obj)) {
+    const validated = valueValidator(val, key);
+    if (validated === undefined) {
+      log(`${ctx}${name}.${key} is invalid`);
+      return undefined;
+    }
+    result[key] = validated;
+  }
+
+  return result;
+}
+
+// validates value is one of allowed enum string values
+export function validateEnumValue<T extends string>(
+  value: unknown,
+  name: string,
+  allowedValues: readonly T[],
+  opts?: ValidationOptions
+): T | undefined {
+  const log = opts?.log ?? logWarn;
+  const ctx = opts?.context ? `${opts.context}: ` : '';
+
+  if (typeof value !== 'string') {
+    log(`${ctx}${name} must be a string`, value);
+    return undefined;
+  }
+
+  if (!allowedValues.includes(value as T)) {
+    log(`${ctx}${name} must be one of: ${allowedValues.join(', ')}`, value);
+    return undefined;
+  }
+
+  return value as T;
+}
+
+// validates value is a function
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+export function validateFunction(
+  value: unknown,
+  name: string,
+  opts?: ValidationOptions
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+): Function | undefined {
+  const log = opts?.log ?? logWarn;
+  const ctx = opts?.context ? `${opts.context}: ` : '';
+
+  if (typeof value !== 'function') {
+    log(`${ctx}${name} must be a function`, typeof value);
+    return undefined;
+  }
+
+  return value;
+}
