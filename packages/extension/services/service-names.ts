@@ -17,6 +17,7 @@ export const ServiceNames = {
 
   // services w/ dependencies (disposed first)
   STATUS_BAR_MANAGER: 'StatusBarManager',
+  COMPONENT_DIAGNOSTICS: 'ComponentDiagnostics',
 } as const;
 
 export type ServiceName = (typeof ServiceNames)[keyof typeof ServiceNames];
