@@ -1,0 +1,74 @@
+// packages/extension/services/SingletonService.ts
+// Abstract base class for singleton services with automatic lifecycle management
+
+import * as vscode from 'vscode';
+import { debug } from '../logging';
+import type { IService } from './types';
+
+// abstract base class for singleton services w/ automatic lifecycle management
+export abstract class SingletonService<T extends SingletonService<T>>
+  implements IService
+{
+  // singleton instance (subclasses MUST override w/ their own static property)
+  protected static instance: SingletonService<never> | undefined;
+
+  // disposables managed by this service - cleaned up automatically on dispose
+  protected disposables: vscode.Disposable[] = [];
+
+  // unique identifier for debug logging (e.g., 'CONFIG-MANAGER', 'TRUST-MANAGER')
+  protected abstract readonly logTag: string;
+
+  protected constructor() {
+    debug(`[${this.logTag}] Initialized`);
+  }
+
+  // get singleton instance (creates new instance if none exists)
+  static getInstance<S extends SingletonService<S>>(this: {
+    new (): S;
+    instance?: S;
+  }): S {
+    if (!this.instance) {
+      this.instance = new this();
+    }
+    return this.instance;
+  }
+
+  // dispose all managed resources & clear singleton instance
+  dispose(): void {
+    this.onDispose();
+
+    for (const d of this.disposables) {
+      d.dispose();
+    }
+    this.disposables = [];
+
+    // Clear static instance on the actual class (not base class)
+    const ctor = this.constructor as typeof SingletonService;
+    ctor.instance = undefined;
+
+    debug(`[${this.logTag}] Disposed`);
+  }
+
+  // static dispose for direct singleton cleanup without instance reference
+  static dispose(): void {
+    if (this.instance) {
+      this.instance.dispose();
+      // instance is cleared by instance.dispose()
+    }
+  }
+
+  // reset singleton instance for testing
+  static reset(): void {
+    this.dispose();
+  }
+
+  // override this for custom cleanup logic (called before disposables are disposed)
+  protected onDispose(): void {
+    // Default: no-op
+  }
+
+  // add a disposable to the managed collection (auto-disposed on service disposal)
+  protected addDisposable(disposable: vscode.Disposable): void {
+    this.disposables.push(disposable);
+  }
+}
