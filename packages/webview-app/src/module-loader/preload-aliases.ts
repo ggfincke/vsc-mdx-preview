@@ -1,6 +1,15 @@
 // packages/webview-app/src/module-loader/preload-aliases.ts
 // single source of truth for preloaded module IDs & aliases
 
+// Import shared component registry for validation
+// IMPORTANT: The components defined below must stay in sync with the shared registry
+// Run the parity tests to verify alignment: npm run test -- preload-parity
+import {
+  GENERIC_COMPONENTS,
+  FRAMEWORK_COMPONENTS,
+  SHIM_PREFIX,
+} from '@mdx-preview/shared-types';
+
 // module IDs for preloaded modules (npm:// prefixed canonical IDs)
 // these are the internal identifiers used by the registry
 export const PRELOADED_IDS = {
@@ -43,6 +52,7 @@ export const PRELOADED_IDS = {
   genericAdmonition: 'npm://@mdx-preview/shims-generic/Admonition',
   genericCollapsible: 'npm://@mdx-preview/shims-generic/Collapsible',
   genericAccordion: 'npm://@mdx-preview/shims-generic/Accordion',
+  genericDetails: 'npm://@mdx-preview/shims-generic/Details',
   genericTabs: 'npm://@mdx-preview/shims-generic/Tabs',
   genericTabItem: 'npm://@mdx-preview/shims-generic/TabItem',
   genericTab: 'npm://@mdx-preview/shims-generic/Tab',
@@ -101,12 +111,14 @@ export const PRELOAD_ALIASES: Record<string, string> = {
   Admonition: PRELOADED_IDS.genericAdmonition,
   Collapsible: PRELOADED_IDS.genericCollapsible,
   Accordion: PRELOADED_IDS.genericAccordion,
+  Details: PRELOADED_IDS.genericDetails,
   // Note: Tabs/TabItem/Tab may conflict with framework shims, use explicit paths
   '@mdx-preview/shims/generic/Callout': PRELOADED_IDS.genericCallout,
   '@mdx-preview/shims/generic/Alert': PRELOADED_IDS.genericAlert,
   '@mdx-preview/shims/generic/Admonition': PRELOADED_IDS.genericAdmonition,
   '@mdx-preview/shims/generic/Collapsible': PRELOADED_IDS.genericCollapsible,
   '@mdx-preview/shims/generic/Accordion': PRELOADED_IDS.genericAccordion,
+  '@mdx-preview/shims/generic/Details': PRELOADED_IDS.genericDetails,
   '@mdx-preview/shims/generic/Tabs': PRELOADED_IDS.genericTabs,
   '@mdx-preview/shims/generic/TabItem': PRELOADED_IDS.genericTabItem,
   '@mdx-preview/shims/generic/Tab': PRELOADED_IDS.genericTab,
@@ -142,6 +154,57 @@ export function getPreservedIds(): string[] {
     'Admonition',
     'Collapsible',
     'Accordion',
+    'Details',
     'CodeGroup',
   ];
+}
+
+// Re-export for parity testing
+export { GENERIC_COMPONENTS, FRAMEWORK_COMPONENTS, SHIM_PREFIX };
+
+// Validate that preloaded IDs cover all components from the shared registry
+// This is used by parity tests to ensure the webview stays in sync
+export function validateRegistryParity(): {
+  valid: boolean;
+  missing: string[];
+} {
+  const missing: string[] = [];
+
+  // Check generic components
+  for (const [name, config] of Object.entries(GENERIC_COMPONENTS)) {
+    const idKey = `generic${name}` as keyof typeof PRELOADED_IDS;
+    if (!PRELOADED_IDS[idKey]) {
+      missing.push(`generic/${name}`);
+    }
+    for (const alias of config.aliases) {
+      const aliasKey = `generic${alias}` as keyof typeof PRELOADED_IDS;
+      if (!PRELOADED_IDS[aliasKey]) {
+        missing.push(`generic/${alias}`);
+      }
+    }
+  }
+
+  // Check framework components
+  for (const component of FRAMEWORK_COMPONENTS.docusaurus) {
+    const key = `docusaurus${component}` as keyof typeof PRELOADED_IDS;
+    if (!PRELOADED_IDS[key]) {
+      missing.push(`docusaurus/${component}`);
+    }
+  }
+
+  for (const component of FRAMEWORK_COMPONENTS.starlight) {
+    const key = `starlight${component}` as keyof typeof PRELOADED_IDS;
+    if (!PRELOADED_IDS[key]) {
+      missing.push(`starlight/${component}`);
+    }
+  }
+
+  for (const component of FRAMEWORK_COMPONENTS.nextjs) {
+    const key = `nextjs${component}` as keyof typeof PRELOADED_IDS;
+    if (!PRELOADED_IDS[key]) {
+      missing.push(`nextjs/${component}`);
+    }
+  }
+
+  return { valid: missing.length === 0, missing };
 }
