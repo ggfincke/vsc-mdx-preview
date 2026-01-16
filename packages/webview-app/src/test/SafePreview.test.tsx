@@ -384,6 +384,120 @@ describe('SafePreview XSS Prevention', () => {
   });
 
   // MDX-specific XSS tests (Group B security testing)
+  // Phase 8: Unknown component placeholder XSS tests
+  describe('Unknown component placeholder security', () => {
+    test('unknown component placeholder escapes component name', () => {
+      const maliciousHTML = `
+        <div class="mdx-unknown-component-placeholder">
+          <div class="mdx-unknown-component-header">
+            <span class="mdx-unknown-icon">⚠</span>
+            <code>&lt;script&gt;alert(1)&lt;/script&gt;</code>
+            <span class="mdx-unknown-hint">(unknown component)</span>
+          </div>
+        </div>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      // placeholder should render
+      expect(
+        document.querySelector('.mdx-unknown-component-placeholder')
+      ).toBeInTheDocument();
+      // script tag should not exist as element
+      expect(document.querySelector('script')).not.toBeInTheDocument();
+    });
+
+    test('unknown component placeholder strips scripts in children', () => {
+      const maliciousHTML = `
+        <div class="mdx-unknown-component-placeholder">
+          <div class="mdx-unknown-component-content">
+            <script>alert('XSS')</script>
+            <p>Safe content</p>
+          </div>
+        </div>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      expect(screen.getByText('Safe content')).toBeInTheDocument();
+      expect(document.querySelector('script')).not.toBeInTheDocument();
+    });
+
+    test('unknown component placeholder strips event handlers', () => {
+      const maliciousHTML = `
+        <div class="mdx-unknown-component-placeholder" onclick="alert('XSS')">
+          <div class="mdx-unknown-component-header" onmouseover="alert('XSS')">
+            <code>Component</code>
+          </div>
+        </div>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      const placeholder = document.querySelector(
+        '.mdx-unknown-component-placeholder'
+      );
+      expect(placeholder).toBeInTheDocument();
+      expect(placeholder?.getAttribute('onclick')).toBeNull();
+
+      const header = document.querySelector('.mdx-unknown-component-header');
+      expect(header?.getAttribute('onmouseover')).toBeNull();
+    });
+
+    test('callout placeholder strips embedded scripts', () => {
+      const maliciousHTML = `
+        <aside class="mdx-safe-callout mdx-safe-callout-warning">
+          <div class="mdx-safe-callout-header">
+            <script>alert('XSS')</script>
+            Warning
+          </div>
+          <div class="mdx-safe-callout-content">
+            <img src="x" onerror="alert('XSS')">
+          </div>
+        </aside>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      expect(document.querySelector('script')).not.toBeInTheDocument();
+      const img = document.querySelector('img');
+      expect(img?.getAttribute('onerror')).toBeNull();
+    });
+
+    test('collapsible placeholder sanitizes title', () => {
+      const maliciousHTML = `
+        <details class="mdx-safe-collapsible">
+          <summary class="mdx-safe-collapsible-summary">
+            &lt;img src=x onerror=alert(1)&gt;
+          </summary>
+          <div class="mdx-safe-collapsible-content">Content</div>
+        </details>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      expect(document.querySelector('details')).toBeInTheDocument();
+      // the onerror should not execute, should be escaped text
+      const summary = document.querySelector('summary');
+      expect(summary?.textContent).toContain('<img');
+      expect(document.querySelector('img[onerror]')).toBeNull();
+    });
+
+    test('tabs placeholder strips dangerous attributes', () => {
+      const maliciousHTML = `
+        <div class="mdx-safe-tabs">
+          <div class="mdx-safe-tabs-notice" onclick="alert('XSS')">
+            Tab content
+          </div>
+          <div class="mdx-safe-tabs-content">
+            <script>document.write('XSS')</script>
+          </div>
+        </div>
+      `;
+      renderWithProvider(maliciousHTML);
+
+      const notice = document.querySelector('.mdx-safe-tabs-notice');
+      expect(notice).toBeInTheDocument();
+      expect(notice?.getAttribute('onclick')).toBeNull();
+      expect(document.querySelector('script')).not.toBeInTheDocument();
+    });
+  });
+
   describe('MDX placeholder injection prevention', () => {
     test('strips script tags inside mdx-jsx-placeholder', () => {
       const maliciousHTML = `
