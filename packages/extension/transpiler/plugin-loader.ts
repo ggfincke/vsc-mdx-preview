@@ -2,11 +2,14 @@
 // * dynamic loading of custom remark/rehype plugins from workspace node_modules
 
 import * as path from 'path';
+import * as vscode from 'vscode';
 import type { Pluggable } from 'unified';
-import { warn, debug, info } from '../logging';
+import { debug, info } from '../logging';
 import type { PluginSpec, ResolvedConfig } from '../preview/config';
-import { isSecurityModeTrusted } from '../security/validateTrust';
+import { getTrustManager, getErrorReporter } from '../services';
 import { getNodeResolver } from '../module-fetcher/resolver-factory';
+import { PluginError } from '../errors';
+import { validateFunction } from '../utils/validation';
 
 // get shared node resolver instance for plugin resolution
 const nodeResolver = getNodeResolver();
@@ -42,10 +45,12 @@ async function loadPlugin(
     const pluginFn =
       pluginModule.default ?? pluginModule[pluginName] ?? pluginModule;
 
-    if (typeof pluginFn !== 'function') {
-      throw new Error(
-        `Plugin "${pluginName}" does not export a function. ` +
-          `Got: ${typeof pluginFn}`
+    const validatedFn = validateFunction(pluginFn, `plugin ${pluginName}`);
+    if (!validatedFn) {
+      throw new PluginError(
+        `Plugin "${pluginName}" does not export a function. Got: ${typeof pluginFn}`,
+        'PLUGIN_INVALID_EXPORT',
+        pluginName
       );
     }
 
@@ -72,7 +77,7 @@ export interface LoadedPlugins {
 // load custom plugins from MDX Preview config (only loads in Trusted Mode, returns empty arrays in Safe Mode w/ warning)
 export async function loadPluginsFromConfig(
   config: ResolvedConfig | undefined,
-  _documentPath: string
+  documentUri: vscode.Uri
 ): Promise<LoadedPlugins> {
   const result: LoadedPlugins = {
     remarkPlugins: [],
@@ -95,14 +100,18 @@ export async function loadPluginsFromConfig(
     return result;
   }
 
-  // check trust state - only load plugins in Trusted Mode
-  if (!isSecurityModeTrusted()) {
+  // check trust state - only load plugins in Trusted Mode (document-aware)
+  const trustState = getTrustManager().getStateForDocument(documentUri);
+  if (!trustState.canExecute) {
     const pluginCount =
       (remarkPlugins?.length ?? 0) + (rehypePlugins?.length ?? 0);
-    warn(
-      `Custom plugins configured but cannot load in Safe Mode. ` +
-        `${pluginCount} plugin(s) will be ignored. ` +
-        `Enable Trusted Mode to use custom plugins.`
+    getErrorReporter().reportPluginError(
+      new PluginError(
+        `Custom plugins configured but cannot load: ${trustState.reason || 'Safe Mode'}. ${pluginCount} plugin(s) will be ignored.`,
+        'PLUGIN_LOAD_ERROR',
+        'custom-plugins'
+      ),
+      'custom-plugins'
     );
     return result;
   }
@@ -113,16 +122,18 @@ export async function loadPluginsFromConfig(
   // load remark plugins
   if (remarkPlugins && remarkPlugins.length > 0) {
     for (const spec of remarkPlugins) {
+      const pluginName = typeof spec === 'string' ? spec : spec[0];
       try {
         const plugin = await loadPlugin(spec, configDir);
         result.remarkPlugins.push(plugin);
-        debug(
-          `Loaded remark plugin: ${typeof spec === 'string' ? spec : spec[0]}`
-        );
+        debug(`Loaded remark plugin: ${pluginName}`);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         result.errors.push(message);
-        warn(message);
+        getErrorReporter().reportPluginError(
+          new PluginError(message, 'PLUGIN_LOAD_ERROR', pluginName, err instanceof Error ? err : undefined),
+          pluginName
+        );
       }
     }
   }
@@ -130,16 +141,18 @@ export async function loadPluginsFromConfig(
   // load rehype plugins
   if (rehypePlugins && rehypePlugins.length > 0) {
     for (const spec of rehypePlugins) {
+      const pluginName = typeof spec === 'string' ? spec : spec[0];
       try {
         const plugin = await loadPlugin(spec, configDir);
         result.rehypePlugins.push(plugin);
-        debug(
-          `Loaded rehype plugin: ${typeof spec === 'string' ? spec : spec[0]}`
-        );
+        debug(`Loaded rehype plugin: ${pluginName}`);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         result.errors.push(message);
-        warn(message);
+        getErrorReporter().reportPluginError(
+          new PluginError(message, 'PLUGIN_LOAD_ERROR', pluginName, err instanceof Error ? err : undefined),
+          pluginName
+        );
       }
     }
   }

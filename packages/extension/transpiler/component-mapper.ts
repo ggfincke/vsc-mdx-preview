@@ -17,63 +17,105 @@ export interface ComponentImportsResult {
   hasComponents: boolean;
 }
 
+// options for component import generation
+export interface ComponentImportsOptions {
+  // whether built-in generic shims should be auto-injected (default: true)
+  builtinsEnabled?: boolean;
+}
+
+// built-in generic component names that can be auto-injected
+// these map directly to preloaded shims in the webview
+const BUILTIN_GENERIC_COMPONENTS = [
+  'Callout',
+  'Alert',
+  'Admonition',
+  'Collapsible',
+  'Accordion',
+  'Tabs',
+  'TabItem',
+  'Tab',
+  'CodeGroup',
+] as const;
+
 // generate import statements & components object for custom component mapping (only generates in Trusted Mode)
 export function generateComponentImports(
   config: ResolvedConfig | undefined,
-  documentDir: string
+  documentDir: string,
+  options: ComponentImportsOptions = {}
 ): ComponentImportsResult {
+  const { builtinsEnabled = true } = options;
+
   const result: ComponentImportsResult = {
     imports: '',
     componentsObject: '{}',
     hasComponents: false,
   };
 
-  if (!config) {
-    return result;
-  }
-
-  const { components } = config.config;
-  if (!components || Object.keys(components).length === 0) {
-    return result;
-  }
-
-  // check trust state
+  // check trust state - only generate in Trusted Mode
   const trustManager = getTrustManager();
   const securityMode = trustManager.getMode();
 
   if (securityMode !== SecurityMode.Trusted) {
-    warn(
-      `Custom components configured but cannot load in Safe Mode. ` +
-        `${Object.keys(components).length} component(s) will be ignored.`
-    );
+    const components = config?.config.components;
+    if (components && Object.keys(components).length > 0) {
+      warn(
+        `Custom components configured but cannot load in Safe Mode. ` +
+          `${Object.keys(components).length} component(s) will be ignored.`
+      );
+    }
     return result;
   }
 
-  const configDir = config.configDir;
   const importStatements: string[] = [];
   const componentEntries: string[] = [];
 
-  for (const [componentName, componentPath] of Object.entries(components)) {
-    // resolve component path relative to config directory
-    const absolutePath = path.isAbsolute(componentPath)
-      ? componentPath
-      : path.resolve(configDir, componentPath);
+  // track which component names are defined by user config (these take precedence)
+  const userDefinedComponents = new Set<string>();
 
-    // convert to relative path from document directory
-    let relativePath = path.relative(documentDir, absolutePath);
+  // process user-defined components from config first
+  const components = config?.config.components;
+  if (components && Object.keys(components).length > 0) {
+    const configDir = config.configDir;
 
-    // ensure path starts with ./ for relative imports
-    if (!relativePath.startsWith('.') && !relativePath.startsWith('/')) {
-      relativePath = './' + relativePath;
+    for (const [componentName, componentPath] of Object.entries(components)) {
+      userDefinedComponents.add(componentName);
+
+      // resolve component path relative to config directory
+      const absolutePath = path.isAbsolute(componentPath)
+        ? componentPath
+        : path.resolve(configDir, componentPath);
+
+      // convert to relative path from document directory
+      let relativePath = path.relative(documentDir, absolutePath);
+
+      // ensure path starts with ./ for relative imports
+      if (!relativePath.startsWith('.') && !relativePath.startsWith('/')) {
+        relativePath = './' + relativePath;
+      }
+
+      // normalize path separators for imports
+      relativePath = relativePath.replace(/\\/g, '/');
+
+      // generate import statement w/ a safe variable name
+      const safeVarName = `_component_${componentName.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+      importStatements.push(`import ${safeVarName} from '${relativePath}';`);
+      componentEntries.push(`  ${componentName}: ${safeVarName}`);
     }
+  }
 
-    // normalize path separators for imports
-    relativePath = relativePath.replace(/\\/g, '/');
+  // add built-in generic shims (if enabled and not overridden by user config)
+  if (builtinsEnabled) {
+    for (const componentName of BUILTIN_GENERIC_COMPONENTS) {
+      // skip if user has defined this component in config (user takes precedence)
+      if (userDefinedComponents.has(componentName)) {
+        continue;
+      }
 
-    // generate import statement w/ a safe variable name
-    const safeVarName = `_component_${componentName.replace(/[^a-zA-Z0-9_]/g, '_')}`;
-    importStatements.push(`import ${safeVarName} from '${relativePath}';`);
-    componentEntries.push(`  ${componentName}: ${safeVarName}`);
+      // generate import from the component name (resolved via preload aliases in webview)
+      const safeVarName = `_builtin_${componentName}`;
+      importStatements.push(`import ${safeVarName} from '${componentName}';`);
+      componentEntries.push(`  ${componentName}: ${safeVarName}`);
+    }
   }
 
   if (importStatements.length > 0) {
@@ -81,9 +123,19 @@ export function generateComponentImports(
     result.componentsObject = `{\n${componentEntries.join(',\n')}\n}`;
     result.hasComponents = true;
 
-    info(
-      `Generated imports for ${importStatements.length} custom component(s)`
-    );
+    const userCount = userDefinedComponents.size;
+    const builtinCount = importStatements.length - userCount;
+
+    if (userCount > 0 && builtinCount > 0) {
+      info(
+        `Generated imports for ${userCount} custom component(s) and ${builtinCount} built-in shim(s)`
+      );
+    } else if (userCount > 0) {
+      info(`Generated imports for ${userCount} custom component(s)`);
+    } else if (builtinCount > 0) {
+      debug(`Injected ${builtinCount} built-in generic shim(s)`);
+    }
+
     debug('Component imports:', result.imports);
   }
 

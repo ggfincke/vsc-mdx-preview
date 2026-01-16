@@ -3,7 +3,7 @@
 
 import { compile } from '@mdx-js/mdx';
 import hasDefaultExport from './hasDefaultExport';
-import matter from 'gray-matter';
+import { extractFrontmatter } from './mdx-common';
 import * as path from 'path';
 
 import { Preview } from '../../preview/preview-manager';
@@ -11,6 +11,7 @@ import { buildTrustedPluginPipeline } from './plugin-builder';
 import { loadPluginsFromConfig } from '../plugin-loader';
 import { generateComponentImports } from '../component-mapper';
 import { warn } from '../../logging';
+import { getConfigManager } from '../../services';
 
 // result type for MDX transpilation (includes frontmatter)
 export interface MdxTranspileResult {
@@ -90,7 +91,7 @@ export const mdxTranspileAsync = async (
   preview: Preview
 ): Promise<MdxTranspileResult> => {
   // extract frontmatter before compilation
-  const { content, data: frontmatter } = matter(mdxText);
+  const { content, frontmatter } = extractFrontmatter(mdxText);
 
   let mdxTextToCompile: string;
   if (!hasDefaultExport(content)) {
@@ -102,7 +103,7 @@ export const mdxTranspileAsync = async (
   // load custom plugins from config (only in Trusted Mode)
   const customPlugins = await loadPluginsFromConfig(
     preview.mdxPreviewConfig,
-    preview.fsPath
+    preview.doc.uri
   );
 
   // log aggregated plugin loading errors
@@ -112,11 +113,14 @@ export const mdxTranspileAsync = async (
     );
   }
 
-  // generate component imports from config (only in Trusted Mode)
+  // generate component imports from config & built-in shims (only in Trusted Mode)
   const documentDir = path.dirname(preview.fsPath);
+  const builtinsEnabled = getConfigManager().get('components.builtins');
+
   const componentImports = generateComponentImports(
     preview.mdxPreviewConfig,
-    documentDir
+    documentDir,
+    { builtinsEnabled }
   );
 
   // prepend component imports to MDX source (before compilation)

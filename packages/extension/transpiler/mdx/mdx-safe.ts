@@ -9,25 +9,46 @@ import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import type { Root, Parent, RootContent } from 'mdast';
-import matter from 'gray-matter';
+import { extractFrontmatter } from './mdx-common';
 import { getSafeRemarkPlugins, getSafeRehypePluginSets } from './plugin-builder';
 import { warn } from '../../logging';
 import type { ResolvedConfig } from '../../preview/config';
+import remarkGenericComponents, {
+  KNOWN_GENERIC_COMPONENTS,
+} from './remark-generic-components';
+import { getConfigManager } from '../../services';
 
-// result type for Safe Mode HTML compilation (includes frontmatter)
-export interface SafeHTMLResult {
-  html: string;
-  frontmatter: Record<string, unknown>;
+// import and re-export types from consolidated types file
+export type { UnknownBehavior, SafeHTMLResult } from '../types';
+import type { UnknownBehavior, SafeHTMLResult } from '../types';
+
+// options for remarkStripMdx plugin
+interface RemarkStripMdxOptions {
+  unknownBehavior?: UnknownBehavior;
+  builtinsEnabled?: boolean;
 }
 
-// MDX JSX element node w/ name property
+// MDX JSX element node w/ name and children properties
 interface MdxJsxElement {
   type: 'mdxJsxFlowElement' | 'mdxJsxTextElement';
   name: string | null;
+  children: RootContent[];
 }
 
-// remark plugin to strip MDX-specific nodes (replaces JSX elements & expressions w/ placeholders)
-function remarkStripMdx() {
+// escape HTML special characters for safe output
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// remark plugin to strip MDX-specific nodes (replaces JSX elements & expressions based on behavior)
+function remarkStripMdx(options: RemarkStripMdxOptions = {}) {
+  const { unknownBehavior = 'placeholder', builtinsEnabled = true } = options;
+
   return (tree: Root) => {
     const nodesToRemove: Array<{ parent: Parent; index: number }> = [];
 
@@ -42,32 +63,61 @@ function remarkStripMdx() {
         return;
       }
 
-      // replace JSX flow elements w/ placeholder
+      // handle JSX flow elements (block-level components)
       if (node.type === 'mdxJsxFlowElement') {
         const jsxNode = node as unknown as MdxJsxElement;
         const name = jsxNode.name || 'Component';
-        const placeholder: RootContent = {
-          type: 'paragraph',
-          children: [
-            {
-              type: 'html',
-              value: `<span class="mdx-jsx-placeholder" title="JSX component (requires Trusted Mode)">&lt;${name} /&gt;</span>`,
-            },
-          ],
-        };
-        (parent as Parent).children[index] = placeholder;
+
+        // check if this is a known generic component (already transformed by remarkGenericComponents)
+        // if builtins are enabled and this is a known component, it should have been transformed
+        // if we still see it here, it means transformation failed or builtins are disabled
+        const isKnownComponent =
+          builtinsEnabled && KNOWN_GENERIC_COMPONENTS.has(name);
+
+        const replacement = createJsxReplacement(
+          jsxNode,
+          name,
+          unknownBehavior,
+          isKnownComponent,
+          true // isFlowElement
+        );
+
+        if (replacement === null) {
+          // strip: remove entirely
+          nodesToRemove.push({ parent: parent as Parent, index });
+        } else if (Array.isArray(replacement)) {
+          // raw: replace with children (splice multiple nodes)
+          (parent as Parent).children.splice(index, 1, ...replacement);
+        } else {
+          // placeholder: replace with placeholder node
+          (parent as Parent).children[index] = replacement;
+        }
         return;
       }
 
-      // replace JSX text elements w/ placeholder
+      // handle JSX text elements (inline components)
       if (node.type === 'mdxJsxTextElement') {
         const jsxNode = node as unknown as MdxJsxElement;
         const name = jsxNode.name || 'Component';
-        const placeholder = {
-          type: 'html' as const,
-          value: `<span class="mdx-jsx-placeholder" title="JSX component (requires Trusted Mode)">&lt;${name} /&gt;</span>`,
-        };
-        (parent as Parent).children[index] = placeholder as RootContent;
+
+        const isKnownComponent =
+          builtinsEnabled && KNOWN_GENERIC_COMPONENTS.has(name);
+
+        const replacement = createJsxReplacement(
+          jsxNode,
+          name,
+          unknownBehavior,
+          isKnownComponent,
+          false // isFlowElement
+        );
+
+        if (replacement === null) {
+          nodesToRemove.push({ parent: parent as Parent, index });
+        } else if (Array.isArray(replacement)) {
+          (parent as Parent).children.splice(index, 1, ...replacement);
+        } else {
+          (parent as Parent).children[index] = replacement;
+        }
         return;
       }
 
@@ -91,7 +141,7 @@ function remarkStripMdx() {
         const placeholder: RootContent = {
           type: 'html',
           value: `<span class="mdx-expression-placeholder" title="JavaScript expression (requires Trusted Mode)">{...}</span>`,
-        } as any;
+        } as RootContent;
         (parent as Parent).children[index] = placeholder;
         return;
       }
@@ -103,6 +153,89 @@ function remarkStripMdx() {
       parent.children.splice(index, 1);
     }
   };
+}
+
+// create replacement for JSX element based on unknownBehavior
+function createJsxReplacement(
+  node: MdxJsxElement,
+  name: string,
+  behavior: UnknownBehavior,
+  isKnownComponent: boolean,
+  isFlowElement: boolean
+): RootContent | RootContent[] | null {
+  const escapedName = escapeHtml(name);
+
+  switch (behavior) {
+    case 'strip':
+      // remove entirely
+      return null;
+
+    case 'raw':
+      // keep children, remove wrapper
+      if (node.children && node.children.length > 0) {
+        return node.children;
+      }
+      return null;
+
+    case 'placeholder':
+    default: {
+      // show placeholder with component name and children
+      const hint = isKnownComponent
+        ? '(builtin component - transform failed)'
+        : '(unknown component)';
+
+      if (isFlowElement) {
+        // block-level placeholder with children
+        const hasChildren = node.children && node.children.length > 0;
+
+        if (hasChildren) {
+          // create placeholder wrapper with children inside
+          return {
+            type: 'unknownComponent' as RootContent['type'],
+            data: {
+              hName: 'div',
+              hProperties: {
+                className: ['mdx-unknown-component-placeholder'],
+              },
+            },
+            children: [
+              {
+                type: 'html',
+                value: `<div class="mdx-unknown-component-header"><span class="mdx-unknown-icon">⚠</span><code>&lt;${escapedName}&gt;</code><span class="mdx-unknown-hint">${hint}</span></div>`,
+              },
+              {
+                type: 'unknownComponentContent' as RootContent['type'],
+                data: {
+                  hName: 'div',
+                  hProperties: {
+                    className: ['mdx-unknown-component-content'],
+                  },
+                },
+                children: node.children,
+              } as RootContent,
+            ],
+          } as RootContent;
+        } else {
+          // self-closing component placeholder
+          return {
+            type: 'paragraph',
+            children: [
+              {
+                type: 'html',
+                value: `<div class="mdx-unknown-component-placeholder mdx-unknown-component-empty"><div class="mdx-unknown-component-header"><span class="mdx-unknown-icon">⚠</span><code>&lt;${escapedName} /&gt;</code><span class="mdx-unknown-hint">${hint}</span></div></div>`,
+              },
+            ],
+          };
+        }
+      } else {
+        // inline placeholder
+        return {
+          type: 'html',
+          value: `<span class="mdx-jsx-placeholder" title="JSX component ${hint}">&lt;${escapedName} /&gt;</span>`,
+        } as RootContent;
+      }
+    }
+  }
 }
 
 // apply plugins from array to unified processor
@@ -140,14 +273,26 @@ export async function compileToSafeHTML(
     }
   }
   // extract frontmatter before compilation
-  const { content, data: frontmatter } = matter(mdxText);
+  const { content, frontmatter } = extractFrontmatter(mdxText);
+
+  // get configuration for builtins and unknown behavior settings
+  const configManager = getConfigManager();
+  const builtinsEnabled = configManager.get('components.builtins');
+
+  // get unknownBehavior from config file first, then fall back to vscode setting
+  const unknownBehavior: UnknownBehavior =
+    (config?.config.unknownBehavior as UnknownBehavior) ||
+    configManager.get('components.unknownBehavior');
 
   // build unified pipeline w/ shared plugins via plugin-builder
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let processor: any = unified()
     .use(remarkParse)
     .use(remarkMdx)
-    .use(remarkStripMdx);
+    // transform known generic components to semantic HTML (before stripping)
+    .use(remarkGenericComponents, { enabled: builtinsEnabled })
+    // strip unknown JSX elements based on configured behavior
+    .use(remarkStripMdx, { unknownBehavior, builtinsEnabled });
 
   // add shared remark plugins (GFM, GitHub alerts, math)
   processor = applyPlugins(processor, getSafeRemarkPlugins());
