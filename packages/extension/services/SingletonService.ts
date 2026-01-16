@@ -6,9 +6,9 @@ import { debug } from '../logging';
 import type { IService } from './types';
 
 // abstract base class for singleton services w/ automatic lifecycle management
-export abstract class SingletonService<T extends SingletonService<T>>
-  implements IService
-{
+export abstract class SingletonService<
+  T extends SingletonService<T>,
+> implements IService {
   // singleton instance (subclasses MUST override w/ their own static property)
   protected static instance: SingletonService<never> | undefined;
 
@@ -18,19 +18,24 @@ export abstract class SingletonService<T extends SingletonService<T>>
   // unique identifier for debug logging (e.g., 'CONFIG-MANAGER', 'TRUST-MANAGER')
   protected abstract readonly logTag: string;
 
+  // Note: Don't access abstract properties (like logTag) here - they aren't available yet
   protected constructor() {
-    debug(`[${this.logTag}] Initialized`);
+    // Initialization logging moved to getInstance() since logTag is abstract
   }
 
   // get singleton instance (creates new instance if none exists)
-  static getInstance<S extends SingletonService<S>>(this: {
-    new (): S;
-    instance?: S;
-  }): S {
-    if (!this.instance) {
-      this.instance = new this();
+  // Note: Using 'Function & { prototype: S }' allows type inference without requiring
+  // public constructor access. TypeScript infers S from the class prototype.
+  static getInstance<S extends SingletonService<S>>(
+    this: Function & { prototype: S }
+  ): S {
+    // Cast to access protected static 'instance' and call protected constructor
+    const ctor = this as unknown as { instance?: S; new (): S };
+    if (!ctor.instance) {
+      ctor.instance = new ctor();
+      debug(`[${ctor.instance.logTag}] Initialized`);
     }
-    return this.instance;
+    return ctor.instance;
   }
 
   // dispose all managed resources & clear singleton instance
