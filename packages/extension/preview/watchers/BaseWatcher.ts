@@ -79,7 +79,9 @@ export abstract class BaseWatcher implements IWatcher {
   // ─── Helper Methods for Subclasses ─────────────────────────────────
 
   // Dispose a single watcher safely.
-  protected disposeWatcher(watcher: vscode.FileSystemWatcher | undefined): void {
+  protected disposeWatcher(
+    watcher: vscode.FileSystemWatcher | undefined
+  ): void {
     watcher?.dispose();
   }
 

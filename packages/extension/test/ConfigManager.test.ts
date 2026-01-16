@@ -171,7 +171,10 @@ describe('ConfigManager', () => {
           key === 'mdx-preview.preview.enableScripts',
       };
       expect(
-        ConfigManager.affectsConfiguration(event as any, 'preview.enableScripts')
+        ConfigManager.affectsConfiguration(
+          event as any,
+          'preview.enableScripts'
+        )
       ).toBe(true);
     });
 

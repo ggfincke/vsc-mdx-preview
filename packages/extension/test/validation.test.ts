@@ -118,7 +118,9 @@ describe('validation', () => {
     });
 
     it('allows Infinity when finite is false', () => {
-      expect(validateNumber(Infinity, 'test', { finite: false })).toBe(Infinity);
+      expect(validateNumber(Infinity, 'test', { finite: false })).toBe(
+        Infinity
+      );
     });
 
     it('validates minimum constraint', () => {
@@ -199,7 +201,9 @@ describe('validation', () => {
 
     it('validates min constraint', () => {
       const log = vi.fn();
-      expect(validateOptionalNumber(0, 'line', { min: 1, log })).toBeUndefined();
+      expect(
+        validateOptionalNumber(0, 'line', { min: 1, log })
+      ).toBeUndefined();
     });
 
     it('returns undefined for non-number input', () => {
@@ -222,10 +226,8 @@ describe('validation', () => {
     });
 
     it('validates elements with custom validator', () => {
-      const result = validateArray(
-        ['a', 'b'],
-        'strings',
-        (el) => (typeof el === 'string' ? el : undefined)
+      const result = validateArray(['a', 'b'], 'strings', (el) =>
+        typeof el === 'string' ? el : undefined
       );
       expect(result).toEqual(['a', 'b']);
     });
@@ -249,7 +251,10 @@ describe('validation', () => {
     it('includes context in error message', () => {
       const log = vi.fn();
       validateArray('invalid', 'items', undefined, { log, context: 'config' });
-      expect(log).toHaveBeenCalledWith('config: items must be an array', 'invalid');
+      expect(log).toHaveBeenCalledWith(
+        'config: items must be an array',
+        'invalid'
+      );
     });
   });
 
@@ -288,16 +293,17 @@ describe('validation', () => {
     it('includes context in error message', () => {
       const log = vi.fn();
       validateObject(null, 'config', { log, context: 'parsing' });
-      expect(log).toHaveBeenCalledWith('parsing: config must be an object', null);
+      expect(log).toHaveBeenCalledWith(
+        'parsing: config must be an object',
+        null
+      );
     });
   });
 
   describe('validateRecord', () => {
     it('validates all values in record', () => {
-      const result = validateRecord(
-        { a: '1', b: '2' },
-        'rec',
-        (v) => (typeof v === 'string' ? v : undefined)
+      const result = validateRecord({ a: '1', b: '2' }, 'rec', (v) =>
+        typeof v === 'string' ? v : undefined
       );
       expect(result).toEqual({ a: '1', b: '2' });
     });
@@ -353,10 +359,7 @@ describe('validation', () => {
         log,
       });
       expect(result).toBeUndefined();
-      expect(log).toHaveBeenCalledWith(
-        'val must be one of: a, b, c',
-        'd'
-      );
+      expect(log).toHaveBeenCalledWith('val must be one of: a, b, c', 'd');
     });
 
     it('returns undefined for non-string', () => {

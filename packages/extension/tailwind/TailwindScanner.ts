@@ -63,10 +63,8 @@ export class TailwindScanner {
     // Pattern-based extraction (static patterns)
     this.patternScanner.extractStaticAttributes(text, classSet);
     this.patternScanner.extractApplyDirectives(text, classSet);
-    this.patternScanner.extractLayerClasses(
-      text,
-      classSet,
-      (t, p, o, c) => this.contentScanner.extractBracedExpressions(t, p, o, c)
+    this.patternScanner.extractLayerClasses(text, classSet, (t, p, o, c) =>
+      this.contentScanner.extractBracedExpressions(t, p, o, c)
     );
 
     // Content-based extraction (dynamic patterns)

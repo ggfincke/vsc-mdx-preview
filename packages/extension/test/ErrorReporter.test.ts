@@ -142,7 +142,10 @@ describe('ErrorReporter', () => {
   describe('severity inference', () => {
     it('infers Critical severity for PATH_TRAVERSAL errors', () => {
       const reporter = ErrorReporter.getInstance();
-      const error = new ExtensionError('Path traversal detected', 'PATH_TRAVERSAL');
+      const error = new ExtensionError(
+        'Path traversal detected',
+        'PATH_TRAVERSAL'
+      );
 
       reporter.report(error, {
         context: ErrorContext.Security,
@@ -356,9 +359,9 @@ describe('ErrorReporter', () => {
         const action = vi.fn();
 
         // Mock showWarningMessage to return 'Perform Action'
-        (window.showWarningMessage as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-          'Perform Action'
-        );
+        (
+          window.showWarningMessage as ReturnType<typeof vi.fn>
+        ).mockResolvedValueOnce('Perform Action');
 
         await reporter.reportWithActions(error, ErrorContext.Security, [
           { label: 'Perform Action', action },
@@ -379,9 +382,9 @@ describe('ErrorReporter', () => {
         const action = vi.fn();
 
         // Mock showWarningMessage to return undefined (dialog dismissed)
-        (window.showWarningMessage as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-          undefined
-        );
+        (
+          window.showWarningMessage as ReturnType<typeof vi.fn>
+        ).mockResolvedValueOnce(undefined);
 
         await reporter.reportWithActions(error, ErrorContext.Security, [
           { label: 'Perform Action', action },

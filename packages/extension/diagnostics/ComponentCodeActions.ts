@@ -15,9 +15,7 @@ const CONFIG_FILE_NAME = '.mdx-previewrc.json';
 
 // code action provider for component diagnostics
 export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
-  static readonly providedCodeActionKinds = [
-    vscode.CodeActionKind.QuickFix,
-  ];
+  static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix];
 
   provideCodeActions(
     document: vscode.TextDocument,
@@ -35,7 +33,9 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
     for (const diagnostic of relevantDiagnostics) {
       // extract component name from diagnostic message
       const match = diagnostic.message.match(/Unknown component "([^"]+)"/);
-      if (!match) {continue;}
+      if (!match) {
+        continue;
+      }
 
       const componentName = match[1];
 
@@ -74,7 +74,9 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
     diagnostic: vscode.Diagnostic
   ): vscode.CodeAction | null {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
-    if (!workspaceFolder) {return null;}
+    if (!workspaceFolder) {
+      return null;
+    }
 
     const configPath = path.join(workspaceFolder.uri.fsPath, CONFIG_FILE_NAME);
     const action = new vscode.CodeAction(
@@ -103,7 +105,9 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
   ): vscode.CodeAction | null {
     // check if there's a similar built-in component
     const suggestion = this.findSimilarBuiltin(componentName);
-    if (!suggestion) {return null;}
+    if (!suggestion) {
+      return null;
+    }
 
     const action = new vscode.CodeAction(
       `Use built-in "${suggestion}" instead`,
@@ -162,7 +166,9 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
   }
 
   // create action to open documentation
-  private createLearnMoreAction(diagnostic: vscode.Diagnostic): vscode.CodeAction {
+  private createLearnMoreAction(
+    diagnostic: vscode.Diagnostic
+  ): vscode.CodeAction {
     const action = new vscode.CodeAction(
       'Learn about component mapping',
       vscode.CodeActionKind.QuickFix
@@ -248,7 +254,8 @@ export function registerComponentCodeActions(
       { language: 'mdx', scheme: 'file' },
       new ComponentCodeActionsProvider(),
       {
-        providedCodeActionKinds: ComponentCodeActionsProvider.providedCodeActionKinds,
+        providedCodeActionKinds:
+          ComponentCodeActionsProvider.providedCodeActionKinds,
       }
     )
   );

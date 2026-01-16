@@ -18,6 +18,12 @@ const toggleUseWhiteBackground = async (): Promise<void> => {
 };
 
 export const commands: CommandDefinition[] = [
-  { id: CommandNames.TOGGLE_VSCODE_MARKDOWN_STYLES, handler: toggleUseVscodeMarkdownStyles },
-  { id: CommandNames.TOGGLE_WHITE_BACKGROUND, handler: toggleUseWhiteBackground },
+  {
+    id: CommandNames.TOGGLE_VSCODE_MARKDOWN_STYLES,
+    handler: toggleUseVscodeMarkdownStyles,
+  },
+  {
+    id: CommandNames.TOGGLE_WHITE_BACKGROUND,
+    handler: toggleUseWhiteBackground,
+  },
 ];

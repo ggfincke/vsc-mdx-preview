@@ -235,7 +235,10 @@ describe('PreviewInitializer', () => {
         '/path/to/.mdx-previewrc.json',
         expect.any(Function)
       );
-      expect(manager.register).toHaveBeenCalledWith('config', expect.anything());
+      expect(manager.register).toHaveBeenCalledWith(
+        'config',
+        expect.anything()
+      );
     });
 
     it('does not register for non-file scheme', () => {
@@ -265,7 +268,12 @@ describe('PreviewInitializer', () => {
       const manager = initializer.createWatchers('', vi.fn());
       const onConfigChange = vi.fn();
 
-      initializer.setupConfigWatcher(manager, 'file', undefined, onConfigChange);
+      initializer.setupConfigWatcher(
+        manager,
+        'file',
+        undefined,
+        onConfigChange
+      );
 
       expect(manager.unregister).toHaveBeenCalledWith('config');
     });
@@ -481,7 +489,9 @@ describe('PreviewInitializer', () => {
 
       // Call the callback - it should wait for gate
       if (capturedCallback) {
-        await (capturedCallback as (fsPath: string) => Promise<void>)('/some/file.ts');
+        await (capturedCallback as (fsPath: string) => Promise<void>)(
+          '/some/file.ts'
+        );
       }
 
       expect(manager.waitForGate).toHaveBeenCalled();

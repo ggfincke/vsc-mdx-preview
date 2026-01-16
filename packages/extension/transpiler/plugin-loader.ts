@@ -131,7 +131,12 @@ export async function loadPluginsFromConfig(
         const message = err instanceof Error ? err.message : String(err);
         result.errors.push(message);
         getErrorReporter().reportPluginError(
-          new PluginError(message, 'PLUGIN_LOAD_ERROR', pluginName, err instanceof Error ? err : undefined),
+          new PluginError(
+            message,
+            'PLUGIN_LOAD_ERROR',
+            pluginName,
+            err instanceof Error ? err : undefined
+          ),
           pluginName
         );
       }
@@ -150,7 +155,12 @@ export async function loadPluginsFromConfig(
         const message = err instanceof Error ? err.message : String(err);
         result.errors.push(message);
         getErrorReporter().reportPluginError(
-          new PluginError(message, 'PLUGIN_LOAD_ERROR', pluginName, err instanceof Error ? err : undefined),
+          new PluginError(
+            message,
+            'PLUGIN_LOAD_ERROR',
+            pluginName,
+            err instanceof Error ? err : undefined
+          ),
           pluginName
         );
       }

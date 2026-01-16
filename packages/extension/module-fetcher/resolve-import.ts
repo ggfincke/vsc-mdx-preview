@@ -24,10 +24,15 @@ export interface ResolveImportOptions {
 // returns true for specifiers starting w/ './' or '../'
 // returns false for URLs (http://, https://, npm://) & empty/null values
 export function isLocalImport(specifier: string): boolean {
-  if (!specifier) {return false;}
-  if (specifier.startsWith('http://') || specifier.startsWith('https://'))
-    {return false;}
-  if (specifier.startsWith('npm://')) {return false;}
+  if (!specifier) {
+    return false;
+  }
+  if (specifier.startsWith('http://') || specifier.startsWith('https://')) {
+    return false;
+  }
+  if (specifier.startsWith('npm://')) {
+    return false;
+  }
   return specifier.startsWith('./') || specifier.startsWith('../');
 }
 

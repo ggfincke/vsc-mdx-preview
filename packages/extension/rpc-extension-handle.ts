@@ -65,10 +65,14 @@ class ExtensionHandle implements ExtensionRPC {
   // report performance metrics from webview
   reportPerformance(evaluationDuration: number): void {
     debug(`[EXT-HANDLE] reportPerformance: ${evaluationDuration}`);
-    const validDuration = validateNumber(evaluationDuration, 'evaluationDuration', {
-      context: 'reportPerformance',
-      finite: true,
-    });
+    const validDuration = validateNumber(
+      evaluationDuration,
+      'evaluationDuration',
+      {
+        context: 'reportPerformance',
+        finite: true,
+      }
+    );
     if (validDuration === undefined) {
       return;
     }
@@ -98,7 +102,11 @@ class ExtensionHandle implements ExtensionRPC {
       allowEmpty: true,
     });
 
-    if (validRequest === undefined || validIsBare === undefined || validParentId === undefined) {
+    if (
+      validRequest === undefined ||
+      validIsBare === undefined ||
+      validParentId === undefined
+    ) {
       return undefined;
     }
 
@@ -177,8 +185,14 @@ class ExtensionHandle implements ExtensionRPC {
     }
 
     // validate line/column if provided (optional, min 1)
-    const validLine = validateOptionalNumber(line, 'line number', { ...opts, min: 1 });
-    const validColumn = validateOptionalNumber(column, 'column number', { ...opts, min: 1 });
+    const validLine = validateOptionalNumber(line, 'line number', {
+      ...opts,
+      min: 1,
+    });
+    const validColumn = validateOptionalNumber(column, 'column number', {
+      ...opts,
+      min: 1,
+    });
 
     // get current document directory from preview
     const entryDir = this.preview.entryFsDirectory;

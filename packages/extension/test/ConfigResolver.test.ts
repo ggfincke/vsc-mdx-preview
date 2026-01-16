@@ -38,7 +38,9 @@ describe('ConfigResolver', () => {
   beforeEach(() => {
     // Register ConfigCache service
     const registry = ServiceRegistry.getInstance();
-    registry.register(ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance());
+    registry.register(ServiceNames.CONFIG_CACHE, () =>
+      ConfigCache.getInstance()
+    );
 
     // Clear cache before each test
     clearConfigCache();

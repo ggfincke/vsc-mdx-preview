@@ -9,7 +9,8 @@ export const CommandNames = {
   REFRESH_PREVIEW: 'mdx-preview.commands.refreshPreview',
 
   // config toggle commands
-  TOGGLE_VSCODE_MARKDOWN_STYLES: 'mdx-preview.commands.toggleUseVscodeMarkdownStyles',
+  TOGGLE_VSCODE_MARKDOWN_STYLES:
+    'mdx-preview.commands.toggleUseVscodeMarkdownStyles',
   TOGGLE_WHITE_BACKGROUND: 'mdx-preview.commands.toggleUseWhiteBackground',
 
   // security commands

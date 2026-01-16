@@ -63,7 +63,11 @@ export async function fetchLocal(
 
     // use UnifiedResolver for all resolution (framework aliases, TypeScript, enhanced-resolve)
     const resolver = getUnifiedResolver();
-    const resolution = resolver.resolveSync(request, resolutionContext, 'browser');
+    const resolution = resolver.resolveSync(
+      request,
+      resolutionContext,
+      'browser'
+    );
 
     if (!resolution) {
       throw new ModuleFetchError(
@@ -76,7 +80,9 @@ export async function fetchLocal(
 
     // if it's a built-in shim, return empty result (webview has this preloaded)
     if (resolution.isBuiltInShim) {
-      debug(`[MODULE-FETCHER] Built-in shim: ${request} -> ${resolution.fsPath}`);
+      debug(
+        `[MODULE-FETCHER] Built-in shim: ${request} -> ${resolution.fsPath}`
+      );
       return {
         fsPath: resolution.fsPath,
         code: '',

@@ -105,7 +105,10 @@ export class ConfigManager extends SingletonService<ConfigManager> {
   getAll(scope?: vscode.Uri): SettingTypes {
     const result = {} as SettingTypes;
     for (const key of Object.keys(DEFAULTS) as SettingKey[]) {
-      (result as unknown as Record<string, unknown>)[key] = this.get(key, scope);
+      (result as unknown as Record<string, unknown>)[key] = this.get(
+        key,
+        scope
+      );
     }
     return result;
   }

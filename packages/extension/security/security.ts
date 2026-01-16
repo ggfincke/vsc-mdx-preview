@@ -37,7 +37,10 @@ const selectSecurityPolicy = async () => {
   const selectedSecurityPolicyItem =
     await vscode.window.showQuickPick(pickItems);
   if (selectedSecurityPolicyItem) {
-    await configManager.set('preview.security', selectedSecurityPolicyItem.type);
+    await configManager.set(
+      'preview.security',
+      selectedSecurityPolicyItem.type
+    );
   }
 };
 

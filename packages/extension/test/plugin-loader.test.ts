@@ -25,7 +25,7 @@ vi.mock('../services', async (importOriginal) => {
   return {
     ...original,
     getConfigManager: () => ({
-      get: (key: string, scope?: unknown) => {
+      get: (key: string, _scope?: unknown) => {
         return __getMockConfig(key) ?? false;
       },
       set: vi.fn(),
@@ -73,7 +73,9 @@ describe('PluginLoader', () => {
 
     // register TrustManager w/ ServiceRegistry
     const registry = ServiceRegistry.getInstance();
-    registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
+    registry.register(ServiceNames.TRUST_MANAGER, () =>
+      TrustManager.getInstance()
+    );
   });
 
   afterEach(() => {
@@ -102,7 +104,10 @@ describe('PluginLoader', () => {
         configDir: '/workspace',
       };
 
-      const result = await loadPluginsFromConfig(config, Uri.file('/workspace/test.mdx'));
+      const result = await loadPluginsFromConfig(
+        config,
+        Uri.file('/workspace/test.mdx')
+      );
 
       expect(result.remarkPlugins).toEqual([]);
       expect(result.rehypePlugins).toEqual([]);
@@ -128,7 +133,10 @@ describe('PluginLoader', () => {
         configDir: '/workspace',
       };
 
-      const result = await loadPluginsFromConfig(config, Uri.file('/workspace/test.mdx'));
+      const result = await loadPluginsFromConfig(
+        config,
+        Uri.file('/workspace/test.mdx')
+      );
 
       // Should attempt to load plugins (may fail due to mock limitations)
       // The important thing is it didn't return empty arrays
@@ -160,7 +168,10 @@ describe('PluginLoader', () => {
         configDir: '/workspace',
       };
 
-      const result = await loadPluginsFromConfig(config, Uri.file('/workspace/test.mdx'));
+      const result = await loadPluginsFromConfig(
+        config,
+        Uri.file('/workspace/test.mdx')
+      );
 
       expect(result.remarkPlugins).toEqual([]);
       expect(result.rehypePlugins).toEqual([]);
@@ -322,9 +333,13 @@ describe('PluginLoader', () => {
 
       expect(result.hasComponents).toBe(true);
       // Should include all builtin components
-      expect(result.imports).toContain("import _builtin_Callout from 'Callout';");
+      expect(result.imports).toContain(
+        "import _builtin_Callout from 'Callout';"
+      );
       expect(result.imports).toContain("import _builtin_Tabs from 'Tabs';");
-      expect(result.imports).toContain("import _builtin_Collapsible from 'Collapsible';");
+      expect(result.imports).toContain(
+        "import _builtin_Collapsible from 'Collapsible';"
+      );
       expect(result.componentsObject).toContain('Callout: _builtin_Callout');
       expect(result.componentsObject).toContain('Tabs: _builtin_Tabs');
     });
@@ -353,7 +368,7 @@ describe('PluginLoader', () => {
       // User's Callout should be used, not builtin
       expect(result.imports).toContain('_component_Callout');
       expect(result.imports).toContain('custom/Callout.tsx');
-      expect(result.imports).not.toContain("import _builtin_Callout");
+      expect(result.imports).not.toContain('import _builtin_Callout');
       // Other builtins should still be included
       expect(result.imports).toContain("import _builtin_Tabs from 'Tabs';");
     });
@@ -448,7 +463,10 @@ describe('PluginLoader', () => {
         configDir: '/workspace',
       };
 
-      const result = await loadPluginsFromConfig(config, Uri.file('/workspace/test.mdx'));
+      const result = await loadPluginsFromConfig(
+        config,
+        Uri.file('/workspace/test.mdx')
+      );
 
       // Should have errors but not throw
       expect(result.errors.length).toBeGreaterThan(0);

@@ -105,7 +105,10 @@ export class PreviewInitializer {
     customCssPath: string,
     onDependencyChange: (fsPath: string) => Promise<void>
   ): WatcherManager {
-    const watcherManager = this.createWatchers(customCssPath, onDependencyChange);
+    const watcherManager = this.createWatchers(
+      customCssPath,
+      onDependencyChange
+    );
     // Start asynchronously (fire-and-forget for backward compatibility)
     void watcherManager.startAll();
     return watcherManager;

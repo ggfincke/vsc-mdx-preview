@@ -22,24 +22,24 @@ describe('PackageJsonWatcher', () => {
     capturedListeners = {};
 
     // Override the createFileSystemWatcher mock to capture listeners
-    (workspace.createFileSystemWatcher as ReturnType<typeof vi.fn>).mockImplementation(
-      (pattern: string) => {
-        const mockWatcher = {
-          onDidChange: vi.fn((listener: (uri: any) => void) => {
-            if (pattern.includes('package.json')) {
-              capturedListeners.packageJson = listener;
-            } else {
-              capturedListeners.lockFile = listener;
-            }
-            return new Disposable(() => {});
-          }),
-          onDidCreate: vi.fn(() => new Disposable(() => {})),
-          onDidDelete: vi.fn(() => new Disposable(() => {})),
-          dispose: vi.fn(),
-        };
-        return mockWatcher;
-      }
-    );
+    (
+      workspace.createFileSystemWatcher as ReturnType<typeof vi.fn>
+    ).mockImplementation((pattern: string) => {
+      const mockWatcher = {
+        onDidChange: vi.fn((listener: (uri: any) => void) => {
+          if (pattern.includes('package.json')) {
+            capturedListeners.packageJson = listener;
+          } else {
+            capturedListeners.lockFile = listener;
+          }
+          return new Disposable(() => {});
+        }),
+        onDidCreate: vi.fn(() => new Disposable(() => {})),
+        onDidDelete: vi.fn(() => new Disposable(() => {})),
+        dispose: vi.fn(),
+      };
+      return mockWatcher;
+    });
 
     watcher = new PackageJsonWatcher();
     mockOnInvalidate = vi.fn();

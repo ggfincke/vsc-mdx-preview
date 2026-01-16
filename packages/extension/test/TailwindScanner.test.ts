@@ -984,9 +984,15 @@ describe('TailwindScanner', () => {
         // Add random delay to simulate non-deterministic I/O
         await new Promise((resolve) => setTimeout(resolve, Math.random() * 10));
         const pathStr = String(p);
-        if (pathStr.includes('comp-z')) {return 'className="zebra-class"';}
-        if (pathStr.includes('comp-a')) {return 'className="alpha-class"';}
-        if (pathStr.includes('comp-m')) {return 'className="middle-class"';}
+        if (pathStr.includes('comp-z')) {
+          return 'className="zebra-class"';
+        }
+        if (pathStr.includes('comp-a')) {
+          return 'className="alpha-class"';
+        }
+        if (pathStr.includes('comp-m')) {
+          return 'className="middle-class"';
+        }
         return '';
       });
 

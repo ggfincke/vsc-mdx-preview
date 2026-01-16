@@ -419,7 +419,7 @@ export const CONFIG_DEFAULTS: Record<string, unknown> = {
 
 // create a mock ConfigManager for use in tests
 export const createMockConfigManager = () => ({
-  get: (key: string, scope?: unknown) => {
+  get: (key: string, _scope?: unknown) => {
     const value = mockConfigValues[key];
     return value !== undefined ? value : CONFIG_DEFAULTS[key];
   },

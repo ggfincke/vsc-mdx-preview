@@ -26,7 +26,7 @@ vi.mock('../services', async (importOriginal) => {
   return {
     ...original,
     getConfigManager: () => ({
-      get: (key: string, scope?: unknown) => {
+      get: (key: string, _scope?: unknown) => {
         return __getMockConfig(key) ?? false;
       },
       set: vi.fn(),
@@ -51,7 +51,9 @@ describe('validateTrust', () => {
 
     // register TrustManager factory w/ ServiceRegistry
     const registry = ServiceRegistry.getInstance();
-    registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
+    registry.register(ServiceNames.TRUST_MANAGER, () =>
+      TrustManager.getInstance()
+    );
   });
 
   afterEach(() => {

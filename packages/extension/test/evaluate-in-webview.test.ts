@@ -78,7 +78,7 @@ vi.mock('../services', async (importOriginal) => {
   return {
     ...original,
     getConfigManager: () => ({
-      get: (key: string, scope?: unknown) => {
+      get: (key: string, _scope?: unknown) => {
         // Dynamically read from vscode mock's config store (set via __setMockConfig)
         const value = vscode.__getMockConfig(key);
         return value !== undefined ? value : vscode.CONFIG_DEFAULTS[key];
@@ -165,8 +165,12 @@ describe('evaluateInWebview', () => {
 
     // register services w/ ServiceRegistry
     const registry = ServiceRegistry.getInstance();
-    registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
-    registry.register(ServiceNames.ERROR_REPORTER, () => ErrorReporter.getInstance());
+    registry.register(ServiceNames.TRUST_MANAGER, () =>
+      TrustManager.getInstance()
+    );
+    registry.register(ServiceNames.ERROR_REPORTER, () =>
+      ErrorReporter.getInstance()
+    );
 
     mockPreview = createMockPreview();
   });

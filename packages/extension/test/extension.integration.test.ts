@@ -81,7 +81,9 @@ describe('Extension Integration', function () {
     test('theme selection commands are available', async function () {
       const allCommands = await vscode.commands.getCommands(true);
       expect(allCommands).toContain('mdx-preview.commands.selectPreviewTheme');
-      expect(allCommands).toContain('mdx-preview.commands.selectCodeBlockTheme');
+      expect(allCommands).toContain(
+        'mdx-preview.commands.selectCodeBlockTheme'
+      );
     });
 
     test('framework selection command is available', async function () {
@@ -92,7 +94,9 @@ describe('Extension Integration', function () {
     test('refreshModuleCache command executes without error', async function () {
       // This command should execute without throwing
       await expect(
-        vscode.commands.executeCommand('mdx-preview.commands.refreshModuleCache')
+        vscode.commands.executeCommand(
+          'mdx-preview.commands.refreshModuleCache'
+        )
       ).resolves.not.toThrow();
     });
 

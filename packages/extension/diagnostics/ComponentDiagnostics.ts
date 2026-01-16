@@ -77,9 +77,7 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
 
   // check if document is MDX
   private isMdxDocument(document: vscode.TextDocument): boolean {
-    return (
-      document.languageId === 'mdx' || document.fileName.endsWith('.mdx')
-    );
+    return document.languageId === 'mdx' || document.fileName.endsWith('.mdx');
   }
 
   // schedule diagnostic update with debounce

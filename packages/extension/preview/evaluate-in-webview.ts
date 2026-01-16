@@ -21,9 +21,7 @@ export default async function evaluateInWebview(
   const engine = getEvaluationEngine();
 
   // Use document-specific trust check (includes remote/scheme checks)
-  const trustState = getTrustManager().getStateForDocument(
-    preview.doc.uri
-  );
+  const trustState = getTrustManager().getStateForDocument(preview.doc.uri);
   debug(
     `[EVALUATE] Trust state: canExecute=${trustState.canExecute}, ` +
       `workspaceTrusted=${trustState.workspaceTrusted}, ` +

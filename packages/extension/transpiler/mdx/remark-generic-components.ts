@@ -14,16 +14,24 @@ import {
   transformCodeGroup,
 } from './transforms';
 
-const CALLOUT_COMPONENTS = new Set(['Callout', 'Alert', 'Admonition']);
-const COLLAPSIBLE_COMPONENTS = new Set(['Collapsible', 'Accordion', 'Details']);
-const TAB_COMPONENTS = new Set(['Tabs', 'TabItem', 'Tab']);
+// Use shared component registry as single source of truth
+import {
+  GENERIC_COMPONENTS,
+  getGenericComponentSet,
+} from '@mdx-preview/shared-types';
 
-export const KNOWN_GENERIC_COMPONENTS = new Set([
-  ...CALLOUT_COMPONENTS,
-  ...COLLAPSIBLE_COMPONENTS,
-  ...TAB_COMPONENTS,
-  'CodeGroup',
+// Derive component sets from the shared registry
+const CALLOUT_COMPONENTS = new Set([
+  'Callout',
+  ...GENERIC_COMPONENTS.Callout.aliases,
 ]);
+const COLLAPSIBLE_COMPONENTS = new Set([
+  'Collapsible',
+  ...GENERIC_COMPONENTS.Collapsible.aliases,
+]);
+
+// Export the full set of known generic components from the shared registry
+export const KNOWN_GENERIC_COMPONENTS = getGenericComponentSet();
 
 export interface RemarkGenericComponentsOptions {
   enabled?: boolean;

@@ -155,9 +155,7 @@ describe('formatUserError', () => {
       'bad-plugin'
     );
     const result = formatUserError(error);
-    expect(result).toBe(
-      "Plugin 'bad-plugin' does not export a valid function"
-    );
+    expect(result).toBe("Plugin 'bad-plugin' does not export a valid function");
   });
 });
 
@@ -254,7 +252,11 @@ describe('formatLogError', () => {
   });
 
   it('includes PluginError pluginName', () => {
-    const error = new PluginError('Load failed', 'PLUGIN_LOAD_ERROR', 'my-plugin');
+    const error = new PluginError(
+      'Load failed',
+      'PLUGIN_LOAD_ERROR',
+      'my-plugin'
+    );
     const result = formatLogError(error);
     expect(result.pluginName).toBe('my-plugin');
     expect(result.code).toBe('PLUGIN_LOAD_ERROR');

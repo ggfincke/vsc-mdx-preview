@@ -16,12 +16,6 @@ import {
 import { ExtensionHandle } from '../../rpc-webview';
 import './ErrorBoundary.css';
 
-interface ErrorDisplayProps {
-  error: Error;
-  onReset?: () => void;
-  title?: string;
-}
-
 // clickable stack trace component
 function ClickableStackTrace({ stack }: { stack: string }) {
   const frames = parseStackTrace(stack);
@@ -62,8 +56,16 @@ function ClickableStackTrace({ stack }: { stack: string }) {
   );
 }
 
-// error display component w/ VS Code styling
-function ErrorDisplay({
+// Error display props for external use
+export interface ErrorDisplayProps {
+  error: Error;
+  onReset?: () => void;
+  title?: string;
+}
+
+// Error display component w/ VS Code styling
+// Exported for reuse in App.tsx and other error handling contexts
+export function ErrorDisplay({
   error,
   onReset,
   title = 'Preview Error',

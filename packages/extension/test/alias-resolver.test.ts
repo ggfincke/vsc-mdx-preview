@@ -94,8 +94,9 @@ describe('alias-resolver', () => {
       });
 
       it('returns null for unsupported Starlight components', () => {
+        // Test with a component that is NOT in FRAMEWORK_COMPONENTS.starlight
         const result = resolveAlias(
-          '@astrojs/starlight/components/FileTree',
+          '@astrojs/starlight/components/UnsupportedWidget',
           'astro-starlight',
           '/workspace'
         );
@@ -306,22 +307,33 @@ describe('alias-resolver', () => {
       });
 
       it('returns null for unsupported Starlight components', () => {
+        // Test with a component that is NOT in FRAMEWORK_COMPONENTS.starlight
+        const result = resolveAlias(
+          '@astrojs/starlight/components/UnknownComponent',
+          'astro-starlight',
+          '/workspace'
+        );
+        expect(result).toBeNull();
+      });
+
+      it('resolves Code component', () => {
+        // Code IS in the supportedShims list (via FRAMEWORK_COMPONENTS.starlight)
         const result = resolveAlias(
           '@astrojs/starlight/components/Code',
           'astro-starlight',
           '/workspace'
         );
-        // Code is not in the supportedShims list
-        expect(result).toBeNull();
+        expect(result).toBe(`${SHIM_PREFIX}/starlight/Code`);
       });
 
-      it('returns null for FileTree component', () => {
+      it('resolves FileTree component', () => {
+        // FileTree IS in the supportedShims list (via FRAMEWORK_COMPONENTS.starlight)
         const result = resolveAlias(
           '@astrojs/starlight/components/FileTree',
           'astro-starlight',
           '/workspace'
         );
-        expect(result).toBeNull();
+        expect(result).toBe(`${SHIM_PREFIX}/starlight/FileTree`);
       });
     });
 

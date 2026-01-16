@@ -46,8 +46,14 @@ export class ThemeManager extends SingletonService<ThemeManager> {
   getThemeConfiguration(docUri?: vscode.Uri): ThemeConfiguration {
     const configManager = getConfigManager();
     return {
-      previewTheme: configManager.get('preview.previewTheme', docUri) as PreviewTheme,
-      codeBlockTheme: configManager.get('preview.codeBlockTheme', docUri) as CodeBlockTheme,
+      previewTheme: configManager.get(
+        'preview.previewTheme',
+        docUri
+      ) as PreviewTheme,
+      codeBlockTheme: configManager.get(
+        'preview.codeBlockTheme',
+        docUri
+      ) as CodeBlockTheme,
       autoTheme: configManager.get('preview.autoTheme', docUri),
     };
   }

@@ -136,25 +136,27 @@ export async function activate(
   // This MUST happen before any code that uses service locators (getPreviewManager, etc.)
   // order matters: services w/ no dependencies first, then dependent services
   const registry = ServiceRegistry.getInstance();
-  registry.register(ServiceNames.CONFIG_MANAGER, () => ConfigManager.getInstance());
+  registry.register(ServiceNames.CONFIG_MANAGER, () =>
+    ConfigManager.getInstance()
+  );
   registry.register(ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance());
-  registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
-  registry.register(ServiceNames.THEME_MANAGER, () => ThemeManager.getInstance());
-  registry.register(
-    ServiceNames.PREVIEW_MANAGER,
-    () => PreviewManager.getInstance()
+  registry.register(ServiceNames.TRUST_MANAGER, () =>
+    TrustManager.getInstance()
   );
-  registry.register(
-    ServiceNames.FRAMEWORK_DETECTOR,
-    () => FrameworkDetector.getInstance()
+  registry.register(ServiceNames.THEME_MANAGER, () =>
+    ThemeManager.getInstance()
   );
-  registry.register(
-    ServiceNames.TAILWIND_PROCESSOR,
-    () => TailwindProcessor.getInstance()
+  registry.register(ServiceNames.PREVIEW_MANAGER, () =>
+    PreviewManager.getInstance()
   );
-  registry.register(
-    ServiceNames.ERROR_REPORTER,
-    () => ErrorReporter.getInstance()
+  registry.register(ServiceNames.FRAMEWORK_DETECTOR, () =>
+    FrameworkDetector.getInstance()
+  );
+  registry.register(ServiceNames.TAILWIND_PROCESSOR, () =>
+    TailwindProcessor.getInstance()
+  );
+  registry.register(ServiceNames.ERROR_REPORTER, () =>
+    ErrorReporter.getInstance()
   );
   // OutputChannel wrapped for IService compatibility (uses shared channel from logging.ts)
   registry.register(ServiceNames.OUTPUT_CHANNEL, () => {
@@ -167,14 +169,12 @@ export async function activate(
     };
   });
   // StatusBarManager depends on TrustManager, FrameworkDetector, PreviewManager
-  registry.register(
-    ServiceNames.STATUS_BAR_MANAGER,
-    () => StatusBarManager.getInstance()
+  registry.register(ServiceNames.STATUS_BAR_MANAGER, () =>
+    StatusBarManager.getInstance()
   );
   // ComponentDiagnostics for unknown component warnings
-  registry.register(
-    ServiceNames.COMPONENT_DIAGNOSTICS,
-    () => ComponentDiagnostics.getInstance()
+  registry.register(ServiceNames.COMPONENT_DIAGNOSTICS, () =>
+    ComponentDiagnostics.getInstance()
   );
   debug('[ACTIVATE] Services registered');
 

@@ -4,7 +4,7 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { transformEntry } from '../module-fetcher/transform';
-import { extractImports } from '../module-fetcher/utils';
+import { extractImportSpecifiers } from '../module-fetcher/import-extractor';
 import { compileToSafeHTML } from '../transpiler/mdx/mdx-safe';
 import { debug } from '../logging';
 import { ErrorContext } from '../errors';
@@ -62,7 +62,7 @@ export class EvaluationEngine {
     const entryFilePath = await fs.promises.realpath(fsPath);
 
     // extract dependencies using shared utility (ESM-first w/ CJS fallback)
-    const dependencies = await extractImports(code);
+    const dependencies = await extractImportSpecifiers(code);
     debug(`[ENGINE] Dependencies: ${dependencies.join(', ')}`);
 
     return {
@@ -103,7 +103,10 @@ export class EvaluationEngine {
 
       const compilationTimeout = vscode.workspace
         .getConfiguration('mdx-preview.tailwind')
-        .get<number>('compilationTimeout', TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS);
+        .get<number>(
+          'compilationTimeout',
+          TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS
+        );
 
       const result = await this.withTimeout(
         getTailwindProcessor().process({
@@ -118,14 +121,11 @@ export class EvaluationEngine {
 
       if (result === null) {
         debug('[ENGINE/TAILWIND] Compilation timed out');
-        getErrorReporter().report(
-          new Error('Tailwind compilation timed out'),
-          {
-            context: ErrorContext.Tailwind,
-            showNotification: true,
-            metadata: { timeout: compilationTimeout },
-          }
-        );
+        getErrorReporter().report(new Error('Tailwind compilation timed out'), {
+          context: ErrorContext.Tailwind,
+          showNotification: true,
+          metadata: { timeout: compilationTimeout },
+        });
         return;
       }
 

@@ -90,10 +90,12 @@ export class FileScanValidator {
   ): Promise<Map<string, string>> {
     const results = new Map<string, string>();
 
-    const readPromises = fsPaths.map(async (fsPath): Promise<FileReadResult> => {
-      const content = await this.readFileIfValid(fsPath, maxBytes);
-      return { fsPath, content };
-    });
+    const readPromises = fsPaths.map(
+      async (fsPath): Promise<FileReadResult> => {
+        const content = await this.readFileIfValid(fsPath, maxBytes);
+        return { fsPath, content };
+      }
+    );
 
     const fileResults = await Promise.all(readPromises);
 

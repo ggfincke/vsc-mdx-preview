@@ -9,7 +9,6 @@ import {
   __setMockWorkspaceFolders,
   __resetMocks,
   __getMockConfig,
-  Uri,
   createMockTextDocument,
 } from './__mocks__/vscode';
 import { handleDidChangeWorkspaceFolders } from '../security/checkFsPath';
@@ -59,7 +58,11 @@ const resetTrustManager = (): void => {
 };
 
 // create a mock Preview object for testing
-function createMockPreview(uri: { scheme: string; fsPath: string; path?: string }): Preview {
+function createMockPreview(uri: {
+  scheme: string;
+  fsPath: string;
+  path?: string;
+}): Preview {
   const mockDoc = createMockTextDocument({
     getText: () => '# Test MDX',
   });
@@ -90,14 +93,14 @@ describe('ExtensionHandle.fetch trust gating', () => {
     vi.clearAllMocks();
 
     // set up workspace folders for path validation
-    __setMockWorkspaceFolders([
-      { uri: { fsPath: '/workspace' } },
-    ]);
+    __setMockWorkspaceFolders([{ uri: { fsPath: '/workspace' } }]);
     handleDidChangeWorkspaceFolders();
 
     // register TrustManager w/ ServiceRegistry
     const registry = ServiceRegistry.getInstance();
-    registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
+    registry.register(ServiceNames.TRUST_MANAGER, () =>
+      TrustManager.getInstance()
+    );
   });
 
   afterEach(() => {
@@ -122,7 +125,11 @@ describe('ExtensionHandle.fetch trust gating', () => {
     });
     const handle = new ExtensionHandle(preview);
 
-    const result = await handle.fetch('./component.tsx', false, '/remote/test.mdx');
+    const result = await handle.fetch(
+      './component.tsx',
+      false,
+      '/remote/test.mdx'
+    );
 
     expect(result).toBeUndefined();
     expect(mockLogWarn).toHaveBeenCalledWith(
@@ -160,7 +167,11 @@ describe('ExtensionHandle.fetch trust gating', () => {
     });
     const handle = new ExtensionHandle(preview);
 
-    const result = await handle.fetch('./component.tsx', false, '/local/test.mdx');
+    const result = await handle.fetch(
+      './component.tsx',
+      false,
+      '/local/test.mdx'
+    );
 
     expect(result).toBeUndefined();
     expect(mockLogWarn).toHaveBeenCalledWith(
@@ -179,7 +190,11 @@ describe('ExtensionHandle.fetch trust gating', () => {
     });
     const handle = new ExtensionHandle(preview);
 
-    const result = await handle.fetch('./component.tsx', false, '/local/test.mdx');
+    const result = await handle.fetch(
+      './component.tsx',
+      false,
+      '/local/test.mdx'
+    );
 
     expect(result).toBeUndefined();
     expect(mockLogWarn).toHaveBeenCalledWith(
@@ -205,7 +220,11 @@ describe('ExtensionHandle.fetch trust gating', () => {
     });
     const handle = new ExtensionHandle(preview);
 
-    const result = await handle.fetch('./component.tsx', false, '/workspace/src/test.mdx');
+    const result = await handle.fetch(
+      './component.tsx',
+      false,
+      '/workspace/src/test.mdx'
+    );
 
     // Should not be undefined (fetch was allowed)
     expect(result).toBeDefined();
@@ -235,7 +254,11 @@ describe('ExtensionHandle.fetch trust gating', () => {
     });
     const handle = new ExtensionHandle(preview);
 
-    const result = await handle.fetch('./component.tsx', false, '/workspace/src/test.mdx');
+    const result = await handle.fetch(
+      './component.tsx',
+      false,
+      '/workspace/src/test.mdx'
+    );
 
     // Should not be undefined (fetch was allowed)
     expect(result).toBeDefined();

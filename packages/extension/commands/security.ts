@@ -4,7 +4,11 @@
 import * as vscode from 'vscode';
 import { debug } from '../logging';
 import { selectSecurityPolicy } from '../security/security';
-import { getConfigManager, getTrustManager, getErrorReporter } from '../services';
+import {
+  getConfigManager,
+  getTrustManager,
+  getErrorReporter,
+} from '../services';
 import { ErrorContext } from '../errors';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from './types';
@@ -26,7 +30,8 @@ const toggleScripts = async (): Promise<void> => {
       [
         {
           label: 'Manage Trust',
-          action: () => vscode.commands.executeCommand('workbench.trust.manage'),
+          action: () =>
+            vscode.commands.executeCommand('workbench.trust.manage'),
         },
         { label: 'Cancel', action: () => {} },
       ]
@@ -49,6 +54,9 @@ const toggleScripts = async (): Promise<void> => {
 };
 
 export const commands: CommandDefinition[] = [
-  { id: CommandNames.CHANGE_SECURITY_SETTINGS, handler: changeSecuritySettings },
+  {
+    id: CommandNames.CHANGE_SECURITY_SETTINGS,
+    handler: changeSecuritySettings,
+  },
   { id: CommandNames.TOGGLE_SCRIPTS, handler: toggleScripts },
 ];

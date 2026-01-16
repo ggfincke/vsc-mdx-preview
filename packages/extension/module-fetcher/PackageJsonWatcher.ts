@@ -40,9 +40,7 @@ export class PackageJsonWatcher implements vscode.Disposable {
     );
 
     this.watcher.onDidChange((uri) => this.handleChange(uri, 'package.json'));
-    this.lockWatcher.onDidChange((uri) =>
-      this.handleChange(uri, 'lock file')
-    );
+    this.lockWatcher.onDidChange((uri) => this.handleChange(uri, 'lock file'));
 
     debug('[RESOLVER-WATCHER] Started watching package files');
   }

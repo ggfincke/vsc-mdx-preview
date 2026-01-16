@@ -93,7 +93,10 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
   // * main error reporting method
   // logs the error & optionally shows it to the user
-  report(error: Error | ExtensionError | unknown, options: ReportOptions): void {
+  report(
+    error: Error | ExtensionError | unknown,
+    options: ReportOptions
+  ): void {
     const normalizedError = this.normalizeError(error);
     const severity =
       options.severity ?? this.inferSeverity(normalizedError, options.context);
@@ -296,7 +299,10 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   }
 
   // determine if notification should be shown
-  private shouldNotify(severity: ErrorSeverity, options: ReportOptions): boolean {
+  private shouldNotify(
+    severity: ErrorSeverity,
+    options: ReportOptions
+  ): boolean {
     // explicit override
     if (options.showNotification !== undefined) {
       return options.showNotification;

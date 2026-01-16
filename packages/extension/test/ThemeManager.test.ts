@@ -46,7 +46,7 @@ vi.mock('vscode', () => ({
 // mock getConfigManager to use same config values
 vi.mock('../services', () => ({
   getConfigManager: () => ({
-    get: (key: string, scope?: unknown) => {
+    get: (key: string, _scope?: unknown) => {
       return mockConfigValues[key];
     },
     set: vi.fn(),

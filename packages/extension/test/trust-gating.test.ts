@@ -42,7 +42,9 @@ describe('TrustManager document-specific checks', () => {
 
     // register TrustManager w/ ServiceRegistry
     const registry = ServiceRegistry.getInstance();
-    registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
+    registry.register(ServiceNames.TRUST_MANAGER, () =>
+      TrustManager.getInstance()
+    );
   });
 
   afterEach(() => {
@@ -233,7 +235,9 @@ describe('TrustManager document-specific checks', () => {
         __setMockRemoteName(undefined);
 
         const manager = TrustManager.getInstance();
-        const result = manager.canUseTrustedMode(Uri.file('/workspace/test.mdx'));
+        const result = manager.canUseTrustedMode(
+          Uri.file('/workspace/test.mdx')
+        );
 
         expect(result.allowed).toBe(true);
         expect(result.reason).toBeUndefined();

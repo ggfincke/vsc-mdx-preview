@@ -30,7 +30,9 @@ This is a note.
 :::`;
       const html = await processMarkdown(input);
 
-      expect(html).toContain('class="mdx-preview-admonition mdx-preview-admonition-note"');
+      expect(html).toContain(
+        'class="mdx-preview-admonition mdx-preview-admonition-note"'
+      );
       expect(html).toContain('data-admonition-type="note"');
       expect(html).toContain('This is a note.');
     });

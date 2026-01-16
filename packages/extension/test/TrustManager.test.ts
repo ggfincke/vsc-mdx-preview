@@ -15,7 +15,7 @@ import { TrustManager } from '../security/TrustManager';
 // mock getConfigManager to use vscode mock's config store
 vi.mock('../services', () => ({
   getConfigManager: () => ({
-    get: (key: string, scope?: unknown) => {
+    get: (key: string, _scope?: unknown) => {
       return __getMockConfig(key) ?? false;
     },
     set: vi.fn(),

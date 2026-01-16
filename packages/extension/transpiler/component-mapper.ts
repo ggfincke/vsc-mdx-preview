@@ -7,6 +7,9 @@ import type { ResolvedConfig } from '../preview/config';
 import { SecurityMode } from '../security/TrustManager';
 import { getTrustManager } from '../services';
 
+// Use shared component registry as single source of truth
+import { getAllGenericComponentNames } from '@mdx-preview/shared-types';
+
 // result of generating component imports
 export interface ComponentImportsResult {
   // import statements to prepend to MDX
@@ -25,17 +28,8 @@ export interface ComponentImportsOptions {
 
 // built-in generic component names that can be auto-injected
 // these map directly to preloaded shims in the webview
-const BUILTIN_GENERIC_COMPONENTS = [
-  'Callout',
-  'Alert',
-  'Admonition',
-  'Collapsible',
-  'Accordion',
-  'Tabs',
-  'TabItem',
-  'Tab',
-  'CodeGroup',
-] as const;
+// Now derived from the shared component registry
+const BUILTIN_GENERIC_COMPONENTS = getAllGenericComponentNames();
 
 // generate import statements & components object for custom component mapping (only generates in Trusted Mode)
 export function generateComponentImports(

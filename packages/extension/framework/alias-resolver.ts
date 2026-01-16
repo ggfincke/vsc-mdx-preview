@@ -4,6 +4,9 @@
 import * as path from 'path';
 import type { Framework } from './FrameworkDetector';
 
+// Use shared component registry as single source of truth
+import { FRAMEWORK_COMPONENTS, SHIM_PREFIX } from '@mdx-preview/shared-types';
+
 // alias configuration for a framework
 export interface AliasConfig {
   // regex pattern to match import request
@@ -14,8 +17,8 @@ export interface AliasConfig {
   resolve: (match: RegExpMatchArray, workspaceRoot: string) => string | null;
 }
 
-// built-in shim module prefix
-export const SHIM_PREFIX = '@mdx-preview/shims';
+// Re-export SHIM_PREFIX for backwards compatibility
+export { SHIM_PREFIX };
 
 // get alias configurations for a framework
 export function getAliasesForFramework(framework: Framework): AliasConfig[] {
@@ -34,15 +37,16 @@ export function getAliasesForFramework(framework: Framework): AliasConfig[] {
 
 // Docusaurus aliases
 function getDocusaurusAliases(): AliasConfig[] {
+  // Use shared registry for supported components
+  const supportedShims = FRAMEWORK_COMPONENTS.docusaurus;
+
   return [
     // @theme/* -> built-in shims
     {
       pattern: /^@theme\/(.+)$/,
       resolve: (match) => {
         const componentName = match[1];
-        // supported shim components
-        const supportedShims = ['Tabs', 'TabItem', 'CodeBlock', 'Details'];
-        if (supportedShims.includes(componentName)) {
+        if ((supportedShims as readonly string[]).includes(componentName)) {
           return `${SHIM_PREFIX}/docusaurus/${componentName}`;
         }
         // unsupported components return null (will fail import)
@@ -67,6 +71,9 @@ function getDocusaurusAliases(): AliasConfig[] {
 
 // Astro Starlight aliases
 function getStarlightAliases(): AliasConfig[] {
+  // Use shared registry for supported components
+  const supportedShims = FRAMEWORK_COMPONENTS.starlight;
+
   return [
     // @astrojs/starlight/components -> all components from single import
     {
@@ -78,17 +85,7 @@ function getStarlightAliases(): AliasConfig[] {
       pattern: /^@astrojs\/starlight\/components\/(.+)$/,
       resolve: (match) => {
         const componentName = match[1];
-        const supportedShims = [
-          'Card',
-          'CardGrid',
-          'LinkCard',
-          'Tabs',
-          'TabItem',
-          'Steps',
-          'Badge',
-          'Aside',
-        ];
-        if (supportedShims.includes(componentName)) {
+        if ((supportedShims as readonly string[]).includes(componentName)) {
           return `${SHIM_PREFIX}/starlight/${componentName}`;
         }
         return null;

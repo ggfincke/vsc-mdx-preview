@@ -113,11 +113,16 @@ describe('StyleInjector', () => {
 
   describe('injectModuleCss', () => {
     it('creates style element with data-module-id attribute', () => {
-      StyleInjector.injectModuleCss('/path/to/module.css', '.module { color: red; }');
+      StyleInjector.injectModuleCss(
+        '/path/to/module.css',
+        '.module { color: red; }'
+      );
 
       const styles = document.querySelectorAll('style[data-module-id]');
       expect(styles.length).toBe(1);
-      expect(styles[0].getAttribute('data-module-id')).toBe('/path/to/module.css');
+      expect(styles[0].getAttribute('data-module-id')).toBe(
+        '/path/to/module.css'
+      );
       expect(styles[0].textContent).toBe('.module { color: red; }');
     });
 

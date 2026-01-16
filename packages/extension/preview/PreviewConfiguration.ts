@@ -47,10 +47,22 @@ export class PreviewConfiguration {
     this._configuration = {
       updateMode: configManager.get('preview.updateMode', docUri),
       debounceDelay,
-      useSucraseTranspiler: configManager.get('build.useSucraseTranspiler', docUri),
-      useVscodeMarkdownStyles: configManager.get('preview.useVscodeMarkdownStyles', docUri),
-      useWhiteBackground: configManager.get('preview.useWhiteBackground', docUri),
-      customLayoutFilePath: configManager.get('preview.mdx.customLayoutFilePath', docUri),
+      useSucraseTranspiler: configManager.get(
+        'build.useSucraseTranspiler',
+        docUri
+      ),
+      useVscodeMarkdownStyles: configManager.get(
+        'preview.useVscodeMarkdownStyles',
+        docUri
+      ),
+      useWhiteBackground: configManager.get(
+        'preview.useWhiteBackground',
+        docUri
+      ),
+      customLayoutFilePath: configManager.get(
+        'preview.mdx.customLayoutFilePath',
+        docUri
+      ),
       customCss: configManager.get('preview.customCss', docUri),
       securityPolicy: configManager.get('preview.security', docUri),
       tailwindEnabled: configManager.get('tailwind.enabled', docUri),
@@ -88,10 +100,22 @@ export class PreviewConfiguration {
 
     const updateMode = configManager.get('preview.updateMode', docUri);
     const debounceDelay = configManager.get('preview.debounceDelay', docUri);
-    const useSucraseTranspiler = configManager.get('build.useSucraseTranspiler', docUri);
-    const useVscodeMarkdownStyles = configManager.get('preview.useVscodeMarkdownStyles', docUri);
-    const useWhiteBackground = configManager.get('preview.useWhiteBackground', docUri);
-    const customLayoutFilePath = configManager.get('preview.mdx.customLayoutFilePath', docUri);
+    const useSucraseTranspiler = configManager.get(
+      'build.useSucraseTranspiler',
+      docUri
+    );
+    const useVscodeMarkdownStyles = configManager.get(
+      'preview.useVscodeMarkdownStyles',
+      docUri
+    );
+    const useWhiteBackground = configManager.get(
+      'preview.useWhiteBackground',
+      docUri
+    );
+    const customLayoutFilePath = configManager.get(
+      'preview.mdx.customLayoutFilePath',
+      docUri
+    );
     const customCss = configManager.get('preview.customCss', docUri);
     const securityPolicy = configManager.get('preview.security', docUri);
     const tailwindEnabled = configManager.get('tailwind.enabled', docUri);

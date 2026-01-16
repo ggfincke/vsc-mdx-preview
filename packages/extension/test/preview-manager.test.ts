@@ -83,7 +83,7 @@ vi.mock('../services', async (importOriginal) => {
   return {
     ...original,
     getConfigManager: () => ({
-      get: (key: string, scope?: unknown) => {
+      get: (key: string, _scope?: unknown) => {
         const defaults: Record<string, unknown> = {
           'preview.updateMode': 'onType',
           'preview.debounceDelay': 300,
@@ -234,7 +234,9 @@ describe('Preview', () => {
   beforeEach(() => {
     // Register ConfigCache service (required by ConfigResolver)
     const registry = ServiceRegistry.getInstance();
-    registry.register(ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance());
+    registry.register(ServiceNames.CONFIG_CACHE, () =>
+      ConfigCache.getInstance()
+    );
   });
 
   afterEach(() => {

@@ -71,7 +71,9 @@ export class ModuleRegistry {
 
     while (queue.length > 0) {
       const current = queue.shift()!;
-      if (invalidated.has(current)) {continue;}
+      if (invalidated.has(current)) {
+        continue;
+      }
 
       // delete from cache
       this.cache.delete(current);

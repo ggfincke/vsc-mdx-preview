@@ -225,7 +225,11 @@ export default function remarkAdmonitions() {
         );
 
         // replace the directive node w/ the admonition node
-        parent.children.splice(index, 1, admonitionNode as typeof parent.children[number]);
+        parent.children.splice(
+          index,
+          1,
+          admonitionNode as (typeof parent.children)[number]
+        );
       }
     );
   };

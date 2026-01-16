@@ -176,10 +176,19 @@ describe('EvaluationEngine', () => {
         mdxText: '# Test',
         entryFilePath: '/path/test.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, workspaceTrusted: true, scriptsEnabled: true },
+        trustState: {
+          canExecute: true,
+          workspaceTrusted: true,
+          scriptsEnabled: true,
+        },
       };
 
-      await engine.processTailwindAsync(mockPreview, params, 1, mockWebviewHandle);
+      await engine.processTailwindAsync(
+        mockPreview,
+        params,
+        1,
+        mockWebviewHandle
+      );
 
       expect(mockPreview.updateTailwindWatchFiles).toHaveBeenCalledWith([
         '/path/tailwind.config.js',
@@ -203,10 +212,19 @@ describe('EvaluationEngine', () => {
         mdxText: '# Test',
         entryFilePath: '/path/test.mdx',
         entryFileDependencies: [],
-        trustState: { canExecute: true, workspaceTrusted: true, scriptsEnabled: true },
+        trustState: {
+          canExecute: true,
+          workspaceTrusted: true,
+          scriptsEnabled: true,
+        },
       };
 
-      await engine.processTailwindAsync(mockPreview, params, 1, mockWebviewHandle);
+      await engine.processTailwindAsync(
+        mockPreview,
+        params,
+        1,
+        mockWebviewHandle
+      );
 
       expect(mockPreview.updateTailwindWatchFiles).not.toHaveBeenCalled();
       expect(mockWebviewHandle.setTailwindCss).not.toHaveBeenCalled();

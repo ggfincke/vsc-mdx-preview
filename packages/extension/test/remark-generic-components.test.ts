@@ -161,8 +161,7 @@ describe('remarkGenericComponents', () => {
     });
 
     it('should use summary prop as title fallback', async () => {
-      const mdx =
-        '<Collapsible summary="Summary text">Content</Collapsible>';
+      const mdx = '<Collapsible summary="Summary text">Content</Collapsible>';
       const html = await compileWithPlugin(mdx);
 
       expect(html).toContain('Summary text');
@@ -247,18 +246,23 @@ console.log('hello');
 
   describe('HTML escaping', () => {
     it('should escape title with special characters', async () => {
-      const mdx = '<Callout title="<script>alert(1)</script>">Content</Callout>';
+      const mdx =
+        '<Callout title="<script>alert(1)</script>">Content</Callout>';
       const html = await compileWithPlugin(mdx);
 
       // should be escaped, not rendered as script tag
       expect(html).not.toContain('<script>');
       // rehype-stringify double-encodes, so &lt; becomes &#x26;lt;
       // either form is acceptable as long as script tag is not executable
-      expect(html.includes('&lt;script&gt;') || html.includes('&#x26;lt;script&#x26;gt;')).toBe(true);
+      expect(
+        html.includes('&lt;script&gt;') ||
+          html.includes('&#x26;lt;script&#x26;gt;')
+      ).toBe(true);
     });
 
     it('should escape Collapsible title with special characters', async () => {
-      const mdx = '<Collapsible title="Test & <b>bold</b>">Content</Collapsible>';
+      const mdx =
+        '<Collapsible title="Test & <b>bold</b>">Content</Collapsible>';
       const html = await compileWithPlugin(mdx);
 
       // check that special characters are escaped (may be double-encoded)

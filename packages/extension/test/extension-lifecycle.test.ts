@@ -9,9 +9,7 @@ import {
   __triggerTrustChange,
   __triggerConfigChange,
   __getMockConfig,
-  workspace,
   window,
-  commands,
 } from './__mocks__/vscode';
 import { ServiceRegistry } from '../services/ServiceRegistry';
 import { ServiceNames } from '../services/service-names';
@@ -209,7 +207,8 @@ describe.skip('extension lifecycle', () => {
     });
 
     test('initializes webview HTML resources', async () => {
-      const { initWebviewAppHTMLResources } = await import('../preview/webview-manager');
+      const { initWebviewAppHTMLResources } =
+        await import('../preview/webview-manager');
       const { activate } = await import('../extension');
 
       await activate(mockContext);
@@ -238,7 +237,8 @@ describe.skip('extension lifecycle', () => {
     });
 
     test('starts PackageJsonWatcher', async () => {
-      const { PackageJsonWatcher } = await import('../module-fetcher/PackageJsonWatcher');
+      const { PackageJsonWatcher } =
+        await import('../module-fetcher/PackageJsonWatcher');
       const { activate } = await import('../extension');
 
       await activate(mockContext);
@@ -275,7 +275,8 @@ describe.skip('extension lifecycle', () => {
 
   describe('deactivate', () => {
     test('clears resolver cache', async () => {
-      const { clearResolverCache } = await import('../module-fetcher/resolver-factory');
+      const { clearResolverCache } =
+        await import('../module-fetcher/resolver-factory');
       const { activate, deactivate } = await import('../extension');
 
       await activate(mockContext);
@@ -305,8 +306,10 @@ describe.skip('extension lifecycle', () => {
 
       // showInformationMessage should not be called for safe mode notification
       // in trusted workspace
-      const safeModeCallCount = (window.showInformationMessage as any).mock.calls.filter(
-        (call: any[]) => call[0]?.includes('Safe Mode')
+      const safeModeCallCount = (
+        window.showInformationMessage as any
+      ).mock.calls.filter((call: any[]) =>
+        call[0]?.includes('Safe Mode')
       ).length;
 
       expect(safeModeCallCount).toBe(0);

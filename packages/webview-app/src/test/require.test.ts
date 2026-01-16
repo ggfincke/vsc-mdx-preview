@@ -243,7 +243,11 @@ describe('createSyncRequire', () => {
         exports: resolvedExports,
         loaded: true,
       });
-      registry.setResolution('/parent.js', 'my-module', '/resolved/my-module.js');
+      registry.setResolution(
+        '/parent.js',
+        'my-module',
+        '/resolved/my-module.js'
+      );
 
       const require = createSyncRequire('/parent.js');
       // Direct cache should win
@@ -260,7 +264,11 @@ describe('createSyncRequire', () => {
         exports: resolvedExports,
         loaded: true,
       });
-      registry.setResolution('/parent.js', 'module-name', '/resolved/module.js');
+      registry.setResolution(
+        '/parent.js',
+        'module-name',
+        '/resolved/module.js'
+      );
       registry.set('npm://module-name@latest', {
         id: 'npm://module-name@latest',
         exports: npmExports,

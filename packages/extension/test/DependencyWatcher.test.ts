@@ -21,30 +21,6 @@ describe('DependencyWatcher', () => {
   let watcher: DependencyWatcher;
   let onChangeCallback: ReturnType<typeof vi.fn>;
 
-  // helper to configure mock for a specific specifier
-  function mockSpecifier(
-    specifier: string,
-    shouldResolve: boolean,
-    isRelative: boolean,
-    resolvedPath: string | null
-  ) {
-    mockShouldResolve.mockImplementation((s: string) => {
-      if (s === specifier) return shouldResolve;
-      // default behavior for other specifiers
-      return s && !s.startsWith('http') && !s.startsWith('npm://');
-    });
-    mockIsRelativeImport.mockImplementation((s: string) => {
-      if (s === specifier) return isRelative;
-      return s?.startsWith('./') || s?.startsWith('../');
-    });
-    mockResolveSync.mockImplementation((s: string) => {
-      if (s === specifier && resolvedPath) {
-        return { fsPath: resolvedPath, isBuiltInShim: false, specifier: s };
-      }
-      return null;
-    });
-  }
-
   // helper to configure mock for multiple relative imports that resolve
   function mockRelativeImports(specifiers: string[]) {
     mockShouldResolve.mockImplementation((s: string) => {
@@ -55,7 +31,11 @@ describe('DependencyWatcher', () => {
     });
     mockResolveSync.mockImplementation((s: string) => {
       if (specifiers.includes(s)) {
-        return { fsPath: `/workspace/src/${s.replace(/^\.\//, '')}`, isBuiltInShim: false, specifier: s };
+        return {
+          fsPath: `/workspace/src/${s.replace(/^\.\//, '')}`,
+          isBuiltInShim: false,
+          specifier: s,
+        };
       }
       return null;
     });

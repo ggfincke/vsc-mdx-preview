@@ -222,7 +222,8 @@ function validateConfig(config: unknown): string[] {
       (v, key) =>
         typeof v === 'string'
           ? v
-          : (collectError(`components.${key} must be a string path`), undefined),
+          : (collectError(`components.${key} must be a string path`),
+            undefined),
       opts
     );
   }
@@ -239,11 +240,19 @@ function validateConfig(config: unknown): string[] {
 
   // validate frameworkOptions
   if (cfg.frameworkOptions !== undefined) {
-    const fOpts = validateObject(cfg.frameworkOptions, 'frameworkOptions', opts);
+    const fOpts = validateObject(
+      cfg.frameworkOptions,
+      'frameworkOptions',
+      opts
+    );
     if (fOpts) {
       // validate enableShims
       if (fOpts.enableShims !== undefined) {
-        validateBoolean(fOpts.enableShims, 'frameworkOptions.enableShims', opts);
+        validateBoolean(
+          fOpts.enableShims,
+          'frameworkOptions.enableShims',
+          opts
+        );
       }
 
       // validate customAliases

@@ -10,7 +10,10 @@ import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import type { Root, Parent, RootContent } from 'mdast';
 import { extractFrontmatter } from './mdx-common';
-import { getSafeRemarkPlugins, getSafeRehypePluginSets } from './plugin-builder';
+import {
+  getSafeRemarkPlugins,
+  getSafeRehypePluginSets,
+} from './plugin-builder';
 import { warn } from '../../logging';
 import type { ResolvedConfig } from '../../preview/config';
 import remarkGenericComponents, {

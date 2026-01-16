@@ -91,7 +91,9 @@ export function validateUrl(
   opts?: ValidationOptions & { allowedSchemes?: string[] }
 ): URL | undefined {
   const str = validateString(value, name, opts);
-  if (str === undefined) {return undefined;}
+  if (str === undefined) {
+    return undefined;
+  }
 
   const log = opts?.log ?? logWarn;
   const ctx = opts?.context ? `${opts.context}: ` : '';

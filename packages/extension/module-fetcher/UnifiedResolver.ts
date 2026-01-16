@@ -51,7 +51,8 @@ export class UnifiedResolver {
   // check if specifier should be resolved (not a URL or npm: protocol)
   shouldResolve(specifier: string): boolean {
     if (!specifier) return false;
-    if (specifier.startsWith('http://') || specifier.startsWith('https://')) return false;
+    if (specifier.startsWith('http://') || specifier.startsWith('https://'))
+      return false;
     if (specifier.startsWith('npm://')) return false;
     return true;
   }
@@ -80,11 +81,15 @@ export class UnifiedResolver {
 
       if (aliasedPath !== null) {
         if (isBuiltInShim(aliasedPath)) {
-          debug(`[UNIFIED-RESOLVER] Framework shim: ${specifier} -> ${aliasedPath}`);
+          debug(
+            `[UNIFIED-RESOLVER] Framework shim: ${specifier} -> ${aliasedPath}`
+          );
           return { fsPath: aliasedPath, isBuiltInShim: true, specifier };
         }
         // alias resolved to a path - continue with that path
-        debug(`[UNIFIED-RESOLVER] Framework alias: ${specifier} -> ${aliasedPath}`);
+        debug(
+          `[UNIFIED-RESOLVER] Framework alias: ${specifier} -> ${aliasedPath}`
+        );
         specifier = aliasedPath;
       }
     }
@@ -100,11 +105,14 @@ export class UnifiedResolver {
 
     // Step 3: enhanced-resolve (for node_modules)
     if (!this.isRelativeImport(specifier)) {
-      const resolver = mode === 'node' ? this.nodeResolver : this.browserResolver;
+      const resolver =
+        mode === 'node' ? this.nodeResolver : this.browserResolver;
       try {
         const resolved = resolver.resolveSync({}, context.baseDir, specifier);
         if (resolved) {
-          debug(`[UNIFIED-RESOLVER] enhanced-resolve: ${specifier} -> ${resolved}`);
+          debug(
+            `[UNIFIED-RESOLVER] enhanced-resolve: ${specifier} -> ${resolved}`
+          );
           return { fsPath: resolved, isBuiltInShim: false, specifier };
         }
       } catch {
@@ -121,7 +129,9 @@ export class UnifiedResolver {
       }
     }
 
-    debug(`[UNIFIED-RESOLVER] Could not resolve: ${specifier} from ${context.baseDir}`);
+    debug(
+      `[UNIFIED-RESOLVER] Could not resolve: ${specifier} from ${context.baseDir}`
+    );
     return null;
   }
 

@@ -10,7 +10,7 @@ import {
   MouseEvent,
 } from 'react';
 import LoadingBar from './components/LoadingBar/LoadingBar';
-import { MDXErrorBoundary } from './components/ErrorBoundary';
+import { MDXErrorBoundary, ErrorDisplay } from './components/ErrorBoundary';
 import { TrustBanner } from './components/TrustBanner/TrustBanner';
 import { StaleIndicator } from './components/StaleIndicator';
 import { SafePreviewRenderer } from './SafePreview';
@@ -314,27 +314,21 @@ function App() {
     return <LoadingBar />;
   }
 
-  // show error state
+  // show error state (use unified ErrorDisplay component)
   if (error) {
     debug('[APP] Rendering error state');
+    // Convert PreviewError to Error for ErrorDisplay
+    const errorObj = new Error(error.message);
+    if (error.stack) {
+      errorObj.stack = error.stack;
+    }
     return (
       <div className="mdx-preview-container">
-        <div className="mdx-preview-error">
-          <div className="mdx-preview-error-header">
-            <span className="mdx-preview-error-icon">!</span>
-            <h2>Preview Error</h2>
-          </div>
-          <pre className="mdx-preview-error-message">{error.message}</pre>
-          {error.stack && (
-            <details>
-              <summary>Stack Trace</summary>
-              <pre className="mdx-preview-error-stack">{error.stack}</pre>
-            </details>
-          )}
-          <button onClick={clearError} className="mdx-preview-retry-button">
-            Dismiss
-          </button>
-        </div>
+        <ErrorDisplay
+          error={errorObj}
+          onReset={clearError}
+          title="Preview Error"
+        />
       </div>
     );
   }

@@ -309,8 +309,12 @@ describe('ExtensionHandle', () => {
       // Configure mock to return untrusted state
       mockGetTrustManager.mockReturnValue({
         getState: () => createMockTrustState(false),
-        getStateForDocument: () => createMockTrustState(false, 'Workspace not trusted'),
-        canUseTrustedMode: () => ({ allowed: false, reason: 'Workspace not trusted' }),
+        getStateForDocument: () =>
+          createMockTrustState(false, 'Workspace not trusted'),
+        canUseTrustedMode: () => ({
+          allowed: false,
+          reason: 'Workspace not trusted',
+        }),
         subscribe: vi.fn(() => ({ dispose: vi.fn() })),
         dispose: vi.fn(),
       });
@@ -324,8 +328,12 @@ describe('ExtensionHandle', () => {
       // Configure mock to return scripts disabled state
       mockGetTrustManager.mockReturnValue({
         getState: () => createMockTrustState(false),
-        getStateForDocument: () => createMockTrustState(false, 'Scripts disabled'),
-        canUseTrustedMode: () => ({ allowed: false, reason: 'Scripts disabled' }),
+        getStateForDocument: () =>
+          createMockTrustState(false, 'Scripts disabled'),
+        canUseTrustedMode: () => ({
+          allowed: false,
+          reason: 'Scripts disabled',
+        }),
         subscribe: vi.fn(() => ({ dispose: vi.fn() })),
         dispose: vi.fn(),
       });

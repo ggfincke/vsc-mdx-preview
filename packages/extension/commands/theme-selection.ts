@@ -19,7 +19,9 @@ const selectPreviewTheme = async (): Promise<void> => {
   debug('[CMD] selectPreviewTheme command triggered');
 
   const configManager = getConfigManager();
-  const currentTheme = configManager.get('preview.previewTheme') as PreviewTheme;
+  const currentTheme = configManager.get(
+    'preview.previewTheme'
+  ) as PreviewTheme;
 
   const items = PREVIEW_THEMES.map((theme) => ({
     label: PREVIEW_THEME_LABELS[theme],
@@ -47,7 +49,9 @@ const selectCodeBlockTheme = async (): Promise<void> => {
   debug('[CMD] selectCodeBlockTheme command triggered');
 
   const configManager = getConfigManager();
-  const currentTheme = configManager.get('preview.codeBlockTheme') as CodeBlockTheme;
+  const currentTheme = configManager.get(
+    'preview.codeBlockTheme'
+  ) as CodeBlockTheme;
 
   const items = CODE_BLOCK_THEMES.map((theme) => ({
     label: CODE_BLOCK_THEME_LABELS[theme],

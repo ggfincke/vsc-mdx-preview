@@ -7,7 +7,7 @@ import { compileToSafeHTML } from '../transpiler/mdx/mdx-safe';
 // mock getConfigManager to provide default config values
 vi.mock('../services', () => ({
   getConfigManager: () => ({
-    get: (key: string, scope?: unknown) => {
+    get: (key: string, _scope?: unknown) => {
       const defaults: Record<string, unknown> = {
         'components.builtins': true,
         'components.unknownBehavior': 'placeholder',

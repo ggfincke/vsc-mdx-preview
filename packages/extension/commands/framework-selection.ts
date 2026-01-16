@@ -3,7 +3,11 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
-import { getConfigManager, getFrameworkDetector, getPreviewManager } from '../services';
+import {
+  getConfigManager,
+  getFrameworkDetector,
+  getPreviewManager,
+} from '../services';
 import type { Framework } from '../framework';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from './types';
@@ -69,7 +73,12 @@ const selectFramework = async (): Promise<void> => {
   if (selected) {
     await configManager.set(
       'framework',
-      selected.value as 'auto' | 'generic' | 'docusaurus' | 'nextjs' | 'astro-starlight',
+      selected.value as
+        | 'auto'
+        | 'generic'
+        | 'docusaurus'
+        | 'nextjs'
+        | 'astro-starlight',
       vscode.ConfigurationTarget.Workspace
     );
 
