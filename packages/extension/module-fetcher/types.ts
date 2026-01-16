@@ -1,0 +1,64 @@
+// packages/extension/module-fetcher/types.ts
+// consolidated type definitions for the module-fetcher subsystem
+
+import type * as typescript from 'typescript';
+import type { Framework } from '../framework/FrameworkDetector';
+
+// re-export shared types
+export type { FetchResult } from '@mdx-preview/shared-types';
+export type { Framework };
+
+// TypeScript configuration for module resolution (compiler options & host)
+export interface TypeScriptConfiguration {
+  tsCompilerOptions: typescript.CompilerOptions;
+  tsCompilerHost: typescript.CompilerHost;
+}
+
+// context for resolving imports
+export interface ResolutionContext {
+  // base directory for relative imports
+  baseDir: string;
+  // TypeScript configuration (optional)
+  tsConfig?: TypeScriptConfiguration;
+  // detected framework (optional)
+  framework?: Framework;
+  // workspace root (optional, for alias resolution)
+  workspaceRoot?: string;
+  // whether framework shims are enabled
+  shimsEnabled?: boolean;
+}
+
+// result of a successful resolution
+export interface ResolutionResult {
+  // absolute filesystem path
+  fsPath: string;
+  // true if this resolved to a built-in shim (webview has it preloaded)
+  isBuiltInShim: boolean;
+  // original import specifier
+  specifier: string;
+}
+
+// resolution mode for different contexts
+export type ResolutionMode = 'browser' | 'node' | 'dependency';
+
+// resolver mode (browser or node conditions)
+export type ResolverMode = 'browser' | 'node';
+
+// options for resolving imports
+export interface ResolveImportOptions {
+  baseDir: string;
+  extensions?: string[];
+}
+
+// result of transforming a module entry
+export interface TransformEntryResult {
+  code: string;
+  dependencies: string[];
+  css?: string;
+}
+
+// handler for specific file types
+export interface FileTypeHandler {
+  extensions: string[];
+  transform(content: string, filePath: string): Promise<TransformEntryResult>;
+}

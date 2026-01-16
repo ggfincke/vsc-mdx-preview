@@ -5,7 +5,7 @@ import type { FetchResult } from '@mdx-preview/shared-types';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { transform } from '../transform';
-import { extractImports } from '../utils';
+import { extractImports } from '../import-extractor';
 
 // handler for JavaScript/TypeScript files - delegates transpilation to transform.ts & extracts dependencies
 export class ScriptHandler implements FileTypeHandler {

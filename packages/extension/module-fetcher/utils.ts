@@ -1,8 +1,6 @@
 // packages/extension/module-fetcher/utils.ts
 // shared utilities for module fetching & resolution
 
-import { init as initLexer, parse as parseImports } from 'es-module-lexer';
-
 // noop module for core/unshimmable modules (CommonJS export format)
 export const NOOP_MODULE = `Object.defineProperty(exports, '__esModule', { value: true });
   function noop() {}
@@ -69,45 +67,8 @@ export function isCoreModule(request: string): boolean {
   return ALL_CORE_MODULES.has(normalized);
 }
 
-// lazy lexer initialization
-let lexerInitialized = false;
-
-// ensure es-module-lexer is initialized before parsing (safe to call multiple times - only initializes once)
-async function ensureLexerInitialized(): Promise<void> {
-  if (!lexerInitialized) {
-    await initLexer;
-    lexerInitialized = true;
-  }
-}
-
-// extract import specifiers from code using es-module-lexer (ESM-first)
-// falls back to regex for CJS require() calls if ESM returns empty or parsing fails
-export async function extractImports(code: string): Promise<string[]> {
-  await ensureLexerInitialized();
-
-  try {
-    const [imports] = parseImports(code);
-    const esmImports = imports
-      .map((imp) => imp.n)
-      .filter((name): name is string => name !== undefined && name !== null);
-
-    // ESM lexer returns empty for CJS code, so also try regex fallback
-    if (esmImports.length === 0) {
-      const requireMatches = code.matchAll(
-        /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g
-      );
-      return Array.from(requireMatches, (m) => m[1]);
-    }
-
-    return esmImports;
-  } catch {
-    // fallback for code that can't be parsed (e.g., CJS) - extract require() calls
-    const requireMatches = code.matchAll(
-      /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g
-    );
-    return Array.from(requireMatches, (m) => m[1]);
-  }
-}
+// NOTE: extractImports has been moved to import-extractor.ts
+// Import from there instead: import { extractImports } from './import-extractor';
 
 // build a noop result for core modules that can't be shimmed
 export function buildNoopResult(normalizedRequest: string) {

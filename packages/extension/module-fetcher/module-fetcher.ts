@@ -3,7 +3,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as typescript from 'typescript';
 import { Preview } from '../preview/preview-manager';
 import { checkFsPath } from '../security/checkFsPath';
 import {
@@ -14,10 +13,9 @@ import {
 import { getErrorReporter, getFrameworkDetector } from '../services';
 import { debug } from '../logging';
 import type { FetchResult } from '@mdx-preview/shared-types';
-import { resolveAlias, isBuiltInShim } from '../framework';
 
 // import from extracted modules
-import { getBrowserResolver } from './resolver-factory';
+import { getUnifiedResolver, type ResolutionContext } from './UnifiedResolver';
 import {
   normalizeNodePrefix,
   isCoreModule,
@@ -27,23 +25,6 @@ import {
 import { handleByExtension } from './handlers';
 
 export type { FetchResult } from '@mdx-preview/shared-types';
-
-// get shared browser resolver instance
-const browserResolver = getBrowserResolver();
-
-// resolve module using enhanced-resolve w/ browser-aware resolution
-function resolveModule(request: string, basedir: string): string {
-  const resolved = browserResolver.resolveSync({}, basedir, request);
-  if (resolved === false || resolved === undefined) {
-    throw new ModuleFetchError(
-      `Cannot resolve module: ${request} from ${basedir}`,
-      'MODULE_NOT_FOUND',
-      request,
-      basedir
-    );
-  }
-  return resolved;
-}
 
 export async function fetchLocal(
   request: string,
@@ -67,70 +48,43 @@ export async function fetchLocal(
       return buildNoopResult(normalizedRequest);
     }
 
-    // check for framework-specific import aliases (e.g., @theme/Tabs, @astrojs/starlight/components)
+    // build resolution context for UnifiedResolver
     const frameworkDetector = getFrameworkDetector();
     const frameworkInfo = frameworkDetector.getFramework(preview.doc.uri);
-    const workspaceRoot = preview.entryFsDirectory;
+    const shimsEnabled = frameworkDetector.areShimsEnabled(preview.doc.uri);
 
-    if (isBare && frameworkDetector.areShimsEnabled(preview.doc.uri)) {
-      const aliasedPath = resolveAlias(
+    const resolutionContext: ResolutionContext = {
+      baseDir: path.dirname(parentId),
+      tsConfig: preview.typescriptConfiguration,
+      framework: frameworkInfo.framework,
+      workspaceRoot: entryFsDirectory,
+      shimsEnabled,
+    };
+
+    // use UnifiedResolver for all resolution (framework aliases, TypeScript, enhanced-resolve)
+    const resolver = getUnifiedResolver();
+    const resolution = resolver.resolveSync(request, resolutionContext, 'browser');
+
+    if (!resolution) {
+      throw new ModuleFetchError(
+        `Cannot resolve module: ${request} from ${resolutionContext.baseDir}`,
+        'MODULE_NOT_FOUND',
         request,
-        frameworkInfo.framework,
-        workspaceRoot
+        resolutionContext.baseDir
       );
-
-      if (aliasedPath !== null) {
-        // if it's a built-in shim, return a special result that webview will handle
-        if (isBuiltInShim(aliasedPath)) {
-          debug(
-            `[MODULE-FETCHER] Resolved framework alias: ${request} -> ${aliasedPath}`
-          );
-          // return empty result - webview has this preloaded
-          // empty code - webview module loader handles this via preloaded aliases
-          return {
-            fsPath: aliasedPath,
-            code: '',
-            dependencies: [],
-          };
-        }
-
-        // otherwise, resolve the aliased path (e.g., @site/components -> workspace path)
-        debug(
-          `[MODULE-FETCHER] Resolved path alias: ${request} -> ${aliasedPath}`
-        );
-        request = aliasedPath;
-      }
     }
 
-    let fsPath: string | null = null;
-
-    // try TypeScript resolution first (if available & not in node_modules)
-    if (
-      preview.typescriptConfiguration &&
-      !parentId.split(path.sep).includes('node_modules')
-    ) {
-      const { tsCompilerOptions, tsCompilerHost } =
-        preview.typescriptConfiguration;
-      const resolvedModule = typescript.resolveModuleName(
-        request,
-        parentId,
-        tsCompilerOptions,
-        tsCompilerHost
-      ).resolvedModule;
-      if (resolvedModule) {
-        fsPath = resolvedModule.resolvedFileName;
-        // don't resolve .d.ts file w/ tsCompilerHost
-        if (fsPath.endsWith('.d.ts')) {
-          fsPath = null;
-        }
-      }
+    // if it's a built-in shim, return empty result (webview has this preloaded)
+    if (resolution.isBuiltInShim) {
+      debug(`[MODULE-FETCHER] Built-in shim: ${request} -> ${resolution.fsPath}`);
+      return {
+        fsPath: resolution.fsPath,
+        code: '',
+        dependencies: [],
+      };
     }
 
-    // fallback to modern resolver w/ ESM exports support
-    if (!fsPath) {
-      const basedir = path.dirname(parentId);
-      fsPath = resolveModule(request, basedir);
-    }
+    let fsPath = resolution.fsPath;
 
     if (!checkFsPath(entryFsDirectory, fsPath)) {
       // fallback check for core modules that resolved to paths outside allowed directories
