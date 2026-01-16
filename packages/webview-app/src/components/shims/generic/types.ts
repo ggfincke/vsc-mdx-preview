@@ -37,7 +37,9 @@ export interface CodeGroupProps {
 
 // normalize callout type (handle aliases)
 export function normalizeCalloutType(type: string | undefined): CalloutType {
-  if (!type) {return 'note';}
+  if (!type) {
+    return 'note';
+  }
 
   const normalized = type.toLowerCase();
 

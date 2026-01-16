@@ -12,6 +12,13 @@ export {
 } from './useTabState';
 
 export {
+  createTabs,
+  type BaseTabsConfig,
+  type BaseTabsProps,
+  type CreateTabsResult,
+} from './BaseTabs';
+
+export {
   BaseCard,
   CardHeader,
   ArrowIcon,
