@@ -132,6 +132,13 @@
         }
       },
       "additionalProperties": false
+    },
+    "unknownBehavior": {
+      "type": "string",
+      "enum": ["strip", "placeholder", "raw"],
+      "default": "placeholder",
+      "description": "How to handle unknown JSX components in Safe Mode. 'strip' removes entirely, 'placeholder' shows a styled box with name and children, 'raw' renders children without wrapper.",
+      "examples": ["placeholder", "strip", "raw"]
     }
   },
   "additionalProperties": false

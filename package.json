@@ -477,6 +477,28 @@
           "default": true,
           "markdownDescription": "Enable framework component shims (Tabs, Cards, etc.) in Trusted Mode. Provides preview-compatible versions of framework-specific components.",
           "scope": "resource"
+        },
+        "mdx-preview.components.builtins": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Enable built-in generic component shims (Callout, Alert, Tabs, etc.) for common MDX patterns. These provide styled versions of components without requiring user code.",
+          "scope": "resource"
+        },
+        "mdx-preview.components.unknownBehavior": {
+          "type": "string",
+          "enum": [
+            "strip",
+            "placeholder",
+            "raw"
+          ],
+          "default": "placeholder",
+          "enumDescriptions": [
+            "Remove the component entirely",
+            "Show a placeholder box with component name and children",
+            "Remove the wrapper but render children inline"
+          ],
+          "markdownDescription": "How to handle unknown JSX components that cannot be rendered. In Safe Mode, unknown components are always handled according to this setting.",
+          "scope": "resource"
         }
       }
     },
