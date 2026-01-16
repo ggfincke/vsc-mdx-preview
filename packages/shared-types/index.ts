@@ -1,6 +1,32 @@
 // packages/shared-types/index.ts
 // shared type definitions for extension & webview packages
 
+// Component registry - single source of truth for all component definitions
+export {
+  // Core registries
+  GENERIC_COMPONENTS,
+  FRAMEWORK_COMPONENTS,
+  SHIM_PREFIX,
+  FRAMEWORK_IMPORT_PATTERNS,
+  // Types
+  type GenericComponentName,
+  type GenericComponentAlias,
+  type Framework,
+  type DocusaurusComponent,
+  type StarlightComponent,
+  type NextjsComponent,
+  // Helper functions
+  getAllGenericComponentNames,
+  getGenericComponentSet,
+  getPrimaryGenericComponentNames,
+  getCanonicalComponentName,
+  getFrameworkComponents,
+  isGenericComponent,
+  isFrameworkComponent,
+  getGenericShimPath,
+  getFrameworkShimPath,
+} from './components';
+
 // result of fetching a module via RPC
 export interface FetchResult {
   fsPath: string;
