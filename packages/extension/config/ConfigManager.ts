@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
-import type { IService } from '../services/types';
+import { SingletonService } from '../services/SingletonService';
 import { SecurityPolicy } from '../security/security';
 import { PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS } from '../constants';
 
@@ -23,7 +23,9 @@ export type SettingKey =
   | 'build.useSucraseTranspiler'
   | 'tailwind.enabled'
   | 'framework'
-  | 'framework.componentShims';
+  | 'framework.componentShims'
+  | 'components.builtins'
+  | 'components.unknownBehavior';
 
 // Type mapping for settings
 export interface SettingTypes {
@@ -42,6 +44,8 @@ export interface SettingTypes {
   'tailwind.enabled': 'auto' | 'enabled' | 'disabled';
   framework: 'auto' | 'generic' | 'docusaurus' | 'nextjs' | 'astro-starlight';
   'framework.componentShims': boolean;
+  'components.builtins': boolean;
+  'components.unknownBehavior': 'strip' | 'placeholder' | 'raw';
 }
 
 // Default values for all settings
@@ -61,6 +65,8 @@ const DEFAULTS: SettingTypes = {
   'tailwind.enabled': 'enabled',
   framework: 'auto',
   'framework.componentShims': true,
+  'components.builtins': true,
+  'components.unknownBehavior': 'placeholder',
 };
 
 type ConfigChangeCallback = (affectedKeys: SettingKey[]) => void;
@@ -71,29 +77,22 @@ type ConfigChangeCallback = (affectedKeys: SettingKey[]) => void;
 // - type-safe configuration access
 // - centralized change notification
 // - registered w/ ServiceRegistry for proper lifecycle
-export class ConfigManager implements IService {
-  private static instance: ConfigManager | undefined;
-  private subscribers = new Set<ConfigChangeCallback>();
-  private configChangeDisposable?: vscode.Disposable;
+export class ConfigManager extends SingletonService<ConfigManager> {
+  protected static override instance: ConfigManager | undefined;
+  protected readonly logTag = 'CONFIG-MANAGER';
 
-  private constructor() {
+  private subscribers = new Set<ConfigChangeCallback>();
+
+  protected constructor() {
+    super();
     // subscribe to VS Code configuration changes
-    this.configChangeDisposable = vscode.workspace.onDidChangeConfiguration(
-      (e) => {
+    this.addDisposable(
+      vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('mdx-preview')) {
           this.notifySubscribers(e);
         }
-      }
+      })
     );
-    debug('[CONFIG-MANAGER] Initialized');
-  }
-
-  // get the singleton instance
-  static getInstance(): ConfigManager {
-    if (!ConfigManager.instance) {
-      ConfigManager.instance = new ConfigManager();
-    }
-    return ConfigManager.instance;
   }
 
   // get a configuration value w/ type safety
@@ -161,18 +160,8 @@ export class ConfigManager implements IService {
     }
   }
 
-  // dispose resources
-  dispose(): void {
-    this.configChangeDisposable?.dispose();
+  // custom cleanup - subscribers are cleared, disposables handled by base class
+  protected override onDispose(): void {
     this.subscribers.clear();
-    ConfigManager.instance = undefined;
-    debug('[CONFIG-MANAGER] Disposed');
-  }
-
-  // reset singleton (for testing)
-  static reset(): void {
-    if (ConfigManager.instance) {
-      ConfigManager.instance.dispose();
-    }
   }
 }

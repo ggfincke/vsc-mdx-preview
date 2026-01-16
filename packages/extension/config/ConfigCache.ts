@@ -3,8 +3,8 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { debug, warn } from '../logging';
-import type { IService } from '../services/types';
+import { warn } from '../logging';
+import { SingletonService } from '../services/SingletonService';
 import type { ResolvedConfig } from '../preview/config/ConfigResolver';
 
 // * manages the cache & file watchers for MDX preview config files
@@ -13,23 +13,16 @@ import type { ResolvedConfig } from '../preview/config/ConfigResolver';
 // - configWatchers: Map of config path -> file system watcher
 // - configChangeSubscribers: Set of callbacks for config changes
 // registered w/ ServiceRegistry for proper disposal
-export class ConfigCache implements IService {
-  private static instance: ConfigCache | undefined;
+export class ConfigCache extends SingletonService<ConfigCache> {
+  protected static override instance: ConfigCache | undefined;
+  protected readonly logTag = 'CONFIG-CACHE';
 
   private cache = new Map<string, ResolvedConfig | null>();
   private watchers = new Map<string, vscode.FileSystemWatcher>();
   private subscribers = new Set<(configPath: string) => void>();
 
-  private constructor() {
-    debug('[CONFIG-CACHE] Initialized');
-  }
-
-  // get the singleton instance
-  static getInstance(): ConfigCache {
-    if (!ConfigCache.instance) {
-      ConfigCache.instance = new ConfigCache();
-    }
-    return ConfigCache.instance;
+  protected constructor() {
+    super();
   }
 
   // get cached config for a directory
@@ -107,8 +100,8 @@ export class ConfigCache implements IService {
     }
   }
 
-  // dispose all resources
-  dispose(): void {
+  // custom cleanup - clear all caches and watchers
+  protected override onDispose(): void {
     // dispose all watchers
     for (const watcher of this.watchers.values()) {
       watcher.dispose();
@@ -116,14 +109,5 @@ export class ConfigCache implements IService {
     this.watchers.clear();
     this.subscribers.clear();
     this.cache.clear();
-    ConfigCache.instance = undefined;
-    debug('[CONFIG-CACHE] Disposed');
-  }
-
-  // reset singleton (for testing)
-  static reset(): void {
-    if (ConfigCache.instance) {
-      ConfigCache.instance.dispose();
-    }
   }
 }
