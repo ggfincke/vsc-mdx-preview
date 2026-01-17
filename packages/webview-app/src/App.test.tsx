@@ -10,10 +10,10 @@ import { ThemeProvider } from './theme';
 import { LightboxProvider } from './context/LightboxContext';
 import type { ReactElement } from 'react';
 
-// capture registered handlers
+// track registered handlers
 let registeredHandlers: Record<string, (...args: unknown[]) => unknown> = {};
 
-// mock the RPC module
+// stub RPC module
 vi.mock('./rpc-webview', () => ({
   registerWebviewHandlers: vi.fn((handlers) => {
     registeredHandlers = handlers;
@@ -26,7 +26,7 @@ vi.mock('./rpc-webview', () => ({
 
 import { ExtensionHandle } from './rpc-webview';
 
-// wrapper for providers
+// wrap component w/ theme & lightbox providers for testing
 function TestWrapper({ children }: { children: ReactElement }) {
   return (
     <ThemeProvider>
@@ -141,7 +141,7 @@ describe('App', () => {
       expect(screen.getByText('Something went wrong')).toBeInTheDocument();
     });
 
-    it('clears error when Dismiss clicked', async () => {
+    it('clears error when Retry clicked', async () => {
       const user = userEvent.setup();
       renderApp();
 
@@ -149,7 +149,7 @@ describe('App', () => {
         registeredHandlers.setError({ message: 'Error' });
       });
 
-      await user.click(screen.getByText('Dismiss'));
+      await user.click(screen.getByText('Retry'));
 
       expect(screen.queryByText('Preview Error')).not.toBeInTheDocument();
     });
@@ -164,7 +164,7 @@ describe('App', () => {
         });
       });
 
-      expect(screen.getByText('Stack Trace')).toBeInTheDocument();
+      expect(screen.getByText(/Stack Trace/)).toBeInTheDocument();
     });
   });
 
@@ -228,7 +228,7 @@ describe('App', () => {
       });
 
       const content = document.querySelector('.mdx-preview-content');
-      // 100% = no transform style applied (no inline style)
+      // 100% scale = no transform style applied
       expect(content?.getAttribute('style')).toBeFalsy();
     });
   });
@@ -265,7 +265,7 @@ describe('App', () => {
         );
       });
 
-      // simulate ctrl+click using native event
+      // simulate Ctrl+click w/ native event
       const link = screen.getByText('External');
       const event = new MouseEvent('click', {
         bubbles: true,
@@ -285,7 +285,7 @@ describe('App', () => {
         registeredHandlers.setSafeContent('<a href="./other.md">Other doc</a>');
       });
 
-      // simulate ctrl+click using native event
+      // simulate Ctrl+click w/ native event
       const link = screen.getByText('Other doc');
       const event = new MouseEvent('click', {
         bubbles: true,
@@ -316,7 +316,7 @@ describe('App', () => {
     it('accepts trusted content handler call', () => {
       renderApp();
 
-      // should not throw
+      // verify no exception thrown
       act(() => {
         registeredHandlers.setTrustState({
           workspaceTrusted: true,
@@ -330,8 +330,8 @@ describe('App', () => {
         );
       });
 
-      // trusted content will try to evaluate, which may fail in test environment
-      // but the handler should be registered & callable
+      // trusted content evaluation may fail in test environment
+      // handler should be registered & callable
       expect(registeredHandlers.setTrustedContent).toBeDefined();
     });
   });

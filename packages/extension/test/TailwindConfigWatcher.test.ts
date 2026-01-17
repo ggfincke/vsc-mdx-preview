@@ -3,11 +3,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// mock debounce to make it synchronous for testing
+// stub debounce to synchronous function for testing
 vi.mock('lodash.debounce', () => ({
   default: vi.fn((fn: () => void) => {
-    const debouncedFn = vi.fn(fn);
-    (debouncedFn as any).cancel = vi.fn();
+    const debouncedFn = vi.fn(fn) as any;
+    debouncedFn.cancel = vi.fn();
+    debouncedFn.flush = vi.fn();
     return debouncedFn;
   }),
 }));
@@ -50,27 +51,28 @@ describe('TailwindConfigWatcher', () => {
     createHandlers = new Map();
     deleteHandlers = new Map();
 
-    vi.mocked(vscode.workspace.createFileSystemWatcher).mockImplementation(
-      (pattern: string) => {
-        const mockWatcher = {
-          onDidChange: vi.fn((handler) => {
-            changeHandlers.set(pattern as string, handler);
-            return { dispose: vi.fn() };
-          }),
-          onDidCreate: vi.fn((handler) => {
-            createHandlers.set(pattern as string, handler);
-            return { dispose: vi.fn() };
-          }),
-          onDidDelete: vi.fn((handler) => {
-            deleteHandlers.set(pattern as string, handler);
-            return { dispose: vi.fn() };
-          }),
-          dispose: vi.fn(),
-        };
-        mockWatchers.push(mockWatcher);
-        return mockWatcher as any;
-      }
-    );
+    vi.mocked(vscode.workspace.createFileSystemWatcher).mockImplementation(((
+      pattern: vscode.GlobPattern
+    ) => {
+      const patternStr = String(pattern);
+      const mockWatcher = {
+        onDidChange: vi.fn((handler) => {
+          changeHandlers.set(patternStr, handler);
+          return { dispose: vi.fn() };
+        }),
+        onDidCreate: vi.fn((handler) => {
+          createHandlers.set(patternStr, handler);
+          return { dispose: vi.fn() };
+        }),
+        onDidDelete: vi.fn((handler) => {
+          deleteHandlers.set(patternStr, handler);
+          return { dispose: vi.fn() };
+        }),
+        dispose: vi.fn(),
+      };
+      mockWatchers.push(mockWatcher);
+      return mockWatcher as unknown as vscode.FileSystemWatcher;
+    }) as typeof vscode.workspace.createFileSystemWatcher);
   });
 
   afterEach(() => {
@@ -245,7 +247,7 @@ describe('TailwindConfigWatcher', () => {
       );
       watcher.start();
 
-      // Get the debounced function created during construction
+      // retrieve debounced function from constructor
       const debouncedFn = vi.mocked(debounce).mock.results[0].value;
 
       watcher.stop();
@@ -281,17 +283,18 @@ describe('TailwindConfigWatcher', () => {
 
   describe('error handling', () => {
     it('catches errors in change callback', () => {
-      // Setup onChange to throw
+      // configure onChange to throw error
       const errorOnChange = vi.fn().mockImplementation(() => {
         throw new Error('Test error');
       });
 
-      // Re-mock debounce to use the error-throwing function
-      vi.mocked(debounce).mockImplementation((fn: () => void) => {
-        const debouncedFn = vi.fn(fn);
-        (debouncedFn as any).cancel = vi.fn();
+      // reconfigure debounce mock w/ error-throwing function
+      vi.mocked(debounce).mockImplementation(((fn: () => void) => {
+        const debouncedFn = vi.fn(fn) as unknown as ReturnType<typeof debounce>;
+        debouncedFn.cancel = vi.fn();
+        debouncedFn.flush = vi.fn();
         return debouncedFn;
-      });
+      }) as typeof debounce);
 
       watcher = new TailwindConfigWatcher(
         ['/path/tailwind.config.js'],
@@ -299,7 +302,7 @@ describe('TailwindConfigWatcher', () => {
       );
       watcher.start();
 
-      // Should not throw
+      // verify no exception thrown
       expect(() => {
         changeHandlers.get('/path/tailwind.config.js')?.();
       }).not.toThrow();
@@ -310,11 +313,12 @@ describe('TailwindConfigWatcher', () => {
         throw new Error('Test error');
       });
 
-      vi.mocked(debounce).mockImplementation((fn: () => void) => {
-        const debouncedFn = vi.fn(fn);
-        (debouncedFn as any).cancel = vi.fn();
+      vi.mocked(debounce).mockImplementation(((fn: () => void) => {
+        const debouncedFn = vi.fn(fn) as unknown as ReturnType<typeof debounce>;
+        debouncedFn.cancel = vi.fn();
+        debouncedFn.flush = vi.fn();
         return debouncedFn;
-      });
+      }) as typeof debounce);
 
       watcher = new TailwindConfigWatcher(
         ['/path/tailwind.config.js'],
@@ -332,11 +336,12 @@ describe('TailwindConfigWatcher', () => {
         throw new Error('Test error');
       });
 
-      vi.mocked(debounce).mockImplementation((fn: () => void) => {
-        const debouncedFn = vi.fn(fn);
-        (debouncedFn as any).cancel = vi.fn();
+      vi.mocked(debounce).mockImplementation(((fn: () => void) => {
+        const debouncedFn = vi.fn(fn) as unknown as ReturnType<typeof debounce>;
+        debouncedFn.cancel = vi.fn();
+        debouncedFn.flush = vi.fn();
         return debouncedFn;
-      });
+      }) as typeof debounce);
 
       watcher = new TailwindConfigWatcher(
         ['/path/tailwind.config.js'],

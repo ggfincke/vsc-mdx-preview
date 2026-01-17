@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Preview } from '../preview/preview-manager';
 
-// mock dependencies before importing transform
+// stub dependencies before importing transform
 vi.mock('../transpiler/mdx/mdx', () => ({
   mdxTranspileAsync: vi.fn(),
 }));
@@ -32,25 +32,37 @@ import { transpileWithFallback } from '../transpiler/transpiler-selector';
 import { resolveTypescriptConfig } from '../preview/config';
 import isModule from 'is-module';
 
+// create mock preview for testing w/ configurable doc properties
+function createMockPreview(
+  options: {
+    languageId?: string;
+    scheme?: string;
+    useSucraseTranspiler?: boolean;
+    typescriptConfiguration?: any;
+  } = {}
+): Preview {
+  return {
+    doc: {
+      languageId: options.languageId ?? 'javascript',
+      uri: { scheme: options.scheme ?? 'file' },
+    },
+    configuration: {
+      useSucraseTranspiler: options.useSucraseTranspiler ?? false,
+    },
+    typescriptConfiguration: options.typescriptConfiguration,
+  } as unknown as Preview;
+}
+
 describe('transform', () => {
   let mockPreview: Preview;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default preview mock
-    mockPreview = {
-      doc: {
-        languageId: 'javascript',
-        uri: { scheme: 'file' },
-      },
-      configuration: {
-        useSucraseTranspiler: false,
-      },
-      typescriptConfiguration: undefined,
-    } as unknown as Preview;
+    // configure preview mock
+    mockPreview = createMockPreview();
 
-    // Default mocks
+    // configure default mocks
     vi.mocked(mdxTranspileAsync).mockResolvedValue({
       code: 'mdx compiled code',
       frontmatter: {},
@@ -67,111 +79,105 @@ describe('transform', () => {
 
   describe('transformEntry', () => {
     it('compiles MDX when languageId is mdx', async () => {
-      mockPreview.doc.languageId = 'mdx';
+      const preview = createMockPreview({ languageId: 'mdx' });
       const code = '# Hello MDX';
 
-      await transformEntry(code, '/path/to/file.mdx', mockPreview);
+      await transformEntry(code, '/path/to/file.mdx', preview);
 
-      expect(mdxTranspileAsync).toHaveBeenCalledWith(code, true, mockPreview);
+      expect(mdxTranspileAsync).toHaveBeenCalledWith(code, true, preview);
     });
 
     it('compiles MDX when languageId is markdown', async () => {
-      mockPreview.doc.languageId = 'markdown';
+      const preview = createMockPreview({ languageId: 'markdown' });
       const code = '# Hello Markdown';
 
-      await transformEntry(code, '/path/to/file.md', mockPreview);
+      await transformEntry(code, '/path/to/file.md', preview);
 
-      expect(mdxTranspileAsync).toHaveBeenCalledWith(code, true, mockPreview);
+      expect(mdxTranspileAsync).toHaveBeenCalledWith(code, true, preview);
     });
 
     it('compiles MDX when uri scheme is untitled', async () => {
-      mockPreview.doc.uri.scheme = 'untitled';
+      const preview = createMockPreview({ scheme: 'untitled' });
       const code = '# Untitled document';
 
-      await transformEntry(code, 'Untitled-1', mockPreview);
+      await transformEntry(code, 'Untitled-1', preview);
 
-      expect(mdxTranspileAsync).toHaveBeenCalledWith(code, true, mockPreview);
+      expect(mdxTranspileAsync).toHaveBeenCalledWith(code, true, preview);
     });
 
     it('extracts frontmatter from MDX', async () => {
-      mockPreview.doc.languageId = 'mdx';
+      const preview = createMockPreview({ languageId: 'mdx' });
       const frontmatter = { title: 'Test', author: 'User' };
       vi.mocked(mdxTranspileAsync).mockResolvedValue({
         code: 'compiled',
         frontmatter,
       });
 
-      const result = await transformEntry('', '/path/to/file.mdx', mockPreview);
+      const result = await transformEntry('', '/path/to/file.mdx', preview);
 
       expect(result.frontmatter).toEqual(frontmatter);
     });
 
     it('uses TypeScript compiler for typescript files when not using Sucrase', async () => {
-      mockPreview.doc.languageId = 'typescript';
-      mockPreview.configuration.useSucraseTranspiler = false;
+      const preview = createMockPreview({
+        languageId: 'typescript',
+        useSucraseTranspiler: false,
+      });
 
-      await transformEntry(
-        'const x: number = 1;',
-        '/path/to/file.ts',
-        mockPreview
-      );
+      await transformEntry('const x: number = 1;', '/path/to/file.ts', preview);
 
       expect(tsTranspileModule).toHaveBeenCalled();
     });
 
     it('uses TypeScript compiler for typescriptreact files when not using Sucrase', async () => {
-      mockPreview.doc.languageId = 'typescriptreact';
-      mockPreview.configuration.useSucraseTranspiler = false;
+      const preview = createMockPreview({
+        languageId: 'typescriptreact',
+        useSucraseTranspiler: false,
+      });
 
       await transformEntry(
         'const App: FC = () => <div/>;',
         '/path/to/file.tsx',
-        mockPreview
+        preview
       );
 
       expect(tsTranspileModule).toHaveBeenCalled();
     });
 
-    it('skips TypeScript compiler when useSucrase is true', async () => {
-      mockPreview.doc.languageId = 'typescript';
-      mockPreview.configuration.useSucraseTranspiler = true;
+    it('skips TypeScript compiler when useSucrase is enabled', async () => {
+      const preview = createMockPreview({
+        languageId: 'typescript',
+        useSucraseTranspiler: true,
+      });
 
-      await transformEntry(
-        'const x: number = 1;',
-        '/path/to/file.ts',
-        mockPreview
-      );
+      await transformEntry('const x: number = 1;', '/path/to/file.ts', preview);
 
       expect(tsTranspileModule).not.toHaveBeenCalled();
     });
 
     it('resolves TypeScript config if not already set', async () => {
-      mockPreview.doc.languageId = 'typescript';
-      mockPreview.typescriptConfiguration = undefined;
+      const preview = createMockPreview({
+        languageId: 'typescript',
+        typescriptConfiguration: undefined,
+      });
 
-      await transformEntry(
-        'const x: number = 1;',
-        '/path/to/file.ts',
-        mockPreview
-      );
+      await transformEntry('const x: number = 1;', '/path/to/file.ts', preview);
 
       expect(resolveTypescriptConfig).toHaveBeenCalledWith(null);
     });
 
     it('uses cached TypeScript config if available', async () => {
-      mockPreview.doc.languageId = 'typescript';
-      mockPreview.typescriptConfiguration = { tsCompilerOptions: {} } as any;
+      const preview = createMockPreview({
+        languageId: 'typescript',
+        typescriptConfiguration: { tsCompilerOptions: {} },
+      });
 
-      await transformEntry(
-        'const x: number = 1;',
-        '/path/to/file.ts',
-        mockPreview
-      );
+      await transformEntry('const x: number = 1;', '/path/to/file.ts', preview);
 
       expect(resolveTypescriptConfig).not.toHaveBeenCalled();
     });
 
-    it('calls transpileWithFallback with Sucrase when configured', async () => {
+    it('calls transpileWithFallback w/ Sucrase when enabled', async () => {
       mockPreview.configuration.useSucraseTranspiler = true;
 
       await transformEntry('const x = 1;', '/path/to/file.js', mockPreview);
@@ -185,7 +191,7 @@ describe('transform', () => {
       );
     });
 
-    it('calls transpileWithFallback with Babel when not configured for Sucrase', async () => {
+    it('calls transpileWithFallback w/ Babel when Sucrase disabled', async () => {
       mockPreview.configuration.useSucraseTranspiler = false;
 
       await transformEntry('const x = 1;', '/path/to/file.js', mockPreview);
@@ -223,12 +229,12 @@ describe('transform', () => {
     });
 
     it('returns empty frontmatter when not MDX', async () => {
-      mockPreview.doc.languageId = 'javascript';
+      const preview = createMockPreview({ languageId: 'javascript' });
 
       const result = await transformEntry(
         'const x = 1;',
         '/path/to/file.js',
-        mockPreview
+        preview
       );
 
       expect(result.frontmatter).toEqual({});
@@ -278,7 +284,7 @@ describe('transform', () => {
       expect(tsTranspileModule).toHaveBeenCalled();
     });
 
-    it('skips TypeScript compiler when useSucrase is true', async () => {
+    it('skips TypeScript compiler when useSucrase is enabled', async () => {
       mockPreview.configuration.useSucraseTranspiler = true;
 
       await transform('const x: number = 1;', '/path/to/dep.ts', mockPreview);
@@ -287,7 +293,7 @@ describe('transform', () => {
     });
 
     it('prefers Sucrase for node_modules ESM dependencies', async () => {
-      // ESM module in node_modules - should use Sucrase
+      // ESM module in node_modules uses Sucrase
       vi.mocked(isModule).mockReturnValue(true);
 
       await transform(
@@ -339,9 +345,8 @@ describe('transform', () => {
         mockPreview
       );
 
-      // Transpilation is called because isInNodeModules=true but isModule=false
-      // means !isInNodeModules || isModule(code) = false || false = false
-      // So transpileWithFallback should NOT be called
+      // isInNodeModules=true but isModule=false, so !isInNodeModules || isModule(code) = false
+      // transpileWithFallback NOT called
       expect(transpileWithFallback).not.toHaveBeenCalled();
     });
 
@@ -369,10 +374,10 @@ describe('transform', () => {
     });
 
     it('detects node_modules in path correctly', async () => {
-      // Windows-style path with node_modules
+      // detect node_modules in Windows-style path
       vi.mocked(isModule).mockReturnValue(false);
 
-      // This should detect node_modules and skip transpilation for CommonJS
+      // detect node_modules & skip transpilation for CommonJS
       await transform(
         'module.exports = 1;',
         '/path/node_modules/pkg/dist/index.js',

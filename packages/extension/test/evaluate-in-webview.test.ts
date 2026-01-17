@@ -25,7 +25,7 @@ vi.mock('../transpiler/mdx/mdx-safe', () => ({
   compileToSafeHTML: vi.fn(),
 }));
 
-// mock fs.promises - include all methods needed by dependencies (enhanced-resolve, etc.)
+// stub fs.promises w/ dependencies' required methods (enhanced-resolve, etc.)
 vi.mock('fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs')>();
   return {
@@ -70,8 +70,8 @@ vi.mock('../tailwind/TailwindProcessor', () => ({
   },
 }));
 
-// mock getConfigManager for TrustManager dependency
-// Uses dynamic import to access vscode mock's config store at test runtime
+// stub getConfigManager for TrustManager dependency
+// use dynamic import to access vscode mock's config store at runtime
 vi.mock('../services', async (importOriginal) => {
   const original = await importOriginal<typeof import('../services')>();
   const vscode = await import('./__mocks__/vscode');
@@ -79,14 +79,29 @@ vi.mock('../services', async (importOriginal) => {
     ...original,
     getConfigManager: () => ({
       get: (key: string, _scope?: unknown) => {
-        // Dynamically read from vscode mock's config store (set via __setMockConfig)
+        // read from vscode mock's config store (set via __setMockConfig)
         const value = vscode.__getMockConfig(key);
         return value !== undefined ? value : vscode.CONFIG_DEFAULTS[key];
       },
       set: vi.fn(),
     }),
     getErrorReporter: () => ({
-      report: vi.fn(),
+      report: vi.fn(
+        (
+          error: Error | unknown,
+          options?: { showInWebview?: boolean; webviewHandle?: any }
+        ) => {
+          // apply showInWebview behavior to match real ErrorReporter
+          if (options?.showInWebview && options?.webviewHandle) {
+            const message =
+              error instanceof Error ? error.message : String(error);
+            options.webviewHandle.showPreviewError({
+              message,
+              stack: error instanceof Error ? error.stack : undefined,
+            });
+          }
+        }
+      ),
       reportSilent: vi.fn(),
       reportToUser: vi.fn(),
       reportConfigError: vi.fn(),
@@ -97,16 +112,16 @@ vi.mock('../services', async (importOriginal) => {
   };
 });
 
-// note: performance API is available in Node.js - we spy on it in tests rather than stubbing
+// performance API is available in Node.js - spy on it rather than stubbing
 
-// import after mocks are set up
+// import after mocks configured
 import evaluateInWebview from '../preview/evaluate-in-webview';
 import { transformEntry } from '../module-fetcher/transform';
 import { compileToSafeHTML } from '../transpiler/mdx/mdx-safe';
 import type { Preview } from '../preview/preview-manager';
 import type * as vscode from 'vscode';
 
-// create mock webview handle
+// generate mock webview handle for testing
 const createMockWebviewHandle = () => ({
   setTrustState: vi.fn(),
   updatePreview: vi.fn(),
@@ -122,7 +137,7 @@ const createMockWebviewHandle = () => ({
   resetZoom: vi.fn(),
 });
 
-// create mock Preview object
+// generate mock Preview object for testing
 const createMockPreview = (overrides: Partial<Preview> = {}): Preview => {
   const webviewHandle = createMockWebviewHandle();
   let tailwindRequestId = 0;
@@ -142,7 +157,7 @@ const createMockPreview = (overrides: Partial<Preview> = {}): Preview => {
   } as unknown as Preview;
 };
 
-// reset TrustManager singleton between tests
+// clear TrustManager singleton between test cases
 const resetTrustManager = (): void => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (TrustManager as any).instance = undefined;
@@ -163,7 +178,7 @@ describe('evaluateInWebview', () => {
     ]);
     handleDidChangeWorkspaceFolders();
 
-    // register services w/ ServiceRegistry
+    // register services & ServiceRegistry
     const registry = ServiceRegistry.getInstance();
     registry.register(ServiceNames.TRUST_MANAGER, () =>
       TrustManager.getInstance()
@@ -179,11 +194,11 @@ describe('evaluateInWebview', () => {
     try {
       TrustManager.getInstance().dispose();
     } catch {
-      // ignore if already disposed
+      // suppress if already disposed
     }
     resetTrustManager();
     ServiceRegistry.reset();
-    // reset ErrorReporter to clear dedupe cache between tests
+    // clear ErrorReporter's dedupe cache between test cases
     ErrorReporter.dispose();
   });
 
@@ -386,7 +401,7 @@ describe('evaluateInWebview', () => {
         '/projects/test-workspace/README.mdx'
       );
 
-      // ErrorReporter sends error w/ message, code, & stack
+      // ErrorReporter sends error w/ message, code & stack
       expect(mockPreview.webviewHandle.showPreviewError).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Transform failed',
@@ -406,7 +421,7 @@ describe('evaluateInWebview', () => {
         '/projects/test-workspace/README.mdx'
       );
 
-      // ErrorReporter wraps non-Error throws in Error, which creates a stack
+      // ErrorReporter wraps non-Error throws in Error & creates stack
       expect(mockPreview.webviewHandle.showPreviewError).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'String error',
@@ -496,8 +511,8 @@ describe('evaluateInWebview', () => {
     });
 
     test('calls pushThemeState even with empty frontmatter', async () => {
-      // Note: the actual code uses `if (frontmatter)` which is truthy for empty objects
-      // This behavior may be intentional for theme state initialization
+      // actual code uses `if (frontmatter)` which is truthy for empty objects
+      // behavior is intentional for theme state initialization
       __setMockTrusted(true);
       __setMockConfig('preview.enableScripts', true);
 
@@ -512,7 +527,7 @@ describe('evaluateInWebview', () => {
         '/projects/test-workspace/README.mdx'
       );
 
-      // empty object is truthy, so pushThemeState is called
+      // empty object is truthy, pushThemeState called
       expect(mockPreview.pushThemeState).toHaveBeenCalledWith({});
     });
   });
@@ -583,7 +598,7 @@ describe('evaluateInWebview', () => {
 
   describe('performance tracking', () => {
     test('marks preview/start at beginning', async () => {
-      // use the real performance API but spy on it
+      // spy on real performance API
       const markSpy = vi.spyOn(performance, 'mark');
 
       __setMockTrusted(true);

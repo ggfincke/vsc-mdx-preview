@@ -30,8 +30,8 @@ vi.mock('../transpiler/mdx/mdx-safe', () => ({
   compileToSafeHTML: mockCompileToSafeHTML,
 }));
 
-vi.mock('../module-fetcher/utils', () => ({
-  extractImports: mockExtractImports,
+vi.mock('../module-fetcher/import-extractor', () => ({
+  extractImportSpecifiers: mockExtractImports,
 }));
 
 vi.mock('fs', () => ({
@@ -62,7 +62,7 @@ describe('EvaluationEngine', () => {
     __resetMocks();
     vi.clearAllMocks();
 
-    // Set up mock return values
+    // configure mock return values
     mockTransformEntry.mockResolvedValue({
       code: 'export default function MDXContent() { return null; }',
       frontmatter: { title: 'Test' },

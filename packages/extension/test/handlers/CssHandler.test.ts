@@ -69,7 +69,7 @@ describe('CssHandler', () => {
       );
 
       expect(result.css).toBe(css);
-      // Note: CSS @imports are not parsed as dependencies - they're handled by the browser
+      // CSS @imports not parsed as dependencies - handled by browser
       expect(result.dependencies).toEqual([]);
     });
 
@@ -138,7 +138,7 @@ describe('CssHandler', () => {
       );
 
       expect(result.css).toBe(largeCss);
-      expect(result.css.length).toBeGreaterThan(20000);
+      expect(result.css!.length).toBeGreaterThan(20000);
     });
   });
 });

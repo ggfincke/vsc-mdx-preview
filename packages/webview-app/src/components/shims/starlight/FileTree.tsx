@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/FileTree.tsx
 // Starlight FileTree component shim for MDX Preview
-// provides preview-compatible version of @astrojs/starlight/components FileTree
+// provide preview-compatible version of @astrojs/starlight/components FileTree
 
 import React, {
   ReactNode,
@@ -158,28 +158,46 @@ function parseLiElement(li: ReactElement): FileTreeEntry | null {
 }
 
 // parse children (unordered list) into structured entries
+// handles both nested structure (<li>folder/<ul>...</ul></li>) and
+// sibling structure (<li>folder/</li><ul>...</ul>)
 function parseFileTreeChildren(children: ReactNode): FileTreeEntry[] {
   const entries: FileTreeEntry[] = [];
+  const childArray = Children.toArray(children);
 
-  Children.forEach(children, (child) => {
+  for (let i = 0; i < childArray.length; i++) {
+    const child = childArray[i];
+
     if (!isValidElement(child)) {
-      return;
+      continue;
     }
 
-    // Handle <ul> wrapper
+    // Handle <ul> wrapper - recursively process its children
     if (child.type === 'ul') {
       entries.push(...parseFileTreeChildren(child.props.children));
-      return;
+      continue;
     }
 
     // Handle <li> items
     if (child.type === 'li') {
       const entry = parseLiElement(child);
-      if (entry) {
-        entries.push(entry);
+      if (!entry) {continue;}
+
+      // Check if next sibling is a <ul> that should be this directory's children
+      // This handles the sibling pattern: <li>folder/</li><ul>...</ul>
+      const nextChild = childArray[i + 1];
+      if (
+        entry.isDirectory &&
+        !entry.children?.length &&
+        isValidElement(nextChild) &&
+        nextChild.type === 'ul'
+      ) {
+        entry.children = parseFileTreeChildren(nextChild.props.children);
+        i++; // Skip the <ul> since we've processed it as children
       }
+
+      entries.push(entry);
     }
-  });
+  }
 
   return entries;
 }

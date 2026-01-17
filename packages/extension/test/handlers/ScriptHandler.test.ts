@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Preview } from '../../preview/preview-manager';
 
-// mock transform and extractImports before importing ScriptHandler
+// stub transform & extractImports before importing ScriptHandler
 vi.mock('../../module-fetcher/transform', () => ({
   transform: vi.fn(),
 }));
@@ -23,7 +23,7 @@ describe('ScriptHandler', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default mocks
+    // configure default mocks
     vi.mocked(transform).mockResolvedValue('transformed code');
     vi.mocked(extractImports).mockResolvedValue([]);
   });
@@ -181,11 +181,7 @@ describe('ScriptHandler', () => {
         'function MDXContent() { return _jsx("h1", ...); }';
       vi.mocked(transform).mockResolvedValue(transformedCode);
 
-      const result = await handler.handle(
-        mdxCode,
-        '/path/to/doc.mdx',
-        mockPreview
-      );
+      await handler.handle(mdxCode, '/path/to/doc.mdx', mockPreview);
 
       expect(transform).toHaveBeenCalledWith(
         mdxCode,
