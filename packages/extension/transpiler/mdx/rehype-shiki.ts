@@ -86,8 +86,7 @@ const COMMON_LANGUAGES: BundledLanguage[] = [
   'latex',
 ];
 
-// create CSS variables theme for dynamic theming
-// this theme outputs CSS variables instead of hardcoded colors
+// create CSS variables theme for dynamic theming (outputs CSS vars instead of hardcoded colors)
 const cssVariablesTheme = createCssVariablesTheme({
   name: 'css-variables',
   variablePrefix: '--shiki-',
@@ -204,6 +203,27 @@ function isLanguageSupported(lang: string): lang is BundledLanguage {
   return COMMON_LANGUAGES.includes(lang as BundledLanguage);
 }
 
+// language alias mapping (short names to Shiki-supported canonical names)
+const LANGUAGE_ALIASES: Record<string, BundledLanguage> = {
+  js: 'javascript',
+  ts: 'typescript',
+  sh: 'bash',
+  yml: 'yaml',
+  py: 'python',
+  rb: 'ruby',
+  cs: 'csharp',
+  fs: 'fsharp',
+  rs: 'rust',
+  kt: 'kotlin',
+  md: 'markdown',
+  // text & plaintext map to fallback (handled separately)
+};
+
+// resolve language alias to canonical name
+function resolveLanguageAlias(lang: string): string {
+  return LANGUAGE_ALIASES[lang] || lang;
+}
+
 // * rehype plugin for Shiki syntax highlighting
 export default function rehypeShiki() {
   return async (tree: Root) => {
@@ -235,7 +255,7 @@ export default function rehypeShiki() {
         return;
       }
 
-      // skip mermaid blocks (handled by rehype-mermaid-placeholder)
+      // skip mermaid blocks (handle via rehype-mermaid-placeholder)
       const className = codeChild.properties?.className;
       const classNames = Array.isArray(className) ? className : [];
       if (classNames.some((c) => String(c) === 'language-mermaid')) {
@@ -271,8 +291,12 @@ export default function rehypeShiki() {
     // second pass: apply highlighting
     for (const { parent, index, lang, code, meta } of nodesToProcess) {
       try {
+        // resolve alias first (e.g., 'js' -> 'javascript', 'ts' -> 'typescript')
+        const resolvedLang = resolveLanguageAlias(lang);
         // use supported language or fall back to plaintext
-        const highlightLang = isLanguageSupported(lang) ? lang : 'text';
+        const highlightLang = isLanguageSupported(resolvedLang)
+          ? resolvedLang
+          : 'text';
 
         // generate HTML w/ CSS variables (themeable via external CSS)
         const html = highlighter.codeToHtml(code, {

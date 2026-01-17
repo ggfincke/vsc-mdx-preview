@@ -1,5 +1,5 @@
 // packages/extension/transpiler/mdx/mdx.ts
-// MDX transpilation w/ layout injection & React root wrapping
+// MDX transpilation w/ layout injection & React root wrapping (compiles MDX to executable JS)
 
 import { compile } from '@mdx-js/mdx';
 import hasDefaultExport from './hasDefaultExport';
@@ -53,20 +53,24 @@ ${mdxText}`;
   }
 };
 
-// wrap compiled MDX output (webview owns single React root & handle rendering)
-// MDX w/ outputFormat: 'program' generates ES module w/ default export
-// when componentsObject is provided, wrap w/ MDXProvider for shortcode support
+// wrap compiled MDX output (webview owns React root & handles rendering, wrap w/ MDXProvider if components provided)
 const wrapCompiledMdx = (
   compiledMDX: string,
   componentsObject?: string
 ): string => {
   if (componentsObject && componentsObject !== '{}') {
+    // Remove the original "export default" to avoid duplicate exports
+    // MDX 3 outputs: "export default function MDXContent" or "export default MDXContent"
+    const strippedMDX = compiledMDX
+      .replace(/export default function MDXContent/g, 'function MDXContent')
+      .replace(/export default MDXContent/g, '');
+
     // wrap w/ MDXProvider to make custom components available as shortcodes
     return `
 // MDX 3 compiled output w/ custom components
 import React from 'react';
 import { MDXProvider } from '@mdx-js/react';
-${compiledMDX}
+${strippedMDX}
 
 const _MDXComponents = ${componentsObject};
 const _OriginalDefault = MDXContent;
@@ -84,7 +88,7 @@ ${compiledMDX}
 `;
 };
 
-// transpile MDX to JavaScript (w/ layout injection if no default export)
+// transpile MDX to JavaScript & inject layout if no default export
 export const mdxTranspileAsync = async (
   mdxText: string,
   _isEntry: boolean,
@@ -100,7 +104,7 @@ export const mdxTranspileAsync = async (
     mdxTextToCompile = content;
   }
 
-  // load custom plugins from config (only in Trusted Mode)
+  // load custom plugins from config
   const customPlugins = await loadPluginsFromConfig(
     preview.mdxPreviewConfig,
     preview.doc.uri
@@ -113,7 +117,7 @@ export const mdxTranspileAsync = async (
     );
   }
 
-  // generate component imports from config & built-in shims (only in Trusted Mode)
+  // generate component imports from config & built-in shims
   const documentDir = path.dirname(preview.fsPath);
   const builtinsEnabled = getConfigManager().get('components.builtins');
 
@@ -138,10 +142,9 @@ export const mdxTranspileAsync = async (
     jsx: false,
     jsxRuntime: 'automatic',
     jsxImportSource: 'react',
-    // remark plugins: GFM, GitHub alerts, math (shared w/ Safe Mode) + custom
+    // remark plugins: GFM, GitHub alerts, math (shared w/ Safe Mode) & custom
     remarkPlugins,
-    // rehype plugins: raw HTML parsing (via rehype-raw), mermaid, math, syntax, anchors, lazy images + custom
-    // note: raw HTML support is handled by rehype-raw in the plugin pipeline
+    // rehype plugins: raw HTML (via rehype-raw), mermaid, math, syntax, anchors, lazy images & custom
     rehypePlugins,
   });
 

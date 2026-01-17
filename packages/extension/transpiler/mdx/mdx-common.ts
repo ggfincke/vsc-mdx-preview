@@ -1,14 +1,14 @@
 // packages/extension/transpiler/mdx/mdx-common.ts
-// shared utilities for MDX compilation (trusted and safe modes)
+// shared utilities for MDX compilation (trusted & safe modes)
 
 import matter from 'gray-matter';
+import type { NextraPageMeta } from '@mdx-preview/shared-types';
 
 // import and re-export types from consolidated types file
 export type { UnknownBehavior, FrontmatterResult } from '../types';
 import type { FrontmatterResult, UnknownBehavior } from '../types';
 
-// extract frontmatter from MDX text using gray-matter
-// returns the content without frontmatter & the parsed frontmatter data
+// extract frontmatter from MDX text w/ gray-matter (returns content & parsed data)
 export function extractFrontmatter(mdxText: string): FrontmatterResult {
   const { content, data } = matter(mdxText);
   return {
@@ -17,8 +17,7 @@ export function extractFrontmatter(mdxText: string): FrontmatterResult {
   };
 }
 
-// get the effective unknown component behavior
-// resolves the behavior from config or returns the default
+// get effective unknown component behavior (resolve from config or return default)
 export function getUnknownBehavior(
   configBehavior: UnknownBehavior | undefined,
   defaultBehavior: UnknownBehavior = 'placeholder'
@@ -52,6 +51,41 @@ export function extractPreviewFrontmatter(
     if (typeof value === 'string') {
       result[key] = value;
     }
+  }
+
+  return result;
+}
+
+// Nextra-specific frontmatter keys
+export const NEXTRA_FRONTMATTER_KEYS = [
+  'title',
+  'sidebarTitle', // Takes precedence over title
+  'description',
+  'layout', // 'default' | 'full' | 'raw'
+] as const;
+
+// extract Nextra-specific frontmatter fields for page metadata
+export function extractNextraFrontmatter(
+  frontmatter: Record<string, unknown>
+): Partial<NextraPageMeta> {
+  const result: Partial<NextraPageMeta> = {};
+
+  // sidebarTitle takes precedence over title
+  if (typeof frontmatter.sidebarTitle === 'string') {
+    result.title = frontmatter.sidebarTitle;
+  } else if (typeof frontmatter.title === 'string') {
+    result.title = frontmatter.title;
+  }
+
+  if (typeof frontmatter.description === 'string') {
+    result.description = frontmatter.description;
+  }
+
+  if (
+    typeof frontmatter.layout === 'string' &&
+    ['default', 'full', 'raw'].includes(frontmatter.layout)
+  ) {
+    result.layout = frontmatter.layout as 'default' | 'full' | 'raw';
   }
 
   return result;
