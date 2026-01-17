@@ -13,6 +13,7 @@ import { PRELOADED_IDS } from './preload-aliases';
 import * as DocusaurusShims from '../components/shims/docusaurus';
 import * as StarlightShims from '../components/shims/starlight';
 import * as NextjsShims from '../components/shims/nextjs';
+import * as NextraShims from '../components/shims/nextra';
 import * as GenericShims from '../components/shims/generic';
 
 export interface LayoutOptions {
@@ -20,7 +21,7 @@ export interface LayoutOptions {
 }
 
 // fallback layout module for when vscode-markdown-layout is not available
-// provides a basic markdown-body wrapper for MDX content
+// provide basic markdown-body wrapper for MDX content
 export const fallbackLayoutModule = {
   createLayout: (options: LayoutOptions = {}) => {
     const className = options.forceLightTheme
@@ -77,6 +78,7 @@ export function initPreloadedModules(vscodeMarkdownLayout: unknown): void {
   initDocusaurusShims();
   initStarlightShims();
   initNextjsShims();
+  initNextraShims();
 
   // Initialize generic shims (built-in, no framework dependency)
   initGenericShims();
@@ -173,6 +175,42 @@ function initNextjsShims(): void {
   registry.preload('next/link', linkModule);
 }
 
+// initialize Nextra component shims
+function initNextraShims(): void {
+  // All-in-one module for nextra/components
+  // Note: Tabs.Tab and Cards.Card are compound components (accessed via parent)
+  const componentsModule = {
+    Callout: NextraShims.Callout,
+    Tabs: NextraShims.Tabs, // Tabs.Tab is a static property on Tabs
+    Cards: NextraShims.Cards, // Cards.Card is a static property on Cards
+    FileTree: NextraShims.FileTree,
+    Steps: NextraShims.Steps,
+    Bleed: NextraShims.Bleed,
+  };
+  registry.preload(PRELOADED_IDS.nextraComponents, componentsModule);
+  registry.preload('nextra/components', componentsModule);
+  registry.preload('nextra-theme-docs', componentsModule);
+  registry.preload('nextra-theme-docs/components', componentsModule);
+
+  // Individual component modules (for granular imports)
+  const calloutModule = createComponentModule(NextraShims.Callout, 'Callout');
+  const tabsModule = createComponentModule(NextraShims.Tabs, 'Tabs');
+  const cardsModule = createComponentModule(NextraShims.Cards, 'Cards');
+  const fileTreeModule = createComponentModule(
+    NextraShims.FileTree,
+    'FileTree'
+  );
+  const stepsModule = createComponentModule(NextraShims.Steps, 'Steps');
+  const bleedModule = createComponentModule(NextraShims.Bleed, 'Bleed');
+
+  registry.preload(PRELOADED_IDS.nextraCallout, calloutModule);
+  registry.preload(PRELOADED_IDS.nextraTabs, tabsModule);
+  registry.preload(PRELOADED_IDS.nextraCards, cardsModule);
+  registry.preload(PRELOADED_IDS.nextraFileTree, fileTreeModule);
+  registry.preload(PRELOADED_IDS.nextraSteps, stepsModule);
+  registry.preload(PRELOADED_IDS.nextraBleed, bleedModule);
+}
+
 // initialize generic component shims (built-in, no framework dependency)
 // these provide common component patterns that work in any MDX context
 function initGenericShims(): void {
@@ -191,7 +229,7 @@ function initGenericShims(): void {
   registry.preload(PRELOADED_IDS.genericAdmonition, admonitionModule);
   registry.preload('Admonition', admonitionModule);
 
-  // Collapsible variants (Collapsible, Accordion)
+  // Collapsible variants (Collapsible, Accordion, Details)
   const collapsibleModule = createComponentModule(
     GenericShims.Collapsible,
     'Collapsible'
@@ -200,11 +238,17 @@ function initGenericShims(): void {
     GenericShims.Accordion,
     'Accordion'
   );
+  const detailsModule = createComponentModule(
+    GenericShims.Collapsible,
+    'Details'
+  );
 
   registry.preload(PRELOADED_IDS.genericCollapsible, collapsibleModule);
   registry.preload('Collapsible', collapsibleModule);
   registry.preload(PRELOADED_IDS.genericAccordion, accordionModule);
   registry.preload('Accordion', accordionModule);
+  registry.preload(PRELOADED_IDS.genericDetails, detailsModule);
+  registry.preload('Details', detailsModule);
 
   // Tab components
   const tabsModule = createComponentModule(GenericShims.Tabs, 'Tabs');
@@ -212,8 +256,11 @@ function initGenericShims(): void {
   const tabModule = createComponentModule(GenericShims.Tab, 'Tab');
 
   registry.preload(PRELOADED_IDS.genericTabs, tabsModule);
+  registry.preload('Tabs', tabsModule);
   registry.preload(PRELOADED_IDS.genericTabItem, tabItemModule);
+  registry.preload('TabItem', tabItemModule);
   registry.preload(PRELOADED_IDS.genericTab, tabModule);
+  registry.preload('Tab', tabModule);
 
   // CodeGroup
   const codeGroupModule = createComponentModule(

@@ -1,17 +1,15 @@
 // packages/webview-app/src/module-loader/preload-aliases.ts
 // single source of truth for preloaded module IDs & aliases
 
-// Import shared component registry for validation
-// IMPORTANT: The components defined below must stay in sync with the shared registry
-// Run the parity tests to verify alignment: npm run test -- preload-parity
+// ! import shared component registry for validation & ensure parity w/ shared registry
+// run parity tests to verify alignment: npm run test -- preload-parity
 import {
   GENERIC_COMPONENTS,
   FRAMEWORK_COMPONENTS,
   SHIM_PREFIX,
 } from '@mdx-preview/shared-types';
 
-// module IDs for preloaded modules (npm:// prefixed canonical IDs)
-// these are the internal identifiers used by the registry
+// module IDs for preloaded modules (npm:// prefixed canonical IDs & internal identifiers)
 export const PRELOADED_IDS = {
   // React core
   react: 'npm://react@18',
@@ -57,6 +55,14 @@ export const PRELOADED_IDS = {
   genericTabItem: 'npm://@mdx-preview/shims-generic/TabItem',
   genericTab: 'npm://@mdx-preview/shims-generic/Tab',
   genericCodeGroup: 'npm://@mdx-preview/shims-generic/CodeGroup',
+  // Nextra shims (compound components: Tabs.Tab, Cards.Card accessed via parent)
+  nextraComponents: 'npm://@mdx-preview/shims-nextra/components',
+  nextraCallout: 'npm://@mdx-preview/shims-nextra/Callout',
+  nextraTabs: 'npm://@mdx-preview/shims-nextra/Tabs',
+  nextraCards: 'npm://@mdx-preview/shims-nextra/Cards',
+  nextraFileTree: 'npm://@mdx-preview/shims-nextra/FileTree',
+  nextraSteps: 'npm://@mdx-preview/shims-nextra/Steps',
+  nextraBleed: 'npm://@mdx-preview/shims-nextra/Bleed',
 } as const;
 
 // alias mappings: request string -> canonical preloaded ID
@@ -112,7 +118,9 @@ export const PRELOAD_ALIASES: Record<string, string> = {
   Collapsible: PRELOADED_IDS.genericCollapsible,
   Accordion: PRELOADED_IDS.genericAccordion,
   Details: PRELOADED_IDS.genericDetails,
-  // Note: Tabs/TabItem/Tab may conflict with framework shims, use explicit paths
+  Tabs: PRELOADED_IDS.genericTabs,
+  TabItem: PRELOADED_IDS.genericTabItem,
+  Tab: PRELOADED_IDS.genericTab,
   '@mdx-preview/shims/generic/Callout': PRELOADED_IDS.genericCallout,
   '@mdx-preview/shims/generic/Alert': PRELOADED_IDS.genericAlert,
   '@mdx-preview/shims/generic/Admonition': PRELOADED_IDS.genericAdmonition,
@@ -124,6 +132,18 @@ export const PRELOAD_ALIASES: Record<string, string> = {
   '@mdx-preview/shims/generic/Tab': PRELOADED_IDS.genericTab,
   '@mdx-preview/shims/generic/CodeGroup': PRELOADED_IDS.genericCodeGroup,
   CodeGroup: PRELOADED_IDS.genericCodeGroup,
+  // Nextra aliases (barrel imports for all components)
+  'nextra/components': PRELOADED_IDS.nextraComponents,
+  'nextra-theme-docs': PRELOADED_IDS.nextraComponents,
+  'nextra-theme-docs/components': PRELOADED_IDS.nextraComponents,
+  '@mdx-preview/shims/nextra': PRELOADED_IDS.nextraComponents,
+  // Individual Nextra component shim paths
+  '@mdx-preview/shims/nextra/Callout': PRELOADED_IDS.nextraCallout,
+  '@mdx-preview/shims/nextra/Tabs': PRELOADED_IDS.nextraTabs,
+  '@mdx-preview/shims/nextra/Cards': PRELOADED_IDS.nextraCards,
+  '@mdx-preview/shims/nextra/FileTree': PRELOADED_IDS.nextraFileTree,
+  '@mdx-preview/shims/nextra/Steps': PRELOADED_IDS.nextraSteps,
+  '@mdx-preview/shims/nextra/Bleed': PRELOADED_IDS.nextraBleed,
 };
 
 // get list of all IDs that should be preserved during module reset
@@ -148,6 +168,10 @@ export function getPreservedIds(): string[] {
     // Next.js shims
     'next/image',
     'next/link',
+    // Nextra shims
+    'nextra/components',
+    'nextra-theme-docs',
+    'nextra-theme-docs/components',
     // Generic shims (direct component names)
     'Callout',
     'Alert',
@@ -155,6 +179,9 @@ export function getPreservedIds(): string[] {
     'Collapsible',
     'Accordion',
     'Details',
+    'Tabs',
+    'TabItem',
+    'Tab',
     'CodeGroup',
   ];
 }
@@ -203,6 +230,13 @@ export function validateRegistryParity(): {
     const key = `nextjs${component}` as keyof typeof PRELOADED_IDS;
     if (!PRELOADED_IDS[key]) {
       missing.push(`nextjs/${component}`);
+    }
+  }
+
+  for (const component of FRAMEWORK_COMPONENTS.nextra) {
+    const key = `nextra${component}` as keyof typeof PRELOADED_IDS;
+    if (!PRELOADED_IDS[key]) {
+      missing.push(`nextra/${component}`);
     }
   }
 
