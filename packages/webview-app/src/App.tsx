@@ -28,6 +28,7 @@ import type {
   PreviewError,
   TrustedPreviewContent,
 } from './types';
+import type { NextraPageMeta } from '@mdx-preview/shared-types';
 import { useTheme } from './theme';
 import {
   ZOOM_MIN_PERCENT,
@@ -39,6 +40,7 @@ import './App.css';
 import './styles/admonitions.css';
 import './components/shims/docusaurus/styles.css';
 import './components/shims/starlight/styles.css';
+import './components/shims/nextra/styles.css';
 
 debug('[APP] App.tsx module loaded');
 
@@ -61,6 +63,8 @@ interface AppState {
   isStale: boolean;
   // zoom level (percentage, 100 = 100%)
   zoomLevel: number;
+  // Nextra page metadata (title, layout, etc.)
+  nextraMeta: NextraPageMeta | null;
 }
 
 function App() {
@@ -74,6 +78,7 @@ function App() {
     evaluatedComponent: null,
     isStale: false,
     zoomLevel: ZOOM_DEFAULT_PERCENT,
+    nextraMeta: null,
   });
 
   // track if we've completed initial setup
@@ -166,6 +171,15 @@ function App() {
     }));
   }, []);
 
+  // set Nextra page metadata (called by RPC handler)
+  const setNextraMeta = useCallback((meta: NextraPageMeta) => {
+    debug('[APP] setNextraMeta called', meta);
+    setState((prev) => ({
+      ...prev,
+      nextraMeta: meta,
+    }));
+  }, []);
+
   // zoom controls
   const zoomIn = useCallback(() => {
     debug('[APP] zoomIn called');
@@ -191,7 +205,7 @@ function App() {
     }));
   }, []);
 
-  // handle link clicks - intercept Ctrl/Cmd+clicks on anchors & route appropriately (regular clicks not intercepted for text selection)
+  // intercept Ctrl/Cmd+clicks on anchors & route to extension (preserve regular clicks for text selection)
   const handleLinkClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
     // find closest anchor element
     const target = event.target as HTMLElement;
@@ -207,7 +221,7 @@ function App() {
 
     const linkType = classifyLink(href);
 
-    // anchor links (internal page navigation) work without modifier
+    // handle anchor links w/o modifier key (internal page navigation)
     if (linkType === 'anchor') {
       event.preventDefault();
       const anchorId = extractAnchor(href);
@@ -220,10 +234,10 @@ function App() {
       return;
     }
 
-    // external & relative-file links require Ctrl/Cmd+click
+    // require Ctrl/Cmd+click for external & relative-file links
     const isModifierClick = event.metaKey || event.ctrlKey;
     if (!isModifierClick) {
-      // no modifier - let default behavior (CSP will block navigation)
+      // ignore non-modifier clicks (CSP blocks navigation)
       debug(`[APP] Link click without modifier, ignoring: ${href}`);
       return;
     }
@@ -232,7 +246,7 @@ function App() {
 
     switch (linkType) {
       case 'external': {
-        // open external URL via extension (more secure than direct navigation)
+        // open external URL via extension for security
         event.preventDefault();
         ExtensionHandle.openExternal(href);
         break;
@@ -248,7 +262,7 @@ function App() {
 
       case 'unknown':
       default: {
-        // let browser handle unknown links (will likely be blocked by CSP)
+        // pass unknown links to browser (CSP will block)
         debug(`[APP] Unknown link type, not intercepting: ${href}`);
         break;
       }
@@ -274,9 +288,8 @@ function App() {
       setTrustedContent,
       setError,
       setStale,
-      // theme handler
       setTheme: setPreviewThemeState,
-      // zoom handlers
+      setNextraMeta,
       zoomIn,
       zoomOut,
       resetZoom,
@@ -289,12 +302,13 @@ function App() {
     setError,
     setStale,
     setPreviewThemeState,
+    setNextraMeta,
     zoomIn,
     zoomOut,
     resetZoom,
   ]);
 
-  // render based on state
+  // destructure state for rendering
   const {
     trustState,
     content,
@@ -303,18 +317,26 @@ function App() {
     evaluatedComponent,
     isStale,
     zoomLevel,
+    nextraMeta,
   } = state;
   debug(
     `[APP] Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
   );
 
-  // show loading state
+  // compute Nextra layout class from metadata
+  const nextraLayoutClass = nextraMeta?.layout === 'full'
+    ? 'nextra-layout-full'
+    : nextraMeta?.layout === 'raw'
+    ? 'nextra-layout-raw'
+    : '';
+
+  // render loading state during initial load
   if (isLoading && !content && !error) {
     debug('[APP] Rendering LoadingBar (initial loading)');
     return <LoadingBar />;
   }
 
-  // show error state (use unified ErrorDisplay component)
+  // render error state w/ unified ErrorDisplay component
   if (error) {
     debug('[APP] Rendering error state');
     // Convert PreviewError to Error for ErrorDisplay
@@ -333,18 +355,18 @@ function App() {
     );
   }
 
-  // no content yet
+  // render loading state when awaiting content
   if (!content) {
     debug('[APP] Rendering LoadingBar (no content)');
     return <LoadingBar />;
   }
 
-  // render content based on mode
+  // render preview content in Safe or Trusted Mode
   debug(`[APP] Rendering content in ${content.mode} mode`);
 
   return (
     <div
-      className="mdx-preview-container"
+      className={`mdx-preview-container ${nextraLayoutClass}`.trim()}
       onClick={handleLinkClick}
       data-mpe-theme-active={previewTheme !== 'none' ? 'true' : undefined}
     >
@@ -364,6 +386,9 @@ function App() {
               : undefined
           }
         >
+          {nextraMeta?.title && (
+            <h1 className="nextra-page-title">{nextraMeta.title}</h1>
+          )}
           {content.mode === 'safe' ? (
             <SafePreviewRenderer html={content.html} />
           ) : (
