@@ -1,0 +1,255 @@
+---
+title: "Callouts Guide"
+description: "Complete guide to using Nextra Callout components with all types and customization options"
+---
+
+import { Callout } from 'nextra/components'
+
+# Callouts Guide
+
+Callouts are alert boxes used to highlight important information. Nextra provides 5 built-in types, each with a distinct icon and color scheme.
+
+## Callout Types
+
+### Default
+
+The default callout uses a lightbulb icon, perfect for general tips and information.
+
+<Callout type="default">
+  This is a **default** callout. It uses a lightbulb icon and is suitable for general information or tips.
+</Callout>
+
+```mdx
+<Callout type="default">
+  This is a **default** callout.
+</Callout>
+```
+
+### Info
+
+Info callouts use a circle-i icon for informational content.
+
+<Callout type="info">
+  This is an **info** callout. Use it for informational notes that readers should be aware of.
+</Callout>
+
+```mdx
+<Callout type="info">
+  This is an **info** callout.
+</Callout>
+```
+
+### Warning
+
+Warning callouts use a triangle exclamation icon for cautionary messages.
+
+<Callout type="warning">
+  This is a **warning** callout. Use it to alert readers about potential issues or important considerations.
+</Callout>
+
+```mdx
+<Callout type="warning">
+  This is a **warning** callout.
+</Callout>
+```
+
+### Error
+
+Error callouts use a diamond exclamation icon for critical errors or failures.
+
+<Callout type="error">
+  This is an **error** callout. Use it for error messages, critical failures, or dangerous actions.
+</Callout>
+
+```mdx
+<Callout type="error">
+  This is an **error** callout.
+</Callout>
+```
+
+### Important
+
+Important callouts use a message/comment icon for crucial information.
+
+<Callout type="important">
+  This is an **important** callout. Use it to emphasize crucial information that shouldn't be missed.
+</Callout>
+
+```mdx
+<Callout type="important">
+  This is an **important** callout.
+</Callout>
+```
+
+---
+
+## Custom Emojis
+
+You can override the default icon with any emoji using the `emoji` prop.
+
+<Callout emoji="🚀">
+  **Launch ready!** Custom emoji callouts let you express any mood or topic.
+</Callout>
+
+<Callout emoji="💡">
+  **Pro tip:** Combine emojis with rich content for engaging documentation.
+</Callout>
+
+<Callout emoji="⚠️">
+  **Heads up!** You can use emoji to match the warning theme but with a different icon.
+</Callout>
+
+<Callout emoji="🎉">
+  **Congratulations!** You've completed the tutorial successfully.
+</Callout>
+
+<Callout emoji="📝">
+  **Note to self:** Don't forget to update the changelog before releasing.
+</Callout>
+
+<Callout emoji="🔥">
+  **Hot tip:** This feature was just released and is incredibly powerful.
+</Callout>
+
+<Callout emoji="🐛">
+  **Known bug:** This issue is being tracked and will be fixed in the next release.
+</Callout>
+
+<Callout emoji="🔒">
+  **Security notice:** Always validate user input before processing.
+</Callout>
+
+```mdx
+<Callout emoji="🚀">
+  Custom emoji callout
+</Callout>
+
+<Callout emoji="💡">
+  Another custom emoji
+</Callout>
+```
+
+---
+
+## Combining Type and Emoji
+
+You can use both `type` and `emoji` props together. The emoji will override the icon, but the type will still determine the color scheme.
+
+<Callout type="warning" emoji="⚠️">
+  Warning with a custom emoji but keeping the warning color scheme.
+</Callout>
+
+<Callout type="error" emoji="🚫">
+  Error with a prohibited sign emoji.
+</Callout>
+
+<Callout type="info" emoji="ℹ️">
+  Info with an information emoji.
+</Callout>
+
+```mdx
+<Callout type="warning" emoji="⚠️">
+  Warning with custom emoji
+</Callout>
+```
+
+---
+
+## Rich Content
+
+Callouts support full Markdown content including formatting, lists, code blocks, and more.
+
+### With Lists
+
+<Callout type="info">
+  **Before you begin, make sure you have:**
+
+  - Node.js 18 or later installed
+  - A package manager (npm, yarn, or pnpm)
+  - Basic knowledge of React and MDX
+</Callout>
+
+### With Code
+
+<Callout type="warning">
+  **Deprecated API Warning**
+
+  The `oldFunction()` API is deprecated. Please migrate to the new API:
+
+  ```js
+  // Old (deprecated)
+  oldFunction(data)
+
+  // New (recommended)
+  newFunction({ data, options: {} })
+  ```
+</Callout>
+
+### With Nested Formatting
+
+<Callout type="important">
+  **Breaking Change in v2.0**
+
+  The following changes require updates to your code:
+
+  1. **Configuration format** - Changed from `.js` to `.mjs`
+  2. **Import paths** - Use `/components` suffix
+  3. **Props renamed**:
+     - `oldProp` → `newProp`
+     - `deprecatedFlag` → removed
+
+  See the [migration guide](#) for detailed instructions.
+</Callout>
+
+### With Links
+
+<Callout>
+  **Learn more** about Nextra components in the [official documentation](https://nextra.site/docs/guide/built-ins).
+
+  You can also check out the [GitHub repository](https://github.com/shuding/nextra) for source code and examples.
+</Callout>
+
+---
+
+## Without Type (Default Behavior)
+
+When no `type` is specified, the callout defaults to `'default'`:
+
+<Callout>
+  This callout has no `type` prop specified, so it uses the default type with a lightbulb icon.
+</Callout>
+
+---
+
+## All Types Side by Side
+
+<Callout type="default">
+  **Default** - General tips and information
+</Callout>
+
+<Callout type="info">
+  **Info** - Informational notes
+</Callout>
+
+<Callout type="warning">
+  **Warning** - Cautionary messages
+</Callout>
+
+<Callout type="error">
+  **Error** - Critical errors
+</Callout>
+
+<Callout type="important">
+  **Important** - Crucial information
+</Callout>
+
+---
+
+## API Reference
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `type` | `'default'` \| `'info'` \| `'warning'` \| `'error'` \| `'important'` | `'default'` | The callout style type |
+| `emoji` | `ReactNode` | (type icon) | Custom emoji or icon (overrides type icon) |
+| `children` | `ReactNode` | required | The callout content |
+| `className` | `string` | - | Additional CSS classes |

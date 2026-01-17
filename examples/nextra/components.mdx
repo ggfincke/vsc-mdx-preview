@@ -1,0 +1,248 @@
+---
+title: "Nextra Component Reference"
+description: "Quick reference for all Nextra components supported by MDX Preview"
+---
+
+import { Callout, Tabs, Cards, FileTree, Steps, Bleed } from 'nextra/components'
+
+# Component Reference
+
+This page provides a quick reference for all Nextra components. For detailed examples of each component, see the dedicated pages.
+
+## Callout
+
+Display important information with styled alert boxes.
+
+<Callout type="default">
+  **Default callout** - General information with a lightbulb icon.
+</Callout>
+
+<Callout type="info">
+  **Info callout** - Informational notes with a circle-i icon.
+</Callout>
+
+<Callout type="warning">
+  **Warning callout** - Warning messages with a triangle icon.
+</Callout>
+
+<Callout type="error">
+  **Error callout** - Error alerts with a diamond icon.
+</Callout>
+
+<Callout type="important">
+  **Important callout** - Important notices with a message icon.
+</Callout>
+
+<Callout emoji="🚀">
+  **Custom emoji** - You can override the default icon with any emoji.
+</Callout>
+
+**Props:**
+- `type`: `'default'` | `'info'` | `'warning'` | `'error'` | `'important'`
+- `emoji`: Custom emoji or React node (overrides type icon)
+
+[See all callout examples →](./callouts)
+
+---
+
+## Tabs
+
+Organize content into switchable panels.
+
+<Tabs items={['React', 'Vue', 'Svelte']}>
+  <Tabs.Tab>
+    ```jsx
+    function App() {
+      return <div>Hello React!</div>
+    }
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```vue
+    <template>
+      <div>Hello Vue!</div>
+    </template>
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```svelte
+    <div>Hello Svelte!</div>
+    ```
+  </Tabs.Tab>
+</Tabs>
+
+**Props:**
+- `items`: Array of tab labels (string or `{ label: string; disabled?: boolean }`)
+- `defaultIndex`: Initial selected tab (default: `0`)
+- `selectedIndex`: Controlled mode selection
+- `storageKey`: localStorage key for persistence
+- `onChange`: Callback when tab changes
+
+[See all tab examples →](./tabs-demo)
+
+---
+
+## Cards
+
+Display content in a responsive grid layout.
+
+<Cards num={3}>
+  <Cards.Card icon="📚" title="Documentation" href="./index">
+    Learn the basics
+  </Cards.Card>
+  <Cards.Card icon="🎯" title="Examples" href="./callouts">
+    See components in action
+  </Cards.Card>
+  <Cards.Card icon="🔗" title="External" href="https://nextra.site" arrow>
+    Visit Nextra site
+  </Cards.Card>
+</Cards>
+
+**Cards Props:**
+- `num`: Number of columns (default: `3`)
+
+**Cards.Card Props:**
+- `title`: Card title (required)
+- `icon`: Emoji or React node
+- `href`: Link URL
+- `arrow`: Show arrow indicator (for links)
+
+[See all card examples →](./cards-demo)
+
+---
+
+## FileTree
+
+Display directory structures with expandable folders.
+
+<FileTree>
+  <ul>
+    <li><strong>src/</strong></li>
+    <ul>
+      <li><strong>components/</strong> React components</li>
+      <ul>
+        <li>Button.tsx</li>
+        <li>Card.tsx</li>
+      </ul>
+      <li>utils/</li>
+      <ul>
+        <li>...</li>
+      </ul>
+    </ul>
+    <li>package.json</li>
+  </ul>
+</FileTree>
+
+**Features:**
+- Directories end with `/` or contain nested `<ul>`
+- Highlight files with `<strong>` tags
+- Add comments after file names
+- Use `...` for placeholders
+
+[See all FileTree examples →](./file-tree-demo)
+
+---
+
+## Steps
+
+Display numbered step-by-step content.
+
+<Steps>
+
+### Install Dependencies
+
+```bash
+npm install nextra nextra-theme-docs
+```
+
+### Configure Next.js
+
+Create `next.config.mjs` with Nextra plugin.
+
+### Create Pages
+
+Add `.mdx` files to the `pages` directory.
+
+</Steps>
+
+**Usage:**
+Wrap content with headings (`###`) in the `<Steps>` component.
+
+---
+
+## Bleed
+
+Allow content to extend beyond the container width with text formatting options.
+
+### Basic Bleed
+
+<Bleed style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+  Standard bleed - content extends slightly beyond the container.
+</Bleed>
+
+### Text Alignment
+
+<Bleed align="center" style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', color: 'white' }}>
+  Horizontally centered text
+</Bleed>
+
+<Bleed align="right" style={{ background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', color: 'white' }}>
+  Right-aligned text
+</Bleed>
+
+### Vertical Alignment
+
+<Bleed valign="middle" align="center" style={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: 'white' }}>
+  Vertically and horizontally centered (auto 150px height)
+</Bleed>
+
+<Bleed valign="bottom" align="right" height="md" style={{ background: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', color: 'white' }}>
+  Bottom-right aligned with 200px height
+</Bleed>
+
+### Text Styling
+
+<Bleed size="xl" weight="bold" align="center" style={{ background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', color: '#333' }}>
+  Extra large bold text
+</Bleed>
+
+<Bleed size="sm" italic align="center" style={{ background: 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)', color: '#333' }}>
+  Small italic caption text
+</Bleed>
+
+### Combined Example
+
+<Bleed align="center" valign="middle" height="lg" size="xl" weight="semibold" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+  Hero Section - Centered, 300px tall
+</Bleed>
+
+<br />
+
+**Props:**
+- `align`: Horizontal alignment - `'left'` | `'center'` | `'right'`
+- `valign`: Vertical alignment - `'top'` | `'middle'` | `'bottom'` (auto 150px height)
+- `height`: Height preset - `'sm'` (100px) | `'md'` (200px) | `'lg'` (300px) | `'xl'` (400px) | `'half'` (50vh) | `'screen'` (100vh)
+- `size`: Font size - `'sm'` | `'base'` | `'lg'` | `'xl'`
+- `weight`: Font weight - `'normal'` | `'medium'` | `'semibold'` | `'bold'`
+- `italic`: Italic text (default: `false`)
+
+---
+
+## Import Statement
+
+All components are imported from `nextra/components`:
+
+```jsx
+import {
+  Callout,
+  Tabs,
+  Cards,
+  FileTree,
+  Steps,
+  Bleed
+} from 'nextra/components'
+```
+
+<Callout type="info">
+  MDX Preview provides shims for these components - you don't need to install Nextra to preview your MDX files.
+</Callout>

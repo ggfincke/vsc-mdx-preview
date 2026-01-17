@@ -1,0 +1,151 @@
+---
+title: "Welcome to Nextra MDX Preview Demo"
+sidebarTitle: "Getting Started"
+description: "A comprehensive demonstration of Nextra framework support in MDX Preview"
+---
+
+import { Callout, Tabs, Cards, FileTree, Steps, Bleed } from 'nextra/components'
+
+# Getting Started with Nextra in MDX Preview
+
+Welcome to this comprehensive example demonstrating **Nextra framework support** in the MDX Preview extension.
+
+<Callout type="info">
+  This page demonstrates the `sidebarTitle` frontmatter field. Notice that "Getting Started" appears in the sidebar instead of the longer page title.
+</Callout>
+
+## What is Nextra?
+
+[Nextra](https://nextra.site) is a Next.js-based documentation framework that provides:
+
+- MDX-first authoring experience
+- Built-in React components
+- Automatic sidebar generation from `_meta.json`
+- Theme support (docs and blog themes)
+
+## MDX Preview Support
+
+This extension provides **full support** for Nextra projects including:
+
+<Cards num={2}>
+  <Cards.Card icon="🧩" title="Component Shims" href="./components">
+    All Nextra components work out of the box
+  </Cards.Card>
+  <Cards.Card icon="⚙️" title="_meta.json Support" href="./file-tree-demo">
+    Page titles and layouts from configuration
+  </Cards.Card>
+  <Cards.Card icon="📝" title="Frontmatter" href="./layouts/full-width">
+    Nextra-specific frontmatter fields
+  </Cards.Card>
+  <Cards.Card icon="🎨" title="Layout Modes" href="./layouts/raw-layout">
+    Default, full-width, and raw layouts
+  </Cards.Card>
+</Cards>
+
+## Quick Start
+
+<Steps>
+
+### Open the Example
+
+Open this `examples/nextra` folder in VS Code with the MDX Preview extension installed.
+
+### Trust the Workspace
+
+When prompted, trust the workspace to enable Trusted Mode features.
+
+### Enable Scripts
+
+Ensure `mdx-preview.preview.enableScripts` is set to `true` in your VS Code settings.
+
+### Open an MDX File
+
+Open any `.mdx` file in this folder and press `Cmd+K X` (Mac) or `Ctrl+K X` (Windows/Linux) to open the preview.
+
+</Steps>
+
+## Explore the Components
+
+<Tabs items={['Callouts', 'Tabs', 'Cards', 'More']}>
+  <Tabs.Tab>
+    Callouts display important information with 5 different types:
+    - `default` - General information
+    - `info` - Informational notes
+    - `warning` - Warning messages
+    - `error` - Error alerts
+    - `important` - Important notices
+
+    [See all callout examples →](./callouts)
+  </Tabs.Tab>
+  <Tabs.Tab>
+    Tabs organize content into switchable panels:
+    - String or object items
+    - localStorage persistence
+    - Disabled tab support
+    - Compound component pattern
+
+    [See all tab examples →](./tabs-demo)
+  </Tabs.Tab>
+  <Tabs.Tab>
+    Cards display content in a grid layout:
+    - Configurable column count
+    - Icons and links
+    - Arrow indicators
+    - External link detection
+
+    [See all card examples →](./cards-demo)
+  </Tabs.Tab>
+  <Tabs.Tab>
+    Additional components:
+    - **FileTree** - Directory structures
+    - **Steps** - Numbered procedures
+    - **Bleed** - Full-width content
+
+    [See component reference →](./components)
+  </Tabs.Tab>
+</Tabs>
+
+## Project Structure
+
+This example has the following structure:
+
+<FileTree>
+  <ul>
+    <li><strong>examples/nextra/</strong></li>
+    <ul>
+      <li>package.json</li>
+      <li>README.md</li>
+      <li>_meta.json</li>
+      <li><strong>docs/</strong></li>
+      <ul>
+        <li>_meta.json</li>
+        <li><strong>index.mdx</strong> this file</li>
+        <li>components.mdx</li>
+        <li>callouts.mdx</li>
+        <li>tabs-demo.mdx</li>
+        <li>cards-demo.mdx</li>
+        <li>file-tree-demo.mdx</li>
+        <li><strong>layouts/</strong></li>
+        <ul>
+          <li>_meta.json</li>
+          <li>full-width.mdx</li>
+          <li>raw-layout.mdx</li>
+        </ul>
+      </ul>
+    </ul>
+  </ul>
+</FileTree>
+
+<Callout>
+  The `_meta.json` files configure page titles and layout settings. Check the [FileTree demo](./file-tree-demo) to see how they work.
+</Callout>
+
+## Next Steps
+
+Explore the dedicated pages for each component to see all their features:
+
+1. [**Callouts**](./callouts) - All callout types and custom emojis
+2. [**Tabs**](./tabs-demo) - Persistence, disabled items, and more
+3. [**Cards**](./cards-demo) - Grid layouts and link handling
+4. [**FileTree**](./file-tree-demo) - Directory structures with highlights
+5. [**Layouts**](./layouts/full-width) - Full-width and raw layout modes
