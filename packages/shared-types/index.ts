@@ -1,7 +1,7 @@
 // packages/shared-types/index.ts
 // shared type definitions for extension & webview packages
 
-// Component registry - single source of truth for all component definitions
+// component registry - single source of truth for all component definitions
 export {
   // Core registries
   GENERIC_COMPONENTS,
@@ -27,7 +27,7 @@ export {
   getFrameworkShimPath,
 } from './components';
 
-// result of fetching a module via RPC
+// fetch result w/ module code & dependencies
 export interface FetchResult {
   fsPath: string;
   code: string;
@@ -35,7 +35,7 @@ export interface FetchResult {
   css?: string;
 }
 
-// trust state synchronized between extension & webview
+// trust state between extension & webview
 export interface TrustState {
   workspaceTrusted: boolean;
   scriptsEnabled: boolean;
@@ -43,14 +43,14 @@ export interface TrustState {
   reason?: string;
 }
 
-// preview error state
+// preview error w/ message & optional stack trace
 export interface PreviewError {
   message: string;
   stack?: string;
   code?: string;
 }
 
-// type guard for PreviewError
+// check if value is a PreviewError
 export function isPreviewError(value: unknown): value is PreviewError {
   return (
     typeof value === 'object' &&
@@ -121,7 +121,7 @@ export function isLightPreviewTheme(theme: PreviewTheme): boolean {
   );
 }
 
-// list of all preview themes
+// available preview themes
 export const PREVIEW_THEMES: PreviewTheme[] = [
   'github-light',
   'github-dark',
@@ -141,7 +141,7 @@ export const PREVIEW_THEMES: PreviewTheme[] = [
   'vue',
 ];
 
-// list of all code block themes
+// available code block themes
 export const CODE_BLOCK_THEMES: CodeBlockTheme[] = [
   'auto',
   'default',
@@ -169,7 +169,7 @@ export const CODE_BLOCK_THEMES: CodeBlockTheme[] = [
   'xonokai',
 ];
 
-// light/dark theme pairs for auto-switching
+// light/dark theme pairs for auto theme switching
 export const THEME_PAIRS: Record<
   string,
   { light: PreviewTheme; dark: PreviewTheme }
@@ -180,7 +180,7 @@ export const THEME_PAIRS: Record<
   solarized: { light: 'solarized-light', dark: 'solarized-dark' },
 };
 
-// get the opposite theme for auto light/dark switching
+// find opposite theme for auto light/dark switching
 export function getOppositeTheme(
   theme: PreviewTheme,
   targetIsLight: boolean
@@ -193,11 +193,11 @@ export function getOppositeTheme(
       return pair.light;
     }
   }
-  // no pair found, return as-is
+  // return theme unchanged if no pair found
   return theme;
 }
 
-// RPC: methods extension exposes to webview (callable by webview)
+// extension-exposed RPC methods
 export interface ExtensionRPC {
   handshake(): void;
   reportPerformance(evaluationDuration: number): void;
@@ -216,7 +216,19 @@ export interface ExtensionRPC {
   ): Promise<void>;
 }
 
-// RPC: methods webview exposes to extension (callable by extension)
+// Nextra _meta.json page-level settings (preview-relevant only)
+export interface NextraPageMeta {
+  // Title from _meta.json or frontmatter (sidebarTitle takes precedence)
+  title?: string;
+  // Layout type: 'default' (max-width container), 'full' (full-width), 'raw' (no styling)
+  layout?: 'default' | 'full' | 'raw';
+  // Page description (from frontmatter)
+  description?: string;
+  // Whether TOC should be visible (informational for preview)
+  toc?: boolean;
+}
+
+// webview-exposed RPC methods
 export interface WebviewRPC {
   setTrustState(state: TrustState): void;
   updatePreview(
@@ -231,6 +243,7 @@ export interface WebviewRPC {
   setCustomCss(css: string): void;
   setTailwindCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
+  setNextraMeta(meta: NextraPageMeta): void;
   zoomIn(): void;
   zoomOut(): void;
   resetZoom(): void;

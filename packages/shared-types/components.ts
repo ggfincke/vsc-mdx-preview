@@ -1,15 +1,9 @@
 // packages/shared-types/components.ts
 // Canonical component registry - single source of truth for all component definitions
-// Used by both extension (transpiler, resolver) and webview (preload, module loader)
+// Used by both extension (transpiler, resolver) & webview (preload, module loader)
 
-// ============================================================================
-// Generic Components (built-in, framework-agnostic shims)
-// ============================================================================
-
-/**
- * Generic component definitions with their aliases.
- * These components are auto-injected in Trusted Mode and transformed in Safe Mode.
- */
+// generic component definitions w/ their aliases
+// auto-inject in Trusted Mode & transform in Safe Mode
 export const GENERIC_COMPONENTS = {
   // Callout variants - informational boxes with type-based styling
   Callout: { aliases: ['Alert', 'Admonition'] as const },
@@ -30,14 +24,8 @@ export type GenericComponentName = keyof typeof GENERIC_COMPONENTS;
 export type GenericComponentAlias =
   (typeof GENERIC_COMPONENTS)[GenericComponentName]['aliases'][number];
 
-// ============================================================================
-// Framework-Specific Components (shims for framework UI libraries)
-// ============================================================================
-
-/**
- * Framework-specific component shims.
- * These replace imports from framework packages with preview-compatible implementations.
- */
+// framework-specific component shims
+// replace imports from framework packages w/ preview-compatible implementations
 export const FRAMEWORK_COMPONENTS = {
   // Docusaurus theme components
   docusaurus: ['Tabs', 'TabItem', 'CodeBlock', 'Details'] as const,
@@ -58,6 +46,10 @@ export const FRAMEWORK_COMPONENTS = {
 
   // Next.js components
   nextjs: ['Image', 'Link'] as const,
+
+  // Nextra components (uses compound pattern: Tabs.Tab, Cards.Card)
+  // We list main exports; subcomponents are accessed via parent
+  nextra: ['Callout', 'Tabs', 'Cards', 'FileTree', 'Steps', 'Bleed'] as const,
 } as const;
 
 // Derive types from framework components
@@ -67,21 +59,14 @@ export type DocusaurusComponent =
 export type StarlightComponent =
   (typeof FRAMEWORK_COMPONENTS)['starlight'][number];
 export type NextjsComponent = (typeof FRAMEWORK_COMPONENTS)['nextjs'][number];
+export type NextraComponent = (typeof FRAMEWORK_COMPONENTS)['nextra'][number];
 
-// ============================================================================
-// Shim Path Configuration
-// ============================================================================
-
-/**
- * Base path prefix for shim module resolution.
- * Extension resolves imports to these paths, webview maps them to preloaded modules.
- */
+// base path prefix for shim module resolution
+// extension resolves imports to these paths, webview maps to preloaded modules
 export const SHIM_PREFIX = '@mdx-preview/shims' as const;
 
-/**
- * Framework import patterns that should be resolved to shims.
- * Used by alias-resolver in the extension.
- */
+// framework import patterns resolved to shims
+// used by alias-resolver in extension
 export const FRAMEWORK_IMPORT_PATTERNS = {
   docusaurus: {
     // @theme/Tabs -> @mdx-preview/shims/docusaurus/Tabs
@@ -102,16 +87,20 @@ export const FRAMEWORK_IMPORT_PATTERNS = {
     imagePattern: /^next\/image$/,
     linkPattern: /^next\/link$/,
   },
+  nextra: {
+    // nextra/components -> all components (Nextra 3.x barrel import)
+    componentsPattern: /^nextra\/components$/,
+    // nextra-theme-docs -> legacy theme imports (Nextra 2.x)
+    themeDocsPattern: /^nextra-theme-docs$/,
+    // nextra-theme-docs/components -> individual component imports
+    themeDocsComponentPattern: /^nextra-theme-docs\/components$/,
+    // nextra/components/Callout -> individual component imports
+    componentPattern: /^nextra\/components\/(.+)$/,
+  },
 } as const;
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Get all generic component names including aliases.
- * Returns: ['Callout', 'Alert', 'Admonition', 'Collapsible', 'Accordion', 'Details', ...]
- */
+// get all generic component names including aliases
+// returns: ['Callout', 'Alert', 'Admonition', 'Collapsible', 'Accordion', 'Details', ...]
 export function getAllGenericComponentNames(): string[] {
   const names: string[] = [];
   for (const [name, config] of Object.entries(GENERIC_COMPONENTS)) {
@@ -120,25 +109,19 @@ export function getAllGenericComponentNames(): string[] {
   return names;
 }
 
-/**
- * Get a Set of all generic component names for O(1) lookup.
- */
+// get Set of all generic component names for O(1) lookup
 export function getGenericComponentSet(): Set<string> {
   return new Set(getAllGenericComponentNames());
 }
 
-/**
- * Get primary generic component names only (no aliases).
- * Returns: ['Callout', 'Collapsible', 'Tabs', 'TabItem', 'CodeGroup']
- */
+// get primary generic component names only (no aliases)
+// returns: ['Callout', 'Collapsible', 'Tabs', 'TabItem', 'CodeGroup']
 export function getPrimaryGenericComponentNames(): GenericComponentName[] {
   return Object.keys(GENERIC_COMPONENTS) as GenericComponentName[];
 }
 
-/**
- * Get the canonical component name for an alias.
- * E.g., 'Alert' -> 'Callout', 'Accordion' -> 'Collapsible'
- */
+// get canonical component name for alias
+// e.g., 'Alert' -> 'Callout', 'Accordion' -> 'Collapsible'
 export function getCanonicalComponentName(
   nameOrAlias: string
 ): string | undefined {
@@ -157,25 +140,19 @@ export function getCanonicalComponentName(
   return undefined;
 }
 
-/**
- * Get component names for a specific framework.
- */
+// get component names for specific framework
 export function getFrameworkComponents<F extends Framework>(
   framework: F
 ): readonly (typeof FRAMEWORK_COMPONENTS)[F][number][] {
   return FRAMEWORK_COMPONENTS[framework];
 }
 
-/**
- * Check if a component name is a known generic component (including aliases).
- */
+// check if component name is known generic component (including aliases)
 export function isGenericComponent(name: string): boolean {
   return getGenericComponentSet().has(name);
 }
 
-/**
- * Check if a component name is a framework-specific component.
- */
+// check if component name is framework-specific component
 export function isFrameworkComponent(
   name: string,
   framework?: Framework
@@ -195,18 +172,14 @@ export function isFrameworkComponent(
   return false;
 }
 
-/**
- * Get the shim path for a generic component.
- * E.g., 'Callout' -> '@mdx-preview/shims/generic/Callout'
- */
+// get shim path for generic component
+// e.g., 'Callout' -> '@mdx-preview/shims/generic/Callout'
 export function getGenericShimPath(componentName: string): string {
   return `${SHIM_PREFIX}/generic/${componentName}`;
 }
 
-/**
- * Get the shim path for a framework component.
- * E.g., ('docusaurus', 'Tabs') -> '@mdx-preview/shims/docusaurus/Tabs'
- */
+// get shim path for framework component
+// e.g., ('docusaurus', 'Tabs') -> '@mdx-preview/shims/docusaurus/Tabs'
 export function getFrameworkShimPath(
   framework: Framework,
   componentName: string
