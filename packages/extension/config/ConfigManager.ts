@@ -42,7 +42,13 @@ export interface SettingTypes {
   'preview.autoTheme': boolean;
   'build.useSucraseTranspiler': boolean;
   'tailwind.enabled': 'auto' | 'enabled' | 'disabled';
-  framework: 'auto' | 'generic' | 'docusaurus' | 'nextjs' | 'astro-starlight';
+  framework:
+    | 'auto'
+    | 'generic'
+    | 'docusaurus'
+    | 'nextjs'
+    | 'astro-starlight'
+    | 'nextra';
   'framework.componentShims': boolean;
   'components.builtins': boolean;
   'components.unknownBehavior': 'strip' | 'placeholder' | 'raw';
@@ -71,12 +77,7 @@ const DEFAULTS: SettingTypes = {
 
 type ConfigChangeCallback = (affectedKeys: SettingKey[]) => void;
 
-// * centralized configuration manager for MDX Preview
-// benefits:
-// - single source of truth for defaults
-// - type-safe configuration access
-// - centralized change notification
-// - registered w/ ServiceRegistry for proper lifecycle
+// Centralized configuration manager for MDX Preview w/ type safety & change notifications
 export class ConfigManager extends SingletonService<ConfigManager> {
   protected static override instance: ConfigManager | undefined;
   protected readonly logTag = 'CONFIG-MANAGER';
@@ -85,7 +86,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
 
   protected constructor() {
     super();
-    // subscribe to VS Code configuration changes
+    // Subscribe to VS Code configuration changes
     this.addDisposable(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('mdx-preview')) {
@@ -95,13 +96,13 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     );
   }
 
-  // get a configuration value w/ type safety
+  // Get config value w/ type safety
   get<K extends SettingKey>(key: K, scope?: vscode.Uri): SettingTypes[K] {
     const config = vscode.workspace.getConfiguration('mdx-preview', scope);
     return config.get<SettingTypes[K]>(key, DEFAULTS[key]);
   }
 
-  // get all configuration values as an object
+  // Get all config values as an object
   getAll(scope?: vscode.Uri): SettingTypes {
     const result = {} as SettingTypes;
     for (const key of Object.keys(DEFAULTS) as SettingKey[]) {
@@ -113,7 +114,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     return result;
   }
 
-  // update a configuration value
+  // Update config value
   async set<K extends SettingKey>(
     key: K,
     value: SettingTypes[K],
@@ -123,7 +124,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     await config.update(key, value, target);
   }
 
-  // subscribe to configuration changes
+  // Subscribe to configuration changes
   onDidChangeConfiguration(callback: ConfigChangeCallback): vscode.Disposable {
     this.subscribers.add(callback);
     return {
@@ -133,7 +134,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     };
   }
 
-  // check if a specific setting affects the configuration change event
+  // Check if a specific setting affects the configuration change event
   static affectsConfiguration(
     event: vscode.ConfigurationChangeEvent,
     key: SettingKey
@@ -141,9 +142,9 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     return event.affectsConfiguration(`mdx-preview.${key}`);
   }
 
-  // notify subscribers of configuration changes
+  // Notify subscribers of configuration changes
   private notifySubscribers(event: vscode.ConfigurationChangeEvent): void {
-    // determine which keys changed
+    // Determine which keys changed
     const affectedKeys = (Object.keys(DEFAULTS) as SettingKey[]).filter((key) =>
       event.affectsConfiguration(`mdx-preview.${key}`)
     );
@@ -163,7 +164,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     }
   }
 
-  // custom cleanup - subscribers are cleared, disposables handled by base class
+  // Clear subscribers on dispose
   protected override onDispose(): void {
     this.subscribers.clear();
   }

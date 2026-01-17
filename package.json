@@ -2,7 +2,7 @@
   "name": "vscode-mdx-preview",
   "displayName": "MDX Preview",
   "description": "MDX Preview",
-  "version": "1.0.0-alpha.10",
+  "version": "1.0.0-alpha.11",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [
@@ -459,7 +459,8 @@
             "generic",
             "docusaurus",
             "nextjs",
-            "astro-starlight"
+            "astro-starlight",
+            "nextra"
           ],
           "default": "auto",
           "enumDescriptions": [
@@ -467,7 +468,8 @@
             "Generic MDX (no framework-specific features)",
             "Docusaurus (@theme/* imports, admonitions)",
             "Next.js (mdx-components.tsx support)",
-            "Astro Starlight (@astrojs/starlight/components)"
+            "Astro Starlight (@astrojs/starlight/components)",
+            "Nextra (nextra/components, theme-docs)"
           ],
           "markdownDescription": "Framework for MDX rendering. When set to `auto`, detects framework from workspace `package.json` dependencies.",
           "scope": "resource"

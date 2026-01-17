@@ -19,7 +19,7 @@ const selectFramework = async (): Promise<void> => {
   const currentSetting = configManager.get('framework');
   const frameworkDetector = getFrameworkDetector();
 
-  // get detected framework for display
+  // Detect framework from active editor
   const editor = vscode.window.activeTextEditor;
   let detectedFramework: Framework = 'generic';
   if (editor) {
@@ -63,6 +63,11 @@ const selectFramework = async (): Promise<void> => {
         currentSetting === 'astro-starlight' ? '(current)' : undefined,
       value: 'astro-starlight',
     },
+    {
+      label: 'Nextra',
+      description: currentSetting === 'nextra' ? '(current)' : undefined,
+      value: 'nextra',
+    },
   ];
 
   const selected = await vscode.window.showQuickPick(frameworks, {
@@ -78,11 +83,12 @@ const selectFramework = async (): Promise<void> => {
         | 'generic'
         | 'docusaurus'
         | 'nextjs'
-        | 'astro-starlight',
+        | 'astro-starlight'
+        | 'nextra',
       vscode.ConfigurationTarget.Workspace
     );
 
-    // refresh previews to apply framework changes
+    // Refresh previews to apply framework changes
     getPreviewManager().refreshAllPreviews();
 
     vscode.window.showInformationMessage(

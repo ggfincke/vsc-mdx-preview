@@ -4,7 +4,7 @@
 import * as path from 'path';
 import type { Framework } from './FrameworkDetector';
 
-// Use shared component registry as single source of truth
+// Get shared component registry for supported components
 import { FRAMEWORK_COMPONENTS, SHIM_PREFIX } from '@mdx-preview/shared-types';
 
 // alias configuration for a framework
@@ -20,7 +20,7 @@ export interface AliasConfig {
 // Re-export SHIM_PREFIX for backwards compatibility
 export { SHIM_PREFIX };
 
-// get alias configurations for a framework
+// Get alias configurations for framework
 export function getAliasesForFramework(framework: Framework): AliasConfig[] {
   switch (framework) {
     case 'docusaurus':
@@ -29,6 +29,8 @@ export function getAliasesForFramework(framework: Framework): AliasConfig[] {
       return getStarlightAliases();
     case 'nextjs':
       return getNextjsAliases();
+    case 'nextra':
+      return getNextraAliases();
     case 'generic':
     default:
       return [];
@@ -37,7 +39,7 @@ export function getAliasesForFramework(framework: Framework): AliasConfig[] {
 
 // Docusaurus aliases
 function getDocusaurusAliases(): AliasConfig[] {
-  // Use shared registry for supported components
+  // Get shared registry for supported components
   const supportedShims = FRAMEWORK_COMPONENTS.docusaurus;
 
   return [
@@ -49,7 +51,7 @@ function getDocusaurusAliases(): AliasConfig[] {
         if ((supportedShims as readonly string[]).includes(componentName)) {
           return `${SHIM_PREFIX}/docusaurus/${componentName}`;
         }
-        // unsupported components return null (will fail import)
+        // Unsupported components return null (will fail import)
         return null;
       },
     },
@@ -71,7 +73,7 @@ function getDocusaurusAliases(): AliasConfig[] {
 
 // Astro Starlight aliases
 function getStarlightAliases(): AliasConfig[] {
-  // Use shared registry for supported components
+  // Get shared registry for supported components
   const supportedShims = FRAMEWORK_COMPONENTS.starlight;
 
   return [
@@ -97,25 +99,60 @@ function getStarlightAliases(): AliasConfig[] {
 // Next.js aliases (minimal - mostly uses mdx-components.tsx)
 function getNextjsAliases(): AliasConfig[] {
   return [
-    // next/image -> placeholder (images work differently in preview)
     {
+      // next/image -> placeholder (images work differently in preview)
       pattern: /^next\/image$/,
       resolve: () => `${SHIM_PREFIX}/nextjs/Image`,
     },
-    // next/link -> simple anchor wrapper
     {
+      // next/link -> simple anchor wrapper
       pattern: /^next\/link$/,
       resolve: () => `${SHIM_PREFIX}/nextjs/Link`,
     },
   ];
 }
 
-// check if a resolved path is a built-in shim
+// Nextra aliases (supports both Nextra 3.x & 2.x import patterns)
+function getNextraAliases(): AliasConfig[] {
+  // Get shared registry for supported components
+  const supportedShims = FRAMEWORK_COMPONENTS.nextra;
+
+  return [
+    {
+      // nextra/components -> all components (Nextra 3.x barrel import)
+      pattern: /^nextra\/components$/,
+      resolve: () => `${SHIM_PREFIX}/nextra`,
+    },
+    {
+      // nextra-theme-docs -> all components (Nextra 2.x)
+      pattern: /^nextra-theme-docs$/,
+      resolve: () => `${SHIM_PREFIX}/nextra`,
+    },
+    {
+      // nextra-theme-docs/components -> all components
+      pattern: /^nextra-theme-docs\/components$/,
+      resolve: () => `${SHIM_PREFIX}/nextra`,
+    },
+    {
+      // Individual component imports (nextra/components/Callout)
+      pattern: /^nextra\/components\/(.+)$/,
+      resolve: (match) => {
+        const componentName = match[1];
+        if ((supportedShims as readonly string[]).includes(componentName)) {
+          return `${SHIM_PREFIX}/nextra/${componentName}`;
+        }
+        return null;
+      },
+    },
+  ];
+}
+
+// Check if resolved path is a built-in shim
 export function isBuiltInShim(resolvedPath: string): boolean {
   return resolvedPath.startsWith(SHIM_PREFIX);
 }
 
-// extract shim info from resolved path
+// Extract shim info from resolved path
 export function parseShimPath(
   resolvedPath: string
 ): { framework: string; component: string } | null {
@@ -127,17 +164,17 @@ export function parseShimPath(
   const parts = withoutPrefix.split('/');
 
   if (parts.length === 1) {
-    // e.g., @mdx-preview/shims/starlight (all components)
+    // E.g. @mdx-preview/shims/starlight (all components)
     return { framework: parts[0], component: '*' };
   } else if (parts.length === 2) {
-    // e.g., @mdx-preview/shims/docusaurus/Tabs
+    // E.g. @mdx-preview/shims/docusaurus/Tabs
     return { framework: parts[0], component: parts[1] };
   }
 
   return null;
 }
 
-// try to resolve an import using framework aliases
+// Resolve import using framework aliases
 export function resolveAlias(
   request: string,
   framework: Framework,
