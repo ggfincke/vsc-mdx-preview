@@ -52,19 +52,29 @@ export function extractRequireSpecifiers(code: string): string[] {
 // check if a specifier is a local/relative import
 // returns true for './foo' & '../bar', false for bare specifiers & URLs
 export function isLocalImport(specifier: string): boolean {
-  if (!specifier) return false;
-  if (specifier.startsWith('http://') || specifier.startsWith('https://'))
+  if (!specifier) {
     return false;
-  if (specifier.startsWith('npm://')) return false;
+  }
+  if (specifier.startsWith('http://') || specifier.startsWith('https://')) {
+    return false;
+  }
+  if (specifier.startsWith('npm://')) {
+    return false;
+  }
   return specifier.startsWith('./') || specifier.startsWith('../');
 }
 
 // check if a specifier should be resolved (not a URL or special protocol)
 export function shouldResolve(specifier: string): boolean {
-  if (!specifier) return false;
-  if (specifier.startsWith('http://') || specifier.startsWith('https://'))
+  if (!specifier) {
     return false;
-  if (specifier.startsWith('npm://')) return false;
+  }
+  if (specifier.startsWith('http://') || specifier.startsWith('https://')) {
+    return false;
+  }
+  if (specifier.startsWith('npm://')) {
+    return false;
+  }
   return true;
 }
 

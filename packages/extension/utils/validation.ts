@@ -189,7 +189,9 @@ export function validateRecord<T>(
   opts?: ValidationOptions
 ): Record<string, T> | undefined {
   const obj = validateObject(value, name, opts);
-  if (!obj) return undefined;
+  if (!obj) {
+    return undefined;
+  }
 
   const log = opts?.log ?? logWarn;
   const ctx = opts?.context ? `${opts.context}: ` : '';
@@ -231,7 +233,7 @@ export function validateEnumValue<T extends string>(
 }
 
 // validates value is a function
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+
 export function validateFunction(
   value: unknown,
   name: string,

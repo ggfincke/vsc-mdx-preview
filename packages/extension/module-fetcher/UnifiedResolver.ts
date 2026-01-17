@@ -50,10 +50,15 @@ export class UnifiedResolver {
 
   // check if specifier should be resolved (not a URL or npm: protocol)
   shouldResolve(specifier: string): boolean {
-    if (!specifier) return false;
-    if (specifier.startsWith('http://') || specifier.startsWith('https://'))
+    if (!specifier) {
       return false;
-    if (specifier.startsWith('npm://')) return false;
+    }
+    if (specifier.startsWith('http://') || specifier.startsWith('https://')) {
+      return false;
+    }
+    if (specifier.startsWith('npm://')) {
+      return false;
+    }
     return true;
   }
 
@@ -150,7 +155,9 @@ export class UnifiedResolver {
     specifier: string,
     context: ResolutionContext
   ): string | null {
-    if (!context.tsConfig) return null;
+    if (!context.tsConfig) {
+      return null;
+    }
 
     const { tsCompilerOptions, tsCompilerHost } = context.tsConfig;
     const containingFile = path.join(context.baseDir, 'index.ts'); // virtual file
