@@ -1,5 +1,5 @@
 // packages/webview-app/src/rpc-webview.ts
-// * RPC webview side - bidirectional communication between webview & extension via Comlink
+// * RPC webview side - bidirectional communication btwn webview & extension via Comlink
 //
 // Message Queue Architecture
 // ==========================
@@ -34,6 +34,7 @@ import type {
   TrustState,
   PreviewError,
   WebviewThemeState,
+  NextraPageMeta,
 } from '@mdx-preview/shared-types';
 
 declare const acquireVsCodeApi: () => {
@@ -75,6 +76,8 @@ interface WebviewStateHandlers {
   setStale: (isStale: boolean) => void;
   // theme
   setTheme?: (state: WebviewThemeState) => void;
+  // Nextra page metadata
+  setNextraMeta?: (meta: NextraPageMeta) => void;
   // zoom
   zoomIn?: () => void;
   zoomOut?: () => void;
@@ -213,7 +216,7 @@ class RPCWebviewHandle implements WebviewRPC {
   // invalidate cached module
   async invalidate(fsPath: string): Promise<void> {
     debug(`[RPC-WEBVIEW] invalidate called: ${fsPath}`);
-    // Import dynamically to avoid circular dependency
+    // ! import dynamically to avoid circular dependency w/ module-loader
     const { invalidateModule } = await import('./module-loader');
     invalidateModule(fsPath);
   }
@@ -247,6 +250,14 @@ class RPCWebviewHandle implements WebviewRPC {
     debug(`[RPC-WEBVIEW] setTheme called`, state);
     if (stateHandlers?.setTheme) {
       stateHandlers.setTheme(state);
+    }
+  }
+
+  // set Nextra page metadata (title, layout, etc.)
+  setNextraMeta(meta: NextraPageMeta): void {
+    debug(`[RPC-WEBVIEW] setNextraMeta called`, meta);
+    if (stateHandlers?.setNextraMeta) {
+      stateHandlers.setNextraMeta(meta);
     }
   }
 

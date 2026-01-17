@@ -29,6 +29,7 @@ import {
   registerComponentCodeActions,
 } from './diagnostics';
 import { registerAllCommands } from './commands';
+import { disposeMetaWatchers } from './nextra/MetaResolver';
 
 // show one-time safe mode notification in untrusted workspaces
 async function showSafeModeNotificationIfNeeded(
@@ -69,7 +70,7 @@ async function showSafeModeNotificationIfNeeded(
   );
 }
 
-// set up workspace trust event handlers (uses onDidChangeWorkspaceTrust for grant & revoke)
+// set up workspace trust event handlers for trust grant & revoke
 function setupTrustHandlers(context: vscode.ExtensionContext): void {
   const workspaceWithTrust = vscode.workspace as typeof vscode.workspace & {
     onDidChangeWorkspaceTrust?: vscode.Event<boolean>;
@@ -78,7 +79,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
   const handleTrustChange = async (trusted: boolean): Promise<void> => {
     const previewManager = getPreviewManager();
 
-    // refresh all previews to reflect new trust state
+    // refresh all previews w/ updated trust state
     previewManager.refreshAllPreviews();
 
     if (trusted) {
@@ -105,7 +106,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
   };
 
   if (workspaceWithTrust.onDidChangeWorkspaceTrust) {
-    // when workspace trust changes (grant or revoke)
+    // handle workspace trust changes (grant & revoke)
     context.subscriptions.push(
       workspaceWithTrust.onDidChangeWorkspaceTrust(handleTrustChange)
     );
@@ -132,9 +133,8 @@ export async function activate(
 ): Promise<void> {
   debug('[ACTIVATE] Starting extension activation...');
 
-  // FIRST: register services w/ the registry for centralized lifecycle management
-  // This MUST happen before any code that uses service locators (getPreviewManager, etc.)
-  // order matters: services w/ no dependencies first, then dependent services
+  // register services w/ centralized registry before using service locators
+  // order matters: register services w/ no dependencies first, then dependent services
   const registry = ServiceRegistry.getInstance();
   registry.register(ServiceNames.CONFIG_MANAGER, () =>
     ConfigManager.getInstance()
@@ -158,7 +158,7 @@ export async function activate(
   registry.register(ServiceNames.ERROR_REPORTER, () =>
     ErrorReporter.getInstance()
   );
-  // OutputChannel wrapped for IService compatibility (uses shared channel from logging.ts)
+  // wrap OutputChannel for IService compatibility (shared channel from logging.ts)
   registry.register(ServiceNames.OUTPUT_CHANNEL, () => {
     const channel = getOutputChannel();
     return {
@@ -231,6 +231,9 @@ export async function activate(
 export function deactivate(): void {
   // clear resolver cache to prevent stale data on reload
   clearResolverCache();
+
+  // dispose Nextra _meta.json file watchers
+  disposeMetaWatchers();
 
   // dispose all registered services in reverse registration order
   // (dependent services like StatusBarManager disposed before their dependencies)

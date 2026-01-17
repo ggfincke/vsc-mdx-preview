@@ -1,16 +1,21 @@
 // packages/extension/preview/evaluate-in-webview.ts
-// Evaluate MDX content in webview (orchestrates Trusted/Safe mode evaluation)
+// evaluate MDX content in webview (orchestrates Trusted/Safe mode evaluation)
 
+import * as vscode from 'vscode';
 import { performance } from 'perf_hooks';
 import { Preview } from './preview-manager';
 import { debug } from '../logging';
 import { ErrorContext } from '../errors';
-import { getTrustManager, getErrorReporter } from '../services';
+import {
+  getTrustManager,
+  getErrorReporter,
+  getFrameworkDetector,
+} from '../services';
 import { getEvaluationEngine } from './EvaluationEngine';
+import { resolveNextraMeta, mergeNextraMeta } from '../nextra/MetaResolver';
+import { extractNextraFrontmatter } from '../transpiler/mdx/mdx-common';
 
-// evaluate MDX content in the webview
-// routes to Trusted Mode (full code execution) or Safe Mode (static HTML)
-// based on the document's trust state
+// evaluate MDX content in webview (routes to Trusted/Safe mode based on trust state)
 export default async function evaluateInWebview(
   preview: Preview,
   text: string,
@@ -56,6 +61,14 @@ export default async function evaluateInWebview(
         preview.pushThemeState(result.frontmatter);
       }
 
+      // For Nextra projects, resolve and send page metadata
+      sendNextraMetaIfNeeded(
+        preview,
+        webviewHandle,
+        fsPath,
+        result.frontmatter
+      );
+
       debug('[EVALUATE] Calling webviewHandle.updatePreview');
       webviewHandle.updatePreview(
         result.code,
@@ -95,6 +108,14 @@ export default async function evaluateInWebview(
         preview.pushThemeState(result.frontmatter);
       }
 
+      // For Nextra projects, resolve and send page metadata
+      sendNextraMetaIfNeeded(
+        preview,
+        webviewHandle,
+        fsPath,
+        result.frontmatter
+      );
+
       debug('[EVALUATE] Calling webviewHandle.updatePreviewSafe');
       webviewHandle.updatePreviewSafe(result.html);
       debug('[EVALUATE] updatePreviewSafe called');
@@ -111,5 +132,45 @@ export default async function evaluateInWebview(
       webviewHandle,
       metadata: { fsPath },
     });
+  }
+}
+
+// resolve & send Nextra page metadata (only runs for Nextra projects)
+function sendNextraMetaIfNeeded(
+  preview: Preview,
+  webviewHandle: Preview['webviewHandle'],
+  fsPath: string,
+  frontmatter: Record<string, unknown> | undefined
+): void {
+  try {
+    const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
+    if (frameworkInfo.framework !== 'nextra') {
+      return;
+    }
+
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(
+      preview.doc.uri
+    );
+    if (!workspaceFolder) {
+      return;
+    }
+
+    // Resolve metadata from _meta.json
+    const metaFromJson = resolveNextraMeta(fsPath, workspaceFolder.uri.fsPath);
+
+    // Extract Nextra-specific frontmatter
+    const metaFromFrontmatter = extractNextraFrontmatter(frontmatter ?? {});
+
+    // Merge (frontmatter overrides _meta.json)
+    const mergedMeta = mergeNextraMeta(metaFromJson, metaFromFrontmatter);
+
+    // Only send if we have meaningful metadata
+    if (Object.keys(mergedMeta).length > 0) {
+      debug('[EVALUATE] Sending Nextra meta to webview:', mergedMeta);
+      webviewHandle.setNextraMeta(mergedMeta);
+    }
+  } catch (err) {
+    // Non-fatal error, just log and continue
+    debug(`[EVALUATE] Error resolving Nextra meta: ${err}`);
   }
 }
