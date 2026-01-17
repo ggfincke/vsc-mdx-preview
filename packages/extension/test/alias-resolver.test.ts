@@ -94,7 +94,7 @@ describe('alias-resolver', () => {
       });
 
       it('returns null for unsupported Starlight components', () => {
-        // Test with a component that is NOT in FRAMEWORK_COMPONENTS.starlight
+        // verify component not in FRAMEWORK_COMPONENTS.starlight
         const result = resolveAlias(
           '@astrojs/starlight/components/UnsupportedWidget',
           'astro-starlight',
@@ -121,6 +121,104 @@ describe('alias-resolver', () => {
       });
     });
 
+    describe('Nextra aliases', () => {
+      it('resolves nextra/components to shim', () => {
+        const result = resolveAlias(
+          'nextra/components',
+          'nextra',
+          '/workspace'
+        );
+        expect(result).toBe(`${SHIM_PREFIX}/nextra`);
+      });
+
+      it('resolves nextra-theme-docs to shim', () => {
+        const result = resolveAlias(
+          'nextra-theme-docs',
+          'nextra',
+          '/workspace'
+        );
+        expect(result).toBe(`${SHIM_PREFIX}/nextra`);
+      });
+
+      it('resolves nextra-theme-docs/components to shim', () => {
+        const result = resolveAlias(
+          'nextra-theme-docs/components',
+          'nextra',
+          '/workspace'
+        );
+        expect(result).toBe(`${SHIM_PREFIX}/nextra`);
+      });
+
+      it('resolves individual nextra components', () => {
+        const callout = resolveAlias(
+          'nextra/components/Callout',
+          'nextra',
+          '/workspace'
+        );
+        expect(callout).toBe(`${SHIM_PREFIX}/nextra/Callout`);
+
+        const tabs = resolveAlias(
+          'nextra/components/Tabs',
+          'nextra',
+          '/workspace'
+        );
+        expect(tabs).toBe(`${SHIM_PREFIX}/nextra/Tabs`);
+
+        const cards = resolveAlias(
+          'nextra/components/Cards',
+          'nextra',
+          '/workspace'
+        );
+        expect(cards).toBe(`${SHIM_PREFIX}/nextra/Cards`);
+      });
+
+      it('returns null for unsupported nextra components', () => {
+        const result = resolveAlias(
+          'nextra/components/UnsupportedComponent',
+          'nextra',
+          '/workspace'
+        );
+        expect(result).toBeNull();
+      });
+
+      it('does not resolve nextra imports when framework is docusaurus', () => {
+        const result = resolveAlias(
+          'nextra/components',
+          'docusaurus',
+          '/workspace'
+        );
+        expect(result).toBeNull();
+      });
+
+      it('does not resolve nextra imports when framework is nextjs', () => {
+        const result = resolveAlias(
+          'nextra/components',
+          'nextjs',
+          '/workspace'
+        );
+        expect(result).toBeNull();
+      });
+
+      it('resolves all supported Nextra components', () => {
+        const components = [
+          'Callout',
+          'Tabs',
+          'Cards',
+          'FileTree',
+          'Steps',
+          'Bleed',
+        ];
+        for (const component of components) {
+          const result = resolveAlias(
+            `nextra/components/${component}`,
+            'nextra',
+            '/workspace'
+          );
+          expect(result).toBe(`${SHIM_PREFIX}/nextra/${component}`);
+        }
+      });
+    });
+
     describe('generic framework', () => {
       it('returns null for any import when framework is generic', () => {
         const result = resolveAlias('@theme/Tabs', 'generic', '/workspace');
@@ -134,7 +232,7 @@ describe('alias-resolver', () => {
       const aliases = getAliasesForFramework('docusaurus');
       expect(aliases.length).toBeGreaterThan(0);
 
-      // should have @theme pattern
+      // verify @theme pattern exists in aliases
       const hasThemePattern = aliases.some((a) =>
         a.pattern.test('@theme/Tabs')
       );
@@ -145,7 +243,7 @@ describe('alias-resolver', () => {
       const aliases = getAliasesForFramework('astro-starlight');
       expect(aliases.length).toBeGreaterThan(0);
 
-      // should have @astrojs/starlight pattern
+      // verify @astrojs/starlight pattern exists in aliases
       const hasStarlightPattern = aliases.some((a) =>
         a.pattern.test('@astrojs/starlight/components')
       );
@@ -156,11 +254,28 @@ describe('alias-resolver', () => {
       const aliases = getAliasesForFramework('nextjs');
       expect(aliases.length).toBeGreaterThan(0);
 
-      // should have next/image pattern
+      // verify next/image pattern exists in aliases
       const hasNextImagePattern = aliases.some((a) =>
         a.pattern.test('next/image')
       );
       expect(hasNextImagePattern).toBe(true);
+    });
+
+    it('returns Nextra aliases for nextra framework', () => {
+      const aliases = getAliasesForFramework('nextra');
+      expect(aliases.length).toBeGreaterThan(0);
+
+      // verify nextra/components pattern exists in aliases
+      const hasNextraPattern = aliases.some((a) =>
+        a.pattern.test('nextra/components')
+      );
+      expect(hasNextraPattern).toBe(true);
+
+      // verify nextra-theme-docs pattern exists in aliases
+      const hasThemeDocsPattern = aliases.some((a) =>
+        a.pattern.test('nextra-theme-docs')
+      );
+      expect(hasThemeDocsPattern).toBe(true);
     });
 
     it('returns empty array for generic framework', () => {
@@ -231,7 +346,7 @@ describe('alias-resolver', () => {
     describe('case sensitivity', () => {
       it('does not match uppercase @THEME', () => {
         const result = resolveAlias('@THEME/Tabs', 'docusaurus', '/workspace');
-        // regex is case-sensitive, so this should not match
+        // verify case-sensitive regex matching
         expect(result).toBeNull();
       });
 
@@ -242,14 +357,13 @@ describe('alias-resolver', () => {
 
       it('does not match lowercase next/IMAGE', () => {
         const result = resolveAlias('next/IMAGE', 'nextjs', '/workspace');
-        // exact match required
+        // verify exact match required
         expect(result).toBeNull();
       });
 
       it('matches exact case for components', () => {
-        // @theme/tabs (lowercase) should not match Tabs
+        // verify @theme/tabs (lowercase) does not match Tabs (case-sensitive)
         const result = resolveAlias('@theme/tabs', 'docusaurus', '/workspace');
-        // tabs is not in supportedShims (case-sensitive)
         expect(result).toBeNull();
       });
     });
@@ -280,18 +394,17 @@ describe('alias-resolver', () => {
           'docusaurus',
           '/workspace/'
         );
-        // path.join should normalize
+        // verify path.join normalization
         expect(result).toBeTruthy();
       });
 
       it('handles @theme with extra path segments', () => {
-        // @theme/Tabs/extra should not match (not a valid component name)
+        // verify @theme/Tabs/extra does not match (invalid component name)
         const result = resolveAlias(
           '@theme/Tabs/extra',
           'docusaurus',
           '/workspace'
         );
-        // the component name would be "Tabs/extra" which is not in supportedShims
         expect(result).toBeNull();
       });
     });
@@ -307,7 +420,7 @@ describe('alias-resolver', () => {
       });
 
       it('returns null for unsupported Starlight components', () => {
-        // Test with a component that is NOT in FRAMEWORK_COMPONENTS.starlight
+        // verify component not in FRAMEWORK_COMPONENTS.starlight
         const result = resolveAlias(
           '@astrojs/starlight/components/UnknownComponent',
           'astro-starlight',
@@ -317,7 +430,7 @@ describe('alias-resolver', () => {
       });
 
       it('resolves Code component', () => {
-        // Code IS in the supportedShims list (via FRAMEWORK_COMPONENTS.starlight)
+        // verify Code component resolution (from FRAMEWORK_COMPONENTS.starlight)
         const result = resolveAlias(
           '@astrojs/starlight/components/Code',
           'astro-starlight',
@@ -327,7 +440,7 @@ describe('alias-resolver', () => {
       });
 
       it('resolves FileTree component', () => {
-        // FileTree IS in the supportedShims list (via FRAMEWORK_COMPONENTS.starlight)
+        // verify FileTree component resolution (from FRAMEWORK_COMPONENTS.starlight)
         const result = resolveAlias(
           '@astrojs/starlight/components/FileTree',
           'astro-starlight',
@@ -356,6 +469,29 @@ describe('alias-resolver', () => {
         );
         expect(result).toBeNull();
       });
+
+      it('does not resolve nextra components when framework is docusaurus', () => {
+        const result = resolveAlias(
+          'nextra/components',
+          'docusaurus',
+          '/workspace'
+        );
+        expect(result).toBeNull();
+      });
+
+      it('does not resolve @theme when framework is nextra', () => {
+        const result = resolveAlias('@theme/Tabs', 'nextra', '/workspace');
+        expect(result).toBeNull();
+      });
+
+      it('does not resolve starlight components when framework is nextra', () => {
+        const result = resolveAlias(
+          '@astrojs/starlight/components',
+          'nextra',
+          '/workspace'
+        );
+        expect(result).toBeNull();
+      });
     });
 
     describe('isBuiltInShim edge cases', () => {
@@ -377,22 +513,20 @@ describe('alias-resolver', () => {
     });
 
     describe('alias resolution behavior', () => {
-      // Note: The current alias-resolver does single-level resolution
-      // These tests document the expected behavior for potential future enhancements
+      // verify single-level resolution behavior (no chain following for future enhancements)
 
       it('does not follow alias chains (single-level resolution)', () => {
-        // Alias resolution is direct mapping, not chained
-        // @theme/Tabs maps directly to shim, no intermediate aliases
+        // verify direct mapping: @theme/Tabs → shim (no intermediate aliases)
         const result = resolveAlias('@theme/Tabs', 'docusaurus', '/workspace');
         expect(result).toBe(`${SHIM_PREFIX}/docusaurus/Tabs`);
 
-        // Trying to resolve the result would return null (it's not an alias)
+        // verify resolving result returns null (not an alias)
         const chainResult = resolveAlias(result!, 'docusaurus', '/workspace');
         expect(chainResult).toBeNull();
       });
 
       it('returns null for self-referencing pattern (no infinite loop)', () => {
-        // Passing a shim path back to resolveAlias should return null, not loop
+        // verify shim path passed to resolveAlias returns null (prevents loop)
         const shimPath = `${SHIM_PREFIX}/docusaurus/Tabs`;
         const result = resolveAlias(shimPath, 'docusaurus', '/workspace');
         expect(result).toBeNull();
@@ -404,7 +538,7 @@ describe('alias-resolver', () => {
           'docusaurus',
           '/workspace'
         );
-        // Component name would be "@custom/component" which is not supported
+        // verify unsupported component name "@custom/component" returns null
         expect(result).toBeNull();
       });
 
@@ -414,7 +548,7 @@ describe('alias-resolver', () => {
           'docusaurus',
           '/workspace'
         );
-        // Query strings make it not match the pattern
+        // verify query strings prevent pattern match
         expect(result).toBeNull();
       });
 
@@ -424,15 +558,14 @@ describe('alias-resolver', () => {
           'docusaurus',
           '/workspace'
         );
-        // Hash makes it not match the pattern
+        // verify hash prevents pattern match
         expect(result).toBeNull();
       });
     });
 
     describe('circular reference safety', () => {
       it('resolveAlias is stateless and cannot create circular references', () => {
-        // Each call is independent - no state is maintained between calls
-        // This makes circular references impossible by design
+        // verify independent calls w/ no state (circular refs impossible by design)
         const result1 = resolveAlias('@theme/Tabs', 'docusaurus', '/workspace');
         const result2 = resolveAlias('@theme/Tabs', 'docusaurus', '/workspace');
 
@@ -441,7 +574,7 @@ describe('alias-resolver', () => {
       });
 
       it('resolving shim path does not cause recursion', () => {
-        // Even if someone tried to resolve a shim path, it returns null safely
+        // verify resolving shim path returns null safely (no recursion)
         const shim = `${SHIM_PREFIX}/starlight`;
         const result = resolveAlias(shim, 'astro-starlight', '/workspace');
         expect(result).toBeNull();
@@ -449,11 +582,10 @@ describe('alias-resolver', () => {
     });
 
     describe('alias chain prevention', () => {
-      // These tests document that single-level resolution is intentional design
-      // Alias chains (A -> B -> C) are NOT supported
+      // verify single-level resolution is intentional design (alias chains A→B→C not supported)
 
       it('resolving shim path returns null (no chaining)', () => {
-        // First resolve an alias
+        // resolve alias first
         const shimPath = resolveAlias(
           '@theme/Tabs',
           'docusaurus',
@@ -461,24 +593,24 @@ describe('alias-resolver', () => {
         );
         expect(shimPath).toBe(`${SHIM_PREFIX}/docusaurus/Tabs`);
 
-        // Attempting to resolve the result returns null - no chain following
+        // verify resolving result returns null (no chain following)
         const chainResult = resolveAlias(shimPath!, 'docusaurus', '/workspace');
         expect(chainResult).toBeNull();
       });
 
       it('multiple resolution calls do not accumulate state', () => {
-        // Resolve several different aliases
+        // resolve several different aliases
         resolveAlias('@theme/Tabs', 'docusaurus', '/workspace');
         resolveAlias('@theme/TabItem', 'docusaurus', '/workspace');
         resolveAlias('next/image', 'nextjs', '/workspace');
 
-        // Each call is independent - no accumulated state
+        // verify each call is independent (no accumulated state)
         const result = resolveAlias('@theme/Tabs', 'docusaurus', '/workspace');
         expect(result).toBe(`${SHIM_PREFIX}/docusaurus/Tabs`);
       });
 
       it('using result as new input returns null (documents single-level)', () => {
-        // Resolve to shim path
+        // resolve to shim path
         const step1 = resolveAlias(
           '@theme/CodeBlock',
           'docusaurus',
@@ -486,22 +618,20 @@ describe('alias-resolver', () => {
         );
         expect(step1).toBe(`${SHIM_PREFIX}/docusaurus/CodeBlock`);
 
-        // Use result as input - should return null (not chain)
+        // verify using result as input returns null (no chaining)
         const step2 = resolveAlias(step1!, 'docusaurus', '/workspace');
         expect(step2).toBeNull();
 
-        // even trying w/ different framework returns null
+        // verify different framework also returns null
         const step3 = resolveAlias(step1!, 'nextjs', '/workspace');
         expect(step3).toBeNull();
       });
 
       it('documents why single-level resolution is correct design', () => {
-        // Single-level resolution is intentional because:
-        // 1. Shim paths are final destinations (actual bundled components)
-        // 2. Chains would require infinite loop protection
-        // 3. Performance: O(1) vs O(n) for chain resolution
-
-        // This test documents the expected behavior
+        // verify single-level resolution design rationale:
+        // 1. shim paths are final destinations (actual bundled components)
+        // 2. chains require infinite loop protection
+        // 3. performance: O(1) vs O(n) for chain resolution
         const originalAlias = '@astrojs/starlight/components';
         const resolved = resolveAlias(
           originalAlias,
@@ -510,7 +640,7 @@ describe('alias-resolver', () => {
         );
         expect(resolved).toBe(`${SHIM_PREFIX}/starlight`);
 
-        // Resolved path is final - no further resolution
+        // verify resolved path is final (no further resolution)
         expect(
           resolveAlias(resolved!, 'astro-starlight', '/workspace')
         ).toBeNull();
@@ -519,7 +649,7 @@ describe('alias-resolver', () => {
 
     describe('circular reference expansion', () => {
       it('repeated resolution of same alias returns consistent result', () => {
-        // Call same resolution 100 times - should always return same result
+        // verify same resolution called 100 times always returns same result
         const expected = `${SHIM_PREFIX}/docusaurus/Tabs`;
         for (let i = 0; i < 100; i++) {
           const result = resolveAlias(
@@ -532,22 +662,18 @@ describe('alias-resolver', () => {
       });
 
       it('resolution cycle attempt A->B->A pattern is prevented', () => {
-        // This scenario can't actually happen because:
-        // 1. Aliases resolve to shim paths
-        // 2. Shim paths are not valid alias inputs
+        // verify cycle prevention (aliases→shim paths, shim paths not valid inputs)
         const aliasA = '@theme/Tabs';
         const resolvedA = resolveAlias(aliasA, 'docusaurus', '/workspace');
         expect(resolvedA).toBe(`${SHIM_PREFIX}/docusaurus/Tabs`);
 
-        // The resolved path doesn't match any alias pattern
+        // verify resolved path doesn't match any alias pattern
         const resolvedB = resolveAlias(resolvedA!, 'docusaurus', '/workspace');
         expect(resolvedB).toBeNull();
-
-        // So cycle is impossible by design
       });
 
       it('cross-framework circular pattern attempt is safe', () => {
-        // Try alternating frameworks - still no recursion
+        // verify alternating frameworks produces no recursion
         const docu = resolveAlias('@theme/Tabs', 'docusaurus', '/workspace');
         const next1 = resolveAlias(docu!, 'nextjs', '/workspace');
         const star1 = resolveAlias(docu!, 'astro-starlight', '/workspace');
@@ -557,7 +683,7 @@ describe('alias-resolver', () => {
       });
 
       it('resolution after partial match failure returns null', () => {
-        // Partial match that fails still returns null
+        // verify partial match failure returns null
         const unsupported = resolveAlias(
           '@theme/UnsupportedComponent',
           'docusaurus',
@@ -565,7 +691,7 @@ describe('alias-resolver', () => {
         );
         expect(unsupported).toBeNull();
 
-        // Next resolution still works normally
+        // verify next resolution works normally
         const supported = resolveAlias(
           '@theme/Tabs',
           'docusaurus',
@@ -578,11 +704,11 @@ describe('alias-resolver', () => {
         // resolve w/ docusaurus
         resolveAlias('@theme/Tabs', 'docusaurus', '/workspace');
 
-        // Switch to nextjs - should work independently
+        // verify switching to nextjs works independently
         const nextResult = resolveAlias('next/image', 'nextjs', '/workspace');
         expect(nextResult).toBe(`${SHIM_PREFIX}/nextjs/Image`);
 
-        // Switch to starlight - should also work independently
+        // verify switching to starlight works independently
         const starlightResult = resolveAlias(
           '@astrojs/starlight/components',
           'astro-starlight',
@@ -590,7 +716,15 @@ describe('alias-resolver', () => {
         );
         expect(starlightResult).toBe(`${SHIM_PREFIX}/starlight`);
 
-        // Back to docusaurus - unchanged
+        // verify switching to nextra works independently
+        const nextraResult = resolveAlias(
+          'nextra/components',
+          'nextra',
+          '/workspace'
+        );
+        expect(nextraResult).toBe(`${SHIM_PREFIX}/nextra`);
+
+        // verify switching back to docusaurus remains unchanged
         const docuResult = resolveAlias(
           '@theme/Tabs',
           'docusaurus',
@@ -602,23 +736,23 @@ describe('alias-resolver', () => {
 
     describe('additional edge cases', () => {
       it('handles very long path segments', () => {
-        // Create a very long component name (1000+ chars)
+        // create very long component name (1000+ chars)
         const longName = 'A'.repeat(1001);
         const longPath = `@theme/${longName}`;
 
-        // Should not crash, returns null (not a supported shim)
+        // verify no crash & returns null (unsupported shim)
         const result = resolveAlias(longPath, 'docusaurus', '/workspace');
         expect(result).toBeNull();
       });
 
       it('handles unicode in component names', () => {
-        // Unicode component names
+        // verify unicode component names return null (unsupported shims)
         const result1 = resolveAlias(
           '@theme/日本語',
           'docusaurus',
           '/workspace'
         );
-        expect(result1).toBeNull(); // Not a supported shim
+        expect(result1).toBeNull();
 
         const result2 = resolveAlias('@theme/Тест', 'docusaurus', '/workspace');
         expect(result2).toBeNull();
@@ -632,7 +766,7 @@ describe('alias-resolver', () => {
       });
 
       it('handles unicode in workspace root', () => {
-        // Unicode workspace path
+        // verify unicode workspace path handling
         const result = resolveAlias(
           '@site/components/Button',
           'docusaurus',
@@ -643,7 +777,7 @@ describe('alias-resolver', () => {
       });
 
       it('handles empty workspace root', () => {
-        // Empty workspace root - path.join handles this
+        // verify path.join handles empty workspace root
         const result = resolveAlias(
           '@site/components/Button',
           'docusaurus',

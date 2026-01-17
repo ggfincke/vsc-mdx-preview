@@ -28,7 +28,7 @@ vi.mock('../services', () => ({
   })),
 }));
 
-// helper to create mock package.json content
+// create mock package.json for testing
 function createPackageJson(
   deps: Record<string, string> = {},
   devDeps: Record<string, string> = {}
@@ -43,10 +43,10 @@ describe('FrameworkDetector', () => {
   let detector: FrameworkDetector;
 
   beforeEach(() => {
-    // reset mocks
+    // reset all mocks
     vi.resetAllMocks();
 
-    // get fresh instance
+    // create fresh instance
     FrameworkDetector.dispose();
     detector = FrameworkDetector.getInstance();
   });
@@ -125,7 +125,7 @@ describe('FrameworkDetector', () => {
 
       const result = detector.detectFromPackageJson('/workspace');
 
-      // should fall back to generic since Next.js without MDX deps
+      // verify fallback to generic for Next.js w/o MDX deps
       expect(result.framework).toBe('generic');
     });
 
@@ -159,7 +159,7 @@ describe('FrameworkDetector', () => {
     });
 
     it('prioritizes frameworks in detection order', () => {
-      // Docusaurus should win over Next.js
+      // verify Docusaurus takes priority over Next.js
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(
         createPackageJson({
@@ -191,6 +191,7 @@ describe('FrameworkDetector', () => {
       expect(detector.getFrameworkDisplayName('astro-starlight')).toBe(
         'Starlight'
       );
+      expect(detector.getFrameworkDisplayName('nextra')).toBe('Nextra');
       expect(detector.getFrameworkDisplayName('generic')).toBe('Generic');
     });
   });
@@ -451,6 +452,21 @@ describe('FrameworkDetector', () => {
 
         expect(result.framework).toBe('astro-starlight');
       });
+
+      it('Nextra takes priority over Next.js when both present', () => {
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue(
+          createPackageJson({
+            nextra: '^3.0.0',
+            next: '^14.0.0',
+            '@next/mdx': '^14.0.0',
+          })
+        );
+
+        const result = detector.detectFromPackageJson('/workspace');
+
+        expect(result.framework).toBe('nextra');
+      });
     });
 
     describe('Next.js MDX detection', () => {
@@ -496,6 +512,100 @@ describe('FrameworkDetector', () => {
         const result = detector.detectFromPackageJson('/workspace');
 
         expect(result.framework).toBe('generic');
+      });
+    });
+
+    describe('Nextra detection', () => {
+      it('detects Nextra from nextra dependency', () => {
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue(
+          createPackageJson({ nextra: '^3.0.0' })
+        );
+
+        const result = detector.detectFromPackageJson('/workspace');
+
+        expect(result.framework).toBe('nextra');
+        expect(result.detected).toBe(true);
+        expect(result.version).toBe('^3.0.0');
+      });
+
+      it('detects Nextra from nextra-theme-docs dependency', () => {
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue(
+          createPackageJson({ 'nextra-theme-docs': '^2.13.0' })
+        );
+
+        const result = detector.detectFromPackageJson('/workspace');
+
+        expect(result.framework).toBe('nextra');
+        expect(result.detected).toBe(true);
+      });
+
+      it('detects Nextra from nextra-theme-blog dependency', () => {
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue(
+          createPackageJson({ 'nextra-theme-blog': '^2.13.0' })
+        );
+
+        const result = detector.detectFromPackageJson('/workspace');
+
+        expect(result.framework).toBe('nextra');
+        expect(result.detected).toBe(true);
+      });
+
+      it('Nextra takes priority over generic Next.js', () => {
+        // Nextra projects often have 'next' as a peer dependency
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue(
+          createPackageJson({
+            nextra: '^3.0.0',
+            next: '^14.0.0',
+            '@mdx-js/react': '^3.0.0',
+          })
+        );
+
+        const result = detector.detectFromPackageJson('/workspace');
+
+        expect(result.framework).toBe('nextra');
+      });
+
+      it('Docusaurus takes priority over Nextra', () => {
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue(
+          createPackageJson({
+            '@docusaurus/core': '^3.0.0',
+            nextra: '^3.0.0',
+          })
+        );
+
+        const result = detector.detectFromPackageJson('/workspace');
+
+        expect(result.framework).toBe('docusaurus');
+      });
+
+      it('Starlight takes priority over Nextra', () => {
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue(
+          createPackageJson({
+            '@astrojs/starlight': '^0.21.0',
+            nextra: '^3.0.0',
+          })
+        );
+
+        const result = detector.detectFromPackageJson('/workspace');
+
+        expect(result.framework).toBe('astro-starlight');
+      });
+
+      it('detects Nextra from devDependencies', () => {
+        vi.mocked(fs.existsSync).mockReturnValue(true);
+        vi.mocked(fs.readFileSync).mockReturnValue(
+          createPackageJson({}, { nextra: '^3.0.0' })
+        );
+
+        const result = detector.detectFromPackageJson('/workspace');
+
+        expect(result.framework).toBe('nextra');
       });
     });
 
@@ -584,11 +694,11 @@ describe('FrameworkDetector', () => {
     });
 
     describe('monorepo scenarios', () => {
-      // Note: Current implementation only looks at the specified workspace path
-      // These tests document expected behavior for monorepo-like structures
+      // note: current implementation only reads at specified workspace path
+      // these tests document expected behavior for monorepo-like structures
 
       it('uses package.json from the specified path only', () => {
-        // The detector reads from the exact path provided
+        // verify detector reads from exact path provided
         vi.mocked(fs.existsSync).mockReturnValue(true);
         vi.mocked(fs.readFileSync).mockReturnValue(
           createPackageJson({ '@docusaurus/core': '^3.0.0' })
@@ -599,7 +709,7 @@ describe('FrameworkDetector', () => {
         );
 
         expect(result.framework).toBe('docusaurus');
-        // The call should be for the specified path
+        // verify call made for specified path
         expect(fs.existsSync).toHaveBeenCalled();
       });
 
@@ -613,8 +723,8 @@ describe('FrameworkDetector', () => {
         expect(result.framework).toBe('generic');
       });
 
-      it('handles workspace with multiple framework deps (uses priority)', () => {
-        // In a monorepo, the root might have multiple framework deps
+      it('handles workspace w/ multiple framework deps (uses priority)', () => {
+        // verify priority used for monorepo w/ multiple framework deps
         vi.mocked(fs.existsSync).mockReturnValue(true);
         vi.mocked(fs.readFileSync).mockReturnValue(
           createPackageJson({
@@ -627,7 +737,7 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // Docusaurus has highest priority
+        // verify Docusaurus takes highest priority
         expect(result.framework).toBe('docusaurus');
       });
     });
@@ -645,9 +755,9 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // still detects framework even w/ null version
+        // verify framework detected even w/ null version
         expect(result.framework).toBe('docusaurus');
-        // Version is undefined when not a string
+        // verify version undefined for non-string values
         expect(result.version).toBeUndefined();
       });
 
@@ -677,7 +787,7 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // Array is not valid dependencies format, should return generic
+        // verify array format returns generic (invalid dependencies format)
         expect(result.framework).toBe('generic');
       });
 
@@ -693,9 +803,9 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // Framework is still detected
+        // verify framework detected for numeric version
         expect(result.framework).toBe('docusaurus');
-        // Version is undefined when not a string (typeof check)
+        // verify version undefined for non-string values
         expect(result.version).toBeUndefined();
       });
 
@@ -711,9 +821,9 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // framework detected even w/ boolean value
+        // verify framework detected w/ boolean value
         expect(result.framework).toBe('docusaurus');
-        // Version is undefined for non-string values
+        // verify version undefined for non-string values
         expect(result.version).toBeUndefined();
       });
 
@@ -748,7 +858,7 @@ describe('FrameworkDetector', () => {
       });
 
       it('handles dependencies with numeric keys', () => {
-        // Unusual but valid JSON
+        // numeric keys in dependencies (unusual but valid JSON)
         vi.mocked(fs.existsSync).mockReturnValue(true);
         vi.mocked(fs.readFileSync).mockReturnValue(
           JSON.stringify({
@@ -761,7 +871,7 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // Should still detect docusaurus from valid key
+        // verify docusaurus detected from valid key
         expect(result.framework).toBe('docusaurus');
       });
 
@@ -780,7 +890,7 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // Should still detect docusaurus
+        // verify docusaurus detected w/ mixed entries
         expect(result.framework).toBe('docusaurus');
         expect(result.version).toBe('^3.0.0');
       });
@@ -797,7 +907,7 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // should still detect framework w/ file: reference
+        // verify framework detected w/ file: reference
         expect(result.framework).toBe('docusaurus');
         expect(result.version).toBe('file:../packages/docusaurus');
       });
@@ -820,11 +930,11 @@ describe('FrameworkDetector', () => {
     });
 
     describe('monorepo detection (documents current behavior)', () => {
-      // Current implementation: only reads package.json at specified path
-      // These tests document this behavior for future reference
+      // note: current implementation reads only at specified path (no parent traversal)
+      // these tests document this behavior for future reference
 
       it('reads only from specified path, not parent directories', () => {
-        // In a monorepo, caller should pass correct path
+        // verify caller passes correct path in monorepo
         vi.mocked(fs.existsSync).mockImplementation((p) => {
           return p === path.join('/workspace/packages/docs', 'package.json');
         });
@@ -853,24 +963,24 @@ describe('FrameworkDetector', () => {
       });
 
       it('does not traverse upward to find root package.json (documents limitation)', () => {
-        // If package.json doesn't exist at specified path, returns generic
-        // Does NOT look in parent directories
+        // verify returns generic when package.json missing at specified path
+        // (does not check parent directories)
         vi.mocked(fs.existsSync).mockImplementation((p) => {
-          // Root has package.json, nested does not
+          // root has package.json, nested does not
           return p === path.join('/workspace', 'package.json');
         });
 
-        // calling w/ nested path
+        // call w/ nested path
         const result = detector.detectFromPackageJson(
           '/workspace/packages/app'
         );
 
-        // Returns generic because it only checks specified path
+        // verify generic returned (only checks specified path)
         expect(result.framework).toBe('generic');
       });
 
       it('each nested workspace can have different framework', () => {
-        // Mock different package.json for different paths
+        // mock different package.json for different paths
         vi.mocked(fs.existsSync).mockReturnValue(true);
         vi.mocked(fs.readFileSync).mockImplementation((p) => {
           const pathStr = String(p);
@@ -900,7 +1010,7 @@ describe('FrameworkDetector', () => {
       it('cache is isolated per workspace path', () => {
         vi.mocked(fs.existsSync).mockReturnValue(true);
 
-        // First call for docs
+        // first call for docs
         vi.mocked(fs.readFileSync).mockReturnValue(
           createPackageJson({ '@docusaurus/core': '^3.0.0' })
         );
@@ -908,7 +1018,7 @@ describe('FrameworkDetector', () => {
           '/workspace/packages/docs'
         );
 
-        // Second call for app - different result
+        // second call for app (different result)
         vi.mocked(fs.readFileSync).mockReturnValue(
           createPackageJson({ next: '^14.0.0', '@next/mdx': '^14.0.0' })
         );
@@ -916,7 +1026,7 @@ describe('FrameworkDetector', () => {
           '/workspace/packages/app'
         );
 
-        // Both should be correctly cached separately
+        // verify both cached separately
         expect(docsResult.framework).toBe('docusaurus');
         expect(appResult.framework).toBe('nextjs');
       });
@@ -933,6 +1043,7 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
+        // verify fallback to generic on ENOENT
         expect(result.framework).toBe('generic');
         expect(result.detected).toBe(true);
       });
@@ -966,19 +1077,20 @@ describe('FrameworkDetector', () => {
       it('recovers after error on next call', () => {
         vi.mocked(fs.existsSync).mockReturnValue(true);
 
-        // First call fails
+        // first call fails
         vi.mocked(fs.readFileSync).mockImplementationOnce(() => {
           throw new Error('Temporary error');
         });
         const failedResult = detector.detectFromPackageJson('/workspace-fail');
 
-        // Second call succeeds
+        // second call succeeds
         vi.mocked(fs.readFileSync).mockReturnValue(
           createPackageJson({ '@docusaurus/core': '^3.0.0' })
         );
         const successResult =
           detector.detectFromPackageJson('/workspace-success');
 
+        // verify recovery from error
         expect(failedResult.framework).toBe('generic');
         expect(successResult.framework).toBe('docusaurus');
       });
@@ -989,7 +1101,7 @@ describe('FrameworkDetector', () => {
         for (let i = 0; i < 10000; i++) {
           manyDeps[`package-${i}`] = '1.0.0';
         }
-        // Add framework deps in the middle
+        // add framework deps in the middle
         manyDeps['@docusaurus/core'] = '^3.0.0';
 
         vi.mocked(fs.existsSync).mockReturnValue(true);
@@ -999,19 +1111,20 @@ describe('FrameworkDetector', () => {
 
         const result = detector.detectFromPackageJson('/workspace');
 
-        // Should still find docusaurus
+        // verify docusaurus found despite large dep count
         expect(result.framework).toBe('docusaurus');
       });
 
       it('handles package.json with no newlines (minified)', () => {
         vi.mocked(fs.existsSync).mockReturnValue(true);
-        // Minified JSON on single line
+        // minified JSON on single line
         vi.mocked(fs.readFileSync).mockReturnValue(
           '{"dependencies":{"@docusaurus/core":"^3.0.0"}}'
         );
 
         const result = detector.detectFromPackageJson('/workspace');
 
+        // verify parsing works for minified JSON
         expect(result.framework).toBe('docusaurus');
       });
 
@@ -1023,12 +1136,11 @@ describe('FrameworkDetector', () => {
             JSON.stringify({ dependencies: { '@docusaurus/core': '^3.0.0' } })
         );
 
-        // JSON.parse handles BOM in most implementations
-        // This tests real-world edge case
+        // note: JSON.parse handles BOM in most implementations
+        // this tests real-world edge case
         const result = detector.detectFromPackageJson('/workspace');
 
-        // May or may not work depending on JSON.parse implementation
-        // Just verify it doesn't crash
+        // verify no crash (may or may not parse depending on JSON.parse impl)
         expect(result).toBeDefined();
         expect(result.detected).toBe(true);
       });
