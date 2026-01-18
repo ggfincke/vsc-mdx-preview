@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import { debug } from '../logging';
 import { SingletonService } from '../services/SingletonService';
 import { getConfigManager, getErrorReporter } from '../services';
+import { SubscriberManager } from '../utils/SubscriberManager';
 import { ErrorContext } from '../errors';
 
 // supported frameworks
@@ -70,7 +71,16 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   protected readonly logTag = 'FRAMEWORK';
 
   private cache: Map<string, FrameworkInfo> = new Map();
-  private subscriptions: Set<(info: FrameworkInfo) => void> = new Set();
+  private subscriberManager = new SubscriberManager<FrameworkInfo>(
+    'FRAMEWORK',
+    (error) => {
+      getErrorReporter().reportSilent(
+        error instanceof Error ? error : new Error(String(error)),
+        ErrorContext.Extension,
+        { operation: 'framework-subscriber-notify' }
+      );
+    }
+  );
   private fileWatcher: vscode.FileSystemWatcher | null = null;
 
   protected constructor() {
@@ -272,25 +282,12 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
 
   // Subscribe to framework changes
   subscribe(callback: (info: FrameworkInfo) => void): vscode.Disposable {
-    this.subscriptions.add(callback);
-    return new vscode.Disposable(() => {
-      this.subscriptions.delete(callback);
-    });
+    return this.subscriberManager.subscribe(callback);
   }
 
   // Notify subscribers of framework change
   private notifySubscribers(info: FrameworkInfo): void {
-    for (const callback of this.subscriptions) {
-      try {
-        callback(info);
-      } catch (error) {
-        getErrorReporter().reportSilent(
-          error instanceof Error ? error : new Error(String(error)),
-          ErrorContext.Extension,
-          { operation: 'framework-subscriber-notify' }
-        );
-      }
-    }
+    this.subscriberManager.notify(info);
   }
 
   // Invalidate cache for workspace
@@ -344,6 +341,6 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
 
     this.cache.clear();
-    this.subscriptions.clear();
+    this.subscriberManager.clear();
   }
 }

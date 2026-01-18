@@ -8,10 +8,12 @@ import {
   DocumentTracker,
   CustomCssWatcher,
   DependencyWatcher,
-  ConfigWatcher,
   TailwindConfigWatcher,
   WatcherManager,
 } from './watchers';
+import type { IWatcher } from './watchers';
+import { onConfigChange } from './config';
+import { PackageJsonWatcher } from '../module-fetcher/PackageJsonWatcher';
 import type { ResolvedConfig } from './config';
 import { getTailwindProcessor } from '../services';
 
@@ -59,7 +61,8 @@ export class PreviewInitializer {
   createWatchers(
     customCssPath: string,
     onDependencyChange: (fsPath: string) => Promise<void>,
-    webviewReadyPromise?: Promise<void>
+    webviewReadyPromise?: Promise<void>,
+    onPackageJsonChange?: () => void
   ): WatcherManager {
     const watcherManager = new WatcherManager();
 
@@ -90,6 +93,16 @@ export class PreviewInitializer {
       watcherManager.register('customCss', customCssWatcher);
     }
 
+    // package.json watcher for module resolution cache invalidation
+    if (onPackageJsonChange) {
+      const packageJsonWatcher = new PackageJsonWatcher(async () => {
+        await watcherManager.waitForGate();
+        debug('[PREVIEW] Package.json changed, invalidating caches');
+        onPackageJsonChange();
+      });
+      watcherManager.register('packageJson', packageJsonWatcher);
+    }
+
     // NOTE: watchers are NOT started here - call startWatchers() after setup
     return watcherManager;
   }
@@ -115,12 +128,12 @@ export class PreviewInitializer {
   }
 
   // Setup or teardown config file watcher based on document scheme.
-  // Consolidates all config watcher logic in one place.
+  // Subscribes directly to ConfigCache change events (no separate ConfigWatcher class).
   setupConfigWatcher(
     watcherManager: WatcherManager,
     docScheme: string,
     mdxPreviewConfig: ResolvedConfig | undefined,
-    onConfigChange: () => void
+    onConfigChanged: () => void
   ): void {
     // always remove existing config watcher first
     watcherManager.unregister('config');
@@ -131,13 +144,48 @@ export class PreviewInitializer {
     }
 
     const configPath = mdxPreviewConfig.configPath;
-    const configWatcher = new ConfigWatcher(configPath, () => {
-      debug('[PREVIEW] MDX config file changed, reloading...');
-      onConfigChange();
-    });
 
-    watcherManager.register('config', configWatcher);
-    configWatcher.start();
+    // Create minimal IWatcher adapter for config subscription
+    // This subscribes directly to ConfigCache events without a separate class
+    let subscription: vscode.Disposable | null = null;
+    let active = false;
+
+    const configSubscriptionWatcher: IWatcher = {
+      async start() {
+        if (active) { return; }
+        subscription = onConfigChange((event) => {
+          if (event.configPath === configPath) {
+            debug('[PREVIEW] MDX config file changed, reloading...');
+            onConfigChanged();
+          }
+        });
+        active = true;
+        debug(`[CONFIG-SUBSCRIPTION] Watching: ${configPath}`);
+      },
+      stop() {
+        if (!active) { return; }
+        subscription?.dispose();
+        subscription = null;
+        active = false;
+        debug('[CONFIG-SUBSCRIPTION] Stopped');
+      },
+      isActive() {
+        return active;
+      },
+      isReady() {
+        return active;
+      },
+      async waitForReady() {
+        // No async setup - ready immediately when active
+        return Promise.resolve();
+      },
+      dispose() {
+        this.stop();
+      },
+    };
+
+    watcherManager.register('config', configSubscriptionWatcher);
+    configSubscriptionWatcher.start();
   }
 
   // Setup custom CSS file watcher via WatcherManager.

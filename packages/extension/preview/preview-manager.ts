@@ -16,7 +16,6 @@ import { WatcherManager } from './watchers';
 // extracted components for Preview class
 import { PreviewState } from './PreviewState';
 import { PreviewEvaluator } from './PreviewEvaluator';
-import { PreviewWatcherCoordinator } from './PreviewWatcherCoordinator';
 
 // extracted modules
 import {
@@ -202,7 +201,6 @@ export class Preview {
   // extracted components (new)
   private state: PreviewState;
   private evaluator!: PreviewEvaluator;
-  private watcherCoordinator: PreviewWatcherCoordinator;
 
   // handshake state
   webviewHandshakePromise!: Promise<void>;
@@ -313,12 +311,6 @@ export class Preview {
       this.webviewHandshakePromise // ready gate - callbacks wait for this
     );
 
-    // initialize watcher coordinator
-    this.watcherCoordinator = new PreviewWatcherCoordinator(
-      this.initializer,
-      this.watcherManager
-    );
-
     // initialize evaluator (needs this preview instance)
     this.evaluator = new PreviewEvaluator(
       this,
@@ -349,19 +341,30 @@ export class Preview {
   }
 
   private setupConfigWatcher(): void {
-    // delegate to watcher coordinator
-    this.watcherCoordinator.setupConfigWatcher(
+    // setup config watcher directly via initializer (coordinator was removed)
+    this.initializer.setupConfigWatcher(
+      this.watcherManager,
       this.doc.uri.scheme,
       this.documentHandler.mdxPreviewConfig,
-      this.documentHandler,
-      () => this.refreshWebview()
+      () => {
+        this.documentHandler.reloadMdxConfig();
+        this.refreshWebview().catch((err) =>
+          logError('Failed to refresh after config change', err)
+        );
+      }
     );
   }
 
   updateTailwindWatchFiles(watchFiles: string[]): void {
-    // delegate to watcher coordinator
-    this.watcherCoordinator.setupTailwindConfigWatcher(watchFiles, () =>
-      this.updateWebview(true)
+    // setup tailwind watcher directly via initializer (coordinator was removed)
+    this.initializer.setupTailwindConfigWatcher(
+      this.watcherManager,
+      watchFiles,
+      () => {
+        this.updateWebview(true).catch((err) =>
+          logError('Failed to refresh after Tailwind change', err)
+        );
+      }
     );
   }
 
@@ -449,8 +452,9 @@ export class Preview {
     );
 
     if (result.needsCssWatcherUpdate) {
-      // delegate to watcher coordinator
-      this.watcherCoordinator.setupCustomCssWatcher(
+      // setup custom CSS watcher directly via initializer (coordinator was removed)
+      this.initializer.setupCustomCssWatcher(
+        this.watcherManager,
         this.configuration.customCss,
         this.entryFsDirectory,
         this.webviewBridge.getHandle()
@@ -467,7 +471,7 @@ export class Preview {
   // dispose of resources held by this preview
   dispose(): void {
     this.state.dispose();
-    this.watcherCoordinator.dispose();
+    this.watcherManager.dispose();
   }
 }
 

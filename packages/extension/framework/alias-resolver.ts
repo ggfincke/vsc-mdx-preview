@@ -4,8 +4,12 @@
 import * as path from 'path';
 import type { Framework } from './FrameworkDetector';
 
-// Get shared component registry for supported components
-import { FRAMEWORK_COMPONENTS, SHIM_PREFIX } from '@mdx-preview/shared-types';
+// Get shared component registry and import patterns for supported components
+import {
+  FRAMEWORK_COMPONENTS,
+  FRAMEWORK_IMPORT_PATTERNS,
+  SHIM_PREFIX,
+} from '@mdx-preview/shared-types';
 
 // alias configuration for a framework
 export interface AliasConfig {
@@ -37,15 +41,15 @@ export function getAliasesForFramework(framework: Framework): AliasConfig[] {
   }
 }
 
-// Docusaurus aliases
+// Docusaurus aliases - uses patterns from shared FRAMEWORK_IMPORT_PATTERNS
 function getDocusaurusAliases(): AliasConfig[] {
-  // Get shared registry for supported components
+  const patterns = FRAMEWORK_IMPORT_PATTERNS.docusaurus;
   const supportedShims = FRAMEWORK_COMPONENTS.docusaurus;
 
   return [
     // @theme/* -> built-in shims
     {
-      pattern: /^@theme\/(.+)$/,
+      pattern: patterns.themePattern,
       resolve: (match) => {
         const componentName = match[1];
         if ((supportedShims as readonly string[]).includes(componentName)) {
@@ -57,7 +61,7 @@ function getDocusaurusAliases(): AliasConfig[] {
     },
     // @site/* -> workspace root
     {
-      pattern: /^@site\/(.+)$/,
+      pattern: patterns.sitePattern,
       resolve: (match, workspaceRoot) => {
         const relativePath = match[1];
         return path.join(workspaceRoot, relativePath);
@@ -65,26 +69,26 @@ function getDocusaurusAliases(): AliasConfig[] {
     },
     // @docusaurus/* -> ignore (internal Docusaurus modules)
     {
-      pattern: /^@docusaurus\//,
+      pattern: patterns.internalPattern,
       resolve: () => null,
     },
   ];
 }
 
-// Astro Starlight aliases
+// Astro Starlight aliases - uses patterns from shared FRAMEWORK_IMPORT_PATTERNS
 function getStarlightAliases(): AliasConfig[] {
-  // Get shared registry for supported components
+  const patterns = FRAMEWORK_IMPORT_PATTERNS.starlight;
   const supportedShims = FRAMEWORK_COMPONENTS.starlight;
 
   return [
     // @astrojs/starlight/components -> all components from single import
     {
-      pattern: /^@astrojs\/starlight\/components$/,
+      pattern: patterns.componentsPattern,
       resolve: () => `${SHIM_PREFIX}/starlight`,
     },
     // individual component imports (if someone destructures)
     {
-      pattern: /^@astrojs\/starlight\/components\/(.+)$/,
+      pattern: patterns.componentPattern,
       resolve: (match) => {
         const componentName = match[1];
         if ((supportedShims as readonly string[]).includes(componentName)) {
@@ -96,46 +100,48 @@ function getStarlightAliases(): AliasConfig[] {
   ];
 }
 
-// Next.js aliases (minimal - mostly uses mdx-components.tsx)
+// Next.js aliases - uses patterns from shared FRAMEWORK_IMPORT_PATTERNS
 function getNextjsAliases(): AliasConfig[] {
+  const patterns = FRAMEWORK_IMPORT_PATTERNS.nextjs;
+
   return [
     {
       // next/image -> placeholder (images work differently in preview)
-      pattern: /^next\/image$/,
+      pattern: patterns.imagePattern,
       resolve: () => `${SHIM_PREFIX}/nextjs/Image`,
     },
     {
       // next/link -> simple anchor wrapper
-      pattern: /^next\/link$/,
+      pattern: patterns.linkPattern,
       resolve: () => `${SHIM_PREFIX}/nextjs/Link`,
     },
   ];
 }
 
-// Nextra aliases (supports both Nextra 3.x & 2.x import patterns)
+// Nextra aliases - uses patterns from shared FRAMEWORK_IMPORT_PATTERNS
 function getNextraAliases(): AliasConfig[] {
-  // Get shared registry for supported components
+  const patterns = FRAMEWORK_IMPORT_PATTERNS.nextra;
   const supportedShims = FRAMEWORK_COMPONENTS.nextra;
 
   return [
     {
       // nextra/components -> all components (Nextra 3.x barrel import)
-      pattern: /^nextra\/components$/,
+      pattern: patterns.componentsPattern,
       resolve: () => `${SHIM_PREFIX}/nextra`,
     },
     {
       // nextra-theme-docs -> all components (Nextra 2.x)
-      pattern: /^nextra-theme-docs$/,
+      pattern: patterns.themeDocsPattern,
       resolve: () => `${SHIM_PREFIX}/nextra`,
     },
     {
       // nextra-theme-docs/components -> all components
-      pattern: /^nextra-theme-docs\/components$/,
+      pattern: patterns.themeDocsComponentPattern,
       resolve: () => `${SHIM_PREFIX}/nextra`,
     },
     {
       // Individual component imports (nextra/components/Callout)
-      pattern: /^nextra\/components\/(.+)$/,
+      pattern: patterns.componentPattern,
       resolve: (match) => {
         const componentName = match[1];
         if ((supportedShims as readonly string[]).includes(componentName)) {

@@ -1,10 +1,18 @@
 // packages/extension/module-fetcher/utils.ts
 // shared utilities for module fetching & resolution
 
+import { debug, warn } from '../logging';
+
 // noop module for core/unshimmable modules (CommonJS export format)
 export const NOOP_MODULE = `Object.defineProperty(exports, '__esModule', { value: true });
   function noop() {}
   exports.default = noop;`;
+
+// Track whether we've shown the core module warning (once per session)
+let hasWarnedAboutCoreModules = false;
+
+// Track all core modules used in current preview (for debug output)
+const usedCoreModules = new Set<string>();
 
 // Node.js core modules that cannot be shimmed in a browser environment
 // these return noop module when requested
@@ -70,11 +78,45 @@ export function isCoreModule(request: string): boolean {
 // NOTE: extractImports has been moved to import-extractor.ts
 // Import from there instead: import { extractImports } from './import-extractor';
 
-// build a noop result for core modules that can't be shimmed
+/**
+ * Build a noop result for core modules that can't be shimmed in browser.
+ * Shows a one-time warning and debug logs for visibility.
+ */
 export function buildNoopResult(normalizedRequest: string) {
+  usedCoreModules.add(normalizedRequest);
+
+  // Show warning once per session when core modules are used
+  if (!hasWarnedAboutCoreModules) {
+    hasWarnedAboutCoreModules = true;
+    warn(
+      `[MODULE-FETCHER] Node.js core module "${normalizedRequest}" imported. ` +
+        `Core modules (fs, path, crypto, etc.) are not available in browser preview. ` +
+        `Code using these modules will receive no-op stubs.`
+    );
+  }
+
+  debug(
+    `[MODULE-FETCHER] Core module "${normalizedRequest}" -> noop. ` +
+      `Used so far: ${Array.from(usedCoreModules).join(', ')}`
+  );
+
   return {
     fsPath: `/externalModules/${normalizedRequest}`,
     code: NOOP_MODULE,
     dependencies: [],
   };
+}
+
+/**
+ * Reset core module warning state (useful for testing)
+ */
+export function resetCoreModuleWarning(): void {
+  hasWarnedAboutCoreModules = false;
+}
+
+/**
+ * Clear tracked core modules (call on preview refresh)
+ */
+export function clearUsedCoreModules(): void {
+  usedCoreModules.clear();
 }

@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import { SingletonService } from '../services/SingletonService';
 import { getConfigManager } from '../services';
+import { SubscriberManager } from '../utils/SubscriberManager';
 import type {
   PreviewTheme,
   CodeBlockTheme,
@@ -16,7 +17,7 @@ export class ThemeManager extends SingletonService<ThemeManager> {
   protected static override instance: ThemeManager | undefined;
   protected readonly logTag = 'THEME-MANAGER';
 
-  private subscribers: Set<(state: WebviewThemeState) => void> = new Set();
+  private subscriberManager = new SubscriberManager<WebviewThemeState>('THEME-MANAGER');
 
   protected constructor() {
     super();
@@ -39,7 +40,7 @@ export class ThemeManager extends SingletonService<ThemeManager> {
 
   // custom cleanup - clear subscribers (disposables handled by base class)
   protected override onDispose(): void {
-    this.subscribers.clear();
+    this.subscriberManager.clear();
   }
 
   // get theme configuration from settings
@@ -150,18 +151,12 @@ export class ThemeManager extends SingletonService<ThemeManager> {
 
   // subscribe to theme changes
   subscribe(callback: (state: WebviewThemeState) => void): vscode.Disposable {
-    this.subscribers.add(callback);
-    return new vscode.Disposable(() => {
-      this.subscribers.delete(callback);
-    });
+    return this.subscriberManager.subscribe(callback);
   }
 
   // notify all subscribers of theme change
   private notifySubscribers(): void {
-    const state = this.getWebviewThemeState();
-    for (const callback of this.subscribers) {
-      callback(state);
-    }
+    this.subscriberManager.notify(this.getWebviewThemeState());
   }
 
   // update theme setting

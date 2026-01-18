@@ -7,14 +7,8 @@ import * as vscode from 'vscode';
 import { info, debug } from '../../logging';
 import { getConfigCache, getErrorReporter } from '../../services';
 import { ConfigError } from '../../errors';
-import {
-  validateObject,
-  validateArray,
-  validateRecord,
-  validateEnumValue,
-  validateBoolean,
-  validateString,
-} from '../../utils/validation';
+import { ConfigChangeType } from '../../config/ConfigCache';
+import { validateConfigSchema } from '../../utils/validation';
 
 // import consolidated types from transpiler/types.ts
 import type {
@@ -170,155 +164,10 @@ function findConfigFile(startDir: string): string | undefined {
   return undefined;
 }
 
-// validate config structure using validation utilities
+// validate config structure using centralized validation
 function validateConfig(config: unknown): string[] {
-  const errors: string[] = [];
-  const collectError = (msg: string) => errors.push(msg);
-  const opts = { context: 'config', log: collectError };
-
-  // validate root object
-  const cfg = validateObject(config, 'config', opts);
-  if (!cfg) {
-    return errors;
-  }
-
-  // validate remarkPlugins
-  if (cfg.remarkPlugins !== undefined) {
-    validateArray(
-      cfg.remarkPlugins,
-      'remarkPlugins',
-      (plugin, i) =>
-        isValidPluginSpec(plugin)
-          ? (plugin as PluginSpec)
-          : (collectError(
-              `remarkPlugins[${i}] must be a string or [string, options] tuple`
-            ),
-            undefined),
-      opts
-    );
-  }
-
-  // validate rehypePlugins
-  if (cfg.rehypePlugins !== undefined) {
-    validateArray(
-      cfg.rehypePlugins,
-      'rehypePlugins',
-      (plugin, i) =>
-        isValidPluginSpec(plugin)
-          ? (plugin as PluginSpec)
-          : (collectError(
-              `rehypePlugins[${i}] must be a string or [string, options] tuple`
-            ),
-            undefined),
-      opts
-    );
-  }
-
-  // validate components
-  if (cfg.components !== undefined) {
-    validateRecord(
-      cfg.components,
-      'components',
-      (v, key) =>
-        typeof v === 'string'
-          ? v
-          : (collectError(`components.${key} must be a string path`),
-            undefined),
-      opts
-    );
-  }
-
-  // validate framework
-  if (cfg.framework !== undefined) {
-    validateEnumValue(
-      cfg.framework,
-      'framework',
-      ['generic', 'docusaurus', 'nextjs', 'astro-starlight'] as const,
-      opts
-    );
-  }
-
-  // validate frameworkOptions
-  if (cfg.frameworkOptions !== undefined) {
-    const fOpts = validateObject(
-      cfg.frameworkOptions,
-      'frameworkOptions',
-      opts
-    );
-    if (fOpts) {
-      // validate enableShims
-      if (fOpts.enableShims !== undefined) {
-        validateBoolean(
-          fOpts.enableShims,
-          'frameworkOptions.enableShims',
-          opts
-        );
-      }
-
-      // validate customAliases
-      if (fOpts.customAliases !== undefined) {
-        validateRecord(
-          fOpts.customAliases,
-          'frameworkOptions.customAliases',
-          (v, key) =>
-            typeof v === 'string'
-              ? v
-              : (collectError(
-                  `frameworkOptions.customAliases.${key} must be a string path`
-                ),
-                undefined),
-          opts
-        );
-      }
-    }
-  }
-
-  // validate tailwind options
-  if (cfg.tailwind !== undefined) {
-    const tw = validateObject(cfg.tailwind, 'tailwind', opts);
-    if (tw) {
-      if (tw.enabled !== undefined) {
-        validateEnumValue(
-          tw.enabled,
-          'tailwind.enabled',
-          ['auto', 'enabled', 'disabled'] as const,
-          opts
-        );
-      }
-      if (tw.configPath !== undefined) {
-        validateString(tw.configPath, 'tailwind.configPath', opts);
-      }
-    }
-  }
-
-  // validate unknownBehavior
-  if (cfg.unknownBehavior !== undefined) {
-    validateEnumValue(
-      cfg.unknownBehavior,
-      'unknownBehavior',
-      ['strip', 'placeholder', 'raw'] as const,
-      opts
-    );
-  }
-
-  return errors;
-}
-
-// check if value is valid plugin spec
-function isValidPluginSpec(value: unknown): value is PluginSpec {
-  if (typeof value === 'string') {
-    return true;
-  }
-  if (
-    Array.isArray(value) &&
-    value.length === 2 &&
-    typeof value[0] === 'string' &&
-    typeof value[1] === 'object' &&
-    value[1] !== null
-  ) {
-    return true;
-  }
-  return false;
+  const result = validateConfigSchema(config, { context: 'config' });
+  return result.errors;
 }
 
 // setup file watcher for config file changes
@@ -332,18 +181,22 @@ function setupConfigWatcher(configPath: string): void {
 
   const watcher = vscode.workspace.createFileSystemWatcher(configPath);
 
-  const handleChange = () => {
+  watcher.onDidChange(() => {
     debug(`Config file changed: ${configPath}`);
     cache.invalidate(configPath);
-    cache.notifyChange(configPath);
-  };
+    cache.notifyChange(configPath, ConfigChangeType.FileChanged);
+  });
 
-  watcher.onDidChange(handleChange);
-  watcher.onDidCreate(handleChange);
+  watcher.onDidCreate(() => {
+    debug(`Config file created: ${configPath}`);
+    cache.invalidate(configPath);
+    cache.notifyChange(configPath, ConfigChangeType.FileCreated);
+  });
+
   watcher.onDidDelete(() => {
     debug(`Config file deleted: ${configPath}`);
     cache.invalidate(configPath);
-    cache.notifyChange(configPath);
+    cache.notifyChange(configPath, ConfigChangeType.FileDeleted);
     // clean up watcher
     cache.removeWatcher(configPath);
   });
@@ -352,8 +205,11 @@ function setupConfigWatcher(configPath: string): void {
 }
 
 // subscribe to config file changes
+// callback receives a ConfigChangeEvent with type, configPath, and timestamp
 export function onConfigChange(
-  callback: (configPath: string) => void
+  callback: (
+    event: import('../../config/ConfigCache').ConfigChangeEvent
+  ) => void
 ): vscode.Disposable {
   return getCache().subscribe(callback);
 }

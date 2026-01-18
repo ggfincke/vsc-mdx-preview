@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { error as logError } from '../logging';
 import { SingletonService } from '../services/SingletonService';
 import { getConfigManager } from '../services';
+import { SubscriberManager } from '../utils/SubscriberManager';
 import type { TrustState } from '@mdx-preview/shared-types';
 
 export type { TrustState } from '@mdx-preview/shared-types';
@@ -31,7 +32,10 @@ export class TrustManager extends SingletonService<TrustManager> {
   protected static override instance: TrustManager | undefined;
   protected readonly logTag = 'TRUST-MANAGER';
 
-  private listeners: Set<(state: TrustState) => void> = new Set();
+  private subscriberManager = new SubscriberManager<TrustState>(
+    'TRUST-MANAGER',
+    (error) => logError('Error in TrustManager listener', error)
+  );
 
   protected constructor() {
     super();
@@ -155,29 +159,16 @@ export class TrustManager extends SingletonService<TrustManager> {
 
   // subscribe to trust state changes
   subscribe(listener: (state: TrustState) => void): vscode.Disposable {
-    this.listeners.add(listener);
-
-    return {
-      dispose: () => {
-        this.listeners.delete(listener);
-      },
-    };
+    return this.subscriberManager.subscribe(listener);
   }
 
   // notify all listeners of state change
   private notifyListeners(): void {
-    const state = this.getState();
-    this.listeners.forEach((listener) => {
-      try {
-        listener(state);
-      } catch (err) {
-        logError('Error in TrustManager listener', err);
-      }
-    });
+    this.subscriberManager.notify(this.getState());
   }
 
   // custom cleanup - clear listeners (disposables handled by base class)
   protected override onDispose(): void {
-    this.listeners.clear();
+    this.subscriberManager.clear();
   }
 }

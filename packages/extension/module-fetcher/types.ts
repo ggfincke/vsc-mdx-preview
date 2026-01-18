@@ -36,10 +36,21 @@ export interface ResolutionResult {
   isBuiltInShim: boolean;
   // original import specifier
   specifier: string;
+  // resolution strategy that succeeded (optional for backward compatibility)
+  strategy?: ResolutionStrategy;
 }
 
 // resolution mode for different contexts
 export type ResolutionMode = 'browser' | 'node' | 'dependency';
+
+// resolution strategy enum - indicates which approach succeeded
+export enum ResolutionStrategy {
+  FrameworkShim = 'framework-shim',
+  FrameworkAlias = 'framework-alias',
+  TypeScript = 'typescript',
+  EnhancedResolve = 'enhanced-resolve',
+  FileProbe = 'file-probe',
+}
 
 // resolver mode (browser or node conditions)
 export type ResolverMode = 'browser' | 'node';

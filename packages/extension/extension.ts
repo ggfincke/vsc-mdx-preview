@@ -18,6 +18,7 @@ import {
   ServiceNames,
   getPreviewManager,
   getStatusBarManager,
+  getConfigManager,
 } from './services';
 import { TailwindProcessor } from './tailwind/TailwindProcessor';
 import { ErrorReporter } from './errors';
@@ -91,13 +92,11 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
       );
 
       if (selection === 'Enable Scripts') {
-        await vscode.workspace
-          .getConfiguration('mdx-preview')
-          .update(
-            'preview.enableScripts',
-            true,
-            vscode.ConfigurationTarget.Workspace
-          );
+        await getConfigManager().set(
+          'preview.enableScripts',
+          true,
+          vscode.ConfigurationTarget.Workspace
+        );
       }
     } else {
       // show safe mode notification if trust was revoked
@@ -217,11 +216,11 @@ export async function activate(
   );
 
   // start package.json watcher to auto-invalidate resolver cache
-  const packageJsonWatcher = new PackageJsonWatcher();
-  packageJsonWatcher.start(() => {
+  const packageJsonWatcher = new PackageJsonWatcher(() => {
     clearResolverCache();
     debug('[WATCHER] Resolver cache cleared due to package file change');
   });
+  void packageJsonWatcher.start();
   context.subscriptions.push(packageJsonWatcher);
 
   debug('[ACTIVATE] Extension activation complete');

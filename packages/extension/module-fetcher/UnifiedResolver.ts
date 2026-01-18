@@ -10,19 +10,21 @@ import { resolveAlias, isBuiltInShim } from '../framework';
 import { debug } from '../logging';
 
 // import consolidated types from module-fetcher/types.ts
-import type {
-  TypeScriptConfiguration,
-  ResolutionContext,
-  ResolutionResult,
-  ResolutionMode,
+import {
+  ResolutionStrategy,
+  type TypeScriptConfiguration,
+  type ResolutionContext,
+  type ResolutionResult,
+  type ResolutionMode,
 } from './types';
 
 // re-export types for backward compatibility
-export type {
-  TypeScriptConfiguration,
-  ResolutionContext,
-  ResolutionResult,
-  ResolutionMode,
+export {
+  ResolutionStrategy,
+  type TypeScriptConfiguration,
+  type ResolutionContext,
+  type ResolutionResult,
+  type ResolutionMode,
 };
 
 // default extensions for file probing
@@ -87,13 +89,18 @@ export class UnifiedResolver {
       if (aliasedPath !== null) {
         if (isBuiltInShim(aliasedPath)) {
           debug(
-            `[UNIFIED-RESOLVER] Framework shim: ${specifier} -> ${aliasedPath}`
+            `[UNIFIED-RESOLVER] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
           );
-          return { fsPath: aliasedPath, isBuiltInShim: true, specifier };
+          return {
+            fsPath: aliasedPath,
+            isBuiltInShim: true,
+            specifier,
+            strategy: ResolutionStrategy.FrameworkShim,
+          };
         }
-        // alias resolved to a path - continue with that path
+        // alias resolved to a path - continue with that path (will use subsequent strategy)
         debug(
-          `[UNIFIED-RESOLVER] Framework alias: ${specifier} -> ${aliasedPath}`
+          `[UNIFIED-RESOLVER] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
         );
         specifier = aliasedPath;
       }
@@ -103,8 +110,15 @@ export class UnifiedResolver {
     if (context.tsConfig && !this.isRelativeImport(specifier)) {
       const tsResolved = this.resolveWithTypeScript(specifier, context);
       if (tsResolved) {
-        debug(`[UNIFIED-RESOLVER] TypeScript: ${specifier} -> ${tsResolved}`);
-        return { fsPath: tsResolved, isBuiltInShim: false, specifier };
+        debug(
+          `[UNIFIED-RESOLVER] Strategy: ${ResolutionStrategy.TypeScript} | ${specifier} -> ${tsResolved}`
+        );
+        return {
+          fsPath: tsResolved,
+          isBuiltInShim: false,
+          specifier,
+          strategy: ResolutionStrategy.TypeScript,
+        };
       }
     }
 
@@ -116,9 +130,14 @@ export class UnifiedResolver {
         const resolved = resolver.resolveSync({}, context.baseDir, specifier);
         if (resolved) {
           debug(
-            `[UNIFIED-RESOLVER] enhanced-resolve: ${specifier} -> ${resolved}`
+            `[UNIFIED-RESOLVER] Strategy: ${ResolutionStrategy.EnhancedResolve} | ${specifier} -> ${resolved}`
           );
-          return { fsPath: resolved, isBuiltInShim: false, specifier };
+          return {
+            fsPath: resolved,
+            isBuiltInShim: false,
+            specifier,
+            strategy: ResolutionStrategy.EnhancedResolve,
+          };
         }
       } catch {
         // continue to fallback
@@ -129,8 +148,15 @@ export class UnifiedResolver {
     if (this.isRelativeImport(specifier)) {
       const probed = this.probeFileSync(context.baseDir, specifier);
       if (probed) {
-        debug(`[UNIFIED-RESOLVER] File probe: ${specifier} -> ${probed}`);
-        return { fsPath: probed, isBuiltInShim: false, specifier };
+        debug(
+          `[UNIFIED-RESOLVER] Strategy: ${ResolutionStrategy.FileProbe} | ${specifier} -> ${probed}`
+        );
+        return {
+          fsPath: probed,
+          isBuiltInShim: false,
+          specifier,
+          strategy: ResolutionStrategy.FileProbe,
+        };
       }
     }
 

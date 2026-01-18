@@ -13,6 +13,7 @@ import { getCSP, generateNonce } from '../security/CSP';
 import { initRPCExtensionSide } from '../rpc-extension';
 import { getPreviewManager, getTrustManager } from '../services';
 import { debug } from '../logging';
+import { WebviewError } from '../errors';
 import { CSP_DEBUG_PREVIEW_LENGTH } from '../constants';
 
 const VIEW_TYPE = 'mdx.preview';
@@ -46,7 +47,11 @@ export async function initWebviewAppHTMLResources(
   // The entry is "index.html"
   const entry = manifest['index.html'];
   if (!entry) {
-    throw new Error('Could not find index.html entry in Vite manifest');
+    throw new WebviewError(
+      'Could not find index.html entry in Vite manifest',
+      'E600',
+      'init'
+    );
   }
 
   const webviewAppBaseUri = vscode.Uri.joinPath(
