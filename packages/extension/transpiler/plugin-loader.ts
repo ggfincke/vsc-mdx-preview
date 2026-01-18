@@ -70,8 +70,8 @@ export interface LoadedPlugins {
   remarkPlugins: Pluggable[];
   // custom rehype plugins to add after built-in plugins
   rehypePlugins: Pluggable[];
-  // errors encountered during loading (plugins that failed to load)
-  errors: string[];
+  // count of plugins that failed to load (errors logged via ErrorReporter)
+  errorCount: number;
 }
 
 // load custom plugins from MDX Preview config (only loads in Trusted Mode, returns empty arrays in Safe Mode w/ warning)
@@ -82,7 +82,7 @@ export async function loadPluginsFromConfig(
   const result: LoadedPlugins = {
     remarkPlugins: [],
     rehypePlugins: [],
-    errors: [],
+    errorCount: 0,
   };
 
   // no config = no custom plugins
@@ -129,7 +129,7 @@ export async function loadPluginsFromConfig(
         debug(`Loaded remark plugin: ${pluginName}`);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        result.errors.push(message);
+        result.errorCount++;
         getErrorReporter().reportPluginError(
           new PluginError(
             message,
@@ -153,7 +153,7 @@ export async function loadPluginsFromConfig(
         debug(`Loaded rehype plugin: ${pluginName}`);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        result.errors.push(message);
+        result.errorCount++;
         getErrorReporter().reportPluginError(
           new PluginError(
             message,
@@ -168,7 +168,7 @@ export async function loadPluginsFromConfig(
   }
 
   const loadedCount = result.remarkPlugins.length + result.rehypePlugins.length;
-  const errorCount = result.errors.length;
+  const errorCount = result.errorCount;
 
   if (loadedCount > 0) {
     info(

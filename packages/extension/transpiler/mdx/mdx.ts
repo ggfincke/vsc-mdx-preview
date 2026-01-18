@@ -1,5 +1,9 @@
 // packages/extension/transpiler/mdx/mdx.ts
 // MDX transpilation w/ layout injection & React root wrapping (compiles MDX to executable JS)
+//
+// This is the Trusted Mode compiler. For Safe Mode, see mdx-safe.ts.
+// Both modes use shared plugins from plugin-builder.ts to ensure parity.
+// See pipeline-config.ts for unified pipeline configuration.
 
 import { compile } from '@mdx-js/mdx';
 import hasDefaultExport from './hasDefaultExport';
@@ -110,10 +114,10 @@ export const mdxTranspileAsync = async (
     preview.doc.uri
   );
 
-  // log aggregated plugin loading errors
-  if (customPlugins.errors.length > 0) {
+  // log aggregated plugin loading errors (individual errors logged via ErrorReporter)
+  if (customPlugins.errorCount > 0) {
     warn(
-      `Failed to load ${customPlugins.errors.length} custom plugin(s). Check console for details.`
+      `Failed to load ${customPlugins.errorCount} custom plugin(s). Check console for details.`
     );
   }
 

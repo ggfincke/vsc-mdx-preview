@@ -14,7 +14,7 @@ import {
   getSafeRemarkPlugins,
   getSafeRehypePluginSets,
 } from './plugin-builder';
-import { warn } from '../../logging';
+import { warnIgnoredSafeModeConfig } from './pipeline-warnings';
 import type { ResolvedConfig } from '../../preview/config';
 import remarkGenericComponents, {
   KNOWN_GENERIC_COMPONENTS,
@@ -262,18 +262,7 @@ export async function compileToSafeHTML(
 ): Promise<SafeHTMLResult> {
   // warn if custom plugins are configured but will be ignored in Safe Mode
   if (config) {
-    const { remarkPlugins, rehypePlugins, components } = config.config;
-    const hasCustomPlugins =
-      (remarkPlugins && remarkPlugins.length > 0) ||
-      (rehypePlugins && rehypePlugins.length > 0);
-    const hasComponents = components && Object.keys(components).length > 0;
-
-    if (hasCustomPlugins || hasComponents) {
-      warn(
-        'Custom plugins and components from .mdx-previewrc.json are ignored in Safe Mode. ' +
-          'Enable Trusted Mode to use custom plugins.'
-      );
-    }
+    warnIgnoredSafeModeConfig(config.config);
   }
   // extract frontmatter before compilation
   const { content, frontmatter } = extractFrontmatter(mdxText);
