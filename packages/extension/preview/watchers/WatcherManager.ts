@@ -65,14 +65,11 @@ export class WatcherManager implements Disposable {
     await Promise.all(startPromises);
   }
 
-  // Wait for all watchers to report ready.
-  async waitForAllReady(): Promise<void> {
+  // Wait for all watchers to report ready (Promise-based, no polling).
+  async waitForAllReady(timeoutMs?: number): Promise<void> {
     const waitPromises = Array.from(this.watchers.entries()).map(
       async ([name, watcher]) => {
-        // poll until ready (simple approach for synchronous watchers)
-        while (!watcher.isReady()) {
-          await new Promise((resolve) => setTimeout(resolve, 10));
-        }
+        await watcher.waitForReady(timeoutMs);
         debug(`[WATCHER-MANAGER] Ready: ${name}`);
       }
     );
@@ -111,6 +108,37 @@ export class WatcherManager implements Disposable {
         debug(`[WATCHER-MANAGER] Stopped: ${name}`);
       }
     }
+  }
+
+  // Refresh a specific watcher (stop + start).
+  async refresh(name: string): Promise<void> {
+    const watcher = this.watchers.get(name);
+    if (watcher) {
+      watcher.stop();
+      await watcher.start();
+      debug(`[WATCHER-MANAGER] Refreshed: ${name}`);
+    }
+  }
+
+  // Refresh all watchers (stop + start each).
+  async refreshAll(): Promise<void> {
+    for (const [name, watcher] of this.watchers) {
+      if (watcher.isActive()) {
+        watcher.stop();
+        await watcher.start();
+        debug(`[WATCHER-MANAGER] Refreshed: ${name}`);
+      }
+    }
+  }
+
+  // Check if all watchers are ready.
+  areAllReady(): boolean {
+    for (const watcher of this.watchers.values()) {
+      if (!watcher.isReady()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // Get the names of all registered watchers.

@@ -27,11 +27,13 @@ export class DependencyWatcher extends BaseWatcher {
   // set base directory for resolving relative imports
   setDocumentDir(dir: string): void {
     this.documentDir = dir;
+    this.markReady(); // Signal readiness may have changed
   }
 
   // set resolution context for enhanced resolution capabilities
   setResolutionContext(context: ResolutionContext): void {
     this.resolutionContext = context;
+    this.markReady(); // Signal readiness may have changed
   }
 
   // update watched dependencies from import list (adds watchers for new dependencies & removes watchers for old ones)

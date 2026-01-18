@@ -76,6 +76,7 @@ export class CustomCssWatcher extends BaseWatcher {
     );
 
     debug('[CSS] Watching custom CSS file');
+    this.markReady(); // Signal ready after setup complete
   }
 
   protected onStop(): void {

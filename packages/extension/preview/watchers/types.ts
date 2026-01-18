@@ -22,6 +22,11 @@ export interface IWatcher extends Disposable {
   // check if the watcher is fully initialized & ready to handle events
   // @returns true if ready to receive & process events
   isReady(): boolean;
+
+  // Wait for the watcher to become ready (Promise-based, no polling).
+  // @param timeoutMs - Optional timeout in milliseconds
+  // @returns Promise that resolves when ready, rejects on timeout
+  waitForReady(timeoutMs?: number): Promise<void>;
 }
 
 // type guard for checking if an object implements IWatcher.
@@ -33,11 +38,13 @@ export function isWatcher(obj: unknown): obj is IWatcher {
     'stop' in obj &&
     'isActive' in obj &&
     'isReady' in obj &&
+    'waitForReady' in obj &&
     'dispose' in obj &&
     typeof (obj as IWatcher).start === 'function' &&
     typeof (obj as IWatcher).stop === 'function' &&
     typeof (obj as IWatcher).isActive === 'function' &&
     typeof (obj as IWatcher).isReady === 'function' &&
+    typeof (obj as IWatcher).waitForReady === 'function' &&
     typeof (obj as IWatcher).dispose === 'function'
   );
 }
