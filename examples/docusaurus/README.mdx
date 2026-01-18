@@ -1,0 +1,501 @@
+---
+title: Docusaurus Component Shims
+description: Demonstrates MDX Preview support for Docusaurus @theme components
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Details from '@theme/Details';
+
+# Docusaurus Component Shims
+
+MDX Preview provides built-in shims for Docusaurus's `@theme/*` components. These work without installing Docusaurus - the extension provides compatible implementations.
+
+> [!TIP]
+> **Trusted Mode Required**: These components require a trusted workspace with `mdx-preview.preview.enableScripts` enabled.
+
+---
+
+## Tabs Component
+
+### Basic Tabs
+
+<Tabs>
+  <TabItem value="javascript" label="JavaScript" default>
+    ```javascript
+    function greet(name) {
+      return `Hello, ${name}!`;
+    }
+
+    console.log(greet('World'));
+    ```
+  </TabItem>
+  <TabItem value="typescript" label="TypeScript">
+    ```typescript
+    function greet(name: string): string {
+      return `Hello, ${name}!`;
+    }
+
+    console.log(greet('World'));
+    ```
+  </TabItem>
+  <TabItem value="python" label="Python">
+    ```python
+    def greet(name):
+        return f"Hello, {name}!"
+
+    print(greet("World"))
+    ```
+  </TabItem>
+</Tabs>
+
+### Tabs with groupId (Synchronized)
+
+Tabs with the same `groupId` stay synchronized when switching. Try switching tabs in the first group - the second group will follow!
+
+**Installation Commands:**
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm" label="npm">
+    ```bash
+    npm install @mdx-js/react
+    ```
+  </TabItem>
+  <TabItem value="yarn" label="Yarn">
+    ```bash
+    yarn add @mdx-js/react
+    ```
+  </TabItem>
+  <TabItem value="pnpm" label="pnpm">
+    ```bash
+    pnpm add @mdx-js/react
+    ```
+  </TabItem>
+</Tabs>
+
+**Build Commands (same groupId):**
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm" label="npm">
+    ```bash
+    npm run build
+    ```
+  </TabItem>
+  <TabItem value="yarn" label="Yarn">
+    ```bash
+    yarn build
+    ```
+  </TabItem>
+  <TabItem value="pnpm" label="pnpm">
+    ```bash
+    pnpm build
+    ```
+  </TabItem>
+</Tabs>
+
+### Tabs with defaultValue
+
+Set a specific tab as the default selection:
+
+<Tabs defaultValue="typescript">
+  <TabItem value="javascript" label="JavaScript">
+    JavaScript content (not selected by default)
+  </TabItem>
+  <TabItem value="typescript" label="TypeScript">
+    **This tab is selected by default** via `defaultValue="typescript"`
+  </TabItem>
+  <TabItem value="rust" label="Rust">
+    Rust content (not selected by default)
+  </TabItem>
+</Tabs>
+
+### Tabs with Explicit Values
+
+Use the `values` prop for programmatic tab definitions:
+
+<Tabs
+  defaultValue="apple"
+  values={[
+    { label: 'Apple', value: 'apple' },
+    { label: 'Orange', value: 'orange' },
+    { label: 'Banana', value: 'banana' },
+  ]}
+>
+  <TabItem value="apple">This is an apple. Red and delicious.</TabItem>
+  <TabItem value="orange">This is an orange. Citrus and refreshing.</TabItem>
+  <TabItem value="banana">This is a banana. Yellow and potassium-rich.</TabItem>
+</Tabs>
+
+### Tabs with Rich Content
+
+Tabs can contain any MDX content:
+
+<Tabs>
+  <TabItem value="overview" label="Overview">
+    ## Project Overview
+
+    This project provides a complete solution for documentation:
+
+    - MDX support with React components
+    - Automatic sidebar generation
+    - Full-text search
+    - Theme customization
+
+    | Feature | Status |
+    |---------|--------|
+    | Markdown | Supported |
+    | MDX | Supported |
+    | React | Supported |
+  </TabItem>
+  <TabItem value="installation" label="Installation">
+    ## Installation Steps
+
+    1. Create a new project:
+
+       ```bash
+       npx create-docusaurus@latest my-docs classic
+       ```
+
+    2. Navigate to the project:
+
+       ```bash
+       cd my-docs
+       ```
+
+    3. Start the development server:
+
+       ```bash
+       npm start
+       ```
+
+    > [!NOTE]
+    > The development server will start at `http://localhost:3000`
+  </TabItem>
+  <TabItem value="configuration" label="Configuration">
+    ## Configuration Options
+
+    Edit `docusaurus.config.js`:
+
+    ```javascript
+    module.exports = {
+      title: 'My Documentation',
+      tagline: 'Dinosaurs are cool',
+      url: 'https://your-site.com',
+      baseUrl: '/',
+      // ... more options
+    };
+    ```
+  </TabItem>
+</Tabs>
+
+---
+
+## CodeBlock Component
+
+The `CodeBlock` component provides enhanced code rendering with copy buttons, titles, and line numbers.
+
+### Basic CodeBlock
+
+<CodeBlock language="javascript">
+{`function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+// Calculate first 10 Fibonacci numbers
+for (let i = 0; i < 10; i++) {
+  console.log(fibonacci(i));
+}`}
+</CodeBlock>
+
+### CodeBlock with Title
+
+<CodeBlock language="typescript" title="src/utils/math.ts">
+{`export function factorial(n: number): number {
+  if (n <= 1) return 1;
+  return n * factorial(n - 1);
+}
+
+export function isPrime(n: number): boolean {
+  if (n < 2) return false;
+  for (let i = 2; i <= Math.sqrt(n); i++) {
+    if (n % i === 0) return false;
+  }
+  return true;
+}`}
+</CodeBlock>
+
+### CodeBlock with Line Numbers
+
+<CodeBlock language="python" showLineNumbers>
+{`def quicksort(arr):
+    if len(arr) <= 1:
+        return arr
+
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+
+    return quicksort(left) + middle + quicksort(right)
+
+# Example usage
+numbers = [3, 6, 8, 10, 1, 2, 1]
+sorted_numbers = quicksort(numbers)
+print(sorted_numbers)`}
+</CodeBlock>
+
+### CodeBlock with Title and Line Numbers
+
+<CodeBlock language="go" title="main.go" showLineNumbers>
+{`package main
+
+import (
+    "fmt"
+    "net/http"
+)
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintf(w, "Hello, %s!", r.URL.Path[1:])
+}
+
+func main() {
+    http.HandleFunc("/", handler)
+    fmt.Println("Server starting on :8080")
+    http.ListenAndServe(":8080", nil)
+}`}
+</CodeBlock>
+
+### Multiple Languages
+
+<CodeBlock language="rust" title="src/main.rs">
+{`fn main() {
+    let greeting = "Hello, Rust!";
+    println!("{}", greeting);
+
+    let numbers = vec![1, 2, 3, 4, 5];
+    let doubled: Vec<i32> = numbers.iter().map(|x| x * 2).collect();
+    println!("{:?}", doubled);
+}`}
+</CodeBlock>
+
+<CodeBlock language="sql" title="queries/users.sql">
+{`SELECT
+    u.id,
+    u.name,
+    COUNT(o.id) as order_count,
+    SUM(o.total) as total_spent
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.created_at > '2024-01-01'
+GROUP BY u.id, u.name
+HAVING COUNT(o.id) > 5
+ORDER BY total_spent DESC
+LIMIT 10;`}
+</CodeBlock>
+
+<CodeBlock language="yaml" title="docker-compose.yml">
+{`version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - db
+  db:
+    image: postgres:15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:`}
+</CodeBlock>
+
+---
+
+## Details Component
+
+The `Details` component creates collapsible sections using the native HTML `<details>` element.
+
+### Basic Details
+
+<Details summary="Click to expand this section">
+  This content is hidden by default. Click the summary to reveal it!
+
+  You can include any MDX content here:
+
+  - Bullet points
+  - **Bold text** and *italic text*
+  - `inline code`
+
+  ```javascript
+  // Even code blocks!
+  const hidden = true;
+  ```
+</Details>
+
+### Details Open by Default
+
+<Details summary="This section starts expanded" open>
+  This content is visible when the page loads because `open={true}` is set.
+
+  Use this for content that's important but takes up space.
+</Details>
+
+### Multiple Details Sections
+
+<Details summary="Section 1: Getting Started">
+  ## Getting Started
+
+  Follow these steps to begin:
+
+  1. Install dependencies
+  2. Configure your environment
+  3. Run the application
+</Details>
+
+<Details summary="Section 2: Advanced Configuration">
+  ## Advanced Configuration
+
+  For power users, here are advanced options:
+
+  ```json
+  {
+    "advanced": true,
+    "experimentalFeatures": ["feature1", "feature2"]
+  }
+  ```
+</Details>
+
+<Details summary="Section 3: Troubleshooting">
+  ## Troubleshooting
+
+  Common issues and solutions:
+
+  | Issue | Solution |
+  |-------|----------|
+  | Build fails | Clear cache and retry |
+  | Slow performance | Enable caching |
+  | Missing styles | Check CSS imports |
+</Details>
+
+### Nested Details
+
+<Details summary="Outer Section">
+  This is the outer section content.
+
+  <Details summary="Inner Section">
+    This is nested inside the outer section!
+
+    You can nest Details components for hierarchical content organization.
+  </Details>
+
+  More content in the outer section after the nested part.
+</Details>
+
+### Details with Custom Styling
+
+<Details summary="Styled Section" className="custom-details">
+  You can add custom CSS classes via the `className` prop for additional styling.
+</Details>
+
+---
+
+## Edge Cases
+
+### Empty Tab Content
+
+<Tabs>
+  <TabItem value="empty" label="Empty Tab">
+  </TabItem>
+  <TabItem value="content" label="Has Content">
+    This tab has content, the previous one is empty.
+  </TabItem>
+</Tabs>
+
+### Long Tab Labels
+
+<Tabs>
+  <TabItem value="short" label="Short">Short label</TabItem>
+  <TabItem value="medium" label="Medium Length Label">Medium label</TabItem>
+  <TabItem value="long" label="This Is A Very Long Tab Label That Might Need To Wrap">
+    Content for the tab with a very long label.
+  </TabItem>
+</Tabs>
+
+### Empty CodeBlock
+
+<CodeBlock language="text">
+{``}
+</CodeBlock>
+
+### Empty Details
+
+<Details summary="Empty content section">
+</Details>
+
+---
+
+## Import Patterns
+
+MDX Preview supports these import patterns for Docusaurus components:
+
+```javascript
+// Standard @theme imports
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import Details from '@theme/Details';
+
+// Direct shim imports (fallback)
+import { Tabs, TabItem } from '@mdx-preview/shims/docusaurus/Tabs';
+import { CodeBlock } from '@mdx-preview/shims/docusaurus/CodeBlock';
+import { Details } from '@mdx-preview/shims/docusaurus/Details';
+```
+
+---
+
+## Component API Reference
+
+### Tabs Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `ReactNode` | required | TabItem components |
+| `defaultValue` | `string` | first tab | Initially selected tab value |
+| `values` | `TabDefinition[]` | - | Programmatic tab definitions |
+| `groupId` | `string` | - | Sync tabs with same groupId |
+| `className` | `string` | - | Additional CSS classes |
+
+### TabItem Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `ReactNode` | required | Tab content |
+| `value` | `string` | required | Unique identifier |
+| `label` | `string` | - | Display label |
+| `default` | `boolean` | false | Mark as default tab |
+| `attributes` | `object` | - | Additional HTML attributes |
+
+### CodeBlock Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `string` | required | Code content |
+| `language` | `string` | - | Syntax highlighting language |
+| `title` | `string` | - | Title bar text |
+| `showLineNumbers` | `boolean` | false | Show line numbers |
+| `metastring` | `string` | - | Additional metadata |
+| `className` | `string` | - | Additional CSS classes |
+
+### Details Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `ReactNode` | required | Collapsible content |
+| `summary` | `ReactNode` | 'Details' | Summary/trigger text |
+| `open` | `boolean` | false | Start expanded |
+| `className` | `string` | - | Additional CSS classes |

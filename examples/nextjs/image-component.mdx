@@ -1,0 +1,189 @@
+import Image from 'next/image';
+import Link from 'next/link';
+
+# Next.js Image Component Examples
+
+The `Image` component from `next/image` renders optimized images. In MDX Preview, images render as standard `<img>` elements without Next.js optimization (since we're not running a Next.js server).
+
+> [!TIP]
+> **Navigation:** <Link href="./index.mdx">← Back to Home</Link> | <Link href="./link-component.mdx">Link Examples →</Link>
+
+---
+
+## Basic Image
+
+<Image
+  src="./kitty.jpg"
+  alt="Cute kitty cat"
+  width={640}
+  height={480}
+/>
+
+## Image with Different Sizes
+
+<Image
+  src="./kitty.jpg"
+  alt="Medium sized kitty"
+  width={400}
+  height={300}
+/>
+
+<Image
+  src="./kitty.jpg"
+  alt="Small square kitty"
+  width={200}
+  height={200}
+/>
+
+## Image with Fill Mode
+
+The `fill` prop makes the image fill its parent container. The parent must have `position: relative`:
+
+<div style={{ position: 'relative', width: '100%', height: '200px', marginBottom: '1rem' }}>
+  <Image
+    src="./kitty.jpg"
+    alt="Kitty using fill mode"
+    fill
+  />
+</div>
+
+With `fill`, the image uses `position: absolute` and `objectFit: cover` by default.
+
+## Priority Loading
+
+Use `priority` for above-the-fold images that should load immediately:
+
+<Image
+  src="./kitty.jpg"
+  alt="Priority loading kitty"
+  width={300}
+  height={225}
+  priority
+/>
+
+Priority images use `loading="eager"` instead of the default `loading="lazy"`.
+
+## Custom Styling
+
+<Image
+  src="./kitty.jpg"
+  alt="Kitty avatar"
+  width={150}
+  height={150}
+  style={{ borderRadius: '50%', border: '3px solid #6366f1' }}
+/>
+
+<Image
+  src="./kitty.jpg"
+  alt="Kitty with rounded corners"
+  width={300}
+  height={225}
+  style={{ borderRadius: '12px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}
+/>
+
+## Image Grid
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+  <Image
+    src="./kitty.jpg"
+    alt="Grid kitty 1"
+    width={200}
+    height={150}
+    style={{ width: '100%', height: 'auto' }}
+  />
+  <Image
+    src="./kitty.jpg"
+    alt="Grid kitty 2"
+    width={200}
+    height={150}
+    style={{ width: '100%', height: 'auto' }}
+  />
+  <Image
+    src="./kitty.jpg"
+    alt="Grid kitty 3"
+    width={200}
+    height={150}
+    style={{ width: '100%', height: 'auto' }}
+  />
+</div>
+
+---
+
+## Combining Link and Image
+
+Wrap Image in Link to create linked images:
+
+<Link href="/products/featured">
+  <Image
+    src="./kitty.jpg"
+    alt="Linked kitty image"
+    width={400}
+    height={300}
+    style={{ cursor: 'pointer' }}
+  />
+</Link>
+
+### Card with Image and Link
+
+<div style={{
+  border: '1px solid #e5e7eb',
+  borderRadius: '8px',
+  overflow: 'hidden',
+  maxWidth: '400px',
+  marginBottom: '1rem'
+}}>
+  <Image
+    src="./kitty.jpg"
+    alt="Kitty card image"
+    width={400}
+    height={300}
+    style={{ width: '100%', height: 'auto' }}
+  />
+  <div style={{ padding: '1rem' }}>
+    <h3 style={{ margin: '0 0 0.5rem 0' }}>Meet the Kitty</h3>
+    <p style={{ margin: '0 0 1rem 0', color: '#6b7280' }}>
+      This adorable kitty is featured in all our Next.js Image examples.
+    </p>
+    <Link href="https://google.com" style={{ color: '#0070f3' }}>
+      Learn more →
+    </Link>
+  </div>
+</div>
+
+---
+
+## Image Props Reference
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `src` | `string \| { src: string }` | required | Image source URL |
+| `alt` | `string` | required | Alt text for accessibility |
+| `width` | `number \| string` | - | Image width (required unless `fill`) |
+| `height` | `number \| string` | - | Image height (required unless `fill`) |
+| `fill` | `boolean` | `false` | Fill parent container |
+| `priority` | `boolean` | `false` | Load immediately (eager) |
+| `placeholder` | `'blur' \| 'empty'` | `'empty'` | Placeholder type |
+| `blurDataURL` | `string` | - | Base64 blur placeholder |
+| `className` | `string` | - | Additional CSS classes |
+| `style` | `CSSProperties` | - | Inline styles |
+
+**Ignored Props (Next.js-specific):**
+- `quality`, `loader`, `unoptimized`, `sizes`
+
+## Image Shim Behavior
+
+The MDX Preview shim provides simplified functionality:
+
+- Renders as a standard `<img>` element
+- No image optimization (uses original image)
+- `fill` mode uses CSS for positioning
+- `priority` sets `loading="eager"` instead of `loading="lazy"`
+- Blur placeholder uses CSS `backgroundImage`
+
+This means previews may look slightly different from a running Next.js app, but the structure and content will be correct.
+
+---
+
+<p style={{ textAlign: 'center', marginTop: '2rem' }}>
+  <Link href="./index.mdx">← Back to Home</Link> | <Link href="./link-component.mdx">Link Examples →</Link> | <Link href="./routing.mdx">Routing Patterns →</Link>
+</p>

@@ -1,0 +1,9 @@
+{
+  "name": "mdx-preview-starlight-example",
+  "description": "MDX Preview example for Astro Starlight projects",
+  "private": true,
+  "dependencies": {
+    "@astrojs/starlight": "^0.20.0",
+    "astro": "^4.0.0"
+  }
+}
