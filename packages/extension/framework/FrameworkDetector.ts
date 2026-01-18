@@ -158,6 +158,33 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
   }
 
+  // Find the closest package.json starting from documentDir up to workspaceRoot
+  private findClosestPackageJsonDir(
+    documentDir: string,
+    workspaceRoot: string
+  ): string {
+    let currentDir = documentDir;
+
+    // Walk up from document directory to workspace root
+    while (currentDir.startsWith(workspaceRoot)) {
+      const packageJsonPath = path.join(currentDir, 'package.json');
+      if (fs.existsSync(packageJsonPath)) {
+        debug('[FRAMEWORK] Found package.json at:', packageJsonPath);
+        return currentDir;
+      }
+
+      const parentDir = path.dirname(currentDir);
+      // Stop if we've reached the root or can't go up further
+      if (parentDir === currentDir) {
+        break;
+      }
+      currentDir = parentDir;
+    }
+
+    // Fallback to workspace root
+    return workspaceRoot;
+  }
+
   // Get framework for document (respects manual override)
   getFramework(documentUri: vscode.Uri): FrameworkInfo {
     // Check manual override setting first
@@ -177,16 +204,23 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
 
     const workspaceRoot = workspaceFolder.uri.fsPath;
+    const documentDir = path.dirname(documentUri.fsPath);
 
-    // Check cache
-    const cached = this.cache.get(workspaceRoot);
+    // Find the closest package.json (from document dir up to workspace root)
+    const packageJsonDir = this.findClosestPackageJsonDir(
+      documentDir,
+      workspaceRoot
+    );
+
+    // Check cache using the package.json directory as key
+    const cached = this.cache.get(packageJsonDir);
     if (cached) {
       return cached;
     }
 
     // Detect & cache framework
-    const detected = this.detectFromPackageJson(workspaceRoot);
-    this.cache.set(workspaceRoot, detected);
+    const detected = this.detectFromPackageJson(packageJsonDir);
+    this.cache.set(packageJsonDir, detected);
     return detected;
   }
 
@@ -280,20 +314,24 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
 
   // Handle package.json change & invalidate cache
   private onPackageJsonChange(uri: vscode.Uri): void {
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-    if (workspaceFolder) {
-      this.invalidateCache(workspaceFolder.uri.fsPath);
+    // Invalidate the cache for the directory containing this package.json
+    const packageJsonDir = path.dirname(uri.fsPath);
+    this.invalidateCache(packageJsonDir);
 
-      // Notify subscribers if this affects the active editor
-      const editor = vscode.window.activeTextEditor;
-      if (editor) {
-        const editorFolder = vscode.workspace.getWorkspaceFolder(
-          editor.document.uri
-        );
-        if (editorFolder?.uri.fsPath === workspaceFolder.uri.fsPath) {
-          const info = this.getFramework(editor.document.uri);
-          this.notifySubscribers(info);
-        }
+    // Notify subscribers if this affects the active editor
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+      const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+      const editorFolder = vscode.workspace.getWorkspaceFolder(
+        editor.document.uri
+      );
+      // Check if the changed package.json is in the same workspace
+      if (
+        workspaceFolder &&
+        editorFolder?.uri.fsPath === workspaceFolder.uri.fsPath
+      ) {
+        const info = this.getFramework(editor.document.uri);
+        this.notifySubscribers(info);
       }
     }
   }
