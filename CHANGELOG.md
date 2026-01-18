@@ -5,6 +5,28 @@ All notable changes to the MDX Preview extension will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Nextra Framework Support**: Full support for Nextra-based documentation projects
+  - Auto-detection of `nextra`, `nextra-theme-docs`, and `nextra-theme-blog` in `package.json`
+  - Component shims: `Callout`, `Tabs`/`Tabs.Tab`, `Cards`/`Cards.Card`, `FileTree`, `Steps`, `Bleed`
+  - Alias resolution for `nextra/components`, `nextra-theme-docs`, and individual component imports
+  - `_meta.json` awareness via MetaResolver (extracts page-level title, layout, toc settings)
+  - Frontmatter extensions: `sidebarTitle`, `description`, `layout` (`default` | `full` | `raw`)
+  - Layout classes applied to preview container based on metadata
+- **Language Aliases**: Code block language aliases (`js`→`javascript`, `ts`→`typescript`, `sh`→`bash`, etc.)
+
+### Changed
+
+- **Generic Shims**: Fixed registration of `Tabs`, `TabItem`, `Tab`, and `Details` as direct aliases
+- **Preload System**: Added Nextra shim IDs and preserved IDs for module cache
+
+### Fixed
+
+- **Starlight FileTree**: Minor styling and structure improvements
+
 ## [1.0.0-alpha.10] - 2026-01-14
 
 ### Added

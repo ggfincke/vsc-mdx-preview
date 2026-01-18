@@ -24,8 +24,8 @@ export abstract class SingletonService<
   }
 
   // get singleton instance (creates new instance if none exists)
-  // Note: Using 'Function & { prototype: S }' allows type inference without requiring
-  // public constructor access. TypeScript infers S from the class prototype.
+  // Note: Using Function & { prototype: S } to infer type from prototype without
+  // checking constructor accessibility. This allows protected constructors.
   static getInstance<S extends SingletonService<S>>(
     this: Function & { prototype: S }
   ): S {

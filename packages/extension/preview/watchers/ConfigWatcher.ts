@@ -35,8 +35,8 @@ export class ConfigWatcher extends BaseWatcher {
   }
 
   protected onStart(): void {
-    this.configChangeDisposable = onConfigChange((changedPath) => {
-      if (changedPath === this.configPath) {
+    this.configChangeDisposable = onConfigChange((event) => {
+      if (event.configPath === this.configPath) {
         debug('[CONFIG-WATCHER] Config file changed, triggering reload...');
         this.onConfigChanged();
       }

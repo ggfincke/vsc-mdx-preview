@@ -2,13 +2,16 @@
 // evaluation logic for MDX content - handles both Trusted & Safe modes
 
 import * as fs from 'fs';
-import * as vscode from 'vscode';
 import { transformEntry } from '../module-fetcher/transform';
 import { extractImportSpecifiers } from '../module-fetcher/import-extractor';
 import { compileToSafeHTML } from '../transpiler/mdx/mdx-safe';
 import { debug } from '../logging';
 import { ErrorContext } from '../errors';
-import { getTailwindProcessor, getErrorReporter } from '../services';
+import {
+  getTailwindProcessor,
+  getErrorReporter,
+  getConfigManager,
+} from '../services';
 import { TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS } from '../constants';
 import type { Preview, WebviewHandle } from './preview-manager';
 import type { TrustState } from '@mdx-preview/shared-types';
@@ -101,12 +104,9 @@ export class EvaluationEngine {
     try {
       debug('[ENGINE/TAILWIND] Starting background compilation');
 
-      const compilationTimeout = vscode.workspace
-        .getConfiguration('mdx-preview.tailwind')
-        .get<number>(
-          'compilationTimeout',
-          TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS
-        );
+      const compilationTimeout =
+        getConfigManager().get('tailwind.compilationTimeout', preview.doc.uri) ??
+        TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS;
 
       const result = await this.withTimeout(
         getTailwindProcessor().process({
