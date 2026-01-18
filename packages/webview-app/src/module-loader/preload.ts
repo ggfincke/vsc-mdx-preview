@@ -34,11 +34,12 @@ export const fallbackLayoutModule = {
 
 // create a module wrapper w/ both default & named exports
 // used for framework shim components
+// __esModule: true is required for Babel's _interopRequireDefault to work correctly
 function createComponentModule<T>(
   component: T,
   name: string
-): { default: T } & Record<string, T> {
-  return { default: component, [name]: component };
+): { __esModule: true; default: T } & Record<string, T> {
+  return { __esModule: true as const, default: component, [name]: component };
 }
 
 // initialize all preloaded modules in the registry
@@ -64,7 +65,7 @@ export function initPreloadedModules(vscodeMarkdownLayout: unknown): void {
   registry.preload('react/jsx-runtime', jsxRuntime);
 
   // MDX React
-  const mdxModule = { MDXProvider };
+  const mdxModule = { __esModule: true as const, MDXProvider };
   registry.preload(PRELOADED_IDS.mdxReact, mdxModule);
   registry.preload(PRELOADED_IDS.mdxReactLatest, mdxModule);
   registry.preload('@mdx-js/react', mdxModule);
@@ -113,7 +114,9 @@ function initDocusaurusShims(): void {
 // initialize Starlight component shims
 function initStarlightShims(): void {
   // All-in-one module for import { Card, Steps, ... } from '@astrojs/starlight/components'
+  // __esModule: true is required for Babel's interop helpers
   const componentsModule = {
+    __esModule: true as const,
     Card: StarlightShims.Card,
     CardGrid: StarlightShims.CardGrid,
     LinkCard: StarlightShims.LinkCard,
@@ -179,7 +182,9 @@ function initNextjsShims(): void {
 function initNextraShims(): void {
   // All-in-one module for nextra/components
   // Note: Tabs.Tab and Cards.Card are compound components (accessed via parent)
+  // __esModule: true is required for Babel's interop helpers
   const componentsModule = {
+    __esModule: true as const,
     Callout: NextraShims.Callout,
     Tabs: NextraShims.Tabs, // Tabs.Tab is a static property on Tabs
     Cards: NextraShims.Cards, // Cards.Card is a static property on Cards
