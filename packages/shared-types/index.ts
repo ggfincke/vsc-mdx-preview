@@ -3,6 +3,24 @@
 
 // component registry - single source of truth for all component definitions
 export {
+  // Alias mappings - single source of truth for extension/webview parity
+  PRELOADED_MODULE_IDS,
+  getDocusaurusShimId,
+  getStarlightShimId,
+  getNextjsShimId,
+  getNextraShimId,
+  getGenericShimId,
+  shimPathToPreloadId,
+  generateFrameworkShimIds,
+  generateGenericShimIds,
+  generateFrameworkPreloadAliases,
+  generateGenericPreloadAliases,
+  generateCorePreloadAliases,
+  generateAllPreloadAliases,
+  type PreloadedModuleId,
+} from './aliases';
+
+export {
   // Core registries
   GENERIC_COMPONENTS,
   FRAMEWORK_COMPONENTS,
@@ -49,6 +67,10 @@ export interface PreviewError {
   message: string;
   stack?: string;
   code?: string;
+  // error context category (module-fetch, transpile, etc.)
+  context?: string;
+  // hint for webview to show retry button
+  recoverable?: boolean;
 }
 
 // check if value is a PreviewError
