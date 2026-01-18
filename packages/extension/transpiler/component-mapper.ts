@@ -2,13 +2,19 @@
 // generate import statements for custom component mappings from config
 
 import * as path from 'path';
-import { warn, debug, info } from '../logging';
+import { debug, info } from '../logging';
 import type { ResolvedConfig } from '../preview/config';
 import { SecurityMode } from '../security/TrustManager';
 import { getTrustManager } from '../services';
 
 // Use shared component registry as single source of truth
 import { getAllGenericComponentNames } from '@mdx-preview/shared-types';
+
+// Use consolidated warning utilities
+import {
+  createIgnoredComponentsWarning,
+  emitWarning,
+} from './mdx/pipeline-warnings';
 
 // result of generating component imports
 export interface ComponentImportsResult {
@@ -52,10 +58,7 @@ export function generateComponentImports(
   if (securityMode !== SecurityMode.Trusted) {
     const components = config?.config.components;
     if (components && Object.keys(components).length > 0) {
-      warn(
-        `Custom components configured but cannot load in Safe Mode. ` +
-          `${Object.keys(components).length} component(s) will be ignored.`
-      );
+      emitWarning(createIgnoredComponentsWarning(Object.keys(components)));
     }
     return result;
   }

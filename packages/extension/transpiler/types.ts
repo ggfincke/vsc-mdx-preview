@@ -8,10 +8,12 @@ export type UnknownBehavior = 'strip' | 'placeholder' | 'raw';
 export type PluginSpec = string | [string, Record<string, unknown>];
 
 // result of loading custom plugins from config
+// NOTE: The primary LoadedPlugins interface is defined in plugin-loader.ts
 export interface LoadedPlugins {
   remarkPlugins: unknown[];
   rehypePlugins: unknown[];
-  errors: Array<{ plugin: string; error: Error }>;
+  // count of plugins that failed to load (errors logged via ErrorReporter)
+  errorCount: number;
 }
 
 // plugin pipeline configuration (remark + rehype plugins)
