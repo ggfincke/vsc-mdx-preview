@@ -263,6 +263,12 @@
           ],
           "scope": "resource"
         },
+        "mdx-preview.preview.openMdxLinksInPreview": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "When Cmd/Ctrl+clicking links to MDX/MD files in the preview, open the preview instead of the file in the editor.",
+          "scope": "resource"
+        },
         "mdx-preview.build.useSucraseTranspiler": {
           "type": "boolean",
           "default": false,

@@ -70,11 +70,15 @@ export class TrustManager extends SingletonService<TrustManager> {
     // fresh read every time (don't rely on cached values)
     const workspaceTrusted = vscode.workspace.isTrusted;
     const scriptsEnabled = getConfigManager().get('preview.enableScripts');
+    const openMdxLinksInPreview = getConfigManager().get(
+      'preview.openMdxLinksInPreview'
+    );
 
     return {
       workspaceTrusted,
       scriptsEnabled,
       canExecute: workspaceTrusted && scriptsEnabled,
+      openMdxLinksInPreview,
     };
   }
 

@@ -12,6 +12,7 @@ export type SettingKey =
   | 'preview.updateMode'
   | 'preview.debounceDelay'
   | 'preview.enableScripts'
+  | 'preview.openMdxLinksInPreview'
   | 'preview.security'
   | 'preview.useVscodeMarkdownStyles'
   | 'preview.useWhiteBackground'
@@ -32,6 +33,7 @@ export interface SettingTypes {
   'preview.updateMode': 'onType' | 'onSave' | 'manual';
   'preview.debounceDelay': number;
   'preview.enableScripts': boolean;
+  'preview.openMdxLinksInPreview': boolean;
   'preview.security': SecurityPolicy;
   'preview.useVscodeMarkdownStyles': boolean;
   'preview.useWhiteBackground': boolean;
@@ -59,6 +61,7 @@ const DEFAULTS: SettingTypes = {
   'preview.updateMode': 'onType',
   'preview.debounceDelay': PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS,
   'preview.enableScripts': false,
+  'preview.openMdxLinksInPreview': true,
   'preview.security': SecurityPolicy.Strict,
   'preview.useVscodeMarkdownStyles': true,
   'preview.useWhiteBackground': false,

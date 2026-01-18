@@ -237,6 +237,58 @@ class ExtensionHandle implements ExtensionRPC {
       );
     }
   }
+
+  // open preview for an MDX file (used for internal link navigation)
+  async openPreview(relativePath: string): Promise<void> {
+    debug(`[EXT-HANDLE] openPreview: ${relativePath}`);
+
+    const opts = { context: 'openPreview' };
+
+    // validate path (required)
+    const validPath = validateString(relativePath, 'path', opts);
+    if (!validPath) {
+      return;
+    }
+
+    // get current document directory from preview
+    const entryDir = this.preview.entryFsDirectory;
+    if (!entryDir) {
+      logWarn('openPreview: no entry directory');
+      return;
+    }
+
+    // resolve relative path
+    const resolvedPath = path.resolve(entryDir, validPath);
+
+    // ! security check - ensure path is within workspace
+    if (!checkFsPath(entryDir, resolvedPath)) {
+      getErrorReporter().report(
+        new SecurityError(
+          'Cannot open file outside workspace folder',
+          'PATH_TRAVERSAL',
+          resolvedPath
+        ),
+        { context: ErrorContext.Security, severity: ErrorSeverity.Warning }
+      );
+      return;
+    }
+
+    try {
+      // open document in editor (this makes it the active editor)
+      const doc = await vscode.workspace.openTextDocument(resolvedPath);
+      await vscode.window.showTextDocument(doc, { preview: false });
+
+      // dynamically import openPreview to avoid circular dependency
+      // openPreview() uses the active editor's document
+      const { openPreview } = await import('./preview/preview-manager');
+      await openPreview();
+    } catch (err) {
+      getErrorReporter().reportToUser(
+        new Error(`Could not open preview: ${relativePath}`),
+        ErrorContext.Extension
+      );
+    }
+  }
 }
 
 export default ExtensionHandle;

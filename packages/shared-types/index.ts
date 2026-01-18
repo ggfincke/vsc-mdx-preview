@@ -41,6 +41,7 @@ export interface TrustState {
   scriptsEnabled: boolean;
   canExecute: boolean;
   reason?: string;
+  openMdxLinksInPreview: boolean;
 }
 
 // preview error w/ message & optional stack trace
@@ -214,6 +215,7 @@ export interface ExtensionRPC {
     line?: number,
     column?: number
   ): Promise<void>;
+  openPreview(relativePath: string): Promise<void>;
 }
 
 // Nextra _meta.json page-level settings (preview-relevant only)

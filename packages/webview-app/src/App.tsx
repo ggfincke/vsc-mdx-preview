@@ -17,11 +17,7 @@ import { SafePreviewRenderer } from './SafePreview';
 import { TrustedPreviewRenderer } from './TrustedPreview';
 import { registerWebviewHandlers, ExtensionHandle } from './rpc-webview';
 import { debug } from './utils/debug';
-import {
-  classifyLink,
-  normalizeRelativePath,
-  extractAnchor,
-} from './utils/linkHandler';
+import { classifyLink } from './utils/linkHandler';
 import type {
   TrustState,
   PreviewContent,
@@ -49,6 +45,7 @@ const INITIAL_TRUST_STATE: TrustState = {
   workspaceTrusted: false,
   scriptsEnabled: false,
   canExecute: false,
+  openMdxLinksInPreview: true,
 };
 
 // app state interface
@@ -205,9 +202,8 @@ function App() {
     }));
   }, []);
 
-  // intercept Ctrl/Cmd+clicks on anchors & route to extension (preserve regular clicks for text selection)
+  // intercept Ctrl/Cmd+clicks on external links & route to extension
   const handleLinkClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
-    // find closest anchor element
     const target = event.target as HTMLElement;
     const anchor = target.closest('a');
     if (!anchor) {
@@ -221,51 +217,16 @@ function App() {
 
     const linkType = classifyLink(href);
 
-    // handle anchor links w/o modifier key (internal page navigation)
-    if (linkType === 'anchor') {
+    // only handle external links with Ctrl/Cmd+click
+    if (linkType === 'external') {
+      const isModifierClick = event.metaKey || event.ctrlKey;
+      if (!isModifierClick) {
+        return;
+      }
+
       event.preventDefault();
-      const anchorId = extractAnchor(href);
-      if (anchorId) {
-        const targetEl = document.getElementById(anchorId);
-        if (targetEl) {
-          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }
-      return;
-    }
-
-    // require Ctrl/Cmd+click for external & relative-file links
-    const isModifierClick = event.metaKey || event.ctrlKey;
-    if (!isModifierClick) {
-      // ignore non-modifier clicks (CSP blocks navigation)
-      debug(`[APP] Link click without modifier, ignoring: ${href}`);
-      return;
-    }
-
-    debug(`[APP] Ctrl/Cmd+click: ${href} (type: ${linkType})`);
-
-    switch (linkType) {
-      case 'external': {
-        // open external URL via extension for security
-        event.preventDefault();
-        ExtensionHandle.openExternal(href);
-        break;
-      }
-
-      case 'relative-file': {
-        // open relative file in editor
-        event.preventDefault();
-        const filePath = normalizeRelativePath(href);
-        ExtensionHandle.openDocument(filePath);
-        break;
-      }
-
-      case 'unknown':
-      default: {
-        // pass unknown links to browser (CSP will block)
-        debug(`[APP] Unknown link type, not intercepting: ${href}`);
-        break;
-      }
+      debug(`[APP] Ctrl/Cmd+click external link: ${href}`);
+      ExtensionHandle.openExternal(href);
     }
   }, []);
 
