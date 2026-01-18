@@ -9,7 +9,10 @@ import {
   warn as logWarn,
   debug as logDebug,
 } from '../logging';
-import { ERROR_DEDUPE_WINDOW_DEFAULT_MS } from '../constants';
+import {
+  ERROR_DEDUPE_WINDOW_DEFAULT_MS,
+  ERROR_DEDUPE_MAX_ENTRIES,
+} from '../constants';
 import { SingletonService } from '../services/SingletonService';
 
 // error severity determines handling behavior
@@ -52,6 +55,8 @@ export interface WebviewErrorHandle {
     message: string;
     code?: string;
     stack?: string;
+    context?: string;
+    recoverable?: boolean;
   }): void;
 }
 
@@ -114,7 +119,11 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
     // handle notifications based on severity & options
     if (options.showInWebview && options.webviewHandle) {
-      this.sendToWebview(normalizedError, options.webviewHandle);
+      this.sendToWebview(
+        normalizedError,
+        options.webviewHandle,
+        options.context
+      );
     } else if (this.shouldNotify(severity, options)) {
       this.showNotification(normalizedError, severity, options.context);
     }
@@ -352,10 +361,11 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     }
   }
 
-  // send error to webview
+  // send error to webview with context and recoverable hint
   private sendToWebview(
     error: ExtensionError | Error,
-    handle: WebviewErrorHandle
+    handle: WebviewErrorHandle,
+    context?: ErrorContext
   ): void {
     const message =
       error instanceof ExtensionError ? formatUserError(error) : error.message;
@@ -364,7 +374,26 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
       message,
       code: error instanceof ExtensionError ? error.code : undefined,
       stack: error.stack,
+      context: context,
+      recoverable: this.isRecoverableError(error),
     });
+  }
+
+  // check if error is recoverable (user can fix and retry)
+  private isRecoverableError(error: Error): boolean {
+    if (error instanceof ExtensionError) {
+      // Module and transpile errors are typically recoverable by fixing the source
+      const recoverableCodes = [
+        'MODULE_NOT_FOUND',
+        'PARSE_ERROR',
+        'TRANSPILE_ERROR',
+        'E102', // circular dependency
+        'E120', // parse error
+        'E300', // MDX transpile
+      ];
+      return recoverableCodes.includes(error.code);
+    }
+    return true;
   }
 
   // get user-friendly context prefix
@@ -393,9 +422,27 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
       return true;
     }
 
+    // FIFO eviction: if map exceeds max size, delete oldest entries
+    if (this.recentErrors.size >= ERROR_DEDUPE_MAX_ENTRIES) {
+      this.evictOldestEntries(Math.ceil(ERROR_DEDUPE_MAX_ENTRIES * 0.1));
+    }
+
     this.recentErrors.set(key, now);
     this.cleanupOldErrors(now - window);
     return false;
+  }
+
+  // FIFO eviction of oldest entries when map exceeds size limit
+  private evictOldestEntries(count: number): void {
+    let evicted = 0;
+    for (const key of this.recentErrors.keys()) {
+      if (evicted >= count) {
+        break;
+      }
+      this.recentErrors.delete(key);
+      evicted++;
+    }
+    logDebug(`[${this.logTag}] Evicted ${evicted} oldest entries (FIFO)`);
   }
 
   // clean up old error entries
