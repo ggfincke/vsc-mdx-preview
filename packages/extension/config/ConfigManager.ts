@@ -4,8 +4,18 @@
 import * as vscode from 'vscode';
 import { debug } from '../logging';
 import { SingletonService } from '../services/SingletonService';
+import { SubscriberManager } from '../utils/SubscriberManager';
 import { SecurityPolicy } from '../security/security';
-import { PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS } from '../constants';
+import {
+  PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS,
+  TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
+} from '../constants';
+import {
+  DEFAULT_MAX_FILE_SIZE_BYTES,
+  DEFAULT_MAX_CSS_FILES_TO_SEARCH,
+  PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES,
+  PROCESSOR_CACHE_DEFAULT_TTL_SECONDS,
+} from '../tailwind/constants';
 
 // VS Code setting keys (relative to 'mdx-preview' namespace)
 export type SettingKey =
@@ -23,6 +33,11 @@ export type SettingKey =
   | 'preview.autoTheme'
   | 'build.useSucraseTranspiler'
   | 'tailwind.enabled'
+  | 'tailwind.maxFileSizeBytes'
+  | 'tailwind.maxCssFilesToSearch'
+  | 'tailwind.cacheMaxEntries'
+  | 'tailwind.cacheTtlSeconds'
+  | 'tailwind.compilationTimeout'
   | 'framework'
   | 'framework.componentShims'
   | 'components.builtins'
@@ -44,6 +59,11 @@ export interface SettingTypes {
   'preview.autoTheme': boolean;
   'build.useSucraseTranspiler': boolean;
   'tailwind.enabled': 'auto' | 'enabled' | 'disabled';
+  'tailwind.maxFileSizeBytes': number;
+  'tailwind.maxCssFilesToSearch': number;
+  'tailwind.cacheMaxEntries': number;
+  'tailwind.cacheTtlSeconds': number;
+  'tailwind.compilationTimeout': number;
   framework:
     | 'auto'
     | 'generic'
@@ -72,6 +92,11 @@ const DEFAULTS: SettingTypes = {
   'preview.autoTheme': true,
   'build.useSucraseTranspiler': false,
   'tailwind.enabled': 'enabled',
+  'tailwind.maxFileSizeBytes': DEFAULT_MAX_FILE_SIZE_BYTES,
+  'tailwind.maxCssFilesToSearch': DEFAULT_MAX_CSS_FILES_TO_SEARCH,
+  'tailwind.cacheMaxEntries': PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES,
+  'tailwind.cacheTtlSeconds': PROCESSOR_CACHE_DEFAULT_TTL_SECONDS,
+  'tailwind.compilationTimeout': TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
   framework: 'auto',
   'framework.componentShims': true,
   'components.builtins': true,
@@ -85,7 +110,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
   protected static override instance: ConfigManager | undefined;
   protected readonly logTag = 'CONFIG-MANAGER';
 
-  private subscribers = new Set<ConfigChangeCallback>();
+  private subscriberManager = new SubscriberManager<SettingKey[]>('CONFIG-MANAGER');
 
   protected constructor() {
     super();
@@ -129,12 +154,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
 
   // Subscribe to configuration changes
   onDidChangeConfiguration(callback: ConfigChangeCallback): vscode.Disposable {
-    this.subscribers.add(callback);
-    return {
-      dispose: () => {
-        this.subscribers.delete(callback);
-      },
-    };
+    return this.subscriberManager.subscribe(callback);
   }
 
   // Check if a specific setting affects the configuration change event
@@ -157,18 +177,11 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     }
 
     debug(`[CONFIG-MANAGER] Settings changed: ${affectedKeys.join(', ')}`);
-
-    for (const callback of this.subscribers) {
-      try {
-        callback(affectedKeys);
-      } catch (err) {
-        debug(`[CONFIG-MANAGER] Error in subscriber: ${err}`);
-      }
-    }
+    this.subscriberManager.notify(affectedKeys);
   }
 
   // Clear subscribers on dispose
   protected override onDispose(): void {
-    this.subscribers.clear();
+    this.subscriberManager.clear();
   }
 }

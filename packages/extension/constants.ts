@@ -34,6 +34,9 @@ export const ERROR_DEDUPE_WINDOW_DEFAULT_MS = 5000;
 // maximum character length for fetch requests (security limit)
 export const MAX_FETCH_REQUEST_LENGTH = 2048;
 
+// maximum entries in error deduplication map before FIFO eviction
+export const ERROR_DEDUPE_MAX_ENTRIES = 1000;
+
 // =============================================================================
 // CACHING
 // =============================================================================

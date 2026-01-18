@@ -5,7 +5,24 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { warn } from '../logging';
 import { SingletonService } from '../services/SingletonService';
+import { SubscriberManager } from '../utils/SubscriberManager';
 import type { ResolvedConfig } from '../preview/config/ConfigResolver';
+
+// Typed config change event types
+export enum ConfigChangeType {
+  FileChanged = 'fileChanged',
+  FileDeleted = 'fileDeleted',
+  FileCreated = 'fileCreated',
+}
+
+// Typed config change event
+export interface ConfigChangeEvent {
+  type: ConfigChangeType;
+  configPath: string;
+  timestamp: number;
+}
+
+export type ConfigChangeCallback = (event: ConfigChangeEvent) => void;
 
 // * manages the cache & file watchers for MDX preview config files
 // encapsulates the global state from ConfigResolver:
@@ -19,7 +36,10 @@ export class ConfigCache extends SingletonService<ConfigCache> {
 
   private cache = new Map<string, ResolvedConfig | null>();
   private watchers = new Map<string, vscode.FileSystemWatcher>();
-  private subscribers = new Set<(configPath: string) => void>();
+  private subscriberManager = new SubscriberManager<ConfigChangeEvent>(
+    'CONFIG-CACHE',
+    (err) => warn('[CONFIG-CACHE] Error in config change callback:', err)
+  );
 
   protected constructor() {
     super();
@@ -80,24 +100,20 @@ export class ConfigCache extends SingletonService<ConfigCache> {
   }
 
   // subscribe to config file changes
-  subscribe(callback: (configPath: string) => void): vscode.Disposable {
-    this.subscribers.add(callback);
-    return {
-      dispose: () => {
-        this.subscribers.delete(callback);
-      },
-    };
+  subscribe(callback: ConfigChangeCallback): vscode.Disposable {
+    return this.subscriberManager.subscribe(callback);
   }
 
   // notify subscribers of a config change
-  notifyChange(configPath: string): void {
-    for (const callback of this.subscribers) {
-      try {
-        callback(configPath);
-      } catch (err) {
-        warn('Error in config change callback:', err);
-      }
-    }
+  notifyChange(
+    configPath: string,
+    type: ConfigChangeType = ConfigChangeType.FileChanged
+  ): void {
+    this.subscriberManager.notify({
+      type,
+      configPath,
+      timestamp: Date.now(),
+    });
   }
 
   // custom cleanup - clear all caches and watchers
@@ -107,7 +123,7 @@ export class ConfigCache extends SingletonService<ConfigCache> {
       watcher.dispose();
     }
     this.watchers.clear();
-    this.subscribers.clear();
+    this.subscriberManager.clear();
     this.cache.clear();
   }
 }
