@@ -281,6 +281,31 @@ export class TailwindDetector {
     return null;
   }
 
+  /**
+   * Get the installed Tailwind CSS version for a workspace.
+   *
+   * Resolution Process:
+   * 1. Uses enhanced-resolve to locate tailwindcss/package.json in node_modules
+   * 2. Parses package.json to extract version string
+   * 3. Extracts major version number (e.g., "3.4.1" -> 3)
+   *
+   * Caching:
+   * - Results are cached with a 5-minute TTL (VERSION_CACHE_TTL_MS)
+   * - Cache key is the workspaceRoot path (or 'default' if null)
+   * - Call invalidateVersionCache() when config files change to force re-detection
+   *
+   * @param workspaceRoot - Workspace root directory, or null for default lookup
+   * @returns TailwindVersionInfo with version string, major version number, and module path
+   * @returns `{ version: null, major: null }` if Tailwind is not installed
+   *
+   * @example
+   * ```typescript
+   * const versionInfo = detector.getWorkspaceTailwindVersion('/path/to/workspace');
+   * if (versionInfo.major === 4) {
+   *   // Use v4-specific compilation
+   * }
+   * ```
+   */
   getWorkspaceTailwindVersion(
     workspaceRoot: string | null
   ): TailwindVersionInfo {

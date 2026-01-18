@@ -12,6 +12,7 @@ import * as path from 'path';
 import { pathToFileURL } from 'url';
 import postcss from 'postcss';
 import { debug } from '../logging';
+import { TailwindError } from '../errors';
 import { MAX_INLINE_SOURCE_CHUNK_SIZE } from './constants';
 
 // PostCSS plugin factory type
@@ -158,12 +159,14 @@ export class TailwindCompiler {
   }
 
   // validates that a loaded module is a valid PostCSS plugin factory
-  // throws Error if the module is not a function
+  // throws TailwindError if the module is not a function
   private validatePluginModule(mod: unknown, id: string): PostCSSPluginFactory {
     if (typeof mod !== 'function') {
-      throw new Error(
+      throw new TailwindError(
         `Module "${id}" must export a function (PostCSS plugin factory). ` +
-          `Got ${typeof mod} instead.`
+          `Got ${typeof mod} instead.`,
+        'E562',
+        'config'
       );
     }
     return mod as PostCSSPluginFactory;

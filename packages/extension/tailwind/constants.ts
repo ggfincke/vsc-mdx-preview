@@ -14,7 +14,21 @@ export const CACHE_DEFAULT_MAX_ENTRIES = 20;
 // default cache TTL in milliseconds (5 minutes)
 export const CACHE_DEFAULT_TTL_MS = 5 * 60 * 1000;
 
-// version detection cache TTL in milliseconds (5 minutes)
+/**
+ * Version detection cache TTL in milliseconds.
+ *
+ * Tailwind version detection requires filesystem I/O to resolve and read
+ * the tailwindcss package.json from node_modules. This TTL balances:
+ * - **Responsiveness**: Detecting version upgrades within a reasonable time
+ * - **Performance**: Avoiding repeated filesystem I/O on every preview update
+ *
+ * The cache is also invalidated manually when TailwindConfigWatcher detects
+ * config file changes, ensuring immediate re-detection when relevant files change.
+ *
+ * @default 300000 (5 minutes)
+ * @see TailwindDetector.getWorkspaceTailwindVersion - Uses this TTL
+ * @see TailwindDetector.invalidateVersionCache - Manual invalidation
+ */
 export const VERSION_CACHE_TTL_MS = 5 * 60 * 1000;
 
 // =============================================================================

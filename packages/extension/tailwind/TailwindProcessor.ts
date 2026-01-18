@@ -8,7 +8,8 @@ import { performance } from 'perf_hooks';
 import * as vscode from 'vscode';
 import { debug, warn } from '../logging';
 import { SingletonService } from '../services/SingletonService';
-import { getErrorReporter } from '../services';
+import { getErrorReporter, getFrameworkDetector } from '../services';
+import type { ResolutionContext } from '../module-fetcher/UnifiedResolver';
 import { ErrorContext, ErrorSeverity } from '../errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
@@ -24,7 +25,9 @@ import {
 } from './constants';
 import type { Preview } from '../preview/preview-manager';
 import type { TrustState } from '@mdx-preview/shared-types';
+import type { TailwindConfig } from '../config/EffectivePreviewConfig';
 
+// Legacy settings interface for backward compatibility
 interface TailwindSettings {
   maxFileSizeBytes: number;
   maxCssFilesToSearch: number;
@@ -32,7 +35,10 @@ interface TailwindSettings {
   cacheTtlSeconds: number;
 }
 
+// Legacy function - prefer using EffectivePreviewConfig.tailwind
+// @deprecated Use effectiveConfig.tailwind instead
 function getTailwindSettings(): TailwindSettings {
+  // eslint-disable-next-line local/no-direct-vscode-config -- deprecated function, to be removed
   const config = vscode.workspace.getConfiguration('mdx-preview.tailwind');
   return {
     maxFileSizeBytes: config.get<number>(
@@ -60,6 +66,8 @@ export interface TailwindProcessOptions {
   entryFilePath: string;
   entryFileDependencies: string[];
   trustState: TrustState;
+  /** Unified effective config - preferred over legacy settings */
+  tailwindConfig?: TailwindConfig;
 }
 
 export interface TailwindProcessResult {
@@ -77,6 +85,9 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   private cache = new TailwindCache();
   private compiler = new TailwindCompiler();
 
+  /** Tracks workspaces where v3 deprecation warning has been shown (once per session) */
+  private v3WarningShown = new Set<string>();
+
   protected constructor() {
     super();
   }
@@ -90,14 +101,19 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       entryFilePath,
       entryFileDependencies,
       trustState,
+      tailwindConfig,
     } = options;
 
+    // Use unified config if provided, otherwise fall back to legacy settings
+    const settings = tailwindConfig ?? getTailwindSettings();
     const configTailwind = preview.mdxPreviewConfig?.config.tailwind;
-    const enabledSetting =
-      configTailwind?.enabled ?? preview.configuration.tailwindEnabled;
 
-    // read settings & update cache if changed
-    const settings = getTailwindSettings();
+    // Determine enabled setting: tailwindConfig > config file > preview config
+    const enabledSetting = tailwindConfig
+      ? tailwindConfig.enabled
+      : (configTailwind?.enabled ?? preview.configuration.tailwindEnabled);
+
+    // Update cache settings
     this.cache.updateSettings({
       maxEntries: settings.cacheMaxEntries,
       ttlMs: settings.cacheTtlSeconds * 1000,
@@ -117,10 +133,13 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       docUri: preview.doc.uri,
       entryDir: preview.entryFsDirectory,
     });
+    // Use configPath from tailwindConfig if provided, otherwise from config file
+    const configPathOverride =
+      tailwindConfig?.configPath ?? configTailwind?.configPath;
     const configPath = this.detector.resolveConfigPath({
       entryDir: preview.entryFsDirectory,
       workspaceRoot,
-      configOverride: configTailwind?.configPath,
+      configOverride: configPathOverride,
       configDir: preview.mdxPreviewConfig?.configDir,
     });
     const entryCssPath = await this.detector.resolveEntryCssPath({
@@ -161,9 +180,28 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     // TODO: Add explicit v5 handling when released
     const tailwindVersion: TailwindVersion =
       versionInfo.major === 3 ? 'v3' : 'v4';
+
+    // Warn about v3 deprecation (once per workspace per session)
+    if (tailwindVersion === 'v3') {
+      this.warnTailwindV3Deprecation(workspaceRoot);
+    }
+
     const baseDir = configPath
       ? path.dirname(configPath)
       : (workspaceRoot ?? preview.entryFsDirectory);
+
+    // Build ResolutionContext for Tailwind scanning (parity with module-fetcher)
+    const frameworkDetector = getFrameworkDetector();
+    const frameworkInfo = frameworkDetector.getFramework(preview.doc.uri);
+    const shimsEnabled = frameworkDetector.areShimsEnabled(preview.doc.uri);
+
+    const resolutionContext: ResolutionContext = {
+      baseDir: preview.entryFsDirectory ?? path.dirname(entryFilePath),
+      tsConfig: preview.typescriptConfiguration,
+      framework: frameworkInfo.framework,
+      workspaceRoot: workspaceRoot ?? preview.entryFsDirectory ?? undefined,
+      shimsEnabled,
+    };
 
     const scanStart = performance.now();
     const scanResult = await this.scanner.scan(mdxText, {
@@ -171,6 +209,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       entryFilePath,
       entryFileDependencies,
       maxFileSizeBytes: settings.maxFileSizeBytes,
+      resolutionContext,
     });
     const scanDuration = performance.now() - scanStart;
     debug(
@@ -296,5 +335,36 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       debug(`[TAILWIND] Failed to stat file ${filePath}: ${error}`);
       return `error:${Date.now()}`;
     }
+  }
+
+  /**
+   * Warn users about Tailwind v3 deprecation.
+   * Shows once per workspace per session to avoid notification spam.
+   */
+  private warnTailwindV3Deprecation(workspaceRoot: string | null): void {
+    const key = workspaceRoot ?? 'default';
+    if (this.v3WarningShown.has(key)) {
+      return;
+    }
+    this.v3WarningShown.add(key);
+
+    warn(
+      '[TAILWIND] Tailwind CSS v3 detected. MDX Preview is optimized for Tailwind v4. ' +
+        'Consider upgrading for improved performance and features.'
+    );
+
+    // Show user-facing notification with action button
+    vscode.window
+      .showWarningMessage(
+        'MDX Preview: Tailwind CSS v3 detected. Consider upgrading to v4 for best results.',
+        'Upgrade Guide'
+      )
+      .then((selection) => {
+        if (selection === 'Upgrade Guide') {
+          vscode.env.openExternal(
+            vscode.Uri.parse('https://tailwindcss.com/docs/upgrade-guide')
+          );
+        }
+      });
   }
 }

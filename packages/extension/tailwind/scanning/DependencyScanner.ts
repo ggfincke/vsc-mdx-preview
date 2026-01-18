@@ -19,13 +19,18 @@ export class DependencyScanner {
     entryFilePath: string,
     imports: string[],
     maxFileSizeBytes: number,
-    extractFromText: TextExtractor
+    extractFromText: TextExtractor,
+    providedContext?: ResolutionContext
   ): Promise<{ classes: Set<string>; scannedFiles: string[] }> {
     const classSet = new Set<string>();
     const scannedFiles: string[] = [];
 
     // Resolve all imports to absolute paths
-    const resolved = await this.resolveDependencies(entryFilePath, imports);
+    const resolved = await this.resolveDependencies(
+      entryFilePath,
+      imports,
+      providedContext
+    );
 
     // Read all dependency files in parallel using FileScanValidator
     const fileContents = await this.validator.readValidFiles(
@@ -45,14 +50,16 @@ export class DependencyScanner {
   // resolve import specifiers to absolute file paths
   private async resolveDependencies(
     entryFilePath: string,
-    imports: string[]
+    imports: string[],
+    providedContext?: ResolutionContext
   ): Promise<string[]> {
     const entryDir = path.dirname(entryFilePath);
 
-    // Build resolution context (simple for Tailwind - just needs baseDir)
-    const context: ResolutionContext = {
-      baseDir: entryDir,
-    };
+    // Use provided context if available, otherwise fall back to minimal context
+    // Always ensure baseDir is set to the entry directory for relative resolution
+    const context: ResolutionContext = providedContext
+      ? { ...providedContext, baseDir: entryDir }
+      : { baseDir: entryDir };
 
     // Filter to resolvable relative imports and resolve in parallel
     const resolutionPromises = imports
