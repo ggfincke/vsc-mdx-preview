@@ -13,6 +13,8 @@ import './index.css';
 import 'katex/dist/katex.min.css';
 // Safe Mode component styles (Callout, Collapsible, Tabs transforms)
 import './styles/safe-components.css';
+// Code block styles (Shiki syntax highlighting with copy button, language badge)
+import './components/CodeBlock/CodeBlock.css';
 
 debug('[WEBVIEW] index.tsx loaded');
 
