@@ -8,31 +8,21 @@ import {
 } from 'react-error-boundary';
 import {
   parseStackTrace,
-  getFirstLocation,
   getDisplayPath,
   isUserCode,
-  type StackFrame,
 } from '../../utils/stackTraceParser';
-import { ExtensionHandle } from '../../rpc-webview';
 import './ErrorBoundary.css';
 
-// clickable stack trace component
-function ClickableStackTrace({ stack }: { stack: string }) {
+// stack trace component
+function StackTrace({ stack }: { stack: string }) {
   const frames = parseStackTrace(stack);
-
-  const handleFrameClick = useCallback((frame: StackFrame) => {
-    if (frame.isNavigable && frame.filePath && frame.line) {
-      ExtensionHandle.openDocument(frame.filePath, frame.line, frame.column);
-    }
-  }, []);
 
   return (
     <div className="mdx-preview-error-stack-frames">
       {frames.map((frame, index) => (
         <div
           key={index}
-          className={`mdx-preview-error-stack-frame ${frame.isNavigable ? 'navigable' : ''} ${frame.filePath && isUserCode(frame.filePath) ? 'user-code' : ''}`}
-          onClick={() => frame.isNavigable && handleFrameClick(frame)}
+          className={`mdx-preview-error-stack-frame ${frame.filePath && isUserCode(frame.filePath) ? 'user-code' : ''}`}
         >
           {frame.isNavigable ? (
             <>
@@ -75,19 +65,6 @@ export function ErrorDisplay({
     navigator.clipboard.writeText(text).catch(console.error);
   }, [error]);
 
-  // get first navigable location for "Open in Editor" button
-  const firstLocation = error.stack ? getFirstLocation(error.stack) : null;
-
-  const handleOpenInEditor = useCallback(() => {
-    if (firstLocation) {
-      ExtensionHandle.openDocument(
-        firstLocation.filePath,
-        firstLocation.line,
-        firstLocation.column
-      );
-    }
-  }, [firstLocation]);
-
   return (
     <div className="mdx-preview-error-overlay">
       <div className="mdx-preview-error-container">
@@ -99,17 +76,12 @@ export function ErrorDisplay({
           <pre className="mdx-preview-error-message">{error.message}</pre>
           {error.stack && (
             <details className="mdx-preview-error-stack-details" open>
-              <summary>Stack Trace (click to navigate)</summary>
-              <ClickableStackTrace stack={error.stack} />
+              <summary>Stack Trace</summary>
+              <StackTrace stack={error.stack} />
             </details>
           )}
         </div>
         <div className="mdx-preview-error-actions">
-          {firstLocation && (
-            <button onClick={handleOpenInEditor} className="mdx-preview-error-button">
-              Open in Editor
-            </button>
-          )}
           <button onClick={handleCopy} className="mdx-preview-error-button">
             Copy Error
           </button>
