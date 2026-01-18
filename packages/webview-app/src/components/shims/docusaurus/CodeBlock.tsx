@@ -2,8 +2,9 @@
 // Docusaurus CodeBlock component shim for MDX Preview
 // provides preview-compatible version of @theme/CodeBlock
 
-import React, { ReactNode, ReactElement, useState, useCallback } from 'react';
-import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../../constants';
+import React, { ReactNode, ReactElement } from 'react';
+import { extractTextContent } from '../base/extractTextContent';
+import { CopyButton } from '../base/CopyButton';
 
 // CodeBlock props (compatible w/ Docusaurus)
 export interface CodeBlockProps {
@@ -15,23 +16,6 @@ export interface CodeBlockProps {
   className?: string;
 }
 
-// extract text content from children
-function extractTextContent(children: ReactNode): string {
-  if (typeof children === 'string') {
-    return children;
-  }
-  if (typeof children === 'number') {
-    return String(children);
-  }
-  if (Array.isArray(children)) {
-    return children.map(extractTextContent).join('');
-  }
-  if (React.isValidElement(children)) {
-    return extractTextContent(children.props.children);
-  }
-  return '';
-}
-
 // code block component
 export function CodeBlock({
   children,
@@ -40,21 +24,8 @@ export function CodeBlock({
   showLineNumbers,
   className,
 }: CodeBlockProps): ReactElement {
-  const [copied, setCopied] = useState(false);
-
   // extract code text for copy functionality
   const codeText = extractTextContent(children).trim();
-
-  // handle copy button click
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(codeText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), CODE_COPY_FEEDBACK_DURATION_MS);
-    } catch (err) {
-      console.error('Failed to copy code:', err);
-    }
-  }, [codeText]);
 
   // determine language class
   const langClass = language ? `language-${language}` : '';
@@ -72,43 +43,11 @@ export function CodeBlock({
       {/* Code container */}
       <div className="codeblock-container">
         {/* Copy button */}
-        <button
-          className={`codeblock-copy-button${copied ? ' copied' : ''}`}
-          onClick={handleCopy}
-          title={copied ? 'Copied!' : 'Copy code'}
-          aria-label={copied ? 'Copied!' : 'Copy code'}
-        >
-          {copied ? (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-            </svg>
-          )}
-        </button>
+        <CopyButton
+          text={codeText}
+          className="codeblock-copy-button"
+          copiedClassName="copied"
+        />
 
         {/* Language badge */}
         {language && <span className="codeblock-language">{language}</span>}

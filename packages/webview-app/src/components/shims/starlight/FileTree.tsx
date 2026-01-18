@@ -8,6 +8,8 @@ import React, {
   Children,
   isValidElement,
 } from 'react';
+import { extractTextContent } from '../base/extractTextContent';
+import { FILE_TREE_ICONS } from '../base/icons';
 
 // file tree props (compatible w/ Starlight)
 export interface FileTreeProps {
@@ -22,33 +24,6 @@ interface FileTreeEntry {
   comment?: string;
   isPlaceholder: boolean;
   children?: FileTreeEntry[];
-}
-
-// SVG icons
-const CHEVRON_ICON =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
-
-const FOLDER_ICON =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
-
-const FILE_ICON =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
-
-// extract text content from React children
-function extractTextContent(node: ReactNode): string {
-  if (typeof node === 'string') {
-    return node;
-  }
-  if (typeof node === 'number') {
-    return String(node);
-  }
-  if (Array.isArray(node)) {
-    return node.map(extractTextContent).join('');
-  }
-  if (isValidElement(node)) {
-    return extractTextContent(node.props.children);
-  }
-  return '';
 }
 
 // check if a child is a bold element (strong)
@@ -219,11 +194,11 @@ function FileTreeItem({ entry }: { entry: FileTreeEntry }): ReactElement {
           <summary className={entry.isHighlighted ? 'highlighted' : ''}>
             <span
               className="icon chevron"
-              dangerouslySetInnerHTML={{ __html: CHEVRON_ICON }}
+              dangerouslySetInnerHTML={{ __html: FILE_TREE_ICONS.chevron }}
             />
             <span
               className="icon folder"
-              dangerouslySetInnerHTML={{ __html: FOLDER_ICON }}
+              dangerouslySetInnerHTML={{ __html: FILE_TREE_ICONS.folder }}
             />
             <span className="name">{entry.name}</span>
             {entry.comment && <span className="comment">{entry.comment}</span>}
@@ -246,7 +221,7 @@ function FileTreeItem({ entry }: { entry: FileTreeEntry }): ReactElement {
     >
       <span
         className="icon file"
-        dangerouslySetInnerHTML={{ __html: FILE_ICON }}
+        dangerouslySetInnerHTML={{ __html: FILE_TREE_ICONS.file }}
       />
       <span className="name">{entry.name}</span>
       {entry.comment && <span className="comment">{entry.comment}</span>}

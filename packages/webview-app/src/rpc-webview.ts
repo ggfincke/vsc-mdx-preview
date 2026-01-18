@@ -104,23 +104,47 @@ function assertNever(x: never): never {
   throw new Error(`Unexpected message type: ${JSON.stringify(x)}`);
 }
 
-const pendingMessages: PendingMessage[] = [];
+// Use Map to coalesce by message type - last message of each type wins
+// This prevents stale messages from replaying out of order when React mounts slowly
+const pendingMessages = new Map<PendingMessage['type'], PendingMessage>();
 
 function enqueueMessage(message: PendingMessage): void {
-  debug(`[RPC-WEBVIEW] Enqueueing message: ${message.type}`);
-  pendingMessages.push(message);
+  const hadPrevious = pendingMessages.has(message.type);
+  debug(
+    `[RPC-WEBVIEW] Enqueueing message: ${message.type}${hadPrevious ? ' (replacing previous)' : ''}`
+  );
+  // Coalesce: newer message of same type replaces older
+  pendingMessages.set(message.type, message);
 }
 
 function flushPendingMessages(): void {
-  debug(
-    `[RPC-WEBVIEW] flushPendingMessages: ${pendingMessages.length} pending`
-  );
-  if (!stateHandlers || pendingMessages.length === 0) {
+  debug(`[RPC-WEBVIEW] flushPendingMessages: ${pendingMessages.size} pending`);
+  if (!stateHandlers || pendingMessages.size === 0) {
     return;
   }
 
-  const messages = pendingMessages.splice(0, pendingMessages.length);
-  for (const message of messages) {
+  // Process in a defined order for consistency:
+  // 1. Trust state first (sets rendering mode)
+  // 2. Content second (safe or trusted - only one will be present due to coalescing)
+  // 3. Error/stale last (overlays)
+  const processingOrder: PendingMessage['type'][] = [
+    'trust',
+    'safe',
+    'trusted',
+    'error',
+    'stale',
+  ];
+
+  // Copy and clear atomically
+  const messages = new Map(pendingMessages);
+  pendingMessages.clear();
+
+  for (const type of processingOrder) {
+    const message = messages.get(type);
+    if (!message) {
+      continue;
+    }
+
     debug(`[RPC-WEBVIEW] Flushing message: ${message.type}`);
     switch (message.type) {
       case 'trust':
@@ -312,9 +336,10 @@ export function registerWebviewHandlers(handlers: WebviewStateHandlers): void {
     stateHandlers = handlers;
 
     // Warn if many messages accumulated (potential timing issue)
-    if (pendingMessages.length > RPC_PENDING_MESSAGES_WARNING_THRESHOLD) {
+    // Note: With coalescing, this is less likely but still possible with many message types
+    if (pendingMessages.size > RPC_PENDING_MESSAGES_WARNING_THRESHOLD) {
       debugError(
-        `[RPC-WEBVIEW] Warning: ${pendingMessages.length} pending messages accumulated`
+        `[RPC-WEBVIEW] Warning: ${pendingMessages.size} pending messages accumulated`
       );
     }
 
