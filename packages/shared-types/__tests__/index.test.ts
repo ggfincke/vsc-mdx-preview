@@ -246,6 +246,7 @@ describe('shared-types', () => {
         scriptsEnabled: true,
         canExecute: true,
         reason: 'Workspace is trusted',
+        openMdxLinksInPreview: true,
       };
 
       expect(trustState.workspaceTrusted).toBeDefined();

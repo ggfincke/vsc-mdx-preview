@@ -19,6 +19,7 @@ const mockTrustState = (
   scriptsEnabled: canExecute,
   canExecute,
   reason,
+  openMdxLinksInPreview: true,
 });
 
 // helper to create mock ConfigurationState with required properties

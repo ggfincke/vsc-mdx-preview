@@ -125,6 +125,7 @@ describe('CSP', () => {
         workspaceTrusted: false,
         scriptsEnabled: false,
         canExecute: false,
+        openMdxLinksInPreview: true,
       };
 
       test('does NOT include unsafe-eval', () => {
@@ -213,6 +214,7 @@ describe('CSP', () => {
         workspaceTrusted: true,
         scriptsEnabled: true,
         canExecute: true,
+        openMdxLinksInPreview: true,
       };
 
       test('includes unsafe-eval for module execution', () => {
@@ -265,6 +267,7 @@ describe('CSP', () => {
         workspaceTrusted: true,
         scriptsEnabled: true,
         canExecute: true,
+        openMdxLinksInPreview: true,
       };
 
       test('returns empty string', () => {
@@ -285,6 +288,7 @@ describe('CSP', () => {
           workspaceTrusted: false,
           scriptsEnabled: true,
           canExecute: false,
+          openMdxLinksInPreview: true,
         };
 
         const csp = getCSP(
@@ -302,6 +306,7 @@ describe('CSP', () => {
           workspaceTrusted: true,
           scriptsEnabled: false,
           canExecute: false,
+          openMdxLinksInPreview: true,
         };
 
         const csp = getCSP(
@@ -319,6 +324,7 @@ describe('CSP', () => {
           workspaceTrusted: false,
           scriptsEnabled: false,
           canExecute: false,
+          openMdxLinksInPreview: true,
         };
 
         // Call without security policy parameter

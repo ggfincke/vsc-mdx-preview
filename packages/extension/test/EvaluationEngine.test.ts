@@ -180,6 +180,7 @@ describe('EvaluationEngine', () => {
           canExecute: true,
           workspaceTrusted: true,
           scriptsEnabled: true,
+          openMdxLinksInPreview: true,
         },
       };
 
@@ -216,6 +217,7 @@ describe('EvaluationEngine', () => {
           canExecute: true,
           workspaceTrusted: true,
           scriptsEnabled: true,
+          openMdxLinksInPreview: true,
         },
       };
 
