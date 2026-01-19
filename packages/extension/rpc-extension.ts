@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 
 import ExtensionHandle from './rpc-extension-handle';
 import { Preview } from './preview/preview-manager';
-import type { WebviewRPC } from '@mdx-preview/shared-types';
+import type { WebviewRPC } from '@mdx-preview/shared';
 import { debug } from './logging';
 
 type AllowedTypeForComlink = 'message';

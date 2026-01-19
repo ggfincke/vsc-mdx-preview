@@ -4,8 +4,8 @@
 import * as typescript from 'typescript';
 import { error as logError } from '../../logging';
 
-// import consolidated type from module-fetcher/types.ts
-import type { TypeScriptConfiguration } from '../../module-fetcher/types';
+// import consolidated type from module-system/types.ts
+import type { TypeScriptConfiguration } from '../../module-system/types';
 
 // re-export type for backward compatibility
 export type { TypeScriptConfiguration };

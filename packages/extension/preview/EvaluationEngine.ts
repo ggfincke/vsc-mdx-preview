@@ -2,9 +2,9 @@
 // evaluation logic for MDX content - handles both Trusted & Safe modes
 
 import * as fs from 'fs';
-import { transformEntry } from '../module-fetcher/transform';
-import { extractImportSpecifiers } from '../module-fetcher/import-extractor';
-import { compileToSafeHTML } from '../transpiler/mdx/mdx-safe';
+import { transformEntry } from '../module-system/transform/transform';
+import { extractImportSpecifiers } from '../module-system/deps/import-extractor';
+import { compileSafe } from '../compiler/safe/compile';
 import { debug } from '../logging';
 import { ErrorContext } from '../errors';
 import {
@@ -14,8 +14,9 @@ import {
 } from '../services';
 import { TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS } from '../constants';
 import type { Preview, WebviewHandle } from './preview-manager';
-import type { TrustState } from '@mdx-preview/shared-types';
+import type { TrustState } from '@mdx-preview/shared';
 import type { ResolvedConfig } from './config';
+import type { TailwindConfig } from '../config/EffectivePreviewConfig';
 
 // result of evaluating MDX in Trusted Mode
 export interface TrustedEvaluationResult {
@@ -43,6 +44,7 @@ export interface TailwindProcessParams {
   entryFilePath: string;
   entryFileDependencies: string[];
   trustState: TrustState;
+  tailwindConfig: TailwindConfig;
 }
 
 // * EvaluationEngine handles the core evaluation logic for MDX content
@@ -84,7 +86,7 @@ export class EvaluationEngine {
     debug('[ENGINE] evaluateSafe called');
 
     debug('[ENGINE] Compiling to safe HTML...');
-    const { html, frontmatter } = await compileToSafeHTML(
+    const { html, frontmatter } = await compileSafe(
       text,
       mdxPreviewConfig
     );
@@ -115,6 +117,7 @@ export class EvaluationEngine {
           entryFilePath: params.entryFilePath,
           entryFileDependencies: params.entryFileDependencies,
           trustState: params.trustState,
+          tailwindConfig: params.tailwindConfig,
         }),
         compilationTimeout
       );

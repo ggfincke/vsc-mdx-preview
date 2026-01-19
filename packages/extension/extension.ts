@@ -22,8 +22,8 @@ import {
 } from './services';
 import { TailwindProcessor } from './tailwind/TailwindProcessor';
 import { ErrorReporter } from './errors';
-import { PackageJsonWatcher } from './module-fetcher/PackageJsonWatcher';
-import { clearResolverCache } from './module-fetcher/resolver-factory';
+import { PackageJsonWatcher } from './module-system/resolver/PackageJsonWatcher';
+import { clearResolverCache } from './module-system/resolver/resolver-factory';
 import { ConfigManager, ConfigCache } from './config';
 import {
   ComponentDiagnostics,

@@ -10,12 +10,12 @@ import { ConfigError } from '../../errors';
 import { ConfigChangeType } from '../../config/ConfigCache';
 import { validateConfigSchema } from '../../utils/validation';
 
-// import consolidated types from transpiler/types.ts
+// import consolidated types from compiler/types.ts
 import type {
   PluginSpec,
   ComponentMapping,
   UnknownBehavior,
-} from '../../transpiler/types';
+} from '../../compiler/types';
 
 // re-export types for backward compatibility
 export type { PluginSpec, ComponentMapping, UnknownBehavior };

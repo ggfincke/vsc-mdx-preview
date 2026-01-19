@@ -5,7 +5,7 @@ import * as path from 'path';
 import {
   getUnifiedResolver,
   type ResolutionContext,
-} from '../../module-fetcher/UnifiedResolver';
+} from '../../module-system/resolver/UnifiedResolver';
 import { FileScanValidator } from '../FileScanValidator';
 import type { TextExtractor } from './types';
 

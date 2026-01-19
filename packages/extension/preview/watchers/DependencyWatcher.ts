@@ -6,7 +6,7 @@ import { debug } from '../../logging';
 import {
   getUnifiedResolver,
   type ResolutionContext,
-} from '../../module-fetcher/UnifiedResolver';
+} from '../../module-system/resolver/UnifiedResolver';
 import { BaseWatcher } from './BaseWatcher';
 
 // watch local file dependencies (imports from MDX files) for changes

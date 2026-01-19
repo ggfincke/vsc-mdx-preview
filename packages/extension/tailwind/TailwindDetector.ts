@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { debug } from '../logging';
-import { getNodeResolver } from '../module-fetcher/resolver-factory';
+import { getNodeResolver } from '../module-system/resolver/resolver-factory';
 import { VERSION_CACHE_TTL_MS } from './constants';
 
 const CONFIG_FILES = [

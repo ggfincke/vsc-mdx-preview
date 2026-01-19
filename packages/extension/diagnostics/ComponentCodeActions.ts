@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { DIAGNOSTIC_CODES } from './ComponentDiagnostics';
-import { KNOWN_GENERIC_COMPONENTS } from '../transpiler/mdx/remark-generic-components';
+import { KNOWN_GENERIC_COMPONENTS } from '../compiler/shared/remark/generic-components';
 import { debug, info } from '../logging';
 import { ConfigError, ErrorContext } from '../errors';
 import { getErrorReporter } from '../services';

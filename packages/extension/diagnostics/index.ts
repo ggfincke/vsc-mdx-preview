@@ -9,13 +9,7 @@ export {
   addComponentToConfig,
 } from './ComponentCodeActions';
 
-export {
-  detectComponents,
-  getUnknownComponents,
-  isPascalCase,
-  isHtmlElement,
-  extractImports,
-} from './ComponentDetector';
+export { detectComponents, getUnknownComponents } from './ComponentDetector';
 
 export type {
   ComponentSource,

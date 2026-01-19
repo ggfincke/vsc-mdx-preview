@@ -5,14 +5,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { debug } from '../logging';
-import type { NextraPageMeta } from '@mdx-preview/shared-types';
+import type { NextraPageMeta } from '@mdx-preview/shared';
 
 // Cache for resolved meta (cache key -> resolved meta or null)
 const metaCache = new Map<string, NextraPageMeta | null>();
 // Track file watchers
 const metaWatchers = new Map<string, vscode.FileSystemWatcher>();
-// Track change callbacks for preview refresh
-const changeCallbacks = new Set<(metaPath: string) => void>();
 
 // Raw _meta.json entry structure (simplified for preview-relevant fields)
 type MetaEntry =
@@ -156,10 +154,6 @@ function setupMetaWatcher(metaPath: string, documentDir: string): void {
         metaCache.delete(key);
       }
     }
-    // Notify listeners
-    for (const callback of changeCallbacks) {
-      callback(metaPath);
-    }
   };
 
   watcher.onDidChange(handleChange);
@@ -188,26 +182,6 @@ export function mergeNextraMeta(
 }
 
 /**
- * Subscribe to _meta.json changes
- * Callback is invoked when any watched _meta.json file changes
- */
-export function onMetaChange(
-  callback: (metaPath: string) => void
-): vscode.Disposable {
-  changeCallbacks.add(callback);
-  return new vscode.Disposable(() => {
-    changeCallbacks.delete(callback);
-  });
-}
-
-/**
- * Clear the meta cache (for testing or manual refresh)
- */
-export function clearMetaCache(): void {
-  metaCache.clear();
-}
-
-/**
  * Dispose all file watchers
  * Call during extension deactivation
  */
@@ -216,5 +190,4 @@ export function disposeMetaWatchers(): void {
     watcher.dispose();
   }
   metaWatchers.clear();
-  changeCallbacks.clear();
 }

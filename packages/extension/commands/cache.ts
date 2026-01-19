@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
-import { clearResolverCache } from '../module-fetcher/resolver-factory';
+import { clearResolverCache } from '../module-system/resolver/resolver-factory';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from './types';
 

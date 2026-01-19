@@ -9,56 +9,19 @@ import * as vscode from 'vscode';
 import { debug, warn } from '../logging';
 import { SingletonService } from '../services/SingletonService';
 import { getErrorReporter, getFrameworkDetector } from '../services';
-import type { ResolutionContext } from '../module-fetcher/UnifiedResolver';
+import type { ResolutionContext } from '../module-system/resolver/UnifiedResolver';
 import { ErrorContext, ErrorSeverity } from '../errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
 import { TailwindCache } from './TailwindCache';
 import { TailwindCompiler, type TailwindVersion } from './TailwindCompiler';
 import {
-  DEFAULT_MAX_FILE_SIZE_BYTES,
-  DEFAULT_MAX_CSS_FILES_TO_SEARCH,
-  PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES,
-  PROCESSOR_CACHE_DEFAULT_TTL_SECONDS,
   MIN_SUPPORTED_TAILWIND_VERSION,
   MAX_KNOWN_TAILWIND_VERSION,
 } from './constants';
 import type { Preview } from '../preview/preview-manager';
-import type { TrustState } from '@mdx-preview/shared-types';
+import type { TrustState } from '@mdx-preview/shared';
 import type { TailwindConfig } from '../config/EffectivePreviewConfig';
-
-// Legacy settings interface for backward compatibility
-interface TailwindSettings {
-  maxFileSizeBytes: number;
-  maxCssFilesToSearch: number;
-  cacheMaxEntries: number;
-  cacheTtlSeconds: number;
-}
-
-// Legacy function - prefer using EffectivePreviewConfig.tailwind
-// @deprecated Use effectiveConfig.tailwind instead
-function getTailwindSettings(): TailwindSettings {
-  // eslint-disable-next-line local/no-direct-vscode-config -- deprecated function, to be removed
-  const config = vscode.workspace.getConfiguration('mdx-preview.tailwind');
-  return {
-    maxFileSizeBytes: config.get<number>(
-      'maxFileSizeBytes',
-      DEFAULT_MAX_FILE_SIZE_BYTES
-    ),
-    maxCssFilesToSearch: config.get<number>(
-      'maxCssFilesToSearch',
-      DEFAULT_MAX_CSS_FILES_TO_SEARCH
-    ),
-    cacheMaxEntries: config.get<number>(
-      'cacheMaxEntries',
-      PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES
-    ),
-    cacheTtlSeconds: config.get<number>(
-      'cacheTtlSeconds',
-      PROCESSOR_CACHE_DEFAULT_TTL_SECONDS
-    ),
-  };
-}
 
 export interface TailwindProcessOptions {
   preview: Preview;
@@ -66,8 +29,7 @@ export interface TailwindProcessOptions {
   entryFilePath: string;
   entryFileDependencies: string[];
   trustState: TrustState;
-  /** Unified effective config - preferred over legacy settings */
-  tailwindConfig?: TailwindConfig;
+  tailwindConfig: TailwindConfig;
 }
 
 export interface TailwindProcessResult {
@@ -104,19 +66,10 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       tailwindConfig,
     } = options;
 
-    // Use unified config if provided, otherwise fall back to legacy settings
-    const settings = tailwindConfig ?? getTailwindSettings();
-    const configTailwind = preview.mdxPreviewConfig?.config.tailwind;
-
-    // Determine enabled setting: tailwindConfig > config file > preview config
-    const enabledSetting = tailwindConfig
-      ? tailwindConfig.enabled
-      : (configTailwind?.enabled ?? preview.configuration.tailwindEnabled);
-
-    // Update cache settings
+    // Update cache settings from unified config
     this.cache.updateSettings({
-      maxEntries: settings.cacheMaxEntries,
-      ttlMs: settings.cacheTtlSeconds * 1000,
+      maxEntries: tailwindConfig.cacheMaxEntries,
+      ttlMs: tailwindConfig.cacheTtlSeconds * 1000,
     });
 
     debug('[TAILWIND] Process start');
@@ -125,7 +78,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       return { css: '', watchFiles: [], enabled: false };
     }
 
-    if (enabledSetting === 'disabled') {
+    if (tailwindConfig.enabled === 'disabled') {
       return { css: '', watchFiles: [], enabled: false };
     }
 
@@ -133,9 +86,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       docUri: preview.doc.uri,
       entryDir: preview.entryFsDirectory,
     });
-    // Use configPath from tailwindConfig if provided, otherwise from config file
-    const configPathOverride =
-      tailwindConfig?.configPath ?? configTailwind?.configPath;
+    const configPathOverride = tailwindConfig.configPath;
     const configPath = this.detector.resolveConfigPath({
       entryDir: preview.entryFsDirectory,
       workspaceRoot,
@@ -145,10 +96,10 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     const entryCssPath = await this.detector.resolveEntryCssPath({
       workspaceRoot,
       entryDir: preview.entryFsDirectory,
-      maxCssFilesToSearch: settings.maxCssFilesToSearch,
+      maxCssFilesToSearch: tailwindConfig.maxCssFilesToSearch,
     });
 
-    if (enabledSetting === 'auto' && !configPath && !entryCssPath) {
+    if (tailwindConfig.enabled === 'auto' && !configPath && !entryCssPath) {
       return { css: '', watchFiles: [], enabled: false };
     }
 
@@ -190,7 +141,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       ? path.dirname(configPath)
       : (workspaceRoot ?? preview.entryFsDirectory);
 
-    // Build ResolutionContext for Tailwind scanning (parity with module-fetcher)
+    // Build ResolutionContext for Tailwind scanning (parity with module-system)
     const frameworkDetector = getFrameworkDetector();
     const frameworkInfo = frameworkDetector.getFramework(preview.doc.uri);
     const shimsEnabled = frameworkDetector.areShimsEnabled(preview.doc.uri);
@@ -208,7 +159,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       includeDependencies: true,
       entryFilePath,
       entryFileDependencies,
-      maxFileSizeBytes: settings.maxFileSizeBytes,
+      maxFileSizeBytes: tailwindConfig.maxFileSizeBytes,
       resolutionContext,
     });
     const scanDuration = performance.now() - scanStart;

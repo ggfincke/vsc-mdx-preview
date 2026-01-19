@@ -13,7 +13,8 @@ import {
 } from '../services';
 import { getEvaluationEngine } from './EvaluationEngine';
 import { resolveNextraMeta, mergeNextraMeta } from '../nextra/MetaResolver';
-import { extractNextraFrontmatter } from '../transpiler/mdx/mdx-common';
+import { extractNextraFrontmatter } from '../compiler/shared/mdx-common';
+import { buildEffectivePreviewConfig } from '../config/EffectivePreviewConfig';
 
 // evaluate MDX content in webview (routes to Trusted/Safe mode based on trust state)
 export default async function evaluateInWebview(
@@ -79,6 +80,11 @@ export default async function evaluateInWebview(
 
       // Compile Tailwind CSS after preview update (non-blocking)
       const tailwindRequestId = preview.nextTailwindRequestId();
+      const effectiveConfig = buildEffectivePreviewConfig({
+        docUri: preview.doc.uri,
+        docFsPath: fsPath,
+        frontmatter: result.frontmatter,
+      });
       void engine.processTailwindAsync(
         preview,
         {
@@ -86,6 +92,7 @@ export default async function evaluateInWebview(
           entryFilePath: result.entryFilePath,
           entryFileDependencies: result.dependencies,
           trustState,
+          tailwindConfig: effectiveConfig.tailwind,
         },
         tailwindRequestId,
         webviewHandle

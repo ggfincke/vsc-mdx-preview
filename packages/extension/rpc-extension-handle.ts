@@ -5,8 +5,8 @@ import { performance } from 'perf_hooks';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Preview } from './preview/preview-manager';
-import { fetchLocal } from './module-fetcher/module-fetcher';
-import { checkFsPath } from './security/checkFsPath';
+import { fetchLocal } from './module-system/fetcher/fetchLocal';
+import { checkFsPath } from './module-system/security/checkFsPath';
 import { getTrustManager, getErrorReporter } from './services';
 import { error as logError, warn as logWarn, debug } from './logging';
 import { SecurityError, ErrorContext, ErrorSeverity } from './errors';
@@ -18,7 +18,7 @@ import {
   validateOptionalNumber,
 } from './utils/validation';
 import { MAX_FETCH_REQUEST_LENGTH } from './constants';
-import type { ExtensionRPC, FetchResult } from '@mdx-preview/shared-types';
+import type { ExtensionRPC, FetchResult } from '@mdx-preview/shared';
 
 // allowed URL schemes for openExternal
 const ALLOWED_EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];

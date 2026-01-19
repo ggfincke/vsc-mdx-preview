@@ -8,7 +8,7 @@ import remarkMdx from 'remark-mdx';
 import { visit } from 'unist-util-visit';
 import type { Root } from 'mdast';
 import matter from 'gray-matter';
-import { KNOWN_GENERIC_COMPONENTS } from '../transpiler/mdx/remark-generic-components';
+import { KNOWN_GENERIC_COMPONENTS } from '../compiler/shared/remark/generic-components';
 import type {
   DetectedComponent,
   ComponentDetectionResult,
@@ -18,7 +18,7 @@ import type {
 import { debug, warn } from '../logging';
 
 // Use shared component registry as single source of truth
-import { isFrameworkComponent } from '@mdx-preview/shared-types';
+import { isFrameworkComponent } from '@mdx-preview/shared';
 
 // MDX JSX element node structure from mdast
 interface MdxJsxElement {
@@ -42,7 +42,7 @@ interface MdxjsEsmNode {
   };
 }
 
-// Note: Using isFrameworkComponent() helper from shared-types instead of local Set
+// Note: Using isFrameworkComponent() helper from shared instead of local Set
 
 // HTML element names (lowercase) - not components
 const HTML_ELEMENTS = new Set([
@@ -342,5 +342,4 @@ export function getUnknownComponents(
   return result.components.filter((c) => c.source === 'unknown');
 }
 
-// export for testing
-export { isPascalCase, isHtmlElement, extractImports };
+// isPascalCase, isHtmlElement, extractImports are internal helpers

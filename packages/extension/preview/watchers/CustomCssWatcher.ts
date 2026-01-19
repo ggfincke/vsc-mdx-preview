@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { debug } from '../../logging';
-import type { WebviewRPC } from '@mdx-preview/shared-types';
+import type { WebviewRPC } from '@mdx-preview/shared';
 import { BaseWatcher } from './BaseWatcher';
 
 // webview handle w/ setCustomCss method

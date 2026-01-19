@@ -6,9 +6,9 @@ import { error as logError } from '../logging';
 import { SingletonService } from '../services/SingletonService';
 import { getConfigManager } from '../services';
 import { SubscriberManager } from '../utils/SubscriberManager';
-import type { TrustState } from '@mdx-preview/shared-types';
+import type { TrustState } from '@mdx-preview/shared';
 
-export type { TrustState } from '@mdx-preview/shared-types';
+export type { TrustState } from '@mdx-preview/shared';
 
 // security mode enum for explicit type safety
 export enum SecurityMode {

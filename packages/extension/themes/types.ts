@@ -1,12 +1,12 @@
 // packages/extension/themes/types.ts
 // theme type definitions for MPE-style theming
 
-// re-export shared types & utilities from @mdx-preview/shared-types
+// re-export shared types & utilities from @mdx-preview/shared
 export type {
   PreviewTheme,
   CodeBlockTheme,
   WebviewThemeState,
-} from '@mdx-preview/shared-types';
+} from '@mdx-preview/shared';
 
 export {
   isLightPreviewTheme,
@@ -14,9 +14,9 @@ export {
   CODE_BLOCK_THEMES,
   THEME_PAIRS,
   getOppositeTheme,
-} from '@mdx-preview/shared-types';
+} from '@mdx-preview/shared';
 
-import type { PreviewTheme, CodeBlockTheme } from '@mdx-preview/shared-types';
+import type { PreviewTheme, CodeBlockTheme } from '@mdx-preview/shared';
 
 // theme configuration (extension-only)
 export interface ThemeConfiguration {

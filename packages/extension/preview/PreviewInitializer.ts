@@ -13,7 +13,7 @@ import {
 } from './watchers';
 import type { IWatcher } from './watchers';
 import { onConfigChange } from './config';
-import { PackageJsonWatcher } from '../module-fetcher/PackageJsonWatcher';
+import { PackageJsonWatcher } from '../module-system/resolver/PackageJsonWatcher';
 import type { ResolvedConfig } from './config';
 import { getTailwindProcessor } from '../services';
 
