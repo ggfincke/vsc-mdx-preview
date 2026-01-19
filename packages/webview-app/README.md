@@ -54,10 +54,13 @@ src/
     LoadingBar/        # Loading indicator
     TrustBanner/       # Trust mode indicator
     ModeBadge.tsx      # Safe/Trusted mode badge
-  module-loader/       # Dynamic module system for Trusted Mode
-    ModuleRegistry.ts  # Module cache and resolution
-    evaluateModule.ts  # Safe eval for transpiled code
-    injectStyles.ts    # CSS injection handling
+  module-system/       # Dynamic module system for Trusted Mode
+    eval/              # Safe eval for transpiled code
+    loader/            # Dependency loading
+    preload/           # Core + shim preloads (generated)
+    registry/          # Module cache and resolution
+    runtime/           # require() runtime
+    styles/            # CSS injection handling
   App.tsx              # Main application component
   SafePreview.tsx      # Safe mode renderer (static HTML)
   TrustedPreview.tsx   # Trusted mode renderer (full MDX)
