@@ -15,15 +15,14 @@
   },
   "dependencies": {
     "@mdx-js/react": "^3.0.0",
-    "@mdx-preview/shared-types": "1.0.0-alpha.5",
+    "@mdx-preview/shared": "1.0.0-alpha.5",
     "comlink": "^4.4.1",
     "dompurify": "^3.0.0",
     "katex": "^0.16.27",
     "mermaid": "^11.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-error-boundary": "^4.0.0",
-    "styled-components": "^6.1.0"
+    "react-error-boundary": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
