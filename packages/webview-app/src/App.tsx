@@ -24,7 +24,7 @@ import type {
   PreviewError,
   TrustedPreviewContent,
 } from './types';
-import type { NextraPageMeta } from '@mdx-preview/shared-types';
+import type { NextraPageMeta } from '@mdx-preview/shared';
 import { useTheme } from './theme';
 import {
   ZOOM_MIN_PERCENT,

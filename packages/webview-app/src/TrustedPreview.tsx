@@ -8,7 +8,7 @@ import {
   useRef,
   ComponentType,
 } from 'react';
-import { evaluateModuleToComponent } from './module-loader';
+import { evaluateModuleToComponent } from './module-system';
 import { useMermaidRendering, useImageLightbox } from './hooks';
 import { PreviewContainer } from './components/PreviewContainer';
 import type { TrustedPreviewContent, PreviewError } from './types';

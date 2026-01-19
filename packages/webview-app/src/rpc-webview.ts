@@ -35,7 +35,7 @@ import type {
   PreviewError,
   WebviewThemeState,
   NextraPageMeta,
-} from '@mdx-preview/shared-types';
+} from '@mdx-preview/shared';
 
 declare const acquireVsCodeApi: () => {
   postMessage(message: unknown): void;
@@ -240,8 +240,8 @@ class RPCWebviewHandle implements WebviewRPC {
   // invalidate cached module
   async invalidate(fsPath: string): Promise<void> {
     debug(`[RPC-WEBVIEW] invalidate called: ${fsPath}`);
-    // ! import dynamically to avoid circular dependency w/ module-loader
-    const { invalidateModule } = await import('./module-loader');
+    // ! import dynamically to avoid circular dependency w/ module-system
+    const { invalidateModule } = await import('./module-system');
     invalidateModule(fsPath);
   }
 
