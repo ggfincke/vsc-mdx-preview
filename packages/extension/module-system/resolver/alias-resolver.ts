@@ -39,9 +39,6 @@ function buildFrameworkAliasMaps(): Record<AliasFrameworkKey, FrameworkAliasMap>
 }
 
 function toAliasFrameworkKey(framework: Framework): AliasFrameworkKey | null {
-  if (framework === 'astro-starlight') {
-    return 'starlight';
-  }
   if (framework === 'generic') {
     return null;
   }

@@ -1,7 +1,6 @@
 // packages/extension/preview/config/ConfigResolver.ts
 // resolve .mdx-previewrc.json configuration files for custom plugins & components
 
-import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { info, debug } from '../../logging';
@@ -9,6 +8,7 @@ import { getConfigCache, getErrorReporter } from '../../services';
 import { ConfigError } from '../../errors';
 import { ConfigChangeType } from '../../config/ConfigCache';
 import { validateConfigSchema } from '../../utils/validation';
+import { readJsonSync, pathExists } from '../../utils/file-utils';
 
 // import consolidated types from compiler/types.ts
 import type {
@@ -43,7 +43,7 @@ export interface MdxPreviewConfig {
   // custom component mappings for MDX
   components?: ComponentMapping;
   // framework override (overrides auto-detection)
-  framework?: 'generic' | 'docusaurus' | 'nextjs' | 'astro-starlight';
+  framework?: 'generic' | 'docusaurus' | 'nextjs' | 'starlight' | 'nextra';
   // framework-specific options
   frameworkOptions?: FrameworkOptions;
   // Tailwind CSS options
@@ -75,9 +75,10 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
   const documentDir = path.dirname(documentPath);
   const cache = getCache();
 
-  // check cache first
-  if (cache.has(documentDir)) {
-    return cache.get(documentDir) ?? null;
+  // check cache first (use get + undefined check instead of has + get for efficiency)
+  const cached = cache.get(documentDir);
+  if (cached !== undefined) {
+    return cached;
   }
 
   const configPath = findConfigFile(documentDir);
@@ -86,51 +87,49 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
     return null;
   }
 
-  try {
-    const configContent = fs.readFileSync(configPath, 'utf-8');
-    const config = JSON.parse(configContent) as MdxPreviewConfig;
-
-    // validate config structure
-    const validationErrors = validateConfig(config);
-    if (validationErrors.length > 0) {
-      getErrorReporter().reportConfigError(
-        new ConfigError(
-          `Invalid config: ${validationErrors.join(', ')}`,
-          'CONFIG_VALIDATION_ERROR',
-          configPath
-        ),
-        configPath
-      );
-      cache.set(documentDir, null);
-      return null;
-    }
-
-    const resolved: ResolvedConfig = {
-      config,
-      configPath,
-      configDir: path.dirname(configPath),
-    };
-
-    cache.set(documentDir, resolved);
-    setupConfigWatcher(configPath);
-
-    info(`Loaded MDX config from ${configPath}`);
-    debug('Config contents:', config);
-
-    return resolved;
-  } catch (err) {
+  // read and parse config file
+  const config = readJsonSync<MdxPreviewConfig>(configPath);
+  if (!config) {
     getErrorReporter().reportConfigError(
       new ConfigError(
-        'Failed to parse config file',
+        'Failed to read or parse config file',
         'CONFIG_PARSE_ERROR',
-        configPath,
-        err instanceof Error ? err : undefined
+        configPath
       ),
       configPath
     );
     cache.set(documentDir, null);
     return null;
   }
+
+  // validate config structure
+  const validationErrors = validateConfig(config);
+  if (validationErrors.length > 0) {
+    getErrorReporter().reportConfigError(
+      new ConfigError(
+        `Invalid config: ${validationErrors.join(', ')}`,
+        'CONFIG_VALIDATION_ERROR',
+        configPath
+      ),
+      configPath
+    );
+    cache.set(documentDir, null);
+    return null;
+  }
+
+  const resolved: ResolvedConfig = {
+    config,
+    configPath,
+    configDir: path.dirname(configPath),
+  };
+
+  cache.set(documentDir, resolved);
+  setupConfigWatcher(configPath);
+
+  info(`Loaded MDX config from ${configPath}`);
+  debug('Config contents:', config);
+
+  return resolved;
 }
 
 // find config file by walking up directory tree
@@ -143,7 +142,7 @@ function findConfigFile(startDir: string): string | undefined {
   while (currentDir) {
     for (const fileName of CONFIG_FILE_NAMES) {
       const configPath = path.join(currentDir, fileName);
-      if (fs.existsSync(configPath)) {
+      if (pathExists(configPath)) {
         return configPath;
       }
     }

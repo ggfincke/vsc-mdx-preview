@@ -1,16 +1,17 @@
 // packages/extension/utils/validation.ts
 // input validation utilities for RPC & other external inputs
 
-import { warn as logWarn, error as logError } from '../logging';
+import { error as logError } from '../logging';
+import {
+  formatContext,
+  getLogger,
+  createPrimitiveValidator,
+  createOptionalValidator,
+  type ValidationOptions,
+} from './validation-factory';
 
-type LogFn = typeof logWarn;
-
-export interface ValidationOptions {
-  // log function to use (defaults to logWarn)
-  log?: LogFn;
-  // context for error messages (e.g., "fetch", "openDocument")
-  context?: string;
-}
+// re-export ValidationOptions for backward compatibility
+export type { ValidationOptions };
 
 // validates value is a string, optionally non-empty
 export function validateString(
@@ -18,8 +19,8 @@ export function validateString(
   name: string,
   opts?: ValidationOptions & { allowEmpty?: boolean }
 ): string | undefined {
-  const log = opts?.log ?? logWarn;
-  const ctx = opts?.context ? `${opts.context}: ` : '';
+  const log = getLogger(opts);
+  const ctx = formatContext(opts?.context);
 
   if (typeof value !== 'string') {
     log(`${ctx}${name} must be a string`, value);
@@ -34,22 +35,13 @@ export function validateString(
   return value;
 }
 
-// validates value is a boolean
-export function validateBoolean(
-  value: unknown,
-  name: string,
-  opts?: ValidationOptions
-): boolean | undefined {
-  const log = opts?.log ?? logError;
-  const ctx = opts?.context ? `${opts.context}: ` : '';
-
-  if (typeof value !== 'boolean') {
-    log(`${ctx}${name} must be a boolean`);
-    return undefined;
-  }
-
-  return value;
-}
+// validates value is a boolean (factory-generated)
+export const validateBoolean = createPrimitiveValidator<boolean>({
+  typeName: 'boolean',
+  typeCheck: (v): v is boolean => typeof v === 'boolean',
+  defaultLog: logError,
+  logValue: false,
+});
 
 // validates value is a number w/ optional constraints
 export function validateNumber(
@@ -57,8 +49,8 @@ export function validateNumber(
   name: string,
   opts?: ValidationOptions & { min?: number; max?: number; finite?: boolean }
 ): number | undefined {
-  const log = opts?.log ?? logWarn;
-  const ctx = opts?.context ? `${opts.context}: ` : '';
+  const log = getLogger(opts);
+  const ctx = formatContext(opts?.context);
 
   if (typeof value !== 'number') {
     log(`${ctx}${name} must be a number`, value);
@@ -95,8 +87,8 @@ export function validateUrl(
     return undefined;
   }
 
-  const log = opts?.log ?? logWarn;
-  const ctx = opts?.context ? `${opts.context}: ` : '';
+  const log = getLogger(opts);
+  const ctx = formatContext(opts?.context);
 
   let parsed: URL;
   try {
@@ -116,19 +108,8 @@ export function validateUrl(
 
 // validates an optional number parameter (used for line/column in openDocument)
 // returns the validated number, or undefined if the value is undefined or invalid
-// does not log for undefined values (they're optional)
-export function validateOptionalNumber(
-  value: unknown,
-  name: string,
-  opts?: ValidationOptions & { min?: number }
-): number | undefined {
-  // optional: undefined is valid
-  if (value === undefined) {
-    return undefined;
-  }
-
-  return validateNumber(value, name, opts);
-}
+// does not log for undefined values (they're optional) - factory-generated wrapper
+export const validateOptionalNumber = createOptionalValidator(validateNumber);
 
 // validates value is an array, optionally validating each element
 // elementValidator receives each element and its index, returns validated value or undefined
@@ -138,8 +119,8 @@ export function validateArray<T>(
   elementValidator?: (el: unknown, index: number) => T | undefined,
   opts?: ValidationOptions
 ): T[] | undefined {
-  const log = opts?.log ?? logWarn;
-  const ctx = opts?.context ? `${opts.context}: ` : '';
+  const log = getLogger(opts);
+  const ctx = formatContext(opts?.context);
 
   if (!Array.isArray(value)) {
     log(`${ctx}${name} must be an array`, value);
@@ -169,8 +150,8 @@ export function validateObject(
   name: string,
   opts?: ValidationOptions
 ): Record<string, unknown> | undefined {
-  const log = opts?.log ?? logWarn;
-  const ctx = opts?.context ? `${opts.context}: ` : '';
+  const log = getLogger(opts);
+  const ctx = formatContext(opts?.context);
 
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     log(`${ctx}${name} must be an object`, value);
@@ -193,8 +174,8 @@ export function validateRecord<T>(
     return undefined;
   }
 
-  const log = opts?.log ?? logWarn;
-  const ctx = opts?.context ? `${opts.context}: ` : '';
+  const log = getLogger(opts);
+  const ctx = formatContext(opts?.context);
   const result: Record<string, T> = {};
 
   for (const [key, val] of Object.entries(obj)) {
@@ -216,8 +197,8 @@ export function validateEnumValue<T extends string>(
   allowedValues: readonly T[],
   opts?: ValidationOptions
 ): T | undefined {
-  const log = opts?.log ?? logWarn;
-  const ctx = opts?.context ? `${opts.context}: ` : '';
+  const log = getLogger(opts);
+  const ctx = formatContext(opts?.context);
 
   if (typeof value !== 'string') {
     log(`${ctx}${name} must be a string`, value);
@@ -232,36 +213,16 @@ export function validateEnumValue<T extends string>(
   return value as T;
 }
 
-// validates value is a function
-
-export function validateFunction(
-  value: unknown,
-  name: string,
-  opts?: ValidationOptions
+// validates value is a function (factory-generated)
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+export const validateFunction = createPrimitiveValidator<Function>({
+  typeName: 'function',
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-): Function | undefined {
-  const log = opts?.log ?? logWarn;
-  const ctx = opts?.context ? `${opts.context}: ` : '';
+  typeCheck: (v): v is Function => typeof v === 'function',
+});
 
-  if (typeof value !== 'function') {
-    log(`${ctx}${name} must be a function`, typeof value);
-    return undefined;
-  }
-
-  return value;
-}
-
-// validates an optional string parameter (undefined is valid, no log for undefined)
-export function validateOptionalString(
-  value: unknown,
-  name: string,
-  opts?: ValidationOptions & { allowEmpty?: boolean }
-): string | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-  return validateString(value, name, opts);
-}
+// validates an optional string parameter (undefined is valid, no log for undefined) - factory-generated wrapper
+export const validateOptionalString = createOptionalValidator(validateString);
 
 // type for plugin specification: string or [string, options]
 export type PluginSpecValue = string | [string, Record<string, unknown>];
@@ -272,8 +233,8 @@ export function validatePluginSpec(
   name: string,
   opts?: ValidationOptions
 ): PluginSpecValue | undefined {
-  const log = opts?.log ?? logWarn;
-  const ctx = opts?.context ? `${opts.context}: ` : '';
+  const log = getLogger(opts);
+  const ctx = formatContext(opts?.context);
 
   // string plugin name is valid
   if (typeof value === 'string') {
@@ -328,7 +289,7 @@ export interface ConfigValidationResult {
     remarkPlugins?: PluginSpecValue[];
     rehypePlugins?: PluginSpecValue[];
     components?: Record<string, string>;
-    framework?: 'generic' | 'docusaurus' | 'nextjs' | 'astro-starlight';
+    framework?: 'generic' | 'docusaurus' | 'nextjs' | 'starlight' | 'nextra';
     frameworkOptions?: {
       enableShims?: boolean;
       customAliases?: Record<string, string>;
@@ -346,7 +307,8 @@ const FRAMEWORK_VALUES = [
   'generic',
   'docusaurus',
   'nextjs',
-  'astro-starlight',
+  'starlight',
+  'nextra',
 ] as const;
 const TAILWIND_ENABLED_VALUES = ['auto', 'enabled', 'disabled'] as const;
 const UNKNOWN_BEHAVIOR_VALUES = ['strip', 'placeholder', 'raw'] as const;

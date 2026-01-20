@@ -69,7 +69,7 @@ export interface SettingTypes {
     | 'generic'
     | 'docusaurus'
     | 'nextjs'
-    | 'astro-starlight'
+    | 'starlight'
     | 'nextra';
   'framework.componentShims': boolean;
   'components.builtins': boolean;

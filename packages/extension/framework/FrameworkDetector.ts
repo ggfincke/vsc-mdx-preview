@@ -3,20 +3,16 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
 import { debug } from '../logging';
 import { SingletonService } from '../services/SingletonService';
 import { getConfigManager, getErrorReporter } from '../services';
 import { SubscriberManager } from '../utils/SubscriberManager';
 import { ErrorContext } from '../errors';
+import { normalizeError, type FrameworkId } from '@mdx-preview/shared';
+import { readJsonSync, pathExists } from '../utils/file-utils';
 
-// supported frameworks
-export type Framework =
-  | 'generic'
-  | 'docusaurus'
-  | 'nextjs'
-  | 'astro-starlight'
-  | 'nextra';
+// re-export FrameworkId as Framework for backward compatibility
+export type Framework = FrameworkId;
 
 // framework detection result
 export interface FrameworkInfo {
@@ -42,7 +38,7 @@ const FRAMEWORK_RULES: FrameworkRule[] = [
     dependencies: ['@docusaurus/core'],
   },
   {
-    framework: 'astro-starlight',
+    framework: 'starlight',
     dependencies: ['@astrojs/starlight'],
   },
   // Nextra detection must come before Next.js since Nextra projects also have 'next' dependency
@@ -75,7 +71,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     'FRAMEWORK',
     (error) => {
       getErrorReporter().reportSilent(
-        error instanceof Error ? error : new Error(String(error)),
+        normalizeError(error),
         ErrorContext.Extension,
         { operation: 'framework-subscriber-notify' }
       );
@@ -118,54 +114,52 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   detectFromPackageJson(workspaceRoot: string): FrameworkInfo {
     const packageJsonPath = path.join(workspaceRoot, 'package.json');
 
-    try {
-      if (!fs.existsSync(packageJsonPath)) {
-        debug('[FRAMEWORK] No package.json found at:', packageJsonPath);
-        return { framework: 'generic', detected: true };
-      }
+    interface PackageJson {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    }
 
-      const content = fs.readFileSync(packageJsonPath, 'utf-8');
-      const packageJson = JSON.parse(content);
-      const allDeps = {
-        ...packageJson.dependencies,
-        ...packageJson.devDependencies,
-      };
+    const packageJson = readJsonSync<PackageJson>(packageJsonPath, {
+      logTag: '[FRAMEWORK]',
+    });
 
-      // Check each rule in priority order
-      for (const rule of FRAMEWORK_RULES) {
-        const hasPrimary = rule.dependencies.some((dep) => dep in allDeps);
-
-        if (hasPrimary) {
-          // For frameworks w/ secondary deps, at least one must be present
-          if (rule.secondaryDependencies) {
-            const hasSecondary = rule.secondaryDependencies.some(
-              (dep) => dep in allDeps
-            );
-            if (!hasSecondary) {
-              continue;
-            }
-          }
-
-          const version = allDeps[rule.dependencies[0]];
-          debug(`[FRAMEWORK] Detected ${rule.framework} (version: ${version})`);
-          return {
-            framework: rule.framework,
-            detected: true,
-            version: typeof version === 'string' ? version : undefined,
-          };
-        }
-      }
-
-      debug('[FRAMEWORK] No framework detected, using generic');
-      return { framework: 'generic', detected: true };
-    } catch (error) {
-      getErrorReporter().reportSilent(
-        error instanceof Error ? error : new Error(String(error)),
-        ErrorContext.Extension,
-        { operation: 'framework-detection', file: packageJsonPath }
-      );
+    if (!packageJson) {
+      debug('[FRAMEWORK] No package.json found or failed to parse at:', packageJsonPath);
       return { framework: 'generic', detected: true };
     }
+
+    const allDeps = {
+      ...packageJson.dependencies,
+      ...packageJson.devDependencies,
+    };
+
+    // Check each rule in priority order
+    for (const rule of FRAMEWORK_RULES) {
+      const hasPrimary = rule.dependencies.some((dep) => dep in allDeps);
+
+      if (hasPrimary) {
+        // For frameworks w/ secondary deps, at least one must be present
+        if (rule.secondaryDependencies) {
+          const hasSecondary = rule.secondaryDependencies.some(
+            (dep) => dep in allDeps
+          );
+          if (!hasSecondary) {
+            continue;
+          }
+        }
+
+        const version = allDeps[rule.dependencies[0]];
+        debug(`[FRAMEWORK] Detected ${rule.framework} (version: ${version})`);
+        return {
+          framework: rule.framework,
+          detected: true,
+          version: typeof version === 'string' ? version : undefined,
+        };
+      }
+    }
+
+    debug('[FRAMEWORK] No framework detected, using generic');
+    return { framework: 'generic', detected: true };
   }
 
   // Find the closest package.json starting from documentDir up to workspaceRoot
@@ -178,7 +172,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     // Walk up from document directory to workspace root
     while (currentDir.startsWith(workspaceRoot)) {
       const packageJsonPath = path.join(currentDir, 'package.json');
-      if (fs.existsSync(packageJsonPath)) {
+      if (pathExists(packageJsonPath)) {
         debug('[FRAMEWORK] Found package.json at:', packageJsonPath);
         return currentDir;
       }
@@ -201,6 +195,15 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     const manualFramework = getConfigManager().get('framework', documentUri);
 
     if (manualFramework !== 'auto') {
+      // Backward compatibility: migrate deprecated 'astro-starlight' to 'starlight'
+      // Cast to string for comparison since old user settings may have the deprecated value
+      if ((manualFramework as string) === 'astro-starlight') {
+        debug('[FRAMEWORK] Migrating deprecated "astro-starlight" to "starlight"');
+        return {
+          framework: 'starlight',
+          detected: false,
+        };
+      }
       return {
         framework: manualFramework as Framework,
         detected: false,
@@ -223,8 +226,9 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     );
 
     // Check cache using the package.json directory as key
+    // (use undefined check for consistency with other cache access patterns)
     const cached = this.cache.get(packageJsonDir);
-    if (cached) {
+    if (cached !== undefined) {
       return cached;
     }
 
@@ -241,7 +245,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
         return 'Docusaurus';
       case 'nextjs':
         return 'Next.js';
-      case 'astro-starlight':
+      case 'starlight':
         return 'Starlight';
       case 'nextra':
         return 'Nextra';
@@ -271,7 +275,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
 
     for (const candidate of candidates) {
       const fullPath = path.join(workspaceRoot, candidate);
-      if (fs.existsSync(fullPath)) {
+      if (pathExists(fullPath)) {
         debug('[FRAMEWORK] Found mdx-components file:', fullPath);
         return fullPath;
       }

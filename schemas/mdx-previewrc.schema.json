@@ -86,9 +86,9 @@
     },
     "framework": {
       "type": "string",
-      "enum": ["generic", "docusaurus", "nextjs", "astro-starlight"],
+      "enum": ["generic", "docusaurus", "nextjs", "starlight", "nextra"],
       "description": "Framework override. Overrides auto-detection from package.json.",
-      "examples": ["docusaurus", "nextjs"]
+      "examples": ["docusaurus", "nextjs", "starlight"]
     },
     "frameworkOptions": {
       "type": "object",

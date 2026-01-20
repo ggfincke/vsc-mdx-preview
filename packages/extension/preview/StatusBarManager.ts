@@ -121,7 +121,7 @@ export class StatusBarManager extends SingletonService<StatusBarManager> {
       case 'nextjs':
         icon = '$(server)';
         break;
-      case 'astro-starlight':
+      case 'starlight':
         icon = '$(star)';
         break;
       case 'nextra':

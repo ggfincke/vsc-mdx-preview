@@ -59,9 +59,8 @@ const selectFramework = async (): Promise<void> => {
     },
     {
       label: 'Astro Starlight',
-      description:
-        currentSetting === 'astro-starlight' ? '(current)' : undefined,
-      value: 'astro-starlight',
+      description: currentSetting === 'starlight' ? '(current)' : undefined,
+      value: 'starlight',
     },
     {
       label: 'Nextra',
@@ -83,7 +82,7 @@ const selectFramework = async (): Promise<void> => {
         | 'generic'
         | 'docusaurus'
         | 'nextjs'
-        | 'astro-starlight'
+        | 'starlight'
         | 'nextra',
       vscode.ConfigurationTarget.Workspace
     );
