@@ -27,3 +27,6 @@ export const debugGroup: (label: string) => void = import.meta.env.DEV
 export const debugGroupEnd: () => void = import.meta.env.DEV
   ? () => console.groupEnd()
   : () => {};
+
+// re-export tagged logger factory
+export { createTaggedLogger, type TaggedLogger } from './createTaggedLogger';
