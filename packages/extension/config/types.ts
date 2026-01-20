@@ -12,7 +12,7 @@ export type UpdateMode = SettingTypes['preview.updateMode'];
 export type TailwindEnabledSetting = SettingTypes['tailwind.enabled'];
 
 // Framework setting values
-// Controls framework detection and shimming behavior
+// Controls framework detection & shimming behavior
 export type FrameworkSetting = SettingTypes['framework'];
 
 // Component unknown behavior setting values

@@ -117,7 +117,7 @@ export class ConfigCache extends SingletonService<ConfigCache> {
     });
   }
 
-  // custom cleanup - clear all caches and watchers
+  // custom cleanup - clear all caches & watchers
   protected override onDispose(): void {
     disposeCollection(this.watchers);
     this.subscriberManager.clear();

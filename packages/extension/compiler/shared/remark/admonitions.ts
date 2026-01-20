@@ -131,6 +131,36 @@ function getDirectiveName(node: ContainerDirective): string {
   return node.name.toLowerCase();
 }
 
+// Custom mdast node types for admonitions
+// These are converted to HTML by rehype via hName/hProperties
+interface AdmonitionNode extends Parent {
+  type: 'admonition';
+  data: {
+    hName: string;
+    hProperties: { className: string[]; 'data-admonition-type': string };
+  };
+}
+
+interface AdmonitionHeaderNode extends Parent {
+  type: 'admonitionHeader';
+  data: { hName: string; hProperties: { className: string[] } };
+}
+
+interface AdmonitionContentNode extends Parent {
+  type: 'admonitionContent';
+  data: { hName: string; hProperties: { className: string[] } };
+}
+
+interface HtmlNode {
+  type: 'html';
+  value: string;
+}
+
+interface TextNode {
+  type: 'text';
+  value: string;
+}
+
 // create HTML AST node for admonition
 function createAdmonitionNode(
   type: AdmonitionType,
@@ -146,8 +176,40 @@ function createAdmonitionNode(
     return true;
   });
 
-  return {
-    type: 'admonition' as any, // custom type that will be converted to HTML
+  const htmlNode: HtmlNode = {
+    type: 'html',
+    value: `<span class="mdx-preview-admonition-icon">${type.icon}</span>`,
+  };
+
+  const textNode: TextNode = {
+    type: 'text',
+    value: title,
+  };
+
+  const headerNode: AdmonitionHeaderNode = {
+    type: 'admonitionHeader',
+    data: {
+      hName: 'div',
+      hProperties: {
+        className: ['mdx-preview-admonition-header'],
+      },
+    },
+    children: [htmlNode, textNode] as unknown as (BlockContent | PhrasingContent)[],
+  };
+
+  const contentNode: AdmonitionContentNode = {
+    type: 'admonitionContent',
+    data: {
+      hName: 'div',
+      hProperties: {
+        className: ['mdx-preview-admonition-content'],
+      },
+    },
+    children: contentChildren,
+  };
+
+  const admonitionNode: AdmonitionNode = {
+    type: 'admonition',
     data: {
       hName: 'div',
       hProperties: {
@@ -155,38 +217,10 @@ function createAdmonitionNode(
         'data-admonition-type': type.label.toLowerCase(),
       },
     },
-    children: [
-      {
-        type: 'admonitionHeader' as any,
-        data: {
-          hName: 'div',
-          hProperties: {
-            className: ['mdx-preview-admonition-header'],
-          },
-        },
-        children: [
-          {
-            type: 'html' as any,
-            value: `<span class="mdx-preview-admonition-icon">${type.icon}</span>`,
-          },
-          {
-            type: 'text',
-            value: title,
-          } as any,
-        ],
-      } as any,
-      {
-        type: 'admonitionContent' as any,
-        data: {
-          hName: 'div',
-          hProperties: {
-            className: ['mdx-preview-admonition-content'],
-          },
-        },
-        children: contentChildren,
-      } as any,
-    ],
-  } as any;
+    children: [headerNode, contentNode] as unknown as (BlockContent | PhrasingContent)[],
+  };
+
+  return admonitionNode as Parent;
 }
 
 // remark plugin to transform container directives to admonitions

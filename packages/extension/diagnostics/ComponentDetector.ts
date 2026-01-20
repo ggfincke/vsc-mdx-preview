@@ -220,7 +220,7 @@ function extractImports(esmValue: string): Map<string, string> {
   return imports;
 }
 
-// determine component source based on name and imports
+// determine component source based on name & imports
 function determineComponentSource(
   name: string,
   imports: Map<string, string>,
@@ -291,7 +291,7 @@ export async function detectComponents(
       const jsxNode = node as unknown as MdxJsxElement;
       const name = jsxNode.name;
 
-      // skip fragments (<></>) and HTML elements
+      // skip fragments (<></>) & HTML elements
       if (!name || isHtmlElement(name)) {
         return;
       }

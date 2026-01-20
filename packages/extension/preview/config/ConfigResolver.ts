@@ -87,7 +87,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
     return null;
   }
 
-  // read and parse config file
+  // read & parse config file
   const config = readJsonSync<MdxPreviewConfig>(configPath);
   if (!config) {
     getErrorReporter().reportConfigError(
@@ -204,7 +204,7 @@ function setupConfigWatcher(configPath: string): void {
 }
 
 // subscribe to config file changes
-// callback receives a ConfigChangeEvent with type, configPath, and timestamp
+// callback receives a ConfigChangeEvent w/ type, configPath, & timestamp
 export function onConfigChange(
   callback: (
     event: import('../../config/ConfigCache').ConfigChangeEvent

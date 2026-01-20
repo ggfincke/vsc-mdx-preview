@@ -90,7 +90,7 @@ export function generateComponentImports(
     }
   }
 
-  // add built-in generic shims (if enabled and not overridden by user config)
+  // add built-in generic shims (if enabled & not overridden by user config)
   if (builtinsEnabled) {
     for (const componentName of BUILTIN_GENERIC_COMPONENTS) {
       // skip if user has defined this component in config (user takes precedence)

@@ -184,7 +184,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   }
 
   // convenience method for plugin errors - logs but does NOT show notification
-  // plugin errors are expected in Safe Mode and should not interrupt user
+  // plugin errors are expected in Safe Mode & should not interrupt user
   reportPluginError(
     error: Error | ExtensionError | unknown,
     pluginName: string
@@ -198,7 +198,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   }
 
   // convenience method for interactive errors w/ action buttons
-  // logs the error and shows a warning with clickable actions
+  // logs the error & shows a warning w/ clickable actions
   async reportWithActions(
     error: Error | ExtensionError | unknown,
     context: ErrorContext,
@@ -213,7 +213,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     // log the error
     this.logError(normalizedError, ErrorSeverity.Warning, { context });
 
-    // show warning with action buttons
+    // show warning w/ action buttons
     const actionLabels = actions.map((a) => a.label);
     const prefix = this.getContextPrefix(context);
     const selection = await vscode.window.showWarningMessage(
@@ -361,7 +361,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     }
   }
 
-  // send error to webview with context and recoverable hint
+  // send error to webview w/ context & recoverable hint
   private sendToWebview(
     error: ExtensionError | Error,
     handle: WebviewErrorHandle,
@@ -379,10 +379,10 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     });
   }
 
-  // check if error is recoverable (user can fix and retry)
+  // check if error is recoverable (user can fix & retry)
   private isRecoverableError(error: Error): boolean {
     if (error instanceof ExtensionError) {
-      // Module and transpile errors are typically recoverable by fixing the source
+      // Module & transpile errors are typically recoverable by fixing the source
       const recoverableCodes = [
         'MODULE_NOT_FOUND',
         'PARSE_ERROR',

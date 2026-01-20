@@ -154,7 +154,7 @@ export class PreviewManager extends SingletonService<PreviewManager> {
     this.subscriberManager.notify(undefined);
   }
 
-  // custom cleanup - clear panel, preview, and subscribers
+  // custom cleanup - clear panel, preview, & subscribers
   protected override onDispose(): void {
     this.clearPanel();
     this.currentPreview?.dispose();

@@ -1,7 +1,7 @@
 // packages/extension/compiler/shared/pipeline-warnings.ts
-// consolidated warning codes and messages for MDX pipeline operations
+// consolidated warning codes & messages for MDX pipeline operations
 //
-// This module provides consistent warning messages across both Safe and Trusted modes,
+// This module provides consistent warning messages across both Safe & Trusted modes,
 // ensuring users receive uniform feedback about pipeline configuration issues.
 
 import { warn, info, debug } from '../../logging';

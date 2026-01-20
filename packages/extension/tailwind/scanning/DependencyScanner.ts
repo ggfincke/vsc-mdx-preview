@@ -61,10 +61,10 @@ export class DependencyScanner {
       ? { ...providedContext, baseDir: entryDir }
       : { baseDir: entryDir };
 
-    // Filter to resolvable relative imports and resolve in parallel
+    // Filter to resolvable relative imports & resolve in parallel
     const resolutionPromises = imports
       .filter((specifier) => {
-        // Must be resolvable and relative
+        // Must be resolvable & relative
         return (
           this.resolver.shouldResolve(specifier) &&
           this.resolver.isRelativeImport(specifier)

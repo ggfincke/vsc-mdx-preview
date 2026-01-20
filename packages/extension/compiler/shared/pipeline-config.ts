@@ -1,5 +1,5 @@
 // packages/extension/compiler/shared/pipeline-config.ts
-// unified pipeline configuration for Safe and Trusted MDX modes
+// unified pipeline configuration for Safe & Trusted MDX modes
 //
 // This module provides a single source of truth for pipeline configuration,
 // ensuring both modes use identical plugin ordering for shared plugins.
@@ -25,7 +25,7 @@ export const MDX_PASSTHROUGH_NODES = [
   'mdxjsEsm',
 ] as const;
 
-// rehype-raw configuration with MDX passthrough
+// rehype-raw configuration w/ MDX passthrough
 export const REHYPE_RAW_CONFIG = {
   passThrough: [...MDX_PASSTHROUGH_NODES],
 } as const;
@@ -56,7 +56,7 @@ export interface PipelineConfig {
   customPlugins?: LoadedPlugins;
 }
 
-// annotated plugin entry for documentation and filtering
+// annotated plugin entry for documentation & filtering
 export interface AnnotatedPlugin {
   plugin: Pluggable;
   phase: RemarkPhase | RehypePhase;
@@ -65,7 +65,7 @@ export interface AnnotatedPlugin {
   description?: string;
 }
 
-// full pipeline description with annotated plugins
+// full pipeline description w/ annotated plugins
 export interface PipelineDescription {
   mode: PipelineMode;
   remarkPlugins: AnnotatedPlugin[];
@@ -89,7 +89,7 @@ export interface SafePipelineConfig {
 export function describePipeline(config: PipelineConfig): PipelineDescription {
   const { mode, customPlugins } = config;
 
-  // build remark plugin list with annotations
+  // build remark plugin list w/ annotations
   const remarkPlugins: AnnotatedPlugin[] = [
     // shared plugins run in both modes (order critical!)
     ...sharedRemarkPlugins.map((plugin, index) => ({
@@ -111,7 +111,7 @@ export function describePipeline(config: PipelineConfig): PipelineDescription {
     }
   }
 
-  // build rehype plugin list with annotations
+  // build rehype plugin list w/ annotations
   const rehypePlugins: AnnotatedPlugin[] = [];
 
   // Trusted Mode needs rehype-raw first to handle raw HTML
@@ -192,7 +192,7 @@ export function emitSafePipeline(
     throw new Error('emitSafePipeline requires mode: safe');
   }
 
-  // filter out trusted-only plugins and extract by phase
+  // filter out trusted-only plugins & extract by phase
   const safeRehype = desc.rehypePlugins.filter((p) => !p.trustedOnly);
 
   return {

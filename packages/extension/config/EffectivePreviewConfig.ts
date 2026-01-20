@@ -24,7 +24,7 @@ export interface TailwindConfig {
 }
 
 // Unified effective preview configuration
-// Combines VS Code settings, project config file, and frontmatter overrides
+// combines VS Code settings, project config file, & frontmatter overrides
 export interface EffectivePreviewConfig {
   // ─── VS Code Settings ───────────────────────────────────────────────
   updateMode: SettingTypes['preview.updateMode'];
@@ -90,7 +90,7 @@ export function buildEffectivePreviewConfig(
     ? themeManager.extractThemeFromFrontmatter(frontmatter)
     : {};
 
-  // 4. Merge with precedence: frontmatter > config file > VS Code settings
+  // 4. Merge w/ precedence: frontmatter > config file > VS Code settings
   return {
     // VS Code settings (no override from config file or frontmatter)
     updateMode: settings['preview.updateMode'],
@@ -104,14 +104,14 @@ export function buildEffectivePreviewConfig(
     customLayoutFilePath: settings['preview.mdx.customLayoutFilePath'],
     useSucraseTranspiler: settings['build.useSucraseTranspiler'],
 
-    // Themes with frontmatter override (frontmatter > VS Code settings)
+    // Themes w/ frontmatter override (frontmatter > VS Code settings)
     previewTheme: (frontmatterTheme.previewTheme ??
       settings['preview.previewTheme']) as PreviewTheme,
     codeBlockTheme: (frontmatterTheme.codeBlockTheme ??
       settings['preview.codeBlockTheme']) as CodeBlockTheme,
     autoTheme: settings['preview.autoTheme'],
 
-    // Tailwind (config file can override enabled and provide configPath)
+    // Tailwind (config file can override enabled & provide configPath)
     tailwind: {
       enabled: fileConfig?.tailwind?.enabled ?? settings['tailwind.enabled'],
       maxFileSizeBytes: settings['tailwind.maxFileSizeBytes'],
@@ -136,7 +136,7 @@ export function buildEffectivePreviewConfig(
     frameworkOverride: fileConfig?.framework,
     frameworkOptions: fileConfig?.frameworkOptions,
 
-    // Metadata for debugging and cache invalidation
+    // Metadata for debugging & cache invalidation
     configFile,
   };
 }

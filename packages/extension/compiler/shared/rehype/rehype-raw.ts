@@ -5,9 +5,16 @@
 import { visit } from 'unist-util-visit';
 import type { Root } from 'hast';
 
+// Raw node type from rehype that contains HTML string
+interface RawNode {
+  type: 'raw';
+  value: string;
+  position?: { start: unknown; end: unknown };
+}
+
 export default function rehypeRaw() {
   return (tree: Root) => {
-    visit(tree, 'raw', (node: any) => {
+    visit(tree, 'raw', (node: RawNode) => {
       // * convert raw HTML node to mdxJsxFlowElement that renders the HTML
       // * this allows the HTML string to be safely compiled by @mdx-js/mdx
       const htmlValue = (node.value || '')

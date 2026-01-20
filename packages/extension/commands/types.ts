@@ -1,5 +1,5 @@
 // packages/extension/commands/types.ts
-// command handler types and interfaces
+// command handler types & interfaces
 
 // Command handler function signature.
 // Commands can be sync or async, w/ no arguments.

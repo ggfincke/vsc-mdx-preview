@@ -21,7 +21,7 @@ import remarkGenericComponents, {
 } from '../shared/remark/generic-components';
 import { getConfigManager } from '../../services';
 
-// import and re-export types from consolidated types file
+// import & re-export types from consolidated types file
 export type { UnknownBehavior, SafeHTMLResult } from '../types';
 import type { UnknownBehavior, SafeHTMLResult } from '../types';
 
@@ -31,7 +31,7 @@ interface RemarkStripMdxOptions {
   builtinsEnabled?: boolean;
 }
 
-// MDX JSX element node w/ name and children properties
+// MDX JSX element node w/ name & children properties
 interface MdxJsxElement {
   type: 'mdxJsxFlowElement' | 'mdxJsxTextElement';
   name: string | null;
@@ -72,7 +72,7 @@ function remarkStripMdx(options: RemarkStripMdxOptions = {}) {
         const name = jsxNode.name || 'Component';
 
         // check if this is a known generic component (already transformed by remarkGenericComponents)
-        // if builtins are enabled and this is a known component, it should have been transformed
+        // if builtins are enabled & this is a known component, it should have been transformed
         // if we still see it here, it means transformation failed or builtins are disabled
         const isKnownComponent =
           builtinsEnabled && KNOWN_GENERIC_COMPONENTS.has(name);
@@ -89,10 +89,10 @@ function remarkStripMdx(options: RemarkStripMdxOptions = {}) {
           // strip: remove entirely
           nodesToRemove.push({ parent: parent as Parent, index });
         } else if (Array.isArray(replacement)) {
-          // raw: replace with children (splice multiple nodes)
+          // raw: replace w/ children (splice multiple nodes)
           (parent as Parent).children.splice(index, 1, ...replacement);
         } else {
-          // placeholder: replace with placeholder node
+          // placeholder: replace w/ placeholder node
           (parent as Parent).children[index] = replacement;
         }
         return;
@@ -182,17 +182,17 @@ function createJsxReplacement(
 
     case 'placeholder':
     default: {
-      // show placeholder with component name and children
+      // show placeholder w/ component name & children
       const hint = isKnownComponent
         ? '(builtin component - transform failed)'
         : '(unknown component)';
 
       if (isFlowElement) {
-        // block-level placeholder with children
+        // block-level placeholder w/ children
         const hasChildren = node.children && node.children.length > 0;
 
         if (hasChildren) {
-          // create placeholder wrapper with children inside
+          // create placeholder wrapper w/ children inside
           return {
             type: 'unknownComponent' as RootContent['type'],
             data: {
@@ -255,7 +255,7 @@ function applyPlugins(processor: any, plugins: Pluggable[]): any {
   return processor;
 }
 
-// * compile MDX to safe static HTML (strips frontmatter, parses AST, removes dangerous nodes, converts to HTML)
+// * compile MDX to safe static HTML (strips frontmatter, parses AST, removes dangerous nodes, & converts to HTML)
 export async function compileSafe(
   mdxText: string,
   config?: ResolvedConfig
@@ -267,7 +267,7 @@ export async function compileSafe(
   // extract frontmatter before compilation
   const { content, frontmatter } = extractFrontmatter(mdxText);
 
-  // get configuration for builtins and unknown behavior settings
+  // get configuration for builtins & unknown behavior settings
   const configManager = getConfigManager();
   const builtinsEnabled = configManager.get('components.builtins');
 

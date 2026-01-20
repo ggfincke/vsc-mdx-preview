@@ -112,7 +112,7 @@ export function validateUrl(
 export const validateOptionalNumber = createOptionalValidator(validateNumber);
 
 // validates value is an array, optionally validating each element
-// elementValidator receives each element and its index, returns validated value or undefined
+// elementValidator receives each element & its index, returns validated value or undefined
 export function validateArray<T>(
   value: unknown,
   name: string,
@@ -161,8 +161,8 @@ export function validateObject(
   return value as Record<string, unknown>;
 }
 
-// validates value is a Record<string, T> with value type checking
-// valueValidator receives each value and its key, returns validated value or undefined
+// validates value is a Record<string, T> w/ value type checking
+// valueValidator receives each value & its key, returns validated value or undefined
 export function validateRecord<T>(
   value: unknown,
   name: string,
@@ -314,7 +314,7 @@ const TAILWIND_ENABLED_VALUES = ['auto', 'enabled', 'disabled'] as const;
 const UNKNOWN_BEHAVIOR_VALUES = ['strip', 'placeholder', 'raw'] as const;
 
 // validates complete MDX Preview config schema
-// returns validation result with errors array and validated config if valid
+// returns validation result w/ errors array & validated config if valid
 export function validateConfigSchema(
   config: unknown,
   opts?: Pick<ValidationOptions, 'context'>

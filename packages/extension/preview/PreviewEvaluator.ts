@@ -15,7 +15,7 @@ import type {
 import type { Preview } from './preview-manager';
 
 // preview evaluator - orchestrates the evaluation pipeline
-// handles document reading, version tracking, and calling evaluateInWebview
+// handles document reading, version tracking, & calling evaluateInWebview
 export class PreviewEvaluator {
   constructor(
     private preview: Preview,
@@ -41,7 +41,7 @@ export class PreviewEvaluator {
     return this.configManager.configuration;
   }
 
-  // update webview with current document content
+  // update webview w/ current document content
   // - force: bypass version tracking (always re-render)
   // - handles different URI schemes: untitled, file, vscode-remote, etc.
   async updateWebview(force = false): Promise<void> {

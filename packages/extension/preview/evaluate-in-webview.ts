@@ -63,7 +63,7 @@ export default async function evaluateInWebview(
         preview.pushThemeState(result.frontmatter);
       }
 
-      // For Nextra projects, resolve and send page metadata
+      // For Nextra projects, resolve & send page metadata
       sendNextraMetaIfNeeded(
         preview,
         webviewHandle,
@@ -116,7 +116,7 @@ export default async function evaluateInWebview(
         preview.pushThemeState(result.frontmatter);
       }
 
-      // For Nextra projects, resolve and send page metadata
+      // For Nextra projects, resolve & send page metadata
       sendNextraMetaIfNeeded(
         preview,
         webviewHandle,
@@ -178,7 +178,7 @@ function sendNextraMetaIfNeeded(
       webviewHandle.setNextraMeta(mergedMeta);
     }
   } catch (err) {
-    // Non-fatal error, just log and continue
+    // Non-fatal error, just log & continue
     debug(`[EVALUATE] Error resolving Nextra meta: ${err}`);
   }
 }

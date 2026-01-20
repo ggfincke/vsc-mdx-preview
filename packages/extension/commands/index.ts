@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { debug } from '../logging';
 
-// re-export types and constants
+// re-export types & constants
 export * from './types';
 export { CommandNames, type CommandName } from './command-names';
 

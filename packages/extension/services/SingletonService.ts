@@ -1,5 +1,5 @@
 // packages/extension/services/SingletonService.ts
-// Abstract base class for singleton services with automatic lifecycle management
+// Abstract base class for singleton services w/ automatic lifecycle management
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
@@ -24,12 +24,12 @@ export abstract class SingletonService<
   }
 
   // get singleton instance (creates new instance if none exists)
-  // Note: Using abstract new () => S to infer type from prototype without
-  // checking constructor accessibility. This allows protected constructors.
+  // Note: Using a permissive `this` type that only requires prototype,
+  // allowing classes w/ protected constructors & protected instance to use getInstance().
   static getInstance<S extends SingletonService<S>>(
-    this: (abstract new () => S) & { prototype: S }
+    this: { prototype: S }
   ): S {
-    // Cast to access protected static 'instance' and call protected constructor
+    // Cast to access protected static 'instance' & call protected constructor
     const ctor = this as unknown as { instance?: S; new (): S };
     if (!ctor.instance) {
       ctor.instance = new ctor();
