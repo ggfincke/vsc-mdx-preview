@@ -11,6 +11,7 @@ import {
   getDisplayPath,
   isUserCode,
 } from '../../utils/stackTraceParser';
+import { normalizeError } from '@mdx-preview/shared';
 import './ErrorBoundary.css';
 
 // stack trace component
@@ -120,20 +121,14 @@ export function MDXErrorBoundary({ children, onError }: MDXErrorBoundaryProps) {
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
       event.preventDefault();
-      const error =
-        event.error instanceof Error
-          ? event.error
-          : new Error(event.message || 'Unknown error');
+      const error = normalizeError(event.error ?? event.message ?? 'Unknown error');
       setGlobalError(error);
       onError?.(error);
     };
 
     const handleRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault();
-      const error =
-        event.reason instanceof Error
-          ? event.reason
-          : new Error(String(event.reason) || 'Unhandled promise rejection');
+      const error = normalizeError(event.reason ?? 'Unhandled promise rejection');
       setGlobalError(error);
       onError?.(error);
     };

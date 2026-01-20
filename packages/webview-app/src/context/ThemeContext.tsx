@@ -10,4 +10,4 @@ export type {
   PreviewTheme,
   CodeBlockTheme,
   WebviewThemeState,
-} from '../theme/types';
+} from '@mdx-preview/shared';

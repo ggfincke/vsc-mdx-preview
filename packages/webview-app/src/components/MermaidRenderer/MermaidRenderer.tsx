@@ -1,7 +1,8 @@
 // packages/webview-app/src/components/MermaidRenderer/MermaidRenderer.tsx
 // * lazy-loaded mermaid diagram renderer w/ error handling & source toggle
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback } from 'react';
+import { useAsyncEffect } from '../../hooks';
 import { useTheme } from '../../theme';
 import './MermaidRenderer.css';
 
@@ -44,64 +45,56 @@ export function MermaidRenderer({ code, id }: Props) {
     setShowSource((prev) => !prev);
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    debugLog('render effect triggered', { id, codePreview: code.slice(0, 50) });
+  useAsyncEffect(
+    async (signal) => {
+      debugLog('render effect triggered', { id, codePreview: code.slice(0, 50) });
 
-    async function render() {
-      try {
-        setIsLoading(true);
-        const mermaid = await getMermaid();
-        debugLog('mermaid library loaded');
+      const mermaid = await getMermaid();
+      debugLog('mermaid library loaded');
 
-        // initialize mermaid w/ strict config (no foreignObject)
-        if (!mermaidInitialized) {
-          mermaid.default.initialize({
-            startOnLoad: false,
-            theme: isDark ? 'dark' : 'default',
-            securityLevel: 'strict',
-            // * disable HTML labels to produce pure SVG (no foreignObject)
-            // this keeps DOMPurify allowlist tighter
-            flowchart: { htmlLabels: false },
-            sequence: { useMaxWidth: true },
-          });
-          mermaidInitialized = true;
-        } else {
-          // update theme if already initialized
-          mermaid.default.initialize({
-            theme: isDark ? 'dark' : 'default',
-          });
-        }
-
-        if (cancelled || !containerRef.current) {
-          return;
-        }
-
-        // render diagram to SVG
-        const { svg } = await mermaid.default.render(`mermaid-svg-${id}`, code);
-
-        if (!cancelled && containerRef.current) {
-          containerRef.current.innerHTML = svg;
-          setError(null);
-          setIsLoading(false);
-          debugLog('render complete', { id });
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const message =
-            err instanceof Error ? err.message : 'Failed to render diagram';
-          debugLog('render error', { id, error: message });
-          setError(message);
-          setIsLoading(false);
-        }
+      // initialize mermaid w/ strict config (no foreignObject)
+      if (!mermaidInitialized) {
+        mermaid.default.initialize({
+          startOnLoad: false,
+          theme: isDark ? 'dark' : 'default',
+          securityLevel: 'strict',
+          // * disable HTML labels to produce pure SVG (no foreignObject)
+          // this keeps DOMPurify allowlist tighter
+          flowchart: { htmlLabels: false },
+          sequence: { useMaxWidth: true },
+        });
+        mermaidInitialized = true;
+      } else {
+        // update theme if already initialized
+        mermaid.default.initialize({
+          theme: isDark ? 'dark' : 'default',
+        });
       }
-    }
 
-    render();
-    return () => {
-      cancelled = true;
-    };
-  }, [code, id, isDark]);
+      if (signal.isCancelled() || !containerRef.current) {
+        return;
+      }
+
+      // render diagram to SVG
+      const { svg } = await mermaid.default.render(`mermaid-svg-${id}`, code);
+
+      if (containerRef.current) {
+        containerRef.current.innerHTML = svg;
+        setError(null);
+        debugLog('render complete', { id });
+      }
+    },
+    [code, id, isDark],
+    {
+      onError: (err) => {
+        const message =
+          err instanceof Error ? err.message : 'Failed to render diagram';
+        debugLog('render error', { id, error: message });
+        setError(message);
+      },
+      onLoadingChange: setIsLoading,
+    }
+  );
 
   // error state w/ show source toggle
   if (error) {

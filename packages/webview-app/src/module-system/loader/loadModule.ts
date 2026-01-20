@@ -17,10 +17,7 @@ import {
   clearPendingModule,
 } from './circular';
 
-/**
- * Recursively load a module and all its dependencies.
- * Handles circular dependencies via pending promise tracking (see circular.ts).
- */
+// * recursively load a module & all its dependencies
 export async function loadModule(
   id: string,
   code: string,

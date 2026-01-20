@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { injectPreviewTheme, injectCodeBlockTheme } from './loader';
-import type { PreviewTheme, CodeBlockTheme, WebviewThemeState } from './types';
+import type { PreviewTheme, CodeBlockTheme, WebviewThemeState } from '@mdx-preview/shared';
 import {
   getCurrentVSCodeTheme,
   onVSCodeThemeChange,

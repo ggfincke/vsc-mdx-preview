@@ -7,6 +7,7 @@
 // 2. CJS-style: uses require/exports/module.exports pattern
 
 import type { ModuleRuntime } from '../types';
+import { extractErrorMessage } from '@mdx-preview/shared';
 
 // evaluate a module string
 // for MDX function-body output (outputFormat: 'function-body'):
@@ -50,7 +51,7 @@ export function evaluateModule(
     return module.exports;
   } catch (error) {
     // re-throw w/ module context for better error messages
-    const message = error instanceof Error ? error.message : String(error);
+    const message = extractErrorMessage(error);
     throw new Error(`Error evaluating module "${moduleId}": ${message}`);
   }
 }

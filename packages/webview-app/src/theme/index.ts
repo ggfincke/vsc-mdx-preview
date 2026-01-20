@@ -4,15 +4,15 @@
 // context & hooks
 export { ThemeProvider, useTheme } from './context';
 
-// theme types & constants
-export type { PreviewTheme, CodeBlockTheme, WebviewThemeState } from './types';
+// theme types & constants (from shared package)
+export type { PreviewTheme, CodeBlockTheme, WebviewThemeState } from '@mdx-preview/shared';
 export {
   isLightPreviewTheme,
   PREVIEW_THEMES,
   CODE_BLOCK_THEMES,
   THEME_PAIRS,
   getOppositeTheme,
-} from './types';
+} from '@mdx-preview/shared';
 
 // VS Code theme detection
 export type { VSCodeTheme } from './detection';

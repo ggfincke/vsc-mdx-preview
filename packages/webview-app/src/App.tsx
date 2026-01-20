@@ -32,6 +32,11 @@ import {
   ZOOM_STEP_PERCENT,
   ZOOM_DEFAULT_PERCENT,
 } from './constants';
+import {
+  useFieldSetter,
+  useFieldResetter,
+  useFieldSetterWithFormat,
+} from './hooks';
 import './App.css';
 import './styles/admonitions.css';
 import './components/shims/docusaurus/styles.css';
@@ -84,11 +89,8 @@ function App() {
   // get theme context for MPE preview themes
   const { previewTheme, setPreviewThemeState } = useTheme();
 
-  // set trust state (called by RPC handler)
-  const setTrustState = useCallback((trustState: TrustState) => {
-    debug('[APP] setTrustState called', trustState);
-    setState((prev) => ({ ...prev, trustState }));
-  }, []);
+  // simple field setters using factory hooks
+  const setTrustState = useFieldSetter(setState, 'trustState', 'APP');
 
   // set Safe Mode content (called by RPC handler)
   const setSafeContent = useCallback((html: string) => {
@@ -136,46 +138,21 @@ function App() {
   }, []);
 
   // clear error & retry
-  const clearError = useCallback(() => {
-    debug('[APP] clearError called');
-    setState((prev) => ({
-      ...prev,
-      error: null,
-    }));
-  }, []);
+  const clearError = useFieldResetter(setState, 'error', null, 'APP', 'clearError');
 
   // set evaluated component after Trusted Mode evaluation
-  const setEvaluatedComponent = useCallback(
-    (component: ComponentType | null) => {
-      debug(
-        '[APP] setEvaluatedComponent called',
-        component ? 'has component' : 'null'
-      );
-      setState((prev) => ({
-        ...prev,
-        evaluatedComponent: component,
-      }));
-    },
-    []
+  const setEvaluatedComponent = useFieldSetterWithFormat(
+    setState,
+    'evaluatedComponent',
+    'APP',
+    (comp) => `setEvaluatedComponent called, ${comp ? 'has component' : 'null'}`
   );
 
   // set stale indicator state
-  const setStale = useCallback((isStale: boolean) => {
-    debug('[APP] setStale called', isStale);
-    setState((prev) => ({
-      ...prev,
-      isStale,
-    }));
-  }, []);
+  const setStale = useFieldSetter(setState, 'isStale', 'APP');
 
   // set Nextra page metadata (called by RPC handler)
-  const setNextraMeta = useCallback((meta: NextraPageMeta) => {
-    debug('[APP] setNextraMeta called', meta);
-    setState((prev) => ({
-      ...prev,
-      nextraMeta: meta,
-    }));
-  }, []);
+  const setNextraMeta = useFieldSetter(setState, 'nextraMeta', 'APP');
 
   // zoom controls
   const zoomIn = useCallback(() => {
@@ -194,13 +171,13 @@ function App() {
     }));
   }, []);
 
-  const resetZoom = useCallback(() => {
-    debug('[APP] resetZoom called');
-    setState((prev) => ({
-      ...prev,
-      zoomLevel: ZOOM_DEFAULT_PERCENT,
-    }));
-  }, []);
+  const resetZoom = useFieldResetter(
+    setState,
+    'zoomLevel',
+    ZOOM_DEFAULT_PERCENT,
+    'APP',
+    'resetZoom'
+  );
 
   // intercept Ctrl/Cmd+clicks on external links & route to extension
   const handleLinkClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
