@@ -56,6 +56,10 @@ export default tseslint.config(
       '**/*.mjs',
       // local eslint rules (plain JS)
       'packages/extension/eslint-rules/**',
+      // test files (not in main tsconfig, tests currently disabled)
+      '**/*.test.ts',
+      '**/*.integration.test.ts',
+      'packages/extension/test/**',
     ],
   }
 );

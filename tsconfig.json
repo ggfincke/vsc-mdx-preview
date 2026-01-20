@@ -22,5 +22,5 @@
     }
   },
   "include": ["packages/extension", "packages/shared"],
-  "exclude": ["node_modules", ".vscode-test"]
+  "exclude": ["node_modules", ".vscode-test", "**/*.test.ts", "**/*.integration.test.ts", "**/test/**"]
 }

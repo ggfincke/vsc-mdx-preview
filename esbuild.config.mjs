@@ -14,7 +14,9 @@ const buildOptions = {
   bundle: true,
   outfile: 'build/extension/extension.js',
   // vscode is provided by VS Code at runtime
-  external: ['vscode'],
+  // @babel/preset-typescript/package.json is dynamically required by @babel/core
+  // for module type detection (optional, not used in this project)
+  external: ['vscode', '@babel/preset-typescript/package.json'],
   // VS Code extension host requires CommonJS
   format: 'cjs',
   platform: 'node',
