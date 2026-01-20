@@ -13,6 +13,7 @@ import {
   rehypeKatex,
 } from './shared-plugins';
 import type { LoadedPlugins } from './loader';
+import type { PluginPipeline } from '../types';
 
 // rehype-raw configuration w/ MDX-specific passThrough nodes
 // these nodes must not be parsed as raw HTML to preserve MDX semantics
@@ -26,12 +27,6 @@ export const REHYPE_RAW_CONFIG = {
     'mdxjsEsm',
   ],
 } as const;
-
-// result of building the plugin pipeline
-export interface PluginPipeline {
-  remarkPlugins: Pluggable[];
-  rehypePlugins: Pluggable[];
-}
 
 // build the remark plugin array for Trusted Mode
 // merges shared plugins w/ custom plugins from config

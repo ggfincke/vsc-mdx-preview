@@ -1,6 +1,8 @@
 // packages/extension/compiler/types.ts
 // consolidated type definitions for the compiler subsystem
 
+import type { Pluggable } from 'unified';
+
 // how to handle unknown JSX components in Safe Mode (strip, placeholder, or raw)
 export type UnknownBehavior = 'strip' | 'placeholder' | 'raw';
 
@@ -9,8 +11,8 @@ export type PluginSpec = string | [string, Record<string, unknown>];
 
 // plugin pipeline configuration (remark + rehype plugins)
 export interface PluginPipeline {
-  remarkPlugins: unknown[];
-  rehypePlugins: unknown[];
+  remarkPlugins: Pluggable[];
+  rehypePlugins: Pluggable[];
 }
 
 // component mapping from MDX component name to relative file path

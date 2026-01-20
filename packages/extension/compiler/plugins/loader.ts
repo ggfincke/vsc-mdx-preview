@@ -10,6 +10,8 @@ import { getTrustManager, getErrorReporter } from '../../services';
 import { getNodeResolver } from '../../module-system/resolver/resolver-factory';
 import { PluginError } from '../../errors';
 import { validateFunction } from '../../utils/validation';
+import { extractErrorMessage, isError } from '@mdx-preview/shared';
+import { parsePluginSpec, getPluginName } from './utils';
 
 // get shared node resolver instance for plugin resolution
 const nodeResolver = getNodeResolver();
@@ -31,8 +33,7 @@ async function loadPlugin(
   spec: PluginSpec,
   configDir: string
 ): Promise<Pluggable> {
-  const pluginName = typeof spec === 'string' ? spec : spec[0];
-  const pluginOptions = typeof spec === 'string' ? undefined : spec[1];
+  const { name: pluginName, options: pluginOptions } = parsePluginSpec(spec);
 
   try {
     const pluginPath = resolvePluginPath(pluginName, configDir);
@@ -59,7 +60,7 @@ async function loadPlugin(
     }
     return pluginFn as Pluggable;
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = extractErrorMessage(err);
     throw new Error(`Failed to load plugin "${pluginName}": ${message}`);
   }
 }
@@ -122,20 +123,20 @@ export async function loadPluginsFromConfig(
   // load remark plugins
   if (remarkPlugins && remarkPlugins.length > 0) {
     for (const spec of remarkPlugins) {
-      const pluginName = typeof spec === 'string' ? spec : spec[0];
+      const pluginName = getPluginName(spec);
       try {
         const plugin = await loadPlugin(spec, configDir);
         result.remarkPlugins.push(plugin);
         debug(`Loaded remark plugin: ${pluginName}`);
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
+        const message = extractErrorMessage(err);
         result.errorCount++;
         getErrorReporter().reportPluginError(
           new PluginError(
             message,
             'PLUGIN_LOAD_ERROR',
             pluginName,
-            err instanceof Error ? err : undefined
+            isError(err) ? err : undefined
           ),
           pluginName
         );
@@ -146,20 +147,20 @@ export async function loadPluginsFromConfig(
   // load rehype plugins
   if (rehypePlugins && rehypePlugins.length > 0) {
     for (const spec of rehypePlugins) {
-      const pluginName = typeof spec === 'string' ? spec : spec[0];
+      const pluginName = getPluginName(spec);
       try {
         const plugin = await loadPlugin(spec, configDir);
         result.rehypePlugins.push(plugin);
         debug(`Loaded rehype plugin: ${pluginName}`);
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
+        const message = extractErrorMessage(err);
         result.errorCount++;
         getErrorReporter().reportPluginError(
           new PluginError(
             message,
             'PLUGIN_LOAD_ERROR',
             pluginName,
-            err instanceof Error ? err : undefined
+            isError(err) ? err : undefined
           ),
           pluginName
         );
