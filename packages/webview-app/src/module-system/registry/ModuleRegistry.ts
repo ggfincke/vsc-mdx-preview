@@ -1,5 +1,5 @@
 // packages/webview-app/src/module-system/registry/ModuleRegistry.ts
-// cache evaluated modules with LRU eviction & track pending fetches
+// cache evaluated modules w/ LRU eviction & track pending fetches
 
 import type { Module } from '../types';
 
@@ -7,13 +7,13 @@ import type { Module } from '../types';
 const DEFAULT_MAX_MODULES = 500;
 const DEFAULT_MAX_STYLES = 100;
 
-// Cache entry with access tracking for LRU
+// Cache entry w/ access tracking for LRU
 interface CacheEntry {
   module: Module;
   lastAccessed: number;
 }
 
-// Style tracking with reference counting
+// Style tracking w/ reference counting
 interface StyleEntry {
   refCount: number;
   lastAccessed: number;
@@ -44,7 +44,7 @@ export class ModuleRegistry {
   }
 
   // preload module (for built-in modules like React)
-  preload(id: string, exports: any): void {
+  preload(id: string, exports: unknown): void {
     this.preloadedIds.add(id);
     this.cache.set(id, {
       module: { id, exports, loaded: true },
@@ -67,7 +67,7 @@ export class ModuleRegistry {
     return this.cache.has(id);
   }
 
-  // set module in cache with LRU eviction
+  // set module in cache w/ LRU eviction
   set(id: string, module: Module): void {
     // Evict if at capacity (don't evict preloaded)
     while (this.cache.size >= this.maxModules && this.canEvict()) {
@@ -90,11 +90,7 @@ export class ModuleRegistry {
     return false;
   }
 
-  /**
-   * Remove all resolutionMap entries where moduleId is either:
-   * - The parent (key prefix before \0)
-   * - The resolved target (value)
-   */
+  // remove all resolutionMap entries for moduleId (as parent or target)
   private cleanResolutionMapFor(moduleId: string): void {
     for (const [key, value] of this.resolutionMap) {
       // Key format: "parentId\0request"
@@ -105,9 +101,7 @@ export class ModuleRegistry {
     }
   }
 
-  /**
-   * Remove module from all dependents sets and delete its own entry
-   */
+  // remove module from all dependents sets & delete its own entry
   private cleanDependentsFor(moduleId: string): void {
     // Remove this module's entry as a dependency target
     this.dependents.delete(moduleId);
@@ -241,7 +235,7 @@ export class ModuleRegistry {
     return this.injectedStyles.has(id);
   }
 
-  // mark CSS as injected for module (with reference counting)
+  // mark CSS as injected for module (w/ reference counting)
   markStyleInjected(id: string): void {
     const existing = this.injectedStyles.get(id);
     if (existing) {

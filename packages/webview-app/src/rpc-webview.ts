@@ -82,7 +82,7 @@ export type ExtensionHandle = ExtensionRPC;
 let extensionHandle: ExtensionHandle;
 let webviewEndpoint: WebviewProxy;
 
-// Module-level state for handlers and pending messages
+// Module-level state for handlers & pending messages
 let stateHandlers: WebviewStateHandlers | null = null;
 
 // Compile-time exhaustiveness check for message types
@@ -121,7 +121,7 @@ function flushPendingMessages(): void {
     'stale',
   ];
 
-  // Copy and clear atomically
+  // Copy & clear atomically
   const messages = new Map(pendingMessages);
   pendingMessages.clear();
 
@@ -201,10 +201,10 @@ class RPCWebviewHandle implements WebviewRPC {
     });
   }
 
-  // EXCEPTION handler - async with dynamic import (kept manual)
+  // EXCEPTION handler - async w/ dynamic import (kept manual)
   async invalidate(fsPath: string): Promise<void> {
     log.debug(`invalidate called: ${fsPath}`);
-    // ! import dynamically to avoid circular dependency w/ module-system
+    // ! import dynamically to avoid circular dep w/ module-system
     const { invalidateModule } = await import('./module-system');
     invalidateModule(fsPath);
   }
@@ -238,7 +238,7 @@ export function registerWebviewHandlers(handlers: WebviewStateHandlers): void {
     stateHandlers = handlers;
 
     // Warn if many messages accumulated (potential timing issue)
-    // Note: With coalescing, this is less likely but still possible with many message types
+    // Note: w/ coalescing, this is less likely but still possible w/ many message types
     if (pendingMessages.size > RPC_PENDING_MESSAGES_WARNING_THRESHOLD) {
       log.error(
         `Warning: ${pendingMessages.size} pending messages accumulated`

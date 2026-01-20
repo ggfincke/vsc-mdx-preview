@@ -194,7 +194,7 @@ function App() {
 
     const linkType = classifyLink(href);
 
-    // only handle external links with Ctrl/Cmd+click
+    // only handle external links w/ Ctrl/Cmd+click
     if (linkType === 'external') {
       const isModifierClick = event.metaKey || event.ctrlKey;
       if (!isModifierClick) {

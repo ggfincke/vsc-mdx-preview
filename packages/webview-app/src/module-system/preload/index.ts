@@ -1,10 +1,10 @@
 // packages/webview-app/src/module-system/preload/index.ts
-// preload orchestration for core modules and shim registry
+// preload orchestration for core modules & shim registry
 
 import { PRELOADED_MODULE_IDS } from '@mdx-preview/shared';
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
-import { fallbackLayoutModule, preloadCoreModules } from './core';
-import { PRELOAD_ALIASES, PRELOADED_SHIM_IDS } from './aliases.generated';
+import { preloadCoreModules } from './core';
+import { PRELOADED_SHIM_IDS } from './aliases.generated';
 import { preloadAllShims } from './preload.generated';
 
 export { fallbackLayoutModule } from './core';

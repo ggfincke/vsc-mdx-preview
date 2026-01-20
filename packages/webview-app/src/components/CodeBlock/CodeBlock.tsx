@@ -1,7 +1,6 @@
 // packages/webview-app/src/components/CodeBlock/CodeBlock.tsx
 // * post-process code blocks to add copy button, language badge, & line highlighting
 
-import { useCallback } from 'react';
 import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../constants';
 import { GITHUB_ICONS } from '../shims/base/icons';
 import './CodeBlock.css';
@@ -75,15 +74,6 @@ function applyLineHighlighting(container: HTMLElement, lines: number[]): void {
       }
     });
   });
-}
-
-// hook for use in React components
-export function useCodeBlockEnhancement() {
-  return useCallback((container: HTMLElement | null) => {
-    if (container) {
-      enhanceCodeBlocks(container);
-    }
-  }, []);
 }
 
 export default enhanceCodeBlocks;

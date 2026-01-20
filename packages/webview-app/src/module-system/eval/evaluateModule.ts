@@ -20,9 +20,9 @@ export function evaluateModule(
   code: string,
   moduleId: string,
   runtime: ModuleRuntime
-): any {
+): Record<string, unknown> {
   // CJS-style module context
-  const module = { exports: {} as any };
+  const module = { exports: {} as Record<string, unknown> };
   const exports = module.exports;
 
   try {

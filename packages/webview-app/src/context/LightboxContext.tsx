@@ -1,6 +1,8 @@
 // packages/webview-app/src/context/LightboxContext.tsx
 // React context for image lightbox functionality
 
+/* eslint-disable react-refresh/only-export-components -- Hook is co-located with provider */
+
 import {
   createContext,
   useContext,

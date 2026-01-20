@@ -1,5 +1,5 @@
 // packages/webview-app/src/hooks/useStateUpdaters.ts
-// Factory hooks for creating memoized state field setters with debug logging
+// Factory hooks for creating memoized state field setters w/ debug logging
 
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { debug } from '../utils/debug';
@@ -15,7 +15,7 @@ export function useFieldSetter<S extends object, K extends keyof S>(
       debug(`[${logTag}] set${capitalize(String(field))} called`, value);
       setState((prev) => ({ ...prev, [field]: value }));
     },
-    // setState is stable, field and logTag are constants
+    // setState is stable, field & logTag are constants
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );

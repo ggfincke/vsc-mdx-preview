@@ -1,5 +1,5 @@
 // packages/webview-app/src/rpc/handler-factory.ts
-// Factory functions for creating RPC handler methods with consistent patterns
+// Factory functions for creating RPC handler methods w/ consistent patterns
 
 import type { TaggedLogger } from '../utils/debug';
 import type {

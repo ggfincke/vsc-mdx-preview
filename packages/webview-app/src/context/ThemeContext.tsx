@@ -1,6 +1,8 @@
 // packages/webview-app/src/context/ThemeContext.tsx
 // backward compatibility re-exports from theme module
 
+/* eslint-disable react-refresh/only-export-components -- Re-exports from theme module */
+
 // re-export everything from the new theme module
 export { ThemeProvider, useTheme } from '../theme/context';
 

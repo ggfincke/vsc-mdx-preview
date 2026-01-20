@@ -55,7 +55,7 @@ export interface ErrorDisplayProps {
 }
 
 // Error display component w/ VS Code styling
-// Exported for reuse in App.tsx and other error handling contexts
+// Exported for reuse in App.tsx & other error handling contexts
 export function ErrorDisplay({
   error,
   onReset,

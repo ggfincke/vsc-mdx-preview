@@ -1,5 +1,5 @@
 // packages/webview-app/src/utils/createTaggedLogger.ts
-// Factory for creating tagged debug loggers with consistent prefix
+// Factory for creating tagged debug loggers w/ consistent prefix
 
 import { debug, debugWarn, debugError } from './debug';
 

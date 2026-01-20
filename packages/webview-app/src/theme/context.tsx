@@ -1,6 +1,8 @@
 // packages/webview-app/src/theme/context.tsx
 // React context for theme state - consumes state pushed from extension (server-driven theming)
 
+/* eslint-disable react-refresh/only-export-components -- Hook is co-located with provider */
+
 import {
   createContext,
   useContext,

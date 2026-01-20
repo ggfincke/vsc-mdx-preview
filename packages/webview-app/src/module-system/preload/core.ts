@@ -1,5 +1,5 @@
 // packages/webview-app/src/module-system/preload/core.ts
-// core module preloads and shim module helpers
+// core module preloads & shim module helpers
 
 import React from 'react';
 import * as ReactDOM from 'react-dom';

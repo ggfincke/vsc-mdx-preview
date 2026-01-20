@@ -146,9 +146,7 @@ export const QUEUED_CONFIGS = {
   setStale: SET_STALE_CONFIG,
 } as const;
 
-/**
- * All OPTIONAL handler configurations.
- */
+// all OPTIONAL handler configurations
 export const OPTIONAL_CONFIGS = {
   setTheme: SET_THEME_CONFIG,
   setNextraMeta: SET_NEXTRA_META_CONFIG,

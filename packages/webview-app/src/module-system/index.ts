@@ -10,7 +10,7 @@ import {
   fallbackLayoutModule,
   getPreservedIds,
 } from './preload';
-import type { FetchResult, Module, ModuleRuntime } from './types';
+import type { FetchResult } from './types';
 import { ExtensionHandle } from '../rpc-webview';
 
 // Re-exports for external use
