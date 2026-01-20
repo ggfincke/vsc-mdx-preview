@@ -6,6 +6,7 @@ import { performance } from 'perf_hooks';
 import { Preview } from './preview-manager';
 import { debug } from '../logging';
 import { ErrorContext } from '../errors';
+import { extractErrorMessage } from '@mdx-preview/shared';
 import {
   getTrustManager,
   getErrorReporter,
@@ -131,7 +132,7 @@ export default async function evaluateInWebview(
     debug('[EVALUATE] evaluateInWebview complete');
   } catch (error) {
     debug(
-      `[EVALUATE] ERROR: ${error instanceof Error ? error.message : String(error)}`
+      `[EVALUATE] ERROR: ${extractErrorMessage(error)}`
     );
     getErrorReporter().report(error, {
       context: ErrorContext.Transpile,

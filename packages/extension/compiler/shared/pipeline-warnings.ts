@@ -40,8 +40,12 @@ export function createIgnoredPluginsWarning(
 ): PipelineWarning {
   const total = remarkCount + rehypeCount;
   const details = [];
-  if (remarkCount > 0) details.push(`${remarkCount} remark`);
-  if (rehypeCount > 0) details.push(`${rehypeCount} rehype`);
+  if (remarkCount > 0) {
+    details.push(`${remarkCount} remark`);
+  }
+  if (rehypeCount > 0) {
+    details.push(`${rehypeCount} rehype`);
+  }
 
   return {
     code: PipelineWarningCode.CUSTOM_PLUGINS_IGNORED,

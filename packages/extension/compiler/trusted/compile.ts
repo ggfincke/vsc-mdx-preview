@@ -123,6 +123,7 @@ export async function compileTrusted(
   const componentImports = generateComponentImports(
     preview.mdxPreviewConfig,
     documentDir,
+    preview.doc.uri,
     { builtinsEnabled }
   );
 

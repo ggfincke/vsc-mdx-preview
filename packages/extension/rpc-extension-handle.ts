@@ -184,6 +184,12 @@ class ExtensionHandle implements ExtensionRPC {
       return;
     }
 
+    // workspace trust check - prevent untrusted documents from opening files
+    if (!vscode.workspace.isTrusted) {
+      logWarn('openDocument: blocked - workspace not trusted');
+      return;
+    }
+
     // validate line/column if provided (optional, min 1)
     const validLine = validateOptionalNumber(line, 'line number', {
       ...opts,
@@ -230,7 +236,7 @@ class ExtensionHandle implements ExtensionRPC {
       }
 
       await vscode.window.showTextDocument(doc, options);
-    } catch (err) {
+    } catch {
       getErrorReporter().reportToUser(
         new Error(`Could not open file: ${relativePath}`),
         ErrorContext.Extension
@@ -273,6 +279,21 @@ class ExtensionHandle implements ExtensionRPC {
       return;
     }
 
+    // ! trust check for target file - ensures preview can execute safely
+    const targetUri = vscode.Uri.file(resolvedPath);
+    const trustState = getTrustManager().getStateForDocument(targetUri);
+    if (!trustState.canExecute) {
+      getErrorReporter().report(
+        new SecurityError(
+          `Cannot open preview: ${trustState.reason || 'Target file is not in Trusted Mode'}`,
+          'TRUST_VIOLATION',
+          resolvedPath
+        ),
+        { context: ErrorContext.Security, severity: ErrorSeverity.Warning }
+      );
+      return;
+    }
+
     try {
       // open document in editor (this makes it the active editor)
       const doc = await vscode.workspace.openTextDocument(resolvedPath);
@@ -282,7 +303,7 @@ class ExtensionHandle implements ExtensionRPC {
       // openPreview() uses the active editor's document
       const { openPreview } = await import('./preview/preview-manager');
       await openPreview();
-    } catch (err) {
+    } catch {
       getErrorReporter().reportToUser(
         new Error(`Could not open preview: ${relativePath}`),
         ErrorContext.Extension

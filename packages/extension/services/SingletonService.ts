@@ -24,10 +24,10 @@ export abstract class SingletonService<
   }
 
   // get singleton instance (creates new instance if none exists)
-  // Note: Using Function & { prototype: S } to infer type from prototype without
+  // Note: Using abstract new () => S to infer type from prototype without
   // checking constructor accessibility. This allows protected constructors.
   static getInstance<S extends SingletonService<S>>(
-    this: Function & { prototype: S }
+    this: (abstract new () => S) & { prototype: S }
   ): S {
     // Cast to access protected static 'instance' and call protected constructor
     const ctor = this as unknown as { instance?: S; new (): S };

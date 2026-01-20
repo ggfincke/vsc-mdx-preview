@@ -1,10 +1,10 @@
 // packages/extension/compiler/trusted/component-mapper.ts
 // generate import statements for custom component mappings from config
 
-import * as path from 'path';
+import * as vscode from 'vscode';
 import { debug, info } from '../../logging';
+import { toAbsolutePath, toRelativeImportPath } from '../../utils/path-utils';
 import type { ResolvedConfig } from '../../preview/config';
-import { SecurityMode } from '../../security/TrustManager';
 import { getTrustManager } from '../../services';
 
 // Use shared component registry as single source of truth
@@ -41,6 +41,7 @@ const BUILTIN_GENERIC_COMPONENTS = getAllGenericComponentNames();
 export function generateComponentImports(
   config: ResolvedConfig | undefined,
   documentDir: string,
+  documentUri: vscode.Uri,
   options: ComponentImportsOptions = {}
 ): ComponentImportsResult {
   const { builtinsEnabled = true } = options;
@@ -51,11 +52,10 @@ export function generateComponentImports(
     hasComponents: false,
   };
 
-  // check trust state - only generate in Trusted Mode
-  const trustManager = getTrustManager();
-  const securityMode = trustManager.getMode();
+  // check trust state for specific document - validates all 4 security rules
+  const trustState = getTrustManager().getStateForDocument(documentUri);
 
-  if (securityMode !== SecurityMode.Trusted) {
+  if (!trustState.canExecute) {
     const components = config?.config.components;
     if (components && Object.keys(components).length > 0) {
       emitWarning(createIgnoredComponentsWarning(Object.keys(components)));
@@ -78,20 +78,10 @@ export function generateComponentImports(
       userDefinedComponents.add(componentName);
 
       // resolve component path relative to config directory
-      const absolutePath = path.isAbsolute(componentPath)
-        ? componentPath
-        : path.resolve(configDir, componentPath);
+      const absolutePath = toAbsolutePath(componentPath, configDir);
 
-      // convert to relative path from document directory
-      let relativePath = path.relative(documentDir, absolutePath);
-
-      // ensure path starts with ./ for relative imports
-      if (!relativePath.startsWith('.') && !relativePath.startsWith('/')) {
-        relativePath = './' + relativePath;
-      }
-
-      // normalize path separators for imports
-      relativePath = relativePath.replace(/\\/g, '/');
+      // convert to relative import path from document directory
+      const relativePath = toRelativeImportPath(absolutePath, documentDir);
 
       // generate import statement w/ a safe variable name
       const safeVarName = `_component_${componentName.replace(/[^a-zA-Z0-9_]/g, '_')}`;
