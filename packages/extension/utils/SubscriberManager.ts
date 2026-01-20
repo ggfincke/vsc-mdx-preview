@@ -4,54 +4,28 @@
 import * as vscode from 'vscode';
 import { debug } from '../logging';
 
-/**
- * Error handler for subscriber notifications.
- * Default logs to debug channel.
- */
+// error handler for subscriber notifications (default logs to debug channel)
 export type SubscriberErrorHandler = (error: unknown, subscriberIndex: number) => void;
 
-/**
- * Generic subscriber manager that implements the pub/sub pattern.
- * Eliminates ~200 LOC of duplicated subscriber code across services.
- *
- * @example
- * ```typescript
- * class MyService {
- *   private subscribers = new SubscriberManager<MyData>('MY-SERVICE');
- *
- *   subscribe(callback: (data: MyData) => void): vscode.Disposable {
- *     return this.subscribers.subscribe(callback);
- *   }
- *
- *   private notifyChange(data: MyData): void {
- *     this.subscribers.notify(data);
- *   }
- *
- *   dispose(): void {
- *     this.subscribers.clear();
- *   }
- * }
- * ```
- */
+// interface for services that support subscription to state changes
+export interface ISubscribable<T> {
+  // subscribe to state change notifications
+  subscribe(callback: (data: T) => void): vscode.Disposable;
+}
+
+// * generic subscriber manager that implements the pub/sub pattern
 export class SubscriberManager<T> {
   private subscribers = new Set<(data: T) => void>();
   private readonly logTag: string;
   private readonly errorHandler?: SubscriberErrorHandler;
 
-  /**
-   * Create a new SubscriberManager.
-   * @param logTag Tag for debug logging (e.g., 'CONFIG-MANAGER')
-   * @param errorHandler Optional custom error handler. Defaults to debug logging.
-   */
+  // create a new SubscriberManager w/ log tag & optional error handler
   constructor(logTag: string, errorHandler?: SubscriberErrorHandler) {
     this.logTag = logTag;
     this.errorHandler = errorHandler;
   }
 
-  /**
-   * Subscribe to notifications.
-   * @returns Disposable that removes the subscription when disposed.
-   */
+  // subscribe to notifications (returns disposable to unsubscribe)
   subscribe(callback: (data: T) => void): vscode.Disposable {
     this.subscribers.add(callback);
     return {
@@ -61,10 +35,7 @@ export class SubscriberManager<T> {
     };
   }
 
-  /**
-   * Notify all subscribers with the given data.
-   * Errors in individual subscribers are caught and logged, not propagated.
-   */
+  // notify all subscribers w/ the given data (errors caught & logged)
   notify(data: T): void {
     let index = 0;
     for (const callback of this.subscribers) {
@@ -81,24 +52,17 @@ export class SubscriberManager<T> {
     }
   }
 
-  /**
-   * Clear all subscribers.
-   * Should be called in service disposal.
-   */
+  // clear all subscribers (call in service disposal)
   clear(): void {
     this.subscribers.clear();
   }
 
-  /**
-   * Get the number of active subscribers.
-   */
+  // get the number of active subscribers
   get size(): number {
     return this.subscribers.size;
   }
 
-  /**
-   * Check if there are any subscribers.
-   */
+  // check if there are any subscribers
   get hasSubscribers(): boolean {
     return this.subscribers.size > 0;
   }

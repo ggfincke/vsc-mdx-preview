@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import { error as logError, debug } from '../logging';
 import { SingletonService } from '../services/SingletonService';
+import { SubscriberManager } from '../utils/SubscriberManager';
 
 import { createOrShowPanel, refreshPanel } from './webview-manager';
 import {
@@ -47,7 +48,7 @@ export class PreviewManager extends SingletonService<PreviewManager> {
   protected readonly logTag = 'PREVIEW-MANAGER';
 
   private currentPreview: Preview | undefined;
-  private subscribers: Set<() => void> = new Set();
+  private subscriberManager = new SubscriberManager<void>('PREVIEW-MANAGER');
 
   // panel state (moved from webview-manager.ts module-level for better testability)
   private _panel: vscode.WebviewPanel | undefined;
@@ -94,12 +95,7 @@ export class PreviewManager extends SingletonService<PreviewManager> {
 
   // subscribe to preview state changes (open/close)
   subscribe(callback: () => void): vscode.Disposable {
-    this.subscribers.add(callback);
-    return {
-      dispose: () => {
-        this.subscribers.delete(callback);
-      },
-    };
+    return this.subscriberManager.subscribe(callback);
   }
 
   // panel state accessors
@@ -155,9 +151,7 @@ export class PreviewManager extends SingletonService<PreviewManager> {
 
   // notify subscribers when preview state changes
   private notifySubscribers(): void {
-    for (const callback of this.subscribers) {
-      callback();
-    }
+    this.subscriberManager.notify(undefined);
   }
 
   // custom cleanup - clear panel, preview, and subscribers
@@ -165,7 +159,7 @@ export class PreviewManager extends SingletonService<PreviewManager> {
     this.clearPanel();
     this.currentPreview?.dispose();
     this.currentPreview = undefined;
-    this.subscribers.clear();
+    this.subscriberManager.clear();
   }
 }
 

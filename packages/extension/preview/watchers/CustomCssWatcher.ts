@@ -2,11 +2,11 @@
 // watch custom CSS file for changes & notify webview
 
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
 import { debug } from '../../logging';
 import type { WebviewRPC } from '@mdx-preview/shared';
 import { BaseWatcher } from './BaseWatcher';
+import { readFileAsync } from '../../utils/file-utils';
+import { resolvePathWithFallbacks } from '../../utils/path-utils';
 
 // webview handle w/ setCustomCss method
 type CssNotifier = Pick<WebviewRPC, 'setCustomCss'>;
@@ -15,7 +15,6 @@ type CssNotifier = Pick<WebviewRPC, 'setCustomCss'>;
 export class CustomCssWatcher extends BaseWatcher {
   protected readonly logTag = 'CSS';
   private watcher?: vscode.FileSystemWatcher;
-  private disposables: vscode.Disposable[] = [];
   private resolvedPath: string | null = null;
   private notifier?: CssNotifier;
 
@@ -52,35 +51,33 @@ export class CustomCssWatcher extends BaseWatcher {
     // initial load
     await this.loadAndSendCss(this.resolvedPath);
 
-    // watch for changes
-    this.watcher = vscode.workspace.createFileSystemWatcher(this.resolvedPath);
-
-    this.disposables.push(
-      this.watcher.onDidChange(() => {
+    // Use createFileWatcher from base class with error wrapping
+    this.watcher = this.createFileWatcher(this.resolvedPath, {
+      onChange: () => {
         debug('[CSS] Custom CSS file changed');
         if (this.resolvedPath) {
           this.loadAndSendCss(this.resolvedPath);
         }
-      }),
-      this.watcher.onDidCreate(() => {
+      },
+      onCreate: () => {
         debug('[CSS] Custom CSS file created');
         if (this.resolvedPath) {
           this.loadAndSendCss(this.resolvedPath);
         }
-      }),
-      this.watcher.onDidDelete(() => {
+      },
+      onDelete: () => {
         debug('[CSS] Custom CSS file deleted');
         this.notifier?.setCustomCss?.('');
-      }),
-      this.watcher
-    );
+      },
+      wrapErrors: true,
+    });
 
     debug('[CSS] Watching custom CSS file');
     this.markReady(); // Signal ready after setup complete
   }
 
   protected onStop(): void {
-    this.disposeAll(this.disposables);
+    this.disposeWatcher(this.watcher);
     this.watcher = undefined;
     this.resolvedPath = null;
   }
@@ -96,33 +93,24 @@ export class CustomCssWatcher extends BaseWatcher {
 
   // resolve CSS path (relative to workspace or absolute)
   private resolvePath(cssPath: string): string | null {
-    if (path.isAbsolute(cssPath)) {
-      return cssPath;
-    }
-
-    // try relative to workspace root
-    if (this.workspaceFolders && this.workspaceFolders.length > 0) {
-      return path.join(this.workspaceFolders[0].uri.fsPath, cssPath);
-    }
-
-    // try relative to document
-    if (this.documentDirectory) {
-      return path.join(this.documentDirectory, cssPath);
-    }
-
-    return null;
+    return resolvePathWithFallbacks({
+      inputPath: cssPath,
+      primaryDir: this.workspaceFolders?.[0]?.uri.fsPath,
+      fallbackDirs: [this.documentDirectory],
+    });
   }
 
   // load CSS file & send to webview
   private async loadAndSendCss(cssPath: string): Promise<void> {
-    try {
-      const cssContent = await fs.promises.readFile(cssPath, 'utf-8');
+    const cssContent = await readFileAsync(cssPath, 'utf-8', {
+      logTag: '[CSS]',
+      logOnError: true,
+    });
+    if (cssContent) {
       this.notifier?.setCustomCss?.(cssContent);
       debug(`[CSS] Loaded custom CSS: ${cssPath} (${cssContent.length} chars)`);
-    } catch (err) {
-      debug(`[CSS] Failed to load custom CSS: ${err}`);
-      // silently fail - file might not exist yet
     }
+    // silently fail if null - file might not exist yet
   }
 
   // update CSS path & restart watching

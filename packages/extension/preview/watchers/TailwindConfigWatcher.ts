@@ -20,15 +20,11 @@ export class TailwindConfigWatcher extends BaseWatcher {
     this._debouncedOnChange = debounce(onChange, CONFIG_WATCHER_DEBOUNCE_MS);
   }
 
+  // Use updateAndRestartSync pattern from base class
   setWatchFiles(files: string[]): void {
-    const wasActive = this._isActive;
-    if (wasActive) {
-      this.stop();
-    }
-    this.watchFiles = files;
-    if (wasActive) {
-      this.start();
-    }
+    this.updateAndRestartSync(() => {
+      this.watchFiles = files;
+    });
   }
 
   protected canStart(): boolean {
@@ -38,30 +34,21 @@ export class TailwindConfigWatcher extends BaseWatcher {
   protected onStart(): void {
     for (const file of this.watchFiles) {
       debug(`[TAILWIND-WATCHER] Creating watcher for: ${file}`);
-      const watcher = vscode.workspace.createFileSystemWatcher(file);
-      watcher.onDidChange(() => {
-        try {
+      // Use createFileWatcher from base class with error wrapping
+      const watcher = this.createFileWatcher(file, {
+        onChange: () => {
           debug(`[TAILWIND-WATCHER] File changed: ${file}`);
           this._debouncedOnChange();
-        } catch (error) {
-          debug(`[TAILWIND-WATCHER] Error in change callback: ${error}`);
-        }
-      });
-      watcher.onDidCreate(() => {
-        try {
+        },
+        onCreate: () => {
           debug(`[TAILWIND-WATCHER] File created: ${file}`);
           this._debouncedOnChange();
-        } catch (error) {
-          debug(`[TAILWIND-WATCHER] Error in create callback: ${error}`);
-        }
-      });
-      watcher.onDidDelete(() => {
-        try {
+        },
+        onDelete: () => {
           debug(`[TAILWIND-WATCHER] File deleted: ${file}`);
           this._debouncedOnChange();
-        } catch (error) {
-          debug(`[TAILWIND-WATCHER] Error in delete callback: ${error}`);
-        }
+        },
+        wrapErrors: true,
       });
       this.watchers.push(watcher);
     }
@@ -70,6 +57,6 @@ export class TailwindConfigWatcher extends BaseWatcher {
 
   protected onStop(): void {
     this._debouncedOnChange.cancel();
-    this.disposeWatcherArray(this.watchers);
+    this.disposeCollection(this.watchers);
   }
 }

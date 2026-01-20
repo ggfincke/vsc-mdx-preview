@@ -72,24 +72,24 @@ export class DependencyWatcher extends BaseWatcher {
       }
     }
 
-    // add watchers for new paths
+    // add watchers for new paths using createFileWatcher
     for (const fsPath of newPaths) {
       if (!this.watchers.has(fsPath)) {
         debug(`[DEP-WATCHER] Adding watcher: ${fsPath}`);
-        const watcher = vscode.workspace.createFileSystemWatcher(fsPath);
-
-        watcher.onDidChange(() => {
-          debug(`[DEP-WATCHER] File changed: ${fsPath}`);
-          this.onChangeCallback(fsPath);
+        const watcher = this.createFileWatcher(fsPath, {
+          onChange: () => {
+            debug(`[DEP-WATCHER] File changed: ${fsPath}`);
+            this.onChangeCallback(fsPath);
+          },
+          onDelete: () => {
+            debug(`[DEP-WATCHER] File deleted: ${fsPath}`);
+            this.watchers.delete(fsPath);
+            watcher.dispose();
+            this.onChangeCallback(fsPath);
+          },
+          ignoreCreateEvents: true,
+          wrapErrors: true,
         });
-
-        watcher.onDidDelete(() => {
-          debug(`[DEP-WATCHER] File deleted: ${fsPath}`);
-          this.watchers.delete(fsPath);
-          watcher.dispose();
-          this.onChangeCallback(fsPath);
-        });
-
         this.watchers.set(fsPath, watcher);
       }
     }
@@ -99,7 +99,7 @@ export class DependencyWatcher extends BaseWatcher {
 
   // clear all dependencies & dispose watchers
   clear(): void {
-    this.disposeWatcherMap(this.watchers);
+    this.disposeCollection(this.watchers);
   }
 
   protected onStart(): void {
