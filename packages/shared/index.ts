@@ -74,6 +74,16 @@ export function isPreviewError(value: unknown): value is PreviewError {
   );
 }
 
+// error handling utilities
+export {
+  isError,
+  extractErrorMessage,
+  extractErrorStack,
+  normalizeError,
+  extractErrorInfo,
+  type ErrorInfo,
+} from './utils/errors';
+
 // available preview themes (markdown content styling)
 export type PreviewTheme =
   | 'github-light'
