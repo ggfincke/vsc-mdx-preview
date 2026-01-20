@@ -4,6 +4,7 @@
 import type { FetchResult } from '@mdx-preview/shared';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
+import { buildModuleExportResult } from './result-builders';
 
 // handler for .json files - wraps JSON content as a CommonJS module export
 export class JsonHandler implements FileTypeHandler {
@@ -14,10 +15,6 @@ export class JsonHandler implements FileTypeHandler {
     fsPath: string,
     _preview: Preview
   ): Promise<FetchResult> {
-    return {
-      fsPath,
-      code: `module.exports = ${code}`,
-      dependencies: [],
-    };
+    return buildModuleExportResult(fsPath, code);
   }
 }

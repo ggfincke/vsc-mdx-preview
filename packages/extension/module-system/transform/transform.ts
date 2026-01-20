@@ -5,10 +5,13 @@ import { Preview } from '../../preview/preview-manager';
 import * as path from 'path';
 import isModule from 'is-module';
 import { compileTrusted } from '../../compiler/trusted/compile';
-import { transpileModule as tsTranspileModule } from 'typescript';
 import { transpileWithFallback } from './selector';
 import { debug } from '../../logging';
-import { resolveTypescriptConfig } from '../../preview/config';
+import {
+  transpileTypeScript,
+  isTypeScriptExtension,
+  isTypeScriptLanguage,
+} from './typescript-transpile';
 
 // result type for entry transformation (includes frontmatter)
 export interface TransformEntryResult {
@@ -39,18 +42,8 @@ async function transformEntry(
   const useSucrase = preview.configuration.useSucraseTranspiler;
   debug(`Transpiler: ${useSucrase ? 'Sucrase' : 'Babel'} selected for entry`);
 
-  if (
-    (languageId === 'typescript' || languageId === 'typescriptreact') &&
-    !useSucrase
-  ) {
-    if (!preview.typescriptConfiguration) {
-      preview.typescriptConfiguration = resolveTypescriptConfig(null);
-    }
-    const { tsCompilerOptions } = preview.typescriptConfiguration;
-    code = tsTranspileModule(code, {
-      compilerOptions: tsCompilerOptions,
-      fileName: fsPath,
-    }).outputText;
+  if (isTypeScriptLanguage(languageId) && !useSucrase) {
+    code = transpileTypeScript(code, fsPath, preview);
   }
 
   code = await transpileWithFallback(code, {
@@ -76,15 +69,8 @@ async function transform(
   }
 
   const useSucrase = preview.configuration.useSucraseTranspiler;
-  if (/\.tsx?$/i.test(extname) && !useSucrase) {
-    if (!preview.typescriptConfiguration) {
-      preview.typescriptConfiguration = resolveTypescriptConfig(null);
-    }
-    const { tsCompilerOptions } = preview.typescriptConfiguration;
-    code = tsTranspileModule(code, {
-      compilerOptions: tsCompilerOptions,
-      fileName: fsPath,
-    }).outputText;
+  if (isTypeScriptExtension(extname) && !useSucrase) {
+    code = transpileTypeScript(code, fsPath, preview);
   }
 
   const isInNodeModules = fsPath.split(path.sep).includes('node_modules');

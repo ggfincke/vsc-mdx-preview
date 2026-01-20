@@ -4,6 +4,7 @@
 import type { FetchResult } from '@mdx-preview/shared';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
+import { buildCssResult } from './result-builders';
 
 // handler for .css files - returns CSS content for injection into the webview
 export class CssHandler implements FileTypeHandler {
@@ -14,11 +15,6 @@ export class CssHandler implements FileTypeHandler {
     fsPath: string,
     _preview: Preview
   ): Promise<FetchResult> {
-    return {
-      fsPath,
-      css: code,
-      code: '',
-      dependencies: [],
-    };
+    return buildCssResult(fsPath, code);
   }
 }

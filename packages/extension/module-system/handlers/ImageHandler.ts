@@ -5,6 +5,7 @@ import type { FetchResult } from '@mdx-preview/shared';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { ModuleFetchError } from '../../errors';
+import { buildModuleExportResult } from './result-builders';
 
 // handler for image files (.gif, .png, .jpg, .jpeg, .svg) - converts file path to webview-accessible URI & wraps as module export
 export class ImageHandler implements FileTypeHandler {
@@ -25,10 +26,6 @@ export class ImageHandler implements FileTypeHandler {
       );
     }
 
-    return {
-      fsPath,
-      code: `module.exports = "${webviewUri}"`,
-      dependencies: [],
-    };
+    return buildModuleExportResult(fsPath, `"${webviewUri}"`);
   }
 }

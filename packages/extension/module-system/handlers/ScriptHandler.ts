@@ -6,6 +6,7 @@ import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { transform } from '../transform/transform';
 import { extractImports } from '../deps/import-extractor';
+import { buildScriptResult } from './result-builders';
 
 // handler for JavaScript/TypeScript files - delegates transpilation to transform.ts & extracts dependencies
 export class ScriptHandler implements FileTypeHandler {
@@ -26,10 +27,6 @@ export class ScriptHandler implements FileTypeHandler {
       (dep): dep is string => dep !== undefined && dep !== null
     );
 
-    return {
-      fsPath,
-      code: transformedCode,
-      dependencies,
-    };
+    return buildScriptResult(fsPath, transformedCode, dependencies);
   }
 }

@@ -7,6 +7,7 @@ import type { FetchResult } from '@mdx-preview/shared';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { getBrowserResolver } from '../resolver/resolver-factory';
+import { buildCssResult } from './result-builders';
 
 // handler for .scss & .sass files - compiles SASS/SCSS to CSS using the sass compiler
 export class SassHandler implements FileTypeHandler {
@@ -37,11 +38,6 @@ export class SassHandler implements FileTypeHandler {
       ],
     });
 
-    return {
-      fsPath,
-      css: result.css,
-      code: '',
-      dependencies: [],
-    };
+    return buildCssResult(fsPath, result.css);
   }
 }
