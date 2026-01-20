@@ -4,6 +4,8 @@
 // Uses compound component pattern: Cards and Cards.Card
 
 import React, { ReactNode, ReactElement, HTMLAttributes, CSSProperties } from 'react';
+import { cn } from '../../../utils/cn';
+import { ArrowIcon } from '../base/icons';
 
 // Cards props (compatible with Nextra)
 export interface CardsProps extends HTMLAttributes<HTMLDivElement> {
@@ -20,23 +22,6 @@ export interface CardProps extends HTMLAttributes<HTMLAnchorElement | HTMLDivEle
   arrow?: boolean;
 }
 
-// Arrow icon SVG
-const ArrowIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 16 16"
-    fill="currentColor"
-    className="mdx-preview-nextra-card-arrow"
-  >
-    <path
-      fillRule="evenodd"
-      d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06l2.97-2.97H3.75a.75.75 0 0 1 0-1.5h7.44L8.22 4.03a.75.75 0 0 1 0-1.06Z"
-    />
-  </svg>
-);
-
 // Main Cards component (grid container)
 function CardsComponent({
   children,
@@ -45,8 +30,6 @@ function CardsComponent({
   style,
   ...props
 }: CardsProps): ReactElement {
-  const classes = ['mdx-preview-nextra-cards', className].filter(Boolean).join(' ');
-
   // Use CSS custom property for column count
   const gridStyle: CSSProperties = {
     ...style,
@@ -54,7 +37,7 @@ function CardsComponent({
   } as CSSProperties;
 
   return (
-    <div className={classes} style={gridStyle} {...props}>
+    <div className={cn('mdx-preview-nextra-cards', className)} style={gridStyle} {...props}>
       {children}
     </div>
   );
@@ -70,14 +53,18 @@ function Card({
   className,
   ...props
 }: CardProps): ReactElement {
-  const classes = ['mdx-preview-nextra-card', className].filter(Boolean).join(' ');
-
   const content = (
     <>
       <div className="mdx-preview-nextra-card-header">
         {icon && <span className="mdx-preview-nextra-card-icon">{icon}</span>}
         <span className="mdx-preview-nextra-card-title">{title}</span>
-        {arrow && <ArrowIcon />}
+        {arrow && (
+          <ArrowIcon
+            size={16}
+            variant="github"
+            className="mdx-preview-nextra-card-arrow"
+          />
+        )}
       </div>
       {children && (
         <div className="mdx-preview-nextra-card-content">{children}</div>
@@ -91,7 +78,7 @@ function Card({
     return (
       <a
         href={href}
-        className={classes}
+        className={cn('mdx-preview-nextra-card', className)}
         target={isExternal ? '_blank' : undefined}
         rel={isExternal ? 'noopener noreferrer' : undefined}
         {...(props as HTMLAttributes<HTMLAnchorElement>)}
@@ -102,7 +89,7 @@ function Card({
   }
 
   return (
-    <div className={classes} {...(props as HTMLAttributes<HTMLDivElement>)}>
+    <div className={cn('mdx-preview-nextra-card', className)} {...(props as HTMLAttributes<HTMLDivElement>)}>
       {content}
     </div>
   );

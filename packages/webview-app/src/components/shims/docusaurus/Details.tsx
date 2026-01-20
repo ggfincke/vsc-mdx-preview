@@ -2,7 +2,11 @@
 // Docusaurus Details component shim for MDX Preview
 // provides preview-compatible version of @theme/Details
 
-import React, { ReactNode, ReactElement, useState } from 'react';
+import React, { ReactNode, ReactElement } from 'react';
+import {
+  BaseCollapsible,
+  DOCUSAURUS_DETAILS_CLASSES,
+} from '../base/BaseCollapsible';
 
 // Details props (compatible w/ Docusaurus)
 export interface DetailsProps {
@@ -12,42 +16,28 @@ export interface DetailsProps {
   className?: string;
 }
 
-// details component (collapsible section)
+/**
+ * Docusaurus Details component
+ * Uses BaseCollapsible with native toggle handling (more semantic)
+ */
 export function Details({
   children,
   summary = 'Details',
   open: defaultOpen = false,
   className,
 }: DetailsProps): ReactElement {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
   return (
-    <details
-      className={`docusaurus-details${className ? ` ${className}` : ''}`}
-      open={isOpen}
-      onToggle={(e) => setIsOpen((e.target as HTMLDetailsElement).open)}
+    <BaseCollapsible
+      summary={summary}
+      defaultOpen={defaultOpen}
+      className={className}
+      classNames={DOCUSAURUS_DETAILS_CLASSES}
+      iconSize={14}
+      useNativeToggle={true}
+      applyOpenClassToWrapper={false}
     >
-      <summary className="details-summary">
-        <span className="details-toggle-icon">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={isOpen ? 'expanded' : ''}
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </span>
-        <span className="details-summary-text">{summary}</span>
-      </summary>
-      <div className="details-content">{children}</div>
-    </details>
+      {children}
+    </BaseCollapsible>
   );
 }
 

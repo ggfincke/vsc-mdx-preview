@@ -112,7 +112,7 @@
   overflow-x: auto;
 }
 
-.mdx-preview-nextra-tab-button {
+.mdx-preview-nextra-tabs-button {
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 500;
@@ -126,16 +126,16 @@
   margin-bottom: -1px;
 }
 
-.mdx-preview-nextra-tab-button:hover {
+.mdx-preview-nextra-tabs-button:hover {
   color: #111827;
 }
 
-.mdx-preview-nextra-tab-button-active {
+.mdx-preview-nextra-tabs-button-active {
   color: #111827;
   border-bottom-color: #3b82f6;
 }
 
-.mdx-preview-nextra-tab-button-disabled {
+.mdx-preview-nextra-tabs-button-disabled {
   color: #d1d5db;
   cursor: not-allowed;
 }
@@ -144,11 +144,11 @@
   padding: 16px 0;
 }
 
-.mdx-preview-nextra-tab-panel {
+.mdx-preview-nextra-tabs-panel {
   animation: nextra-tabs-fade-in 0.2s ease-out;
 }
 
-.mdx-preview-nextra-tab-panel[hidden] {
+.mdx-preview-nextra-tabs-panel[hidden] {
   display: none;
 }
 
@@ -407,20 +407,20 @@ a.mdx-preview-nextra-card:hover .mdx-preview-nextra-card-arrow {
   border-bottom-color: #374151;
 }
 
-.vscode-dark .mdx-preview-nextra-tab-button {
+.vscode-dark .mdx-preview-nextra-tabs-button {
   color: #9ca3af;
 }
 
-.vscode-dark .mdx-preview-nextra-tab-button:hover {
+.vscode-dark .mdx-preview-nextra-tabs-button:hover {
   color: #f3f4f6;
 }
 
-.vscode-dark .mdx-preview-nextra-tab-button-active {
+.vscode-dark .mdx-preview-nextra-tabs-button-active {
   color: #f3f4f6;
   border-bottom-color: #60a5fa;
 }
 
-.vscode-dark .mdx-preview-nextra-tab-button-disabled {
+.vscode-dark .mdx-preview-nextra-tabs-button-disabled {
   color: #4b5563;
 }
 

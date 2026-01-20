@@ -7,8 +7,17 @@ import React, {
   ReactNode,
   ReactElement,
   Context,
+  Children,
+  isValidElement,
+  HTMLAttributes,
 } from 'react';
-import { useTabState, type TabDefinition, type TabItemProps } from './useTabState';
+import { cn } from '../../../utils/cn';
+import {
+  useTabState,
+  useIndexTabs,
+  type TabDefinition,
+  type TabItemProps,
+} from './useTabState';
 
 // Configuration for creating a Tabs component
 export interface BaseTabsConfig {
@@ -139,6 +148,156 @@ export function createTabs(config: BaseTabsConfig): CreateTabsResult {
   }
 
   return { Tabs, useTabsContext, TabsContext };
+}
+
+// ============================================================================
+// Index-based Tabs Factory (for Nextra-style tabs)
+// ============================================================================
+
+// Configuration for index-based tabs
+export interface IndexTabsConfig {
+  // CSS class prefix for all tab elements
+  classPrefix: string;
+  // Context name for debugging
+  contextName: string;
+}
+
+// Props for index-based Tabs components
+export interface IndexTabsProps<T>
+  extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+  children: ReactNode;
+  items: T[];
+  defaultIndex?: number;
+  selectedIndex?: number;
+  storageKey?: string;
+  onChange?: (index: number) => void;
+  tabClassName?: string | ((index: number, selected: boolean) => string);
+}
+
+// Item accessors for extracting label/disabled from tab items
+export interface IndexTabsItemAccessors<T> {
+  getLabel: (item: T) => string;
+  isDisabled?: (item: T) => boolean;
+}
+
+// Result from createIndexTabs factory
+export interface CreateIndexTabsResult<T> {
+  Tabs: React.FC<IndexTabsProps<T>> & { Tab: React.FC<{ children: ReactNode }> };
+  TabsContext: Context<boolean>;
+}
+
+/**
+ * Factory for creating index-based Tabs components (Nextra style).
+ * Uses items array instead of extracting tabs from children.
+ *
+ * @example
+ * ```tsx
+ * const { Tabs } = createIndexTabs<TabItem>(
+ *   { classPrefix: 'mdx-preview-nextra-tabs', contextName: 'NextraTabs' },
+ *   {
+ *     getLabel: (item) => typeof item === 'string' ? item : item.label,
+ *     isDisabled: (item) => typeof item === 'object' && item.disabled === true,
+ *   }
+ * );
+ * ```
+ */
+export function createIndexTabs<T>(
+  config: IndexTabsConfig,
+  accessors: IndexTabsItemAccessors<T>
+): CreateIndexTabsResult<T> {
+  const { classPrefix, contextName } = config;
+  const { getLabel, isDisabled = () => false } = accessors;
+
+  const TabsContext = createContext<boolean>(false);
+  TabsContext.displayName = `${contextName}Context`;
+
+  // Tab subcomponent (compound component pattern)
+  function Tab({ children }: { children: ReactNode }): ReactElement {
+    return <>{children}</>;
+  }
+
+  function TabsComponent({
+    children,
+    items,
+    defaultIndex = 0,
+    selectedIndex: controlledIndex,
+    storageKey,
+    onChange,
+    className,
+    tabClassName,
+    ...props
+  }: IndexTabsProps<T>): ReactElement {
+    const { activeIndex, setActiveIndex } = useIndexTabs({
+      items,
+      defaultIndex,
+      controlledIndex,
+      storageKey,
+      onChange,
+      isDisabled,
+    });
+
+    // Get Tab children for content panels
+    const tabChildren = Children.toArray(children).filter(
+      (child) => isValidElement(child) && child.type === Tab
+    );
+
+    return (
+      <TabsContext.Provider value={true}>
+        <div className={cn(classPrefix, className)} {...props}>
+          <div className={`${classPrefix}-header`} role="tablist">
+            {items.map((item, index) => {
+              const label = getLabel(item);
+              const disabled = isDisabled(item);
+              const selected = index === activeIndex;
+
+              const customClass = tabClassName
+                ? typeof tabClassName === 'function'
+                  ? tabClassName(index, selected)
+                  : tabClassName
+                : undefined;
+
+              return (
+                <button
+                  key={index}
+                  role="tab"
+                  aria-selected={selected}
+                  aria-disabled={disabled}
+                  tabIndex={selected ? 0 : -1}
+                  className={cn(
+                    `${classPrefix}-button`,
+                    selected && `${classPrefix}-button-active`,
+                    disabled && `${classPrefix}-button-disabled`,
+                    customClass
+                  )}
+                  onClick={() => setActiveIndex(index)}
+                  disabled={disabled}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <div className={`${classPrefix}-content`}>
+            {tabChildren.map((child, index) => (
+              <div
+                key={index}
+                role="tabpanel"
+                hidden={index !== activeIndex}
+                className={`${classPrefix}-panel`}
+              >
+                {index === activeIndex && child}
+              </div>
+            ))}
+          </div>
+        </div>
+      </TabsContext.Provider>
+    );
+  }
+
+  const Tabs = Object.assign(TabsComponent, { Tab });
+  Tabs.displayName = contextName;
+
+  return { Tabs, TabsContext };
 }
 
 // Re-export types for convenience

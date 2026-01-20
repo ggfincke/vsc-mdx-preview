@@ -1,7 +1,7 @@
 // packages/webview-app/src/components/shims/base/useTabState.ts
 // shared hook for tab state management across framework shims
 
-import { useState, ReactNode, isValidElement, Children } from 'react';
+import { useState, useCallback, ReactNode, isValidElement, Children } from 'react';
 
 // Tab item extracted from children
 export interface TabItem {
@@ -124,3 +124,92 @@ export function useTabState(options: UseTabStateOptions): UseTabStateResult {
 }
 
 export default useTabState;
+
+// ============================================================================
+// Index-based tab state management (for Nextra-style tabs)
+// ============================================================================
+
+// options for useIndexTabs hook (used by components w/ index-based tab selection)
+export interface UseIndexTabsOptions<T> {
+  // array of tab items
+  items: T[];
+  // default selected index (default: 0)
+  defaultIndex?: number;
+  // controlled selected index (overrides internal state)
+  controlledIndex?: number;
+  // localStorage key for persisting selected tab
+  storageKey?: string;
+  // callback when tab selection changes
+  onChange?: (index: number) => void;
+  // function to check if a tab item is disabled
+  isDisabled?: (item: T, index: number) => boolean;
+}
+
+// result from useIndexTabs hook
+export interface UseIndexTabsResult {
+  // currently active tab index
+  activeIndex: number;
+  // function to set active tab index (handles disabled check, localStorage, onChange)
+  setActiveIndex: (index: number) => void;
+}
+
+// hook for index-based tab state management
+export function useIndexTabs<T>({
+  items,
+  defaultIndex = 0,
+  controlledIndex,
+  storageKey,
+  onChange,
+  isDisabled = () => false,
+}: UseIndexTabsOptions<T>): UseIndexTabsResult {
+  // get initial index from localStorage if storageKey is provided
+  const getInitialIndex = useCallback((): number => {
+    if (storageKey && typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`nextra-tabs-${storageKey}`);
+        if (stored !== null) {
+          const parsed = parseInt(stored, 10);
+          if (!isNaN(parsed) && parsed >= 0 && parsed < items.length) {
+            return parsed;
+          }
+        }
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+    return defaultIndex;
+  }, [storageKey, defaultIndex, items.length]);
+
+  const [internalIndex, setInternalIndex] = useState(getInitialIndex);
+  const activeIndex = controlledIndex ?? internalIndex;
+
+  // Handle tab selection
+  const setActiveIndex = useCallback(
+    (index: number) => {
+      // Check if tab is disabled
+      if (items[index] !== undefined && isDisabled(items[index], index)) {
+        return;
+      }
+
+      // Update internal state if not controlled
+      if (controlledIndex === undefined) {
+        setInternalIndex(index);
+      }
+
+      // Save to localStorage if storageKey is provided
+      if (storageKey && typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(`nextra-tabs-${storageKey}`, String(index));
+        } catch {
+          // Ignore localStorage errors
+        }
+      }
+
+      // Call onChange callback
+      onChange?.(index);
+    },
+    [controlledIndex, items, isDisabled, onChange, storageKey]
+  );
+
+  return { activeIndex, setActiveIndex };
+}
