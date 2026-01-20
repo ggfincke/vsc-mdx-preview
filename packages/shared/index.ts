@@ -1,5 +1,5 @@
 // packages/shared/index.ts
-// shared type definitions and registries for extension & webview packages
+// shared type definitions & registries for extension & webview packages
 
 // component registry - single source of truth for all shim definitions
 export {

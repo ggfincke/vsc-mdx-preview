@@ -415,7 +415,7 @@ export type NextraComponent = Extract<
   { kind: 'component'; framework: 'nextra' }
 >['name'];
 
-// Generic component definitions with aliases (derived from registry)
+// Generic component definitions w/ aliases (derived from registry)
 export const GENERIC_COMPONENTS = buildGenericComponents();
 
 // Framework component lists (derived from registry)

@@ -1,5 +1,5 @@
 // packages/shared/codegen/generate.ts
-// code generation for webview preload and alias tables
+// code generation for webview preload & alias tables
 
 import * as path from 'path';
 import {
