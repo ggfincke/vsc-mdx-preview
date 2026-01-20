@@ -16,10 +16,8 @@ export interface DetailsProps {
   className?: string;
 }
 
-/**
- * Docusaurus Details component
- * Uses BaseCollapsible with native toggle handling (more semantic)
- */
+// * Docusaurus Details component
+// uses BaseCollapsible w/ native toggle handling (more semantic)
 export function Details({
   children,
   summary = 'Details',

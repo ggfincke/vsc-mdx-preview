@@ -2,6 +2,8 @@
 // Docusaurus Tabs/TabItem component shim for MDX Preview
 // Provides preview-compatible versions of @theme/Tabs & @theme/TabItem
 
+/* eslint-disable react-refresh/only-export-components -- Context & hooks are co-located with component */
+
 import React, { useContext, ReactElement } from 'react';
 import {
   createTabs,
@@ -16,7 +18,7 @@ export type TabItemProps = BaseTabItemProps;
 export type { TabDefinition };
 
 // Create Docusaurus-compatible tabs using the factory
-// Uses 'mdx-preview-tabs' class prefix with 'docusaurus-tabs' wrapper
+// Uses 'mdx-preview-tabs' class prefix w/ 'docusaurus-tabs' wrapper
 // Supports groupId for tab synchronization
 const {
   Tabs,
@@ -31,7 +33,7 @@ const {
 
 // TabItem component (Docusaurus-specific)
 // Renders children directly when outside Tabs context
-export function TabItem({ children, value }: TabItemProps): ReactElement {
+export function TabItem({ children, value: _value }: TabItemProps): ReactElement {
   const isInsideTabs = useContext(TabsContext);
 
   // If used outside of Tabs context, render directly

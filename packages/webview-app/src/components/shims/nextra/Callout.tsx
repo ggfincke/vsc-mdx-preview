@@ -12,17 +12,15 @@ import {
 // Callout type variants (matching Nextra's official API)
 export type CalloutType = NextraCalloutType | null;
 
-// Callout props (compatible with Nextra)
+// Callout props (compatible w/ Nextra)
 export interface CalloutProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   type?: CalloutType;
   emoji?: ReactNode;
 }
 
-/**
- * Nextra Callout component
- * Uses centralized GitHub Primer style icons from icons.ts
- */
+// * Nextra Callout component
+// uses centralized GitHub Primer style icons from icons.ts
 export function Callout({
   children,
   type = 'default',

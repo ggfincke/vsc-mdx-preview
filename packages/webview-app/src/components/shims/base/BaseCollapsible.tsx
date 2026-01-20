@@ -1,85 +1,49 @@
 // packages/webview-app/src/components/shims/base/BaseCollapsible.tsx
 // Shared base component for collapsible/details implementations
-// Used by generic/Collapsible and docusaurus/Details
+// Used by generic/Collapsible & docusaurus/Details
+
+/* eslint-disable react-refresh/only-export-components -- Class name presets are co-located with component */
 
 import React, { useState, ReactNode, ReactElement, SyntheticEvent, MouseEvent } from 'react';
 import { cn } from '../../../utils/cn';
 import { ChevronIcon } from './icons';
 
-/**
- * Class names configuration for BaseCollapsible
- * Allows framework-specific styling while sharing logic
- */
+// class names configuration for BaseCollapsible
 export interface CollapsibleClassNames {
-  /** Container element class */
+  // container element class
   container: string;
-  /** Summary/header element class */
+  // summary/header element class
   summary: string;
-  /** Icon wrapper class */
+  // icon wrapper class
   icon: string;
-  /** Icon open state class (appended when open) */
+  // icon open state class (appended when open)
   iconOpen: string;
-  /** Title/text element class */
+  // title/text element class
   title: string;
-  /** Content container class */
+  // content container class
   content: string;
 }
 
 export interface BaseCollapsibleProps {
-  /** Content to show when expanded */
+  // content to show when expanded
   children: ReactNode;
-
-  /**
-   * Summary/title displayed in the header
-   * Can be a string or ReactNode (allows icons, JSX)
-   */
+  // summary/title displayed in the header
   summary: ReactNode;
-
-  /** Whether to start expanded (default: false) */
+  // whether to start expanded (default: false)
   defaultOpen?: boolean;
-
-  /** Additional CSS class for the container */
+  // additional CSS class for the container
   className?: string;
-
-  /**
-   * Class names for each element
-   * Allows framework-specific styling
-   */
+  // class names for each element
   classNames: CollapsibleClassNames;
-
-  /**
-   * Icon size in pixels (default: 16)
-   * Generic Collapsible uses 16, Docusaurus Details uses 14
-   */
+  // icon size in pixels (default: 16)
   iconSize?: number;
-
-  /**
-   * Whether to use native toggle event (onToggle) or custom click handling
-   * - true: Uses native onToggle event (Docusaurus pattern - more semantic)
-   * - false: Uses custom onClick handler (Generic pattern - prevents native behavior)
-   * Default: true
-   */
+  // whether to use native toggle event (default: true)
   useNativeToggle?: boolean;
-
-  /**
-   * Whether to apply the open class to the icon element vs the SVG inside
-   * - true: Apply to icon wrapper (Generic Collapsible pattern)
-   * - false: Apply to SVG element directly (Docusaurus Details pattern)
-   * Default: true
-   */
+  // whether to apply the open class to the icon wrapper (default: true)
   applyOpenClassToWrapper?: boolean;
 }
 
-/**
- * BaseCollapsible - Shared collapsible/details component base
- *
- * Consolidates common logic between Generic Collapsible and Docusaurus Details:
- * - State management (useState for open/close)
- * - Toggle handling (native or custom)
- * - Chevron icon rendering with rotation
- *
- * Framework-specific styling is achieved through classNames prop.
- */
+// * BaseCollapsible - shared collapsible/details component base
 export function BaseCollapsible({
   children,
   summary,
@@ -145,10 +109,7 @@ export function BaseCollapsible({
 // Preset class configurations for each framework
 // ============================================================================
 
-/**
- * Class names for Generic Collapsible
- * Uses: mdx-preview-generic-collapsible-* pattern
- */
+// class names for Generic Collapsible
 export const GENERIC_COLLAPSIBLE_CLASSES: CollapsibleClassNames = {
   container: 'mdx-preview-generic-collapsible',
   summary: 'mdx-preview-generic-collapsible-summary',
@@ -158,10 +119,7 @@ export const GENERIC_COLLAPSIBLE_CLASSES: CollapsibleClassNames = {
   content: 'mdx-preview-generic-collapsible-content',
 };
 
-/**
- * Class names for Docusaurus Details
- * Uses: docusaurus-details, details-* pattern
- */
+// class names for Docusaurus Details
 export const DOCUSAURUS_DETAILS_CLASSES: CollapsibleClassNames = {
   container: 'docusaurus-details',
   summary: 'details-summary',

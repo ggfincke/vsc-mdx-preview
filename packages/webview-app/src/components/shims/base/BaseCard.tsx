@@ -5,17 +5,17 @@ import React, { ReactNode, ReactElement } from 'react';
 
 // Props for BaseCard component
 export interface BaseCardProps {
-  // /** Card content */
+  // card content
   children: ReactNode;
-  // /** Main CSS class for the card container */
+  // main CSS class for the card container
   className: string;
-  // /** Render as anchor tag instead of div */
+  // render as anchor tag instead of div
   as?: 'div' | 'a';
-  // /** Link href (required when as="a") */
+  // link href (required when as="a")
   href?: string;
-  // /** Open link in new tab */
+  // open link in new tab
   openInNewTab?: boolean;
-  // /** Additional props to spread on the container */
+  // additional props to spread on the container
   containerProps?: Record<string, unknown>;
 }
 

@@ -4,39 +4,15 @@
 import { useState, useCallback } from 'react';
 import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../../constants';
 
-/**
- * Result from useCopyToClipboard hook
- */
+// result from useCopyToClipboard hook
 export interface UseCopyToClipboardResult {
-  /** Whether the copy was successful (shows feedback state) */
+  // whether the copy was successful (shows feedback state)
   copied: boolean;
-  /** Function to copy text to clipboard */
+  // function to copy text to clipboard
   copy: (text: string) => Promise<void>;
 }
 
-/**
- * Hook for copy-to-clipboard functionality with visual feedback.
- *
- * Used by:
- * - Docusaurus CodeBlock
- * - Starlight Code
- * - CopyButton component
- *
- * @returns Object with copied state and copy function
- *
- * @example
- * ```tsx
- * function MyComponent() {
- *   const { copied, copy } = useCopyToClipboard();
- *
- *   return (
- *     <button onClick={() => copy('Hello!')}>
- *       {copied ? 'Copied!' : 'Copy'}
- *     </button>
- *   );
- * }
- * ```
- */
+// hook for copy-to-clipboard functionality w/ visual feedback
 export function useCopyToClipboard(): UseCopyToClipboardResult {
   const [copied, setCopied] = useState(false);
 

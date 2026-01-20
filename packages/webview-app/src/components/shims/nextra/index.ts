@@ -5,11 +5,11 @@
 export { Callout } from './Callout';
 export type { CalloutProps, CalloutType } from './Callout';
 
-// Tabs uses compound pattern: Tabs and Tabs.Tab
+// Tabs uses compound pattern: Tabs & Tabs.Tab
 export { Tabs } from './Tabs';
 export type { TabsProps, TabProps, TabItem } from './Tabs';
 
-// Cards uses compound pattern: Cards and Cards.Card
+// Cards uses compound pattern: Cards & Cards.Card
 export { Cards } from './Cards';
 export type { CardsProps, CardProps } from './Cards';
 

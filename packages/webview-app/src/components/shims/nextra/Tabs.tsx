@@ -3,13 +3,13 @@
 // Provides preview-compatible version of nextra/components Tabs
 // Uses createIndexTabs factory from BaseTabs
 
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import {
   createIndexTabs,
   type IndexTabsProps,
 } from '../base/BaseTabs';
 
-// Tab item can be a string or an object with label and other properties
+// Tab item can be a string or an object w/ label & other properties
 export type TabItem = string | { label: string; disabled?: boolean };
 
 // Helper to get label from TabItem
@@ -43,7 +43,7 @@ export interface TabProps {
 // Export Tab subcomponent separately for convenience
 export const Tab = NextraTabs.Tab;
 
-// Export Tabs with compound component pattern
+// Export Tabs w/ compound component pattern
 export const Tabs = NextraTabs;
 
 // Export context for advanced use cases

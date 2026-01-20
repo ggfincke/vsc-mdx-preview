@@ -2,6 +2,8 @@
 // Shared icon registry for all shim components
 // Consolidates SVG icons used across multiple frameworks
 
+/* eslint-disable react-refresh/only-export-components -- Icon registry is co-located with icon components */
+
 import React, { ReactElement } from 'react';
 
 // callout/aside icons - used by generic Callout & Starlight Aside (Lucide style)
@@ -183,7 +185,7 @@ export function CheckIcon({ size = 16, className }: IconProps): ReactElement {
 
 // ============================================================================
 // GitHub Primer Style JSX Icon Components (for Nextra)
-// Used by Nextra Callout and Nextra Cards
+// Used by Nextra Callout & Nextra Cards
 // ============================================================================
 
 // Nextra Callout icon types

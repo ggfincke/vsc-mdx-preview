@@ -1,13 +1,13 @@
 // packages/webview-app/src/components/shims/nextra/Cards.tsx
 // Nextra Cards component shim for MDX Preview
 // Provides preview-compatible version of nextra/components Cards
-// Uses compound component pattern: Cards and Cards.Card
+// Uses compound component pattern: Cards & Cards.Card
 
 import React, { ReactNode, ReactElement, HTMLAttributes, CSSProperties } from 'react';
 import { cn } from '../../../utils/cn';
 import { ArrowIcon } from '../base/icons';
 
-// Cards props (compatible with Nextra)
+// Cards props (compatible w/ Nextra)
 export interface CardsProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   num?: number; // Number of columns (default: 3)

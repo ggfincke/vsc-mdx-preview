@@ -18,7 +18,7 @@ type VAlign = 'top' | 'middle' | 'bottom';
 // Height presets
 type HeightPreset = 'sm' | 'md' | 'lg' | 'xl' | 'screen' | 'half';
 
-// Bleed props (compatible with Nextra)
+// Bleed props (compatible w/ Nextra)
 export interface BleedProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   size?: TextSize; // Text size: sm, base, lg, xl

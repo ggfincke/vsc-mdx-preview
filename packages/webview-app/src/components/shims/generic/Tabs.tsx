@@ -2,6 +2,8 @@
 // Generic Tabs component shim for MDX Preview
 // Provides preview-compatible tabs without framework dependency
 
+/* eslint-disable react-refresh/only-export-components -- Context & hooks are co-located with component */
+
 import { createTabs, type BaseTabsProps, type TabDefinition } from '../base';
 
 // Re-export types for compatibility

@@ -41,7 +41,6 @@ export function Code({
   code,
   lang,
   title,
-  meta,
   frame = 'auto',
 }: CodeProps): ReactElement {
   // Determine effective frame type

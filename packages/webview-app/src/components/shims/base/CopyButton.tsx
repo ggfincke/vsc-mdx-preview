@@ -5,39 +5,17 @@ import React, { ReactElement } from 'react';
 import { useCopyToClipboard } from './useCopyToClipboard';
 import { CODE_ICONS } from './icons';
 
-/**
- * Props for CopyButton component
- */
+// props for CopyButton component
 export interface CopyButtonProps {
-  /** Text content to copy to clipboard */
+  // text content to copy to clipboard
   text: string;
-  /** Base CSS class for the button (default: 'copy-button') */
+  // base CSS class for the button (default: 'copy-button')
   className?: string;
-  /** CSS class added when copied (default: 'copied') */
+  // CSS class added when copied (default: 'copied')
   copiedClassName?: string;
 }
 
-/**
- * Reusable copy-to-clipboard button with visual feedback.
- *
- * Used by:
- * - Docusaurus CodeBlock
- * - Starlight Code
- *
- * Features:
- * - Shows copy icon, switches to check icon on success
- * - Accessible with title and aria-label
- * - Configurable CSS classes
- *
- * @example
- * ```tsx
- * <CopyButton
- *   text={codeContent}
- *   className="codeblock-copy-button"
- *   copiedClassName="copied"
- * />
- * ```
- */
+// reusable copy-to-clipboard button w/ visual feedback
 export function CopyButton({
   text,
   className = 'copy-button',

@@ -3,7 +3,6 @@
 // provides tabbed code blocks without framework dependency
 
 import React, {
-  ReactNode,
   ReactElement,
   Children,
   isValidElement,

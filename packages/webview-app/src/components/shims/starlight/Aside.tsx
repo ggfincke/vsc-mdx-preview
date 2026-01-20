@@ -3,7 +3,7 @@
 // provides preview-compatible version of @astrojs/starlight/components Aside
 // note: this is the JSX alternative to ::: directive syntax
 
-import React, { ReactNode, ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 import { CALLOUT_ICONS } from '../base/icons';
 
 // Aside types (same as admonitions)

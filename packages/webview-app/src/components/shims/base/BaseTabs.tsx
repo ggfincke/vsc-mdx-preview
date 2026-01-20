@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/shims/base/BaseTabs.tsx
-// Factory for creating framework-specific Tabs components with shared logic
+// Factory for creating framework-specific Tabs components w/ shared logic
 
 import React, {
   createContext,
@@ -53,27 +53,8 @@ export interface CreateTabsResult {
   TabsContext: Context<boolean>;
 }
 
-/**
- * Factory function to create framework-specific Tabs components.
- * All implementations share the same core logic via useTabState hook.
- *
- * @example
- * ```tsx
- * // Create generic tabs
- * const { Tabs, useTabsContext } = createTabs({
- *   classPrefix: 'mdx-preview-generic-tabs',
- *   contextName: 'GenericTabs',
- * });
- *
- * // Create Docusaurus-compatible tabs
- * const { Tabs, useTabsContext } = createTabs({
- *   classPrefix: 'mdx-preview-tabs',
- *   wrapperClass: 'docusaurus-tabs',
- *   supportsGroupId: true,
- *   contextName: 'DocusaurusTabs',
- * });
- * ```
- */
+// * Factory function to create framework-specific Tabs components
+// all implementations share the same core logic via useTabState hook
 export function createTabs(config: BaseTabsConfig): CreateTabsResult {
   const { classPrefix, wrapperClass, supportsGroupId = false, contextName } = config;
 
@@ -186,21 +167,8 @@ export interface CreateIndexTabsResult<T> {
   TabsContext: Context<boolean>;
 }
 
-/**
- * Factory for creating index-based Tabs components (Nextra style).
- * Uses items array instead of extracting tabs from children.
- *
- * @example
- * ```tsx
- * const { Tabs } = createIndexTabs<TabItem>(
- *   { classPrefix: 'mdx-preview-nextra-tabs', contextName: 'NextraTabs' },
- *   {
- *     getLabel: (item) => typeof item === 'string' ? item : item.label,
- *     isDisabled: (item) => typeof item === 'object' && item.disabled === true,
- *   }
- * );
- * ```
- */
+// * Factory for creating index-based Tabs components (Nextra style)
+// uses items array instead of extracting tabs from children
 export function createIndexTabs<T>(
   config: IndexTabsConfig,
   accessors: IndexTabsItemAccessors<T>

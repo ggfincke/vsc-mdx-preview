@@ -9,10 +9,8 @@ import {
   GENERIC_COLLAPSIBLE_CLASSES,
 } from '../base/BaseCollapsible';
 
-/**
- * Generic Collapsible component
- * Uses BaseCollapsible with custom click handling (prevents native toggle)
- */
+// * Generic Collapsible component
+// uses BaseCollapsible w/ custom click handling (prevents native toggle)
 export function Collapsible({
   children,
   title,
@@ -33,9 +31,7 @@ export function Collapsible({
   );
 }
 
-/**
- * Accordion component (alias for Collapsible)
- */
+// Accordion component (alias for Collapsible)
 export function Accordion(props: CollapsibleProps): ReactElement {
   return <Collapsible {...props} />;
 }
