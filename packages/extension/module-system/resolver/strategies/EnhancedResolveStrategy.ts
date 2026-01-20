@@ -4,6 +4,7 @@
 import type { Resolver } from 'enhanced-resolve';
 import { getBrowserResolver, getNodeResolver } from '../resolver-factory';
 import { debug } from '../../../logging';
+import { createSingleton } from '../../../utils/singleton-factory';
 import {
   ResolutionStrategy,
   type ResolutionContext,
@@ -11,11 +12,9 @@ import {
   type ResolutionMode,
 } from '../../types';
 import type { IResolutionStrategy } from './types';
+import { buildResolutionResult } from '../result-builders';
 
-/**
- * Enhanced-resolve strategy for node_modules resolution.
- * Handles package.json exports, main/module fields, and browser vs node conditions.
- */
+// enhanced-resolve strategy for node_modules resolution
 export class EnhancedResolveStrategy implements IResolutionStrategy {
   readonly name = 'EnhancedResolve';
 
@@ -38,12 +37,7 @@ export class EnhancedResolveStrategy implements IResolutionStrategy {
       const resolved = resolver.resolveSync({}, context.baseDir, specifier);
       if (resolved) {
         debug(`[ENHANCED-RESOLVE] ${specifier} -> ${resolved}`);
-        return {
-          fsPath: resolved,
-          isBuiltInShim: false,
-          specifier,
-          strategy: ResolutionStrategy.EnhancedResolve,
-        };
+        return buildResolutionResult(resolved, specifier, ResolutionStrategy.EnhancedResolve);
       }
     } catch {
       // module not found - continue to next strategy
@@ -54,16 +48,9 @@ export class EnhancedResolveStrategy implements IResolutionStrategy {
 }
 
 // singleton instance
-let instance: EnhancedResolveStrategy | null = null;
+const { get: getEnhancedResolveStrategy } = createSingleton(
+  () => new EnhancedResolveStrategy()
+);
 
-export function getEnhancedResolveStrategy(): EnhancedResolveStrategy {
-  if (!instance) {
-    instance = new EnhancedResolveStrategy();
-  }
-  return instance;
-}
+export { getEnhancedResolveStrategy };
 
-// reset for testing (internal use only)
-function resetEnhancedResolveStrategy(): void {
-  instance = null;
-}

@@ -1,8 +1,9 @@
 // packages/extension/module-system/resolver/UnifiedResolver.ts
-// unified module resolution combining framework aliases, TypeScript paths, and enhanced-resolve
+// unified module resolution combining framework aliases, TypeScript paths, & enhanced-resolve
 
 import { resolveAlias, isBuiltInShim } from './alias-resolver';
 import { debug } from '../../logging';
+import { createResettableSingleton } from '../../utils/singleton-factory';
 
 // import strategies
 import {
@@ -29,13 +30,7 @@ export {
   type ResolutionMode,
 };
 
-/**
- * UnifiedResolver orchestrates 4 resolution strategies in priority order:
- * 1. Framework alias resolution (e.g., @theme/Tabs -> built-in shim)
- * 2. TypeScript path resolution (via tsconfig paths)
- * 3. enhanced-resolve (for node_modules w/ ESM exports support)
- * 4. File probing fallback (for relative imports)
- */
+// * UnifiedResolver orchestrates 4 resolution strategies in priority order
 export class UnifiedResolver {
   // check if specifier is a relative import
   isRelativeImport(specifier: string): boolean {
@@ -90,7 +85,7 @@ export class UnifiedResolver {
             strategy: ResolutionStrategy.FrameworkShim,
           };
         }
-        // alias resolved to a path - continue with that path (will use subsequent strategy)
+        // alias resolved to a path - continue w/ that path (will use subsequent strategy)
         debug(
           `[UNIFIED-RESOLVER] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
         );
@@ -139,18 +134,13 @@ export class UnifiedResolver {
   }
 }
 
-// singleton instance
-let resolverInstance: UnifiedResolver | null = null;
+// singleton instance (resettable for testing)
+const unifiedResolverSingleton = createResettableSingleton(
+  () => new UnifiedResolver()
+);
 
 // get the shared UnifiedResolver instance
-export function getUnifiedResolver(): UnifiedResolver {
-  if (!resolverInstance) {
-    resolverInstance = new UnifiedResolver();
-  }
-  return resolverInstance;
-}
+export const getUnifiedResolver = unifiedResolverSingleton.get;
 
 // reset resolver (for testing)
-export function resetUnifiedResolver(): void {
-  resolverInstance = null;
-}
+export const resetUnifiedResolver = unifiedResolverSingleton.reset;

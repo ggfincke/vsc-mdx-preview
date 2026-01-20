@@ -6,6 +6,7 @@ import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve';
 import type { Resolver } from 'enhanced-resolve';
 import { debug } from '../../logging';
 import { RESOLVER_CACHE_TTL_MS } from '../../constants';
+import { createResettableSingleton } from '../../utils/singleton-factory';
 
 // shared cached file system for all resolvers
 const cachedFs = new CachedInputFileSystem(fs, RESOLVER_CACHE_TTL_MS);
@@ -65,25 +66,18 @@ function createResolver(mode: ResolverMode): Resolver {
 }
 
 // pre-created resolvers for common use cases (lazily initialized)
-let _browserResolver: Resolver | null = null;
-let _nodeResolver: Resolver | null = null;
+const browserResolverSingleton = createResettableSingleton(
+  () => createResolver('browser')
+);
+const nodeResolverSingleton = createResettableSingleton(
+  () => createResolver('node')
+);
 
 // get the shared browser resolver instance (used for resolving modules to be loaded in the webview)
-export function getBrowserResolver(): Resolver {
-  if (!_browserResolver) {
-    _browserResolver = createResolver('browser');
-  }
-  return _browserResolver;
-}
+export const getBrowserResolver = browserResolverSingleton.get;
 
 // get the shared node resolver instance (used for resolving plugins to be loaded in the extension)
-export function getNodeResolver(): Resolver {
-  if (!_nodeResolver) {
-    _nodeResolver = createResolver('node');
-  }
-  return _nodeResolver;
-}
-
+export const getNodeResolver = nodeResolverSingleton.get;
 
 // clear resolver cache (invalidates all cached resolutions)
 // call when package.json changes or when manual refresh is requested
@@ -92,8 +86,8 @@ export function clearResolverCache(): void {
   cachedFs.purge();
 
   // reset resolver instances (forces recreation on next use)
-  _browserResolver = null;
-  _nodeResolver = null;
+  browserResolverSingleton.reset();
+  nodeResolverSingleton.reset();
 
   debug('[RESOLVER] Cache cleared');
 }

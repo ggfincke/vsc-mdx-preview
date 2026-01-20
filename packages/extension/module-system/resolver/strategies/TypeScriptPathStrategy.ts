@@ -4,6 +4,7 @@
 import * as path from 'path';
 import * as typescript from 'typescript';
 import { debug } from '../../../logging';
+import { createSingleton } from '../../../utils/singleton-factory';
 import {
   ResolutionStrategy,
   type ResolutionContext,
@@ -11,11 +12,9 @@ import {
   type ResolutionMode,
 } from '../../types';
 import type { IResolutionStrategy } from './types';
+import { buildResolutionResult } from '../result-builders';
 
-/**
- * TypeScript path resolution strategy.
- * Uses tsconfig.json paths to resolve module aliases (e.g., @/components).
- */
+// TypeScript path resolution strategy (tsconfig.json paths)
 export class TypeScriptPathStrategy implements IResolutionStrategy {
   readonly name = 'TypeScript';
 
@@ -45,12 +44,7 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
         return null;
       }
       debug(`[TYPESCRIPT] ${specifier} -> ${fsPath}`);
-      return {
-        fsPath,
-        isBuiltInShim: false,
-        specifier,
-        strategy: ResolutionStrategy.TypeScript,
-      };
+      return buildResolutionResult(fsPath, specifier, ResolutionStrategy.TypeScript);
     }
 
     return null;
@@ -58,11 +52,8 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
 }
 
 // singleton instance
-let instance: TypeScriptPathStrategy | null = null;
+const { get: getTypeScriptPathStrategy } = createSingleton(
+  () => new TypeScriptPathStrategy()
+);
 
-export function getTypeScriptPathStrategy(): TypeScriptPathStrategy {
-  if (!instance) {
-    instance = new TypeScriptPathStrategy();
-  }
-  return instance;
-}
+export { getTypeScriptPathStrategy };

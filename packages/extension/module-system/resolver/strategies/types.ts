@@ -7,21 +7,12 @@ import type {
   ResolutionMode,
 } from '../../types';
 
-/**
- * Interface for resolution strategies.
- * Each strategy handles a specific type of import resolution.
- */
+// interface for resolution strategies
 export interface IResolutionStrategy {
-  /** Strategy name for debugging/logging */
+  // strategy name for debugging/logging
   readonly name: string;
 
-  /**
-   * Resolve a module specifier to a filesystem path.
-   * @param specifier - The import specifier (e.g., './Button', '@/utils')
-   * @param context - Resolution context including baseDir, tsConfig, etc.
-   * @param mode - Resolution mode ('browser' | 'node' | 'dependency')
-   * @returns Resolution result or null if this strategy cannot resolve
-   */
+  // resolve a module specifier to a filesystem path
   resolve(
     specifier: string,
     context: ResolutionContext,
