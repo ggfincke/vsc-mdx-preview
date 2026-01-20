@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import { warn } from '../logging';
 import { SingletonService } from '../services/SingletonService';
 import { SubscriberManager } from '../utils/SubscriberManager';
+import { disposeCollection } from '../utils/disposable';
 import type { ResolvedConfig } from '../preview/config/ConfigResolver';
 
 // Typed config change event types
@@ -118,11 +119,7 @@ export class ConfigCache extends SingletonService<ConfigCache> {
 
   // custom cleanup - clear all caches and watchers
   protected override onDispose(): void {
-    // dispose all watchers
-    for (const watcher of this.watchers.values()) {
-      watcher.dispose();
-    }
-    this.watchers.clear();
+    disposeCollection(this.watchers);
     this.subscriberManager.clear();
     this.cache.clear();
   }

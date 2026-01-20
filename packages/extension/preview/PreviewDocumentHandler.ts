@@ -11,7 +11,7 @@ import {
   type ResolvedConfig,
 } from './config';
 import { DocumentTracker, DependencyWatcher, WatcherManager } from './watchers';
-import type { UpdateMode } from './PreviewConfiguration';
+import type { UpdateMode } from '../config';
 
 export interface DocumentState {
   doc: vscode.TextDocument;

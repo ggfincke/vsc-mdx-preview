@@ -3,12 +3,13 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
+import { writeFileSync } from 'fs';
 import { DIAGNOSTIC_CODES } from './ComponentDiagnostics';
 import { KNOWN_GENERIC_COMPONENTS } from '../compiler/shared/remark/generic-components';
 import { debug, info } from '../logging';
 import { ConfigError, ErrorContext } from '../errors';
 import { getErrorReporter } from '../services';
+import { readJsonSync } from '../utils/file-utils';
 
 // config file name
 const CONFIG_FILE_NAME = '.mdx-previewrc.json';
@@ -198,13 +199,9 @@ export async function addComponentToConfig(
   debug(`[ComponentCodeActions] Adding ${componentName} to ${configPath}`);
 
   try {
-    let config: Record<string, unknown> = {};
-
-    // read existing config if it exists
-    if (fs.existsSync(configPath)) {
-      const content = fs.readFileSync(configPath, 'utf-8');
-      config = JSON.parse(content);
-    }
+    // read existing config or start with empty object
+    const config: Record<string, unknown> =
+      readJsonSync<Record<string, unknown>>(configPath) ?? {};
 
     // ensure components object exists
     if (!config.components || typeof config.components !== 'object') {
@@ -219,7 +216,7 @@ export async function addComponentToConfig(
 
     // write updated config
     const updatedContent = JSON.stringify(config, null, 2) + '\n';
-    fs.writeFileSync(configPath, updatedContent, 'utf-8');
+    writeFileSync(configPath, updatedContent, 'utf-8');
 
     // open the config file
     const document = await vscode.workspace.openTextDocument(configPath);

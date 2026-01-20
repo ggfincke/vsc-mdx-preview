@@ -5,9 +5,10 @@ import * as vscode from 'vscode';
 import debounce from 'lodash.debounce';
 import { SecurityPolicy } from '../security/security';
 import { getConfigManager } from '../services';
+import type { UpdateMode, TailwindEnabledSetting } from '../config';
 
-export type UpdateMode = 'onType' | 'onSave' | 'manual';
-export type TailwindEnabledSetting = 'auto' | 'enabled' | 'disabled';
+// Re-export for backward compatibility
+export type { UpdateMode, TailwindEnabledSetting };
 
 export interface StyleConfiguration {
   useVscodeMarkdownStyles: boolean;

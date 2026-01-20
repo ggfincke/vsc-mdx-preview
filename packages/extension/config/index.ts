@@ -8,3 +8,10 @@ export {
 } from './ConfigManager';
 
 export { ConfigCache } from './ConfigCache';
+
+export type {
+  UpdateMode,
+  TailwindEnabledSetting,
+  FrameworkSetting,
+  UnknownBehaviorSetting,
+} from './types';

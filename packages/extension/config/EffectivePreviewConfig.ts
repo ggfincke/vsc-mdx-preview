@@ -70,17 +70,7 @@ export interface BuildEffectiveConfigOptions {
   frontmatter?: Record<string, unknown>;
 }
 
-/**
- * Build unified effective preview configuration.
- *
- * Merges configuration from multiple sources with clear precedence:
- * 1. Frontmatter (highest priority) - per-document overrides
- * 2. Config file (.mdx-previewrc.json) - per-project settings
- * 3. VS Code settings (lowest priority) - user/workspace defaults
- *
- * @param options - Document URI, file path, and optional frontmatter
- * @returns Unified configuration object
- */
+// * build unified effective preview configuration
 export function buildEffectivePreviewConfig(
   options: BuildEffectiveConfigOptions
 ): EffectivePreviewConfig {

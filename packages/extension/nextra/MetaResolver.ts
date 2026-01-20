@@ -1,11 +1,11 @@
 // packages/extension/nextra/MetaResolver.ts
 // Resolve Nextra _meta.json files for page-level settings
 
-import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { debug } from '../logging';
 import type { NextraPageMeta } from '@mdx-preview/shared';
+import { readJsonSync, pathExists } from '../utils/file-utils';
 
 // Cache for resolved meta (cache key -> resolved meta or null)
 const metaCache = new Map<string, NextraPageMeta | null>();
@@ -27,11 +27,7 @@ type MetaEntry =
       };
     };
 
-/**
- * Resolve _meta.json settings for a specific MDX file
- * Searches for _meta.json in the document's directory and parent directories
- * up to the workspace root
- */
+// * resolve _meta.json settings for a specific MDX file
 export function resolveNextraMeta(
   mdxFilePath: string,
   workspaceRoot: string
@@ -39,11 +35,12 @@ export function resolveNextraMeta(
   const documentDir = path.dirname(mdxFilePath);
   const pageBaseName = path.basename(mdxFilePath, path.extname(mdxFilePath));
 
-  // Check cache
+  // Check cache (use get + undefined check instead of has + get for efficiency)
   const cacheKey = `${documentDir}:${pageBaseName}`;
-  if (metaCache.has(cacheKey)) {
+  const cached = metaCache.get(cacheKey);
+  if (cached !== undefined) {
     debug(`[NEXTRA-META] Cache hit for ${cacheKey}`);
-    return metaCache.get(cacheKey) ?? null;
+    return cached;
   }
 
   // Search for _meta.json upward
@@ -54,31 +51,29 @@ export function resolveNextraMeta(
     return null;
   }
 
-  try {
-    debug(`[NEXTRA-META] Found _meta.json at ${metaPath}`);
-    const content = fs.readFileSync(metaPath, 'utf-8');
-    const meta = JSON.parse(content) as Record<string, MetaEntry>;
+  debug(`[NEXTRA-META] Found _meta.json at ${metaPath}`);
+  const meta = readJsonSync<Record<string, MetaEntry>>(metaPath, {
+    logTag: '[NEXTRA-META]',
+    logOnError: true,
+  });
 
-    // Extract settings for this page
-    const pageSettings = extractPageSettings(meta, pageBaseName);
-
-    // Setup watcher for this _meta.json file
-    setupMetaWatcher(metaPath, documentDir);
-
-    metaCache.set(cacheKey, pageSettings);
-    debug(`[NEXTRA-META] Resolved meta for ${pageBaseName}:`, pageSettings);
-    return pageSettings;
-  } catch (err) {
-    debug(`[NEXTRA-META] Failed to parse ${metaPath}: ${err}`);
+  if (!meta) {
     metaCache.set(cacheKey, null);
     return null;
   }
+
+  // Extract settings for this page
+  const pageSettings = extractPageSettings(meta, pageBaseName);
+
+  // Setup watcher for this _meta.json file
+  setupMetaWatcher(metaPath, documentDir);
+
+  metaCache.set(cacheKey, pageSettings);
+  debug(`[NEXTRA-META] Resolved meta for ${pageBaseName}:`, pageSettings);
+  return pageSettings;
 }
 
-/**
- * Find _meta.json by walking up directory tree
- * Stops at workspace root or filesystem root
- */
+// find _meta.json by walking up directory tree
 function findMetaFile(
   startDir: string,
   workspaceRoot: string
@@ -87,7 +82,7 @@ function findMetaFile(
 
   while (currentDir && currentDir.startsWith(workspaceRoot)) {
     const metaPath = path.join(currentDir, '_meta.json');
-    if (fs.existsSync(metaPath)) {
+    if (pathExists(metaPath)) {
       return metaPath;
     }
 
@@ -101,10 +96,7 @@ function findMetaFile(
   return undefined;
 }
 
-/**
- * Extract page-specific settings from _meta.json
- * Handles both string entries (title only) and object entries (full config)
- */
+// extract page-specific settings from _meta.json
 function extractPageSettings(
   meta: Record<string, MetaEntry>,
   pageBaseName: string
@@ -120,7 +112,7 @@ function extractPageSettings(
     // Simple string entry is just a title
     result.title = entry;
   } else if (typeof entry === 'object') {
-    // Object entry with full settings
+    // Object entry w/ full settings
     if (entry.title) {
       result.title = entry.title;
     }
@@ -135,10 +127,7 @@ function extractPageSettings(
   return Object.keys(result).length > 0 ? result : null;
 }
 
-/**
- * Setup file watcher for _meta.json changes
- * Invalidates cache and notifies listeners when file changes
- */
+// setup file watcher for _meta.json changes
 function setupMetaWatcher(metaPath: string, documentDir: string): void {
   if (metaWatchers.has(metaPath)) {
     return;
@@ -167,10 +156,7 @@ function setupMetaWatcher(metaPath: string, documentDir: string): void {
   metaWatchers.set(metaPath, watcher);
 }
 
-/**
- * Merge _meta.json settings with frontmatter (frontmatter wins)
- * Use this to combine settings from both sources
- */
+// merge _meta.json settings w/ frontmatter (frontmatter wins)
 export function mergeNextraMeta(
   metaJson: NextraPageMeta | null,
   frontmatter: Partial<NextraPageMeta>
@@ -181,10 +167,7 @@ export function mergeNextraMeta(
   };
 }
 
-/**
- * Dispose all file watchers
- * Call during extension deactivation
- */
+// dispose all file watchers (call during extension deactivation)
 export function disposeMetaWatchers(): void {
   for (const watcher of metaWatchers.values()) {
     watcher.dispose();

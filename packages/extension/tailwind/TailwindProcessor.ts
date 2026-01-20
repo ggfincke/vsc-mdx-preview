@@ -20,7 +20,7 @@ import {
   MAX_KNOWN_TAILWIND_VERSION,
 } from './constants';
 import type { Preview } from '../preview/preview-manager';
-import type { TrustState } from '@mdx-preview/shared';
+import { normalizeError, type TrustState } from '@mdx-preview/shared';
 import type { TailwindConfig } from '../config/EffectivePreviewConfig';
 
 export interface TailwindProcessOptions {
@@ -47,7 +47,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   private cache = new TailwindCache();
   private compiler = new TailwindCompiler();
 
-  /** Tracks workspaces where v3 deprecation warning has been shown (once per session) */
+  // tracks workspaces where v3 deprecation warning has been shown (once per session)
   private v3WarningShown = new Set<string>();
 
   protected constructor() {
@@ -177,8 +177,9 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       entryCssPath
     );
 
+    // TailwindCache.get() returns string | null (null = expired or missing)
     const cached = this.cache.get(cacheKey);
-    if (cached) {
+    if (cached !== null) {
       return {
         css: cached,
         watchFiles: this.buildWatchFiles(configPath, entryCssPath),
@@ -209,9 +210,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
         enabled: true,
       };
     } catch (error) {
-      getErrorReporter().report(
-        error instanceof Error ? error : new Error(String(error)),
-        {
+      getErrorReporter().report(normalizeError(error), {
           context: ErrorContext.Tailwind,
           severity: ErrorSeverity.Warning,
           showNotification: false, // Tailwind errors are non-blocking
@@ -288,10 +287,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     }
   }
 
-  /**
-   * Warn users about Tailwind v3 deprecation.
-   * Shows once per workspace per session to avoid notification spam.
-   */
+  // warn users about Tailwind v3 deprecation (once per workspace per session)
   private warnTailwindV3Deprecation(workspaceRoot: string | null): void {
     const key = workspaceRoot ?? 'default';
     if (this.v3WarningShown.has(key)) {
@@ -304,7 +300,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
         'Consider upgrading for improved performance and features.'
     );
 
-    // Show user-facing notification with action button
+    // show user-facing notification w/ action button
     vscode.window
       .showWarningMessage(
         'MDX Preview: Tailwind CSS v3 detected. Consider upgrading to v4 for best results.',

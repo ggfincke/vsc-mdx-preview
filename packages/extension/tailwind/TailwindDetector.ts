@@ -7,12 +7,14 @@
 // - All file I/O wrapped in try-catch, returns null/undefined on failure
 // - Debug logging added for troubleshooting detection issues
 
-import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { extractErrorMessage } from '@mdx-preview/shared';
 import { debug } from '../logging';
 import { getNodeResolver } from '../module-system/resolver/resolver-factory';
 import { VERSION_CACHE_TTL_MS } from './constants';
+import { pathExists, readFileAsync, readJsonSync } from '../utils/file-utils';
+import { toAbsolutePath } from '../utils/path-utils';
 
 const CONFIG_FILES = [
   'tailwind.config.js',
@@ -134,16 +136,14 @@ export class TailwindDetector {
       if (!baseDir) {
         return null;
       }
-      const resolved = path.isAbsolute(configOverride)
-        ? configOverride
-        : path.resolve(baseDir, configOverride);
-      return fs.existsSync(resolved) ? resolved : null;
+      const resolved = toAbsolutePath(configOverride, baseDir);
+      return pathExists(resolved) ? resolved : null;
     }
 
     const cacheKey = `${workspaceRoot ?? ''}::${entryDir ?? ''}`;
     if (this.configCache.has(cacheKey)) {
       const cached = this.configCache.get(cacheKey) ?? null;
-      if (cached && fs.existsSync(cached)) {
+      if (cached && pathExists(cached)) {
         return cached;
       }
       this.configCache.delete(cacheKey);
@@ -159,7 +159,7 @@ export class TailwindDetector {
     while (currentDir) {
       for (const fileName of CONFIG_FILES) {
         const candidate = path.join(currentDir, fileName);
-        if (fs.existsSync(candidate)) {
+        if (pathExists(candidate)) {
           this.configCache.set(cacheKey, candidate);
           return candidate;
         }
@@ -192,7 +192,7 @@ export class TailwindDetector {
     const cacheKey = `${workspaceRoot}::${entryDir ?? ''}`;
     if (this.entryCssCache.has(cacheKey)) {
       const cached = this.entryCssCache.get(cacheKey) ?? null;
-      if (cached && fs.existsSync(cached)) {
+      if (cached && pathExists(cached)) {
         return cached;
       }
       this.entryCssCache.delete(cacheKey);
@@ -222,17 +222,14 @@ export class TailwindDetector {
     );
 
     for (const uri of candidates) {
-      try {
-        const content = await fs.promises.readFile(uri.fsPath, 'utf-8');
-        if (
-          TAILWIND_IMPORT_RE.test(content) ||
-          TAILWIND_DIRECTIVE_RE.test(content)
-        ) {
-          this.entryCssCache.set(cacheKey, uri.fsPath);
-          return uri.fsPath;
-        }
-      } catch {
-        // ignore unreadable files
+      const content = await readFileAsync(uri.fsPath);
+      if (
+        content &&
+        (TAILWIND_IMPORT_RE.test(content) ||
+          TAILWIND_DIRECTIVE_RE.test(content))
+      ) {
+        this.entryCssCache.set(cacheKey, uri.fsPath);
+        return uri.fsPath;
       }
     }
 
@@ -257,16 +254,13 @@ export class TailwindDetector {
       // Check all common locations in parallel for this directory
       const checks = COMMON_CSS_LOCATIONS.map(async (relativePath) => {
         const fullPath = path.join(baseDir, relativePath);
-        try {
-          const content = await fs.promises.readFile(fullPath, 'utf-8');
-          if (
-            TAILWIND_IMPORT_RE.test(content) ||
-            TAILWIND_DIRECTIVE_RE.test(content)
-          ) {
-            return fullPath;
-          }
-        } catch {
-          // File doesn't exist or isn't readable
+        const content = await readFileAsync(fullPath);
+        if (
+          content &&
+          (TAILWIND_IMPORT_RE.test(content) ||
+            TAILWIND_DIRECTIVE_RE.test(content))
+        ) {
+          return fullPath;
         }
         return null;
       });
@@ -281,31 +275,7 @@ export class TailwindDetector {
     return null;
   }
 
-  /**
-   * Get the installed Tailwind CSS version for a workspace.
-   *
-   * Resolution Process:
-   * 1. Uses enhanced-resolve to locate tailwindcss/package.json in node_modules
-   * 2. Parses package.json to extract version string
-   * 3. Extracts major version number (e.g., "3.4.1" -> 3)
-   *
-   * Caching:
-   * - Results are cached with a 5-minute TTL (VERSION_CACHE_TTL_MS)
-   * - Cache key is the workspaceRoot path (or 'default' if null)
-   * - Call invalidateVersionCache() when config files change to force re-detection
-   *
-   * @param workspaceRoot - Workspace root directory, or null for default lookup
-   * @returns TailwindVersionInfo with version string, major version number, and module path
-   * @returns `{ version: null, major: null }` if Tailwind is not installed
-   *
-   * @example
-   * ```typescript
-   * const versionInfo = detector.getWorkspaceTailwindVersion('/path/to/workspace');
-   * if (versionInfo.major === 4) {
-   *   // Use v4-specific compilation
-   * }
-   * ```
-   */
+  // get the installed Tailwind CSS version for a workspace (cached w/ 5-minute TTL)
   getWorkspaceTailwindVersion(
     workspaceRoot: string | null
   ): TailwindVersionInfo {
@@ -334,7 +304,7 @@ export class TailwindDetector {
       }
     } catch (err) {
       debug(
-        `[TAILWIND] Failed to resolve tailwindcss in ${workspaceRoot}: ${err instanceof Error ? err.message : String(err)}`
+        `[TAILWIND] Failed to resolve tailwindcss in ${workspaceRoot}: ${extractErrorMessage(err)}`
       );
       resolved = undefined;
     }
@@ -349,27 +319,12 @@ export class TailwindDetector {
       return info;
     }
 
-    try {
-      const pkg = JSON.parse(fs.readFileSync(resolved, 'utf-8')) as {
-        version?: string;
-      };
-      const version = pkg.version ?? null;
-      const major = version ? Number(version.split('.')[0]) : null;
-      const info: TailwindVersionInfo = {
-        version,
-        major: Number.isNaN(major) ? null : major,
-        modulePath: path.dirname(resolved),
-      };
-      this.versionCache.set(cacheKey, {
-        info,
-        expiresAt: Date.now() + VERSION_CACHE_TTL_MS,
-      });
-      debug(`[TAILWIND] Workspace Tailwind version: ${version ?? 'unknown'}`);
-      return info;
-    } catch (err) {
-      debug(
-        `[TAILWIND] Failed to read Tailwind package.json at ${resolved}: ${err instanceof Error ? err.message : String(err)}`
-      );
+    const pkg = readJsonSync<{ version?: string }>(resolved, {
+      logTag: '[TAILWIND]',
+      logOnError: true,
+    });
+
+    if (!pkg) {
       const info: TailwindVersionInfo = { version: null, major: null };
       this.versionCache.set(cacheKey, {
         info,
@@ -377,6 +332,20 @@ export class TailwindDetector {
       });
       return info;
     }
+
+    const version = pkg.version ?? null;
+    const major = version ? Number(version.split('.')[0]) : null;
+    const info: TailwindVersionInfo = {
+      version,
+      major: Number.isNaN(major) ? null : major,
+      modulePath: path.dirname(resolved),
+    };
+    this.versionCache.set(cacheKey, {
+      info,
+      expiresAt: Date.now() + VERSION_CACHE_TTL_MS,
+    });
+    debug(`[TAILWIND] Workspace Tailwind version: ${version ?? 'unknown'}`);
+    return info;
   }
 
   // invalidate version cache for a specific workspace or all workspaces
