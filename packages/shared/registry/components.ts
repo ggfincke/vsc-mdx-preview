@@ -4,8 +4,14 @@
 export const SHIM_PREFIX = '@mdx-preview/shims' as const;
 
 // framework IDs used by the shim registry
+// Framework = frameworks with shims (excludes 'generic')
 export type Framework = 'docusaurus' | 'starlight' | 'nextjs' | 'nextra';
+// FrameworkId = all frameworks including 'generic' (canonical runtime type)
 export type FrameworkId = Framework | 'generic';
+// FrameworkName = alias for FrameworkId (semantic clarity)
+export type FrameworkName = FrameworkId;
+// FrameworkSetting = VS Code setting type ('auto' triggers detection)
+export type FrameworkSetting = 'auto' | FrameworkName;
 
 export type ComponentKind = 'component' | 'barrel';
 

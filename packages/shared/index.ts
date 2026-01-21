@@ -1,6 +1,13 @@
 // packages/shared/index.ts
 // shared type definitions & registries for extension & webview packages
 
+// shared timing & limit constants
+export {
+  STANDARD_DEBOUNCE_MS,
+  STANDARD_CACHE_TTL_MS,
+  STANDARD_WATCHER_DEBOUNCE_MS,
+} from './constants';
+
 // component registry - single source of truth for all shim definitions
 export {
   COMPONENT_REGISTRY,
@@ -22,6 +29,8 @@ export {
   type ComponentBarrelDefinition,
   type Framework,
   type FrameworkId,
+  type FrameworkName,
+  type FrameworkSetting,
   type GenericComponentName,
   type GenericComponentAlias,
   type DocusaurusComponent,
@@ -71,6 +80,18 @@ export function isPreviewError(value: unknown): value is PreviewError {
     value !== null &&
     'message' in value &&
     typeof (value as PreviewError).message === 'string'
+  );
+}
+
+// format trust state for debug logging
+export function formatTrustStateForDebug(
+  tag: string,
+  state: TrustState
+): string {
+  return (
+    `[${tag}] Trust state: canExecute=${state.canExecute}, ` +
+    `workspaceTrusted=${state.workspaceTrusted}, ` +
+    `scriptsEnabled=${state.scriptsEnabled}`
   );
 }
 
