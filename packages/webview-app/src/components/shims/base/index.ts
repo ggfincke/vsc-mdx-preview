@@ -18,13 +18,7 @@ export {
   type CreateTabsResult,
 } from './BaseTabs';
 
-export {
-  BaseCard,
-  CardHeader,
-  ArrowIcon,
-  type BaseCardProps,
-  type CardHeaderProps,
-} from './BaseCard';
+export { BaseCard, ArrowIcon, type BaseCardProps } from './BaseCard';
 
 export {
   useCopyToClipboard,
@@ -36,3 +30,10 @@ export { extractTextContent } from './extractTextContent';
 export { CopyButton, type CopyButtonProps } from './CopyButton';
 
 export { CALLOUT_ICONS, FILE_TREE_ICONS, CODE_ICONS } from './icons';
+
+export {
+  createCallout,
+  type BaseCalloutConfig,
+  type BaseCalloutProps,
+  type IconSource,
+} from './BaseCallout';

@@ -51,31 +51,6 @@ export function BaseCard({
   );
 }
 
-// common card header component
-export interface CardHeaderProps {
-  title: string;
-  icon?: ReactNode;
-  className?: string;
-  titleClassName?: string;
-  iconClassName?: string;
-}
-
-// reusable card header w/ optional icon
-export function CardHeader({
-  title,
-  icon,
-  className = 'card-header',
-  titleClassName = 'card-title',
-  iconClassName = 'card-icon',
-}: CardHeaderProps): ReactElement {
-  return (
-    <div className={className}>
-      {icon && <span className={iconClassName}>{icon}</span>}
-      <span className={titleClassName}>{title}</span>
-    </div>
-  );
-}
-
 // Re-export ArrowIcon from centralized icons for backwards compatibility
 // Starlight LinkCard imports this
 export { ArrowIcon } from './icons';
