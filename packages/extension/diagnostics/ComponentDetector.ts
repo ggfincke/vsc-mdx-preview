@@ -19,18 +19,7 @@ import { debug, warn } from '../logging';
 
 // Use shared component registry as single source of truth
 import { isFrameworkComponent } from '@mdx-preview/shared';
-
-// MDX JSX element node structure from mdast
-interface MdxJsxElement {
-  type: 'mdxJsxFlowElement' | 'mdxJsxTextElement';
-  name: string | null;
-  attributes: Array<{ name: string; value: unknown }>;
-  children: unknown[];
-  position?: {
-    start: { line: number; column: number; offset?: number };
-    end: { line: number; column: number; offset?: number };
-  };
-}
+import type { MdxJsxElement } from '../compiler/shared/transforms/types';
 
 // MDX ESM node (imports/exports)
 interface MdxjsEsmNode {

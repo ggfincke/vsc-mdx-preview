@@ -14,6 +14,11 @@ export interface MdxJsxElement {
   name: string | null;
   attributes: MdxJsxAttribute[];
   children: Array<BlockContent | PhrasingContent>;
+  // optional position for diagnostics & IDE features
+  position?: {
+    start: { line: number; column: number; offset?: number };
+    end: { line: number; column: number; offset?: number };
+  };
 }
 
 export interface NodeConfig {
