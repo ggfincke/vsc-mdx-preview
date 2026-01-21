@@ -3,11 +3,15 @@
 // provides preview-compatible version of @astrojs/starlight/components Aside
 // note: this is the JSX alternative to ::: directive syntax
 
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
+import { createCallout, type BaseCalloutProps } from '../base/BaseCallout';
 import { CALLOUT_ICONS } from '../base/icons';
 
 // Aside types (same as admonitions)
 export type AsideType = 'note' | 'tip' | 'caution' | 'danger';
+
+// Aside component props
+export type AsideProps = BaseCalloutProps<AsideType>;
 
 // default titles for each aside type
 const ASIDE_TITLES: Record<AsideType, string> = {
@@ -17,26 +21,19 @@ const ASIDE_TITLES: Record<AsideType, string> = {
   danger: 'Danger',
 };
 
-// aside component
-export function Aside({
-  children,
-  type = 'note',
-  title,
-}: AsideProps): ReactElement {
-  const displayTitle = title || ASIDE_TITLES[type];
+// create the Aside using factory
+const BaseAside = createCallout<AsideType>({
+  classPrefix: 'mdx-preview-starlight-aside',
+  types: ['note', 'tip', 'caution', 'danger'],
+  defaultType: 'note',
+  icons: { type: 'svg', icons: CALLOUT_ICONS },
+  defaultTitles: ASIDE_TITLES,
+  layout: 'header',
+});
 
-  return (
-    <aside className={`mdx-preview-starlight-aside mdx-preview-starlight-aside-${type}`}>
-      <div className="mdx-preview-starlight-aside-header">
-        <span
-          className="mdx-preview-starlight-aside-icon"
-          dangerouslySetInnerHTML={{ __html: CALLOUT_ICONS[type] }}
-        />
-        <span className="mdx-preview-starlight-aside-title">{displayTitle}</span>
-      </div>
-      <div className="mdx-preview-starlight-aside-content">{children}</div>
-    </aside>
-  );
+// Aside component
+export function Aside(props: AsideProps): ReactElement {
+  return <BaseAside {...props} />;
 }
 
 export default Aside;

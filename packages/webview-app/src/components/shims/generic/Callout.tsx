@@ -2,44 +2,61 @@
 // Generic Callout/Alert/Admonition component shim for MDX Preview
 // provides preview-compatible versions of common callout patterns
 
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 import {
-  CalloutProps,
-  normalizeCalloutType,
-  CALLOUT_TITLES,
-} from './types';
+  createCallout,
+  type BaseCalloutProps,
+} from '../base/BaseCallout';
+import { CalloutType, CALLOUT_TITLES } from './types';
 import { CALLOUT_ICONS } from '../base/icons';
 
-// Callout component
-export function Callout({
-  children,
-  type,
-  title,
-  icon,
-}: CalloutProps): ReactElement {
-  const normalizedType = normalizeCalloutType(type);
-  const displayTitle = title || CALLOUT_TITLES[normalizedType];
-  const iconSvg = CALLOUT_ICONS[normalizedType];
+// Callout props - extends base props for generic callout
+export type CalloutProps = BaseCalloutProps<CalloutType>;
 
-  return (
-    <aside
-      className={`mdx-preview-generic-callout mdx-preview-generic-callout-${normalizedType}`}
-      data-callout-type={normalizedType}
-    >
-      <div className="mdx-preview-generic-callout-header">
-        {icon ? (
-          <span className="mdx-preview-generic-callout-icon">{icon}</span>
-        ) : (
-          <span
-            className="mdx-preview-generic-callout-icon"
-            dangerouslySetInnerHTML={{ __html: iconSvg }}
-          />
-        )}
-        <span className="mdx-preview-generic-callout-title">{displayTitle}</span>
-      </div>
-      <div className="mdx-preview-generic-callout-content">{children}</div>
-    </aside>
-  );
+// create the base Callout using factory
+const BaseCallout = createCallout<CalloutType>({
+  classPrefix: 'mdx-preview-generic-callout',
+  types: ['note', 'tip', 'warning', 'danger', 'info', 'caution', 'important'],
+  defaultType: 'note',
+  icons: { type: 'svg', icons: CALLOUT_ICONS },
+  defaultTitles: CALLOUT_TITLES,
+  layout: 'header',
+});
+
+// Callout component with type normalization
+export function Callout(props: CalloutProps): ReactElement {
+  // normalize type aliases (success -> tip, error -> danger, etc.)
+  const normalizedType = normalizeType(props.type);
+  return <BaseCallout {...props} type={normalizedType} />;
+}
+
+// normalize callout type (handle aliases)
+function normalizeType(type: string | undefined): CalloutType {
+  if (!type) {
+    return 'note';
+  }
+  const normalized = type.toLowerCase();
+  // handle common aliases
+  switch (normalized) {
+    case 'success':
+      return 'tip';
+    case 'error':
+      return 'danger';
+    case 'warn':
+      return 'warning';
+    case 'hint':
+      return 'tip';
+    default:
+      // check if it's a valid type
+      if (
+        ['note', 'tip', 'warning', 'danger', 'info', 'caution', 'important'].includes(
+          normalized
+        )
+      ) {
+        return normalized as CalloutType;
+      }
+      return 'note';
+  }
 }
 
 // Alert component (alias for Callout)

@@ -4,6 +4,7 @@
 
 import React, { ReactNode, ReactElement, HTMLAttributes } from 'react';
 import { cn } from '../../../utils/cn';
+import { createCallout } from '../base/BaseCallout';
 import {
   NEXTRA_CALLOUT_ICONS,
   type NextraCalloutType,
@@ -19,8 +20,27 @@ export interface CalloutProps extends HTMLAttributes<HTMLDivElement> {
   emoji?: ReactNode;
 }
 
+// default (empty) titles - Nextra callouts don't have titles
+const NEXTRA_CALLOUT_TITLES: Record<NextraCalloutType, string> = {
+  default: '',
+  info: '',
+  warning: '',
+  error: '',
+  important: '',
+};
+
+// create the base Callout using factory
+const BaseCallout = createCallout<NextraCalloutType>({
+  classPrefix: 'mdx-preview-nextra-callout',
+  types: ['default', 'info', 'warning', 'error', 'important'],
+  defaultType: 'default',
+  icons: { type: 'component', icons: NEXTRA_CALLOUT_ICONS },
+  defaultTitles: NEXTRA_CALLOUT_TITLES,
+  layout: 'inline',
+});
+
 // * Nextra Callout component
-// uses centralized GitHub Primer style icons from icons.ts
+// wraps the base callout to support Nextra-specific props (emoji, className, spread props)
 export function Callout({
   children,
   type = 'default',
@@ -28,22 +48,19 @@ export function Callout({
   className,
   ...props
 }: CalloutProps): ReactElement {
-  // Determine the icon to display
-  const IconComponent = type ? NEXTRA_CALLOUT_ICONS[type] : null;
-  const icon = emoji ?? (IconComponent ? <IconComponent size={16} /> : null);
+  // use emoji as custom icon if provided
+  const icon = emoji ?? undefined;
+  const effectiveType = type ?? 'default';
 
   return (
-    <aside
-      className={cn(
-        'mdx-preview-nextra-callout',
-        type && `mdx-preview-nextra-callout-${type}`,
-        className
-      )}
+    <div
+      className={cn('mdx-preview-nextra-callout-wrapper', className)}
       {...props}
     >
-      {icon && <span className="mdx-preview-nextra-callout-icon">{icon}</span>}
-      <div className="mdx-preview-nextra-callout-content">{children}</div>
-    </aside>
+      <BaseCallout type={effectiveType} icon={icon}>
+        {children}
+      </BaseCallout>
+    </div>
   );
 }
 
