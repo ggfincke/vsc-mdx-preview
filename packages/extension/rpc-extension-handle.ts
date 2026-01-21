@@ -2,14 +2,12 @@
 // RPC handle exposed to webview (called via Comlink)
 
 import { performance } from 'perf_hooks';
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { Preview } from './preview/preview-manager';
 import { fetchLocal } from './module-system/fetcher/fetchLocal';
-import { checkFsPath } from './module-system/security/checkFsPath';
 import { getTrustManager, getErrorReporter } from './services';
 import { error as logError, warn as logWarn, debug } from './logging';
-import { SecurityError, ErrorContext, ErrorSeverity } from './errors';
+import { ErrorContext } from './errors';
 import {
   validateString,
   validateBoolean,
@@ -17,6 +15,10 @@ import {
   validateUrl,
   validateOptionalNumber,
 } from './utils/validation';
+import {
+  validateAndResolveSecurePath,
+  reportTrustViolationError,
+} from './utils/pathSecurity';
 import { MAX_FETCH_REQUEST_LENGTH } from './constants';
 import type { ExtensionRPC, FetchResult } from '@mdx-preview/shared';
 
@@ -92,9 +94,10 @@ class ExtensionHandle implements ExtensionRPC {
 
     // type validation using utilities
     const opts = { context: 'fetch', log: logError };
+    // allow empty string, validateFetchRequest handles length
     const validRequest = validateString(request, 'request', {
       ...opts,
-      allowEmpty: true, // allow empty string, validateFetchRequest handles length
+      allowEmpty: true,
     });
     const validIsBare = validateBoolean(isBare, 'isBare', opts);
     const validParentId = validateString(parentId, 'parentId', {
@@ -184,8 +187,9 @@ class ExtensionHandle implements ExtensionRPC {
       return;
     }
 
-    // workspace trust check - prevent untrusted documents from opening files
-    if (!vscode.workspace.isTrusted) {
+    // workspace trust check via TrustManager (not direct vscode.workspace.isTrusted)
+    const trustState = getTrustManager().getState();
+    if (!trustState.workspaceTrusted) {
       logWarn('openDocument: blocked - workspace not trusted');
       return;
     }
@@ -200,31 +204,20 @@ class ExtensionHandle implements ExtensionRPC {
       min: 1,
     });
 
-    // get current document directory from preview
-    const entryDir = this.preview.entryFsDirectory;
-    if (!entryDir) {
-      logWarn('openDocument: no entry directory');
-      return;
-    }
-
-    // resolve relative path
-    const resolvedPath = path.resolve(entryDir, validPath);
-
-    // ! security check - ensure path is within workspace
-    if (!checkFsPath(entryDir, resolvedPath)) {
-      getErrorReporter().report(
-        new SecurityError(
-          'Cannot open file outside workspace folder',
-          'PATH_TRAVERSAL',
-          resolvedPath
-        ),
-        { context: ErrorContext.Security, severity: ErrorSeverity.Warning }
-      );
+    // validate and resolve path securely (entry dir check + path traversal check)
+    const securePathResult = validateAndResolveSecurePath(
+      this.preview,
+      validPath,
+      'openDocument'
+    );
+    if (!securePathResult) {
       return;
     }
 
     try {
-      const doc = await vscode.workspace.openTextDocument(resolvedPath);
+      const doc = await vscode.workspace.openTextDocument(
+        securePathResult.resolvedPath
+      );
 
       // create selection if line is provided (VS Code uses 0-based indexing)
       const options: vscode.TextDocumentShowOptions = {};
@@ -256,47 +249,33 @@ class ExtensionHandle implements ExtensionRPC {
       return;
     }
 
-    // get current document directory from preview
-    const entryDir = this.preview.entryFsDirectory;
-    if (!entryDir) {
-      logWarn('openPreview: no entry directory');
-      return;
-    }
-
-    // resolve relative path
-    const resolvedPath = path.resolve(entryDir, validPath);
-
-    // ! security check - ensure path is within workspace
-    if (!checkFsPath(entryDir, resolvedPath)) {
-      getErrorReporter().report(
-        new SecurityError(
-          'Cannot open file outside workspace folder',
-          'PATH_TRAVERSAL',
-          resolvedPath
-        ),
-        { context: ErrorContext.Security, severity: ErrorSeverity.Warning }
-      );
+    // validate and resolve path securely (entry dir check + path traversal check)
+    const securePathResult = validateAndResolveSecurePath(
+      this.preview,
+      validPath,
+      'openPreview'
+    );
+    if (!securePathResult) {
       return;
     }
 
     // ! trust check for target file - ensures preview can execute safely
-    const targetUri = vscode.Uri.file(resolvedPath);
+    const targetUri = vscode.Uri.file(securePathResult.resolvedPath);
     const trustState = getTrustManager().getStateForDocument(targetUri);
     if (!trustState.canExecute) {
-      getErrorReporter().report(
-        new SecurityError(
-          `Cannot open preview: ${trustState.reason || 'Target file is not in Trusted Mode'}`,
-          'TRUST_VIOLATION',
-          resolvedPath
-        ),
-        { context: ErrorContext.Security, severity: ErrorSeverity.Warning }
+      reportTrustViolationError(
+        securePathResult.resolvedPath,
+        trustState.reason || 'Target file is not in Trusted Mode',
+        'openPreview'
       );
       return;
     }
 
     try {
       // open document in editor (this makes it the active editor)
-      const doc = await vscode.workspace.openTextDocument(resolvedPath);
+      const doc = await vscode.workspace.openTextDocument(
+        securePathResult.resolvedPath
+      );
       await vscode.window.showTextDocument(doc, { preview: false });
 
       // dynamically import openPreview to avoid circular dependency
