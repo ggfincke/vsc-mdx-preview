@@ -6,7 +6,10 @@ import { performance } from 'perf_hooks';
 import { Preview } from './preview-manager';
 import { debug } from '../logging';
 import { ErrorContext } from '../errors';
-import { extractErrorMessage } from '@mdx-preview/shared';
+import {
+  extractErrorMessage,
+  formatTrustStateForDebug,
+} from '@mdx-preview/shared';
 import {
   getTrustManager,
   getErrorReporter,
@@ -29,11 +32,7 @@ export default async function evaluateInWebview(
 
   // Use document-specific trust check (includes remote/scheme checks)
   const trustState = getTrustManager().getStateForDocument(preview.doc.uri);
-  debug(
-    `[EVALUATE] Trust state: canExecute=${trustState.canExecute}, ` +
-      `workspaceTrusted=${trustState.workspaceTrusted}, ` +
-      `scriptsEnabled=${trustState.scriptsEnabled}`
-  );
+  debug(formatTrustStateForDebug('EVALUATE', trustState));
 
   try {
     performance.mark('preview/start');

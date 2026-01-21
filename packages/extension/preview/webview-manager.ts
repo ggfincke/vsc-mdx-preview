@@ -15,6 +15,7 @@ import { getPreviewManager, getTrustManager } from '../services';
 import { debug } from '../logging';
 import { WebviewError } from '../errors';
 import { CSP_DEBUG_PREVIEW_LENGTH } from '../constants';
+import { formatTrustStateForDebug } from '@mdx-preview/shared';
 
 const VIEW_TYPE = 'mdx.preview';
 const MDX_PREVIEW_FOCUS_CONTEXT_KEY = 'mdxPreviewFocus';
@@ -149,9 +150,7 @@ function setPanelHTMLFromPreview(preview: Preview): void {
 
   // Get current trust state (document-specific, includes remote/scheme checks)
   const trustState = getTrustManager().getStateForDocument(doc.uri);
-  debug(
-    `[WEBVIEW-MGR] Trust state: canExecute=${trustState.canExecute}, workspaceTrusted=${trustState.workspaceTrusted}, scriptsEnabled=${trustState.scriptsEnabled}`
-  );
+  debug(formatTrustStateForDebug('WEBVIEW-MGR', trustState));
 
   // Generate nonce for script tags
   const nonce = generateNonce();

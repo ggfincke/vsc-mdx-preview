@@ -4,6 +4,8 @@
 // this file consolidates magic numbers from across the Tailwind module
 // to improve maintainability & documentation.
 
+import { STANDARD_CACHE_TTL_MS } from '@mdx-preview/shared';
+
 // =============================================================================
 // cache configuration
 // =============================================================================
@@ -11,11 +13,11 @@
 // default maximum entries in the CSS cache (LRU eviction)
 export const CACHE_DEFAULT_MAX_ENTRIES = 20;
 
-// default cache TTL in milliseconds (5 minutes)
-export const CACHE_DEFAULT_TTL_MS = 5 * 60 * 1000;
+// default cache TTL in milliseconds (5 minutes) - uses shared constant
+export const CACHE_DEFAULT_TTL_MS = STANDARD_CACHE_TTL_MS;
 
-// version detection cache TTL in milliseconds (5 minutes)
-export const VERSION_CACHE_TTL_MS = 5 * 60 * 1000;
+// version detection cache TTL in milliseconds (5 minutes) - uses shared constant
+export const VERSION_CACHE_TTL_MS = STANDARD_CACHE_TTL_MS;
 
 // =============================================================================
 // processing limits
