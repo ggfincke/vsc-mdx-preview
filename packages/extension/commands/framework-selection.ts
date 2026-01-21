@@ -9,6 +9,7 @@ import {
   getPreviewManager,
 } from '../services';
 import type { Framework } from '../framework';
+import type { FrameworkSetting } from '@mdx-preview/shared';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from './types';
 
@@ -77,13 +78,7 @@ const selectFramework = async (): Promise<void> => {
   if (selected) {
     await configManager.set(
       'framework',
-      selected.value as
-        | 'auto'
-        | 'generic'
-        | 'docusaurus'
-        | 'nextjs'
-        | 'starlight'
-        | 'nextra',
+      selected.value as FrameworkSetting,
       vscode.ConfigurationTarget.Workspace
     );
 

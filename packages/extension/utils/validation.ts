@@ -9,6 +9,7 @@ import {
   createOptionalValidator,
   type ValidationOptions,
 } from './validation-factory';
+import type { FrameworkName } from '@mdx-preview/shared';
 
 // re-export ValidationOptions for backward compatibility
 export type { ValidationOptions };
@@ -213,12 +214,13 @@ export function validateEnumValue<T extends string>(
   return value as T;
 }
 
+// callable function type (avoids ESLint no-unsafe-function-type)
+type CallableFunction = (...args: unknown[]) => unknown;
+
 // validates value is a function (factory-generated)
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-export const validateFunction = createPrimitiveValidator<Function>({
+export const validateFunction = createPrimitiveValidator<CallableFunction>({
   typeName: 'function',
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  typeCheck: (v): v is Function => typeof v === 'function',
+  typeCheck: (v): v is CallableFunction => typeof v === 'function',
 });
 
 // validates an optional string parameter (undefined is valid, no log for undefined) - factory-generated wrapper
@@ -289,7 +291,7 @@ export interface ConfigValidationResult {
     remarkPlugins?: PluginSpecValue[];
     rehypePlugins?: PluginSpecValue[];
     components?: Record<string, string>;
-    framework?: 'generic' | 'docusaurus' | 'nextjs' | 'starlight' | 'nextra';
+    framework?: FrameworkName;
     frameworkOptions?: {
       enableShims?: boolean;
       customAliases?: Record<string, string>;

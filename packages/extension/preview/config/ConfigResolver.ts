@@ -16,6 +16,7 @@ import type {
   ComponentMapping,
   UnknownBehavior,
 } from '../../compiler/types';
+import type { FrameworkName } from '@mdx-preview/shared';
 
 // re-export types for backward compatibility
 export type { PluginSpec, ComponentMapping, UnknownBehavior };
@@ -43,7 +44,7 @@ export interface MdxPreviewConfig {
   // custom component mappings for MDX
   components?: ComponentMapping;
   // framework override (overrides auto-detection)
-  framework?: 'generic' | 'docusaurus' | 'nextjs' | 'starlight' | 'nextra';
+  framework?: FrameworkName;
   // framework-specific options
   frameworkOptions?: FrameworkOptions;
   // Tailwind CSS options

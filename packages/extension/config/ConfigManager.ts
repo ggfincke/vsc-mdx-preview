@@ -10,6 +10,7 @@ import {
   PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS,
   TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
 } from '../constants';
+import type { FrameworkSetting } from '@mdx-preview/shared';
 import {
   DEFAULT_MAX_FILE_SIZE_BYTES,
   DEFAULT_MAX_CSS_FILES_TO_SEARCH,
@@ -64,13 +65,7 @@ export interface SettingTypes {
   'tailwind.cacheMaxEntries': number;
   'tailwind.cacheTtlSeconds': number;
   'tailwind.compilationTimeout': number;
-  framework:
-    | 'auto'
-    | 'generic'
-    | 'docusaurus'
-    | 'nextjs'
-    | 'starlight'
-    | 'nextra';
+  framework: FrameworkSetting;
   'framework.componentShims': boolean;
   'components.builtins': boolean;
   'components.unknownBehavior': 'strip' | 'placeholder' | 'raw';
