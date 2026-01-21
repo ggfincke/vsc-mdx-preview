@@ -93,7 +93,7 @@ export class ModuleRegistry {
   // remove all resolutionMap entries for moduleId (as parent or target)
   private cleanResolutionMapFor(moduleId: string): void {
     for (const [key, value] of this.resolutionMap) {
-      // Key format: "parentId\0request"
+      // key format: "parentId\0request"
       const parentId = key.split('\0')[0];
       if (parentId === moduleId || value === moduleId) {
         this.resolutionMap.delete(key);
@@ -244,8 +244,9 @@ export class ModuleRegistry {
     } else {
       // Evict old unreferenced styles if at capacity
       while (this.injectedStyles.size >= this.maxStyles) {
+        // no more unreferenced styles to evict
         if (!this.evictUnreferencedStyle()) {
-          break; // No more unreferenced styles to evict
+          break;
         }
       }
       this.injectedStyles.set(id, { refCount: 1, lastAccessed: Date.now() });

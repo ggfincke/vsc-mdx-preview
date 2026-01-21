@@ -1,4 +1,5 @@
 // packages/webview-app/src/components/ErrorBoundary/index.ts
+// barrel export for ErrorBoundary component
 
 export {
   MDXErrorBoundary,

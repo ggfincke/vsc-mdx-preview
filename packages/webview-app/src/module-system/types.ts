@@ -6,11 +6,13 @@ import type { FetchResult } from '@mdx-preview/shared';
 // re-export FetchResult from shared
 export type { FetchResult } from '@mdx-preview/shared';
 
+// module export type - can be any value (default export, named exports, etc.)
+type ModuleExports = Record<string, unknown> | unknown;
+
 // a cached module
 export interface Module {
   id: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  exports: any;
+  exports: ModuleExports;
   loaded: boolean;
 }
 
