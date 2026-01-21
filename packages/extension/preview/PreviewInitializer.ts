@@ -85,10 +85,11 @@ export class PreviewInitializer {
 
     // custom CSS watcher (if configured)
     if (customCssPath) {
+      // entryFsDirectory not available yet, pass null
       const customCssWatcher = new CustomCssWatcher(
         customCssPath,
         vscode.workspace.workspaceFolders,
-        null // entryFsDirectory not available yet
+        null
       );
       watcherManager.register('customCss', customCssWatcher);
     }
@@ -127,8 +128,10 @@ export class PreviewInitializer {
     return watcherManager;
   }
 
-  // Setup or teardown config file watcher based on document scheme.
-  // Subscribes directly to ConfigCache change events (no separate ConfigWatcher class).
+  // Setup or teardown config change subscription based on document scheme.
+  // Subscribes to ConfigCache change events broadcasted by ConfigResolver.
+  // Note: Actual file watching is done by ConfigResolver.setupConfigWatcher(),
+  // this method subscribes to those change notifications.
   setupConfigWatcher(
     watcherManager: WatcherManager,
     docScheme: string,

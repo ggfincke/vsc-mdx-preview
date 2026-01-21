@@ -164,7 +164,8 @@ export const window = {
   showErrorMessage: vi.fn(),
   showQuickPick: vi.fn(),
   createWebviewPanel: vi.fn(),
-  activeColorTheme: { kind: 2 }, // ColorThemeKind.Dark
+  // ColorThemeKind.Dark
+  activeColorTheme: { kind: 2 },
   onDidChangeActiveColorTheme: vi.fn(() => new Disposable(() => {})),
 };
 

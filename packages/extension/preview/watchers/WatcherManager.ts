@@ -11,9 +11,7 @@ export class WatcherManager implements Disposable {
   private watchers = new Map<string, IWatcher>();
   private readyGate: Promise<void> | null = null;
 
-  // Register a watcher w/ a unique name.
-  // @param name - Unique identifier for the watcher
-  // @param watcher - The watcher instance to register
+  // register a watcher w/ a unique name
   register(name: string, watcher: IWatcher): void {
     // dispose existing watcher w/ same name if present
     const existing = this.watchers.get(name);
@@ -26,22 +24,17 @@ export class WatcherManager implements Disposable {
     debug(`[WATCHER-MANAGER] Registered watcher: ${name}`);
   }
 
-  // Get a registered watcher by name.
-  // @param name - The watcher name
-  // @returns The watcher instance or undefined if not found
+  // get a registered watcher by name
   get<T extends IWatcher>(name: string): T | undefined {
     return this.watchers.get(name) as T | undefined;
   }
 
-  // Check if a watcher is registered.
-  // @param name - The watcher name
+  // check if a watcher is registered
   has(name: string): boolean {
     return this.watchers.has(name);
   }
 
-  // Unregister & dispose a watcher.
-  // @param name - The watcher name
-  // @returns true if the watcher was found & removed
+  // unregister & dispose a watcher (returns true if found & removed)
   unregister(name: string): boolean {
     const watcher = this.watchers.get(name);
     if (watcher) {

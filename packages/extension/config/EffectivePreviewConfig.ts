@@ -20,7 +20,8 @@ export interface TailwindConfig {
   cacheMaxEntries: number;
   cacheTtlSeconds: number;
   compilationTimeout: number;
-  configPath?: string; // From config file
+  // from config file
+  configPath?: string;
 }
 
 // Unified effective preview configuration

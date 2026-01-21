@@ -210,10 +210,11 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
         enabled: true,
       };
     } catch (error) {
+      // Tailwind errors are non-blocking
       getErrorReporter().report(normalizeError(error), {
           context: ErrorContext.Tailwind,
           severity: ErrorSeverity.Warning,
-          showNotification: false, // Tailwind errors are non-blocking
+          showNotification: false,
           metadata: { operation: 'compilation' },
         }
       );

@@ -4,6 +4,7 @@
 import { resolveAlias, isBuiltInShim } from './alias-resolver';
 import { debug } from '../../logging';
 import { createResettableSingleton } from '../../utils/singleton-factory';
+import { buildShimResolutionResult } from './result-builders';
 
 // import strategies
 import {
@@ -78,12 +79,11 @@ export class UnifiedResolver {
           debug(
             `[UNIFIED-RESOLVER] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
           );
-          return {
-            fsPath: aliasedPath,
-            isBuiltInShim: true,
+          return buildShimResolutionResult(
+            aliasedPath,
             specifier,
-            strategy: ResolutionStrategy.FrameworkShim,
-          };
+            ResolutionStrategy.FrameworkShim
+          );
         }
         // alias resolved to a path - continue w/ that path (will use subsequent strategy)
         debug(

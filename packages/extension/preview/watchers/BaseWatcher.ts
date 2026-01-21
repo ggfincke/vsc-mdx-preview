@@ -178,7 +178,8 @@ export abstract class BaseWatcher implements IWatcher {
     if (this._isActive && this.checkReadiness() && this._readyResolve) {
       debug(`[${this.logTag}] Ready`);
       this._readyResolve();
-      this._readyResolve = null; // Prevent double resolve
+      // prevent double resolve
+      this._readyResolve = null;
     }
   }
 

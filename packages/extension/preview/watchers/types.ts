@@ -1,31 +1,33 @@
 // packages/extension/preview/watchers/types.ts
 // common interface for all watchers
+//
+// ## Config Watching Architecture
+//
+// The config watching system uses a broadcast pattern:
+// 1. ConfigResolver.setupConfigWatcher() - Creates VS Code FileSystemWatcher for config files
+// 2. ConfigCache - Central broadcast point that receives & notifies of config changes
+// 3. PreviewInitializer.setupConfigWatcher() - Creates IWatcher adapters that subscribe to ConfigCache
+//
+// This avoids duplicate file watchers - one watcher per config file, multiple subscribers.
 
 import type { Disposable } from 'vscode';
 
-// common interface for all watchers.
-// provides unified lifecycle management (start/stop/dispose).
+// common interface for all watchers
+// provides unified lifecycle management (start/stop/dispose)
 export interface IWatcher extends Disposable {
-  // Start watching.
-  // Called when the watcher should begin monitoring for changes.
-  // Returns a promise that resolves when the watcher is fully initialized.
+  // start watching & initialize (returns promise when ready)
   start(): Promise<void>;
 
-  // Stop watching without disposing resources.
-  // Can be restarted later w/ start().
+  // stop watching without disposing (can restart later w/ start())
   stop(): void;
 
-  // Check if the watcher is currently active.
-  // @returns true if watching, false if stopped
+  // check if the watcher is currently active
   isActive(): boolean;
 
   // check if the watcher is fully initialized & ready to handle events
-  // @returns true if ready to receive & process events
   isReady(): boolean;
 
-  // Wait for the watcher to become ready (Promise-based, no polling).
-  // @param timeoutMs - Optional timeout in milliseconds
-  // @returns Promise that resolves when ready, rejects on timeout
+  // wait for the watcher to become ready (Promise-based, no polling)
   waitForReady(timeoutMs?: number): Promise<void>;
 }
 

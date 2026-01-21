@@ -97,7 +97,8 @@ export class PreviewDocumentHandler {
       watcherManager.get<DependencyWatcher>('dependency');
     if (this.entryFsDirectory && dependencyWatcher) {
       dependencyWatcher.setDocumentDir(this.entryFsDirectory);
-      dependencyWatcher.clear(); // clear old dependencies when switching documents
+      // clear old dependencies when switching documents
+      dependencyWatcher.clear();
     }
   }
 

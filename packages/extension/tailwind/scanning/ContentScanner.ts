@@ -118,7 +118,8 @@ export class ContentScanner {
     let inSingleQuote = false;
     let inDoubleQuote = false;
     let inTemplateString = false;
-    let templateExprDepth = 0; // Track brace depth within ${} interpolations
+    // track brace depth within ${} interpolations
+    let templateExprDepth = 0;
 
     while (i < text.length && depth > 0) {
       const char = text[i];
@@ -145,7 +146,8 @@ export class ContentScanner {
       if (inTemplateString && !inSingleQuote && !inDoubleQuote) {
         if (char === '$' && text[i + 1] === '{') {
           templateExprDepth = 1;
-          i += 2; // Skip ${ entirely
+          // skip ${ entirely
+          i += 2;
           continue;
         } else if (templateExprDepth > 0) {
           // inside template expression - track inner string states & braces
@@ -231,7 +233,8 @@ export class ContentScanner {
         }
 
         // find the matching closing brace
-        i += 2; // Skip ${
+        // skip ${
+        i += 2;
         const exprStart = i;
         let braceDepth = 1;
         let inString: string | null = null;

@@ -83,11 +83,12 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     super();
 
     // Watch for package.json changes
+    // createFileSystemWatcher args: ignoreCreate, ignoreChange, ignoreDelete
     this.fileWatcher = vscode.workspace.createFileSystemWatcher(
       '**/package.json',
-      false, // create
-      false, // change
-      false // delete
+      false,
+      false,
+      false
     );
 
     this.addDisposable(

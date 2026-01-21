@@ -28,7 +28,8 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
     }
 
     const { tsCompilerOptions, tsCompilerHost } = context.tsConfig;
-    const containingFile = path.join(context.baseDir, 'index.ts'); // virtual file
+    // virtual file for TypeScript resolution
+    const containingFile = path.join(context.baseDir, 'index.ts');
 
     const resolvedModule = typescript.resolveModuleName(
       specifier,

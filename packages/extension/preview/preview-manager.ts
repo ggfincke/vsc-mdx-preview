@@ -296,13 +296,14 @@ export class Preview {
 
     // create watchers w/ ready gate (callbacks wait for webview handshake)
     // NOTE: watchers are created but NOT started yet
+    // ready gate - callbacks wait for handshake promise
     this.watcherManager = this.initializer.createWatchers(
       this.configManager.configuration.customCss,
       async (fsPath) => {
         await this.webviewBridge.invalidate(fsPath);
         await this.updateWebview(true);
       },
-      this.webviewHandshakePromise // ready gate - callbacks wait for this
+      this.webviewHandshakePromise
     );
 
     // initialize evaluator (needs this preview instance)

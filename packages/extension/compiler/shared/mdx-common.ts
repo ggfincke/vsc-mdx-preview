@@ -59,9 +59,11 @@ export function extractPreviewFrontmatter(
 // Nextra-specific frontmatter keys
 export const NEXTRA_FRONTMATTER_KEYS = [
   'title',
-  'sidebarTitle', // Takes precedence over title
+  // takes precedence over title
+  'sidebarTitle',
   'description',
-  'layout', // 'default' | 'full' | 'raw'
+  // 'default' | 'full' | 'raw'
+  'layout',
 ] as const;
 
 // extract Nextra-specific frontmatter fields for page metadata

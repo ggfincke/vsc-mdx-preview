@@ -94,7 +94,8 @@ export function resolvePathWithFallbacks(
   for (const dir of dirsToTry) {
     const resolved = path.resolve(dir, inputPath);
     if (!checkExists) {
-      return resolved; // Return first resolution without existence check
+      // return first resolution w/o existence check
+      return resolved;
     }
     try {
       fs.accessSync(resolved);
