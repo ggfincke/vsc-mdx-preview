@@ -31,6 +31,7 @@ export type SettingKey =
   | 'preview.mdx.customLayoutFilePath'
   | 'preview.previewTheme'
   | 'preview.codeBlockTheme'
+  | 'preview.mermaidTheme'
   | 'preview.autoTheme'
   | 'build.useSucraseTranspiler'
   | 'tailwind.enabled'
@@ -57,6 +58,7 @@ export interface SettingTypes {
   'preview.mdx.customLayoutFilePath': string;
   'preview.previewTheme': string;
   'preview.codeBlockTheme': string;
+  'preview.mermaidTheme': string;
   'preview.autoTheme': boolean;
   'build.useSucraseTranspiler': boolean;
   'tailwind.enabled': 'auto' | 'enabled' | 'disabled';
@@ -84,6 +86,7 @@ const DEFAULTS: SettingTypes = {
   'preview.mdx.customLayoutFilePath': '',
   'preview.previewTheme': 'none',
   'preview.codeBlockTheme': 'auto',
+  'preview.mermaidTheme': 'default',
   'preview.autoTheme': true,
   'build.useSucraseTranspiler': false,
   'tailwind.enabled': 'enabled',

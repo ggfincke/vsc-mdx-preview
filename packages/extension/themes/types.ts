@@ -5,6 +5,7 @@
 export type {
   PreviewTheme,
   CodeBlockTheme,
+  MermaidTheme,
   WebviewThemeState,
 } from '@mdx-preview/shared';
 
@@ -16,12 +17,13 @@ export {
   getOppositeTheme,
 } from '@mdx-preview/shared';
 
-import type { PreviewTheme, CodeBlockTheme } from '@mdx-preview/shared';
+import type { PreviewTheme, CodeBlockTheme, MermaidTheme } from '@mdx-preview/shared';
 
 // theme configuration (extension-only)
 export interface ThemeConfiguration {
   previewTheme: PreviewTheme;
   codeBlockTheme: CodeBlockTheme;
+  mermaidTheme: MermaidTheme;
   autoTheme: boolean;
 }
 
@@ -71,3 +73,14 @@ export const CODE_BLOCK_THEME_LABELS: Record<CodeBlockTheme, string> = {
   vue: 'Vue',
   xonokai: 'Xonokai',
 };
+
+export const MERMAID_THEME_LABELS: Record<MermaidTheme, string> = {
+  default: 'Default (Light)',
+  dark: 'Dark',
+  forest: 'Forest',
+  neutral: 'Neutral',
+  base: 'Base (Minimal)',
+  null: 'None (Raw)',
+};
+
+export const MERMAID_THEMES: MermaidTheme[] = ['default', 'dark', 'forest', 'neutral', 'base', 'null'];

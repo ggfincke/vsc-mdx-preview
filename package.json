@@ -114,6 +114,11 @@
         "category": "MDX"
       },
       {
+        "command": "mdx-preview.commands.selectMermaidTheme",
+        "title": "Select Mermaid Theme",
+        "category": "MDX"
+      },
+      {
         "command": "mdx-preview.commands.zoomIn",
         "title": "Zoom In",
         "category": "MDX"
@@ -456,6 +461,28 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "Automatically switch between light/dark preview themes based on VS Code's current color theme.",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.mermaidTheme": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "dark",
+            "forest",
+            "neutral",
+            "base",
+            "null"
+          ],
+          "enumDescriptions": [
+            "Light theme with good text contrast (recommended)",
+            "Dark theme for dark backgrounds",
+            "Green-tinted forest theme",
+            "Neutral grayscale theme",
+            "Minimal base theme for custom styling",
+            "No theme applied (raw SVG)"
+          ],
+          "markdownDescription": "Theme for Mermaid diagrams (flowcharts, sequence diagrams, etc.)",
           "scope": "resource"
         },
         "mdx-preview.framework": {

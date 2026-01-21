@@ -20,6 +20,7 @@ export const CommandNames = {
   // theme commands
   SELECT_PREVIEW_THEME: 'mdx-preview.commands.selectPreviewTheme',
   SELECT_CODE_BLOCK_THEME: 'mdx-preview.commands.selectCodeBlockTheme',
+  SELECT_MERMAID_THEME: 'mdx-preview.commands.selectMermaidTheme',
 
   // zoom commands
   ZOOM_IN: 'mdx-preview.commands.zoomIn',

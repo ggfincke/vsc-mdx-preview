@@ -124,6 +124,9 @@ export type PreviewTheme =
   | 'none'
   | 'vue';
 
+// available mermaid diagram themes
+export type MermaidTheme = 'default' | 'dark' | 'forest' | 'neutral' | 'base' | 'null';
+
 // available code block themes (syntax highlighting)
 export type CodeBlockTheme =
   | 'auto'
@@ -155,6 +158,7 @@ export type CodeBlockTheme =
 export interface WebviewThemeState {
   previewTheme: PreviewTheme;
   codeBlockTheme: CodeBlockTheme;
+  mermaidTheme: MermaidTheme;
   isLight: boolean;
 }
 

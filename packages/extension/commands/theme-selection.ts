@@ -7,10 +7,13 @@ import { getConfigManager, getPreviewManager } from '../services';
 import {
   PREVIEW_THEMES,
   CODE_BLOCK_THEMES,
+  MERMAID_THEMES,
   PREVIEW_THEME_LABELS,
   CODE_BLOCK_THEME_LABELS,
+  MERMAID_THEME_LABELS,
   type PreviewTheme,
   type CodeBlockTheme,
+  type MermaidTheme,
 } from '../themes';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from './types';
@@ -75,7 +78,38 @@ const selectCodeBlockTheme = async (): Promise<void> => {
   }
 };
 
+const selectMermaidTheme = async (): Promise<void> => {
+  debug('[CMD] selectMermaidTheme command triggered');
+
+  const configManager = getConfigManager();
+  const currentTheme = configManager.get(
+    'preview.mermaidTheme'
+  ) as MermaidTheme;
+
+  const items = MERMAID_THEMES.map((theme) => ({
+    label: MERMAID_THEME_LABELS[theme],
+    description: theme === currentTheme ? '(current)' : undefined,
+    theme,
+  }));
+
+  const selected = await vscode.window.showQuickPick(items, {
+    placeHolder: 'Select Mermaid diagram theme',
+    matchOnDescription: true,
+  });
+
+  if (selected) {
+    await configManager.set(
+      'preview.mermaidTheme',
+      selected.theme,
+      vscode.ConfigurationTarget.Global
+    );
+    // refresh previews to apply theme
+    getPreviewManager().refreshAllPreviews();
+  }
+};
+
 export const commands: CommandDefinition[] = [
   { id: CommandNames.SELECT_PREVIEW_THEME, handler: selectPreviewTheme },
   { id: CommandNames.SELECT_CODE_BLOCK_THEME, handler: selectCodeBlockTheme },
+  { id: CommandNames.SELECT_MERMAID_THEME, handler: selectMermaidTheme },
 ];

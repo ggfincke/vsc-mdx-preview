@@ -8,6 +8,7 @@ import { SubscriberManager } from '../utils/SubscriberManager';
 import type {
   PreviewTheme,
   CodeBlockTheme,
+  MermaidTheme,
   ThemeConfiguration,
   WebviewThemeState,
 } from './types';
@@ -55,6 +56,10 @@ export class ThemeManager extends SingletonService<ThemeManager> {
         'preview.codeBlockTheme',
         docUri
       ) as CodeBlockTheme,
+      mermaidTheme: configManager.get(
+        'preview.mermaidTheme',
+        docUri
+      ) as MermaidTheme,
       autoTheme: configManager.get('preview.autoTheme', docUri),
     };
   }
@@ -128,6 +133,7 @@ export class ThemeManager extends SingletonService<ThemeManager> {
     return {
       previewTheme: effectivePreviewTheme,
       codeBlockTheme: effectiveCodeBlockTheme,
+      mermaidTheme: config.mermaidTheme,
       isLight: this.isLightTheme(),
     };
   }
