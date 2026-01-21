@@ -5,6 +5,7 @@ import type { TrustState, PreviewError } from '@mdx-preview/shared';
 import type {
   QueuedHandlerConfig,
   OptionalHandlerConfig,
+  QueuedMessageType,
 } from './handler-factory';
 
 // ============================================================================
@@ -12,17 +13,30 @@ import type {
 // These handlers buffer messages until React mounts, then flush to state handlers
 // ============================================================================
 
+// factory for creating simple pass-through queued configs
+// use for handlers where the payload is passed directly without transformation
+function createSimpleQueuedConfig<T>(
+  methodName: string,
+  messageType: QueuedMessageType,
+  handlerKey: keyof import('./handler-factory').RequiredStateHandlers,
+  debugFormat?: (...args: unknown[]) => string
+): QueuedHandlerConfig<T, [T]> {
+  return {
+    methodName,
+    messageType,
+    handlerKey,
+    toPayload: (value: unknown) => value as T,
+    toHandlerArgs: (payload) => [payload],
+    debugFormat,
+  };
+}
+
 // configuration for setTrustState handler
-export const SET_TRUST_STATE_CONFIG: QueuedHandlerConfig<
-  TrustState,
-  [TrustState]
-> = {
-  methodName: 'setTrustState',
-  messageType: 'trust',
-  handlerKey: 'setTrustState',
-  toPayload: (state: unknown) => state as TrustState,
-  toHandlerArgs: (payload) => [payload],
-};
+export const SET_TRUST_STATE_CONFIG = createSimpleQueuedConfig<TrustState>(
+  'setTrustState',
+  'trust',
+  'setTrustState'
+);
 
 // payload type for updatePreview
 interface TrustedPayload {
@@ -77,61 +91,46 @@ export const UPDATE_PREVIEW_SAFE_CONFIG: QueuedHandlerConfig<
 };
 
 // configuration for showPreviewError handler
-export const SHOW_PREVIEW_ERROR_CONFIG: QueuedHandlerConfig<
-  PreviewError,
-  [PreviewError]
-> = {
-  methodName: 'showPreviewError',
-  messageType: 'error',
-  handlerKey: 'setError',
-  toPayload: (error: unknown) => error as PreviewError,
-  toHandlerArgs: (payload) => [payload],
-};
+export const SHOW_PREVIEW_ERROR_CONFIG = createSimpleQueuedConfig<PreviewError>(
+  'showPreviewError',
+  'error',
+  'setError'
+);
 
 // configuration for setStale handler
-export const SET_STALE_CONFIG: QueuedHandlerConfig<boolean, [boolean]> = {
-  methodName: 'setStale',
-  messageType: 'stale',
-  handlerKey: 'setStale',
-  toPayload: (isStale: unknown) => isStale as boolean,
-  toHandlerArgs: (payload) => [payload],
-  debugFormat: (isStale: unknown) => `setStale called: ${isStale}`,
-};
+export const SET_STALE_CONFIG = createSimpleQueuedConfig<boolean>(
+  'setStale',
+  'stale',
+  'setStale',
+  (isStale: unknown) => `setStale called: ${isStale}`
+);
 
 // ============================================================================
 // OPTIONAL Handler Configurations
 // These handlers call the optional handler if present, no queuing
 // ============================================================================
 
+// factory for creating optional handler configs with identical methodName/handlerKey
+function createOptionalConfig<K extends keyof import('./handler-factory').OptionalStateHandlers>(
+  key: K
+): OptionalHandlerConfig {
+  return { methodName: key, handlerKey: key };
+}
+
 // configuration for setTheme handler
-export const SET_THEME_CONFIG: OptionalHandlerConfig = {
-  methodName: 'setTheme',
-  handlerKey: 'setTheme',
-};
+export const SET_THEME_CONFIG = createOptionalConfig('setTheme');
 
 // configuration for setNextraMeta handler
-export const SET_NEXTRA_META_CONFIG: OptionalHandlerConfig = {
-  methodName: 'setNextraMeta',
-  handlerKey: 'setNextraMeta',
-};
+export const SET_NEXTRA_META_CONFIG = createOptionalConfig('setNextraMeta');
 
 // configuration for zoomIn handler
-export const ZOOM_IN_CONFIG: OptionalHandlerConfig = {
-  methodName: 'zoomIn',
-  handlerKey: 'zoomIn',
-};
+export const ZOOM_IN_CONFIG = createOptionalConfig('zoomIn');
 
 // configuration for zoomOut handler
-export const ZOOM_OUT_CONFIG: OptionalHandlerConfig = {
-  methodName: 'zoomOut',
-  handlerKey: 'zoomOut',
-};
+export const ZOOM_OUT_CONFIG = createOptionalConfig('zoomOut');
 
 // configuration for resetZoom handler
-export const RESET_ZOOM_CONFIG: OptionalHandlerConfig = {
-  methodName: 'resetZoom',
-  handlerKey: 'resetZoom',
-};
+export const RESET_ZOOM_CONFIG = createOptionalConfig('resetZoom');
 
 // ============================================================================
 // Config Collections (for iteration/documentation)
