@@ -6,14 +6,62 @@
 // - the ESM/CJS module loading uses intelligent fallback: try CommonJS first,
 //   then ESM if ERR_REQUIRE_ESM is detected
 // - file I/O errors (readFile) propagate up - expected to be caught by orchestrator
+//
+// optimization: PostCSS is lazy-loaded to improve extension startup time
+// for workspaces that don't use Tailwind
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
-import postcss from 'postcss';
 import { debug } from '../logging';
 import { TailwindError } from '../errors';
 import { MAX_INLINE_SOURCE_CHUNK_SIZE } from './constants';
+
+// type-only import for PostCSS default export (actual module loaded lazily)
+// postcss default export is a function that creates a Processor
+type PostCSSFn = typeof import('postcss').default;
+
+// module-level cache for lazy-loaded PostCSS function
+let postcssInstance: PostCSSFn | null = null;
+
+// lazy-load postcss only when Tailwind compilation is needed
+// follows the same CJS/ESM fallback pattern as Tailwind plugin loading
+async function getPostCSS(): Promise<PostCSSFn> {
+  if (postcssInstance) {
+    return postcssInstance;
+  }
+
+  debug('[TAILWIND] Lazy-loading postcss...');
+
+  try {
+    // try CommonJS require first (most common case)
+    const mod = require('postcss');
+    postcssInstance = (mod.default ?? mod) as PostCSSFn;
+    debug('[TAILWIND] PostCSS loaded via require');
+    return postcssInstance;
+  } catch (error) {
+    // handle ESM-only postcss package
+    const isEsm =
+      error instanceof Error &&
+      'code' in error &&
+      (error as NodeJS.ErrnoException).code === 'ERR_REQUIRE_ESM';
+
+    if (!isEsm) {
+      throw error;
+    }
+
+    const mod = await import('postcss');
+    postcssInstance = (mod.default ?? mod) as PostCSSFn;
+    debug('[TAILWIND] PostCSS loaded via dynamic import (ESM)');
+    return postcssInstance;
+  }
+}
+
+// clear postcss cache (for testing or cache refresh scenarios)
+export function clearPostCSSCache(): void {
+  postcssInstance = null;
+  debug('[TAILWIND] PostCSS cache cleared');
+}
 
 // PostCSS plugin factory type
 // a function that accepts options & returns a PostCSS plugin object
@@ -54,6 +102,8 @@ export class TailwindCompiler {
       ...(contentConfig.length > 0 ? { content: contentConfig } : {}),
     };
 
+    // lazy-load postcss (deferred until first Tailwind compilation)
+    const postcss = await getPostCSS();
     const result = await postcss([plugin(pluginOptions)]).process(inputCss, {
       from: options.entryCssPath ?? undefined,
     });
