@@ -60,3 +60,6 @@ export async function handleByExtension(
   }
   return undefined;
 }
+
+// re-export cache clearing for handlers that support it
+export { clearSassCache } from './SassHandler';
