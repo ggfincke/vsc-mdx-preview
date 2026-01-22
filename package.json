@@ -2,7 +2,7 @@
   "name": "vscode-mdx-preview",
   "displayName": "MDX Preview",
   "description": "MDX Preview",
-  "version": "1.0.0-alpha.11",
+  "version": "1.0.0-alpha.12",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [
@@ -609,10 +609,12 @@
     "lint": "eslint packages/extension && npm run lint -w webview",
     "lint:fix": "eslint packages/extension --fix && npm run lint:fix -w webview",
     "format": "prettier --write \"packages/**/*.{ts,js,json}\" \"*.{md,json}\"",
-    "format:check": "prettier --check \"packages/**/*.{ts,js,json}\" \"*.{md,json}\""
+    "format:check": "prettier --check \"packages/**/*.{ts,js,json}\" \"*.{md,json}\"",
+    "size:report": "node scripts/size-report.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "sass": "^1.80.0",
     "vitest": "^2.0.0",
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^20.0.0",
@@ -623,15 +625,12 @@
     "globals": "^15.0.0",
     "prettier": "^3.0.0",
     "tsx": "^4.19.2",
+    "typescript": "^5.4.0",
     "typescript-eslint": "^8.0.0"
   },
   "dependencies": {
     "@babel/core": "^7.24.0",
     "@babel/plugin-proposal-export-default-from": "^7.24.0",
-    "@babel/plugin-transform-class-properties": "^7.24.0",
-    "@babel/plugin-transform-export-namespace-from": "^7.24.0",
-    "@babel/plugin-transform-nullish-coalescing-operator": "^7.24.0",
-    "@babel/plugin-transform-optional-chaining": "^7.24.0",
     "@babel/preset-env": "^7.24.0",
     "@babel/preset-react": "^7.24.0",
     "@mdx-js/mdx": "^3.0.0",
@@ -655,11 +654,10 @@
     "remark-mdx": "^3.0.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.0.0",
-    "sass": "^1.80.0",
     "shiki": "^1.29.2",
     "sucrase": "^3.35.0",
+    "tsconfck": "^3.1.0",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.4.0",
     "unified": "^11.0.0",
     "unist-util-visit": "^5.0.0"
   },
