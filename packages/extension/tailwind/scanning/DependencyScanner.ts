@@ -25,20 +25,20 @@ export class DependencyScanner {
     const classSet = new Set<string>();
     const scannedFiles: string[] = [];
 
-    // Resolve all imports to absolute paths
+    // resolve all imports to absolute paths
     const resolved = await this.resolveDependencies(
       entryFilePath,
       imports,
       providedContext
     );
 
-    // Read all dependency files in parallel using FileScanValidator
+    // read all dependency files in parallel using FileScanValidator
     const fileContents = await this.validator.readValidFiles(
       resolved,
       maxFileSizeBytes
     );
 
-    // Extract classes from each file
+    // extract classes from each file
     for (const [fsPath, content] of fileContents) {
       extractFromText(content, classSet);
       scannedFiles.push(fsPath);
@@ -55,16 +55,16 @@ export class DependencyScanner {
   ): Promise<string[]> {
     const entryDir = path.dirname(entryFilePath);
 
-    // Use provided context if available, otherwise fall back to minimal context
-    // Always ensure baseDir is set to the entry directory for relative resolution
+    // use provided context if available, otherwise fall back to minimal context
+    // always ensure baseDir is set to the entry directory for relative resolution
     const context: ResolutionContext = providedContext
       ? { ...providedContext, baseDir: entryDir }
       : { baseDir: entryDir };
 
-    // Filter to resolvable relative imports & resolve in parallel
+    // filter to resolvable relative imports & resolve in parallel
     const resolutionPromises = imports
       .filter((specifier) => {
-        // Must be resolvable & relative
+        // must be resolvable & relative
         return (
           this.resolver.shouldResolve(specifier) &&
           this.resolver.isRelativeImport(specifier)

@@ -314,10 +314,10 @@ export class Preview {
       this.watcherManager
     );
 
-    // set document FIRST (sets document directory for watchers)
+    // set document first (sets document directory for watchers)
     this.setDoc(doc);
 
-    // THEN start watchers (now document directory is set)
+    // then start watchers (now document directory is set)
     void this.initializer.startWatchers(this.watcherManager);
 
     // setup performance observer in development

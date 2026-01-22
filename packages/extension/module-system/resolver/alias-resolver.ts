@@ -7,6 +7,8 @@ import {
   COMPONENT_REGISTRY,
   SHIM_PREFIX,
   type FrameworkId,
+  isGenericComponent,
+  getCanonicalComponentName,
 } from '@mdx-preview/shared';
 
 
@@ -52,17 +54,26 @@ function resolveFrameworkAlias(
   return FRAMEWORK_ALIAS_MAPS[framework].get(request) ?? null;
 }
 
-// Check if resolved path is a built-in shim
+// check if resolved path is a built-in shim
 export function isBuiltInShim(resolvedPath: string): boolean {
   return resolvedPath.startsWith(SHIM_PREFIX);
 }
 
-// Resolve import using framework aliases
+// resolve import using framework aliases
 export function resolveAlias(
   request: string,
   framework: Framework,
   workspaceRoot: string
 ): string | null {
+  // handle bare imports of generic component names (Callout, Accordion, Alert, etc.)
+  // these are auto-injected by component-mapper.ts & need to resolve to shims
+  if (isGenericComponent(request)) {
+    const canonical = getCanonicalComponentName(request);
+    if (canonical) {
+      return `${SHIM_PREFIX}generic/${canonical}`;
+    }
+  }
+
   const frameworkKey = toAliasFrameworkKey(framework);
   if (!frameworkKey) {
     return null;

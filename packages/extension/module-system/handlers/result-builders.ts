@@ -1,8 +1,5 @@
 // packages/extension/module-system/handlers/result-builders.ts
-// Builder functions for constructing FetchResult objects consistently
-//
-// These factory functions standardize FetchResult construction across all handlers,
-// ensuring consistent field population & reducing inline object literal boilerplate.
+// builder functions for constructing FetchResult objects consistently
 
 import type { FetchResult } from '@mdx-preview/shared';
 

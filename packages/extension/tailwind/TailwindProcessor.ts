@@ -66,7 +66,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       tailwindConfig,
     } = options;
 
-    // Update cache settings from unified config
+    // update cache settings from unified config
     this.cache.updateSettings({
       maxEntries: tailwindConfig.cacheMaxEntries,
       ttlMs: tailwindConfig.cacheTtlSeconds * 1000,
@@ -106,7 +106,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     const versionInfo =
       this.detector.getWorkspaceTailwindVersion(workspaceRoot);
 
-    // Guard for unsupported versions (v1, v2)
+    // guard for unsupported versions (v1, v2)
     if (
       versionInfo.major !== null &&
       versionInfo.major < MIN_SUPPORTED_TAILWIND_VERSION
@@ -117,7 +117,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       return { css: '', watchFiles: [], enabled: false };
     }
 
-    // Warn about unknown future versions (may need updates)
+    // warn about unknown future versions (may need updates)
     if (
       versionInfo.major !== null &&
       versionInfo.major > MAX_KNOWN_TAILWIND_VERSION
@@ -132,7 +132,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     const tailwindVersion: TailwindVersion =
       versionInfo.major === 3 ? 'v3' : 'v4';
 
-    // Warn about v3 deprecation (once per workspace per session)
+    // warn about v3 deprecation (once per workspace per session)
     if (tailwindVersion === 'v3') {
       this.warnTailwindV3Deprecation(workspaceRoot);
     }
@@ -141,7 +141,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       ? path.dirname(configPath)
       : (workspaceRoot ?? preview.entryFsDirectory);
 
-    // Build ResolutionContext for Tailwind scanning (parity with module-system)
+    // build ResolutionContext for Tailwind scanning (parity w/ module-system)
     const frameworkDetector = getFrameworkDetector();
     const frameworkInfo = frameworkDetector.getFramework(preview.doc.uri);
     const shimsEnabled = frameworkDetector.areShimsEnabled(preview.doc.uri);
@@ -281,8 +281,8 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       const stat = await fs.promises.stat(filePath);
       return `${stat.mtimeMs}`;
     } catch (error) {
-      // Return unique error stamp to bust cache on transient errors
-      // This prevents stale cache hits when file is temporarily unreadable
+      // return unique error stamp to bust cache on transient errors
+      // this prevents stale cache hits when file is temporarily unreadable
       debug(`[TAILWIND] Failed to stat file ${filePath}: ${error}`);
       return `error:${Date.now()}`;
     }

@@ -65,11 +65,11 @@ export class ContentScanner {
   }
 
   // extract classes from array.join(' ') patterns
-  // Example: ['flex', 'gap-4', condition && 'mt-2'].join(' ')
+  // example: ['flex', 'gap-4', condition && 'mt-2'].join(' ')
   extractArrayJoinPatterns(text: string, classSet: Set<string>): void {
     for (const match of text.matchAll(ARRAY_JOIN_RE)) {
       const arrayContent = match[1];
-      // Extract string literals from inside the array brackets
+      // extract string literals from inside the array brackets
       const literals = this.extractStringLiterals(`[${arrayContent}]`);
       for (const literal of literals) {
         this.addClasses(literal, classSet);
@@ -78,7 +78,7 @@ export class ContentScanner {
   }
 
   // extract balanced expressions using brace/paren matching
-  // Handles nested braces properly, e.g., className={condition ? "a" : "b"}
+  // handles nested braces properly, e.g., className={condition ? "a" : "b"}
   extractBracedExpressions(
     text: string,
     startPattern: RegExp,
@@ -160,7 +160,7 @@ export class ContentScanner {
         }
       }
 
-      // Only count braces for the outer expression when completely outside all strings
+      // only count braces for the outer expression when completely outside all strings
       const outsideAllStrings =
         !inSingleQuote && !inDoubleQuote && !inTemplateString;
 
@@ -185,7 +185,7 @@ export class ContentScanner {
 
   // extract string literals from JavaScript expression w/ recursive template literal handling
   extractStringLiterals(expression: string, depth = 0): string[] {
-    // Guard against stack overflow from pathological nested template literals
+    // guard against stack overflow from pathological nested template literals
     if (depth > SCANNER_MAX_RECURSION_DEPTH) {
       debug(
         `[TAILWIND-SCANNER] Max recursion depth (${SCANNER_MAX_RECURSION_DEPTH}) reached, skipping nested extraction`
@@ -283,7 +283,7 @@ export class ContentScanner {
       }
     }
 
-    // Add remaining static part
+    // add remaining static part
     const remainingStatic = template.slice(staticStart);
     if (remainingStatic.trim()) {
       results.push(remainingStatic);

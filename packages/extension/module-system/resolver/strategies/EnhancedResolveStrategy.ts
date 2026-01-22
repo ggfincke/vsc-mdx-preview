@@ -1,5 +1,5 @@
 // packages/extension/module-system/resolver/strategies/EnhancedResolveStrategy.ts
-// Node.js-style resolution using enhanced-resolve
+// node.js-style resolution using enhanced-resolve
 
 import type { Resolver } from 'enhanced-resolve';
 import { getBrowserResolver, getNodeResolver } from '../resolver-factory';

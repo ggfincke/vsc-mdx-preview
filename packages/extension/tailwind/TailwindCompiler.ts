@@ -3,9 +3,9 @@
 //
 // error handling strategy:
 // - this module propagates errors to its caller (TailwindProcessor)
-// - The ESM/CJS module loading uses intelligent fallback: try CommonJS first,
+// - the ESM/CJS module loading uses intelligent fallback: try CommonJS first,
 //   then ESM if ERR_REQUIRE_ESM is detected
-// - File I/O errors (readFile) propagate up - expected to be caught by orchestrator
+// - file I/O errors (readFile) propagate up - expected to be caught by orchestrator
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -70,7 +70,7 @@ export class TailwindCompiler {
     }
 
     if (options.tailwindVersion === 'v4') {
-      // Skip preflight to avoid overriding markdown styles in previews.
+      // skip preflight to avoid overriding markdown styles in previews
       return [
         '@import "tailwindcss/theme";',
         '@tailwind components;',
@@ -79,7 +79,7 @@ export class TailwindCompiler {
       ].join('\n');
     }
 
-    // Skip base layer to preserve markdown formatting by default.
+    // skip base layer to preserve markdown formatting by default
     return '@tailwind components;\n@tailwind utilities;\n';
   }
 

@@ -9,7 +9,7 @@ export interface TailwindScanOptions {
   entryFilePath?: string;
   entryFileDependencies?: string[];
   maxFileSizeBytes?: number;
-  // Resolution context for proper import resolution (parity with module-system)
+  // resolution context for proper import resolution (parity w/ module-system)
   resolutionContext?: ResolutionContext;
 }
 
@@ -32,10 +32,10 @@ export class TailwindScanner {
     const classSet = new Set<string>();
     const scannedFiles: string[] = [];
 
-    // Extract from main text (synchronous - no I/O)
+    // extract from main text (synchronous - no I/O)
     this.extractFromText(text, classSet);
 
-    // Optionally scan dependency files
+    // optionally scan dependency files
     if (
       options.includeDependencies &&
       options.entryFilePath &&
@@ -64,14 +64,14 @@ export class TailwindScanner {
 
   // extract Tailwind classes from text content using all scanning strategies
   private extractFromText(text: string, classSet: Set<string>): void {
-    // Pattern-based extraction (static patterns)
+    // pattern-based extraction (static patterns)
     this.patternScanner.extractStaticAttributes(text, classSet);
     this.patternScanner.extractApplyDirectives(text, classSet);
     this.patternScanner.extractLayerClasses(text, classSet, (t, p, o, c) =>
       this.contentScanner.extractBracedExpressions(t, p, o, c)
     );
 
-    // Content-based extraction (dynamic patterns)
+    // content-based extraction (dynamic patterns)
     this.contentScanner.extractDynamicExpressions(text, classSet);
     this.contentScanner.extractUtilityFunctions(text, classSet);
     this.contentScanner.extractCvaPatterns(text, classSet);

@@ -8,13 +8,13 @@ export const NOOP_MODULE = `Object.defineProperty(exports, '__esModule', { value
   function noop() {}
   exports.default = noop;`;
 
-// Track whether we've shown the core module warning (once per session)
+// track whether we've shown the core module warning (once per session)
 let hasWarnedAboutCoreModules = false;
 
-// Track all core modules used in current preview (for debug output)
+// track all core modules used in current preview (for debug output)
 const usedCoreModules = new Set<string>();
 
-// Node.js core modules that cannot be shimmed in a browser environment
+// node.js core modules that cannot be shimmed in a browser environment
 // these return noop module when requested
 // https://github.com/calvinmetcalf/rollup-plugin-node-builtins
 // license: MIT except ES6 ports of browserify modules
@@ -31,7 +31,7 @@ const UNSHIMMABLE_CORE_MODULES = new Set([
   'crypto',
 ]);
 
-// Node.js core modules that could theoretically be shimmed
+// node.js core modules that could theoretically be shimmed
 // but return noop for security/simplicity in webview context
 const SHIMMABLE_CORE_MODULES = new Set([
   'process',
@@ -75,14 +75,14 @@ export function isCoreModule(request: string): boolean {
   return ALL_CORE_MODULES.has(normalized);
 }
 
-// NOTE: extractImports has been moved to import-extractor.ts
-// Import from there instead: import { extractImports } from './import-extractor';
+// extractImports has been moved to import-extractor.ts
+// import from there instead: import { extractImports } from './import-extractor';
 
 // build a noop result for core modules that can't be shimmed in browser
 export function buildNoopResult(normalizedRequest: string) {
   usedCoreModules.add(normalizedRequest);
 
-  // Show warning once per session when core modules are used
+  // show warning once per session when core modules are used
   if (!hasWarnedAboutCoreModules) {
     hasWarnedAboutCoreModules = true;
     warn(

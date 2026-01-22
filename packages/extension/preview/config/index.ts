@@ -14,7 +14,7 @@ export {
   type ResolvedConfig,
 } from './ConfigResolver';
 
-// Re-export config change types from ConfigCache
+// re-export config change types from ConfigCache
 export {
   ConfigChangeType,
   type ConfigChangeEvent,

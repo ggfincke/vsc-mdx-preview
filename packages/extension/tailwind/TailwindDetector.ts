@@ -3,9 +3,9 @@
 //
 // error handling strategy:
 // - discovery module - silent failures are expected & intentional
-// - File not found = Tailwind not configured (returns null, no error)
-// - All file I/O wrapped in try-catch, returns null/undefined on failure
-// - Debug logging added for troubleshooting detection issues
+// - file not found = Tailwind not configured (returns null, no error)
+// - all file I/O wrapped in try-catch, returns null/undefined on failure
+// - debug logging added for troubleshooting detection issues
 
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -198,7 +198,7 @@ export class TailwindDetector {
       this.entryCssCache.delete(cacheKey);
     }
 
-    // First, check common locations for faster detection
+    // first, check common locations for faster detection
     const commonResult = await this.findEntryCssInCommonLocations(
       workspaceRoot,
       entryDir
@@ -209,7 +209,7 @@ export class TailwindDetector {
       return commonResult;
     }
 
-    // Fall back to full workspace scan if not found in common locations
+    // fall back to full workspace scan if not found in common locations
     debug(
       '[TAILWIND] Entry CSS not in common locations, scanning workspace...'
     );
@@ -243,7 +243,7 @@ export class TailwindDetector {
     workspaceRoot: string,
     entryDir: string | null
   ): Promise<string | null> {
-    // Build list of directories to check (entryDir first if different from workspace)
+    // build list of directories to check (entryDir first if different from workspace)
     const dirsToCheck: string[] = [];
     if (entryDir && entryDir !== workspaceRoot) {
       dirsToCheck.push(entryDir);
@@ -251,7 +251,7 @@ export class TailwindDetector {
     dirsToCheck.push(workspaceRoot);
 
     for (const baseDir of dirsToCheck) {
-      // Check all common locations in parallel for this directory
+      // check all common locations in parallel for this directory
       const checks = COMMON_CSS_LOCATIONS.map(async (relativePath) => {
         const fullPath = path.join(baseDir, relativePath);
         const content = await readFileAsync(fullPath);
@@ -287,7 +287,7 @@ export class TailwindDetector {
       return cached.info;
     }
 
-    // Cache miss or expired - delete stale entry
+    // cache miss or expired - delete stale entry
     if (cached) {
       this.versionCache.delete(cacheKey);
     }

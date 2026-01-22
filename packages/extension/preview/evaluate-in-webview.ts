@@ -30,7 +30,7 @@ export default async function evaluateInWebview(
   const { webviewHandle } = preview;
   const engine = getEvaluationEngine();
 
-  // Use document-specific trust check (includes remote/scheme checks)
+  // use document-specific trust check (includes remote/scheme checks)
   const trustState = getTrustManager().getStateForDocument(preview.doc.uri);
   debug(formatTrustStateForDebug('EVALUATE', trustState));
 
@@ -41,15 +41,15 @@ export default async function evaluateInWebview(
     await preview.webviewHandshakePromise;
     debug('[EVALUATE] Handshake complete!');
 
-    // Push initial config after handshake
+    // push initial config after handshake
     preview.onWebviewReady();
 
-    // Send trust state to webview
+    // send trust state to webview
     debug('[EVALUATE] Sending trust state to webview');
     webviewHandle.setTrustState(trustState);
 
     if (trustState.canExecute) {
-      // Trusted Mode: full code evaluation
+      // trusted mode: full code evaluation
       debug('[EVALUATE] Using Trusted Mode');
 
       const result = await engine.evaluateTrusted(text, fsPath, preview);
@@ -62,7 +62,7 @@ export default async function evaluateInWebview(
         preview.pushThemeState(result.frontmatter);
       }
 
-      // For Nextra projects, resolve & send page metadata
+      // for Nextra projects, resolve & send page metadata
       sendNextraMetaIfNeeded(
         preview,
         webviewHandle,
@@ -78,7 +78,7 @@ export default async function evaluateInWebview(
       );
       debug('[EVALUATE] updatePreview called');
 
-      // Compile Tailwind CSS after preview update (non-blocking)
+      // compile Tailwind CSS after preview update (non-blocking)
       const tailwindRequestId = preview.nextTailwindRequestId();
       const effectiveConfig = buildEffectivePreviewConfig({
         docUri: preview.doc.uri,
@@ -98,10 +98,10 @@ export default async function evaluateInWebview(
         webviewHandle
       );
     } else {
-      // Safe Mode: static HTML rendering
+      // safe mode: static HTML rendering
       debug('[EVALUATE] Using Safe Mode');
 
-      // Disable Tailwind in Safe Mode
+      // disable Tailwind in safe mode
       const tailwindRequestId = preview.nextTailwindRequestId();
       if (preview.isTailwindRequestCurrent(tailwindRequestId)) {
         preview.updateTailwindWatchFiles([]);
@@ -115,7 +115,7 @@ export default async function evaluateInWebview(
         preview.pushThemeState(result.frontmatter);
       }
 
-      // For Nextra projects, resolve & send page metadata
+      // for Nextra projects, resolve & send page metadata
       sendNextraMetaIfNeeded(
         preview,
         webviewHandle,
@@ -162,22 +162,22 @@ function sendNextraMetaIfNeeded(
       return;
     }
 
-    // Resolve metadata from _meta.json
+    // resolve metadata from _meta.json
     const metaFromJson = resolveNextraMeta(fsPath, workspaceFolder.uri.fsPath);
 
-    // Extract Nextra-specific frontmatter
+    // extract Nextra-specific frontmatter
     const metaFromFrontmatter = extractNextraFrontmatter(frontmatter ?? {});
 
-    // Merge (frontmatter overrides _meta.json)
+    // merge (frontmatter overrides _meta.json)
     const mergedMeta = mergeNextraMeta(metaFromJson, metaFromFrontmatter);
 
-    // Only send if we have meaningful metadata
+    // only send if we have meaningful metadata
     if (Object.keys(mergedMeta).length > 0) {
       debug('[EVALUATE] Sending Nextra meta to webview:', mergedMeta);
       webviewHandle.setNextraMeta(mergedMeta);
     }
   } catch (err) {
-    // Non-fatal error, just log & continue
+    // non-fatal error, log & continue
     debug(`[EVALUATE] Error resolving Nextra meta: ${err}`);
   }
 }

@@ -135,12 +135,16 @@ export async function fetchLocal(
     const scriptHandler = new ScriptHandler();
     return scriptHandler.handle(code, fsPath, preview);
   } catch (error) {
-    // report error via centralized ErrorReporter
+    // report error via centralized ErrorReporter w/ helpful context
     getErrorReporter().report(error, {
       context: ErrorContext.ModuleFetch,
       showInWebview: true,
       webviewHandle: preview.webviewHandle,
-      metadata: { request, parentId },
+      metadata: {
+        request,
+        parentId,
+        hint: `Verify the path "${request}" exists and is accessible from "${parentId}".`,
+      },
     });
     return undefined;
   }

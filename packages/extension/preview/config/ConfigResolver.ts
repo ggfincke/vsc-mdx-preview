@@ -71,7 +71,8 @@ function getCache() {
   return getConfigCache();
 }
 
-// find & parse .mdx-previewrc.json config file for document (searches from document's directory upward to workspace root)
+// find & parse .mdx-previewrc.json config file for document
+// searches from document's directory upward to workspace root
 export function resolveConfig(documentPath: string): ResolvedConfig | null {
   const documentDir = path.dirname(documentPath);
   const cache = getCache();
@@ -139,28 +140,35 @@ function findConfigFile(startDir: string): string | undefined {
   const workspaceFolders = vscode.workspace.workspaceFolders;
   const workspaceRoots = workspaceFolders?.map((f) => f.uri.fsPath) ?? [];
 
+  debug(`[CONFIG] Searching for config starting at: ${startDir}`);
+  debug(`[CONFIG] Workspace roots: ${workspaceRoots.join(', ') || '(none)'}`);
+
   // walk up to workspace root or filesystem root
   while (currentDir) {
     for (const fileName of CONFIG_FILE_NAMES) {
       const configPath = path.join(currentDir, fileName);
       if (pathExists(configPath)) {
+        debug(`[CONFIG] Found config file at: ${configPath}`);
         return configPath;
       }
     }
 
     // stop at workspace root
     if (workspaceRoots.some((root) => currentDir === root)) {
+      debug(`[CONFIG] Reached workspace root: ${currentDir}`);
       break;
     }
 
     const parentDir = path.dirname(currentDir);
     if (parentDir === currentDir) {
       // reached filesystem root
+      debug(`[CONFIG] Reached filesystem root`);
       break;
     }
     currentDir = parentDir;
   }
 
+  debug(`[CONFIG] No config file found`);
   return undefined;
 }
 
@@ -220,11 +228,11 @@ export function clearConfigCache(): void {
 }
 
 // dispose all config watchers (call during extension deactivation)
-// Note: This is now handled by ConfigCache.dispose() via ServiceRegistry,
-// but we keep this for backward compatibility w/ extension.ts
+// note: now handled by ConfigCache.dispose() via ServiceRegistry,
+// but kept for backward compatibility w/ extension.ts
 export function disposeConfigWatchers(): void {
   // ConfigCache handles cleanup via dispose(), which is called by ServiceRegistry
-  // This function is kept for backward compatibility but delegates to clear()
+  // this function is kept for backward compatibility but delegates to clear()
   getCache().clear();
 }
 

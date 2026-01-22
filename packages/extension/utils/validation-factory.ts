@@ -1,5 +1,5 @@
 // packages/extension/utils/validation-factory.ts
-// Factory utilities for creating type validators with consistent boilerplate handling
+// factory utilities for creating type validators w/ consistent boilerplate handling
 
 import { warn as logWarn } from '../logging';
 

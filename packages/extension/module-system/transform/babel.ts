@@ -1,5 +1,5 @@
 // packages/extension/module-system/transform/babel.ts
-// Babel configuration for transpiling user code in MDX files
+// babel configuration for transpiling user code in MDX files
 
 import * as babel from '@babel/core';
 

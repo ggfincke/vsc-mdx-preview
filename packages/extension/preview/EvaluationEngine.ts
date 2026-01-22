@@ -1,5 +1,5 @@
 // packages/extension/preview/EvaluationEngine.ts
-// evaluation logic for MDX content - handles both Trusted & Safe modes
+// evaluation logic for MDX content, handles both Trusted & Safe modes
 
 import * as fs from 'fs';
 import { transformEntry } from '../module-system/transform/transform';
@@ -63,7 +63,7 @@ export class EvaluationEngine {
     const { code, frontmatter } = await transformEntry(text, fsPath, preview);
     debug(`[ENGINE] Transform complete, code length: ${code.length}`);
 
-    // Use async fs.promises.realpath instead of sync version
+    // use async fs.promises.realpath instead of sync version
     const entryFilePath = await fs.promises.realpath(fsPath);
 
     // extract dependencies using shared utility (ESM-first w/ CJS fallback)

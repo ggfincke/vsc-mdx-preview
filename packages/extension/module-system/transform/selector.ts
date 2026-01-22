@@ -15,8 +15,8 @@ export interface TranspileOptions {
 }
 
 // transpile code w/ automatic fallback from Sucrase to Babel.
-// when useSucrase is true, attempts Sucrase first & falls back to Babel on failure.
-// when useSucrase is false, uses Babel directly.
+// when useSucrase is true, attempts Sucrase first & falls back to Babel on failure
+// when useSucrase is false, uses Babel directly
 export async function transpileWithFallback(
   code: string,
   options: TranspileOptions

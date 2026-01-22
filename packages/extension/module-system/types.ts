@@ -8,7 +8,7 @@ import type { Framework } from '../framework/FrameworkDetector';
 export type { FetchResult } from '@mdx-preview/shared';
 export type { Framework };
 
-// TypeScript configuration for module resolution (compiler options & host)
+// typescript configuration for module resolution (compiler options & host)
 export interface TypeScriptConfiguration {
   tsCompilerOptions: typescript.CompilerOptions;
   tsCompilerHost: typescript.CompilerHost;
@@ -18,7 +18,7 @@ export interface TypeScriptConfiguration {
 export interface ResolutionContext {
   // base directory for relative imports
   baseDir: string;
-  // TypeScript configuration (optional)
+  // typescript configuration (optional)
   tsConfig?: TypeScriptConfiguration;
   // detected framework (optional)
   framework?: Framework;

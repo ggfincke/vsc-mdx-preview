@@ -1,10 +1,10 @@
 // packages/extension/utils/path-utils.ts
-// Centralized path manipulation utilities for cross-platform compatibility
+// centralized path manipulation utilities for cross-platform compatibility
 //
-// Key conventions:
-// - All import paths use forward slashes (even on Windows)
-// - Relative import paths start with './' or '../'
-// - Absolute paths are platform-native (use path.sep)
+// key conventions:
+// - all import paths use forward slashes (even on Windows)
+// - relative import paths start w/ './' or '../'
+// - absolute paths are platform-native (use path.sep)
 
 import * as path from 'path';
 import * as fs from 'fs';
@@ -34,7 +34,7 @@ export function toRelativeImportPath(
     relativePath = './' + relativePath;
   }
 
-  // Normalize to forward slashes for import compatibility
+  // normalize to forward slashes for import compatibility
   return normalizePathSeparators(relativePath);
 }
 
@@ -61,7 +61,7 @@ export function resolvePathWithFallbacks(
     checkExists = false,
   } = options;
 
-  // If absolute, return directly (optionally check exists)
+  // if absolute, return directly (optionally check exists)
   if (path.isAbsolute(inputPath)) {
     if (checkExists) {
       try {
@@ -74,7 +74,7 @@ export function resolvePathWithFallbacks(
     return inputPath;
   }
 
-  // Build ordered list of directories to try
+  // build ordered list of directories to try
   const dirsToTry: string[] = [];
   if (primaryDir) {
     dirsToTry.push(primaryDir);
@@ -85,12 +85,12 @@ export function resolvePathWithFallbacks(
     }
   }
 
-  // If no directories to try, can't resolve
+  // if no directories to try, can't resolve
   if (dirsToTry.length === 0) {
     return null;
   }
 
-  // Try each directory
+  // try each directory
   for (const dir of dirsToTry) {
     const resolved = path.resolve(dir, inputPath);
     if (!checkExists) {

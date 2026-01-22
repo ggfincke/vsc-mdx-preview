@@ -34,7 +34,7 @@ export class TailwindConfigWatcher extends BaseWatcher {
   protected onStart(): void {
     for (const file of this.watchFiles) {
       debug(`[TAILWIND-WATCHER] Creating watcher for: ${file}`);
-      // Use createFileWatcher from base class with error wrapping
+      // use createFileWatcher from base class w/ error wrapping
       const watcher = this.createFileWatcher(file, {
         onChange: () => {
           debug(`[TAILWIND-WATCHER] File changed: ${file}`);

@@ -22,10 +22,10 @@ export interface HandshakeResult {
   resolve: () => void;
 }
 
-// handles initialization logic for preview instances.
-// creates & configures watchers & manages the webview handshake.
+// handles initialization logic for preview instances
+// creates & configures watchers & manages the webview handshake
 export class PreviewInitializer {
-  // create a webview handshake promise w/ timeout.
+  // create a webview handshake promise w/ timeout
   createHandshake(): HandshakeResult {
     debug('[PREVIEW] initWebviewHandshakePromise called');
     let resolveHandshake: () => void;
@@ -56,8 +56,8 @@ export class PreviewInitializer {
     };
   }
 
-  // Create all watchers via WatcherManager without starting them.
-  // Call startWatchers() after document directory is set.
+  // create all watchers via WatcherManager w/out starting them
+  // call startWatchers() after document directory is set
   createWatchers(
     customCssPath: string,
     onDependencyChange: (fsPath: string) => Promise<void>,
@@ -108,13 +108,13 @@ export class PreviewInitializer {
     return watcherManager;
   }
 
-  // Start all watchers after document directory is set.
+  // start all watchers after document directory is set
   async startWatchers(watcherManager: WatcherManager): Promise<void> {
     await watcherManager.startAll();
   }
 
-  // Initialize all watchers via WatcherManager (backward compatible).
-  // Prefer createWatchers() + startWatchers() for new code.
+  // initialize all watchers via WatcherManager (backward compatible)
+  // prefer createWatchers() + startWatchers() for new code
   initializeWatchers(
     customCssPath: string,
     onDependencyChange: (fsPath: string) => Promise<void>
@@ -123,15 +123,15 @@ export class PreviewInitializer {
       customCssPath,
       onDependencyChange
     );
-    // Start asynchronously (fire-and-forget for backward compatibility)
+    // start asynchronously (fire-and-forget for backward compatibility)
     void watcherManager.startAll();
     return watcherManager;
   }
 
-  // Setup or teardown config change subscription based on document scheme.
-  // Subscribes to ConfigCache change events broadcasted by ConfigResolver.
-  // Note: Actual file watching is done by ConfigResolver.setupConfigWatcher(),
-  // this method subscribes to those change notifications.
+  // setup or teardown config change subscription based on document scheme
+  // subscribes to ConfigCache change events broadcasted by ConfigResolver
+  // note: actual file watching is done by ConfigResolver.setupConfigWatcher(),
+  // this method subscribes to those change notifications
   setupConfigWatcher(
     watcherManager: WatcherManager,
     docScheme: string,
@@ -148,8 +148,8 @@ export class PreviewInitializer {
 
     const configPath = mdxPreviewConfig.configPath;
 
-    // Create minimal IWatcher adapter for config subscription
-    // This subscribes directly to ConfigCache events without a separate class
+    // create minimal IWatcher adapter for config subscription
+    // this subscribes directly to ConfigCache events w/out a separate class
     let subscription: vscode.Disposable | null = null;
     let active = false;
 
@@ -179,7 +179,7 @@ export class PreviewInitializer {
         return active;
       },
       async waitForReady() {
-        // No async setup - ready immediately when active
+        // no async setup - ready immediately when active
         return Promise.resolve();
       },
       dispose() {
@@ -191,7 +191,7 @@ export class PreviewInitializer {
     configSubscriptionWatcher.start();
   }
 
-  // Setup custom CSS file watcher via WatcherManager.
+  // setup custom CSS file watcher via WatcherManager
   setupCustomCssWatcher(
     watcherManager: WatcherManager,
     cssPath: string,
@@ -220,7 +220,7 @@ export class PreviewInitializer {
     customCssWatcher.start();
   }
 
-  // Setup Tailwind config watcher via WatcherManager.
+  // setup Tailwind config watcher via WatcherManager
   setupTailwindConfigWatcher(
     watcherManager: WatcherManager,
     watchFiles: string[],
@@ -234,7 +234,7 @@ export class PreviewInitializer {
 
     const tailwindWatcher = new TailwindConfigWatcher(watchFiles, () => {
       debug('[PREVIEW] Tailwind config changed, reloading...');
-      // Invalidate version cache when config changes (handles v3->v4 upgrades)
+      // invalidate version cache when config changes (handles v3->v4 upgrades)
       getTailwindProcessor().invalidateVersionCache();
       onChange();
     });

@@ -1,5 +1,5 @@
 // packages/extension/services/SingletonService.ts
-// Abstract base class for singleton services w/ automatic lifecycle management
+// abstract base class for singleton services w/ automatic lifecycle management
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
@@ -18,18 +18,18 @@ export abstract class SingletonService<
   // unique identifier for debug logging (e.g., 'CONFIG-MANAGER', 'TRUST-MANAGER')
   protected abstract readonly logTag: string;
 
-  // Note: Don't access abstract properties (like logTag) here - they aren't available yet
+  // note: don't access abstract properties (like logTag) here - they aren't available yet
   protected constructor() {
-    // Initialization logging moved to getInstance() since logTag is abstract
+    // initialization logging moved to getInstance() since logTag is abstract
   }
 
   // get singleton instance (creates new instance if none exists)
-  // Note: Using a permissive `this` type that only requires prototype,
+  // note: using a permissive `this` type that only requires prototype,
   // allowing classes w/ protected constructors & protected instance to use getInstance().
   static getInstance<S extends SingletonService<S>>(
     this: { prototype: S }
   ): S {
-    // Cast to access protected static 'instance' & call protected constructor
+    // cast to access protected static 'instance' & call protected constructor
     const ctor = this as unknown as { instance?: S; new (): S };
     if (!ctor.instance) {
       ctor.instance = new ctor();
@@ -47,7 +47,7 @@ export abstract class SingletonService<
     }
     this.disposables = [];
 
-    // Clear static instance on the actual class (not base class)
+    // clear static instance on the actual class (not base class)
     const ctor = this.constructor as typeof SingletonService;
     ctor.instance = undefined;
 
@@ -69,7 +69,7 @@ export abstract class SingletonService<
 
   // override this for custom cleanup logic (called before disposables are disposed)
   protected onDispose(): void {
-    // Default: no-op
+    // default: no-op
   }
 
   // add a disposable to the managed collection (auto-disposed on service disposal)

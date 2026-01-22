@@ -54,7 +54,7 @@ function createResolver(mode: ResolverMode): Resolver {
     conditionNames: config.conditionNames,
     mainFields: config.mainFields,
     aliasFields: config.aliasFields,
-    // ESM exports/imports field support
+    // esm exports/imports field support
     exportsFields: ['exports'],
     importsFields: mode === 'browser' ? ['imports'] : [],
     // common settings

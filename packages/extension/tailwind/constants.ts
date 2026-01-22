@@ -25,9 +25,9 @@ export const VERSION_CACHE_TTL_MS = STANDARD_CACHE_TTL_MS;
 
 // maximum characters per @source inline() directive for Tailwind v4
 // Tailwind v4 uses CSS-based `@source inline("...")` directives instead of the
-// v3 `content` configuration option. This limit prevents potential issues w/
+// v3 `content` configuration option - this limit prevents potential issues w/
 // PostCSS or CSS parsers when processing very long inline source strings
-// the value of 2000 is a conservative defensive limit. Content exceeding this
+// the value of 2000 is a conservative defensive limit - content exceeding this
 // is split into multiple @source directives
 export const MAX_INLINE_SOURCE_CHUNK_SIZE = 2000;
 

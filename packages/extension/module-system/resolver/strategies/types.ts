@@ -1,5 +1,5 @@
 // packages/extension/module-system/resolver/strategies/types.ts
-// Strategy interface for modular resolution approaches
+// strategy interface for modular resolution approaches
 
 import type {
   ResolutionContext,

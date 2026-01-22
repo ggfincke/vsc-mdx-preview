@@ -1,5 +1,5 @@
 // packages/extension/module-system/resolver/strategies/TypeScriptPathStrategy.ts
-// TypeScript path alias resolution strategy
+// typescript path alias resolution strategy
 
 import * as path from 'path';
 import * as typescript from 'typescript';
@@ -14,7 +14,7 @@ import {
 import type { IResolutionStrategy } from './types';
 import { buildResolutionResult } from '../result-builders';
 
-// TypeScript path resolution strategy (tsconfig.json paths)
+// typescript path resolution strategy (tsconfig.json paths)
 export class TypeScriptPathStrategy implements IResolutionStrategy {
   readonly name = 'TypeScript';
 

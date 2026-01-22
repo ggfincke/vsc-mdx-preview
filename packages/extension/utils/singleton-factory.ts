@@ -1,5 +1,5 @@
 // packages/extension/utils/singleton-factory.ts
-// Generic singleton factory utility to eliminate duplicated lazy singleton patterns
+// generic singleton factory utility to eliminate duplicated lazy singleton patterns
 
 // singleton configuration options
 export interface SingletonOptions {

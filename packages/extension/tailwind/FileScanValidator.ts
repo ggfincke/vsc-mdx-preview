@@ -1,8 +1,8 @@
 // packages/extension/tailwind/FileScanValidator.ts
 // file validation utilities for Tailwind scanning
 //
-// extracted from TailwindScanner to improve testability & reusability.
-// handles file size validation, token validation, & parallel file reading.
+// extracted from TailwindScanner to improve testability & reusability
+// handles file size validation, token validation, & parallel file reading
 
 import * as fs from 'fs';
 import { extractErrorMessage } from '@mdx-preview/shared';

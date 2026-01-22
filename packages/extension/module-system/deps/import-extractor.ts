@@ -15,15 +15,15 @@ async function ensureLexerInitialized(): Promise<void> {
   }
 }
 
-// CommonJS require() extraction patterns
+// commonJS require() extraction patterns
 // LIMITATIONS: dynamic requires, computed paths, & template interpolation unsupported
 
-// Pattern 1: Standard string quotes (single, double) w/ escaped char support
-// Matches: require('lodash'), require("express"), require('path\'s/file')
+// pattern 1: standard string quotes (single, double) w/ escaped char support
+// matches: require('lodash'), require("express"), require('path\'s/file')
 const REQUIRE_QUOTED = /require\s*\(\s*(['"])([^'"\\]*(?:\\.[^'"\\]*)*)\1\s*\)/g;
 
-// Pattern 2: Template literals (simple, no interpolation)
-// Matches: require(`lodash`) but NOT require(`${dynamic}`)
+// pattern 2: template literals (simple, no interpolation)
+// matches: require(`lodash`) but NOT require(`${dynamic}`)
 const REQUIRE_TEMPLATE = /require\s*\(\s*`([^`\\]*(?:\\.[^`\\]*)*)`\s*\)/g;
 
 // extract import specifiers from JavaScript/TypeScript code
@@ -55,7 +55,7 @@ export async function extractImportSpecifiers(code: string): Promise<string[]> {
 function extractRequireSpecifiers(code: string): string[] {
   const specifiers: string[] = [];
 
-  // Reset lastIndex for global regexes (they maintain state between calls)
+  // reset lastIndex for global regexes (they maintain state between calls)
   REQUIRE_QUOTED.lastIndex = 0;
   REQUIRE_TEMPLATE.lastIndex = 0;
 
@@ -68,10 +68,10 @@ function extractRequireSpecifiers(code: string): string[] {
     }
   }
 
-  // Match template literal requires (simple, no interpolation)
+  // match template literal requires (simple, no interpolation)
   while ((match = REQUIRE_TEMPLATE.exec(code)) !== null) {
     const specifier = match[1];
-    // Skip if contains ${} interpolation (can't statically analyze)
+    // skip if contains ${} interpolation (can't statically analyze)
     if (specifier && !specifier.includes('${') && !specifiers.includes(specifier)) {
       specifiers.push(specifier);
     }

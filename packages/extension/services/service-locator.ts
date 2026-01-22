@@ -1,11 +1,11 @@
 // packages/extension/services/service-locator.ts
-// Type-safe service access helpers for the ServiceRegistry
+// type-safe service access helpers for the ServiceRegistry
 
 import { ServiceRegistry } from './ServiceRegistry';
 import { ServiceNames, type ServiceName } from './service-names';
 import type { IService } from './types';
 
-// Import service types for typed convenience functions
+// import service types for typed convenience functions
 import type { ConfigManager } from '../config/ConfigManager';
 import type { ConfigCache } from '../config/ConfigCache';
 import type { TrustManager } from '../security/TrustManager';
@@ -40,8 +40,8 @@ export function isServiceInitialized(name: ServiceName): boolean {
 }
 
 // ============================================================================
-// Service Getter Factory
-// Creates typed getter functions for registered services
+// service getter factory
+// creates typed getter functions for registered services
 // ============================================================================
 
 // factory for creating service getter functions
@@ -51,8 +51,8 @@ function createServiceGetter<T extends IService>(name: ServiceName): () => T {
 }
 
 // ============================================================================
-// Typed Convenience Functions
-// These provide better IntelliSense & type checking than generic getService()
+// typed convenience functions
+// these provide better IntelliSense & type checking than generic getService()
 // ============================================================================
 
 // ConfigManager - manages VS Code configuration settings for the extension

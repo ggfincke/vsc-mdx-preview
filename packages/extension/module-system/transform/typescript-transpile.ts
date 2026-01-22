@@ -1,8 +1,5 @@
 // packages/extension/module-system/transform/typescript-transpile.ts
-// Unified TypeScript transpilation helper
-//
-// This module centralizes TypeScript transpilation logic to eliminate duplication
-// between transformEntry() & transform() functions in transform.ts.
+// unified TypeScript transpilation helper - centralizes logic to eliminate duplication
 
 import { transpileModule as tsTranspileModule } from 'typescript';
 import type { Preview } from '../../preview/preview-manager';
@@ -14,7 +11,7 @@ export function transpileTypeScript(
   fsPath: string,
   preview: Preview
 ): string {
-  // Lazily resolve TypeScript configuration
+  // lazily resolve TypeScript configuration
   if (!preview.typescriptConfiguration) {
     preview.typescriptConfiguration = resolveTypescriptConfig(null);
   }

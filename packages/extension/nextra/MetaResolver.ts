@@ -1,5 +1,5 @@
 // packages/extension/nextra/MetaResolver.ts
-// Resolve Nextra _meta.json files for page-level settings
+// resolve Nextra _meta.json files for page-level settings
 
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -7,12 +7,12 @@ import { debug } from '../logging';
 import type { NextraPageMeta } from '@mdx-preview/shared';
 import { readJsonSync, pathExists } from '../utils/file-utils';
 
-// Cache for resolved meta (cache key -> resolved meta or null)
+// cache for resolved meta (cache key -> resolved meta or null)
 const metaCache = new Map<string, NextraPageMeta | null>();
-// Track file watchers
+// track file watchers
 const metaWatchers = new Map<string, vscode.FileSystemWatcher>();
 
-// Raw _meta.json entry structure (simplified for preview-relevant fields)
+// raw _meta.json entry structure (simplified for preview-relevant fields)
 type MetaEntry =
   | string
   | {
@@ -35,7 +35,7 @@ export function resolveNextraMeta(
   const documentDir = path.dirname(mdxFilePath);
   const pageBaseName = path.basename(mdxFilePath, path.extname(mdxFilePath));
 
-  // Check cache (use get + undefined check instead of has + get for efficiency)
+  // check cache (use get + undefined check instead of has + get for efficiency)
   const cacheKey = `${documentDir}:${pageBaseName}`;
   const cached = metaCache.get(cacheKey);
   if (cached !== undefined) {
@@ -43,7 +43,7 @@ export function resolveNextraMeta(
     return cached;
   }
 
-  // Search for _meta.json upward
+  // search for _meta.json upward
   const metaPath = findMetaFile(documentDir, workspaceRoot);
   if (!metaPath) {
     debug(`[NEXTRA-META] No _meta.json found for ${mdxFilePath}`);
@@ -62,10 +62,10 @@ export function resolveNextraMeta(
     return null;
   }
 
-  // Extract settings for this page
+  // extract settings for this page
   const pageSettings = extractPageSettings(meta, pageBaseName);
 
-  // Setup watcher for this _meta.json file
+  // setup watcher for this _meta.json file
   setupMetaWatcher(metaPath, documentDir);
 
   metaCache.set(cacheKey, pageSettings);
@@ -87,9 +87,10 @@ function findMetaFile(
     }
 
     const parentDir = path.dirname(currentDir);
+    // filesystem root
     if (parentDir === currentDir) {
       break;
-    } // filesystem root
+    }
     currentDir = parentDir;
   }
 
@@ -109,10 +110,10 @@ function extractPageSettings(
   const result: NextraPageMeta = {};
 
   if (typeof entry === 'string') {
-    // Simple string entry is just a title
+    // simple string entry is just a title
     result.title = entry;
   } else if (typeof entry === 'object') {
-    // Object entry w/ full settings
+    // object entry w/ full settings
     if (entry.title) {
       result.title = entry.title;
     }
@@ -137,7 +138,7 @@ function setupMetaWatcher(metaPath: string, documentDir: string): void {
 
   const handleChange = () => {
     debug(`[NEXTRA-META] _meta.json changed: ${metaPath}`);
-    // Clear cache entries for this directory
+    // clear cache entries for this directory
     for (const key of metaCache.keys()) {
       if (key.startsWith(documentDir)) {
         metaCache.delete(key);
@@ -163,7 +164,8 @@ export function mergeNextraMeta(
 ): NextraPageMeta {
   return {
     ...metaJson,
-    ...frontmatter, // Frontmatter overrides _meta.json
+    // frontmatter overrides _meta.json
+    ...frontmatter,
   };
 }
 

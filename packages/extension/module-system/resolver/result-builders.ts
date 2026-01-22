@@ -1,8 +1,5 @@
 // packages/extension/module-system/resolver/result-builders.ts
-// Builder functions for constructing ResolutionResult objects consistently
-//
-// These factory functions standardize ResolutionResult construction across all
-// resolution strategies, ensuring consistent field population & reducing boilerplate.
+// builder functions for constructing ResolutionResult objects consistently
 
 import type { ResolutionResult } from '../types';
 import { ResolutionStrategy } from '../types';

@@ -1,10 +1,10 @@
 // packages/extension/utils/file-utils.ts
-// Centralized file I/O utilities with consistent error handling
+// centralized file I/O utilities w/ consistent error handling
 //
-// Error handling strategy:
-// - All functions return null/undefined on failure (never throw)
-// - Optional debug logging via options parameter
-// - Consistent error message format for troubleshooting
+// error handling strategy:
+// - all functions return null/undefined on failure (never throw)
+// - optional debug logging via options parameter
+// - consistent error message format for troubleshooting
 
 import * as fs from 'fs';
 import { debug as logDebug } from '../logging';
@@ -18,7 +18,7 @@ export interface FileOptions {
 }
 
 // ============================================================================
-// SYNCHRONOUS FILE OPERATIONS
+// synchronous file operations
 // ============================================================================
 
 // safely read a file synchronously, returning null on any failure
@@ -87,7 +87,7 @@ export function directoryExists(dirPath: string): boolean {
 }
 
 // ============================================================================
-// ASYNCHRONOUS FILE OPERATIONS
+// asynchronous file operations
 // ============================================================================
 
 // safely read a file asynchronously, returning null on any failure

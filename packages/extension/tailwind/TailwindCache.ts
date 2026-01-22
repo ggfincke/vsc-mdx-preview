@@ -4,7 +4,7 @@
 // error handling strategy:
 // - no error handling needed - all operations are synchronous in-memory
 // - Map operations cannot fail under normal conditions
-// - Defensive coding handles edge cases (e.g., undefined key during eviction)
+// - defensive coding handles edge cases (e.g., undefined key during eviction)
 
 import { debug } from '../logging';
 import { CACHE_DEFAULT_MAX_ENTRIES, CACHE_DEFAULT_TTL_MS } from './constants';

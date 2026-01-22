@@ -51,7 +51,7 @@ export class CustomCssWatcher extends BaseWatcher {
     // initial load
     await this.loadAndSendCss(this.resolvedPath);
 
-    // Use createFileWatcher from base class with error wrapping
+    // use createFileWatcher from base class w/ error wrapping
     this.watcher = this.createFileWatcher(this.resolvedPath, {
       onChange: () => {
         debug('[CSS] Custom CSS file changed');
@@ -87,7 +87,7 @@ export class CustomCssWatcher extends BaseWatcher {
     return this.resolvedPath !== null;
   }
 
-  // Alias for backward compatibility
+  // alias for backward compatibility
   watch(): void {
     this.start();
   }

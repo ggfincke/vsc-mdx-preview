@@ -5,8 +5,8 @@ import type { Disposable } from 'vscode';
 import { debug } from '../../logging';
 import type { IWatcher } from './types';
 
-// coordinate all watchers w/ unified lifecycle management.
-// provides a central place to register, start, stop, & dispose watchers.
+// coordinate all watchers w/ unified lifecycle management
+// provides a central place to register, start, stop, & dispose watchers
 export class WatcherManager implements Disposable {
   private watchers = new Map<string, IWatcher>();
   private readyGate: Promise<void> | null = null;
@@ -46,8 +46,8 @@ export class WatcherManager implements Disposable {
     return false;
   }
 
-  // Start all registered watchers.
-  // Returns a promise that resolves when all watchers have started.
+  // start all registered watchers
+  // returns a promise that resolves when all watchers have started
   async startAll(): Promise<void> {
     const startPromises = Array.from(this.watchers.entries())
       .filter(([, watcher]) => !watcher.isActive())
@@ -58,7 +58,7 @@ export class WatcherManager implements Disposable {
     await Promise.all(startPromises);
   }
 
-  // Wait for all watchers to report ready (Promise-based, no polling).
+  // wait for all watchers to report ready (Promise-based, no polling)
   async waitForAllReady(timeoutMs?: number): Promise<void> {
     const waitPromises = Array.from(this.watchers.entries()).map(
       async ([name, watcher]) => {
@@ -69,7 +69,7 @@ export class WatcherManager implements Disposable {
     await Promise.all(waitPromises);
   }
 
-  // Get the ready state of all watchers.
+  // get the ready state of all watchers
   getReadyState(): Map<string, boolean> {
     return new Map(
       Array.from(this.watchers.entries()).map(([name, watcher]) => [
@@ -79,21 +79,21 @@ export class WatcherManager implements Disposable {
     );
   }
 
-  // Set a ready gate that watcher callbacks should wait for.
-  // Used to prevent callbacks from firing before webview is ready.
+  // set a ready gate that watcher callbacks should wait for
+  // used to prevent callbacks from firing before webview is ready
   setReadyGate(gate: Promise<void>): void {
     this.readyGate = gate;
   }
 
-  // Wait for the ready gate to resolve.
-  // Watcher callbacks should call this before processing events.
+  // wait for the ready gate to resolve
+  // watcher callbacks should call this before processing events
   async waitForGate(): Promise<void> {
     if (this.readyGate) {
       await this.readyGate;
     }
   }
 
-  // Stop all registered watchers without disposing them.
+  // stop all registered watchers w/out disposing them
   stopAll(): void {
     for (const [name, watcher] of this.watchers) {
       if (watcher.isActive()) {
@@ -103,7 +103,7 @@ export class WatcherManager implements Disposable {
     }
   }
 
-  // Refresh a specific watcher (stop + start).
+  // refresh a specific watcher (stop + start)
   async refresh(name: string): Promise<void> {
     const watcher = this.watchers.get(name);
     if (watcher) {
@@ -113,7 +113,7 @@ export class WatcherManager implements Disposable {
     }
   }
 
-  // Refresh all watchers (stop + start each).
+  // refresh all watchers (stop + start each)
   async refreshAll(): Promise<void> {
     for (const [name, watcher] of this.watchers) {
       if (watcher.isActive()) {
@@ -124,7 +124,7 @@ export class WatcherManager implements Disposable {
     }
   }
 
-  // Check if all watchers are ready.
+  // check if all watchers are ready
   areAllReady(): boolean {
     for (const watcher of this.watchers.values()) {
       if (!watcher.isReady()) {
@@ -134,17 +134,17 @@ export class WatcherManager implements Disposable {
     return true;
   }
 
-  // Get the names of all registered watchers.
+  // get the names of all registered watchers
   getNames(): string[] {
     return Array.from(this.watchers.keys());
   }
 
-  // Get the count of registered watchers.
+  // get the count of registered watchers
   get size(): number {
     return this.watchers.size;
   }
 
-  // Dispose all watchers & clear the registry.
+  // dispose all watchers & clear the registry
   dispose(): void {
     for (const [name, watcher] of this.watchers) {
       debug(`[WATCHER-MANAGER] Disposing: ${name}`);

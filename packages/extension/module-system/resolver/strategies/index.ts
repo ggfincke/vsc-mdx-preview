@@ -1,5 +1,5 @@
 // packages/extension/module-system/resolver/strategies/index.ts
-// Resolution strategy exports
+// resolution strategy exports
 
 export type { IResolutionStrategy } from './types';
 

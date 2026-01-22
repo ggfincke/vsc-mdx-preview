@@ -11,7 +11,7 @@ import type { TypeScriptConfiguration } from '../../module-system/types';
 export type { TypeScriptConfiguration };
 
 // resolve TypeScript configuration from a tsconfig.json file
-// handles extends, paths, baseUrl, references, etc.
+// handles extends, paths, baseUrl, references, etc
 export function resolveTypescriptConfig(
   configFile: string | null
 ): TypeScriptConfiguration {

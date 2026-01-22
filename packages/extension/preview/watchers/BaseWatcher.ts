@@ -9,7 +9,7 @@ import {
 } from '../../utils/disposable';
 import type { IWatcher } from './types';
 
-// Options for creating a file watcher
+// options for creating a file watcher
 interface FileWatcherOptions {
   onChange?: (uri: vscode.Uri) => void;
   onCreate?: (uri: vscode.Uri) => void;
@@ -32,7 +32,7 @@ export abstract class BaseWatcher implements IWatcher {
   private _readyPromise: Promise<void> | null = null;
   private _readyResolve: (() => void) | null = null;
 
-  // ─── Lifecycle Methods ─────────────────────────────────────────────
+  // ─── lifecycle methods ─────────────────────────────────────────────
 
   async start(): Promise<void> {
     if (this._isActive) {
@@ -72,7 +72,7 @@ export abstract class BaseWatcher implements IWatcher {
     debug(`[${this.logTag}] Stopped`);
   }
 
-  // ─── Update & Restart Pattern ────────────────────────────────────────
+  // ─── update & restart pattern ────────────────────────────────────────
 
   // stop (if active), run update function, then restart (if was active)
   protected updateAndRestartSync(updateFn: () => void): void {
@@ -98,18 +98,18 @@ export abstract class BaseWatcher implements IWatcher {
     }
   }
 
-  // ─── State Query Methods ─────────────────────────────────────────────
+  // ─── state query methods ─────────────────────────────────────────────
 
   isActive(): boolean {
     return this._isActive;
   }
 
-  // Default: ready when active & checkReadiness() returns true.
+  // default: ready when active & checkReadiness() returns true
   isReady(): boolean {
     return this._isActive && this.checkReadiness();
   }
 
-  // Promise-based waiting for readiness (no polling).
+  // Promise-based waiting for readiness (no polling)
   async waitForReady(timeoutMs?: number): Promise<void> {
     // If already ready, resolve immediately
     if (this.isReady()) {
@@ -143,37 +143,37 @@ export abstract class BaseWatcher implements IWatcher {
     this.onDispose();
   }
 
-  // ─── Abstract Methods (must implement) ─────────────────────────────
+  // ─── abstract methods (must implement) ─────────────────────────────
 
-  // Called after _isActive is set to true. Setup watchers here.
+  // called after _isActive is set to true - setup watchers here
   protected abstract onStart(): Promise<void> | void;
 
-  // Called before _isActive is set to false. Cleanup watchers here.
+  // called before _isActive is set to false - cleanup watchers here
   protected abstract onStop(): void;
 
-  // ─── Optional Hooks (override as needed) ───────────────────────────
+  // ─── optional hooks (override as needed) ───────────────────────────
 
-  // Pre-start validation. Return false to prevent start(). Default: true
+  // pre-start validation - return false to prevent start() (default: true)
   protected canStart(): boolean {
     return true;
   }
 
-  // Additional readiness check beyond _isActive. Default: true
+  // additional readiness check beyond _isActive (default: true)
   protected checkReadiness(): boolean {
     return true;
   }
 
-  // Additional cleanup on dispose (beyond stop). Default: no-op
+  // additional cleanup on dispose (beyond stop) - default: no-op
   protected onDispose(): void {}
 
-  // ─── Readiness Signaling ───────────────────────────────────────────
+  // ─── readiness signaling ───────────────────────────────────────────
 
-  // Call this from subclasses when readiness state may have changed.
+  // call this from subclasses when readiness state may have changed
   protected markReady(): void {
     this._checkAndResolveReady();
   }
 
-  // Internal: check & resolve ready promise if conditions are met
+  // internal: check & resolve ready promise if conditions are met
   private _checkAndResolveReady(): void {
     if (this._isActive && this.checkReadiness() && this._readyResolve) {
       debug(`[${this.logTag}] Ready`);
@@ -183,7 +183,7 @@ export abstract class BaseWatcher implements IWatcher {
     }
   }
 
-  // Internal: Get existing promise or create new one.
+  // internal: get existing promise or create new one
   private _getOrCreateReadyPromise(): Promise<void> {
     if (!this._readyPromise) {
       this._readyPromise = new Promise((resolve) => {
@@ -193,7 +193,7 @@ export abstract class BaseWatcher implements IWatcher {
     return this._readyPromise;
   }
 
-  // ─── Helper Methods for Subclasses ─────────────────────────────────
+  // ─── helper methods for subclasses ─────────────────────────────────
 
   // dispose a single watcher safely
   protected disposeWatcher(
@@ -209,7 +209,7 @@ export abstract class BaseWatcher implements IWatcher {
     disposeCollectionUtil(collection);
   }
 
-  // ─── File Watcher Factory ───────────────────────────────────────────
+  // ─── file watcher factory ───────────────────────────────────────────
 
   // create a file watcher w/ standard event handlers & error wrapping
   protected createFileWatcher(

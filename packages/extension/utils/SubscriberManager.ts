@@ -1,5 +1,5 @@
 // packages/extension/utils/SubscriberManager.ts
-// Generic subscriber/listener pattern utility to eliminate duplication across services
+// generic subscriber/listener pattern utility to eliminate duplication across services
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';

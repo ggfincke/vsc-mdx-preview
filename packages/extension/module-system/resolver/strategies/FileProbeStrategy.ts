@@ -1,5 +1,5 @@
 // packages/extension/module-system/resolver/strategies/FileProbeStrategy.ts
-// File probing strategy for relative imports without extensions
+// file probing strategy for relative imports without extensions
 
 import * as path from 'path';
 import { debug } from '../../../logging';

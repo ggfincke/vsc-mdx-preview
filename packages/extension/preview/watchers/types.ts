@@ -1,14 +1,14 @@
 // packages/extension/preview/watchers/types.ts
 // common interface for all watchers
 //
-// ## Config Watching Architecture
+// ## config watching architecture
 //
-// The config watching system uses a broadcast pattern:
-// 1. ConfigResolver.setupConfigWatcher() - Creates VS Code FileSystemWatcher for config files
-// 2. ConfigCache - Central broadcast point that receives & notifies of config changes
-// 3. PreviewInitializer.setupConfigWatcher() - Creates IWatcher adapters that subscribe to ConfigCache
+// the config watching system uses a broadcast pattern:
+// 1. ConfigResolver.setupConfigWatcher() - creates VS Code FileSystemWatcher for config files
+// 2. ConfigCache - central broadcast point that receives & notifies of config changes
+// 3. PreviewInitializer.setupConfigWatcher() - creates IWatcher adapters that subscribe to ConfigCache
 //
-// This avoids duplicate file watchers - one watcher per config file, multiple subscribers.
+// this avoids duplicate file watchers - one watcher per config file, multiple subscribers
 
 import type { Disposable } from 'vscode';
 
@@ -31,7 +31,7 @@ export interface IWatcher extends Disposable {
   waitForReady(timeoutMs?: number): Promise<void>;
 }
 
-// type guard for checking if an object implements IWatcher.
+// type guard for checking if an object implements IWatcher
 export function isWatcher(obj: unknown): obj is IWatcher {
   return (
     typeof obj === 'object' &&

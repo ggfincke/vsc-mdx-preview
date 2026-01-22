@@ -23,7 +23,7 @@ export class PackageJsonWatcher extends BaseWatcher {
     }
   }
 
-  // Allow setting callback after construction (for backward compatibility)
+  // allow setting callback after construction (for backward compatibility)
   setOnInvalidate(callback: () => void): void {
     this.onInvalidate = callback;
   }

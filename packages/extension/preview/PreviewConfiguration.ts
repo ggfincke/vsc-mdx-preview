@@ -7,7 +7,7 @@ import { SecurityPolicy } from '../security/security';
 import { getConfigManager } from '../services';
 import type { UpdateMode, TailwindEnabledSetting } from '../config';
 
-// Re-export for backward compatibility
+// re-export for backward compatibility
 export type { UpdateMode, TailwindEnabledSetting };
 
 export interface StyleConfiguration {
@@ -34,8 +34,8 @@ export interface ConfigChangeResult {
   oldCssPath: string;
 }
 
-// manages preview configuration state & updates.
-// reads from VS Code settings & tracks changes that require preview refresh.
+// manages preview configuration state & updates
+// reads from VS Code settings & tracks changes that require preview refresh
 export class PreviewConfiguration {
   private _configuration: ConfigurationState;
   private _debouncedUpdateWebview: ReturnType<typeof debounce>;
@@ -91,8 +91,8 @@ export class PreviewConfiguration {
     return this._debouncedUpdateWebview;
   }
 
-  // Update configuration from VS Code settings.
-  // Returns information about what changed to allow caller to react appropriately.
+  // update configuration from VS Code settings
+  // returns information about what changed to allow caller to react appropriately
   updateConfiguration(
     docUri: vscode.Uri,
     updateWebviewFn: () => void

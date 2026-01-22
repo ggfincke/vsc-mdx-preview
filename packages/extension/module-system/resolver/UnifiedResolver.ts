@@ -62,7 +62,7 @@ export class UnifiedResolver {
       return null;
     }
 
-    // Step 1: Framework alias resolution (for bare imports only)
+    // step 1: framework alias resolution (for bare imports only)
     if (
       context.framework &&
       context.shimsEnabled &&
@@ -93,7 +93,7 @@ export class UnifiedResolver {
       }
     }
 
-    // Step 2: TypeScript path resolution (for non-relative imports)
+    // step 2: TypeScript path resolution (for non-relative imports)
     if (context.tsConfig && !this.isRelativeImport(specifier)) {
       const result = getTypeScriptPathStrategy().resolve(specifier, context, mode);
       if (result) {
@@ -101,7 +101,7 @@ export class UnifiedResolver {
       }
     }
 
-    // Step 3: enhanced-resolve (for node_modules)
+    // step 3: enhanced-resolve (for node_modules)
     if (!this.isRelativeImport(specifier)) {
       const result = getEnhancedResolveStrategy().resolve(specifier, context, mode);
       if (result) {
@@ -109,7 +109,7 @@ export class UnifiedResolver {
       }
     }
 
-    // Step 4: File probing fallback (for relative imports)
+    // step 4: file probing fallback (for relative imports)
     if (this.isRelativeImport(specifier)) {
       const result = getFileProbeStrategy().resolve(specifier, context, mode);
       if (result) {
