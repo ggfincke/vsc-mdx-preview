@@ -1,151 +1,258 @@
 ---
-title: "Welcome to Nextra MDX Preview Demo"
-sidebarTitle: "Getting Started"
-description: "A comprehensive demonstration of Nextra framework support in MDX Preview"
+title: "Nextra MDX Preview Examples"
+description: "Demonstration of Nextra framework support in MDX Preview"
 ---
 
 import { Callout, Tabs, Cards, FileTree, Steps, Bleed } from 'nextra/components'
 
-# Getting Started with Nextra in MDX Preview
+# Nextra MDX Preview Examples
 
-Welcome to this comprehensive example demonstrating **Nextra framework support** in the MDX Preview extension.
+This example demonstrates **Nextra framework support** in MDX Preview. All Nextra components are supported out of the box.
 
-<Callout type="info">
-  This page demonstrates the `sidebarTitle` frontmatter field. Notice that "Getting Started" appears in the sidebar instead of the longer page title.
+---
+
+## Callouts
+
+Callouts are alert boxes with 5 built-in types:
+
+<Callout type="default">
+  **Default** - General tips and information with a lightbulb icon.
 </Callout>
 
-## What is Nextra?
+<Callout type="info">
+  **Info** - Informational notes with a circle-i icon.
+</Callout>
 
-[Nextra](https://nextra.site) is a Next.js-based documentation framework that provides:
+<Callout type="warning">
+  **Warning** - Cautionary messages with a triangle icon.
+</Callout>
 
-- MDX-first authoring experience
-- Built-in React components
-- Automatic sidebar generation from `_meta.json`
-- Theme support (docs and blog themes)
+<Callout type="error">
+  **Error** - Critical errors with a diamond icon.
+</Callout>
 
-## MDX Preview Support
+<Callout type="important">
+  **Important** - Crucial information with a message icon.
+</Callout>
 
-This extension provides **full support** for Nextra projects including:
+### Custom Emojis
 
-<Cards num={2}>
-  <Cards.Card icon="🧩" title="Component Shims" href="./components">
-    All Nextra components work out of the box
-  </Cards.Card>
-  <Cards.Card icon="⚙️" title="_meta.json Support" href="./file-tree-demo">
-    Page titles and layouts from configuration
-  </Cards.Card>
-  <Cards.Card icon="📝" title="Frontmatter" href="./layouts/full-width">
-    Nextra-specific frontmatter fields
-  </Cards.Card>
-  <Cards.Card icon="🎨" title="Layout Modes" href="./layouts/raw-layout">
-    Default, full-width, and raw layouts
-  </Cards.Card>
-</Cards>
+Override the default icon with any emoji:
 
-## Quick Start
+<Callout emoji="🚀">
+  **Launch ready!** Custom emoji callouts let you express any mood or topic.
+</Callout>
 
-<Steps>
+<Callout emoji="🔒">
+  **Security notice:** Always validate user input before processing.
+</Callout>
 
-### Open the Example
+---
 
-Open this `examples/nextra` folder in VS Code with the MDX Preview extension installed.
+## Tabs
 
-### Trust the Workspace
+Tabs organize content into switchable panels:
 
-When prompted, trust the workspace to enable Trusted Mode features.
-
-### Enable Scripts
-
-Ensure `mdx-preview.preview.enableScripts` is set to `true` in your VS Code settings.
-
-### Open an MDX File
-
-Open any `.mdx` file in this folder and press `Cmd+K X` (Mac) or `Ctrl+K X` (Windows/Linux) to open the preview.
-
-</Steps>
-
-## Explore the Components
-
-<Tabs items={['Callouts', 'Tabs', 'Cards', 'More']}>
+<Tabs items={['JavaScript', 'TypeScript', 'Python']}>
   <Tabs.Tab>
-    Callouts display important information with 5 different types:
-    - `default` - General information
-    - `info` - Informational notes
-    - `warning` - Warning messages
-    - `error` - Error alerts
-    - `important` - Important notices
-
-    [See all callout examples →](./callouts)
+    ```js
+    function greet(name) {
+      return `Hello, ${name}!`;
+    }
+    ```
   </Tabs.Tab>
   <Tabs.Tab>
-    Tabs organize content into switchable panels:
-    - String or object items
-    - localStorage persistence
-    - Disabled tab support
-    - Compound component pattern
-
-    [See all tab examples →](./tabs-demo)
+    ```ts
+    function greet(name: string): string {
+      return `Hello, ${name}!`;
+    }
+    ```
   </Tabs.Tab>
   <Tabs.Tab>
-    Cards display content in a grid layout:
-    - Configurable column count
-    - Icons and links
-    - Arrow indicators
-    - External link detection
-
-    [See all card examples →](./cards-demo)
-  </Tabs.Tab>
-  <Tabs.Tab>
-    Additional components:
-    - **FileTree** - Directory structures
-    - **Steps** - Numbered procedures
-    - **Bleed** - Full-width content
-
-    [See component reference →](./components)
+    ```python
+    def greet(name):
+        return f"Hello, {name}!"
+    ```
   </Tabs.Tab>
 </Tabs>
 
-## Project Structure
+### Package Manager Example
 
-This example has the following structure:
+<Tabs items={['pnpm', 'npm', 'yarn', 'bun']} storageKey="pkg-manager">
+  <Tabs.Tab>
+    ```bash
+    pnpm add nextra nextra-theme-docs
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash
+    npm install nextra nextra-theme-docs
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash
+    yarn add nextra nextra-theme-docs
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash
+    bun add nextra nextra-theme-docs
+    ```
+  </Tabs.Tab>
+</Tabs>
+
+### Disabled Tabs
+
+<Tabs items={[
+  { label: 'Free Tier' },
+  { label: 'Pro', disabled: true },
+  { label: 'Enterprise', disabled: true }
+]}>
+  <Tabs.Tab>
+    **Free Tier Features:** Up to 3 projects, community support, basic analytics.
+  </Tabs.Tab>
+  <Tabs.Tab>
+    _Coming soon!_
+  </Tabs.Tab>
+  <Tabs.Tab>
+    _Contact sales for access._
+  </Tabs.Tab>
+</Tabs>
+
+---
+
+## Cards
+
+Cards display content in a responsive grid layout:
+
+<Cards num={3}>
+  <Cards.Card icon="📚" title="Documentation">
+    Comprehensive guides and tutorials.
+  </Cards.Card>
+  <Cards.Card icon="🎯" title="Quick Start">
+    Get up and running in minutes.
+  </Cards.Card>
+  <Cards.Card icon="🔧" title="Configuration">
+    Customize every aspect of your setup.
+  </Cards.Card>
+</Cards>
+
+### Cards with External Links
+
+External links can be opened with **Ctrl/Cmd+Click**:
+
+<Cards num={2}>
+  <Cards.Card
+    icon="🌐"
+    title="Nextra Website"
+    href="https://nextra.site"
+    arrow
+  >
+    Official Nextra documentation
+  </Cards.Card>
+  <Cards.Card
+    icon="📦"
+    title="GitHub Repository"
+    href="https://github.com/shuding/nextra"
+    arrow
+  >
+    Source code and issues
+  </Cards.Card>
+</Cards>
+
+### Feature Grid
+
+<Cards num={3}>
+  <Cards.Card icon="⚡" title="Lightning Fast">
+    Built on Next.js for optimal performance.
+  </Cards.Card>
+  <Cards.Card icon="🎨" title="Beautiful Themes">
+    Docs and blog themes included.
+  </Cards.Card>
+  <Cards.Card icon="🔍" title="Full-Text Search">
+    Built-in search powered by FlexSearch.
+  </Cards.Card>
+  <Cards.Card icon="📱" title="Responsive Design">
+    Looks great on all devices.
+  </Cards.Card>
+  <Cards.Card icon="🌙" title="Dark Mode">
+    Automatic dark mode support.
+  </Cards.Card>
+  <Cards.Card icon="🔒" title="SEO Optimized">
+    Automatic sitemap and meta tags.
+  </Cards.Card>
+</Cards>
+
+---
+
+## FileTree
+
+Display directory structures with expandable folders:
 
 <FileTree>
   <ul>
-    <li><strong>examples/nextra/</strong></li>
+    <li><strong>src/</strong> source code</li>
     <ul>
-      <li>package.json</li>
-      <li>README.md</li>
-      <li>_meta.json</li>
-      <li><strong>docs/</strong></li>
+      <li><strong>components/</strong> React components</li>
       <ul>
-        <li>_meta.json</li>
-        <li><strong>index.mdx</strong> this file</li>
-        <li>components.mdx</li>
-        <li>callouts.mdx</li>
-        <li>tabs-demo.mdx</li>
-        <li>cards-demo.mdx</li>
-        <li>file-tree-demo.mdx</li>
-        <li><strong>layouts/</strong></li>
-        <ul>
-          <li>_meta.json</li>
-          <li>full-width.mdx</li>
-          <li>raw-layout.mdx</li>
-        </ul>
+        <li>Button.tsx</li>
+        <li>Card.tsx</li>
+        <li>Modal.tsx</li>
+      </ul>
+      <li>hooks/ custom React hooks</li>
+      <ul>
+        <li>useAuth.ts</li>
+        <li>useTheme.ts</li>
+      </ul>
+      <li>utils/</li>
+      <ul>
+        <li>...</li>
       </ul>
     </ul>
+    <li>public/ static assets</li>
+    <li><strong>package.json</strong></li>
+    <li>tsconfig.json</li>
   </ul>
 </FileTree>
 
-<Callout>
-  The `_meta.json` files configure page titles and layout settings. Check the [FileTree demo](./file-tree-demo) to see how they work.
+---
+
+## Steps
+
+Display numbered step-by-step content:
+
+<Steps>
+
+### Install Dependencies
+
+```bash
+npm install nextra nextra-theme-docs
+```
+
+### Configure Next.js
+
+Create `next.config.mjs` with the Nextra plugin.
+
+### Create Pages
+
+Add `.mdx` files to the `pages` directory.
+
+</Steps>
+
+---
+
+## Bleed
+
+Allow content to extend beyond the container width:
+
+<Bleed align="center" valign="middle" height="md" size="lg" weight="semibold" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+  Full-width hero section
+</Bleed>
+
+---
+
+## External Resources
+
+<Callout type="info">
+  Learn more about Nextra at [nextra.site](https://nextra.site) or check out the [GitHub repository](https://github.com/shuding/nextra).
 </Callout>
-
-## Next Steps
-
-Explore the dedicated pages for each component to see all their features:
-
-1. [**Callouts**](./callouts) - All callout types and custom emojis
-2. [**Tabs**](./tabs-demo) - Persistence, disabled items, and more
-3. [**Cards**](./cards-demo) - Grid layouts and link handling
-4. [**FileTree**](./file-tree-demo) - Directory structures with highlights
-5. [**Layouts**](./layouts/full-width) - Full-width and raw layout modes
