@@ -8,7 +8,6 @@ import { injectStyles } from '../styles/injectStyles';
 import { createSyncRequire } from '../runtime/require';
 import { PRELOAD_ALIASES } from '../preload';
 import type { Module, ModuleRuntime, ModuleFetcher } from '../types';
-import { debugWarn } from '../../utils/debug';
 
 // circular dependency helpers (see circular.ts for details)
 import {
@@ -86,8 +85,17 @@ async function loadModuleAsync(
     // Fetch dependency
     const result = await fetcher(dep, isBare, id);
     if (!result) {
-      debugWarn(`[MODULE-SYSTEM] Failed to fetch dependency: ${dep}`);
-      continue;
+      // Throw error instead of silently continuing - this surfaces the real problem
+      // to the user instead of showing a confusing MDX runtime error later
+      throw new Error(
+        `Failed to load module: "${dep}"\n` +
+          `Required by: ${id}\n\n` +
+          `Possible causes:\n` +
+          `  - The file does not exist at the specified path\n` +
+          `  - The path in .mdx-previewrc.json is incorrect\n` +
+          `  - A transpilation error occurred\n\n` +
+          `Check the MDX Preview output channel for details.`
+      );
     }
 
     // Register resolution mapping: (parentId, request) -> fsPath

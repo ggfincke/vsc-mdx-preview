@@ -39,9 +39,13 @@ import {
 } from './hooks';
 import './App.css';
 import './styles/admonitions.css';
+// Base styles (shared via data-attribute selectors)
+import './components/shims/base/styles/index.css';
+// Framework-specific styles (unique components only)
 import './components/shims/docusaurus/styles.css';
 import './components/shims/starlight/styles.css';
 import './components/shims/nextra/styles.css';
+import './components/shims/generic/styles.css';
 
 debug('[APP] App.tsx module loaded');
 

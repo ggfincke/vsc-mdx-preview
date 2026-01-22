@@ -5,7 +5,7 @@ import React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as ReactDOMClient from 'react-dom/client';
 import * as jsxRuntime from 'react/jsx-runtime';
-import { MDXProvider } from '@mdx-js/react';
+import { MDXProvider, useMDXComponents } from '@mdx-js/react';
 import { PRELOADED_MODULE_IDS } from '@mdx-preview/shared';
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
 
@@ -79,8 +79,8 @@ export function preloadCoreModules(
   // JSX Runtime
   registry.preload(PRELOADED_MODULE_IDS.jsxRuntime, jsxRuntime);
 
-  // MDX React
-  const mdxModule = { __esModule: true as const, MDXProvider };
+  // MDX React (must include useMDXComponents for MDX 3 compiled code to read context)
+  const mdxModule = { __esModule: true as const, MDXProvider, useMDXComponents };
   registry.preload(PRELOADED_MODULE_IDS.mdxReact, mdxModule);
   registry.preload(PRELOADED_MODULE_IDS.mdxReactLatest, mdxModule);
 
