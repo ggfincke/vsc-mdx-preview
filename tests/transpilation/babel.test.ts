@@ -16,24 +16,26 @@ describe('transformAsync()', () => {
     expect(result!.code).toContain('className');
   });
 
-  it('transforms modern syntax (optional chaining)', async () => {
+  it('preserves modern syntax (optional chaining) - native in Node 20/Chromium', async () => {
     const code = `const value = obj?.nested?.property;`;
 
     const result = await transformAsync(code);
 
     expect(result).not.toBeNull();
-    // Optional chaining should be transformed for browser compatibility
-    expect(result!.code).not.toContain('?.');
+    // Optional chaining is natively supported in Node 20 and modern Chromium
+    // so it should be preserved (not transformed)
+    expect(result!.code).toContain('?.');
   });
 
-  it('transforms modern syntax (nullish coalescing)', async () => {
+  it('preserves modern syntax (nullish coalescing) - native in Node 20/Chromium', async () => {
     const code = `const value = obj ?? defaultValue;`;
 
     const result = await transformAsync(code);
 
     expect(result).not.toBeNull();
-    // Nullish coalescing should be transformed
-    expect(result!.code).not.toContain('??');
+    // Nullish coalescing is natively supported in Node 20 and modern Chromium
+    // so it should be preserved (not transformed)
+    expect(result!.code).toContain('??');
   });
 
   it('handles export default from syntax', async () => {

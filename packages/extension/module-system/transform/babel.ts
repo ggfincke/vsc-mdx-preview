@@ -1,32 +1,30 @@
 // packages/extension/module-system/transform/babel.ts
 // babel configuration for transpiling user code in MDX files
+//
+// webview evaluates modules using new Function() which requires CommonJS format
+// preset-env converts ES modules (import/export) to CommonJS (require/module.exports)
 
 import * as babel from '@babel/core';
 
-// babel configuration (@babel/preset-env handles dynamic imports)
+// babel configuration for module transformation and JSX
 const babelOptions = {
   presets: [
+    // ES modules → CommonJS (required for webview Function() evaluation)
     babel.createConfigItem([
       require('@babel/preset-env'),
-      { exclude: ['transform-regenerator'] },
+      {
+        modules: 'commonjs',
+        // only transform modules, not syntax (Node 20+ handles rest)
+        targets: { node: 'current' },
+      },
     ]),
+    // JSX transformation (required for React components)
     babel.createConfigItem(require('@babel/preset-react')),
   ],
   plugins: [
-    // stage-1 proposal: export default from (kept for real-world compatibility)
+    // stage-1 proposal: export default from (not native in Node/browsers)
     babel.createConfigItem(
       require('@babel/plugin-proposal-export-default-from')
-    ),
-    // standard ES2020+ transforms (renamed from deprecated plugin-proposal-* packages)
-    babel.createConfigItem(
-      require('@babel/plugin-transform-export-namespace-from')
-    ),
-    babel.createConfigItem(require('@babel/plugin-transform-class-properties')),
-    babel.createConfigItem(
-      require('@babel/plugin-transform-optional-chaining')
-    ),
-    babel.createConfigItem(
-      require('@babel/plugin-transform-nullish-coalescing-operator')
     ),
   ],
 };
