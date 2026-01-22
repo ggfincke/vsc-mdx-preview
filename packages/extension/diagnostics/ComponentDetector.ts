@@ -17,7 +17,7 @@ import type {
 } from './types';
 import { debug, warn } from '../logging';
 
-// Use shared component registry as single source of truth
+// use shared component registry as single source of truth
 import { isFrameworkComponent } from '@mdx-preview/shared';
 import type { MdxJsxElement } from '../compiler/shared/transforms/types';
 
@@ -31,7 +31,7 @@ interface MdxjsEsmNode {
   };
 }
 
-// Note: Using isFrameworkComponent() helper from shared instead of local Set
+// using isFrameworkComponent() helper from shared instead of local Set
 
 // HTML element names (lowercase) - not components
 const HTML_ELEMENTS = new Set([

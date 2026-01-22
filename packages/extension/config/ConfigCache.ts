@@ -1,5 +1,5 @@
 // packages/extension/config/ConfigCache.ts
-// Encapsulates config cache state for proper lifecycle management
+// encapsulates config cache state for proper lifecycle management
 
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -9,14 +9,14 @@ import { SubscriberManager } from '../utils/SubscriberManager';
 import { disposeCollection } from '../utils/disposable';
 import type { ResolvedConfig } from '../preview/config/ConfigResolver';
 
-// Typed config change event types
+// typed config change event types
 export enum ConfigChangeType {
   FileChanged = 'fileChanged',
   FileDeleted = 'fileDeleted',
   FileCreated = 'fileCreated',
 }
 
-// Typed config change event
+// typed config change event
 export interface ConfigChangeEvent {
   type: ConfigChangeType;
   configPath: string;

@@ -101,11 +101,12 @@ export class ConfigError extends ExtensionError {
 }
 
 // plugin errors
+// E460 = PLUGIN_SAFE_MODE_BLOCKED
 export type PluginErrorCode =
   | 'PLUGIN_NOT_FOUND'
   | 'PLUGIN_LOAD_ERROR'
   | 'PLUGIN_INVALID_EXPORT'
-  | 'E460'; // PLUGIN_SAFE_MODE_BLOCKED
+  | 'E460';
 
 export class PluginError extends ExtensionError {
   constructor(
@@ -119,12 +120,16 @@ export class PluginError extends ExtensionError {
 }
 
 // tailwind errors
+// E500 = TAILWIND_NOT_INSTALLED
+// E501 = TAILWIND_VERSION_UNSUPPORTED
+// E520 = TAILWIND_CONFIG_NOT_FOUND
+// E562 = TAILWIND_INVALID_PLUGIN
 export type TailwindErrorCode =
-  | 'E500' // TAILWIND_NOT_INSTALLED
-  | 'E501' // TAILWIND_VERSION_UNSUPPORTED
-  | 'E520' // TAILWIND_CONFIG_NOT_FOUND
+  | 'E500'
+  | 'E501'
+  | 'E520'
   | 'TAILWIND_COMPILATION_ERROR'
-  | 'E562'; // TAILWIND_INVALID_PLUGIN
+  | 'E562';
 
 export class TailwindError extends ExtensionError {
   constructor(
@@ -138,10 +143,13 @@ export class TailwindError extends ExtensionError {
 }
 
 // webview errors
+// E600 = WEBVIEW_MANIFEST_ERROR
+// E620 = WEBVIEW_HANDSHAKE_TIMEOUT
+// E640 = WEBVIEW_RPC_ERROR
 export type WebviewErrorCode =
-  | 'E600' // WEBVIEW_MANIFEST_ERROR
-  | 'E620' // WEBVIEW_HANDSHAKE_TIMEOUT
-  | 'E640'; // WEBVIEW_RPC_ERROR
+  | 'E600'
+  | 'E620'
+  | 'E640';
 
 export class WebviewError extends ExtensionError {
   constructor(
@@ -155,9 +163,11 @@ export class WebviewError extends ExtensionError {
 }
 
 // service errors
+// E800 = SERVICE_NOT_REGISTERED
+// E801 = SERVICE_ALREADY_DISPOSED
 export type ServiceErrorCode =
-  | 'E800' // SERVICE_NOT_REGISTERED
-  | 'E801'; // SERVICE_ALREADY_DISPOSED
+  | 'E800'
+  | 'E801';
 
 export class ServiceError extends ExtensionError {
   constructor(

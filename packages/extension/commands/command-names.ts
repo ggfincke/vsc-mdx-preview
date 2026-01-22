@@ -1,8 +1,8 @@
 // packages/extension/commands/command-names.ts
 // command ID constants for type-safe registration
 
-// Command IDs as constants to prevent typos & enable refactoring.
-// Mirrors the pattern from services/service-names.ts.
+// command IDs as constants to prevent typos & enable refactoring
+// mirrors the pattern from services/service-names.ts
 export const CommandNames = {
   // preview commands
   OPEN_PREVIEW: 'mdx-preview.commands.openPreview',

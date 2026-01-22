@@ -117,7 +117,7 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
 
     action.diagnostics = [diagnostic];
 
-    // create edit to replace component name with the suggestion
+    // create edit to replace component name w/ the suggestion
     action.edit = new vscode.WorkspaceEdit();
     action.edit.replace(document.uri, diagnostic.range, suggestion);
 
@@ -199,7 +199,7 @@ export async function addComponentToConfig(
   debug(`[ComponentCodeActions] Adding ${componentName} to ${configPath}`);
 
   try {
-    // read existing config or start with empty object
+    // read existing config or start w/ empty object
     const config: Record<string, unknown> =
       readJsonSync<Record<string, unknown>>(configPath) ?? {};
 
@@ -208,7 +208,7 @@ export async function addComponentToConfig(
       config.components = {};
     }
 
-    // add component with placeholder path
+    // add component w/ placeholder path
     const components = config.components as Record<string, string>;
     if (!components[componentName]) {
       components[componentName] = `./src/components/${componentName}.tsx`;

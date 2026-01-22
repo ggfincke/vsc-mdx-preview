@@ -4,12 +4,17 @@
 import type * as vscode from 'vscode';
 
 // source of a known component
+// - builtin: generic built-in shims (Callout, Tabs, etc.)
+// - framework: framework shims (Docusaurus, Next.js, Starlight)
+// - config: defined in .mdx-previewrc.json components field
+// - import: explicitly imported in the MDX file
+// - unknown: not recognized
 export type ComponentSource =
-  | 'builtin' // generic built-in shims (Callout, Tabs, etc.)
-  | 'framework' // framework shims (Docusaurus, Next.js, Starlight)
-  | 'config' // defined in .mdx-previewrc.json components field
-  | 'import' // explicitly imported in the MDX file
-  | 'unknown'; // not recognized
+  | 'builtin'
+  | 'framework'
+  | 'config'
+  | 'import'
+  | 'unknown';
 
 // detected JSX component in an MDX file
 export interface DetectedComponent {

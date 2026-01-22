@@ -41,7 +41,7 @@ export enum ErrorContext {
   Config = 'config',
   // webview communication errors
   Webview = 'webview',
-  // Tailwind CSS processing errors
+  // tailwind CSS processing errors
   Tailwind = 'tailwind',
   // plugin loading errors
   Plugin = 'plugin',
@@ -106,7 +106,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     const severity =
       options.severity ?? this.inferSeverity(normalizedError, options.context);
 
-    // Check for duplicate suppression
+    // check for duplicate suppression
     if (this.isDuplicate(normalizedError, options.dedupeWindow)) {
       logDebug(
         `[ERROR-REPORTER] Suppressed duplicate: ${normalizedError.message}`
@@ -244,7 +244,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     error: Error | ExtensionError,
     context: ErrorContext
   ): ErrorSeverity {
-    // Security errors are always critical or warning
+    // security errors are always critical or warning
     if (error instanceof ExtensionError) {
       if (error.code === 'PATH_TRAVERSAL') {
         return ErrorSeverity.Critical;
@@ -254,7 +254,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
       }
     }
 
-    // Context-based severity mapping
+    // context-based severity mapping
     switch (context) {
       case ErrorContext.Security:
         return ErrorSeverity.Critical;
@@ -382,14 +382,15 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   // check if error is recoverable (user can fix & retry)
   private isRecoverableError(error: Error): boolean {
     if (error instanceof ExtensionError) {
-      // Module & transpile errors are typically recoverable by fixing the source
+      // module & transpile errors are typically recoverable by fixing the source
+      // E102 = circular dependency, E120 = parse error, E300 = MDX transpile
       const recoverableCodes = [
         'MODULE_NOT_FOUND',
         'PARSE_ERROR',
         'TRANSPILE_ERROR',
-        'E102', // circular dependency
-        'E120', // parse error
-        'E300', // MDX transpile
+        'E102',
+        'E120',
+        'E300',
       ];
       return recoverableCodes.includes(error.code);
     }
@@ -422,7 +423,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
       return true;
     }
 
-    // FIFO eviction: if map exceeds max size, delete oldest entries
+    // fifo eviction: if map exceeds max size, delete oldest entries
     if (this.recentErrors.size >= ERROR_DEDUPE_MAX_ENTRIES) {
       this.evictOldestEntries(Math.ceil(ERROR_DEDUPE_MAX_ENTRIES * 0.1));
     }
@@ -432,7 +433,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     return false;
   }
 
-  // FIFO eviction of oldest entries when map exceeds size limit
+  // fifo eviction of oldest entries when map exceeds size limit
   private evictOldestEntries(count: number): void {
     let evicted = 0;
     for (const key of this.recentErrors.keys()) {

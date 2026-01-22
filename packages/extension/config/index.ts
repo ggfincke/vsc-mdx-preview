@@ -1,5 +1,5 @@
 // packages/extension/config/index.ts
-// Public exports for configuration management
+// public exports for configuration management
 
 export {
   ConfigManager,

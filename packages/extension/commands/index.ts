@@ -19,7 +19,7 @@ import { commands as cacheCommands } from './cache';
 
 import type { CommandDefinition } from './types';
 
-// All command definitions aggregated from modules.
+// all command definitions aggregated from modules
 const allCommands: CommandDefinition[] = [
   ...previewCommands,
   ...configToggleCommands,
@@ -31,10 +31,6 @@ const allCommands: CommandDefinition[] = [
 ];
 
 // register all MDX Preview commands w/ VS Code
-//
-// @example
-// // In extension.ts activate()
-// context.subscriptions.push(...registerAllCommands());
 export function registerAllCommands(): vscode.Disposable[] {
   debug('[COMMANDS] Registering all commands...');
 

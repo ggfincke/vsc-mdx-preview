@@ -1,5 +1,5 @@
 // packages/extension/commands/security.ts
-// security-related commands with trust checks
+// security-related commands w/ trust checks
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';

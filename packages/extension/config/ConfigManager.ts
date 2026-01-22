@@ -1,5 +1,5 @@
 // packages/extension/config/ConfigManager.ts
-// Centralized configuration management for MDX Preview extension
+// centralized configuration management for MDX Preview extension
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
@@ -45,7 +45,7 @@ export type SettingKey =
   | 'components.builtins'
   | 'components.unknownBehavior';
 
-// Type mapping for settings
+// type mapping for settings
 export interface SettingTypes {
   'preview.updateMode': 'onType' | 'onSave' | 'manual';
   'preview.debounceDelay': number;
@@ -73,7 +73,7 @@ export interface SettingTypes {
   'components.unknownBehavior': 'strip' | 'placeholder' | 'raw';
 }
 
-// Default values for all settings
+// default values for all settings
 const DEFAULTS: SettingTypes = {
   'preview.updateMode': 'onType',
   'preview.debounceDelay': PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS,
@@ -103,7 +103,7 @@ const DEFAULTS: SettingTypes = {
 
 type ConfigChangeCallback = (affectedKeys: SettingKey[]) => void;
 
-// Centralized configuration manager for MDX Preview w/ type safety & change notifications
+// * centralized configuration manager for MDX Preview w/ type safety & change notifications
 export class ConfigManager extends SingletonService<ConfigManager> {
   protected static override instance: ConfigManager | undefined;
   protected readonly logTag = 'CONFIG-MANAGER';
@@ -112,7 +112,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
 
   protected constructor() {
     super();
-    // Subscribe to VS Code configuration changes
+    // subscribe to VS Code configuration changes
     this.addDisposable(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('mdx-preview')) {
@@ -122,13 +122,13 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     );
   }
 
-  // Get config value w/ type safety
+  // get config value w/ type safety
   get<K extends SettingKey>(key: K, scope?: vscode.Uri): SettingTypes[K] {
     const config = vscode.workspace.getConfiguration('mdx-preview', scope);
     return config.get<SettingTypes[K]>(key, DEFAULTS[key]);
   }
 
-  // Get all config values as an object
+  // get all config values as an object
   getAll(scope?: vscode.Uri): SettingTypes {
     const result = {} as SettingTypes;
     for (const key of Object.keys(DEFAULTS) as SettingKey[]) {
@@ -140,7 +140,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     return result;
   }
 
-  // Update config value
+  // update config value
   async set<K extends SettingKey>(
     key: K,
     value: SettingTypes[K],
@@ -150,12 +150,12 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     await config.update(key, value, target);
   }
 
-  // Subscribe to configuration changes
+  // subscribe to configuration changes
   onDidChangeConfiguration(callback: ConfigChangeCallback): vscode.Disposable {
     return this.subscriberManager.subscribe(callback);
   }
 
-  // Check if a specific setting affects the configuration change event
+  // check if a specific setting affects the configuration change event
   static affectsConfiguration(
     event: vscode.ConfigurationChangeEvent,
     key: SettingKey
@@ -163,9 +163,9 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     return event.affectsConfiguration(`mdx-preview.${key}`);
   }
 
-  // Notify subscribers of configuration changes
+  // notify subscribers of configuration changes
   private notifySubscribers(event: vscode.ConfigurationChangeEvent): void {
-    // Determine which keys changed
+    // determine which keys changed
     const affectedKeys = (Object.keys(DEFAULTS) as SettingKey[]).filter((key) =>
       event.affectsConfiguration(`mdx-preview.${key}`)
     );
@@ -178,7 +178,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     this.subscriberManager.notify(affectedKeys);
   }
 
-  // Clear subscribers on dispose
+  // clear subscribers on dispose
   protected override onDispose(): void {
     this.subscriberManager.clear();
   }

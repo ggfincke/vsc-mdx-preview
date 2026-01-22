@@ -20,7 +20,7 @@ const selectFramework = async (): Promise<void> => {
   const currentSetting = configManager.get('framework');
   const frameworkDetector = getFrameworkDetector();
 
-  // Detect framework from active editor
+  // detect framework from active editor
   const editor = vscode.window.activeTextEditor;
   let detectedFramework: Framework = 'generic';
   if (editor) {
@@ -82,7 +82,7 @@ const selectFramework = async (): Promise<void> => {
       vscode.ConfigurationTarget.Workspace
     );
 
-    // Refresh previews to apply framework changes
+    // refresh previews to apply framework changes
     getPreviewManager().refreshAllPreviews();
 
     vscode.window.showInformationMessage(

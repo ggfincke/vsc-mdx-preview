@@ -16,7 +16,7 @@ export const DIAGNOSTIC_CODES = {
 // diagnostic source name
 const DIAGNOSTIC_SOURCE = 'MDX Preview';
 
-// ComponentDiagnostics service
+// * ComponentDiagnostics service
 // manages a DiagnosticCollection for MDX component issues
 export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics> {
   protected static override instance: ComponentDiagnostics | undefined;
@@ -80,7 +80,7 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
     return document.languageId === 'mdx' || document.fileName.endsWith('.mdx');
   }
 
-  // schedule diagnostic update with debounce
+  // schedule diagnostic update w/ debounce
   private scheduleUpdate(document: vscode.TextDocument): void {
     const uriString = document.uri.toString();
 

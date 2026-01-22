@@ -1,7 +1,7 @@
 // packages/extension/errors/error-codes.ts
 // centralized error codes enum for consistent error handling
 //
-// Error code structure follows numeric prefixes by category:
+// error code structure follows numeric prefixes by category:
 // - E001-E099: Trust & Security
 // - E100-E199: Module Fetch
 // - E200-E299: Configuration
@@ -17,7 +17,7 @@
 // used for programmatic error handling, logging, & user message templates
 export enum ErrorCode {
   // =========================================================================
-  // Trust & Security errors (E001-E099)
+  // trust & security errors (E001-E099)
   // =========================================================================
   PATH_TRAVERSAL = 'PATH_TRAVERSAL',
   PATH_INVALID = 'E002',
@@ -27,7 +27,7 @@ export enum ErrorCode {
   TRUST_REMOTE_DOCUMENT = 'E023',
 
   // =========================================================================
-  // Module Fetch errors (E100-E199)
+  // module fetch errors (E100-E199)
   // =========================================================================
   MODULE_NOT_FOUND = 'MODULE_NOT_FOUND',
   OUTSIDE_WORKSPACE = 'OUTSIDE_WORKSPACE',
@@ -37,7 +37,7 @@ export enum ErrorCode {
   MODULE_FETCH_IO_ERROR = 'E162',
 
   // =========================================================================
-  // Configuration errors (E200-E299)
+  // configuration errors (E200-E299)
   // =========================================================================
   CONFIG_PARSE_ERROR = 'CONFIG_PARSE_ERROR',
   CONFIG_FILE_NOT_FOUND = 'E201',
@@ -46,14 +46,14 @@ export enum ErrorCode {
   CONFIG_COMPONENT_MAPPING_INVALID = 'E222',
 
   // =========================================================================
-  // Transpilation errors (E300-E399)
+  // transpilation errors (E300-E399)
   // =========================================================================
   TRANSPILE_ERROR = 'TRANSPILE_ERROR',
   MDX_FRONTMATTER_ERROR = 'E301',
   BABEL_TRANSPILE_ERROR = 'E320',
 
   // =========================================================================
-  // Plugin errors (E400-E499)
+  // plugin errors (E400-E499)
   // =========================================================================
   PLUGIN_NOT_FOUND = 'PLUGIN_NOT_FOUND',
   PLUGIN_LOAD_ERROR = 'PLUGIN_LOAD_ERROR',
@@ -61,7 +61,7 @@ export enum ErrorCode {
   PLUGIN_SAFE_MODE_BLOCKED = 'E460',
 
   // =========================================================================
-  // Tailwind errors (E500-E599)
+  // tailwind errors (E500-E599)
   // =========================================================================
   TAILWIND_NOT_INSTALLED = 'E500',
   TAILWIND_VERSION_UNSUPPORTED = 'E501',
@@ -71,27 +71,27 @@ export enum ErrorCode {
   TAILWIND_INVALID_PLUGIN = 'E562',
 
   // =========================================================================
-  // Webview errors (E600-E699)
+  // webview errors (E600-E699)
   // =========================================================================
   WEBVIEW_MANIFEST_ERROR = 'E600',
   WEBVIEW_HANDSHAKE_TIMEOUT = 'E620',
   WEBVIEW_RPC_ERROR = 'E640',
 
   // =========================================================================
-  // File I/O errors (E700-E799)
+  // file I/O errors (E700-E799)
   // =========================================================================
   FILE_READ_ERROR = 'E700',
   FILE_NOT_FOUND = 'E701',
   WATCHER_CREATE_ERROR = 'E740',
 
   // =========================================================================
-  // Service errors (E800-E899)
+  // service errors (E800-E899)
   // =========================================================================
   SERVICE_NOT_REGISTERED = 'E800',
   SERVICE_ALREADY_DISPOSED = 'E801',
 
   // =========================================================================
-  // General errors (E900-E999)
+  // general errors (E900-E999)
   // =========================================================================
   UNKNOWN_ERROR = 'UNKNOWN_ERROR',
   INTERNAL_ERROR = 'E901',
