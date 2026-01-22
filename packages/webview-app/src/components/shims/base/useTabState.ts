@@ -19,7 +19,7 @@ export interface TabDefinition {
 // Props for a TabItem component
 export interface TabItemProps {
   children: ReactNode;
-  value: string;
+  value?: string; // Optional - can use label as fallback (Starlight uses label only)
   label?: string;
   default?: boolean;
 }
@@ -49,10 +49,12 @@ export function extractTabItems(children: ReactNode): TabItem[] {
     }
 
     const props = child.props as TabItemProps;
-    if (props.value !== undefined) {
+    // Accept either 'value' (Docusaurus) or 'label' (Starlight) as identifier
+    const value = props.value ?? props.label;
+    if (value !== undefined) {
       items.push({
-        value: props.value,
-        label: props.label || props.value,
+        value,
+        label: props.label || value,
         content: props.children,
       });
     }

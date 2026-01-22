@@ -35,7 +35,7 @@ interface FrameworkRule {
 const FRAMEWORK_RULES: FrameworkRule[] = [
   {
     framework: 'docusaurus',
-    dependencies: ['@docusaurus/core'],
+    dependencies: ['@docusaurus/core', '@docusaurus/preset-classic'],
   },
   {
     framework: 'starlight',

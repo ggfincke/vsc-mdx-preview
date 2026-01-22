@@ -104,6 +104,16 @@ async function loadModuleAsync(
       registry.setResolution(id, dep, result.fsPath);
     }
 
+    // Check if the resolved path is an alias to a preloaded module
+    // This handles built-in shims returned by the extension (e.g., @mdx-preview/shims/nextra)
+    const preloadId = PRELOAD_ALIASES[result.fsPath];
+    if (preloadId && registry.has(preloadId)) {
+      // Map the dependency to the preloaded module instead of loading empty code
+      registry.setResolution(id, dep, preloadId);
+      registry.addDependency(id, preloadId);
+      continue;
+    }
+
     // Handle CSS
     if (result.css) {
       injectStyles(result.fsPath, result.css);
