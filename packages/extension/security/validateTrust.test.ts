@@ -1,9 +1,9 @@
 // packages/extension/security/validateTrust.test.ts
-// Unit tests for trust validation utilities
+// unit tests for trust validation utilities
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Define hoisted mocks
+// define hoisted mocks
 const { mockTrustManager } = vi.hoisted(() => ({
   mockTrustManager: {
     canExecute: vi.fn(() => true),
@@ -23,19 +23,19 @@ const { mockTrustManager } = vi.hoisted(() => ({
   },
 }));
 
-// Mock services
+// mock services
 vi.mock('../services', () => ({
   getTrustManager: () => mockTrustManager,
 }));
 
-// Mock vscode (minimal - just Uri for document tests)
+// mock vscode (minimal - just Uri for document tests)
 vi.mock('vscode', () => ({
   Uri: {
     file: (path: string) => ({ scheme: 'file', fsPath: path, path }),
   },
 }));
 
-// Import after mocks
+// import after mocks
 import {
   TrustError,
   isTrustedModeEnabled,

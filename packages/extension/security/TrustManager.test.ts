@@ -1,9 +1,9 @@
 // packages/extension/security/TrustManager.test.ts
-// Unit tests for TrustManager security system
+// unit tests for TrustManager security system
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Define hoisted mocks BEFORE vi.mock() calls
+// define hoisted mocks BEFORE vi.mock() calls
 const { mockWorkspace, mockEnv, mockConfigManager } = vi.hoisted(() => ({
   mockWorkspace: {
     isTrusted: true,
@@ -23,7 +23,7 @@ const { mockWorkspace, mockEnv, mockConfigManager } = vi.hoisted(() => ({
   },
 }));
 
-// Mock vscode module
+// mock vscode module
 vi.mock('vscode', () => ({
   workspace: mockWorkspace,
   env: mockEnv,
@@ -36,12 +36,12 @@ vi.mock('vscode', () => ({
   },
 }));
 
-// Mock services
+// mock services
 vi.mock('../services', () => ({
   getConfigManager: () => mockConfigManager,
 }));
 
-// Mock logging
+// mock logging
 vi.mock('../logging', () => ({
   error: vi.fn(),
   warn: vi.fn(),
@@ -49,7 +49,7 @@ vi.mock('../logging', () => ({
   info: vi.fn(),
 }));
 
-// Import after mocks are set up
+// import after mocks are set up
 import { TrustManager, SecurityMode, getSecurityMode } from './TrustManager';
 import type { TrustState } from '@mdx-preview/shared';
 
@@ -57,7 +57,7 @@ describe('TrustManager', () => {
   let trustManager: TrustManager;
 
   beforeEach(() => {
-    // Reset mocks to default values
+    // reset mocks to default values
     mockWorkspace.isTrusted = true;
     mockEnv.remoteName = undefined;
     mockConfigManager.get.mockImplementation((key: string) => {
@@ -66,7 +66,7 @@ describe('TrustManager', () => {
       return undefined;
     });
 
-    // Get fresh instance (reset singleton)
+    // get fresh instance (reset singleton)
     TrustManager['instance'] = undefined;
     trustManager = TrustManager.getInstance();
   });

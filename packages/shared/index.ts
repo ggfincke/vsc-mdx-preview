@@ -67,7 +67,7 @@ export interface PreviewError {
   message: string;
   stack?: string;
   code?: string;
-  // error context category (module-fetch, transpile, etc.)
+  // error context category (module-fetch, transpile, etc)
   context?: string;
   // hint for webview to show retry button
   recoverable?: boolean;
@@ -268,13 +268,13 @@ export interface ExtensionRPC {
 
 // Nextra _meta.json page-level settings (preview-relevant only)
 export interface NextraPageMeta {
-  // Title from _meta.json or frontmatter (sidebarTitle takes precedence)
+  // title from _meta.json or frontmatter (sidebarTitle takes precedence)
   title?: string;
-  // Layout type: 'default' (max-width container), 'full' (full-width), 'raw' (no styling)
+  // layout type: 'default' (max-width container), 'full' (full-width), 'raw' (no styling)
   layout?: 'default' | 'full' | 'raw';
-  // Page description (from frontmatter)
+  // page description (from frontmatter)
   description?: string;
-  // Whether TOC should be visible (informational for preview)
+  // whether TOC should be visible (informational for preview)
   toc?: boolean;
 }
 

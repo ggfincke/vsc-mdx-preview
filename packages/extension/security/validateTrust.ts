@@ -1,5 +1,5 @@
 // packages/extension/security/validateTrust.ts
-// Centralized trust validation utilities for trust-gated operations
+// centralized trust validation utilities for trust-gated operations
 
 import * as vscode from 'vscode';
 import { SecurityMode } from './TrustManager';

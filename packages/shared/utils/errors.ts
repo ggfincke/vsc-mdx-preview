@@ -1,12 +1,12 @@
 // packages/shared/utils/errors.ts
 // cross-environment error handling utilities (works in both Node.js & browser)
 
-// type guard to check if a value is an Error instance
+// check if value is an Error instance (type guard)
 export function isError(value: unknown): value is Error {
   return value instanceof Error;
 }
 
-// extract the error message from an unknown error value
+// extract error message from an unknown error value
 export function extractErrorMessage(error: unknown): string {
   if (isError(error)) {
     return error.message;
@@ -14,7 +14,7 @@ export function extractErrorMessage(error: unknown): string {
   return String(error);
 }
 
-// extract the stack trace from an unknown error value
+// extract stack trace from an unknown error value
 export function extractErrorStack(error: unknown): string | undefined {
   if (isError(error)) {
     return error.stack;

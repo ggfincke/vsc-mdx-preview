@@ -4,12 +4,15 @@
 export const SHIM_PREFIX = '@mdx-preview/shims' as const;
 
 // framework IDs used by the shim registry
-// Framework = frameworks with shims (excludes 'generic')
+// Framework = frameworks w/ shims (excludes 'generic')
 export type Framework = 'docusaurus' | 'starlight' | 'nextjs' | 'nextra';
+
 // FrameworkId = all frameworks including 'generic' (canonical runtime type)
 export type FrameworkId = Framework | 'generic';
+
 // FrameworkName = alias for FrameworkId (semantic clarity)
 export type FrameworkName = FrameworkId;
+
 // FrameworkSetting = VS Code setting type ('auto' triggers detection)
 export type FrameworkSetting = 'auto' | FrameworkName;
 
@@ -18,32 +21,42 @@ export type ComponentKind = 'component' | 'barrel';
 export interface ComponentDefinitionBase {
   // canonical name for this shim entry (component name or barrel identifier)
   name: string;
+
   // framework this shim belongs to
   framework: FrameworkId;
+
   // import specifiers users write in MDX
   importSpecifiers: readonly string[];
+
   // internal shim path used by the extension
   shimPath: string;
+
   // canonical preloaded module ID used by the webview
   preloadId: string;
+
   // webview import path (relative to webview src/)
   webviewImport: string;
+
   // whether to map bare names/aliases to this preload ID
   exposeAsBareImport?: boolean;
 }
 
 export interface ComponentDefinition extends ComponentDefinitionBase {
   kind: 'component';
+
   // aliases that should map to the same component
   aliases: readonly string[];
+
   // default import unless specified
   importKind?: 'default' | 'named';
+
   // named import to use when importKind is 'named'
   importName?: string;
 }
 
 export interface ComponentBarrelDefinition extends ComponentDefinitionBase {
   kind: 'barrel';
+
   // named exports to expose from the barrel module
   exportNames: readonly string[];
 }
@@ -53,9 +66,7 @@ export type ComponentRegistryEntry =
   | ComponentBarrelDefinition;
 
 export const COMPONENT_REGISTRY = [
-  // ─────────────────────────────────────────────────────────────
-  // Generic components (framework-agnostic)
-  // ─────────────────────────────────────────────────────────────
+  // generic components (framework-agnostic)
   {
     kind: 'component',
     name: 'Callout',
@@ -112,9 +123,7 @@ export const COMPONENT_REGISTRY = [
     exposeAsBareImport: true,
   },
 
-  // ─────────────────────────────────────────────────────────────
   // Docusaurus components
-  // ─────────────────────────────────────────────────────────────
   {
     kind: 'component',
     name: 'Tabs',
@@ -158,9 +167,7 @@ export const COMPONENT_REGISTRY = [
     webviewImport: 'components/shims/docusaurus/Details',
   },
 
-  // ─────────────────────────────────────────────────────────────
   // Starlight components
-  // ─────────────────────────────────────────────────────────────
   {
     kind: 'barrel',
     name: 'components',
@@ -287,9 +294,7 @@ export const COMPONENT_REGISTRY = [
     webviewImport: 'components/shims/starlight/Code',
   },
 
-  // ─────────────────────────────────────────────────────────────
   // Next.js components
-  // ─────────────────────────────────────────────────────────────
   {
     kind: 'component',
     name: 'Image',
@@ -311,9 +316,7 @@ export const COMPONENT_REGISTRY = [
     webviewImport: 'components/shims/nextjs/Link',
   },
 
-  // ─────────────────────────────────────────────────────────────
   // Nextra components
-  // ─────────────────────────────────────────────────────────────
   {
     kind: 'barrel',
     name: 'components',
@@ -390,7 +393,7 @@ export const COMPONENT_REGISTRY = [
   },
 ] as const satisfies readonly ComponentRegistryEntry[];
 
-// Derive types from the registry for stronger typing across the repo
+// derive types from the registry for stronger typing across the repo
 export type ComponentRegistryEntryType = (typeof COMPONENT_REGISTRY)[number];
 type GenericComponentEntry = Extract<
   ComponentRegistryEntryType,
@@ -421,10 +424,10 @@ export type NextraComponent = Extract<
   { kind: 'component'; framework: 'nextra' }
 >['name'];
 
-// Generic component definitions w/ aliases (derived from registry)
+// generic component definitions w/ aliases (derived from registry)
 export const GENERIC_COMPONENTS = buildGenericComponents();
 
-// Framework component lists (derived from registry)
+// framework component lists (derived from registry)
 export const FRAMEWORK_COMPONENTS = buildFrameworkComponents();
 
 function buildGenericComponents(): Record<string, { aliases: string[] }> {

@@ -1,19 +1,19 @@
 // packages/extension/security/CSP.test.ts
-// Unit tests for Content Security Policy generation
+// unit tests for Content Security Policy generation
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock vscode module
+// mock vscode module
 vi.mock('vscode', () => ({
-  // Minimal mock - CSP.ts only uses vscode.Webview type
+  // minimal mock - CSP.ts only uses vscode.Webview type
 }));
 
-// Import after mock
+// import after mock
 import { generateNonce, generateCSP, getCSP } from './CSP';
 import { SecurityPolicy } from './security';
 import type { TrustState } from './TrustManager';
 
-// Mock webview for testing
+// mock webview for testing
 const createMockWebview = () => ({
   cspSource: 'https://file+.vscode-resource.vscode-cdn.net',
   html: '',
@@ -34,7 +34,7 @@ describe('generateNonce()', () => {
   it('produces unique values on each call', () => {
     const nonces = new Set<string>();
 
-    // Generate 100 nonces and verify uniqueness
+    // generate 100 nonces & verify uniqueness
     for (let i = 0; i < 100; i++) {
       const nonce = generateNonce();
       expect(nonces.has(nonce)).toBe(false);
@@ -110,7 +110,7 @@ describe('generateCSP()', () => {
       allowUnsafeEval: false,
     });
 
-    // Verify all required directives are present
+    // verify all required directives are present
     expect(csp).toContain('default-src');
     expect(csp).toContain('img-src');
     expect(csp).toContain('style-src');
@@ -220,13 +220,13 @@ describe('getCSP()', () => {
 
     const csp = getCSP(mockWebview as any, 'test-nonce', trustState);
 
-    // Should return a non-empty CSP (strict mode)
+    // should return a non-empty CSP (strict mode)
     expect(csp).not.toBe('');
     expect(csp).toContain("default-src 'none'");
   });
 
   it('uses canExecute to determine unsafe-eval', () => {
-    // canExecute: true - should have unsafe-eval
+    // canExecute: true should have unsafe-eval
     const trustedState: TrustState = {
       workspaceTrusted: true,
       scriptsEnabled: true,
@@ -237,7 +237,7 @@ describe('getCSP()', () => {
     const trustedCsp = getCSP(mockWebview as any, 'nonce1', trustedState);
     expect(trustedCsp).toContain("'unsafe-eval'");
 
-    // canExecute: false - should NOT have unsafe-eval
+    // canExecute: false should NOT have unsafe-eval
     const safeState: TrustState = {
       workspaceTrusted: true,
       scriptsEnabled: false,

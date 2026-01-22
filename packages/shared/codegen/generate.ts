@@ -143,9 +143,11 @@ function buildCoreAliases(): Record<string, string> {
     'npm://react-dom/client': PRELOADED_MODULE_IDS.reactDomClient,
     'react/jsx-runtime': PRELOADED_MODULE_IDS.jsxRuntime,
     'npm://react/jsx-runtime': PRELOADED_MODULE_IDS.jsxRuntime,
+
     // MDX aliases
     '@mdx-js/react': PRELOADED_MODULE_IDS.mdxReact,
     'npm://@mdx-js/react': PRELOADED_MODULE_IDS.mdxReact,
+
     // Layout aliases
     'vscode-markdown-layout': PRELOADED_MODULE_IDS.vscodeLayout,
     'npm://vscode-markdown-layout': PRELOADED_MODULE_IDS.vscodeLayout,
