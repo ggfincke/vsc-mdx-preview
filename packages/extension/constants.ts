@@ -30,8 +30,9 @@ export const ERROR_DEDUPE_MAX_ENTRIES = 1000;
 
 // -- caching --
 
-// enhanced-resolve cached file system TTL (ms)
-export const RESOLVER_CACHE_TTL_MS = 4000;
+// enhanced-resolve cached file system TTL (ms) - 30s is safe since
+// cache is cleared on package.json changes and manual refresh
+export const RESOLVER_CACHE_TTL_MS = 30000;
 
 // -- ui --
 
