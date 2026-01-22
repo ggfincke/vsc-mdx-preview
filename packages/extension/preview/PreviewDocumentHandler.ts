@@ -80,7 +80,8 @@ export class PreviewDocumentHandler {
 
     const configFile = findTsConfig(this.entryFsDirectory ?? '');
     if (configFile) {
-      this._typescriptConfiguration = resolveTypescriptConfig(configFile);
+      this._typescriptConfiguration =
+        resolveTypescriptConfig(configFile) ?? undefined;
     } else {
       this._typescriptConfiguration = undefined;
     }

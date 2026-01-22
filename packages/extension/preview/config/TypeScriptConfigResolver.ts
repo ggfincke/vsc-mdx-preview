@@ -1,8 +1,10 @@
 // packages/extension/preview/config/TypeScriptConfigResolver.ts
-// resolve TypeScript configuration from tsconfig.json for MDX compilation
+// resolve TypeScript configuration from tsconfig.json using tsconfck (lightweight)
 
-import * as typescript from 'typescript';
-import { error as logError } from '../../logging';
+import * as path from 'path';
+import * as fs from 'fs';
+import { parse, type TSConfckParseResult } from 'tsconfck';
+import { error as logError, debug } from '../../logging';
 
 // import consolidated type from module-system/types.ts
 import type { TypeScriptConfiguration } from '../../module-system/types';
@@ -10,61 +12,90 @@ import type { TypeScriptConfiguration } from '../../module-system/types';
 // re-export type for backward compatibility
 export type { TypeScriptConfiguration };
 
-// resolve TypeScript configuration from a tsconfig.json file
-// handles extends, paths, baseUrl, references, etc
-export function resolveTypescriptConfig(
-  configFile: string | null
-): TypeScriptConfiguration {
-  let tsCompilerOptions: typescript.CompilerOptions;
+// cache parsed configs by directory to avoid repeated FS reads
+const configCache = new Map<string, TypeScriptConfiguration | null>();
 
-  if (configFile) {
-    // use getParsedCommandLineOfConfigFile for full tsconfig resolution
-    // properly handles extends, paths, baseUrl, references
-    const parsedConfig = typescript.getParsedCommandLineOfConfigFile(
-      configFile,
-      // existing options to merge
-      {},
-      {
-        ...typescript.sys,
-        onUnRecoverableConfigFileDiagnostic: (diagnostic) => {
-          logError(
-            'TypeScript config error',
-            typescript.flattenDiagnosticMessageText(
-              diagnostic.messageText,
-              '\n'
-            )
-          );
-        },
-      }
-    );
+// find tsconfig.json by walking up the directory tree
+export function findTsConfig(directory: string): string | undefined {
+  let currentDir = directory;
+  const root = path.parse(currentDir).root;
 
-    if (parsedConfig) {
-      tsCompilerOptions = parsedConfig.options;
-    } else {
-      // fallback if parsing fails
-      tsCompilerOptions = typescript.getDefaultCompilerOptions();
+  while (currentDir !== root) {
+    const configPath = path.join(currentDir, 'tsconfig.json');
+    if (fs.existsSync(configPath)) {
+      return configPath;
     }
-  } else {
-    tsCompilerOptions = typescript.getDefaultCompilerOptions();
+    currentDir = path.dirname(currentDir);
   }
 
-  // override certain options for preview purposes
-  delete tsCompilerOptions.emitDeclarationOnly;
-  delete tsCompilerOptions.declaration;
-  tsCompilerOptions.module = typescript.ModuleKind.ESNext;
-  tsCompilerOptions.target = typescript.ScriptTarget.ESNext;
-  tsCompilerOptions.noEmitHelpers = false;
-  tsCompilerOptions.importHelpers = false;
-
-  const tsCompilerHost = typescript.createCompilerHost(tsCompilerOptions);
-
-  return {
-    tsCompilerHost,
-    tsCompilerOptions,
-  };
+  return undefined;
 }
 
-// find tsconfig.json for a given directory
-export function findTsConfig(directory: string): string | undefined {
-  return typescript.findConfigFile(directory, typescript.sys.fileExists);
+// resolve TypeScript configuration from a tsconfig.json file (async)
+// handles extends, paths, baseUrl using tsconfck
+export async function resolveTypescriptConfigAsync(
+  configFile: string | null
+): Promise<TypeScriptConfiguration | null> {
+  if (!configFile) {
+    return null;
+  }
+
+  // check cache
+  const cacheKey = path.dirname(configFile);
+  if (configCache.has(cacheKey)) {
+    return configCache.get(cacheKey) ?? null;
+  }
+
+  try {
+    const result: TSConfckParseResult = await parse(configFile);
+    const compilerOptions = result.tsconfig?.compilerOptions ?? {};
+
+    const config: TypeScriptConfiguration = {
+      baseUrl: compilerOptions.baseUrl,
+      paths: compilerOptions.paths,
+      rootDir: compilerOptions.rootDir,
+      configPath: configFile,
+    };
+
+    debug(
+      `[TS-CONFIG] Parsed ${configFile}: baseUrl=${config.baseUrl}, paths=${Object.keys(config.paths ?? {}).length} aliases`
+    );
+
+    configCache.set(cacheKey, config);
+    return config;
+  } catch (err) {
+    logError('[TS-CONFIG] Failed to parse tsconfig:', err);
+    configCache.set(cacheKey, null);
+    return null;
+  }
+}
+
+// synchronous wrapper for backward compatibility
+// uses cached results if available, otherwise returns null
+// caller should use async version for initial load
+export function resolveTypescriptConfig(
+  configFile: string | null
+): TypeScriptConfiguration | null {
+  if (!configFile) {
+    return null;
+  }
+
+  const cacheKey = path.dirname(configFile);
+  if (configCache.has(cacheKey)) {
+    return configCache.get(cacheKey) ?? null;
+  }
+
+  // if not cached, trigger async parse and return null for now
+  // the async version will populate the cache
+  resolveTypescriptConfigAsync(configFile).catch(() => {
+    // ignore - error already logged
+  });
+
+  return null;
+}
+
+// clear the config cache (for testing or when tsconfig changes)
+export function clearTsConfigCache(): void {
+  configCache.clear();
+  debug('[TS-CONFIG] Config cache cleared');
 }

@@ -1,17 +1,23 @@
 // packages/extension/module-system/types.ts
 // consolidated type definitions for the module system
 
-import type * as typescript from 'typescript';
 import type { Framework } from '../framework/FrameworkDetector';
 
 // re-export shared types
 export type { FetchResult } from '@mdx-preview/shared';
 export type { Framework };
 
-// typescript configuration for module resolution (compiler options & host)
+// typescript configuration for module resolution (extracted from tsconfig.json)
+// uses lightweight tsconfck parsing instead of full TypeScript compiler
 export interface TypeScriptConfiguration {
-  tsCompilerOptions: typescript.CompilerOptions;
-  tsCompilerHost: typescript.CompilerHost;
+  // base URL for non-relative imports (from compilerOptions.baseUrl)
+  baseUrl?: string;
+  // path alias mappings (from compilerOptions.paths)
+  paths?: Record<string, string[]>;
+  // root directory (from compilerOptions.rootDir)
+  rootDir?: string;
+  // absolute path to the tsconfig.json file
+  configPath?: string;
 }
 
 // context for resolving imports

@@ -23,6 +23,8 @@ export {
 
 export {
   resolveTypescriptConfig,
+  resolveTypescriptConfigAsync,
   findTsConfig,
+  clearTsConfigCache,
   type TypeScriptConfiguration,
 } from './TypeScriptConfigResolver';
