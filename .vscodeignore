@@ -1,14 +1,58 @@
+# VS Code local settings
 .vscode/**
 .vscode-test/**
+
+# Build artifacts to exclude
 build/extension/test/**
-coverage/**
+build/**/*.map
+
+# Source code (not needed - bundled into extension.js)
+packages/**
+
+# Development documentation
 dev-docs/**
+CLAUDE.md
+
+# Test files
+tests/**
+coverage/**
+
+# Examples
+examples/**
+
+# Private packages
 node_modules/webview/**
 node_modules/webview
 node_modules/@mdx-preview/**
-# build/**/*.map
-examples/**
-packages/**
+
+# Node dependencies (bundled into extension.js)
+node_modules/**
+
+# Configuration files
 .gitignore
+.prettierrc*
+.prettierignore
 tsconfig.json
+tsconfig.*.json
 vitest.config.ts
+tests/vitest.config.ts
+eslint.config.mjs
+esbuild.config.mjs
+package-lock.json
+
+# Claude/AI configuration
+.claude/**
+
+# Scripts (development only)
+scripts/**
+
+# GitHub/CI configuration (if exists)
+.github/**
+
+# Editor configs
+.editorconfig
+
+# NPM/Yarn
+.npmrc
+.yarnrc*
+yarn.lock
