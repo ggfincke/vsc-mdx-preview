@@ -90,6 +90,7 @@ export function BaseCollapsible({
   return (
     <details
       className={cn(classNames.container, className)}
+      data-component="collapsible"
       open={isOpen}
       onToggle={handleNativeToggle}
       onClick={handleDetailsClick}

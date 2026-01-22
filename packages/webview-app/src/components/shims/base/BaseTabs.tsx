@@ -85,6 +85,7 @@ export function createTabs(config: BaseTabsConfig): CreateTabsResult {
       <TabsContext.Provider value={true}>
         <div
           className={wrapperClassName}
+          data-component="tabs"
           data-group-id={supportsGroupId ? groupId : undefined}
         >
           {/* Tab headers */}
