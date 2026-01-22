@@ -155,7 +155,9 @@ function parseFileTreeChildren(children: ReactNode): FileTreeEntry[] {
     // Handle <li> items
     if (child.type === 'li') {
       const entry = parseLiElement(child);
-      if (!entry) {continue;}
+      if (!entry) {
+        continue;
+      }
 
       // Check if next sibling is a <ul> that should be this directory's children
       // This handles the sibling pattern: <li>folder/</li><ul>...</ul>
@@ -167,7 +169,8 @@ function parseFileTreeChildren(children: ReactNode): FileTreeEntry[] {
         nextChild.type === 'ul'
       ) {
         entry.children = parseFileTreeChildren(nextChild.props.children);
-        i++; // Skip the <ul> since we've processed it as children
+        // skip the <ul> since we've processed it as children
+        i++;
       }
 
       entries.push(entry);

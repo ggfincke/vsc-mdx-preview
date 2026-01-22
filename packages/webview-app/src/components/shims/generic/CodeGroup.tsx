@@ -15,16 +15,28 @@ function extractLabelFromCodeBlock(child: ReactElement): string {
   const props = child.props as Record<string, unknown>;
 
   // try various prop names used by different frameworks
-  if (typeof props.title === 'string') {return props.title;}
-  if (typeof props.label === 'string') {return props.label;}
-  if (typeof props.filename === 'string') {return props.filename;}
-  if (typeof props.language === 'string') {return props.language;}
-  if (typeof props.lang === 'string') {return props.lang;}
+  if (typeof props.title === 'string') {
+    return props.title;
+  }
+  if (typeof props.label === 'string') {
+    return props.label;
+  }
+  if (typeof props.filename === 'string') {
+    return props.filename;
+  }
+  if (typeof props.language === 'string') {
+    return props.language;
+  }
+  if (typeof props.lang === 'string') {
+    return props.lang;
+  }
 
   // try to get from className (e.g., "language-javascript")
   if (typeof props.className === 'string') {
     const match = props.className.match(/language-(\w+)/);
-    if (match) {return match[1];}
+    if (match) {
+      return match[1];
+    }
   }
 
   return 'Code';
