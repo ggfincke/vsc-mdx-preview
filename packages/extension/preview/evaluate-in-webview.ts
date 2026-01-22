@@ -48,6 +48,13 @@ export default async function evaluateInWebview(
     debug('[EVALUATE] Sending trust state to webview');
     webviewHandle.setTrustState(trustState);
 
+    // send framework info so webview can lazy-load the right shims
+    const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
+    if (frameworkInfo.framework !== 'generic') {
+      debug(`[EVALUATE] Sending framework to webview: ${frameworkInfo.framework}`);
+      webviewHandle.setFramework(frameworkInfo.framework);
+    }
+
     if (trustState.canExecute) {
       // trusted mode: full code evaluation
       debug('[EVALUATE] Using Trusted Mode');

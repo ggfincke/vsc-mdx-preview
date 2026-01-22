@@ -7,6 +7,8 @@ import {
   SHIM_PREFIX,
   type ComponentDefinition,
   type ComponentRegistryEntry,
+  type Framework,
+  type FrameworkId,
 } from '../registry/components';
 import { PRELOADED_MODULE_IDS } from '../core-modules';
 
@@ -20,6 +22,14 @@ export interface GeneratePreloadOptions {
 }
 
 const REGISTRY_ENTRIES: readonly ComponentRegistryEntry[] = COMPONENT_REGISTRY;
+
+// frameworks that have lazy-loaded shims (excludes 'generic')
+const LAZY_FRAMEWORKS: Framework[] = [
+  'docusaurus',
+  'starlight',
+  'nextra',
+  'nextjs',
+];
 
 function isComponentEntry(
   entry: ComponentRegistryEntry
@@ -80,11 +90,48 @@ function getImportStatement(
   return `import ${importVar} from '${relativeImport}';`;
 }
 
-export function generatePreloadTs(options: GeneratePreloadOptions): string {
+function getDynamicImportExpression(
+  entry: ComponentRegistryEntry,
+  relativeImport: string
+): string {
+  if (entry.kind === 'barrel') {
+    return `import('${relativeImport}')`;
+  }
+
+  if (entry.importKind === 'named') {
+    const importName = entry.importName ?? entry.name;
+    return `import('${relativeImport}').then(m => m.${importName})`;
+  }
+
+  return `import('${relativeImport}').then(m => m.default)`;
+}
+
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function groupEntriesByFramework(
+  entries: readonly ComponentRegistryEntry[]
+): Map<FrameworkId, ComponentRegistryEntry[]> {
+  const grouped = new Map<FrameworkId, ComponentRegistryEntry[]>();
+
+  for (const entry of entries) {
+    const existing = grouped.get(entry.framework) ?? [];
+    existing.push(entry);
+    grouped.set(entry.framework, existing);
+  }
+
+  return grouped;
+}
+
+function generateGenericPreloadFunction(
+  entries: ComponentRegistryEntry[],
+  options: GeneratePreloadOptions
+): { imports: string[]; func: string } {
   const importLines: string[] = [];
   const preloadLines: string[] = [];
 
-  for (const entry of REGISTRY_ENTRIES) {
+  for (const entry of entries) {
     const importVar = toImportVarName(entry);
     const relativeImport = getRelativeWebviewImport(entry, options);
     importLines.push(getImportStatement(entry, importVar, relativeImport));
@@ -105,15 +152,114 @@ export function generatePreloadTs(options: GeneratePreloadOptions): string {
     }
   }
 
+  const func = `// preload generic shims synchronously (always needed as fallbacks)
+export function preloadGenericShims(registry: ModuleRegistry): void {
+${preloadLines.join('\n')}
+}`;
+
+  return { imports: importLines, func };
+}
+
+function generateFrameworkLoader(
+  framework: Framework,
+  entries: ComponentRegistryEntry[],
+  options: GeneratePreloadOptions
+): string {
+  const funcName = `load${capitalize(framework)}Shims`;
+
+  // generate dynamic import promises
+  const importPromises: string[] = [];
+  const varNames: string[] = [];
+
+  for (const entry of entries) {
+    const varName = toImportVarName(entry);
+    const relativeImport = getRelativeWebviewImport(entry, options);
+    const dynamicImport = getDynamicImportExpression(entry, relativeImport);
+    importPromises.push(`    ${dynamicImport}`);
+    varNames.push(varName);
+  }
+
+  // generate preload calls
+  const preloadCalls: string[] = [];
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
+    const varName = varNames[i];
+
+    if (isComponentEntry(entry)) {
+      const exportNames = getComponentExportNames(entry);
+      preloadCalls.push(
+        `  registry.preload('${entry.preloadId}', createComponentModule(${varName}, ${JSON.stringify(
+          exportNames
+        )}));`
+      );
+    } else {
+      preloadCalls.push(
+        `  registry.preload('${entry.preloadId}', createBarrelModule(${varName}, ${JSON.stringify(
+          entry.exportNames
+        )}));`
+      );
+    }
+  }
+
+  return `// lazy-load ${framework} shims on demand
+export async function ${funcName}(registry: ModuleRegistry): Promise<void> {
+  const [
+    ${varNames.join(',\n    ')}
+  ] = await Promise.all([
+${importPromises.join(',\n')}
+  ]);
+
+${preloadCalls.join('\n')}
+}`;
+}
+
+export function generatePreloadTs(options: GeneratePreloadOptions): string {
+  const grouped = groupEntriesByFramework(REGISTRY_ENTRIES);
+
+  // generate generic shims (static imports)
+  const genericEntries = grouped.get('generic') ?? [];
+  const { imports: genericImports, func: genericFunc } =
+    generateGenericPreloadFunction(genericEntries, options);
+
+  // generate framework loaders (dynamic imports)
+  const frameworkLoaders: string[] = [];
+  for (const framework of LAZY_FRAMEWORKS) {
+    const entries = grouped.get(framework) ?? [];
+    if (entries.length > 0) {
+      frameworkLoaders.push(generateFrameworkLoader(framework, entries, options));
+    }
+  }
+
+  // generate FRAMEWORK_LOADERS map (includes generic as no-op since it's loaded synchronously)
+  const loaderMapEntries = [
+    '  generic: async () => {}', // generic shims loaded synchronously via preloadGenericShims
+    ...LAZY_FRAMEWORKS.map((fw) => `  ${fw}: load${capitalize(fw)}Shims`),
+  ];
+
   return `${GENERATED_HEADER}
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
 import { createBarrelModule, createComponentModule } from './core';
+import type { Framework } from '@mdx-preview/shared';
 
-${importLines.join('\n')}
+// static imports for generic shims (always loaded)
+${genericImports.join('\n')}
 
-// preload all shim components into the module registry
-export function preloadAllShims(registry: ModuleRegistry): void {
-${preloadLines.join('\n')}
+${genericFunc}
+
+${frameworkLoaders.join('\n\n')}
+
+// map framework name to lazy loader function
+// note: 'generic' is a no-op since generic shims are loaded synchronously via preloadGenericShims
+export const FRAMEWORK_LOADERS: Record<Framework, (registry: ModuleRegistry) => Promise<void>> = {
+${loaderMapEntries.join(',\n')}
+};
+
+// preload all shims (for backward compatibility during migration)
+export async function preloadAllShims(registry: ModuleRegistry): Promise<void> {
+  preloadGenericShims(registry);
+  await Promise.all(
+    Object.values(FRAMEWORK_LOADERS).map((loader) => loader(registry))
+  );
 }
 `;
 }

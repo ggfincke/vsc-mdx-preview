@@ -1,6 +1,9 @@
 // packages/shared/index.ts
 // shared type definitions & registries for extension & webview packages
 
+// import types used locally in this file
+import type { Framework as FrameworkType } from './registry/components';
+
 // shared timing & limit constants
 export {
   STANDARD_DEBOUNCE_MS,
@@ -281,6 +284,7 @@ export interface NextraPageMeta {
 // webview-exposed RPC methods
 export interface WebviewRPC {
   setTrustState(state: TrustState): void;
+  setFramework(framework: FrameworkType): void;
   updatePreview(
     code: string,
     entryFilePath: string,

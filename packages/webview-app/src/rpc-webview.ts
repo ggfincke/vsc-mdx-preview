@@ -33,6 +33,7 @@ import type {
   WebviewRPC,
   TrustState,
   PreviewError,
+  Framework,
 } from '@mdx-preview/shared';
 import {
   createHandlerFactories,
@@ -198,6 +199,15 @@ class RPCWebviewHandle implements WebviewRPC {
     log.debug(`setTailwindCss called, length: ${css.length}`);
     StyleInjector.inject(STYLE_IDS.TAILWIND_CSS, css, {
       insertBefore: STYLE_IDS.CUSTOM_CSS,
+    });
+  }
+
+  // DIRECT handler - load framework-specific shims on demand
+  setFramework(framework: Framework): void {
+    log.debug(`setFramework called: ${framework}`);
+    // ! import dynamically to avoid circular dep w/ module-system
+    void import('./module-system').then(({ ensureFrameworkShimsLoaded }) => {
+      ensureFrameworkShimsLoaded(framework);
     });
   }
 
