@@ -31,7 +31,7 @@ export const autolinkHeadingsConfig = {
 // shared remark plugins (order matters!)
 // 1. remarkDirective parses ::: syntax into directive nodes
 // 2. remarkAdmonitions transforms directive nodes to admonition HTML
-// 3. remarkGithubAlerts handles [!NOTE] etc. (must come before GFM)
+// 3. remarkGithubAlerts handles [!NOTE] etc (must come before GFM)
 // 4. remarkGfm adds GitHub Flavored Markdown
 // 5. remarkMath handles math expressions
 export const sharedRemarkPlugins: Pluggable[] = [

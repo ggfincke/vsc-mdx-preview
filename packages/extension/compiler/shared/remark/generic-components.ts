@@ -1,8 +1,8 @@
 // packages/extension/compiler/shared/remark/generic-components.ts
 // remark plugin to transform known generic JSX components to semantic HTML in Safe Mode
 //
-// Component detection uses the shared registry from @mdx-preview/shared.
-// For unified component classification across the codebase, see:
+// component detection uses the shared registry from @mdx-preview/shared
+// for unified component classification across the codebase, see:
 // - packages/extension/compiler/deps/classifier.ts
 
 import { visit } from 'unist-util-visit';
@@ -18,13 +18,13 @@ import {
   transformCodeGroup,
 } from '../transforms';
 
-// Use shared component registry as single source of truth
+// use shared component registry as single source of truth
 import {
   GENERIC_COMPONENTS,
   getGenericComponentSet,
 } from '@mdx-preview/shared';
 
-// Derive component sets from the shared registry
+// derive component sets from the shared registry
 const CALLOUT_COMPONENTS = new Set([
   'Callout',
   ...GENERIC_COMPONENTS.Callout.aliases,
@@ -34,7 +34,7 @@ const COLLAPSIBLE_COMPONENTS = new Set([
   ...GENERIC_COMPONENTS.Collapsible.aliases,
 ]);
 
-// Export the full set of known generic components from the shared registry
+// export the full set of known generic components from the shared registry
 export const KNOWN_GENERIC_COMPONENTS = getGenericComponentSet();
 
 export interface RemarkGenericComponentsOptions {

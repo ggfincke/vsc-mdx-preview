@@ -5,7 +5,7 @@
 import { visit } from 'unist-util-visit';
 import type { Root } from 'hast';
 
-// Raw node type from rehype that contains HTML string
+// raw node type from rehype that contains HTML string
 interface RawNode {
   type: 'raw';
   value: string;

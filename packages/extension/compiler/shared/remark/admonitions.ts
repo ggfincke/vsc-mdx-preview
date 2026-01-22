@@ -1,7 +1,7 @@
 // packages/extension/compiler/shared/remark/admonitions.ts
 // remark plugin to transform directive syntax (:::note, :::warning, etc.) to admonition HTML
 //
-// this plugin transforms container directives from remark-directive into admonition HTML.
+// this plugin transforms container directives from remark-directive into admonition HTML
 // it supports Docusaurus/Starlight-style admonition syntax:
 //
 //   :::note
@@ -131,8 +131,8 @@ function getDirectiveName(node: ContainerDirective): string {
   return node.name.toLowerCase();
 }
 
-// Custom mdast node types for admonitions
-// These are converted to HTML by rehype via hName/hProperties
+// custom mdast node types for admonitions
+// these are converted to HTML by rehype via hName/hProperties
 interface AdmonitionNode extends Parent {
   type: 'admonition';
   data: {

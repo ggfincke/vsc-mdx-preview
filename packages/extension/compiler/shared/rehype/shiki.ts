@@ -14,7 +14,7 @@ import { createCssVariablesTheme } from 'shiki/core';
 
 // common languages to pre-bundle (others fall back to plaintext)
 const COMMON_LANGUAGES: BundledLanguage[] = [
-  // Web fundamentals
+  // web fundamentals
   'typescript',
   'javascript',
   'tsx',
@@ -28,12 +28,12 @@ const COMMON_LANGUAGES: BundledLanguage[] = [
   'vue',
   'svelte',
 
-  // Shell & scripting
+  // shell & scripting
   'bash',
   'shell',
   'powershell',
 
-  // Documentation & data
+  // documentation & data
   'markdown',
   'mdx',
   'yaml',
@@ -43,7 +43,7 @@ const COMMON_LANGUAGES: BundledLanguage[] = [
   'sql',
   'regex',
 
-  // Systems programming
+  // systems programming
   'c',
   'cpp',
   'rust',
@@ -55,11 +55,11 @@ const COMMON_LANGUAGES: BundledLanguage[] = [
   'kotlin',
   'scala',
 
-  // Apple ecosystem
+  // apple ecosystem
   'swift',
   'objective-c',
 
-  // Scripting languages
+  // scripting languages
   'python',
   'ruby',
   'php',
@@ -71,17 +71,17 @@ const COMMON_LANGUAGES: BundledLanguage[] = [
   'csharp',
   'fsharp',
 
-  // Functional
+  // functional
   'haskell',
   'elixir',
   'clojure',
 
-  // DevOps & config
+  // devops & config
   'dockerfile',
   'nginx',
   'ini',
 
-  // Other
+  // other
   'diff',
   'latex',
 ];
@@ -321,7 +321,7 @@ export default function rehypeShiki() {
   };
 }
 
-// create wrapper element w/ code block, title bar, etc.
+// create wrapper element w/ code block, title bar, etc
 function createCodeBlockWrapper(options: {
   html: string;
   lang: string;

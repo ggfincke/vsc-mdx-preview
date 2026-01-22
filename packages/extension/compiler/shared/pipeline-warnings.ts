@@ -1,8 +1,8 @@
 // packages/extension/compiler/shared/pipeline-warnings.ts
 // consolidated warning codes & messages for MDX pipeline operations
 //
-// This module provides consistent warning messages across both Safe & Trusted modes,
-// ensuring users receive uniform feedback about pipeline configuration issues.
+// provides consistent warning messages across both Safe & Trusted modes,
+// ensuring users receive uniform feedback about pipeline configuration issues
 
 import { warn, info, debug } from '../../logging';
 
@@ -12,15 +12,15 @@ export enum PipelineWarningCode {
   CUSTOM_PLUGINS_IGNORED = 'MDX001',
   CUSTOM_COMPONENTS_IGNORED = 'MDX002',
 
-  // Plugin loading warnings
+  // plugin loading warnings
   PLUGIN_LOAD_FAILED = 'MDX003',
   PLUGIN_INVALID_EXPORT = 'MDX004',
 
-  // Component handling warnings
+  // component handling warnings
   BUILTIN_TRANSFORM_FAILED = 'MDX005',
   UNKNOWN_COMPONENT_DETECTED = 'MDX006',
 
-  // Configuration warnings
+  // configuration warnings
   INVALID_CONFIG_VALUE = 'MDX007',
   CONFIG_FILE_NOT_FOUND = 'MDX008',
 }

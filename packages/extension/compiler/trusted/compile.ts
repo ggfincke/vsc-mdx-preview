@@ -1,8 +1,8 @@
 // packages/extension/compiler/trusted/compile.ts
 // MDX transpilation w/ layout injection & React root wrapping (compiles MDX to executable JS)
 //
-// This is the Trusted Mode compiler. For Safe Mode, see compiler/safe/compile.ts.
-// Both modes use shared plugins from compiler/plugins to ensure parity.
+// this is the Trusted Mode compiler - for Safe Mode, see compiler/safe/compile.ts
+// both modes use shared plugins from compiler/plugins to ensure parity
 
 import { compile } from '@mdx-js/mdx';
 import hasDefaultExport from './hasDefaultExport';
@@ -13,7 +13,7 @@ import { extractFrontmatter } from '../shared/mdx-common';
 import { buildTrustedPluginPipeline } from '../plugins/builder';
 import { loadPluginsFromConfig } from '../plugins/loader';
 import { generateComponentImports } from './component-mapper';
-import { warn } from '../../logging';
+import { debug, warn } from '../../logging';
 import { getConfigManager } from '../../services';
 
 import type { MdxTranspileResult } from '../types';
@@ -58,7 +58,7 @@ const wrapCompiledMdx = (
   componentsObject?: string
 ): string => {
   if (componentsObject && componentsObject !== '{}') {
-    // Remove the original "export default" to avoid duplicate exports
+    // remove the original "export default" to avoid duplicate exports
     // MDX 3 outputs: "export default function MDXContent" or "export default MDXContent"
     const strippedMDX = compiledMDX
       .replace(/export default function MDXContent/g, 'function MDXContent')
@@ -120,6 +120,10 @@ export async function compileTrusted(
   const documentDir = path.dirname(preview.fsPath);
   const builtinsEnabled = getConfigManager().get('components.builtins');
 
+  debug(`[COMPILE] mdxPreviewConfig: ${preview.mdxPreviewConfig ? JSON.stringify(preview.mdxPreviewConfig.config) : 'undefined'}`);
+  debug(`[COMPILE] documentDir: ${documentDir}`);
+  debug(`[COMPILE] builtinsEnabled: ${builtinsEnabled}`);
+
   const componentImports = generateComponentImports(
     preview.mdxPreviewConfig,
     documentDir,
@@ -127,8 +131,11 @@ export async function compileTrusted(
     { builtinsEnabled }
   );
 
+  debug(`[COMPILE] componentImports.hasComponents: ${componentImports.hasComponents}`);
+
   // prepend component imports to MDX source (before compilation)
   if (componentImports.hasComponents) {
+    debug(`[COMPILE] Prepending component imports to MDX source`);
     mdxTextToCompile = componentImports.imports + '\n\n' + mdxTextToCompile;
   }
 
@@ -142,6 +149,8 @@ export async function compileTrusted(
     jsx: false,
     jsxRuntime: 'automatic',
     jsxImportSource: 'react',
+    // enable MDXProvider context reading (MDX will call useMDXComponents() to get components)
+    providerImportSource: '@mdx-js/react',
     // remark plugins: GFM, GitHub alerts, math (shared w/ Safe Mode) & custom
     remarkPlugins,
     // rehype plugins: raw HTML (via rehype-raw), mermaid, math, syntax, anchors, lazy images & custom
@@ -159,5 +168,5 @@ export async function compileTrusted(
   };
 }
 
-// Backward-compatible export name
+// backward-compatible export name
 export const mdxTranspileAsync = compileTrusted;

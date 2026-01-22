@@ -41,7 +41,7 @@ const FRAMEWORK_RULES: FrameworkRule[] = [
     framework: 'starlight',
     dependencies: ['@astrojs/starlight'],
   },
-  // Nextra detection must come before Next.js since Nextra projects also have 'next' dependency
+  // nextra detection must come before Next.js since Nextra projects also have 'next' dependency
   {
     framework: 'nextra',
     dependencies: ['nextra'],
@@ -82,7 +82,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   protected constructor() {
     super();
 
-    // Watch for package.json changes
+    // watch for package.json changes
     // createFileSystemWatcher args: ignoreCreate, ignoreChange, ignoreDelete
     this.fileWatcher = vscode.workspace.createFileSystemWatcher(
       '**/package.json',
@@ -101,7 +101,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
       this.fileWatcher.onDidDelete((uri) => this.onPackageJsonChange(uri))
     );
 
-    // Watch for framework setting changes
+    // watch for framework setting changes
     this.addDisposable(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('mdx-preview.framework')) {
@@ -111,7 +111,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     );
   }
 
-  // Detect framework from workspace root package.json
+  // detect framework from workspace root package.json
   detectFromPackageJson(workspaceRoot: string): FrameworkInfo {
     const packageJsonPath = path.join(workspaceRoot, 'package.json');
 
@@ -134,12 +134,12 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
       ...packageJson.devDependencies,
     };
 
-    // Check each rule in priority order
+    // check each rule in priority order
     for (const rule of FRAMEWORK_RULES) {
       const hasPrimary = rule.dependencies.some((dep) => dep in allDeps);
 
       if (hasPrimary) {
-        // For frameworks w/ secondary deps, at least one must be present
+        // for frameworks w/ secondary deps, at least one must be present
         if (rule.secondaryDependencies) {
           const hasSecondary = rule.secondaryDependencies.some(
             (dep) => dep in allDeps
@@ -163,14 +163,14 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     return { framework: 'generic', detected: true };
   }
 
-  // Find the closest package.json starting from documentDir up to workspaceRoot
+  // find the closest package.json starting from documentDir up to workspaceRoot
   private findClosestPackageJsonDir(
     documentDir: string,
     workspaceRoot: string
   ): string {
     let currentDir = documentDir;
 
-    // Walk up from document directory to workspace root
+    // walk up from document directory to workspace root
     while (currentDir.startsWith(workspaceRoot)) {
       const packageJsonPath = path.join(currentDir, 'package.json');
       if (pathExists(packageJsonPath)) {
@@ -179,25 +179,25 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
       }
 
       const parentDir = path.dirname(currentDir);
-      // Stop if we've reached the root or can't go up further
+      // stop if we've reached the root or can't go up further
       if (parentDir === currentDir) {
         break;
       }
       currentDir = parentDir;
     }
 
-    // Fallback to workspace root
+    // fallback to workspace root
     return workspaceRoot;
   }
 
-  // Get framework for document (respects manual override)
+  // get framework for document (respects manual override)
   getFramework(documentUri: vscode.Uri): FrameworkInfo {
-    // Check manual override setting first
+    // check manual override setting first
     const manualFramework = getConfigManager().get('framework', documentUri);
 
     if (manualFramework !== 'auto') {
-      // Backward compatibility: migrate deprecated 'astro-starlight' to 'starlight'
-      // Cast to string for comparison since old user settings may have the deprecated value
+      // backward compatibility: migrate deprecated 'astro-starlight' to 'starlight'
+      // cast to string for comparison since old user settings may have the deprecated value
       if ((manualFramework as string) === 'astro-starlight') {
         debug('[FRAMEWORK] Migrating deprecated "astro-starlight" to "starlight"');
         return {
@@ -211,7 +211,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
       };
     }
 
-    // Get workspace root for this document
+    // get workspace root for this document
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(documentUri);
     if (!workspaceFolder) {
       return { framework: 'generic', detected: true };
@@ -220,26 +220,26 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     const workspaceRoot = workspaceFolder.uri.fsPath;
     const documentDir = path.dirname(documentUri.fsPath);
 
-    // Find the closest package.json (from document dir up to workspace root)
+    // find the closest package.json (from document dir up to workspace root)
     const packageJsonDir = this.findClosestPackageJsonDir(
       documentDir,
       workspaceRoot
     );
 
-    // Check cache using the package.json directory as key
-    // (use undefined check for consistency with other cache access patterns)
+    // check cache using the package.json directory as key
+    // (use undefined check for consistency w/ other cache access patterns)
     const cached = this.cache.get(packageJsonDir);
     if (cached !== undefined) {
       return cached;
     }
 
-    // Detect & cache framework
+    // detect & cache framework
     const detected = this.detectFromPackageJson(packageJsonDir);
     this.cache.set(packageJsonDir, detected);
     return detected;
   }
 
-  // Get framework display name for UI
+  // get framework display name for UI
   getFrameworkDisplayName(framework: Framework): string {
     switch (framework) {
       case 'docusaurus':
@@ -256,12 +256,12 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
   }
 
-  // Check if component shims are enabled
+  // check if component shims are enabled
   areShimsEnabled(documentUri: vscode.Uri): boolean {
     return getConfigManager().get('framework.componentShims', documentUri);
   }
 
-  // Find mdx-components.tsx file (for Next.js)
+  // find mdx-components.tsx file (for Next.js)
   findMdxComponentsFile(workspaceRoot: string): string | null {
     const candidates = [
       'mdx-components.tsx',
@@ -285,28 +285,28 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     return null;
   }
 
-  // Subscribe to framework changes
+  // subscribe to framework changes
   subscribe(callback: (info: FrameworkInfo) => void): vscode.Disposable {
     return this.subscriberManager.subscribe(callback);
   }
 
-  // Notify subscribers of framework change
+  // notify subscribers of framework change
   private notifySubscribers(info: FrameworkInfo): void {
     this.subscriberManager.notify(info);
   }
 
-  // Invalidate cache for workspace
+  // invalidate cache for workspace
   invalidateCache(workspaceRoot: string): void {
     this.cache.delete(workspaceRoot);
     debug('[FRAMEWORK] Cache invalidated for:', workspaceRoot);
   }
 
-  // Invalidate all caches & notify subscribers
+  // invalidate all caches & notify subscribers
   private invalidateAllCaches(): void {
     this.cache.clear();
     debug('[FRAMEWORK] All caches invalidated');
 
-    // Notify subscribers w/ current framework for active editor
+    // notify subscribers w/ current framework for active editor
     const editor = vscode.window.activeTextEditor;
     if (editor) {
       const info = this.getFramework(editor.document.uri);
@@ -314,20 +314,20 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
   }
 
-  // Handle package.json change & invalidate cache
+  // handle package.json change & invalidate cache
   private onPackageJsonChange(uri: vscode.Uri): void {
-    // Invalidate the cache for the directory containing this package.json
+    // invalidate the cache for the directory containing this package.json
     const packageJsonDir = path.dirname(uri.fsPath);
     this.invalidateCache(packageJsonDir);
 
-    // Notify subscribers if this affects the active editor
+    // notify subscribers if this affects the active editor
     const editor = vscode.window.activeTextEditor;
     if (editor) {
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
       const editorFolder = vscode.workspace.getWorkspaceFolder(
         editor.document.uri
       );
-      // Check if the changed package.json is in the same workspace
+      // check if the changed package.json is in the same workspace
       if (
         workspaceFolder &&
         editorFolder?.uri.fsPath === workspaceFolder.uri.fsPath
@@ -338,7 +338,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
   }
 
-  // Clear file watcher, cache, & subscriptions on dispose
+  // clear file watcher, cache, & subscriptions on dispose
   protected override onDispose(): void {
     if (this.fileWatcher) {
       this.fileWatcher.dispose();

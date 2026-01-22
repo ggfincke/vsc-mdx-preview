@@ -7,10 +7,10 @@ import { toAbsolutePath, toRelativeImportPath } from '../../utils/path-utils';
 import type { ResolvedConfig } from '../../preview/config';
 import { getTrustManager } from '../../services';
 
-// Use shared component registry as single source of truth
+// use shared component registry as single source of truth
 import { getAllGenericComponentNames } from '@mdx-preview/shared';
 
-// Use consolidated warning utilities
+// use consolidated warning utilities
 import {
   createIgnoredComponentsWarning,
   emitWarning,
@@ -34,7 +34,7 @@ export interface ComponentImportsOptions {
 
 // built-in generic component names that can be auto-injected
 // these map directly to preloaded shims in the webview
-// Now derived from the shared component registry
+// now derived from the shared component registry
 const BUILTIN_GENERIC_COMPONENTS = getAllGenericComponentNames();
 
 // generate import statements & components object for custom component mapping (only generates in Trusted Mode)
@@ -46,6 +46,10 @@ export function generateComponentImports(
 ): ComponentImportsResult {
   const { builtinsEnabled = true } = options;
 
+  debug(`[COMPONENT-MAPPER] Called with config: ${config ? JSON.stringify(config.config) : 'undefined'}`);
+  debug(`[COMPONENT-MAPPER] documentDir: ${documentDir}`);
+  debug(`[COMPONENT-MAPPER] builtinsEnabled: ${builtinsEnabled}`);
+
   const result: ComponentImportsResult = {
     imports: '',
     componentsObject: '{}',
@@ -54,6 +58,7 @@ export function generateComponentImports(
 
   // check trust state for specific document - validates all 4 security rules
   const trustState = getTrustManager().getStateForDocument(documentUri);
+  debug(`[COMPONENT-MAPPER] trustState.canExecute: ${trustState.canExecute}`);
 
   if (!trustState.canExecute) {
     const components = config?.config.components;
@@ -123,7 +128,10 @@ export function generateComponentImports(
       debug(`Injected ${builtinCount} built-in generic shim(s)`);
     }
 
-    debug('Component imports:', result.imports);
+    debug('[COMPONENT-MAPPER] Generated imports:\n' + result.imports);
+    debug('[COMPONENT-MAPPER] Components object: ' + result.componentsObject);
+  } else {
+    debug('[COMPONENT-MAPPER] No imports generated');
   }
 
   return result;

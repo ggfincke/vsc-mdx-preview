@@ -31,7 +31,7 @@ interface RemarkStripMdxOptions {
   builtinsEnabled?: boolean;
 }
 
-// MDX JSX element node w/ name & children properties
+// MDX JSX element node w/ name & children
 interface MdxJsxElement {
   type: 'mdxJsxFlowElement' | 'mdxJsxTextElement';
   name: string | null;
@@ -315,5 +315,5 @@ export async function compileSafe(
   };
 }
 
-// Backward-compatible export name
+// backward-compatible export name
 export const compileToSafeHTML = compileSafe;

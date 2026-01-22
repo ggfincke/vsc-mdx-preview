@@ -7,7 +7,7 @@ import type { ExtensionError } from './index';
 // ! Placeholders must match actual field names on error classes
 const USER_MESSAGES: Record<string, string> = {
   // ===========================================================================
-  // Trust & Security errors
+  // trust & security errors
   // ===========================================================================
   PATH_TRAVERSAL: "Access denied: '{attemptedPath}' is outside workspace",
   E002: "Invalid path format: '{attemptedPath}'",
@@ -18,7 +18,7 @@ const USER_MESSAGES: Record<string, string> = {
   E023: 'Remote environment detected. Trusted Mode requires local workspaces.',
 
   // ===========================================================================
-  // Module Fetch errors (uses modulePath & parentModule)
+  // module fetch errors (uses modulePath & parentModule)
   // ===========================================================================
   MODULE_NOT_FOUND:
     "Cannot find module '{modulePath}'. Did you run npm install?",
@@ -29,7 +29,7 @@ const USER_MESSAGES: Record<string, string> = {
   E162: "Failed to read module file: '{modulePath}'",
 
   // ===========================================================================
-  // Configuration errors (uses configPath)
+  // configuration errors (uses configPath)
   // ===========================================================================
   CONFIG_PARSE_ERROR: "Failed to parse config file '{configPath}'",
   E201: "Config file not found: '{configPath}'",
@@ -38,14 +38,14 @@ const USER_MESSAGES: Record<string, string> = {
   E222: 'Invalid component mapping in config',
 
   // ===========================================================================
-  // Transpilation errors (uses sourceFile, line, column)
+  // transpilation errors (uses sourceFile, line, column)
   // ===========================================================================
   TRANSPILE_ERROR: "Compilation error in '{sourceFile}' at line {line}",
   E301: "Invalid frontmatter in '{sourceFile}'",
   E320: "Babel transform failed for '{sourceFile}'",
 
   // ===========================================================================
-  // Plugin errors (uses pluginName)
+  // plugin errors (uses pluginName)
   // ===========================================================================
   PLUGIN_NOT_FOUND: "Cannot find plugin '{pluginName}'. Ensure it's installed.",
   PLUGIN_LOAD_ERROR: "Failed to load plugin '{pluginName}'",
@@ -54,7 +54,7 @@ const USER_MESSAGES: Record<string, string> = {
   E460: 'Custom plugins are blocked in Safe Mode',
 
   // ===========================================================================
-  // Tailwind errors (uses phase)
+  // tailwind errors (uses phase)
   // ===========================================================================
   E500: 'Tailwind CSS not installed in workspace',
   E501: 'Tailwind version not supported. Minimum: v3',
@@ -64,27 +64,27 @@ const USER_MESSAGES: Record<string, string> = {
   E562: 'Invalid Tailwind PostCSS plugin',
 
   // ===========================================================================
-  // Webview errors (uses phase)
+  // webview errors (uses phase)
   // ===========================================================================
   E600: 'Could not find Vite manifest in extension',
   E620: 'Preview initialization timed out',
   E640: 'Failed to communicate with preview',
 
   // ===========================================================================
-  // File I/O errors (uses filePath)
+  // file I/O errors (uses filePath)
   // ===========================================================================
   E700: "Failed to read file: '{filePath}'",
   E701: "File not found: '{filePath}'",
   E740: "Failed to create file watcher for '{pattern}'",
 
   // ===========================================================================
-  // Service errors (uses serviceName)
+  // service errors (uses serviceName)
   // ===========================================================================
   E800: "Service not registered: '{serviceName}'",
   E801: 'Cannot access disposed service registry',
 
   // ===========================================================================
-  // General errors
+  // general errors
   // ===========================================================================
   UNKNOWN_ERROR: 'An unexpected error occurred',
   E901: 'Internal extension error',

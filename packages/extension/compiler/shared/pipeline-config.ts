@@ -1,8 +1,8 @@
 // packages/extension/compiler/shared/pipeline-config.ts
 // unified pipeline configuration for Safe & Trusted MDX modes
 //
-// This module provides a single source of truth for pipeline configuration,
-// ensuring both modes use identical plugin ordering for shared plugins.
+// provides a single source of truth for pipeline configuration,
+// ensuring both modes use identical plugin ordering for shared plugins
 
 import type { Pluggable } from 'unified';
 import type { UnknownBehavior, PluginPipeline } from '../types';
@@ -16,7 +16,7 @@ import {
 import rehypeRawPkg from 'rehype-raw';
 
 // MDX node types to preserve when parsing raw HTML (Trusted Mode only)
-// These nodes must not be converted to HTML by rehype-raw
+// these nodes must not be converted to HTML by rehype-raw
 export const MDX_PASSTHROUGH_NODES = [
   'mdxJsxFlowElement',
   'mdxJsxTextElement',
