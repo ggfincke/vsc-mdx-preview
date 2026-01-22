@@ -3,11 +3,16 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
-import { debug, warn } from '../logging';
+import { debug } from '../logging';
+import { SingletonService } from '../services/SingletonService';
+import { getConfigManager, getErrorReporter } from '../services';
+import { SubscriberManager } from '../utils/SubscriberManager';
+import { ErrorContext } from '../errors';
+import { normalizeError, type FrameworkId } from '@mdx-preview/shared';
+import { readJsonSync, pathExists } from '../utils/file-utils';
 
-// supported frameworks
-export type Framework = 'generic' | 'docusaurus' | 'nextjs' | 'astro-starlight';
+// re-export FrameworkId as Framework for backward compatibility
+export type Framework = FrameworkId;
 
 // framework detection result
 export interface FrameworkInfo {
@@ -33,8 +38,21 @@ const FRAMEWORK_RULES: FrameworkRule[] = [
     dependencies: ['@docusaurus/core'],
   },
   {
-    framework: 'astro-starlight',
+    framework: 'starlight',
     dependencies: ['@astrojs/starlight'],
+  },
+  // nextra detection must come before Next.js since Nextra projects also have 'next' dependency
+  {
+    framework: 'nextra',
+    dependencies: ['nextra'],
+  },
+  {
+    framework: 'nextra',
+    dependencies: ['nextra-theme-docs'],
+  },
+  {
+    framework: 'nextra',
+    dependencies: ['nextra-theme-blog'],
   },
   {
     framework: 'nextjs',
@@ -44,30 +62,47 @@ const FRAMEWORK_RULES: FrameworkRule[] = [
 ];
 
 // singleton framework detector
-export class FrameworkDetector {
-  private static instance: FrameworkDetector | null = null;
+export class FrameworkDetector extends SingletonService<FrameworkDetector> {
+  protected static override instance: FrameworkDetector | undefined;
+  protected readonly logTag = 'FRAMEWORK';
+
   private cache: Map<string, FrameworkInfo> = new Map();
-  private subscriptions: Set<(info: FrameworkInfo) => void> = new Set();
-  private disposables: vscode.Disposable[] = [];
+  private subscriberManager = new SubscriberManager<FrameworkInfo>(
+    'FRAMEWORK',
+    (error) => {
+      getErrorReporter().reportSilent(
+        normalizeError(error),
+        ErrorContext.Extension,
+        { operation: 'framework-subscriber-notify' }
+      );
+    }
+  );
   private fileWatcher: vscode.FileSystemWatcher | null = null;
 
-  private constructor() {
+  protected constructor() {
+    super();
+
     // watch for package.json changes
+    // createFileSystemWatcher args: ignoreCreate, ignoreChange, ignoreDelete
     this.fileWatcher = vscode.workspace.createFileSystemWatcher(
       '**/package.json',
-      false, // create
-      false, // change
-      false // delete
+      false,
+      false,
+      false
     );
 
-    this.disposables.push(
-      this.fileWatcher.onDidChange((uri) => this.onPackageJsonChange(uri)),
-      this.fileWatcher.onDidCreate((uri) => this.onPackageJsonChange(uri)),
+    this.addDisposable(
+      this.fileWatcher.onDidChange((uri) => this.onPackageJsonChange(uri))
+    );
+    this.addDisposable(
+      this.fileWatcher.onDidCreate((uri) => this.onPackageJsonChange(uri))
+    );
+    this.addDisposable(
       this.fileWatcher.onDidDelete((uri) => this.onPackageJsonChange(uri))
     );
 
-    // watch for setting changes
-    this.disposables.push(
+    // watch for framework setting changes
+    this.addDisposable(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('mdx-preview.framework')) {
           this.invalidateAllCaches();
@@ -76,82 +111,100 @@ export class FrameworkDetector {
     );
   }
 
-  // get singleton instance
-  static getInstance(): FrameworkDetector {
-    if (!FrameworkDetector.instance) {
-      FrameworkDetector.instance = new FrameworkDetector();
-    }
-    return FrameworkDetector.instance;
-  }
-
-  // static dispose for singleton cleanup
-  static dispose(): void {
-    if (FrameworkDetector.instance) {
-      FrameworkDetector.instance.dispose();
-      FrameworkDetector.instance = null;
-    }
-  }
-
-  // detect framework from package.json in workspace root
+  // detect framework from workspace root package.json
   detectFromPackageJson(workspaceRoot: string): FrameworkInfo {
     const packageJsonPath = path.join(workspaceRoot, 'package.json');
 
-    try {
-      if (!fs.existsSync(packageJsonPath)) {
-        debug('[FRAMEWORK] No package.json found at:', packageJsonPath);
-        return { framework: 'generic', detected: true };
-      }
+    interface PackageJson {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    }
 
-      const content = fs.readFileSync(packageJsonPath, 'utf-8');
-      const packageJson = JSON.parse(content);
-      const allDeps = {
-        ...packageJson.dependencies,
-        ...packageJson.devDependencies,
-      };
+    const packageJson = readJsonSync<PackageJson>(packageJsonPath, {
+      logTag: '[FRAMEWORK]',
+    });
 
-      // check each rule in priority order
-      for (const rule of FRAMEWORK_RULES) {
-        const hasPrimary = rule.dependencies.some((dep) => dep in allDeps);
-
-        if (hasPrimary) {
-          // for frameworks w/ secondary deps, at least one must be present
-          if (rule.secondaryDependencies) {
-            const hasSecondary = rule.secondaryDependencies.some(
-              (dep) => dep in allDeps
-            );
-            if (!hasSecondary) {
-              continue;
-            }
-          }
-
-          const version = allDeps[rule.dependencies[0]];
-          debug(`[FRAMEWORK] Detected ${rule.framework} (version: ${version})`);
-          return {
-            framework: rule.framework,
-            detected: true,
-            version: typeof version === 'string' ? version : undefined,
-          };
-        }
-      }
-
-      debug('[FRAMEWORK] No framework detected, using generic');
-      return { framework: 'generic', detected: true };
-    } catch (error) {
-      warn('[FRAMEWORK] Error reading package.json:', error);
+    if (!packageJson) {
+      debug('[FRAMEWORK] No package.json found or failed to parse at:', packageJsonPath);
       return { framework: 'generic', detected: true };
     }
+
+    const allDeps = {
+      ...packageJson.dependencies,
+      ...packageJson.devDependencies,
+    };
+
+    // check each rule in priority order
+    for (const rule of FRAMEWORK_RULES) {
+      const hasPrimary = rule.dependencies.some((dep) => dep in allDeps);
+
+      if (hasPrimary) {
+        // for frameworks w/ secondary deps, at least one must be present
+        if (rule.secondaryDependencies) {
+          const hasSecondary = rule.secondaryDependencies.some(
+            (dep) => dep in allDeps
+          );
+          if (!hasSecondary) {
+            continue;
+          }
+        }
+
+        const version = allDeps[rule.dependencies[0]];
+        debug(`[FRAMEWORK] Detected ${rule.framework} (version: ${version})`);
+        return {
+          framework: rule.framework,
+          detected: true,
+          version: typeof version === 'string' ? version : undefined,
+        };
+      }
+    }
+
+    debug('[FRAMEWORK] No framework detected, using generic');
+    return { framework: 'generic', detected: true };
   }
 
-  // get framework for a document (respects manual override)
+  // find the closest package.json starting from documentDir up to workspaceRoot
+  private findClosestPackageJsonDir(
+    documentDir: string,
+    workspaceRoot: string
+  ): string {
+    let currentDir = documentDir;
+
+    // walk up from document directory to workspace root
+    while (currentDir.startsWith(workspaceRoot)) {
+      const packageJsonPath = path.join(currentDir, 'package.json');
+      if (pathExists(packageJsonPath)) {
+        debug('[FRAMEWORK] Found package.json at:', packageJsonPath);
+        return currentDir;
+      }
+
+      const parentDir = path.dirname(currentDir);
+      // stop if we've reached the root or can't go up further
+      if (parentDir === currentDir) {
+        break;
+      }
+      currentDir = parentDir;
+    }
+
+    // fallback to workspace root
+    return workspaceRoot;
+  }
+
+  // get framework for document (respects manual override)
   getFramework(documentUri: vscode.Uri): FrameworkInfo {
     // check manual override setting first
-    const config = vscode.workspace.getConfiguration(
-      'mdx-preview',
-      documentUri
-    );
-    const manualFramework = config.get<string>('framework', 'auto');
+    const manualFramework = getConfigManager().get('framework', documentUri);
 
     if (manualFramework !== 'auto') {
+      // backward compatibility: migrate deprecated 'astro-starlight' to 'starlight'
+      // cast to string for comparison since old user settings may have the deprecated value
+      if ((manualFramework as string) === 'astro-starlight') {
+        debug('[FRAMEWORK] Migrating deprecated "astro-starlight" to "starlight"');
+        return {
+          framework: 'starlight',
+          detected: false,
+        };
+      }
       return {
         framework: manualFramework as Framework,
         detected: false,
@@ -165,16 +218,24 @@ export class FrameworkDetector {
     }
 
     const workspaceRoot = workspaceFolder.uri.fsPath;
+    const documentDir = path.dirname(documentUri.fsPath);
 
-    // check cache
-    const cached = this.cache.get(workspaceRoot);
-    if (cached) {
+    // find the closest package.json (from document dir up to workspace root)
+    const packageJsonDir = this.findClosestPackageJsonDir(
+      documentDir,
+      workspaceRoot
+    );
+
+    // check cache using the package.json directory as key
+    // (use undefined check for consistency w/ other cache access patterns)
+    const cached = this.cache.get(packageJsonDir);
+    if (cached !== undefined) {
       return cached;
     }
 
-    // detect & cache
-    const detected = this.detectFromPackageJson(workspaceRoot);
-    this.cache.set(workspaceRoot, detected);
+    // detect & cache framework
+    const detected = this.detectFromPackageJson(packageJsonDir);
+    this.cache.set(packageJsonDir, detected);
     return detected;
   }
 
@@ -185,8 +246,10 @@ export class FrameworkDetector {
         return 'Docusaurus';
       case 'nextjs':
         return 'Next.js';
-      case 'astro-starlight':
+      case 'starlight':
         return 'Starlight';
+      case 'nextra':
+        return 'Nextra';
       case 'generic':
       default:
         return 'Generic';
@@ -195,11 +258,7 @@ export class FrameworkDetector {
 
   // check if component shims are enabled
   areShimsEnabled(documentUri: vscode.Uri): boolean {
-    const config = vscode.workspace.getConfiguration(
-      'mdx-preview',
-      documentUri
-    );
-    return config.get<boolean>('framework.componentShims', true);
+    return getConfigManager().get('framework.componentShims', documentUri);
   }
 
   // find mdx-components.tsx file (for Next.js)
@@ -217,7 +276,7 @@ export class FrameworkDetector {
 
     for (const candidate of candidates) {
       const fullPath = path.join(workspaceRoot, candidate);
-      if (fs.existsSync(fullPath)) {
+      if (pathExists(fullPath)) {
         debug('[FRAMEWORK] Found mdx-components file:', fullPath);
         return fullPath;
       }
@@ -228,30 +287,21 @@ export class FrameworkDetector {
 
   // subscribe to framework changes
   subscribe(callback: (info: FrameworkInfo) => void): vscode.Disposable {
-    this.subscriptions.add(callback);
-    return new vscode.Disposable(() => {
-      this.subscriptions.delete(callback);
-    });
+    return this.subscriberManager.subscribe(callback);
   }
 
-  // notify subscribers
+  // notify subscribers of framework change
   private notifySubscribers(info: FrameworkInfo): void {
-    for (const callback of this.subscriptions) {
-      try {
-        callback(info);
-      } catch (error) {
-        warn('[FRAMEWORK] Subscriber error:', error);
-      }
-    }
+    this.subscriberManager.notify(info);
   }
 
-  // invalidate cache for a workspace
+  // invalidate cache for workspace
   invalidateCache(workspaceRoot: string): void {
     this.cache.delete(workspaceRoot);
     debug('[FRAMEWORK] Cache invalidated for:', workspaceRoot);
   }
 
-  // invalidate all caches
+  // invalidate all caches & notify subscribers
   private invalidateAllCaches(): void {
     this.cache.clear();
     debug('[FRAMEWORK] All caches invalidated');
@@ -264,39 +314,38 @@ export class FrameworkDetector {
     }
   }
 
-  // handle package.json change
+  // handle package.json change & invalidate cache
   private onPackageJsonChange(uri: vscode.Uri): void {
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-    if (workspaceFolder) {
-      this.invalidateCache(workspaceFolder.uri.fsPath);
+    // invalidate the cache for the directory containing this package.json
+    const packageJsonDir = path.dirname(uri.fsPath);
+    this.invalidateCache(packageJsonDir);
 
-      // notify subscribers if this affects the active editor
-      const editor = vscode.window.activeTextEditor;
-      if (editor) {
-        const editorFolder = vscode.workspace.getWorkspaceFolder(
-          editor.document.uri
-        );
-        if (editorFolder?.uri.fsPath === workspaceFolder.uri.fsPath) {
-          const info = this.getFramework(editor.document.uri);
-          this.notifySubscribers(info);
-        }
+    // notify subscribers if this affects the active editor
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+      const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+      const editorFolder = vscode.workspace.getWorkspaceFolder(
+        editor.document.uri
+      );
+      // check if the changed package.json is in the same workspace
+      if (
+        workspaceFolder &&
+        editorFolder?.uri.fsPath === workspaceFolder.uri.fsPath
+      ) {
+        const info = this.getFramework(editor.document.uri);
+        this.notifySubscribers(info);
       }
     }
   }
 
-  // dispose resources (public for IService interface)
-  dispose(): void {
-    for (const disposable of this.disposables) {
-      disposable.dispose();
-    }
-    this.disposables = [];
-
+  // clear file watcher, cache, & subscriptions on dispose
+  protected override onDispose(): void {
     if (this.fileWatcher) {
       this.fileWatcher.dispose();
       this.fileWatcher = null;
     }
 
     this.cache.clear();
-    this.subscriptions.clear();
+    this.subscriberManager.clear();
   }
 }

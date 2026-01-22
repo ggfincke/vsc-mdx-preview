@@ -5,23 +5,23 @@ import React, { ReactNode, ReactElement } from 'react';
 
 // Props for BaseCard component
 export interface BaseCardProps {
-  // /** Card content */
+  // card content
   children: ReactNode;
-  // /** Main CSS class for the card container */
+  // main CSS class for the card container
   className: string;
-  // /** Render as anchor tag instead of div */
+  // render as anchor tag instead of div
   as?: 'div' | 'a';
-  // /** Link href (required when as="a") */
+  // link href (required when as="a")
   href?: string;
-  // /** Open link in new tab */
+  // open link in new tab
   openInNewTab?: boolean;
-  // /** Additional props to spread on the container */
+  // additional props to spread on the container
   containerProps?: Record<string, unknown>;
 }
 
 // base card component that can render as div or anchor
 // provides a flexible foundation for Card & LinkCard components
-// across different framework shims.
+// across different framework shims
 export function BaseCard({
   children,
   className,
@@ -51,49 +51,8 @@ export function BaseCard({
   );
 }
 
-// common card header component
-export interface CardHeaderProps {
-  title: string;
-  icon?: ReactNode;
-  className?: string;
-  titleClassName?: string;
-  iconClassName?: string;
-}
-
-// reusable card header w/ optional icon
-export function CardHeader({
-  title,
-  icon,
-  className = 'card-header',
-  titleClassName = 'card-title',
-  iconClassName = 'card-icon',
-}: CardHeaderProps): ReactElement {
-  return (
-    <div className={className}>
-      {icon && <span className={iconClassName}>{icon}</span>}
-      <span className={titleClassName}>{title}</span>
-    </div>
-  );
-}
-
-// arrow icon for link cards
-export function ArrowIcon(): ReactElement {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <polyline points="12 5 19 12 12 19" />
-    </svg>
-  );
-}
+// Re-export ArrowIcon from centralized icons for backwards compatibility
+// Starlight LinkCard imports this
+export { ArrowIcon } from './icons';
 
 export default BaseCard;

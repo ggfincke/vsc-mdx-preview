@@ -11,7 +11,7 @@ import {
   type ResolvedConfig,
 } from './config';
 import { DocumentTracker, DependencyWatcher, WatcherManager } from './watchers';
-import type { UpdateMode } from './PreviewConfiguration';
+import type { UpdateMode } from '../config';
 
 export interface DocumentState {
   doc: vscode.TextDocument;
@@ -20,7 +20,7 @@ export interface DocumentState {
   mdxPreviewConfig?: ResolvedConfig;
 }
 
-// handles document state, tracking, & change events for a preview instance.
+// handles document state, tracking, & change events for a preview instance
 export class PreviewDocumentHandler {
   private _doc!: vscode.TextDocument;
   private _dependentFsPaths: Set<string> = new Set();
@@ -73,7 +73,7 @@ export class PreviewDocumentHandler {
     return null;
   }
 
-  // Set the document & resolve related configurations.
+  // set the document & resolve related configurations
   setDoc(doc: vscode.TextDocument, watcherManager: WatcherManager): void {
     this._doc = doc;
     this._dependentFsPaths = new Set([doc.uri.fsPath]);
@@ -97,35 +97,36 @@ export class PreviewDocumentHandler {
       watcherManager.get<DependencyWatcher>('dependency');
     if (this.entryFsDirectory && dependencyWatcher) {
       dependencyWatcher.setDocumentDir(this.entryFsDirectory);
-      dependencyWatcher.clear(); // clear old dependencies when switching documents
+      // clear old dependencies when switching documents
+      dependencyWatcher.clear();
     }
   }
 
-  // Update the MDX preview config (called after config file change).
+  // update the MDX preview config (called after config file change)
   reloadMdxConfig(): void {
     this._mdxPreviewConfig = resolveConfig(this._doc.uri.fsPath) ?? undefined;
   }
 
-  // Reset rendered version tracking (called when panel is disposed to force re-render).
+  // reset rendered version tracking (called when panel is disposed to force re-render)
   resetRenderedVersion(watcherManager: WatcherManager): void {
     const docTracker = watcherManager.get<DocumentTracker>('document');
     docTracker?.resetRenderedVersion();
   }
 
-  // Mark preview as stale (document changed but not rendered).
+  // mark preview as stale (document changed but not rendered)
   markStale(watcherManager: WatcherManager): void {
     const docTracker = watcherManager.get<DocumentTracker>('document');
     docTracker?.markStale();
   }
 
-  // Update dependency watcher w/ new imports (called from evaluate-in-webview).
+  // update dependency watcher w/ new imports (called from evaluate-in-webview)
   updateDependencies(imports: string[], watcherManager: WatcherManager): void {
     const dependencyWatcher =
       watcherManager.get<DependencyWatcher>('dependency');
     dependencyWatcher?.updateDependencies(imports);
   }
 
-  // Handle text document change event.
+  // handle text document change event
   async handleDidChangeTextDocument(
     fsPath: string,
     doc: vscode.TextDocument,
@@ -162,7 +163,7 @@ export class PreviewDocumentHandler {
     }
   }
 
-  // Handle text document save event.
+  // handle text document save event
   async handleDidSaveTextDocument(
     fsPath: string,
     active: boolean,

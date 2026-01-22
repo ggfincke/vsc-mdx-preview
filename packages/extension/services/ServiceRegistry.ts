@@ -1,8 +1,9 @@
 // packages/extension/services/ServiceRegistry.ts
-// Central registry for managing service lifecycle
+// central registry for managing service lifecycle
 
 import type { Disposable } from 'vscode';
 import { debug } from '../logging';
+import { ServiceError } from '../errors';
 import type { IService, ServiceFactory, ServiceRegistration } from './types';
 
 // * central registry for managing service lifecycle
@@ -30,7 +31,10 @@ export class ServiceRegistry implements Disposable {
   // register a service factory (called lazily on first access)
   register<T extends IService>(name: string, factory: ServiceFactory<T>): void {
     if (this.disposed) {
-      throw new Error('Cannot register service on disposed registry');
+      throw new ServiceError(
+        'Cannot register service on disposed registry',
+        'E801'
+      );
     }
 
     if (this.services.has(name)) {
@@ -50,15 +54,18 @@ export class ServiceRegistry implements Disposable {
   // get a service instance by name (creates on first access via lazy initialization)
   get<T extends IService>(name: string): T {
     if (this.disposed) {
-      throw new Error('Cannot get service from disposed registry');
+      throw new ServiceError(
+        'Cannot get service from disposed registry',
+        'E801'
+      );
     }
 
     const registration = this.services.get(name);
     if (!registration) {
-      throw new Error(`Service not registered: ${name}`);
+      throw new ServiceError(`Service not registered: ${name}`, 'E800', name);
     }
 
-    // Lazy initialization
+    // lazy initialization
     if (!registration.instance) {
       debug(`[SERVICE-REGISTRY] Creating instance: ${name}`);
       registration.instance = registration.factory();
@@ -86,7 +93,7 @@ export class ServiceRegistry implements Disposable {
 
     debug('[SERVICE-REGISTRY] Starting disposal...');
 
-    // Sort by registration order descending (reverse order)
+    // sort by registration order descending (reverse order)
     const sortedRegistrations = Array.from(this.services.values())
       .filter((reg) => reg.instance !== undefined)
       .sort((a, b) => b.registrationOrder - a.registrationOrder);

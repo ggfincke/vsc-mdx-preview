@@ -182,6 +182,56 @@ Custom plugins and components execute arbitrary code. They are **only available 
 
 For more details, see [examples/custom-plugins/](examples/custom-plugins/).
 
+## Tailwind CSS Support
+
+MDX Preview includes built-in Tailwind CSS support for utility-first styling in your MDX documents.
+
+### Requirements
+
+- **Tailwind CSS v4** (recommended) - Full support with `@tailwindcss/postcss`
+- **Tailwind CSS v3** - Supported but deprecated; upgrade to v4 is encouraged
+
+### Auto-Detection
+
+Tailwind is enabled automatically when the extension detects:
+
+- A `tailwind.config.{js,ts,mjs,cjs}` file in your workspace, OR
+- A CSS file with `@import "tailwindcss"` or `@tailwind` directives
+
+### Configuration
+
+Control Tailwind via VS Code settings:
+
+| Setting                           | Default  | Description                            |
+| --------------------------------- | -------- | -------------------------------------- |
+| `mdx-preview.tailwind.enabled`    | `"auto"` | `"auto"`, `"enabled"`, or `"disabled"` |
+| `mdx-preview.tailwind.configPath` | `""`     | Custom path to Tailwind config file    |
+
+Or in `.mdx-previewrc.json`:
+
+```json
+{
+  "tailwind": {
+    "enabled": "auto"
+  }
+}
+```
+
+### Supported Patterns
+
+The extension extracts Tailwind classes from:
+
+- Static: `className="flex gap-4"`
+- Conditional: `className={active ? "bg-blue-500" : "bg-gray-500"}`
+- Utilities: `clsx()`, `cn()`, `classnames()`
+- CVA: `cva('base', { variants: {...} })`
+- `@apply` directives in CSS
+
+### Limitations
+
+- Truly dynamic classes like `text-${size}` cannot be detected statically
+- Use Tailwind's `safelist` option for classes that can't be statically analyzed
+
 ## Advanced Features
 
 ### Syntax Highlighting

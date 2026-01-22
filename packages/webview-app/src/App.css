@@ -10,6 +10,7 @@
 .mdx-preview-content {
   padding: 0 26px;
   padding-top: 1em;
+  overflow-x: hidden; /* Prevent horizontal scroll from Bleed components */
 }
 
 /* Error Display */

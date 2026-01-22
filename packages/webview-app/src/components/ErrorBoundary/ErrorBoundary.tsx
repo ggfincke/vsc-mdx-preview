@@ -8,37 +8,22 @@ import {
 } from 'react-error-boundary';
 import {
   parseStackTrace,
-  getFirstLocation,
   getDisplayPath,
   isUserCode,
-  type StackFrame,
 } from '../../utils/stackTraceParser';
-import { ExtensionHandle } from '../../rpc-webview';
+import { normalizeError } from '@mdx-preview/shared';
 import './ErrorBoundary.css';
 
-interface ErrorDisplayProps {
-  error: Error;
-  onReset?: () => void;
-  title?: string;
-}
-
-// clickable stack trace component
-function ClickableStackTrace({ stack }: { stack: string }) {
+// stack trace component
+function StackTrace({ stack }: { stack: string }) {
   const frames = parseStackTrace(stack);
-
-  const handleFrameClick = useCallback((frame: StackFrame) => {
-    if (frame.isNavigable && frame.filePath && frame.line) {
-      ExtensionHandle.openDocument(frame.filePath, frame.line, frame.column);
-    }
-  }, []);
 
   return (
     <div className="mdx-preview-error-stack-frames">
       {frames.map((frame, index) => (
         <div
           key={index}
-          className={`mdx-preview-error-stack-frame ${frame.isNavigable ? 'navigable' : ''} ${frame.filePath && isUserCode(frame.filePath) ? 'user-code' : ''}`}
-          onClick={() => frame.isNavigable && handleFrameClick(frame)}
+          className={`mdx-preview-error-stack-frame ${frame.filePath && isUserCode(frame.filePath) ? 'user-code' : ''}`}
         >
           {frame.isNavigable ? (
             <>
@@ -62,8 +47,16 @@ function ClickableStackTrace({ stack }: { stack: string }) {
   );
 }
 
-// error display component w/ VS Code styling
-function ErrorDisplay({
+// Error display props for external use
+export interface ErrorDisplayProps {
+  error: Error;
+  onReset?: () => void;
+  title?: string;
+}
+
+// Error display component w/ VS Code styling
+// Exported for reuse in App.tsx & other error handling contexts
+export function ErrorDisplay({
   error,
   onReset,
   title = 'Preview Error',
@@ -72,19 +65,6 @@ function ErrorDisplay({
     const text = `${error.message}\n\n${error.stack || ''}`;
     navigator.clipboard.writeText(text).catch(console.error);
   }, [error]);
-
-  // get first navigable location for "Open in Editor" button
-  const firstLocation = error.stack ? getFirstLocation(error.stack) : null;
-
-  const handleOpenInEditor = useCallback(() => {
-    if (firstLocation) {
-      ExtensionHandle.openDocument(
-        firstLocation.filePath,
-        firstLocation.line,
-        firstLocation.column
-      );
-    }
-  }, [firstLocation]);
 
   return (
     <div className="mdx-preview-error-overlay">
@@ -97,17 +77,12 @@ function ErrorDisplay({
           <pre className="mdx-preview-error-message">{error.message}</pre>
           {error.stack && (
             <details className="mdx-preview-error-stack-details" open>
-              <summary>Stack Trace (click to navigate)</summary>
-              <ClickableStackTrace stack={error.stack} />
+              <summary>Stack Trace</summary>
+              <StackTrace stack={error.stack} />
             </details>
           )}
         </div>
         <div className="mdx-preview-error-actions">
-          {firstLocation && (
-            <button onClick={handleOpenInEditor} className="mdx-preview-error-button">
-              Open in Editor
-            </button>
-          )}
           <button onClick={handleCopy} className="mdx-preview-error-button">
             Copy Error
           </button>
@@ -146,20 +121,14 @@ export function MDXErrorBoundary({ children, onError }: MDXErrorBoundaryProps) {
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
       event.preventDefault();
-      const error =
-        event.error instanceof Error
-          ? event.error
-          : new Error(event.message || 'Unknown error');
+      const error = normalizeError(event.error ?? event.message ?? 'Unknown error');
       setGlobalError(error);
       onError?.(error);
     };
 
     const handleRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault();
-      const error =
-        event.reason instanceof Error
-          ? event.reason
-          : new Error(String(event.reason) || 'Unhandled promise rejection');
+      const error = normalizeError(event.reason ?? 'Unhandled promise rejection');
       setGlobalError(error);
       onError?.(error);
     };

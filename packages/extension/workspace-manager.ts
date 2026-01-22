@@ -4,9 +4,10 @@
 import { workspace, ExtensionContext } from 'vscode';
 
 import { getPreviewManager } from './services';
-import { handleDidChangeWorkspaceFolders } from './security/checkFsPath';
+import { handleDidChangeWorkspaceFolders } from './module-system/security/checkFsPath';
 
-// initialize workspace event handlers & register w/ extension context (disposables added to context.subscriptions for automatic cleanup)
+// initialize workspace event handlers & register w/ extension context
+// disposables added to context.subscriptions for automatic cleanup
 export function initWorkspaceHandlers(context: ExtensionContext): void {
   // handle document saves - refresh preview if saved file is relevant
   context.subscriptions.push(

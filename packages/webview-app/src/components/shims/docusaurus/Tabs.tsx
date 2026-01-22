@@ -1,92 +1,39 @@
 // packages/webview-app/src/components/shims/docusaurus/Tabs.tsx
 // Docusaurus Tabs/TabItem component shim for MDX Preview
-// provides preview-compatible versions of @theme/Tabs & @theme/TabItem
+// Provides preview-compatible versions of @theme/Tabs & @theme/TabItem
 
-import React, {
-  createContext,
-  useContext,
-  ReactNode,
-  ReactElement,
-} from 'react';
+/* eslint-disable react-refresh/only-export-components -- Context & hooks are co-located with component */
+
+import React, { useContext, ReactElement } from 'react';
 import {
-  useTabState,
-  type TabItemProps as BaseTabItemProps,
+  createTabs,
+  type BaseTabsProps,
   type TabDefinition,
+  type TabItemProps as BaseTabItemProps,
 } from '../base';
 
-// Re-export TabItemProps for compatibility
+// Re-export types for compatibility
+export type TabsProps = BaseTabsProps;
 export type TabItemProps = BaseTabItemProps;
+export type { TabDefinition };
 
-// context for TabItem to know if it's inside Tabs
-const TabsContext = createContext<boolean>(false);
+// Create Docusaurus-compatible tabs using the factory
+// Uses 'mdx-preview-tabs' class prefix w/ 'docusaurus-tabs' wrapper
+// Supports groupId for tab synchronization
+const {
+  Tabs,
+  useTabsContext,
+  TabsContext,
+} = createTabs({
+  classPrefix: 'mdx-preview-tabs',
+  wrapperClass: 'docusaurus-tabs',
+  supportsGroupId: true,
+  contextName: 'DocusaurusTabs',
+});
 
-// Tabs props (compatible w/ Docusaurus)
-export interface TabsProps {
-  children: ReactNode;
-  defaultValue?: string;
-  values?: TabDefinition[];
-  groupId?: string;
-  className?: string;
-  queryString?: string | boolean;
-  lazy?: boolean;
-}
-
-// tabs component
-export function Tabs({
-  children,
-  defaultValue,
-  values,
-  groupId,
-  className,
-}: TabsProps): ReactElement {
-  const { activeValue, setActiveValue, tabs, tabItems } = useTabState({
-    children,
-    defaultValue,
-    values,
-  });
-
-  return (
-    <TabsContext.Provider value={true}>
-      <div
-        className={`docusaurus-tabs${className ? ` ${className}` : ''}`}
-        data-group-id={groupId}
-      >
-        {/* Tab headers */}
-        <div className="mdx-preview-tabs-header" role="tablist">
-          {tabs.map((tab) => (
-            <button
-              key={tab.value}
-              role="tab"
-              className={`mdx-preview-tabs-button${tab.value === activeValue ? ' active' : ''}`}
-              aria-selected={tab.value === activeValue}
-              onClick={() => setActiveValue(tab.value)}
-              tabIndex={tab.value === activeValue ? 0 : -1}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab content */}
-        <div className="mdx-preview-tabs-content">
-          {tabItems.map((item) => (
-            <div
-              key={item.value}
-              role="tabpanel"
-              className={`mdx-preview-tabs-panel${item.value === activeValue ? ' active' : ''}`}
-              hidden={item.value !== activeValue}
-            >
-              {item.content}
-            </div>
-          ))}
-        </div>
-      </div>
-    </TabsContext.Provider>
-  );
-}
-
-// TabItem component
-export function TabItem({ children, value }: TabItemProps): ReactElement {
+// TabItem component (Docusaurus-specific)
+// Renders children directly when outside Tabs context
+export function TabItem({ children, value: _value }: TabItemProps): ReactElement {
   const isInsideTabs = useContext(TabsContext);
 
   // If used outside of Tabs context, render directly
@@ -99,5 +46,5 @@ export function TabItem({ children, value }: TabItemProps): ReactElement {
   return <>{children}</>;
 }
 
-// default export for compatibility
+export { Tabs, useTabsContext, TabsContext };
 export default Tabs;

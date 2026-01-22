@@ -3,15 +3,16 @@
 //
 // error handling strategy:
 // - this module propagates errors to its caller (TailwindProcessor)
-// - The ESM/CJS module loading uses intelligent fallback: try CommonJS first,
+// - the ESM/CJS module loading uses intelligent fallback: try CommonJS first,
 //   then ESM if ERR_REQUIRE_ESM is detected
-// - File I/O errors (readFile) propagate up - expected to be caught by orchestrator
+// - file I/O errors (readFile) propagate up - expected to be caught by orchestrator
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 import postcss from 'postcss';
 import { debug } from '../logging';
+import { TailwindError } from '../errors';
 import { MAX_INLINE_SOURCE_CHUNK_SIZE } from './constants';
 
 // PostCSS plugin factory type
@@ -69,7 +70,7 @@ export class TailwindCompiler {
     }
 
     if (options.tailwindVersion === 'v4') {
-      // Skip preflight to avoid overriding markdown styles in previews.
+      // skip preflight to avoid overriding markdown styles in previews
       return [
         '@import "tailwindcss/theme";',
         '@tailwind components;',
@@ -78,7 +79,7 @@ export class TailwindCompiler {
       ].join('\n');
     }
 
-    // Skip base layer to preserve markdown formatting by default.
+    // skip base layer to preserve markdown formatting by default
     return '@tailwind components;\n@tailwind utilities;\n';
   }
 
@@ -158,12 +159,14 @@ export class TailwindCompiler {
   }
 
   // validates that a loaded module is a valid PostCSS plugin factory
-  // throws Error if the module is not a function
+  // throws TailwindError if the module is not a function
   private validatePluginModule(mod: unknown, id: string): PostCSSPluginFactory {
     if (typeof mod !== 'function') {
-      throw new Error(
+      throw new TailwindError(
         `Module "${id}" must export a function (PostCSS plugin factory). ` +
-          `Got ${typeof mod} instead.`
+          `Got ${typeof mod} instead.`,
+        'E562',
+        'config'
       );
     }
     return mod as PostCSSPluginFactory;

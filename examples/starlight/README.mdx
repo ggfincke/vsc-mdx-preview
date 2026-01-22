@@ -1,0 +1,663 @@
+---
+title: Starlight Component Shims
+description: Demonstrates MDX Preview support for Astro Starlight components
+---
+
+import { Card, CardGrid, LinkCard, Badge, Aside, Tabs, TabItem, Steps, FileTree, Code } from '@astrojs/starlight/components';
+
+# Starlight Component Shims
+
+MDX Preview provides built-in shims for Astro Starlight's component library. These work without installing Starlight - the extension provides compatible implementations.
+
+> [!TIP]
+> **Trusted Mode Required**: These components require a trusted workspace with `mdx-preview.preview.enableScripts` enabled.
+
+---
+
+## Card Components
+
+### Basic Card
+
+<Card title="Getting Started">
+  Start building your documentation with Starlight's powerful component system.
+  Cards provide a visual way to highlight content.
+</Card>
+
+### Card with Icon
+
+<Card title="Documentation" icon="open-book">
+  Comprehensive guides and API references for all features.
+</Card>
+
+<Card title="Tutorials" icon="pencil">
+  Step-by-step tutorials to help you learn the fundamentals.
+</Card>
+
+<Card title="Examples" icon="puzzle">
+  Real-world code examples and project templates.
+</Card>
+
+---
+
+## CardGrid
+
+Display multiple cards in a responsive grid layout.
+
+### Basic CardGrid
+
+<CardGrid>
+  <Card title="Quick Start" icon="rocket">
+    Get up and running in just a few minutes with our quick start guide.
+  </Card>
+  <Card title="Guides" icon="document">
+    In-depth guides covering common tasks and workflows.
+  </Card>
+  <Card title="API Reference" icon="setting">
+    Complete API documentation with examples.
+  </Card>
+  <Card title="FAQ" icon="information">
+    Answers to frequently asked questions.
+  </Card>
+</CardGrid>
+
+### CardGrid with Stagger Animation
+
+Cards appear with a staggered animation effect:
+
+<CardGrid stagger>
+  <Card title="First" icon="star">
+    This card animates first.
+  </Card>
+  <Card title="Second" icon="star">
+    This card animates second.
+  </Card>
+  <Card title="Third" icon="star">
+    This card animates third.
+  </Card>
+  <Card title="Fourth" icon="star">
+    This card animates last.
+  </Card>
+</CardGrid>
+
+---
+
+## LinkCard
+
+Cards that link to other pages with optional descriptions.
+
+### Basic LinkCards
+
+<LinkCard
+  title="MDX Documentation"
+  description="Learn about MDX and how to use it effectively in your projects."
+  href="https://mdxjs.com"
+/>
+
+<LinkCard
+  title="Astro Documentation"
+  description="Official Astro documentation with guides and API reference."
+  href="https://docs.astro.build"
+/>
+
+### LinkCards in a Grid
+
+<CardGrid>
+  <LinkCard
+    title="GitHub Repository"
+    description="View source code and contribute to the project."
+    href="https://github.com"
+  />
+  <LinkCard
+    title="Discord Community"
+    description="Join our community for support and discussion."
+    href="https://discord.com"
+  />
+</CardGrid>
+
+### LinkCard without Description
+
+<LinkCard
+  title="Quick Link to Homepage"
+  href="/"
+/>
+
+---
+
+## Badge Component
+
+Inline badges for labeling and categorization.
+
+### Badge Variants
+
+<p>
+  <Badge text="Note" variant="note" /> - For general notes
+</p>
+<p>
+  <Badge text="Tip" variant="tip" /> - For helpful tips
+</p>
+<p>
+  <Badge text="Caution" variant="caution" /> - For warnings
+</p>
+<p>
+  <Badge text="Danger" variant="danger" /> - For critical warnings
+</p>
+<p>
+  <Badge text="Success" variant="success" /> - For success states
+</p>
+<p>
+  <Badge text="Default" variant="default" /> - Default styling
+</p>
+
+### Badge Sizes
+
+<p>
+  <Badge text="Small" size="small" /> - Small size
+</p>
+<p>
+  <Badge text="Medium" size="medium" /> - Medium size
+</p>
+<p>
+  <Badge text="Large" size="large" /> - Large size
+</p>
+
+### Badges in Context
+
+This feature is <Badge text="New" variant="tip" size="small" /> and ready to use!
+
+The legacy API is <Badge text="Deprecated" variant="caution" size="small" /> - please migrate to the new version.
+
+Version 2.0 introduced <Badge text="Breaking Changes" variant="danger" size="small" /> that require attention.
+
+This component is <Badge text="Stable" variant="success" size="small" /> and production-ready.
+
+---
+
+## Aside Component
+
+Callout boxes for important information with different severity levels.
+
+### Aside Types
+
+<Aside type="note">
+  This is a **note** aside. Use it for general information that adds context.
+</Aside>
+
+<Aside type="tip">
+  This is a **tip** aside. Use it for helpful suggestions and best practices.
+</Aside>
+
+<Aside type="caution">
+  This is a **caution** aside. Use it to warn about potential issues or gotchas.
+</Aside>
+
+<Aside type="danger">
+  This is a **danger** aside. Use it for critical warnings about breaking changes or security issues.
+</Aside>
+
+### Aside with Custom Title
+
+<Aside type="tip" title="Pro Tip">
+  You can customize the title of any aside to make it more specific to your content!
+</Aside>
+
+<Aside type="note" title="Historical Context">
+  This feature was introduced in version 1.5 to address user feedback about navigation.
+</Aside>
+
+<Aside type="caution" title="Breaking Change in v2.0">
+  The API signature has changed. Please update your code before upgrading.
+</Aside>
+
+### Aside with Rich Content
+
+<Aside type="note" title="Complete Example">
+  Asides can contain any MDX content:
+
+  - Bullet point lists
+  - **Bold** and *italic* formatting
+  - `inline code` snippets
+
+  ```javascript
+  // Even code blocks work inside asides!
+  const example = {
+    supported: true,
+    features: ['lists', 'code', 'formatting']
+  };
+  ```
+
+  | Tables | Also | Work |
+  |--------|------|------|
+  | Cell 1 | Cell 2 | Cell 3 |
+</Aside>
+
+---
+
+## Tabs Component
+
+Organize content into switchable tabs. Uses the same API as Docusaurus tabs.
+
+### Basic Tabs
+
+<Tabs>
+  <TabItem label="npm">
+    ```bash
+    npm install @astrojs/starlight
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn add @astrojs/starlight
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add @astrojs/starlight
+    ```
+  </TabItem>
+</Tabs>
+
+### Tabs with Different Content Types
+
+<Tabs>
+  <TabItem label="Overview">
+    ## Project Overview
+
+    Starlight is a documentation theme for Astro that provides:
+
+    - Automatic sidebar generation
+    - Full-text search
+    - Internationalization support
+    - Dark mode
+  </TabItem>
+  <TabItem label="Code">
+    ```typescript
+    // astro.config.mjs
+    import { defineConfig } from 'astro/config';
+    import starlight from '@astrojs/starlight';
+
+    export default defineConfig({
+      integrations: [
+        starlight({
+          title: 'My Docs',
+          social: {
+            github: 'https://github.com/withastro/starlight',
+          },
+        }),
+      ],
+    });
+    ```
+  </TabItem>
+</Tabs>
+
+---
+
+## Steps Component
+
+Display numbered step-by-step instructions.
+
+<Steps>
+
+1. **Install Starlight**
+
+   Add Starlight to your Astro project:
+
+   ```bash
+   npx astro add starlight
+   ```
+
+2. **Configure Your Project**
+
+   Edit your `astro.config.mjs`:
+
+   ```javascript
+   import starlight from '@astrojs/starlight';
+
+   export default defineConfig({
+     integrations: [starlight({ title: 'My Docs' })],
+   });
+   ```
+
+3. **Add Your Content**
+
+   Create MDX files in `src/content/docs/`:
+
+   ```
+   src/content/docs/
+   ├── index.mdx
+   ├── getting-started.mdx
+   └── guides/
+       └── first-guide.mdx
+   ```
+
+4. **Start Developing**
+
+   Run the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+   Open `http://localhost:4321` to see your docs!
+
+</Steps>
+
+---
+
+## FileTree Component
+
+Display directory structures with expandable folders.
+
+### Basic FileTree
+
+<FileTree>
+- src/
+  - components/
+    - Header.astro
+    - Footer.astro
+    - Sidebar.astro
+  - content/
+    - docs/
+      - index.mdx
+      - getting-started.mdx
+  - pages/
+    - index.astro
+- astro.config.mjs
+- package.json
+</FileTree>
+
+### FileTree with Highlighted Files
+
+Use `**bold**` to highlight important files:
+
+<FileTree>
+- src/
+  - content/
+    - docs/
+      - **index.mdx** (main entry point)
+      - getting-started.mdx
+      - guides/
+        - **installation.mdx** (you are here)
+        - configuration.mdx
+- **astro.config.mjs** (configuration file)
+- package.json
+</FileTree>
+
+### FileTree with Comments
+
+Add descriptions after filenames:
+
+<FileTree>
+- src/
+  - components/
+    - Header.astro main navigation header
+    - Footer.astro site footer with links
+    - **Sidebar.astro** auto-generated sidebar
+  - content/
+    - config.ts content collection schema
+    - docs/
+      - ...
+  - styles/
+    - global.css global styles
+- astro.config.mjs Astro configuration
+- tailwind.config.js Tailwind CSS config
+</FileTree>
+
+### FileTree with Placeholders
+
+Use `...` to indicate more files exist:
+
+<FileTree>
+- node_modules/
+  - ...
+- src/
+  - components/
+    - ...
+  - content/
+    - docs/
+      - index.mdx
+      - ...
+- package.json
+- ...
+</FileTree>
+
+### Complex Project Structure
+
+<FileTree>
+- packages/
+  - **core/**
+    - src/
+      - components/
+        - Button.tsx
+        - Card.tsx
+        - ...
+      - hooks/
+        - useTheme.ts
+        - useAuth.ts
+      - index.ts barrel export
+    - package.json
+    - tsconfig.json
+  - **docs/**
+    - src/
+      - content/
+        - docs/
+          - ...
+    - astro.config.mjs
+    - package.json
+- .github/
+  - workflows/
+    - ci.yml
+    - deploy.yml
+- package.json root package.json
+- pnpm-workspace.yaml monorepo config
+- turbo.json Turborepo config
+</FileTree>
+
+---
+
+## Code Component
+
+Display code with syntax highlighting and optional frames.
+
+### Basic Code
+
+<Code code={`const greeting = 'Hello, World!';
+console.log(greeting);`} lang="javascript" />
+
+### Code with Title
+
+<Code
+  code={`export function add(a: number, b: number): number {
+  return a + b;
+}
+
+export function multiply(a: number, b: number): number {
+  return a * b;
+}`}
+  lang="typescript"
+  title="math.ts"
+/>
+
+### Code with Terminal Frame
+
+Shell languages automatically get a terminal-style frame:
+
+<Code
+  code={`npm create astro@latest
+cd my-project
+npm run dev`}
+  lang="bash"
+  title="Terminal"
+/>
+
+### Explicit Terminal Frame
+
+Force terminal styling with `frame="terminal"`:
+
+<Code
+  code={`echo "Hello from the terminal!"
+ls -la
+pwd`}
+  lang="bash"
+  frame="terminal"
+  title="Shell Commands"
+/>
+
+### Code Frame
+
+Standard code editor frame:
+
+<Code
+  code={`interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+const users: User[] = [];`}
+  lang="typescript"
+  frame="code"
+  title="types.ts"
+/>
+
+### No Frame
+
+Remove all frame styling:
+
+<Code
+  code={`Just plain text without any frame decoration.
+Multiple lines work too.`}
+  frame="none"
+/>
+
+### Multiple Languages
+
+<Code
+  code={`fn main() {
+    println!("Hello, Rust!");
+
+    let numbers = vec![1, 2, 3, 4, 5];
+    let doubled: Vec<i32> = numbers.iter().map(|x| x * 2).collect();
+    println!("{:?}", doubled);
+}`}
+  lang="rust"
+  title="main.rs"
+/>
+
+<Code
+  code={`SELECT
+    u.id,
+    u.name,
+    COUNT(o.id) as order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id, u.name
+ORDER BY order_count DESC;`}
+  lang="sql"
+  title="query.sql"
+/>
+
+---
+
+## Import Patterns
+
+MDX Preview supports these import patterns for Starlight components:
+
+```javascript
+// Barrel import (recommended)
+import {
+  Card,
+  CardGrid,
+  LinkCard,
+  Badge,
+  Aside,
+  Tabs,
+  TabItem,
+  Steps,
+  FileTree,
+  Code
+} from '@astrojs/starlight/components';
+
+// Individual component imports
+import { Card } from '@astrojs/starlight/components/Card';
+import { Code } from '@astrojs/starlight/components/Code';
+
+// Direct shim imports (fallback)
+import { Card } from '@mdx-preview/shims/starlight/Card';
+```
+
+---
+
+## Component API Reference
+
+### Card Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `title` | `string` | **Required.** Card title |
+| `icon` | `string` | Optional icon name |
+| `children` | `ReactNode` | Card content |
+
+### CardGrid Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `ReactNode` | required | Card components |
+| `stagger` | `boolean` | `false` | Enable stagger animation |
+
+### LinkCard Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `title` | `string` | **Required.** Card title |
+| `description` | `string` | Optional description |
+| `href` | `string` | **Required.** Link URL |
+
+### Badge Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `text` | `ReactNode` | required | Badge text |
+| `variant` | `'note' \| 'tip' \| 'caution' \| 'danger' \| 'success' \| 'default'` | `'default'` | Color variant |
+| `size` | `'small' \| 'medium' \| 'large'` | `'small'` | Badge size |
+
+### Aside Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `ReactNode` | required | Aside content |
+| `type` | `'note' \| 'tip' \| 'caution' \| 'danger'` | `'note'` | Aside type |
+| `title` | `string` | Type-based | Custom title |
+
+### Tabs Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `children` | `ReactNode` | TabItem components |
+
+### TabItem Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `label` | `string` | Tab label |
+| `children` | `ReactNode` | Tab content |
+
+### Steps Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `children` | `ReactNode` | Ordered list with step content |
+
+### FileTree Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `children` | `ReactNode` | Nested list structure |
+
+### Code Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `code` | `string` | required | Code content |
+| `lang` | `string` | - | Language for highlighting |
+| `title` | `string` | - | Title bar text |
+| `frame` | `'code' \| 'terminal' \| 'none' \| 'auto'` | `'auto'` | Frame style |

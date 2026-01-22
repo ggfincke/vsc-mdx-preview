@@ -10,24 +10,21 @@ import {
   MouseEvent,
 } from 'react';
 import LoadingBar from './components/LoadingBar/LoadingBar';
-import { MDXErrorBoundary } from './components/ErrorBoundary';
+import { MDXErrorBoundary, ErrorDisplay } from './components/ErrorBoundary';
 import { TrustBanner } from './components/TrustBanner/TrustBanner';
 import { StaleIndicator } from './components/StaleIndicator';
 import { SafePreviewRenderer } from './SafePreview';
 import { TrustedPreviewRenderer } from './TrustedPreview';
 import { registerWebviewHandlers, ExtensionHandle } from './rpc-webview';
 import { debug } from './utils/debug';
-import {
-  classifyLink,
-  normalizeRelativePath,
-  extractAnchor,
-} from './utils/linkHandler';
+import { classifyLink } from './utils/linkHandler';
 import type {
   TrustState,
   PreviewContent,
   PreviewError,
   TrustedPreviewContent,
 } from './types';
+import type { NextraPageMeta } from '@mdx-preview/shared';
 import { useTheme } from './theme';
 import {
   ZOOM_MIN_PERCENT,
@@ -35,10 +32,20 @@ import {
   ZOOM_STEP_PERCENT,
   ZOOM_DEFAULT_PERCENT,
 } from './constants';
+import {
+  useFieldSetter,
+  useFieldResetter,
+  useFieldSetterWithFormat,
+} from './hooks';
 import './App.css';
 import './styles/admonitions.css';
+// Base styles (shared via data-attribute selectors)
+import './components/shims/base/styles/index.css';
+// Framework-specific styles (unique components only)
 import './components/shims/docusaurus/styles.css';
 import './components/shims/starlight/styles.css';
+import './components/shims/nextra/styles.css';
+import './components/shims/generic/styles.css';
 
 debug('[APP] App.tsx module loaded');
 
@@ -47,6 +54,7 @@ const INITIAL_TRUST_STATE: TrustState = {
   workspaceTrusted: false,
   scriptsEnabled: false,
   canExecute: false,
+  openMdxLinksInPreview: true,
 };
 
 // app state interface
@@ -61,6 +69,8 @@ interface AppState {
   isStale: boolean;
   // zoom level (percentage, 100 = 100%)
   zoomLevel: number;
+  // Nextra page metadata (title, layout, etc.)
+  nextraMeta: NextraPageMeta | null;
 }
 
 function App() {
@@ -74,6 +84,7 @@ function App() {
     evaluatedComponent: null,
     isStale: false,
     zoomLevel: ZOOM_DEFAULT_PERCENT,
+    nextraMeta: null,
   });
 
   // track if we've completed initial setup
@@ -82,11 +93,8 @@ function App() {
   // get theme context for MPE preview themes
   const { previewTheme, setPreviewThemeState } = useTheme();
 
-  // set trust state (called by RPC handler)
-  const setTrustState = useCallback((trustState: TrustState) => {
-    debug('[APP] setTrustState called', trustState);
-    setState((prev) => ({ ...prev, trustState }));
-  }, []);
+  // simple field setters using factory hooks
+  const setTrustState = useFieldSetter(setState, 'trustState', 'APP');
 
   // set Safe Mode content (called by RPC handler)
   const setSafeContent = useCallback((html: string) => {
@@ -134,37 +142,21 @@ function App() {
   }, []);
 
   // clear error & retry
-  const clearError = useCallback(() => {
-    debug('[APP] clearError called');
-    setState((prev) => ({
-      ...prev,
-      error: null,
-    }));
-  }, []);
+  const clearError = useFieldResetter(setState, 'error', null, 'APP', 'clearError');
 
   // set evaluated component after Trusted Mode evaluation
-  const setEvaluatedComponent = useCallback(
-    (component: ComponentType | null) => {
-      debug(
-        '[APP] setEvaluatedComponent called',
-        component ? 'has component' : 'null'
-      );
-      setState((prev) => ({
-        ...prev,
-        evaluatedComponent: component,
-      }));
-    },
-    []
+  const setEvaluatedComponent = useFieldSetterWithFormat(
+    setState,
+    'evaluatedComponent',
+    'APP',
+    (comp) => `setEvaluatedComponent called, ${comp ? 'has component' : 'null'}`
   );
 
   // set stale indicator state
-  const setStale = useCallback((isStale: boolean) => {
-    debug('[APP] setStale called', isStale);
-    setState((prev) => ({
-      ...prev,
-      isStale,
-    }));
-  }, []);
+  const setStale = useFieldSetter(setState, 'isStale', 'APP');
+
+  // set Nextra page metadata (called by RPC handler)
+  const setNextraMeta = useFieldSetter(setState, 'nextraMeta', 'APP');
 
   // zoom controls
   const zoomIn = useCallback(() => {
@@ -183,17 +175,16 @@ function App() {
     }));
   }, []);
 
-  const resetZoom = useCallback(() => {
-    debug('[APP] resetZoom called');
-    setState((prev) => ({
-      ...prev,
-      zoomLevel: ZOOM_DEFAULT_PERCENT,
-    }));
-  }, []);
+  const resetZoom = useFieldResetter(
+    setState,
+    'zoomLevel',
+    ZOOM_DEFAULT_PERCENT,
+    'APP',
+    'resetZoom'
+  );
 
-  // handle link clicks - intercept Ctrl/Cmd+clicks on anchors & route appropriately (regular clicks not intercepted for text selection)
+  // intercept Ctrl/Cmd+clicks on external links & route to extension
   const handleLinkClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
-    // find closest anchor element
     const target = event.target as HTMLElement;
     const anchor = target.closest('a');
     if (!anchor) {
@@ -207,51 +198,16 @@ function App() {
 
     const linkType = classifyLink(href);
 
-    // anchor links (internal page navigation) work without modifier
-    if (linkType === 'anchor') {
+    // only handle external links w/ Ctrl/Cmd+click
+    if (linkType === 'external') {
+      const isModifierClick = event.metaKey || event.ctrlKey;
+      if (!isModifierClick) {
+        return;
+      }
+
       event.preventDefault();
-      const anchorId = extractAnchor(href);
-      if (anchorId) {
-        const targetEl = document.getElementById(anchorId);
-        if (targetEl) {
-          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }
-      return;
-    }
-
-    // external & relative-file links require Ctrl/Cmd+click
-    const isModifierClick = event.metaKey || event.ctrlKey;
-    if (!isModifierClick) {
-      // no modifier - let default behavior (CSP will block navigation)
-      debug(`[APP] Link click without modifier, ignoring: ${href}`);
-      return;
-    }
-
-    debug(`[APP] Ctrl/Cmd+click: ${href} (type: ${linkType})`);
-
-    switch (linkType) {
-      case 'external': {
-        // open external URL via extension (more secure than direct navigation)
-        event.preventDefault();
-        ExtensionHandle.openExternal(href);
-        break;
-      }
-
-      case 'relative-file': {
-        // open relative file in editor
-        event.preventDefault();
-        const filePath = normalizeRelativePath(href);
-        ExtensionHandle.openDocument(filePath);
-        break;
-      }
-
-      case 'unknown':
-      default: {
-        // let browser handle unknown links (will likely be blocked by CSP)
-        debug(`[APP] Unknown link type, not intercepting: ${href}`);
-        break;
-      }
+      debug(`[APP] Ctrl/Cmd+click external link: ${href}`);
+      ExtensionHandle.openExternal(href);
     }
   }, []);
 
@@ -274,9 +230,8 @@ function App() {
       setTrustedContent,
       setError,
       setStale,
-      // theme handler
       setTheme: setPreviewThemeState,
-      // zoom handlers
+      setNextraMeta,
       zoomIn,
       zoomOut,
       resetZoom,
@@ -289,12 +244,13 @@ function App() {
     setError,
     setStale,
     setPreviewThemeState,
+    setNextraMeta,
     zoomIn,
     zoomOut,
     resetZoom,
   ]);
 
-  // render based on state
+  // destructure state for rendering
   const {
     trustState,
     content,
@@ -303,54 +259,56 @@ function App() {
     evaluatedComponent,
     isStale,
     zoomLevel,
+    nextraMeta,
   } = state;
   debug(
     `[APP] Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
   );
 
-  // show loading state
+  // compute Nextra layout class from metadata
+  const nextraLayoutClass = nextraMeta?.layout === 'full'
+    ? 'nextra-layout-full'
+    : nextraMeta?.layout === 'raw'
+    ? 'nextra-layout-raw'
+    : '';
+
+  // render loading state during initial load
   if (isLoading && !content && !error) {
     debug('[APP] Rendering LoadingBar (initial loading)');
     return <LoadingBar />;
   }
 
-  // show error state
+  // render error state w/ unified ErrorDisplay component
   if (error) {
     debug('[APP] Rendering error state');
+    // Convert PreviewError to Error for ErrorDisplay
+    const errorObj = new Error(error.message);
+    if (error.stack) {
+      errorObj.stack = error.stack;
+    }
     return (
       <div className="mdx-preview-container">
-        <div className="mdx-preview-error">
-          <div className="mdx-preview-error-header">
-            <span className="mdx-preview-error-icon">!</span>
-            <h2>Preview Error</h2>
-          </div>
-          <pre className="mdx-preview-error-message">{error.message}</pre>
-          {error.stack && (
-            <details>
-              <summary>Stack Trace</summary>
-              <pre className="mdx-preview-error-stack">{error.stack}</pre>
-            </details>
-          )}
-          <button onClick={clearError} className="mdx-preview-retry-button">
-            Dismiss
-          </button>
-        </div>
+        <ErrorDisplay
+          error={errorObj}
+          onReset={clearError}
+          title="Preview Error"
+        />
       </div>
     );
   }
 
-  // no content yet
+  // render loading state when awaiting content
   if (!content) {
     debug('[APP] Rendering LoadingBar (no content)');
     return <LoadingBar />;
   }
 
-  // render content based on mode
+  // render preview content in Safe or Trusted Mode
   debug(`[APP] Rendering content in ${content.mode} mode`);
 
   return (
     <div
-      className="mdx-preview-container"
+      className={`mdx-preview-container ${nextraLayoutClass}`.trim()}
       onClick={handleLinkClick}
       data-mpe-theme-active={previewTheme !== 'none' ? 'true' : undefined}
     >
@@ -370,6 +328,9 @@ function App() {
               : undefined
           }
         >
+          {nextraMeta?.title && (
+            <h1 className="nextra-page-title">{nextraMeta.title}</h1>
+          )}
           {content.mode === 'safe' ? (
             <SafePreviewRenderer html={content.html} />
           ) : (

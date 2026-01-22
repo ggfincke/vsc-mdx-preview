@@ -1,10 +1,10 @@
 // packages/extension/security/validateTrust.ts
-// Centralized trust validation utilities for trust-gated operations
+// centralized trust validation utilities for trust-gated operations
 
 import * as vscode from 'vscode';
 import { SecurityMode } from './TrustManager';
 import { getTrustManager } from '../services';
-import type { TrustState } from '@mdx-preview/shared-types';
+import type { TrustState } from '@mdx-preview/shared';
 
 // custom error for trust validation failures
 // thrown when an operation requires Trusted Mode but current state is Safe Mode

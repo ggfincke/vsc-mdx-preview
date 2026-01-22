@@ -5,6 +5,43 @@ All notable changes to the MDX Preview extension will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [1.0.0-alpha.11] - 2026-01-21
+
+### Added
+
+- **Nextra Framework Support**: Full Nextra support with component shims (Callout, Tabs, Cards, FileTree, Steps, Bleed), `_meta.json` awareness, and frontmatter extensions
+- **Language Aliases**: Code block language aliases (`js`→`javascript`, `ts`→`typescript`, `sh`→`bash`, etc.)
+- **Mermaid Theme Setting**: Configurable Mermaid diagram theme via `mdx-preview.preview.mermaidTheme`
+- **MDX Link Navigation**: New `openMdxLinksInPreview` setting for in-preview navigation
+- **Monorepo Architecture**: Restructured into `@mdx-preview/shared`, `compiler`, and `module-system` packages
+- **Service Infrastructure**: SingletonService, BaseWatcher, SubscriberManager, and EffectivePreviewConfig patterns
+- **Component System**: BaseCallout/BaseTabs factories, component classifier, registry parity validation
+- **Diagnostics**: Component detection with quick-fix code actions
+- **Testing**: Security unit tests and example projects (admonitions, docusaurus, nextjs, nextra, starlight)
+
+### Changed
+
+- **Architecture**: Services to SingletonService pattern, watchers to BaseWatcher, module resolution to UnifiedResolver
+- **Code Style**: Standardized terse comment style across codebase
+- **CSS Architecture**: Extracted base component styles to `base/styles/` folder
+- **Examples**: Consolidated Nextra and Next.js examples into single index.mdx files
+- **Tailwind**: Added v3 deprecation warning
+- **Generic Shims**: Fixed `Tabs`, `TabItem`, `Tab`, `Details` alias registration
+
+### Fixed
+
+- **Starlight FileTree**: Minor styling and structure improvements
+- **CodeBlock CSS**: Import CodeBlock.css in webview index.tsx
+- **Babel Interop**: Added `__esModule` markers for proper interop
+- **Shim Components**: Updated to use shared utilities and fixed styling
+
+### Removed
+
+- **Legacy Directories**: Removed old module-fetcher, transpiler, shared-types, and module-loader directories
+- **Example Files**: Consolidated redundant Nextra and Next.js example files
+
 ## [1.0.0-alpha.10] - 2026-01-14
 
 ### Added

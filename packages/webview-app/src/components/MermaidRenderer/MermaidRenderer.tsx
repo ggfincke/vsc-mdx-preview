@@ -1,7 +1,8 @@
 // packages/webview-app/src/components/MermaidRenderer/MermaidRenderer.tsx
 // * lazy-loaded mermaid diagram renderer w/ error handling & source toggle
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback } from 'react';
+import { useAsyncEffect } from '../../hooks';
 import { useTheme } from '../../theme';
 import './MermaidRenderer.css';
 
@@ -23,7 +24,6 @@ interface Props {
 
 // lazy-load mermaid (heavy ~2MB, only load when needed)
 let mermaidPromise: Promise<typeof import('mermaid')> | null = null;
-let mermaidInitialized = false;
 
 function getMermaid() {
   if (!mermaidPromise) {
@@ -32,76 +32,88 @@ function getMermaid() {
   return mermaidPromise;
 }
 
+// check if mermaid theme is dark (needs dark background)
+function isDarkMermaidTheme(theme: string): boolean {
+  return theme === 'dark';
+}
+
 // * render a single mermaid diagram w/ error handling
 export function MermaidRenderer({ code, id }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { isDark } = useTheme();
+  const { mermaidTheme } = useTheme();
   const [error, setError] = useState<string | null>(null);
   const [showSource, setShowSource] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const isDark = isDarkMermaidTheme(mermaidTheme);
 
   const toggleSource = useCallback(() => {
     setShowSource((prev) => !prev);
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    debugLog('render effect triggered', { id, codePreview: code.slice(0, 50) });
+  useAsyncEffect(
+    async (signal) => {
+      debugLog('render effect triggered', { id, codePreview: code.slice(0, 50) });
 
-    async function render() {
-      try {
-        setIsLoading(true);
-        const mermaid = await getMermaid();
-        debugLog('mermaid library loaded');
+      const mermaid = await getMermaid();
+      debugLog('mermaid library loaded');
 
-        // initialize mermaid w/ strict config (no foreignObject)
-        if (!mermaidInitialized) {
-          mermaid.default.initialize({
-            startOnLoad: false,
-            theme: isDark ? 'dark' : 'default',
-            securityLevel: 'strict',
-            // * disable HTML labels to produce pure SVG (no foreignObject)
-            // this keeps DOMPurify allowlist tighter
-            flowchart: { htmlLabels: false },
-            sequence: { useMaxWidth: true },
-          });
-          mermaidInitialized = true;
-        } else {
-          // update theme if already initialized
-          mermaid.default.initialize({
-            theme: isDark ? 'dark' : 'default',
-          });
-        }
+      // initialize mermaid w/ strict config (no foreignObject)
+      // theme is controlled by user setting (mdx-preview.preview.mermaidTheme)
+      mermaid.default.initialize({
+        startOnLoad: false,
+        theme: mermaidTheme,
+        securityLevel: 'strict',
+        // * disable HTML labels to produce pure SVG (no foreignObject)
+        // this keeps DOMPurify allowlist tighter
+        flowchart: { htmlLabels: false },
+        sequence: { useMaxWidth: true },
+        // fix ER diagram relationship label contrast
+        themeCSS: `
+          .edgeLabel text,
+          .edgeLabel tspan,
+          .edgeLabel span,
+          .edgeLabel .label text,
+          .edgeLabel .label tspan,
+          .edgeLabel .label span,
+          .edgeLabel foreignObject div {
+            fill: ${isDark ? '#fff' : '#000'} !important;
+            color: ${isDark ? '#fff' : '#000'} !important;
+          }
+          .relationshipLabelBox,
+          .relationshipLabelBox rect,
+          .edgeLabel .label rect.background {
+            fill: ${isDark ? '#1e1e1e' : '#ffffff'} !important;
+            stroke: ${isDark ? '#555' : '#ccc'} !important;
+            stroke-width: 1px !important;
+            opacity: 1 !important;
+          }
+        `,
+      });
 
-        if (cancelled || !containerRef.current) {
-          return;
-        }
-
-        // render diagram to SVG
-        const { svg } = await mermaid.default.render(`mermaid-svg-${id}`, code);
-
-        if (!cancelled && containerRef.current) {
-          containerRef.current.innerHTML = svg;
-          setError(null);
-          setIsLoading(false);
-          debugLog('render complete', { id });
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const message =
-            err instanceof Error ? err.message : 'Failed to render diagram';
-          debugLog('render error', { id, error: message });
-          setError(message);
-          setIsLoading(false);
-        }
+      if (signal.isCancelled() || !containerRef.current) {
+        return;
       }
-    }
 
-    render();
-    return () => {
-      cancelled = true;
-    };
-  }, [code, id, isDark]);
+      // render diagram to SVG
+      const { svg } = await mermaid.default.render(`mermaid-svg-${id}`, code);
+
+      if (containerRef.current) {
+        containerRef.current.innerHTML = svg;
+        setError(null);
+        debugLog('render complete', { id });
+      }
+    },
+    [code, id, mermaidTheme],
+    {
+      onError: (err) => {
+        const message =
+          err instanceof Error ? err.message : 'Failed to render diagram';
+        debugLog('render error', { id, error: message });
+        setError(message);
+      },
+      onLoadingChange: setIsLoading,
+    }
+  );
 
   // error state w/ show source toggle
   if (error) {
@@ -142,6 +154,7 @@ export function MermaidRenderer({ code, id }: Props) {
       <div
         ref={containerRef}
         className="mdx-preview-mermaid-diagram"
+        data-theme={isDark ? 'dark' : 'light'}
         style={{ visibility: isLoading ? 'hidden' : 'visible' }}
       />
     </div>

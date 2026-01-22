@@ -1,5 +1,5 @@
 // packages/extension/preview/PreviewWebviewBridge.ts
-// * Webview communication & theme management for preview instances
+// * webview communication & theme management for preview instances
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';

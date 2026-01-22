@@ -9,9 +9,20 @@
 }
 
 .mdx-preview-mermaid-diagram {
+  /* theme-aware background colors (can be overridden via custom CSS) */
+  --mermaid-bg-light: #f8f8f8;
+  --mermaid-bg-dark: #1e1e1e;
+
   display: flex;
   justify-content: center;
   margin: 16px 0;
+  background: var(--mermaid-bg-light);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.mdx-preview-mermaid-diagram[data-theme='dark'] {
+  background: var(--mermaid-bg-dark);
 }
 
 .mdx-preview-mermaid-diagram svg {

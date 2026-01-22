@@ -1,0 +1,89 @@
+/* packages/webview-app/src/components/shims/base/styles/tabs.css */
+/* Shared tabs styles using data-attribute selectors */
+/* Works with all frameworks that use createTabs() factory */
+
+/* ==================== Base Structure ==================== */
+[data-component="tabs"] {
+  margin: 1rem 0;
+  border: 1px solid var(--vscode-panel-border, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Tab header / tablist */
+[data-component="tabs"] [role="tablist"] {
+  display: flex;
+  gap: 0;
+  background-color: var(--vscode-editor-background, #f5f5f5);
+  border-bottom: 1px solid var(--vscode-panel-border, #e0e0e0);
+  overflow-x: auto;
+}
+
+/* Tab buttons */
+[data-component="tabs"] [role="tab"] {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: var(--vscode-foreground, #333);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.2s ease;
+}
+
+[data-component="tabs"] [role="tab"]:hover {
+  background-color: var(--vscode-list-hoverBackground, rgba(0, 0, 0, 0.05));
+}
+
+[data-component="tabs"] [role="tab"][aria-selected="true"],
+[data-component="tabs"] [role="tab"].active {
+  color: var(--vscode-textLink-foreground, #0066cc);
+  border-bottom-color: var(--vscode-textLink-foreground, #0066cc);
+  background-color: var(--vscode-editor-background, #fff);
+}
+
+[data-component="tabs"] [role="tab"]:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder, #0066cc);
+  outline-offset: -2px;
+}
+
+/* Tab content container */
+[data-component="tabs"] > [class*="-content"] {
+  background-color: var(--vscode-editor-background, #fff);
+}
+
+/* Tab panels */
+[data-component="tabs"] [role="tabpanel"] {
+  padding: 1rem;
+}
+
+[data-component="tabs"] [role="tabpanel"] > :first-child {
+  margin-top: 0;
+}
+
+[data-component="tabs"] [role="tabpanel"] > :last-child {
+  margin-bottom: 0;
+}
+
+[data-component="tabs"] [role="tabpanel"][hidden] {
+  display: none;
+}
+
+/* ==================== Dark Mode ==================== */
+
+.vscode-dark [data-component="tabs"] {
+  border-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark [data-component="tabs"] [role="tablist"] {
+  background-color: var(--vscode-editor-background, #252526);
+  border-bottom-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark [data-component="tabs"] [role="tab"][aria-selected="true"],
+.vscode-dark [data-component="tabs"] [role="tab"].active {
+  background-color: var(--vscode-editor-background, #1e1e1e);
+}

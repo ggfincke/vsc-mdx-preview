@@ -18,9 +18,9 @@
     "resolveJsonModule": true,
     "types": ["node"],
     "paths": {
-      "@mdx-preview/shared-types": ["./packages/shared-types/index.ts"]
+      "@mdx-preview/shared": ["./packages/shared/index.ts"]
     }
   },
-  "include": ["packages/extension", "packages/shared-types"],
-  "exclude": ["node_modules", ".vscode-test"]
+  "include": ["packages/extension", "packages/shared"],
+  "exclude": ["node_modules", ".vscode-test", "**/*.test.ts", "**/*.integration.test.ts", "**/test/**"]
 }

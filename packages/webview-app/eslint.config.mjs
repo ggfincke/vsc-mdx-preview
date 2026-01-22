@@ -51,6 +51,14 @@ export default tseslint.config(
       eqeqeq: ['error', 'always'],
     },
   },
+  // Context files export both Provider components and useX hooks by design.
+  // This is the standard React Context pattern and a known exception to Fast Refresh.
+  {
+    files: ['**/context.tsx', '**/*Context.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
   {
     ignores: ['dist/**', 'node_modules/**', 'vite.config.ts'],
   }

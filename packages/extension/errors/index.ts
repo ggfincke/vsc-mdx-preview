@@ -9,6 +9,8 @@ export {
   type ReportOptions,
 } from './ErrorReporter';
 
+export { ErrorCode } from './error-codes';
+
 // base error class w/ error code for programmatic handling
 export class ExtensionError extends Error {
   constructor(
@@ -81,5 +83,99 @@ export class PathAccessDeniedError extends SecurityError {
       fsPath
     );
     this.fsPath = fsPath;
+  }
+}
+
+// config errors
+export type ConfigErrorCode = 'CONFIG_PARSE_ERROR' | 'CONFIG_VALIDATION_ERROR';
+
+export class ConfigError extends ExtensionError {
+  constructor(
+    message: string,
+    code: ConfigErrorCode,
+    public readonly configPath?: string,
+    cause?: Error
+  ) {
+    super(message, code, cause);
+  }
+}
+
+// plugin errors
+// E460 = PLUGIN_SAFE_MODE_BLOCKED
+export type PluginErrorCode =
+  | 'PLUGIN_NOT_FOUND'
+  | 'PLUGIN_LOAD_ERROR'
+  | 'PLUGIN_INVALID_EXPORT'
+  | 'E460';
+
+export class PluginError extends ExtensionError {
+  constructor(
+    message: string,
+    code: PluginErrorCode,
+    public readonly pluginName: string,
+    cause?: Error
+  ) {
+    super(message, code, cause);
+  }
+}
+
+// tailwind errors
+// E500 = TAILWIND_NOT_INSTALLED
+// E501 = TAILWIND_VERSION_UNSUPPORTED
+// E520 = TAILWIND_CONFIG_NOT_FOUND
+// E562 = TAILWIND_INVALID_PLUGIN
+export type TailwindErrorCode =
+  | 'E500'
+  | 'E501'
+  | 'E520'
+  | 'TAILWIND_COMPILATION_ERROR'
+  | 'E562';
+
+export class TailwindError extends ExtensionError {
+  constructor(
+    message: string,
+    code: TailwindErrorCode,
+    public readonly phase?: 'detect' | 'config' | 'scan' | 'compile',
+    cause?: Error
+  ) {
+    super(message, code, cause);
+  }
+}
+
+// webview errors
+// E600 = WEBVIEW_MANIFEST_ERROR
+// E620 = WEBVIEW_HANDSHAKE_TIMEOUT
+// E640 = WEBVIEW_RPC_ERROR
+export type WebviewErrorCode =
+  | 'E600'
+  | 'E620'
+  | 'E640';
+
+export class WebviewError extends ExtensionError {
+  constructor(
+    message: string,
+    code: WebviewErrorCode,
+    public readonly phase?: 'init' | 'handshake' | 'rpc',
+    cause?: Error
+  ) {
+    super(message, code, cause);
+  }
+}
+
+// service errors
+// E800 = SERVICE_NOT_REGISTERED
+// E801 = SERVICE_ALREADY_DISPOSED
+export type ServiceErrorCode =
+  | 'E800'
+  | 'E801';
+
+export class ServiceError extends ExtensionError {
+  constructor(
+    message: string,
+    code: ServiceErrorCode,
+    public readonly serviceName?: string,
+    cause?: Error
+  ) {
+    super(message, code, cause);
   }
 }

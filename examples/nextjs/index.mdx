@@ -1,0 +1,198 @@
+import Link from 'next/link';
+import Image from 'next/image';
+
+# Next.js MDX Preview Examples
+
+This example demonstrates MDX Preview's support for Next.js components (`next/image` and `next/link`).
+
+## Framework Detection
+
+When viewing this file in MDX Preview, the status bar should display:
+
+**▲ Next.js**
+
+This confirms that the Next.js framework has been detected based on the `next` and `@mdx-js/react` dependencies in [package.json](./package.json).
+
+---
+
+## Image Component
+
+The `Image` component from `next/image` renders images. In MDX Preview, images render as standard `<img>` elements without Next.js optimization.
+
+### Basic Image
+
+<Image
+  src="./kitty.jpg"
+  alt="Cute kitty cat"
+  width={640}
+  height={480}
+/>
+
+### Different Sizes
+
+<Image
+  src="./kitty.jpg"
+  alt="Medium sized kitty"
+  width={400}
+  height={300}
+/>
+
+<Image
+  src="./kitty.jpg"
+  alt="Small square kitty"
+  width={200}
+  height={200}
+/>
+
+### Fill Mode
+
+The `fill` prop makes the image fill its parent container:
+
+<div style={{ position: 'relative', width: '100%', height: '200px', marginBottom: '1rem' }}>
+  <Image
+    src="./kitty.jpg"
+    alt="Kitty using fill mode"
+    fill
+  />
+</div>
+
+### Custom Styling
+
+<Image
+  src="./kitty.jpg"
+  alt="Kitty avatar"
+  width={150}
+  height={150}
+  style={{ borderRadius: '50%', border: '3px solid #6366f1' }}
+/>
+
+<Image
+  src="./kitty.jpg"
+  alt="Kitty with rounded corners"
+  width={300}
+  height={225}
+  style={{ borderRadius: '12px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}
+/>
+
+### Image Grid
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+  <Image
+    src="./kitty.jpg"
+    alt="Grid kitty 1"
+    width={200}
+    height={150}
+    style={{ width: '100%', height: 'auto' }}
+  />
+  <Image
+    src="./kitty.jpg"
+    alt="Grid kitty 2"
+    width={200}
+    height={150}
+    style={{ width: '100%', height: 'auto' }}
+  />
+  <Image
+    src="./kitty.jpg"
+    alt="Grid kitty 3"
+    width={200}
+    height={150}
+    style={{ width: '100%', height: 'auto' }}
+  />
+</div>
+
+---
+
+## Link Component
+
+The `Link` component from `next/link` creates navigation links. External links can be opened with **Ctrl/Cmd+Click**.
+
+### External Links
+
+<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '2rem' }}>
+  <Link href="https://google.com">Google Search</Link>
+  <Link href="https://github.com">GitHub</Link>
+  <Link href="https://nextjs.org/docs">Next.js Documentation</Link>
+</div>
+
+### Styled Links
+
+<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1rem', marginBottom: '2rem' }}>
+  <Link href="https://nextjs.org" style={{ color: '#0070f3', fontWeight: 'bold', textDecoration: 'underline' }}>
+    Bold Blue Link
+  </Link>
+
+  <Link href="https://github.com" style={{
+    display: 'inline-block',
+    padding: '0.5rem 1rem',
+    background: '#6366f1',
+    color: 'white',
+    borderRadius: '6px',
+    textDecoration: 'none',
+    fontWeight: '500'
+  }}>
+    Button-styled Link
+  </Link>
+
+  <Link href="https://nextjs.org/docs" style={{
+    color: '#059669',
+    textDecoration: 'none',
+    borderBottom: '2px solid #059669'
+  }}>
+    Underline Style Link
+  </Link>
+</div>
+
+---
+
+## Combining Link and Image
+
+### Card with Image and Link
+
+<div style={{
+  border: '1px solid #e5e7eb',
+  borderRadius: '8px',
+  overflow: 'hidden',
+  maxWidth: '400px',
+  marginBottom: '1rem'
+}}>
+  <Image
+    src="./kitty.jpg"
+    alt="Kitty card image"
+    width={400}
+    height={300}
+    style={{ width: '100%', height: 'auto' }}
+  />
+  <div style={{ padding: '1rem' }}>
+    <h3 style={{ margin: '0 0 0.5rem 0' }}>Meet the Kitty</h3>
+    <p style={{ margin: '0 0 1rem 0', color: '#6b7280' }}>
+      This adorable kitty is featured in all our Next.js Image examples.
+    </p>
+    <Link href="https://google.com/search?q=cute+cats" style={{ color: '#0070f3' }}>
+      Search for more cats →
+    </Link>
+  </div>
+</div>
+
+---
+
+## Props Reference
+
+### Image Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `src` | `string` | Image source URL (required) |
+| `alt` | `string` | Alt text for accessibility (required) |
+| `width` | `number` | Image width (required unless `fill`) |
+| `height` | `number` | Image height (required unless `fill`) |
+| `fill` | `boolean` | Fill parent container |
+| `priority` | `boolean` | Load immediately (eager) |
+| `style` | `CSSProperties` | Inline styles |
+
+### Link Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `href` | `string` | Destination URL (required) |
+| `children` | `ReactNode` | Link content (required) |
+| `style` | `CSSProperties` | Inline styles |

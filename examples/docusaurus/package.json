@@ -1,0 +1,8 @@
+{
+  "name": "mdx-preview-docusaurus-example",
+  "description": "MDX Preview example for Docusaurus projects",
+  "private": true,
+  "dependencies": {
+    "@docusaurus/preset-classic": "^3.0.0"
+  }
+}

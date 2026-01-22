@@ -41,13 +41,13 @@ vscode-mdx-preview/
 │   ├── extension/          # VS Code extension (Node.js)
 │   │   ├── preview/        # Preview panel management
 │   │   ├── security/       # Trust & CSP management
-│   │   ├── transpiler/     # MDX/Babel/Sucrase compilation
-│   │   ├── module-fetcher/ # Dependency resolution
+│   │   ├── compiler/       # MDX/Babel/Sucrase compilation
+│   │   ├── module-system/  # Dependency resolution
 │   │   └── test/           # Unit tests
 │   └── webview-app/        # React app rendered in webview
 │       └── src/
-│           ├── components/ # React components
-│           └── module-loader/ # Browser-side module loading
+│           ├── components/   # React components
+│           └── module-system/ # Browser-side module loading
 ├── examples/               # Example MDX projects
 └── assets/                 # Icons and images
 ```
@@ -78,8 +78,8 @@ The extension runs in VS Code's extension host (Node.js environment):
 - **webview-manager.ts**: Creates webview HTML with proper CSP
 - **TrustManager.ts**: Handles workspace trust state
 - **CSP.ts**: Generates Content Security Policy headers
-- **transpiler/**: Compiles MDX to JavaScript using @mdx-js/mdx
-- **module-fetcher/**: Resolves and fetches dependencies from workspace
+- **compiler/**: Compiles MDX to JavaScript using @mdx-js/mdx
+- **module-system/**: Resolves and fetches dependencies from workspace
 
 ### Webview Side (`packages/webview-app`)
 
@@ -88,7 +88,7 @@ The webview is a React 18 app running in an isolated iframe:
 - **App.tsx**: Main component, switches between Safe/Trusted mode
 - **SafePreview.tsx**: Renders sanitized HTML (Safe Mode)
 - **TrustedPreview.tsx**: Evaluates and renders MDX (Trusted Mode)
-- **module-loader/**: In-browser CommonJS-style module system
+- **module-system/**: In-browser CommonJS-style module system
 
 ### Communication
 

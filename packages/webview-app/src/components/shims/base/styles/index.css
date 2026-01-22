@@ -1,0 +1,7 @@
+/* packages/webview-app/src/components/shims/base/styles/index.css */
+/* Base component styles - imported by App.tsx */
+/* These provide shared styles for all framework shims via data-attribute selectors */
+
+@import './callout.css';
+@import './tabs.css';
+@import './collapsible.css';

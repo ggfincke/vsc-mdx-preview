@@ -1,7 +1,7 @@
 // packages/webview-app/src/utils/stackTraceParser.ts
 // parse error stack traces to extract file locations for navigation
 
-export interface StackFrame {
+interface StackFrame {
   // raw line from stack trace
   raw: string;
   // function or method name (may be undefined for anonymous)
@@ -144,23 +144,6 @@ export function parseStackTrace(stack: string): StackFrame[] {
   }
 
   return frames;
-}
-
-// extract the first navigable location from a stack trace
-export function getFirstLocation(
-  stack: string
-): { filePath: string; line: number; column?: number } | null {
-  const frames = parseStackTrace(stack);
-  for (const frame of frames) {
-    if (frame.isNavigable && frame.filePath && frame.line) {
-      return {
-        filePath: frame.filePath,
-        line: frame.line,
-        column: frame.column,
-      };
-    }
-  }
-  return null;
 }
 
 // check if a file path looks like it's from the user's code (not internal/library)

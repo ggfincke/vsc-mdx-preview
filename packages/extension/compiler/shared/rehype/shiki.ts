@@ -1,0 +1,379 @@
+// packages/extension/compiler/shared/rehype/shiki.ts
+// syntax highlighting w/ Shiki + meta parsing (line numbers, highlighting, title)
+
+import { visit } from 'unist-util-visit';
+import type { Root, Element, Text, ElementContent } from 'hast';
+import { htmlToHastFragment } from './shiki-helpers';
+import {
+  createHighlighter,
+  type Highlighter,
+  type BundledLanguage,
+  type ShikiTransformer,
+} from 'shiki';
+import { createCssVariablesTheme } from 'shiki/core';
+
+// common languages to pre-bundle (others fall back to plaintext)
+const COMMON_LANGUAGES: BundledLanguage[] = [
+  // web fundamentals
+  'typescript',
+  'javascript',
+  'tsx',
+  'jsx',
+  'json',
+  'jsonc',
+  'css',
+  'scss',
+  'less',
+  'html',
+  'vue',
+  'svelte',
+
+  // shell & scripting
+  'bash',
+  'shell',
+  'powershell',
+
+  // documentation & data
+  'markdown',
+  'mdx',
+  'yaml',
+  'toml',
+  'xml',
+  'graphql',
+  'sql',
+  'regex',
+
+  // systems programming
+  'c',
+  'cpp',
+  'rust',
+  'go',
+  'zig',
+
+  // JVM languages
+  'java',
+  'kotlin',
+  'scala',
+
+  // apple ecosystem
+  'swift',
+  'objective-c',
+
+  // scripting languages
+  'python',
+  'ruby',
+  'php',
+  'lua',
+  'perl',
+  'r',
+
+  // .NET
+  'csharp',
+  'fsharp',
+
+  // functional
+  'haskell',
+  'elixir',
+  'clojure',
+
+  // devops & config
+  'dockerfile',
+  'nginx',
+  'ini',
+
+  // other
+  'diff',
+  'latex',
+];
+
+// create CSS variables theme for dynamic theming (outputs CSS vars instead of hardcoded colors)
+const cssVariablesTheme = createCssVariablesTheme({
+  name: 'css-variables',
+  variablePrefix: '--shiki-',
+  variableDefaults: {},
+  fontStyle: true,
+});
+
+// transformer to add diff-specific classes to lines
+const diffTransformer: ShikiTransformer = {
+  name: 'diff-highlight',
+  line(hast, lineNumber) {
+    const lines = this.source.split('\n');
+    const lineText = lines[lineNumber - 1] || '';
+
+    if (lineText.startsWith('+')) {
+      this.addClassToHast(hast, 'diff-add');
+    } else if (lineText.startsWith('-')) {
+      this.addClassToHast(hast, 'diff-remove');
+    }
+  },
+};
+
+// cached highlighter instance
+let highlighterPromise: Promise<Highlighter> | null = null;
+
+async function getHighlighter(): Promise<Highlighter> {
+  if (!highlighterPromise) {
+    highlighterPromise = createHighlighter({
+      themes: [cssVariablesTheme],
+      langs: COMMON_LANGUAGES,
+    });
+  }
+  return highlighterPromise;
+}
+
+// code meta parsed from fence info: ```ts showLineNumbers {1,3-5} title="example.ts"
+interface CodeMeta {
+  showLineNumbers: boolean;
+  highlightLines: Set<number>;
+  title?: string;
+}
+
+// parse meta string from code fence
+function parseMeta(meta: string | undefined): CodeMeta {
+  const result: CodeMeta = {
+    showLineNumbers: false,
+    highlightLines: new Set(),
+    title: undefined,
+  };
+
+  if (!meta) {
+    return result;
+  }
+
+  // showLineNumbers flag
+  result.showLineNumbers = /\bshowLineNumbers\b/i.test(meta);
+
+  // {1,3-5} line highlighting
+  const lineMatch = meta.match(/\{([^}]+)\}/);
+  if (lineMatch) {
+    result.highlightLines = parseLineRanges(lineMatch[1]);
+  }
+
+  // title="..." or title='...'
+  const titleMatch = meta.match(/title=["']([^"']+)["']/);
+  if (titleMatch) {
+    result.title = titleMatch[1];
+  }
+
+  return result;
+}
+
+// parse line ranges like "1,3-5,8" into Set of line numbers
+function parseLineRanges(rangeStr: string): Set<number> {
+  const lines = new Set<number>();
+  for (const part of rangeStr.split(',')) {
+    const trimmed = part.trim();
+    if (trimmed.includes('-')) {
+      const [startStr, endStr] = trimmed.split('-');
+      const start = parseInt(startStr, 10);
+      const end = parseInt(endStr, 10);
+      if (!isNaN(start) && !isNaN(end)) {
+        for (let i = start; i <= end; i++) {
+          lines.add(i);
+        }
+      }
+    } else {
+      const num = parseInt(trimmed, 10);
+      if (!isNaN(num)) {
+        lines.add(num);
+      }
+    }
+  }
+  return lines;
+}
+
+// extract language from class name (e.g., "language-typescript" -> "typescript")
+function extractLanguage(className: unknown): string | null {
+  if (!className) {
+    return null;
+  }
+  const classes = Array.isArray(className) ? className : [className];
+  for (const cls of classes) {
+    const str = String(cls);
+    if (str.startsWith('language-')) {
+      return str.replace('language-', '');
+    }
+  }
+  return null;
+}
+
+// check if language is supported
+function isLanguageSupported(lang: string): lang is BundledLanguage {
+  return COMMON_LANGUAGES.includes(lang as BundledLanguage);
+}
+
+// language alias mapping (short names to Shiki-supported canonical names)
+const LANGUAGE_ALIASES: Record<string, BundledLanguage> = {
+  js: 'javascript',
+  ts: 'typescript',
+  sh: 'bash',
+  yml: 'yaml',
+  py: 'python',
+  rb: 'ruby',
+  cs: 'csharp',
+  fs: 'fsharp',
+  rs: 'rust',
+  kt: 'kotlin',
+  md: 'markdown',
+  // text & plaintext map to fallback (handled separately)
+};
+
+// resolve language alias to canonical name
+function resolveLanguageAlias(lang: string): string {
+  return LANGUAGE_ALIASES[lang] || lang;
+}
+
+// * rehype plugin for Shiki syntax highlighting
+export default function rehypeShiki() {
+  return async (tree: Root) => {
+    const highlighter = await getHighlighter();
+    const nodesToProcess: Array<{
+      node: Element;
+      parent: Element;
+      index: number;
+      lang: string;
+      code: string;
+      meta: CodeMeta;
+    }> = [];
+
+    // first pass: collect code blocks
+    visit(tree, 'element', (node: Element, index, parent) => {
+      if (node.tagName !== 'pre') {
+        return;
+      }
+      if (typeof index !== 'number' || !parent) {
+        return;
+      }
+
+      const codeChild = node.children[0];
+      if (
+        !codeChild ||
+        codeChild.type !== 'element' ||
+        codeChild.tagName !== 'code'
+      ) {
+        return;
+      }
+
+      // skip mermaid blocks (handle via rehype-mermaid-placeholder)
+      const className = codeChild.properties?.className;
+      const classNames = Array.isArray(className) ? className : [];
+      if (classNames.some((c) => String(c) === 'language-mermaid')) {
+        return;
+      }
+
+      // extract language & code content
+      const lang = extractLanguage(className);
+      const textNode = codeChild.children[0] as Text | undefined;
+      const code = textNode?.type === 'text' ? textNode.value : '';
+
+      if (!code.trim()) {
+        return;
+      }
+
+      // parse meta from data attribute (set by MDX/remark)
+      const metaStr =
+        (codeChild.properties?.['data-meta'] as string) ||
+        (node.properties?.['data-meta'] as string) ||
+        '';
+      const meta = parseMeta(metaStr);
+
+      nodesToProcess.push({
+        node,
+        parent: parent as Element,
+        index,
+        lang: lang || 'plaintext',
+        code,
+        meta,
+      });
+    });
+
+    // second pass: apply highlighting
+    for (const { parent, index, lang, code, meta } of nodesToProcess) {
+      try {
+        // resolve alias first (e.g., 'js' -> 'javascript', 'ts' -> 'typescript')
+        const resolvedLang = resolveLanguageAlias(lang);
+        // use supported language or fall back to plaintext
+        const highlightLang = isLanguageSupported(resolvedLang)
+          ? resolvedLang
+          : 'text';
+
+        // generate HTML w/ CSS variables (themeable via external CSS)
+        const html = highlighter.codeToHtml(code, {
+          lang: highlightLang,
+          theme: 'css-variables',
+          transformers: highlightLang === 'diff' ? [diffTransformer] : [],
+        });
+
+        // create wrapper w/ code block
+        const wrapper = createCodeBlockWrapper({
+          html,
+          lang,
+          meta,
+          code,
+        });
+
+        parent.children[index] = wrapper;
+      } catch {
+        // on error, leave original code block
+      }
+    }
+  };
+}
+
+// create wrapper element w/ code block, title bar, etc
+function createCodeBlockWrapper(options: {
+  html: string;
+  lang: string;
+  meta: CodeMeta;
+  code: string;
+}): Element {
+  const { html, lang, meta, code } = options;
+
+  const children: ElementContent[] = [];
+
+  // optional title bar
+  if (meta.title) {
+    children.push({
+      type: 'element',
+      tagName: 'div',
+      properties: { className: ['mdx-preview-codeblock-title'] },
+      children: [{ type: 'text', value: meta.title }],
+    });
+  }
+
+  // code container w/ CSS variable-based highlighting
+  const codeContainer: Element = {
+    type: 'element',
+    tagName: 'div',
+    properties: {
+      className: [
+        'mdx-preview-codeblock-shiki',
+        meta.showLineNumbers ? 'with-line-numbers' : '',
+      ].filter(Boolean),
+      'data-language': lang,
+      // for copy button
+      'data-code': code,
+    },
+    children: [
+      // single themed version using CSS variables
+      ...htmlToHastFragment(html),
+    ],
+  };
+
+  // apply line highlighting classes if specified
+  if (meta.highlightLines.size > 0) {
+    codeContainer.properties!['data-highlight-lines'] = Array.from(
+      meta.highlightLines
+    ).join(',');
+  }
+
+  children.push(codeContainer);
+
+  return {
+    type: 'element',
+    tagName: 'div',
+    properties: { className: ['mdx-preview-codeblock'] },
+    children,
+  };
+}

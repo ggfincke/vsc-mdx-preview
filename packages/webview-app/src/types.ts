@@ -1,18 +1,14 @@
 // packages/webview-app/src/types.ts
 // shared types for MDX Preview webview
 
-// re-export shared types from @mdx-preview/shared-types
+// re-export shared types from @mdx-preview/shared
 export type {
   TrustState,
   FetchResult,
   PreviewError,
   ExtensionRPC,
   WebviewRPC,
-} from '@mdx-preview/shared-types';
-
-// alias for backward compatibility
-import type { ExtensionRPC } from '@mdx-preview/shared-types';
-export type ExtensionHandleMethods = ExtensionRPC;
+} from '@mdx-preview/shared';
 
 // preview content for Trusted Mode
 export interface TrustedPreviewContent {
@@ -32,7 +28,7 @@ export interface SafePreviewContent {
 export type PreviewContent = TrustedPreviewContent | SafePreviewContent;
 
 // complete preview state managed by App component
-import type { TrustState, PreviewError } from '@mdx-preview/shared-types';
+import type { TrustState, PreviewError } from '@mdx-preview/shared';
 export interface PreviewState {
   trustState: TrustState;
   content: PreviewContent | null;

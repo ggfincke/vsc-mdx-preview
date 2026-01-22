@@ -1,61 +1,27 @@
 // packages/extension/tailwind/TailwindProcessor.ts
 // orchestrate Tailwind detection, scanning, compilation, & caching
-//
-// error handling strategy:
-// - this is the orchestrator - catches all errors from child modules
-// - Compilation failures are logged at ERROR level (user-facing) via logError()
-// - Returns safe defaults { css: '', watchFiles: [], enabled: false } on failure
-// - File stat errors in cache key building are silently handled (non-critical)
 
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { performance } from 'perf_hooks';
 import * as vscode from 'vscode';
-import { debug, error as logError, warn } from '../logging';
+import { debug, warn } from '../logging';
+import { SingletonService } from '../services/SingletonService';
+import { getErrorReporter, getFrameworkDetector } from '../services';
+import type { ResolutionContext } from '../module-system/resolver/UnifiedResolver';
+import { ErrorContext, ErrorSeverity } from '../errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
 import { TailwindCache } from './TailwindCache';
 import { TailwindCompiler, type TailwindVersion } from './TailwindCompiler';
 import {
-  DEFAULT_MAX_FILE_SIZE_BYTES,
-  DEFAULT_MAX_CSS_FILES_TO_SEARCH,
-  PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES,
-  PROCESSOR_CACHE_DEFAULT_TTL_SECONDS,
   MIN_SUPPORTED_TAILWIND_VERSION,
   MAX_KNOWN_TAILWIND_VERSION,
 } from './constants';
 import type { Preview } from '../preview/preview-manager';
-import type { TrustState } from '@mdx-preview/shared-types';
-
-interface TailwindSettings {
-  maxFileSizeBytes: number;
-  maxCssFilesToSearch: number;
-  cacheMaxEntries: number;
-  cacheTtlSeconds: number;
-}
-
-function getTailwindSettings(): TailwindSettings {
-  const config = vscode.workspace.getConfiguration('mdx-preview.tailwind');
-  return {
-    maxFileSizeBytes: config.get<number>(
-      'maxFileSizeBytes',
-      DEFAULT_MAX_FILE_SIZE_BYTES
-    ),
-    maxCssFilesToSearch: config.get<number>(
-      'maxCssFilesToSearch',
-      DEFAULT_MAX_CSS_FILES_TO_SEARCH
-    ),
-    cacheMaxEntries: config.get<number>(
-      'cacheMaxEntries',
-      PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES
-    ),
-    cacheTtlSeconds: config.get<number>(
-      'cacheTtlSeconds',
-      PROCESSOR_CACHE_DEFAULT_TTL_SECONDS
-    ),
-  };
-}
+import { normalizeError, type TrustState } from '@mdx-preview/shared';
+import type { TailwindConfig } from '../config/EffectivePreviewConfig';
 
 export interface TailwindProcessOptions {
   preview: Preview;
@@ -63,6 +29,7 @@ export interface TailwindProcessOptions {
   entryFilePath: string;
   entryFileDependencies: string[];
   trustState: TrustState;
+  tailwindConfig: TailwindConfig;
 }
 
 export interface TailwindProcessResult {
@@ -71,18 +38,20 @@ export interface TailwindProcessResult {
   enabled: boolean;
 }
 
-export class TailwindProcessor {
-  private static instance: TailwindProcessor;
+export class TailwindProcessor extends SingletonService<TailwindProcessor> {
+  protected static override instance: TailwindProcessor | undefined;
+  protected readonly logTag = 'TAILWIND';
+
   private detector = new TailwindDetector();
   private scanner = new TailwindScanner();
   private cache = new TailwindCache();
   private compiler = new TailwindCompiler();
 
-  static getInstance(): TailwindProcessor {
-    if (!TailwindProcessor.instance) {
-      TailwindProcessor.instance = new TailwindProcessor();
-    }
-    return TailwindProcessor.instance;
+  // tracks workspaces where v3 deprecation warning has been shown (once per session)
+  private v3WarningShown = new Set<string>();
+
+  protected constructor() {
+    super();
   }
 
   async process(
@@ -94,17 +63,13 @@ export class TailwindProcessor {
       entryFilePath,
       entryFileDependencies,
       trustState,
+      tailwindConfig,
     } = options;
 
-    const configTailwind = preview.mdxPreviewConfig?.config.tailwind;
-    const enabledSetting =
-      configTailwind?.enabled ?? preview.configuration.tailwindEnabled;
-
-    // read settings & update cache if changed
-    const settings = getTailwindSettings();
+    // update cache settings from unified config
     this.cache.updateSettings({
-      maxEntries: settings.cacheMaxEntries,
-      ttlMs: settings.cacheTtlSeconds * 1000,
+      maxEntries: tailwindConfig.cacheMaxEntries,
+      ttlMs: tailwindConfig.cacheTtlSeconds * 1000,
     });
 
     debug('[TAILWIND] Process start');
@@ -113,7 +78,7 @@ export class TailwindProcessor {
       return { css: '', watchFiles: [], enabled: false };
     }
 
-    if (enabledSetting === 'disabled') {
+    if (tailwindConfig.enabled === 'disabled') {
       return { css: '', watchFiles: [], enabled: false };
     }
 
@@ -121,26 +86,27 @@ export class TailwindProcessor {
       docUri: preview.doc.uri,
       entryDir: preview.entryFsDirectory,
     });
+    const configPathOverride = tailwindConfig.configPath;
     const configPath = this.detector.resolveConfigPath({
       entryDir: preview.entryFsDirectory,
       workspaceRoot,
-      configOverride: configTailwind?.configPath,
+      configOverride: configPathOverride,
       configDir: preview.mdxPreviewConfig?.configDir,
     });
     const entryCssPath = await this.detector.resolveEntryCssPath({
       workspaceRoot,
       entryDir: preview.entryFsDirectory,
-      maxCssFilesToSearch: settings.maxCssFilesToSearch,
+      maxCssFilesToSearch: tailwindConfig.maxCssFilesToSearch,
     });
 
-    if (enabledSetting === 'auto' && !configPath && !entryCssPath) {
+    if (tailwindConfig.enabled === 'auto' && !configPath && !entryCssPath) {
       return { css: '', watchFiles: [], enabled: false };
     }
 
     const versionInfo =
       this.detector.getWorkspaceTailwindVersion(workspaceRoot);
 
-    // Guard for unsupported versions (v1, v2)
+    // guard for unsupported versions (v1, v2)
     if (
       versionInfo.major !== null &&
       versionInfo.major < MIN_SUPPORTED_TAILWIND_VERSION
@@ -151,7 +117,7 @@ export class TailwindProcessor {
       return { css: '', watchFiles: [], enabled: false };
     }
 
-    // Warn about unknown future versions (may need updates)
+    // warn about unknown future versions (may need updates)
     if (
       versionInfo.major !== null &&
       versionInfo.major > MAX_KNOWN_TAILWIND_VERSION
@@ -165,16 +131,36 @@ export class TailwindProcessor {
     // TODO: Add explicit v5 handling when released
     const tailwindVersion: TailwindVersion =
       versionInfo.major === 3 ? 'v3' : 'v4';
+
+    // warn about v3 deprecation (once per workspace per session)
+    if (tailwindVersion === 'v3') {
+      this.warnTailwindV3Deprecation(workspaceRoot);
+    }
+
     const baseDir = configPath
       ? path.dirname(configPath)
       : (workspaceRoot ?? preview.entryFsDirectory);
+
+    // build ResolutionContext for Tailwind scanning (parity w/ module-system)
+    const frameworkDetector = getFrameworkDetector();
+    const frameworkInfo = frameworkDetector.getFramework(preview.doc.uri);
+    const shimsEnabled = frameworkDetector.areShimsEnabled(preview.doc.uri);
+
+    const resolutionContext: ResolutionContext = {
+      baseDir: preview.entryFsDirectory ?? path.dirname(entryFilePath),
+      tsConfig: preview.typescriptConfiguration,
+      framework: frameworkInfo.framework,
+      workspaceRoot: workspaceRoot ?? preview.entryFsDirectory ?? undefined,
+      shimsEnabled,
+    };
 
     const scanStart = performance.now();
     const scanResult = await this.scanner.scan(mdxText, {
       includeDependencies: true,
       entryFilePath,
       entryFileDependencies,
-      maxFileSizeBytes: settings.maxFileSizeBytes,
+      maxFileSizeBytes: tailwindConfig.maxFileSizeBytes,
+      resolutionContext,
     });
     const scanDuration = performance.now() - scanStart;
     debug(
@@ -191,8 +177,9 @@ export class TailwindProcessor {
       entryCssPath
     );
 
+    // TailwindCache.get() returns string | null (null = expired or missing)
     const cached = this.cache.get(cacheKey);
-    if (cached) {
+    if (cached !== null) {
       return {
         css: cached,
         watchFiles: this.buildWatchFiles(configPath, entryCssPath),
@@ -223,7 +210,14 @@ export class TailwindProcessor {
         enabled: true,
       };
     } catch (error) {
-      logError('Tailwind compilation failed', error);
+      // Tailwind errors are non-blocking
+      getErrorReporter().report(normalizeError(error), {
+          context: ErrorContext.Tailwind,
+          severity: ErrorSeverity.Warning,
+          showNotification: false,
+          metadata: { operation: 'compilation' },
+        }
+      );
       return { css: '', watchFiles: [], enabled: false };
     }
   }
@@ -234,20 +228,10 @@ export class TailwindProcessor {
     this.detector.invalidateVersionCache(workspaceRoot);
   }
 
-  // dispose resources held by the processor - clears caches & any held references
-  dispose(): void {
+  // custom cleanup - clear caches
+  protected override onDispose(): void {
     this.cache.clear();
     this.detector.invalidateVersionCache();
-    debug('[TAILWIND] TailwindProcessor disposed');
-  }
-
-  // static dispose for singleton cleanup
-  static dispose(): void {
-    if (TailwindProcessor.instance) {
-      TailwindProcessor.instance.dispose();
-      // @ts-expect-error - reset singleton for dispose
-      TailwindProcessor.instance = undefined;
-    }
   }
 
   private buildWatchFiles(
@@ -297,10 +281,38 @@ export class TailwindProcessor {
       const stat = await fs.promises.stat(filePath);
       return `${stat.mtimeMs}`;
     } catch (error) {
-      // Return unique error stamp to bust cache on transient errors
-      // This prevents stale cache hits when file is temporarily unreadable
+      // return unique error stamp to bust cache on transient errors
+      // this prevents stale cache hits when file is temporarily unreadable
       debug(`[TAILWIND] Failed to stat file ${filePath}: ${error}`);
       return `error:${Date.now()}`;
     }
+  }
+
+  // warn users about Tailwind v3 deprecation (once per workspace per session)
+  private warnTailwindV3Deprecation(workspaceRoot: string | null): void {
+    const key = workspaceRoot ?? 'default';
+    if (this.v3WarningShown.has(key)) {
+      return;
+    }
+    this.v3WarningShown.add(key);
+
+    warn(
+      '[TAILWIND] Tailwind CSS v3 detected. MDX Preview is optimized for Tailwind v4. ' +
+        'Consider upgrading for improved performance and features.'
+    );
+
+    // show user-facing notification w/ action button
+    vscode.window
+      .showWarningMessage(
+        'MDX Preview: Tailwind CSS v3 detected. Consider upgrading to v4 for best results.',
+        'Upgrade Guide'
+      )
+      .then((selection) => {
+        if (selection === 'Upgrade Guide') {
+          vscode.env.openExternal(
+            vscode.Uri.parse('https://tailwindcss.com/docs/upgrade-guide')
+          );
+        }
+      });
   }
 }

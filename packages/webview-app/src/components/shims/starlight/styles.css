@@ -48,9 +48,29 @@
   margin: 1rem 0;
 }
 
-.mdx-preview-starlight-card-grid.stagger .mdx-preview-starlight-card:nth-child(even) {
-  transform: translateY(0.5rem);
+/* Stagger animation */
+@keyframes starlight-card-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
+.mdx-preview-starlight-card-grid.stagger > .mdx-preview-starlight-card {
+  animation: starlight-card-fade-in 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.mdx-preview-starlight-card-grid.stagger > .mdx-preview-starlight-card:nth-child(1) { animation-delay: 0s; }
+.mdx-preview-starlight-card-grid.stagger > .mdx-preview-starlight-card:nth-child(2) { animation-delay: 0.1s; }
+.mdx-preview-starlight-card-grid.stagger > .mdx-preview-starlight-card:nth-child(3) { animation-delay: 0.2s; }
+.mdx-preview-starlight-card-grid.stagger > .mdx-preview-starlight-card:nth-child(4) { animation-delay: 0.3s; }
+.mdx-preview-starlight-card-grid.stagger > .mdx-preview-starlight-card:nth-child(5) { animation-delay: 0.4s; }
+.mdx-preview-starlight-card-grid.stagger > .mdx-preview-starlight-card:nth-child(6) { animation-delay: 0.5s; }
 
 /* ==================== LinkCard ==================== */
 .mdx-preview-starlight-link-card {

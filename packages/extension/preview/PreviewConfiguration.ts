@@ -4,10 +4,11 @@
 import * as vscode from 'vscode';
 import debounce from 'lodash.debounce';
 import { SecurityPolicy } from '../security/security';
-import { PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS } from '../constants';
+import { getConfigManager } from '../services';
+import type { UpdateMode, TailwindEnabledSetting } from '../config';
 
-export type UpdateMode = 'onType' | 'onSave' | 'manual';
-export type TailwindEnabledSetting = 'auto' | 'enabled' | 'disabled';
+// re-export for backward compatibility
+export type { UpdateMode, TailwindEnabledSetting };
 
 export interface StyleConfiguration {
   useVscodeMarkdownStyles: boolean;
@@ -33,54 +34,39 @@ export interface ConfigChangeResult {
   oldCssPath: string;
 }
 
-// manages preview configuration state & updates.
-// reads from VS Code settings & tracks changes that require preview refresh.
+// manages preview configuration state & updates
+// reads from VS Code settings & tracks changes that require preview refresh
 export class PreviewConfiguration {
   private _configuration: ConfigurationState;
   private _debouncedUpdateWebview: ReturnType<typeof debounce>;
 
   constructor(docUri: vscode.Uri, updateWebviewFn: () => void) {
-    const extensionConfig = vscode.workspace.getConfiguration(
-      'mdx-preview',
-      docUri
-    );
+    const configManager = getConfigManager();
 
-    const debounceDelay = extensionConfig.get<number>(
-      'preview.debounceDelay',
-      PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS
-    );
+    const debounceDelay = configManager.get('preview.debounceDelay', docUri);
 
     this._configuration = {
-      updateMode: extensionConfig.get<UpdateMode>(
-        'preview.updateMode',
-        'onType'
-      ),
+      updateMode: configManager.get('preview.updateMode', docUri),
       debounceDelay,
-      useSucraseTranspiler: extensionConfig.get<boolean>(
+      useSucraseTranspiler: configManager.get(
         'build.useSucraseTranspiler',
-        false
+        docUri
       ),
-      useVscodeMarkdownStyles: extensionConfig.get<boolean>(
+      useVscodeMarkdownStyles: configManager.get(
         'preview.useVscodeMarkdownStyles',
-        true
+        docUri
       ),
-      useWhiteBackground: extensionConfig.get<boolean>(
+      useWhiteBackground: configManager.get(
         'preview.useWhiteBackground',
-        false
+        docUri
       ),
-      customLayoutFilePath: extensionConfig.get<string>(
+      customLayoutFilePath: configManager.get(
         'preview.mdx.customLayoutFilePath',
-        ''
+        docUri
       ),
-      customCss: extensionConfig.get<string>('preview.customCss', ''),
-      securityPolicy: extensionConfig.get<SecurityPolicy>(
-        'preview.security',
-        SecurityPolicy.Strict
-      ),
-      tailwindEnabled: extensionConfig.get<TailwindEnabledSetting>(
-        'tailwind.enabled',
-        'enabled'
-      ),
+      customCss: configManager.get('preview.customCss', docUri),
+      securityPolicy: configManager.get('preview.security', docUri),
+      tailwindEnabled: configManager.get('tailwind.enabled', docUri),
     };
 
     this._debouncedUpdateWebview = debounce(updateWebviewFn, debounceDelay);
@@ -105,50 +91,35 @@ export class PreviewConfiguration {
     return this._debouncedUpdateWebview;
   }
 
-  // Update configuration from VS Code settings.
-  // Returns information about what changed to allow caller to react appropriately.
+  // update configuration from VS Code settings
+  // returns information about what changed to allow caller to react appropriately
   updateConfiguration(
     docUri: vscode.Uri,
     updateWebviewFn: () => void
   ): ConfigChangeResult {
-    const extensionConfig = vscode.workspace.getConfiguration(
-      'mdx-preview',
+    const configManager = getConfigManager();
+
+    const updateMode = configManager.get('preview.updateMode', docUri);
+    const debounceDelay = configManager.get('preview.debounceDelay', docUri);
+    const useSucraseTranspiler = configManager.get(
+      'build.useSucraseTranspiler',
       docUri
     );
-
-    const updateMode = extensionConfig.get<UpdateMode>(
-      'preview.updateMode',
-      'onType'
-    );
-    const debounceDelay = extensionConfig.get<number>(
-      'preview.debounceDelay',
-      PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS
-    );
-    const useSucraseTranspiler = extensionConfig.get<boolean>(
-      'build.useSucraseTranspiler',
-      false
-    );
-    const useVscodeMarkdownStyles = extensionConfig.get<boolean>(
+    const useVscodeMarkdownStyles = configManager.get(
       'preview.useVscodeMarkdownStyles',
-      true
+      docUri
     );
-    const useWhiteBackground = extensionConfig.get<boolean>(
+    const useWhiteBackground = configManager.get(
       'preview.useWhiteBackground',
-      false
+      docUri
     );
-    const customLayoutFilePath = extensionConfig.get<string>(
+    const customLayoutFilePath = configManager.get(
       'preview.mdx.customLayoutFilePath',
-      ''
+      docUri
     );
-    const customCss = extensionConfig.get<string>('preview.customCss', '');
-    const securityPolicy = extensionConfig.get<SecurityPolicy>(
-      'preview.security',
-      SecurityPolicy.Strict
-    );
-    const tailwindEnabled = extensionConfig.get<TailwindEnabledSetting>(
-      'tailwind.enabled',
-      'enabled'
-    );
+    const customCss = configManager.get('preview.customCss', docUri);
+    const securityPolicy = configManager.get('preview.security', docUri);
+    const tailwindEnabled = configManager.get('tailwind.enabled', docUri);
 
     const needsWebviewRefresh =
       useVscodeMarkdownStyles !== this._configuration.useVscodeMarkdownStyles ||

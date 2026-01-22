@@ -2,6 +2,7 @@
 // shared container component for SafePreview & TrustedPreview
 
 import type { ReactNode, RefObject, MouseEvent } from 'react';
+import { cn } from '../../utils/cn';
 import './PreviewContainer.css';
 
 export interface PreviewContainerProps {
@@ -38,14 +39,11 @@ export function PreviewContainer({
   className,
 }: PreviewContainerProps) {
   const baseClass = mode === 'safe' ? 'mdx-safe-preview' : 'mdx-trusted-preview';
-  const combinedClassName = className
-    ? `${baseClass} ${className}`
-    : baseClass;
 
   return (
     <div
       ref={containerRef}
-      className={combinedClassName}
+      className={cn(baseClass, className)}
       data-mode={mode}
       onClick={onImageClick}
     >

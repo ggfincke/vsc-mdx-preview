@@ -1,0 +1,89 @@
+/* packages/webview-app/src/components/shims/base/styles/collapsible.css */
+/* Shared collapsible/details styles using data-attribute selectors */
+/* Works with all frameworks that use BaseCollapsible */
+
+/* ==================== Base Structure ==================== */
+[data-component="collapsible"] {
+  margin: 1rem 0;
+  border: 1px solid var(--vscode-panel-border, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Summary / header element */
+[data-component="collapsible"] > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background-color: var(--vscode-editor-background, #f5f5f5);
+  font-weight: 500;
+  list-style: none;
+  user-select: none;
+}
+
+/* Hide native disclosure markers */
+[data-component="collapsible"] > summary::-webkit-details-marker {
+  display: none;
+}
+
+[data-component="collapsible"] > summary::marker {
+  display: none;
+}
+
+[data-component="collapsible"] > summary:hover {
+  background-color: var(--vscode-list-hoverBackground, rgba(0, 0, 0, 0.05));
+}
+
+/* Icon container */
+[data-component="collapsible"] > summary > [class*="-icon"] {
+  display: inline-flex;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+/* Icon rotation when open */
+[data-component="collapsible"] > summary > [class*="-icon"].open,
+[data-component="collapsible"] > summary > [class*="-icon"].expanded {
+  transform: rotate(90deg);
+}
+
+[data-component="collapsible"] > summary > [class*="-icon"] svg {
+  width: 1em;
+  height: 1em;
+}
+
+/* Title text */
+[data-component="collapsible"] > summary > [class*="-title"],
+[data-component="collapsible"] > summary > [class*="-text"] {
+  flex: 1;
+}
+
+/* Content container */
+[data-component="collapsible"] > [class*="-content"] {
+  padding: 1rem;
+  border-top: 1px solid var(--vscode-panel-border, #e0e0e0);
+}
+
+[data-component="collapsible"] > [class*="-content"] > :first-child {
+  margin-top: 0;
+}
+
+[data-component="collapsible"] > [class*="-content"] > :last-child {
+  margin-bottom: 0;
+}
+
+/* ==================== Dark Mode ==================== */
+
+.vscode-dark [data-component="collapsible"] {
+  border-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark [data-component="collapsible"] > summary {
+  background-color: var(--vscode-editor-background, #1e1e1e);
+}
+
+.vscode-dark [data-component="collapsible"] > [class*="-content"] {
+  border-top-color: var(--vscode-panel-border, #333);
+}

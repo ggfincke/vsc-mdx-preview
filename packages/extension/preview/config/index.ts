@@ -14,6 +14,13 @@ export {
   type ResolvedConfig,
 } from './ConfigResolver';
 
+// re-export config change types from ConfigCache
+export {
+  ConfigChangeType,
+  type ConfigChangeEvent,
+  type ConfigChangeCallback,
+} from '../../config/ConfigCache';
+
 export {
   resolveTypescriptConfig,
   findTsConfig,

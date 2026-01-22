@@ -4,13 +4,14 @@
 import * as typescript from 'typescript';
 import { error as logError } from '../../logging';
 
-export interface TypeScriptConfiguration {
-  tsCompilerOptions: typescript.CompilerOptions;
-  tsCompilerHost: typescript.CompilerHost;
-}
+// import consolidated type from module-system/types.ts
+import type { TypeScriptConfiguration } from '../../module-system/types';
+
+// re-export type for backward compatibility
+export type { TypeScriptConfiguration };
 
 // resolve TypeScript configuration from a tsconfig.json file
-// handles extends, paths, baseUrl, references, etc.
+// handles extends, paths, baseUrl, references, etc
 export function resolveTypescriptConfig(
   configFile: string | null
 ): TypeScriptConfiguration {

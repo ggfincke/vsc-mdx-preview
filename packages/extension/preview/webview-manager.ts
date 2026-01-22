@@ -13,7 +13,9 @@ import { getCSP, generateNonce } from '../security/CSP';
 import { initRPCExtensionSide } from '../rpc-extension';
 import { getPreviewManager, getTrustManager } from '../services';
 import { debug } from '../logging';
+import { WebviewError } from '../errors';
 import { CSP_DEBUG_PREVIEW_LENGTH } from '../constants';
+import { formatTrustStateForDebug } from '@mdx-preview/shared';
 
 const VIEW_TYPE = 'mdx.preview';
 const MDX_PREVIEW_FOCUS_CONTEXT_KEY = 'mdxPreviewFocus';
@@ -38,15 +40,19 @@ export async function initWebviewAppHTMLResources(
   );
 
   debug(`[WEBVIEW-MGR] Reading manifest from: ${manifestUri.fsPath}`);
-  // Use workspace.fs.readFile for extension resources (works in remote/virtual scenarios)
+  // use workspace.fs.readFile for extension resources (works in remote/virtual scenarios)
   const manifestBytes = await vscode.workspace.fs.readFile(manifestUri);
   const manifestContent = new TextDecoder().decode(manifestBytes);
   const manifest = JSON.parse(manifestContent);
 
-  // The entry is "index.html"
+  // the entry is "index.html"
   const entry = manifest['index.html'];
   if (!entry) {
-    throw new Error('Could not find index.html entry in Vite manifest');
+    throw new WebviewError(
+      'Could not find index.html entry in Vite manifest',
+      'E600',
+      'init'
+    );
   }
 
   const webviewAppBaseUri = vscode.Uri.joinPath(
@@ -83,7 +89,7 @@ function getWebviewAppHTML(
 
   const { useVscodeMarkdownStyles, useWhiteBackground } = styleConfiguration;
 
-  // Convert extension URIs to webview URIs
+  // convert extension URIs to webview URIs
   const scriptUri = webview.asWebviewUri(webviewAppUris.mainScript);
   const styleUri = webviewAppUris.mainStyle
     ? webview.asWebviewUri(webviewAppUris.mainStyle)
@@ -142,16 +148,14 @@ function setPanelHTMLFromPreview(preview: Preview): void {
   const { doc, styleConfiguration } = preview;
   const previewBaseHref = panel.webview.asWebviewUri(doc.uri).toString(true);
 
-  // Get current trust state (document-specific, includes remote/scheme checks)
+  // get current trust state (document-specific, includes remote/scheme checks)
   const trustState = getTrustManager().getStateForDocument(doc.uri);
-  debug(
-    `[WEBVIEW-MGR] Trust state: canExecute=${trustState.canExecute}, workspaceTrusted=${trustState.workspaceTrusted}, scriptsEnabled=${trustState.scriptsEnabled}`
-  );
+  debug(formatTrustStateForDebug('WEBVIEW-MGR', trustState));
 
-  // Generate nonce for script tags
+  // generate nonce for script tags
   const nonce = generateNonce();
 
-  // Get CSP based on trust state
+  // get CSP based on trust state
   const csp = getCSP(
     panel.webview,
     nonce,
@@ -182,8 +186,8 @@ export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
   debug('[WEBVIEW-MGR] createOrShowPanel called');
   const manager = getPreviewManager();
 
-  // Use ViewColumn.Beside to open preview next to the active editor
-  // This is the modern VS Code approach that handles edge cases better
+  // use ViewColumn.Beside to open preview next to the active editor
+  // this is the modern VS Code approach that handles edge cases better
   const previewColumn = vscode.ViewColumn.Beside;
   const previewTitle = `Preview ${path.basename(preview.doc.fileName)}`;
 
@@ -193,7 +197,7 @@ export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
 
   if (!panel) {
     debug('[WEBVIEW-MGR] Creating new webview panel');
-    // Set up local resource roots for security
+    // set up local resource roots for security
     const localResourceRoots: vscode.Uri[] = [];
     const extensionUri = manager.getExtensionUri();
     if (extensionUri) {
@@ -212,7 +216,7 @@ export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
       previewColumn,
       {
         enableScripts: true,
-        // SECURITY: Disable command URIs - preview content should not execute VS Code commands
+        // ! disable command URIs - preview content should not execute VS Code commands
         enableCommandUris: false,
         retainContextWhenHidden: true,
         localResourceRoots,
@@ -270,7 +274,7 @@ export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
     );
     if (panelDoc !== preview.doc) {
       debug('[WEBVIEW-MGR] Different doc, reinitializing handshake');
-      // Re-initialize handshake since we're resetting the webview HTML
+      // re-initialize handshake since we're resetting the webview HTML
       preview.initWebviewHandshakePromise();
       panel.title = previewTitle;
       setPanelHTMLFromPreview(preview);
@@ -299,7 +303,7 @@ export function refreshPanel(preview: Preview): void {
     debug('[WEBVIEW-MGR] refreshPanel: no panel');
     return;
   }
-  // Re-initialize handshake since we're resetting the webview HTML
+  // re-initialize handshake since we're resetting the webview HTML
   debug('[WEBVIEW-MGR] Reinitializing handshake for refresh');
   preview.initWebviewHandshakePromise();
   // reveal in current column & preserve focus

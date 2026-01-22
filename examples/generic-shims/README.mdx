@@ -1,0 +1,539 @@
+---
+title: Generic Component Shims
+description: Framework-agnostic components that work without imports
+---
+
+# Generic Component Shims
+
+MDX Preview provides built-in generic components that work across all frameworks. These components are available in **both Trusted Mode and Safe Mode** - no imports required!
+
+> [!TIP]
+> These components work without any imports in Trusted Mode. In Safe Mode, they're automatically transformed to semantic HTML.
+
+---
+
+## Callout / Alert / Admonition
+
+All three names work identically - they're aliases for the same component:
+
+<Callout type="note">
+  This is a **Callout** component with `type="note"`.
+</Callout>
+
+<Alert type="tip">
+  This is an **Alert** component. Same component, different name!
+</Alert>
+
+<Admonition type="warning">
+  This is an **Admonition** component. Another alias for the same thing.
+</Admonition>
+
+---
+
+## Callout Types
+
+The Callout component supports 7 types, each with its own icon and color scheme:
+
+### Note
+
+<Callout type="note">
+  **Note** - Use for general information and context. Blue color scheme with an info icon.
+</Callout>
+
+### Tip
+
+<Callout type="tip">
+  **Tip** - Use for helpful suggestions and best practices. Green color scheme with a lightbulb icon.
+</Callout>
+
+### Info
+
+<Callout type="info">
+  **Info** - Use for informational content. Blue color scheme, similar to note.
+</Callout>
+
+### Warning
+
+<Callout type="warning">
+  **Warning** - Use for potential issues and gotchas. Amber/orange color scheme with a warning icon.
+</Callout>
+
+### Danger
+
+<Callout type="danger">
+  **Danger** - Use for critical warnings about breaking changes or security. Red color scheme with an X icon.
+</Callout>
+
+### Caution
+
+<Callout type="caution">
+  **Caution** - Use for proceed-with-care situations. Amber/orange color scheme.
+</Callout>
+
+### Important
+
+<Callout type="important">
+  **Important** - Use for key information that shouldn't be missed. Purple color scheme with a check icon.
+</Callout>
+
+---
+
+## Callout with Custom Title
+
+Override the default type-based title:
+
+<Callout type="tip" title="Pro Tip">
+  You can customize the title to make it more specific to your content!
+</Callout>
+
+<Callout type="warning" title="Breaking Change in v3.0">
+  The API signature has changed. Please update your code before upgrading.
+</Callout>
+
+<Callout type="danger" title="Security Advisory - CVE-2024-1234">
+  A critical vulnerability has been discovered. Update immediately.
+</Callout>
+
+<Callout type="note" title="Historical Context">
+  This feature was introduced in version 1.5 based on community feedback.
+</Callout>
+
+---
+
+## Callout with Custom Icon
+
+Override the default icon with any React element:
+
+<Callout type="note" icon="🎉">
+  Custom emoji icon instead of the default info icon!
+</Callout>
+
+<Callout type="tip" icon="🚀">
+  Rocket emoji for a launch-related tip!
+</Callout>
+
+<Callout type="warning" icon="⚠️">
+  Using an emoji warning sign.
+</Callout>
+
+<Callout type="danger" icon="🔥">
+  Fire emoji for a hot issue!
+</Callout>
+
+---
+
+## Type Aliases
+
+The following type aliases are normalized to standard types:
+
+<Callout type="success">
+  `type="success"` normalizes to `"tip"` - green styling.
+</Callout>
+
+<Callout type="error">
+  `type="error"` normalizes to `"danger"` - red styling.
+</Callout>
+
+<Callout type="warn">
+  `type="warn"` normalizes to `"warning"` - amber styling.
+</Callout>
+
+<Callout type="hint">
+  `type="hint"` normalizes to `"tip"` - green styling.
+</Callout>
+
+---
+
+## Collapsible / Accordion / Details
+
+All three names work identically for collapsible sections:
+
+<Collapsible title="Click to expand this Collapsible">
+  This content is hidden by default. Click the title to reveal it!
+
+  You can include any content here:
+  - Lists
+  - **Formatting**
+  - Code blocks
+</Collapsible>
+
+<Accordion title="This is an Accordion">
+  Same component as Collapsible, just a different name.
+  Some design systems call this an accordion.
+</Accordion>
+
+<Details title="This is a Details component">
+  Another alias for the same collapsible behavior.
+  Named after the HTML `<details>` element it uses internally.
+</Details>
+
+---
+
+## Collapsible with defaultOpen
+
+Start expanded using `defaultOpen` or `defaultOpen={true}`:
+
+<Collapsible title="This section starts expanded" defaultOpen>
+  This content is visible when the page loads.
+
+  Use `defaultOpen` for important content that should be visible by default
+  but can still be collapsed to save space.
+</Collapsible>
+
+<Collapsible title="This section starts collapsed">
+  This content is hidden by default. You have to click to see it.
+</Collapsible>
+
+---
+
+## Collapsible with summary Prop
+
+The `summary` prop is an alias for `title`:
+
+<Collapsible summary="Using the summary prop">
+  The `summary` prop works the same as `title`.
+  This provides compatibility with native HTML details syntax.
+</Collapsible>
+
+---
+
+## Nested Collapsibles
+
+<Collapsible title="Outer Section">
+  This is the outer collapsible content.
+
+  <Collapsible title="Nested Section">
+    This is a nested collapsible inside the outer one!
+
+    You can nest as deeply as needed.
+  </Collapsible>
+
+  More content in the outer section after the nested part.
+</Collapsible>
+
+---
+
+## Collapsible with Rich Content
+
+<Collapsible title="Complete API Reference">
+  ## API Methods
+
+  Here's the complete list of available methods:
+
+  ### `create(options)`
+
+  Create a new instance:
+
+  ```javascript
+  const instance = create({
+    name: 'my-instance',
+    config: {
+      debug: true,
+      timeout: 5000
+    }
+  });
+  ```
+
+  ### `destroy()`
+
+  Clean up resources:
+
+  ```javascript
+  instance.destroy();
+  ```
+
+  ### Configuration Options
+
+  | Option | Type | Default | Description |
+  |--------|------|---------|-------------|
+  | `name` | `string` | required | Instance name |
+  | `debug` | `boolean` | `false` | Enable debug mode |
+  | `timeout` | `number` | `3000` | Request timeout in ms |
+</Collapsible>
+
+---
+
+## Tabs / TabItem / Tab
+
+Create tabbed content with the Tabs component:
+
+<Tabs>
+  <TabItem value="js" label="JavaScript">
+    ```javascript
+    function greet(name) {
+      return `Hello, ${name}!`;
+    }
+
+    console.log(greet('World'));
+    ```
+  </TabItem>
+  <TabItem value="ts" label="TypeScript">
+    ```typescript
+    function greet(name: string): string {
+      return `Hello, ${name}!`;
+    }
+
+    console.log(greet('World'));
+    ```
+  </TabItem>
+  <TabItem value="py" label="Python">
+    ```python
+    def greet(name):
+        return f"Hello, {name}!"
+
+    print(greet("World"))
+    ```
+  </TabItem>
+</Tabs>
+
+---
+
+## Tab Alias
+
+`Tab` is an alias for `TabItem`:
+
+<Tabs>
+  <Tab value="first" label="First Tab">
+    Content for the first tab using the `Tab` alias.
+  </Tab>
+  <Tab value="second" label="Second Tab">
+    Content for the second tab.
+  </Tab>
+</Tabs>
+
+---
+
+## Tabs with defaultValue
+
+Set a specific tab as the default:
+
+<Tabs defaultValue="option2">
+  <TabItem value="option1" label="Option 1">
+    Not selected by default.
+  </TabItem>
+  <TabItem value="option2" label="Option 2">
+    **This tab is selected by default** via `defaultValue="option2"`.
+  </TabItem>
+  <TabItem value="option3" label="Option 3">
+    Also not selected by default.
+  </TabItem>
+</Tabs>
+
+---
+
+## Tabs with Rich Content
+
+<Tabs>
+  <TabItem value="overview" label="Overview">
+    ## Feature Overview
+
+    This feature provides:
+
+    - Automatic detection
+    - Smart defaults
+    - Full customization
+
+    | Aspect | Behavior |
+    |--------|----------|
+    | Detection | Automatic |
+    | Defaults | Sensible |
+    | Override | Supported |
+  </TabItem>
+  <TabItem value="code" label="Code Example">
+    ```typescript
+    interface Config {
+      enabled: boolean;
+      options: {
+        mode: 'auto' | 'manual';
+        timeout: number;
+      };
+    }
+
+    const defaultConfig: Config = {
+      enabled: true,
+      options: {
+        mode: 'auto',
+        timeout: 5000
+      }
+    };
+    ```
+  </TabItem>
+  <TabItem value="api" label="API Reference">
+    ### Methods
+
+    #### `configure(options)`
+
+    Update the configuration:
+
+    ```javascript
+    configure({
+      enabled: true,
+      options: { mode: 'manual' }
+    });
+    ```
+
+    #### `reset()`
+
+    Reset to defaults:
+
+    ```javascript
+    reset();
+    ```
+  </TabItem>
+</Tabs>
+
+---
+
+## CodeGroup
+
+Group multiple code blocks into a tabbed interface. Labels are auto-extracted from language or title:
+
+<CodeGroup>
+```javascript
+// JavaScript implementation
+function add(a, b) {
+  return a + b;
+}
+```
+```typescript
+// TypeScript implementation
+function add(a: number, b: number): number {
+  return a + b;
+}
+```
+```python
+# Python implementation
+def add(a, b):
+    return a + b
+```
+</CodeGroup>
+
+---
+
+## CodeGroup with Explicit Labels
+
+Use the `labels` prop to override auto-detected labels:
+
+<CodeGroup labels={["Client Code", "Server Code", "Shared Types"]}>
+```javascript
+// client.js
+async function fetchData() {
+  const response = await fetch('/api/data');
+  return response.json();
+}
+```
+```javascript
+// server.js
+app.get('/api/data', (req, res) => {
+  res.json({ message: 'Hello from server!' });
+});
+```
+```typescript
+// types.ts
+interface ApiResponse {
+  message: string;
+}
+```
+</CodeGroup>
+
+---
+
+## CodeGroup with Titled Code Blocks
+
+When code blocks have titles, those are used as labels:
+
+<CodeGroup>
+```json title="package.json"
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "^18.2.0"
+  }
+}
+```
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "strict": true
+  }
+}
+```
+```yaml title=".eslintrc.yml"
+root: true
+extends:
+  - eslint:recommended
+  - plugin:react/recommended
+```
+</CodeGroup>
+
+---
+
+## Single Code Block in CodeGroup
+
+When there's only one code block, it renders without tabs:
+
+<CodeGroup>
+```bash
+npm install my-package
+```
+</CodeGroup>
+
+---
+
+## Component API Reference
+
+### Callout / Alert / Admonition Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `type` | `'note' \| 'tip' \| 'info' \| 'warning' \| 'danger' \| 'caution' \| 'important'` | `'note'` | Callout type/style |
+| `title` | `string` | Type name | Custom title |
+| `icon` | `ReactNode` | Type icon | Custom icon |
+| `children` | `ReactNode` | required | Content |
+
+**Type Aliases:**
+- `success` → `tip`
+- `error` → `danger`
+- `warn` → `warning`
+- `hint` → `tip`
+
+### Collapsible / Accordion / Details Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `title` | `string` | required | Summary/trigger text |
+| `summary` | `string` | - | Alias for `title` |
+| `defaultOpen` | `boolean` | `false` | Start expanded |
+| `children` | `ReactNode` | required | Collapsible content |
+
+### Tabs Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `defaultValue` | `string` | Initially selected tab value |
+| `children` | `ReactNode` | TabItem components |
+
+### TabItem / Tab Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `value` | `string` | Unique identifier |
+| `label` | `string` | Display label |
+| `children` | `ReactNode` | Tab content |
+
+### CodeGroup Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `labels` | `string[]` | Explicit tab labels |
+| `children` | `ReactNode` | Code block elements |
+
+**Label Auto-Extraction Order:**
+1. `title` prop on code block
+2. `label` prop
+3. `filename` prop
+4. `language` / `lang` prop
+5. Language from className (e.g., `language-javascript`)

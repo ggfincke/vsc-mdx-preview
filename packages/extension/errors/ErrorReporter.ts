@@ -9,7 +9,11 @@ import {
   warn as logWarn,
   debug as logDebug,
 } from '../logging';
-import { ERROR_DEDUPE_WINDOW_DEFAULT_MS } from '../constants';
+import {
+  ERROR_DEDUPE_WINDOW_DEFAULT_MS,
+  ERROR_DEDUPE_MAX_ENTRIES,
+} from '../constants';
+import { SingletonService } from '../services/SingletonService';
 
 // error severity determines handling behavior
 export enum ErrorSeverity {
@@ -37,7 +41,7 @@ export enum ErrorContext {
   Config = 'config',
   // webview communication errors
   Webview = 'webview',
-  // Tailwind CSS processing errors
+  // tailwind CSS processing errors
   Tailwind = 'tailwind',
   // plugin loading errors
   Plugin = 'plugin',
@@ -51,6 +55,8 @@ export interface WebviewErrorHandle {
     message: string;
     code?: string;
     stack?: string;
+    context?: string;
+    recoverable?: boolean;
   }): void;
 }
 
@@ -79,28 +85,28 @@ export interface ReportOptions {
 // - configurable user notifications
 // - webview error display integration
 // - duplicate error suppression
-export class ErrorReporter {
-  private static instance: ErrorReporter | undefined;
+export class ErrorReporter extends SingletonService<ErrorReporter> {
+  protected static override instance: ErrorReporter | undefined;
+  protected readonly logTag = 'ERROR-REPORTER';
+
   private recentErrors = new Map<string, number>();
   private readonly DEFAULT_DEDUPE_WINDOW = ERROR_DEDUPE_WINDOW_DEFAULT_MS;
 
-  private constructor() {}
-
-  static getInstance(): ErrorReporter {
-    if (!ErrorReporter.instance) {
-      ErrorReporter.instance = new ErrorReporter();
-    }
-    return ErrorReporter.instance;
+  protected constructor() {
+    super();
   }
 
   // * main error reporting method
   // logs the error & optionally shows it to the user
-  report(error: Error | ExtensionError | unknown, options: ReportOptions): void {
+  report(
+    error: Error | ExtensionError | unknown,
+    options: ReportOptions
+  ): void {
     const normalizedError = this.normalizeError(error);
     const severity =
       options.severity ?? this.inferSeverity(normalizedError, options.context);
 
-    // Check for duplicate suppression
+    // check for duplicate suppression
     if (this.isDuplicate(normalizedError, options.dedupeWindow)) {
       logDebug(
         `[ERROR-REPORTER] Suppressed duplicate: ${normalizedError.message}`
@@ -113,7 +119,11 @@ export class ErrorReporter {
 
     // handle notifications based on severity & options
     if (options.showInWebview && options.webviewHandle) {
-      this.sendToWebview(normalizedError, options.webviewHandle);
+      this.sendToWebview(
+        normalizedError,
+        options.webviewHandle,
+        options.context
+      );
     } else if (this.shouldNotify(severity, options)) {
       this.showNotification(normalizedError, severity, options.context);
     }
@@ -159,6 +169,65 @@ export class ErrorReporter {
     });
   }
 
+  // convenience method for config errors - logs & shows warning notification
+  reportConfigError(
+    error: Error | ExtensionError | unknown,
+    configPath?: string,
+    metadata?: Record<string, unknown>
+  ): void {
+    this.report(error, {
+      context: ErrorContext.Config,
+      severity: ErrorSeverity.Warning,
+      showNotification: true,
+      metadata: { configPath, ...metadata },
+    });
+  }
+
+  // convenience method for plugin errors - logs but does NOT show notification
+  // plugin errors are expected in Safe Mode & should not interrupt user
+  reportPluginError(
+    error: Error | ExtensionError | unknown,
+    pluginName: string
+  ): void {
+    this.report(error, {
+      context: ErrorContext.Plugin,
+      severity: ErrorSeverity.Warning,
+      showNotification: false,
+      metadata: { pluginName },
+    });
+  }
+
+  // convenience method for interactive errors w/ action buttons
+  // logs the error & shows a warning w/ clickable actions
+  async reportWithActions(
+    error: Error | ExtensionError | unknown,
+    context: ErrorContext,
+    actions: { label: string; action: () => void | Promise<void> }[]
+  ): Promise<void> {
+    const normalizedError = this.normalizeError(error);
+    const message =
+      normalizedError instanceof ExtensionError
+        ? formatUserError(normalizedError)
+        : normalizedError.message;
+
+    // log the error
+    this.logError(normalizedError, ErrorSeverity.Warning, { context });
+
+    // show warning w/ action buttons
+    const actionLabels = actions.map((a) => a.label);
+    const prefix = this.getContextPrefix(context);
+    const selection = await vscode.window.showWarningMessage(
+      `${prefix}: ${message}`,
+      ...actionLabels
+    );
+
+    // execute selected action
+    const selectedAction = actions.find((a) => a.label === selection);
+    if (selectedAction) {
+      await selectedAction.action();
+    }
+  }
+
   // normalize any error type to ExtensionError or Error
   private normalizeError(error: unknown): ExtensionError | Error {
     if (error instanceof ExtensionError) {
@@ -175,7 +244,7 @@ export class ErrorReporter {
     error: Error | ExtensionError,
     context: ErrorContext
   ): ErrorSeverity {
-    // Security errors are always critical or warning
+    // security errors are always critical or warning
     if (error instanceof ExtensionError) {
       if (error.code === 'PATH_TRAVERSAL') {
         return ErrorSeverity.Critical;
@@ -185,7 +254,7 @@ export class ErrorReporter {
       }
     }
 
-    // Context-based severity mapping
+    // context-based severity mapping
     switch (context) {
       case ErrorContext.Security:
         return ErrorSeverity.Critical;
@@ -239,7 +308,10 @@ export class ErrorReporter {
   }
 
   // determine if notification should be shown
-  private shouldNotify(severity: ErrorSeverity, options: ReportOptions): boolean {
+  private shouldNotify(
+    severity: ErrorSeverity,
+    options: ReportOptions
+  ): boolean {
     // explicit override
     if (options.showNotification !== undefined) {
       return options.showNotification;
@@ -289,10 +361,11 @@ export class ErrorReporter {
     }
   }
 
-  // send error to webview
+  // send error to webview w/ context & recoverable hint
   private sendToWebview(
     error: ExtensionError | Error,
-    handle: WebviewErrorHandle
+    handle: WebviewErrorHandle,
+    context?: ErrorContext
   ): void {
     const message =
       error instanceof ExtensionError ? formatUserError(error) : error.message;
@@ -301,7 +374,27 @@ export class ErrorReporter {
       message,
       code: error instanceof ExtensionError ? error.code : undefined,
       stack: error.stack,
+      context: context,
+      recoverable: this.isRecoverableError(error),
     });
+  }
+
+  // check if error is recoverable (user can fix & retry)
+  private isRecoverableError(error: Error): boolean {
+    if (error instanceof ExtensionError) {
+      // module & transpile errors are typically recoverable by fixing the source
+      // E102 = circular dependency, E120 = parse error, E300 = MDX transpile
+      const recoverableCodes = [
+        'MODULE_NOT_FOUND',
+        'PARSE_ERROR',
+        'TRANSPILE_ERROR',
+        'E102',
+        'E120',
+        'E300',
+      ];
+      return recoverableCodes.includes(error.code);
+    }
+    return true;
   }
 
   // get user-friendly context prefix
@@ -330,9 +423,27 @@ export class ErrorReporter {
       return true;
     }
 
+    // fifo eviction: if map exceeds max size, delete oldest entries
+    if (this.recentErrors.size >= ERROR_DEDUPE_MAX_ENTRIES) {
+      this.evictOldestEntries(Math.ceil(ERROR_DEDUPE_MAX_ENTRIES * 0.1));
+    }
+
     this.recentErrors.set(key, now);
     this.cleanupOldErrors(now - window);
     return false;
+  }
+
+  // fifo eviction of oldest entries when map exceeds size limit
+  private evictOldestEntries(count: number): void {
+    let evicted = 0;
+    for (const key of this.recentErrors.keys()) {
+      if (evicted >= count) {
+        break;
+      }
+      this.recentErrors.delete(key);
+      evicted++;
+    }
+    logDebug(`[${this.logTag}] Evicted ${evicted} oldest entries (FIFO)`);
   }
 
   // clean up old error entries
@@ -344,17 +455,8 @@ export class ErrorReporter {
     }
   }
 
-  // dispose instance resources
-  dispose(): void {
+  // custom cleanup - clear recent errors map
+  protected override onDispose(): void {
     this.recentErrors.clear();
-    logDebug('[ERROR-REPORTER] ErrorReporter disposed');
-  }
-
-  // dispose singleton for cleanup
-  static dispose(): void {
-    if (ErrorReporter.instance) {
-      ErrorReporter.instance.dispose();
-      ErrorReporter.instance = undefined;
-    }
   }
 }

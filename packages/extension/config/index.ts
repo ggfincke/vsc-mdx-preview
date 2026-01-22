@@ -1,5 +1,5 @@
 // packages/extension/config/index.ts
-// Public exports for configuration management
+// public exports for configuration management
 
 export {
   ConfigManager,
@@ -8,3 +8,10 @@ export {
 } from './ConfigManager';
 
 export { ConfigCache } from './ConfigCache';
+
+export type {
+  UpdateMode,
+  TailwindEnabledSetting,
+  FrameworkSetting,
+  UnknownBehaviorSetting,
+} from './types';

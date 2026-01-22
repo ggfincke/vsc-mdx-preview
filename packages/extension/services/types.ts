@@ -1,5 +1,5 @@
 // packages/extension/services/types.ts
-// Type definitions for the service registry system
+// type definitions for the service registry system
 
 // interface that all managed services must implement
 // services can optionally have a dispose method for cleanup

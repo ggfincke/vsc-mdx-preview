@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { injectPreviewTheme, injectCodeBlockTheme } from './loader';
-import type { PreviewTheme, CodeBlockTheme, WebviewThemeState } from './types';
+import type { PreviewTheme, CodeBlockTheme, MermaidTheme, WebviewThemeState } from '@mdx-preview/shared';
 import {
   getCurrentVSCodeTheme,
   onVSCodeThemeChange,
@@ -28,6 +28,7 @@ interface ThemeContextValue {
   // preview theme (pushed from extension)
   previewTheme: PreviewTheme;
   codeBlockTheme: CodeBlockTheme;
+  mermaidTheme: MermaidTheme;
   // handler for extension to push theme state
   setPreviewThemeState: (state: WebviewThemeState) => void;
 }
@@ -50,6 +51,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // preview themes (pushed from extension)
   const [previewTheme, setPreviewTheme] = useState<PreviewTheme>('none');
   const [codeBlockTheme, setCodeBlockTheme] = useState<CodeBlockTheme>('auto');
+  const [mermaidTheme, setMermaidTheme] = useState<MermaidTheme>('default');
   const [isLight, setIsLight] = useState(true);
 
   // track VS Code theme changes (local detection for UI only)
@@ -71,6 +73,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const setPreviewThemeState = useCallback((state: WebviewThemeState) => {
     setPreviewTheme(state.previewTheme);
     setCodeBlockTheme(state.codeBlockTheme);
+    setMermaidTheme(state.mermaidTheme);
     setIsLight(state.isLight);
   }, []);
 
@@ -83,9 +86,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       isHighContrast: vsCodeTheme === 'high-contrast',
       previewTheme,
       codeBlockTheme,
+      mermaidTheme,
       setPreviewThemeState,
     }),
-    [vsCodeTheme, previewTheme, codeBlockTheme, setPreviewThemeState]
+    [vsCodeTheme, previewTheme, codeBlockTheme, mermaidTheme, setPreviewThemeState]
   );
 
   return (

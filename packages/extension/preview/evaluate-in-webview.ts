@@ -1,16 +1,26 @@
 // packages/extension/preview/evaluate-in-webview.ts
-// Evaluate MDX content in webview (orchestrates Trusted/Safe mode evaluation)
+// evaluate MDX content in webview (orchestrates Trusted/Safe mode evaluation)
 
+import * as vscode from 'vscode';
 import { performance } from 'perf_hooks';
 import { Preview } from './preview-manager';
 import { debug } from '../logging';
 import { ErrorContext } from '../errors';
-import { getTrustManager, getErrorReporter } from '../services';
+import {
+  extractErrorMessage,
+  formatTrustStateForDebug,
+} from '@mdx-preview/shared';
+import {
+  getTrustManager,
+  getErrorReporter,
+  getFrameworkDetector,
+} from '../services';
 import { getEvaluationEngine } from './EvaluationEngine';
+import { resolveNextraMeta, mergeNextraMeta } from '../nextra/MetaResolver';
+import { extractNextraFrontmatter } from '../compiler/shared/mdx-common';
+import { buildEffectivePreviewConfig } from '../config/EffectivePreviewConfig';
 
-// evaluate MDX content in the webview
-// routes to Trusted Mode (full code execution) or Safe Mode (static HTML)
-// based on the document's trust state
+// evaluate MDX content in webview (routes to Trusted/Safe mode based on trust state)
 export default async function evaluateInWebview(
   preview: Preview,
   text: string,
@@ -20,15 +30,9 @@ export default async function evaluateInWebview(
   const { webviewHandle } = preview;
   const engine = getEvaluationEngine();
 
-  // Use document-specific trust check (includes remote/scheme checks)
-  const trustState = getTrustManager().getStateForDocument(
-    preview.doc.uri
-  );
-  debug(
-    `[EVALUATE] Trust state: canExecute=${trustState.canExecute}, ` +
-      `workspaceTrusted=${trustState.workspaceTrusted}, ` +
-      `scriptsEnabled=${trustState.scriptsEnabled}`
-  );
+  // use document-specific trust check (includes remote/scheme checks)
+  const trustState = getTrustManager().getStateForDocument(preview.doc.uri);
+  debug(formatTrustStateForDebug('EVALUATE', trustState));
 
   try {
     performance.mark('preview/start');
@@ -37,15 +41,15 @@ export default async function evaluateInWebview(
     await preview.webviewHandshakePromise;
     debug('[EVALUATE] Handshake complete!');
 
-    // Push initial config after handshake
+    // push initial config after handshake
     preview.onWebviewReady();
 
-    // Send trust state to webview
+    // send trust state to webview
     debug('[EVALUATE] Sending trust state to webview');
     webviewHandle.setTrustState(trustState);
 
     if (trustState.canExecute) {
-      // Trusted Mode: full code evaluation
+      // trusted mode: full code evaluation
       debug('[EVALUATE] Using Trusted Mode');
 
       const result = await engine.evaluateTrusted(text, fsPath, preview);
@@ -58,6 +62,14 @@ export default async function evaluateInWebview(
         preview.pushThemeState(result.frontmatter);
       }
 
+      // for Nextra projects, resolve & send page metadata
+      sendNextraMetaIfNeeded(
+        preview,
+        webviewHandle,
+        fsPath,
+        result.frontmatter
+      );
+
       debug('[EVALUATE] Calling webviewHandle.updatePreview');
       webviewHandle.updatePreview(
         result.code,
@@ -66,8 +78,13 @@ export default async function evaluateInWebview(
       );
       debug('[EVALUATE] updatePreview called');
 
-      // Compile Tailwind CSS after preview update (non-blocking)
+      // compile Tailwind CSS after preview update (non-blocking)
       const tailwindRequestId = preview.nextTailwindRequestId();
+      const effectiveConfig = buildEffectivePreviewConfig({
+        docUri: preview.doc.uri,
+        docFsPath: fsPath,
+        frontmatter: result.frontmatter,
+      });
       void engine.processTailwindAsync(
         preview,
         {
@@ -75,15 +92,16 @@ export default async function evaluateInWebview(
           entryFilePath: result.entryFilePath,
           entryFileDependencies: result.dependencies,
           trustState,
+          tailwindConfig: effectiveConfig.tailwind,
         },
         tailwindRequestId,
         webviewHandle
       );
     } else {
-      // Safe Mode: static HTML rendering
+      // safe mode: static HTML rendering
       debug('[EVALUATE] Using Safe Mode');
 
-      // Disable Tailwind in Safe Mode
+      // disable Tailwind in safe mode
       const tailwindRequestId = preview.nextTailwindRequestId();
       if (preview.isTailwindRequestCurrent(tailwindRequestId)) {
         preview.updateTailwindWatchFiles([]);
@@ -97,6 +115,14 @@ export default async function evaluateInWebview(
         preview.pushThemeState(result.frontmatter);
       }
 
+      // for Nextra projects, resolve & send page metadata
+      sendNextraMetaIfNeeded(
+        preview,
+        webviewHandle,
+        fsPath,
+        result.frontmatter
+      );
+
       debug('[EVALUATE] Calling webviewHandle.updatePreviewSafe');
       webviewHandle.updatePreviewSafe(result.html);
       debug('[EVALUATE] updatePreviewSafe called');
@@ -105,7 +131,7 @@ export default async function evaluateInWebview(
     debug('[EVALUATE] evaluateInWebview complete');
   } catch (error) {
     debug(
-      `[EVALUATE] ERROR: ${error instanceof Error ? error.message : String(error)}`
+      `[EVALUATE] ERROR: ${extractErrorMessage(error)}`
     );
     getErrorReporter().report(error, {
       context: ErrorContext.Transpile,
@@ -113,5 +139,45 @@ export default async function evaluateInWebview(
       webviewHandle,
       metadata: { fsPath },
     });
+  }
+}
+
+// resolve & send Nextra page metadata (only runs for Nextra projects)
+function sendNextraMetaIfNeeded(
+  preview: Preview,
+  webviewHandle: Preview['webviewHandle'],
+  fsPath: string,
+  frontmatter: Record<string, unknown> | undefined
+): void {
+  try {
+    const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
+    if (frameworkInfo.framework !== 'nextra') {
+      return;
+    }
+
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(
+      preview.doc.uri
+    );
+    if (!workspaceFolder) {
+      return;
+    }
+
+    // resolve metadata from _meta.json
+    const metaFromJson = resolveNextraMeta(fsPath, workspaceFolder.uri.fsPath);
+
+    // extract Nextra-specific frontmatter
+    const metaFromFrontmatter = extractNextraFrontmatter(frontmatter ?? {});
+
+    // merge (frontmatter overrides _meta.json)
+    const mergedMeta = mergeNextraMeta(metaFromJson, metaFromFrontmatter);
+
+    // only send if we have meaningful metadata
+    if (Object.keys(mergedMeta).length > 0) {
+      debug('[EVALUATE] Sending Nextra meta to webview:', mergedMeta);
+      webviewHandle.setNextraMeta(mergedMeta);
+    }
+  } catch (err) {
+    // non-fatal error, log & continue
+    debug(`[EVALUATE] Error resolving Nextra meta: ${err}`);
   }
 }

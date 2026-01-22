@@ -1,0 +1,394 @@
+---
+title: Safe Mode Demonstration
+description: Understanding how MDX Preview renders content in Safe Mode
+---
+
+# Safe Mode Demonstration
+
+This example demonstrates how MDX Preview renders content in **Safe Mode**. Safe Mode is automatically activated when:
+
+- The workspace is **not trusted**, OR
+- The setting `mdx-preview.preview.enableScripts` is set to `false`
+
+> **Note:** This example includes a `.vscode/settings.json` file that sets `enableScripts` to `false`, ensuring Safe Mode is always used regardless of your global settings.
+
+Safe Mode provides a secure preview by compiling MDX to static HTML without executing any JavaScript.
+
+---
+
+## Feature Comparison
+
+| Feature | Safe Mode | Trusted Mode |
+|---------|:---------:|:------------:|
+| Standard Markdown | Yes | Yes |
+| Code syntax highlighting | Yes | Yes |
+| Math expressions (KaTeX) | Yes | Yes |
+| Mermaid diagrams | Yes | Yes |
+| GitHub alerts | Yes | Yes |
+| Admonition directives | Yes | Yes |
+| Generic component transforms | Yes | Yes |
+| React components | No | Yes |
+| JavaScript expressions | No | Yes |
+| Module imports | No | Yes |
+| Custom plugins | No | Yes |
+| Interactive features | No | Yes |
+
+---
+
+## What Works in Safe Mode
+
+### Standard Markdown
+
+All standard Markdown features work perfectly:
+
+**Bold text**, *italic text*, ~~strikethrough~~, and `inline code`
+
+- Bullet list item 1
+- Bullet list item 2
+  - Nested item
+- Bullet list item 3
+
+1. Numbered item one
+2. Numbered item two
+3. Numbered item three
+
+> Blockquotes work as expected and can span multiple lines.
+
+[Links work](https://example.com) perfectly in Safe Mode.
+
+### Syntax Highlighting
+
+Code blocks have full Shiki-powered syntax highlighting:
+
+```typescript
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  roles: string[];
+}
+
+async function fetchUser(id: string): Promise<User> {
+  const response = await fetch(`/api/users/${id}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user: ${response.status}`);
+  }
+  return response.json();
+}
+```
+
+```python
+def fibonacci(n: int) -> int:
+    """Calculate the nth Fibonacci number."""
+    if n <= 1:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+
+# Generate first 10 Fibonacci numbers
+for i in range(10):
+    print(f"F({i}) = {fibonacci(i)}")
+```
+
+### Tables
+
+| Column 1 | Column 2 | Column 3 |
+|----------|----------|----------|
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |
+
+### GitHub Alerts
+
+> [!NOTE]
+> GitHub-style alerts work in Safe Mode!
+
+> [!TIP]
+> Tips are fully supported.
+
+> [!WARNING]
+> Warnings display correctly.
+
+> [!CAUTION]
+> Caution alerts work too.
+
+### Admonition Directives
+
+:::note
+Admonition directive syntax works fully in Safe Mode!
+:::
+
+:::warning[Custom Title]
+Custom titles are preserved.
+:::
+
+:::tip
+Tips render with proper styling.
+:::
+
+---
+
+## Generic Component Transforms
+
+In Safe Mode, built-in generic components are transformed to semantic HTML:
+
+### Callout Transform
+
+<Callout type="note">
+  In Safe Mode, this Callout becomes an HTML `<aside>` element with appropriate styling.
+</Callout>
+
+<Callout type="warning" title="Static Warning">
+  Custom titles are preserved in the transform.
+</Callout>
+
+<Callout type="danger">
+  All callout types render with their correct icons and colors.
+</Callout>
+
+### Collapsible Transform
+
+<Collapsible title="Click to expand">
+  In Safe Mode, this becomes a native HTML `<details>` element.
+
+  Interactivity comes from the browser's built-in details/summary behavior - no JavaScript required!
+</Collapsible>
+
+<Collapsible title="Another section" defaultOpen>
+  This section starts expanded due to `defaultOpen`.
+</Collapsible>
+
+### Tabs Transform
+
+<Tabs>
+  <TabItem value="a" label="Tab A">
+    Content for Tab A.
+  </TabItem>
+  <TabItem value="b" label="Tab B">
+    Content for Tab B.
+  </TabItem>
+</Tabs>
+
+In Safe Mode, tabs are rendered as sequential sections since tab switching requires JavaScript. A notice indicates that interactive tabs require Trusted Mode.
+
+---
+
+## Unknown Component Handling
+
+When MDX Preview encounters a component it doesn't recognize, it uses the `unknownBehavior` setting to decide how to handle it.
+
+### This Example's Configuration
+
+The `.mdx-previewrc.json` file in this directory sets:
+
+```json
+{
+  "unknownBehavior": "placeholder"
+}
+```
+
+### Unknown Component Example
+
+The following custom component is not built-in:
+
+<MyCustomButton onClick={() => alert('clicked')}>
+  Click me!
+</MyCustomButton>
+
+With `unknownBehavior: "placeholder"`, this shows a styled box indicating the component couldn't be rendered.
+
+### Available Behaviors
+
+#### `"placeholder"` (Default)
+
+Shows a warning box with the component name and its children:
+
+```html
+<div class="mdx-unknown-component-placeholder">
+  <div class="mdx-unknown-component-header">
+    ⚠ <code>&lt;ComponentName&gt;</code>
+    <span>(unknown component)</span>
+  </div>
+  <div class="mdx-unknown-component-content">
+    [children rendered here]
+  </div>
+</div>
+```
+
+#### `"strip"`
+
+Completely removes the component and its children. Nothing is rendered.
+
+To test this, change `.mdx-previewrc.json` to:
+```json
+{
+  "unknownBehavior": "strip"
+}
+```
+
+#### `"raw"`
+
+Removes the component wrapper but renders the children:
+
+```json
+{
+  "unknownBehavior": "raw"
+}
+```
+
+This is useful when you want to see the content but not the component styling.
+
+---
+
+## Expressions in Safe Mode
+
+MDX expressions become placeholders since they require JavaScript evaluation:
+
+### The result of 1 + 1 is: {1 + 1}
+
+### Current timestamp: {Date.now()}
+
+### Dynamic greeting: {`Hello, ${"World"}!`}
+
+In Safe Mode, these expressions are replaced with `<span class="mdx-expression-placeholder">{...}</span>` to indicate they couldn't be evaluated.
+
+---
+
+## Imports Are Ignored
+
+In Safe Mode, import statements are completely stripped:
+
+```mdx
+// These imports would be stripped in Safe Mode:
+import CustomComponent from './CustomComponent';
+import { Button } from 'my-ui-library';
+import data from './data.json';
+
+// And these components won't work:
+<CustomComponent />
+<Button>Click me</Button>
+```
+
+The imported components will either show placeholders, be stripped, or show their children based on the `unknownBehavior` setting.
+
+---
+
+## What You CAN'T Do in Safe Mode
+
+### No Custom React Components
+
+```mdx
+// This won't work:
+import Calculator from './Calculator';
+<Calculator initialValue={0} />
+```
+
+### No Event Handlers
+
+```html
+<!-- Event handlers are removed -->
+<button onclick="alert('clicked')">Click me</button>
+```
+
+### No Dynamic Content
+
+```mdx
+// Dynamic expressions become placeholders:
+{items.map(item => <li key={item.id}>{item.name}</li>)}
+```
+
+### No Custom MDX Plugins
+
+Plugins specified in `.mdx-previewrc.json` are ignored in Safe Mode:
+
+```json
+{
+  "remarkPlugins": ["remark-custom-plugin"],
+  "rehypePlugins": ["rehype-custom-plugin"]
+}
+```
+
+A warning is logged, but the plugins are not loaded.
+
+---
+
+## Best Practices for Safe Mode Compatibility
+
+1. **Prefer Admonition Syntax** - `:::note` works better than `<Callout>` in Safe Mode because it doesn't require component execution.
+
+2. **Use Semantic HTML** - Native HTML elements like `<details>`, `<mark>`, `<kbd>` work everywhere.
+
+3. **Keep Content Static** - Avoid dynamic values when possible.
+
+4. **Provide Fallbacks** - Consider what Safe Mode users will see.
+
+5. **Test in Both Modes** - Verify your content renders appropriately in both modes.
+
+---
+
+## Security Benefits
+
+Safe Mode provides security by:
+
+- **No `eval()` or `Function()` execution** - Code cannot be dynamically executed
+- **Strict Content Security Policy** - CSP headers prevent inline scripts
+- **DOMPurify Sanitization** - All HTML is sanitized before rendering
+- **No Arbitrary Code Execution** - Only pre-compiled static HTML is rendered
+- **XSS Protection** - Script injection is blocked
+
+This makes Safe Mode ideal for:
+
+- Untrusted workspaces
+- Previewing external MDX files
+- Documentation with strict security requirements
+- Public preview environments
+
+---
+
+## Switching Between Modes
+
+### To Enable Trusted Mode
+
+1. Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
+2. Run "Workspaces: Manage Workspace Trust"
+3. Grant trust to the workspace
+4. Open VS Code Settings (`Cmd+,` / `Ctrl+,`)
+5. Search for `mdx-preview.preview.enableScripts`
+6. Check the box to enable scripts
+
+### To Force Safe Mode
+
+Even in a trusted workspace, you can force Safe Mode by:
+
+1. Open VS Code Settings
+2. Search for `mdx-preview.preview.enableScripts`
+3. Uncheck the box (set to `false`)
+
+This is useful for testing how your content renders in Safe Mode.
+
+---
+
+## Configuration Options
+
+### VS Code Settings
+
+```json
+{
+  "mdx-preview.preview.enableScripts": false,
+  "mdx-preview.components.builtins": true,
+  "mdx-preview.components.unknownBehavior": "placeholder"
+}
+```
+
+### Per-Project Configuration
+
+Create `.mdx-previewrc.json`:
+
+```json
+{
+  "unknownBehavior": "placeholder"
+}
+```
+
+Options:
+- `"placeholder"` - Show warning box with component name
+- `"strip"` - Remove component entirely
+- `"raw"` - Show children only, no wrapper

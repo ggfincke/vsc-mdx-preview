@@ -1,11 +1,29 @@
 // packages/extension/config/ConfigCache.ts
-// Encapsulates config cache state for proper lifecycle management
+// encapsulates config cache state for proper lifecycle management
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { debug, warn } from '../logging';
-import type { IService } from '../services/types';
+import { warn } from '../logging';
+import { SingletonService } from '../services/SingletonService';
+import { SubscriberManager } from '../utils/SubscriberManager';
+import { disposeCollection } from '../utils/disposable';
 import type { ResolvedConfig } from '../preview/config/ConfigResolver';
+
+// typed config change event types
+export enum ConfigChangeType {
+  FileChanged = 'fileChanged',
+  FileDeleted = 'fileDeleted',
+  FileCreated = 'fileCreated',
+}
+
+// typed config change event
+export interface ConfigChangeEvent {
+  type: ConfigChangeType;
+  configPath: string;
+  timestamp: number;
+}
+
+export type ConfigChangeCallback = (event: ConfigChangeEvent) => void;
 
 // * manages the cache & file watchers for MDX preview config files
 // encapsulates the global state from ConfigResolver:
@@ -13,23 +31,19 @@ import type { ResolvedConfig } from '../preview/config/ConfigResolver';
 // - configWatchers: Map of config path -> file system watcher
 // - configChangeSubscribers: Set of callbacks for config changes
 // registered w/ ServiceRegistry for proper disposal
-export class ConfigCache implements IService {
-  private static instance: ConfigCache | undefined;
+export class ConfigCache extends SingletonService<ConfigCache> {
+  protected static override instance: ConfigCache | undefined;
+  protected readonly logTag = 'CONFIG-CACHE';
 
   private cache = new Map<string, ResolvedConfig | null>();
   private watchers = new Map<string, vscode.FileSystemWatcher>();
-  private subscribers = new Set<(configPath: string) => void>();
+  private subscriberManager = new SubscriberManager<ConfigChangeEvent>(
+    'CONFIG-CACHE',
+    (err) => warn('[CONFIG-CACHE] Error in config change callback:', err)
+  );
 
-  private constructor() {
-    debug('[CONFIG-CACHE] Initialized');
-  }
-
-  // get the singleton instance
-  static getInstance(): ConfigCache {
-    if (!ConfigCache.instance) {
-      ConfigCache.instance = new ConfigCache();
-    }
-    return ConfigCache.instance;
+  protected constructor() {
+    super();
   }
 
   // get cached config for a directory
@@ -87,43 +101,26 @@ export class ConfigCache implements IService {
   }
 
   // subscribe to config file changes
-  subscribe(callback: (configPath: string) => void): vscode.Disposable {
-    this.subscribers.add(callback);
-    return {
-      dispose: () => {
-        this.subscribers.delete(callback);
-      },
-    };
+  subscribe(callback: ConfigChangeCallback): vscode.Disposable {
+    return this.subscriberManager.subscribe(callback);
   }
 
   // notify subscribers of a config change
-  notifyChange(configPath: string): void {
-    for (const callback of this.subscribers) {
-      try {
-        callback(configPath);
-      } catch (err) {
-        warn('Error in config change callback:', err);
-      }
-    }
+  notifyChange(
+    configPath: string,
+    type: ConfigChangeType = ConfigChangeType.FileChanged
+  ): void {
+    this.subscriberManager.notify({
+      type,
+      configPath,
+      timestamp: Date.now(),
+    });
   }
 
-  // dispose all resources
-  dispose(): void {
-    // dispose all watchers
-    for (const watcher of this.watchers.values()) {
-      watcher.dispose();
-    }
-    this.watchers.clear();
-    this.subscribers.clear();
+  // custom cleanup - clear all caches & watchers
+  protected override onDispose(): void {
+    disposeCollection(this.watchers);
+    this.subscriberManager.clear();
     this.cache.clear();
-    ConfigCache.instance = undefined;
-    debug('[CONFIG-CACHE] Disposed');
-  }
-
-  // reset singleton (for testing)
-  static reset(): void {
-    if (ConfigCache.instance) {
-      ConfigCache.instance.dispose();
-    }
   }
 }

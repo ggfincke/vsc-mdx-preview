@@ -1,17 +1,12 @@
 // packages/webview-app/src/TrustedPreview.tsx
 // render MDX content in Trusted Mode (evaluates transpiled code & renders React component)
 
-import {
-  useEffect,
-  useLayoutEffect,
-  useState,
-  useRef,
-  ComponentType,
-} from 'react';
-import { evaluateModuleToComponent } from './module-loader';
-import { useMermaidRendering, useImageLightbox } from './hooks';
+import { useLayoutEffect, useState, useRef, ComponentType } from 'react';
+import { evaluateModuleToComponent } from './module-system';
+import { useMermaidRendering, useImageLightbox, useAsyncEffect } from './hooks';
 import { PreviewContainer } from './components/PreviewContainer';
 import type { TrustedPreviewContent, PreviewError } from './types';
+import { extractErrorInfo } from '@mdx-preview/shared';
 
 interface TrustedPreviewRendererProps {
   content: TrustedPreviewContent;
@@ -38,48 +33,24 @@ export function TrustedPreviewRenderer({
   });
 
   // evaluate code when content changes
-  useEffect(() => {
-    let cancelled = false;
-
-    async function evaluate() {
-      setIsEvaluating(true);
-
-      try {
-        const component = await evaluateModuleToComponent(
-          content.code,
-          content.entryFilePath,
-          content.dependencies
-        );
-
-        if (!cancelled) {
-          onComponentReady(component);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          const message =
-            error instanceof Error ? error.message : String(error);
-          const stack = error instanceof Error ? error.stack : undefined;
-          onError({ message, stack });
-        }
-      } finally {
-        if (!cancelled) {
-          setIsEvaluating(false);
-        }
-      }
+  useAsyncEffect(
+    async () => {
+      return evaluateModuleToComponent(
+        content.code,
+        content.entryFilePath,
+        content.dependencies
+      );
+    },
+    [content.code, content.entryFilePath, content.dependencies],
+    {
+      onSuccess: onComponentReady,
+      onError: (error) => {
+        const { message, stack } = extractErrorInfo(error);
+        onError({ message, stack });
+      },
+      onLoadingChange: setIsEvaluating,
     }
-
-    evaluate();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    content.code,
-    content.entryFilePath,
-    content.dependencies,
-    onComponentReady,
-    onError,
-  ]);
+  );
 
   // trigger mermaid scan when component becomes available
   // (hook's initial scan runs before container is rendered during loading state)

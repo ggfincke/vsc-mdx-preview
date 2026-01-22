@@ -7,11 +7,4 @@ export {
   type FrameworkInfo,
 } from './FrameworkDetector';
 
-export {
-  getAliasesForFramework,
-  resolveAlias,
-  isBuiltInShim,
-  parseShimPath,
-  SHIM_PREFIX,
-  type AliasConfig,
-} from './alias-resolver';
+// alias resolution moved to module-system/resolver/alias-resolver.ts

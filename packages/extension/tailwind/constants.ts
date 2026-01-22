@@ -4,6 +4,8 @@
 // this file consolidates magic numbers from across the Tailwind module
 // to improve maintainability & documentation.
 
+import { STANDARD_CACHE_TTL_MS } from '@mdx-preview/shared';
+
 // =============================================================================
 // cache configuration
 // =============================================================================
@@ -11,11 +13,11 @@
 // default maximum entries in the CSS cache (LRU eviction)
 export const CACHE_DEFAULT_MAX_ENTRIES = 20;
 
-// default cache TTL in milliseconds (5 minutes)
-export const CACHE_DEFAULT_TTL_MS = 5 * 60 * 1000;
+// default cache TTL in milliseconds (5 minutes) - uses shared constant
+export const CACHE_DEFAULT_TTL_MS = STANDARD_CACHE_TTL_MS;
 
-// version detection cache TTL in milliseconds (5 minutes)
-export const VERSION_CACHE_TTL_MS = 5 * 60 * 1000;
+// version detection cache TTL in milliseconds (5 minutes) - uses shared constant
+export const VERSION_CACHE_TTL_MS = STANDARD_CACHE_TTL_MS;
 
 // =============================================================================
 // processing limits
@@ -23,9 +25,9 @@ export const VERSION_CACHE_TTL_MS = 5 * 60 * 1000;
 
 // maximum characters per @source inline() directive for Tailwind v4
 // Tailwind v4 uses CSS-based `@source inline("...")` directives instead of the
-// v3 `content` configuration option. This limit prevents potential issues w/
+// v3 `content` configuration option - this limit prevents potential issues w/
 // PostCSS or CSS parsers when processing very long inline source strings
-// the value of 2000 is a conservative defensive limit. Content exceeding this
+// the value of 2000 is a conservative defensive limit - content exceeding this
 // is split into multiple @source directives
 export const MAX_INLINE_SOURCE_CHUNK_SIZE = 2000;
 

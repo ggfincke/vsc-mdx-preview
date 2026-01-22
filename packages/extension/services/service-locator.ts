@@ -1,11 +1,11 @@
 // packages/extension/services/service-locator.ts
-// Type-safe service access helpers for the ServiceRegistry
+// type-safe service access helpers for the ServiceRegistry
 
 import { ServiceRegistry } from './ServiceRegistry';
 import { ServiceNames, type ServiceName } from './service-names';
 import type { IService } from './types';
 
-// Import service types for typed convenience functions
+// import service types for typed convenience functions
 import type { ConfigManager } from '../config/ConfigManager';
 import type { ConfigCache } from '../config/ConfigCache';
 import type { TrustManager } from '../security/TrustManager';
@@ -40,54 +40,47 @@ export function isServiceInitialized(name: ServiceName): boolean {
 }
 
 // ============================================================================
-// typed convenience functions for each registered service
+// service getter factory
+// creates typed getter functions for registered services
+// ============================================================================
+
+// factory for creating service getter functions
+// reduces boilerplate for standard getter pattern
+function createServiceGetter<T extends IService>(name: ServiceName): () => T {
+  return () => ServiceRegistry.getInstance().get<T>(name);
+}
+
+// ============================================================================
+// typed convenience functions
 // these provide better IntelliSense & type checking than generic getService()
 // ============================================================================
 
-// get the ConfigManager singleton - manages VS Code configuration settings for the extension
-export function getConfigManager(): ConfigManager {
-  return getService<ConfigManager>(ServiceNames.CONFIG_MANAGER);
-}
+// ConfigManager - manages VS Code configuration settings for the extension
+export const getConfigManager = createServiceGetter<ConfigManager>(ServiceNames.CONFIG_MANAGER);
 
-// get the ConfigCache singleton - manages config file caching & watchers
-export function getConfigCache(): ConfigCache {
-  return getService<ConfigCache>(ServiceNames.CONFIG_CACHE);
-}
+// ConfigCache - manages config file caching & watchers
+export const getConfigCache = createServiceGetter<ConfigCache>(ServiceNames.CONFIG_CACHE);
 
-// get the TrustManager singleton - manages workspace trust state & security mode
-export function getTrustManager(): TrustManager {
-  return getService<TrustManager>(ServiceNames.TRUST_MANAGER);
-}
+// TrustManager - manages workspace trust state & security mode
+export const getTrustManager = createServiceGetter<TrustManager>(ServiceNames.TRUST_MANAGER);
 
-// get the ThemeManager singleton - manages preview & code block theme settings
-export function getThemeManager(): ThemeManager {
-  return getService<ThemeManager>(ServiceNames.THEME_MANAGER);
-}
+// ThemeManager - manages preview & code block theme settings
+export const getThemeManager = createServiceGetter<ThemeManager>(ServiceNames.THEME_MANAGER);
 
-// get the PreviewManager singleton - manages webview panels & preview lifecycle
-export function getPreviewManager(): PreviewManager {
-  return getService<PreviewManager>(ServiceNames.PREVIEW_MANAGER);
-}
+// PreviewManager - manages webview panels & preview lifecycle
+export const getPreviewManager = createServiceGetter<PreviewManager>(ServiceNames.PREVIEW_MANAGER);
 
-// get the FrameworkDetector singleton - detects documentation frameworks (Docusaurus, Starlight, etc.)
-export function getFrameworkDetector(): FrameworkDetector {
-  return getService<FrameworkDetector>(ServiceNames.FRAMEWORK_DETECTOR);
-}
+// FrameworkDetector - detects documentation frameworks (Docusaurus, Starlight, etc.)
+export const getFrameworkDetector = createServiceGetter<FrameworkDetector>(ServiceNames.FRAMEWORK_DETECTOR);
 
-// get the TailwindProcessor singleton - handles Tailwind CSS detection, scanning, & compilation
-export function getTailwindProcessor(): TailwindProcessor {
-  return getService<TailwindProcessor>(ServiceNames.TAILWIND_PROCESSOR);
-}
+// TailwindProcessor - handles Tailwind CSS detection, scanning, & compilation
+export const getTailwindProcessor = createServiceGetter<TailwindProcessor>(ServiceNames.TAILWIND_PROCESSOR);
 
-// get the ErrorReporter singleton - centralized error handling & reporting
-export function getErrorReporter(): ErrorReporter {
-  return getService<ErrorReporter>(ServiceNames.ERROR_REPORTER);
-}
+// ErrorReporter - centralized error handling & reporting
+export const getErrorReporter = createServiceGetter<ErrorReporter>(ServiceNames.ERROR_REPORTER);
 
-// get the StatusBarManager singleton - manages status bar items for trust state & framework display
-export function getStatusBarManager(): StatusBarManager {
-  return getService<StatusBarManager>(ServiceNames.STATUS_BAR_MANAGER);
-}
+// StatusBarManager - manages status bar items for trust state & framework display
+export const getStatusBarManager = createServiceGetter<StatusBarManager>(ServiceNames.STATUS_BAR_MANAGER);
 
 // get the OutputChannel instance - used for logging messages to the "MDX Preview" output panel
 export function getOutputChannel(): OutputChannel {

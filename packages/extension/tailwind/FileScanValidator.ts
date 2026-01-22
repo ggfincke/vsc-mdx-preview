@@ -1,10 +1,11 @@
 // packages/extension/tailwind/FileScanValidator.ts
 // file validation utilities for Tailwind scanning
 //
-// extracted from TailwindScanner to improve testability & reusability.
-// handles file size validation, token validation, & parallel file reading.
+// extracted from TailwindScanner to improve testability & reusability
+// handles file size validation, token validation, & parallel file reading
 
 import * as fs from 'fs';
+import { extractErrorMessage } from '@mdx-preview/shared';
 import { debug } from '../logging';
 import { CLASS_TOKEN_RE } from './constants';
 
@@ -38,7 +39,7 @@ export class FileScanValidator {
     } catch (err) {
       return {
         valid: false,
-        reason: `Cannot stat file: ${err instanceof Error ? err.message : String(err)}`,
+        reason: `Cannot stat file: ${extractErrorMessage(err)}`,
       };
     }
   }
@@ -77,7 +78,7 @@ export class FileScanValidator {
       return await fs.promises.readFile(fsPath, 'utf-8');
     } catch (err) {
       debug(
-        `[TAILWIND] Skipping unreadable file: ${fsPath} (${err instanceof Error ? err.message : String(err)})`
+        `[TAILWIND] Skipping unreadable file: ${fsPath} (${extractErrorMessage(err)})`
       );
       return null;
     }
@@ -90,10 +91,12 @@ export class FileScanValidator {
   ): Promise<Map<string, string>> {
     const results = new Map<string, string>();
 
-    const readPromises = fsPaths.map(async (fsPath): Promise<FileReadResult> => {
-      const content = await this.readFileIfValid(fsPath, maxBytes);
-      return { fsPath, content };
-    });
+    const readPromises = fsPaths.map(
+      async (fsPath): Promise<FileReadResult> => {
+        const content = await this.readFileIfValid(fsPath, maxBytes);
+        return { fsPath, content };
+      }
+    );
 
     const fileResults = await Promise.all(readPromises);
 

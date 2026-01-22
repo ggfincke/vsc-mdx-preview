@@ -5,40 +5,32 @@
 
 import * as vscode from 'vscode';
 
-import {
-  openPreview,
-  refreshPreview,
-  PreviewManager,
-} from './preview/preview-manager';
-import { selectSecurityPolicy } from './security/security';
+import { PreviewManager } from './preview/preview-manager';
 import { TrustManager } from './security/TrustManager';
 import { initWebviewAppHTMLResources } from './preview/webview-manager';
 import { initWorkspaceHandlers } from './workspace-manager';
 import { info, debug, showOutput, getOutputChannel } from './logging';
 import { StatusBarManager } from './preview/StatusBarManager';
-import {
-  PREVIEW_THEMES,
-  CODE_BLOCK_THEMES,
-  PREVIEW_THEME_LABELS,
-  CODE_BLOCK_THEME_LABELS,
-  ThemeManager,
-  type PreviewTheme,
-  type CodeBlockTheme,
-} from './themes';
-import { FrameworkDetector, type Framework } from './framework';
+import { ThemeManager } from './themes';
+import { FrameworkDetector } from './framework';
 import {
   ServiceRegistry,
   ServiceNames,
   getPreviewManager,
-  getTrustManager,
   getStatusBarManager,
-  getFrameworkDetector,
+  getConfigManager,
 } from './services';
 import { TailwindProcessor } from './tailwind/TailwindProcessor';
 import { ErrorReporter } from './errors';
-import { PackageJsonWatcher } from './module-fetcher/PackageJsonWatcher';
-import { clearResolverCache } from './module-fetcher/resolver-factory';
+import { PackageJsonWatcher } from './module-system/resolver/PackageJsonWatcher';
+import { clearResolverCache } from './module-system/resolver/resolver-factory';
 import { ConfigManager, ConfigCache } from './config';
+import {
+  ComponentDiagnostics,
+  registerComponentCodeActions,
+} from './diagnostics';
+import { registerAllCommands } from './commands';
+import { disposeMetaWatchers } from './nextra/MetaResolver';
 
 // show one-time safe mode notification in untrusted workspaces
 async function showSafeModeNotificationIfNeeded(
@@ -79,7 +71,7 @@ async function showSafeModeNotificationIfNeeded(
   );
 }
 
-// set up workspace trust event handlers (uses onDidChangeWorkspaceTrust for grant & revoke)
+// set up workspace trust event handlers for trust grant & revoke
 function setupTrustHandlers(context: vscode.ExtensionContext): void {
   const workspaceWithTrust = vscode.workspace as typeof vscode.workspace & {
     onDidChangeWorkspaceTrust?: vscode.Event<boolean>;
@@ -88,7 +80,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
   const handleTrustChange = async (trusted: boolean): Promise<void> => {
     const previewManager = getPreviewManager();
 
-    // refresh all previews to reflect new trust state
+    // refresh all previews w/ updated trust state
     previewManager.refreshAllPreviews();
 
     if (trusted) {
@@ -100,13 +92,11 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
       );
 
       if (selection === 'Enable Scripts') {
-        await vscode.workspace
-          .getConfiguration('mdx-preview')
-          .update(
-            'preview.enableScripts',
-            true,
-            vscode.ConfigurationTarget.Workspace
-          );
+        await getConfigManager().set(
+          'preview.enableScripts',
+          true,
+          vscode.ConfigurationTarget.Workspace
+        );
       }
     } else {
       // show safe mode notification if trust was revoked
@@ -115,7 +105,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
   };
 
   if (workspaceWithTrust.onDidChangeWorkspaceTrust) {
-    // when workspace trust changes (grant or revoke)
+    // handle workspace trust changes (grant & revoke)
     context.subscriptions.push(
       workspaceWithTrust.onDidChangeWorkspaceTrust(handleTrustChange)
     );
@@ -142,31 +132,32 @@ export async function activate(
 ): Promise<void> {
   debug('[ACTIVATE] Starting extension activation...');
 
-  // FIRST: register services w/ the registry for centralized lifecycle management
-  // This MUST happen before any code that uses service locators (getPreviewManager, etc.)
-  // order matters: services w/ no dependencies first, then dependent services
+  // register services w/ centralized registry before using service locators
+  // order matters: register services w/ no dependencies first, then dependent services
   const registry = ServiceRegistry.getInstance();
-  registry.register(ServiceNames.CONFIG_MANAGER, () => ConfigManager.getInstance());
+  registry.register(ServiceNames.CONFIG_MANAGER, () =>
+    ConfigManager.getInstance()
+  );
   registry.register(ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance());
-  registry.register(ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance());
-  registry.register(ServiceNames.THEME_MANAGER, () => ThemeManager.getInstance());
-  registry.register(
-    ServiceNames.PREVIEW_MANAGER,
-    () => PreviewManager.getInstance()
+  registry.register(ServiceNames.TRUST_MANAGER, () =>
+    TrustManager.getInstance()
   );
-  registry.register(
-    ServiceNames.FRAMEWORK_DETECTOR,
-    () => FrameworkDetector.getInstance()
+  registry.register(ServiceNames.THEME_MANAGER, () =>
+    ThemeManager.getInstance()
   );
-  registry.register(
-    ServiceNames.TAILWIND_PROCESSOR,
-    () => TailwindProcessor.getInstance()
+  registry.register(ServiceNames.PREVIEW_MANAGER, () =>
+    PreviewManager.getInstance()
   );
-  registry.register(
-    ServiceNames.ERROR_REPORTER,
-    () => ErrorReporter.getInstance()
+  registry.register(ServiceNames.FRAMEWORK_DETECTOR, () =>
+    FrameworkDetector.getInstance()
   );
-  // OutputChannel wrapped for IService compatibility (uses shared channel from logging.ts)
+  registry.register(ServiceNames.TAILWIND_PROCESSOR, () =>
+    TailwindProcessor.getInstance()
+  );
+  registry.register(ServiceNames.ERROR_REPORTER, () =>
+    ErrorReporter.getInstance()
+  );
+  // wrap OutputChannel for IService compatibility (shared channel from logging.ts)
   registry.register(ServiceNames.OUTPUT_CHANNEL, () => {
     const channel = getOutputChannel();
     return {
@@ -177,9 +168,12 @@ export async function activate(
     };
   });
   // StatusBarManager depends on TrustManager, FrameworkDetector, PreviewManager
-  registry.register(
-    ServiceNames.STATUS_BAR_MANAGER,
-    () => StatusBarManager.getInstance()
+  registry.register(ServiceNames.STATUS_BAR_MANAGER, () =>
+    StatusBarManager.getInstance()
+  );
+  // ComponentDiagnostics for unknown component warnings
+  registry.register(ServiceNames.COMPONENT_DIAGNOSTICS, () =>
+    ComponentDiagnostics.getInstance()
   );
   debug('[ACTIVATE] Services registered');
 
@@ -202,95 +196,11 @@ export async function activate(
   // set up trust event handlers
   setupTrustHandlers(context);
 
-  // register commands
-  const openPreviewCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.openPreview',
-    () => {
-      debug('[CMD] openPreview command triggered');
-      openPreview();
-    }
-  );
+  // register component diagnostics code actions
+  registerComponentCodeActions(context);
 
-  const refreshPreviewCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.refreshPreview',
-    () => {
-      debug('[CMD] refreshPreview command triggered');
-      refreshPreview();
-    }
-  );
-
-  const toggleUseVscodeMarkdownStylesCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.toggleUseVscodeMarkdownStyles',
-    () => {
-      const extensionConfig = vscode.workspace.getConfiguration('mdx-preview');
-      const useVscodeMarkdownStyles = extensionConfig.get<boolean>(
-        'preview.useVscodeMarkdownStyles',
-        false
-      );
-      extensionConfig.update(
-        'preview.useVscodeMarkdownStyles',
-        !useVscodeMarkdownStyles
-      );
-    }
-  );
-
-  const toggleUseWhiteBackgroundCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.toggleUseWhiteBackground',
-    () => {
-      const extensionConfig = vscode.workspace.getConfiguration('mdx-preview');
-      const useWhiteBackground = extensionConfig.get<boolean>(
-        'preview.useWhiteBackground',
-        false
-      );
-      extensionConfig.update('preview.useWhiteBackground', !useWhiteBackground);
-    }
-  );
-
-  const toggleChangeSecuritySettings = vscode.commands.registerCommand(
-    'mdx-preview.commands.changeSecuritySettings',
-    () => {
-      selectSecurityPolicy();
-    }
-  );
-
-  // command to toggle scripts setting (only in trusted workspaces)
-  const toggleScriptsCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.toggleScripts',
-    async () => {
-      debug('[CMD] toggleScripts command triggered');
-
-      const trustState = getTrustManager().getState();
-
-      if (!trustState.workspaceTrusted) {
-        // workspace not trusted - offer to manage trust
-        const selection = await vscode.window.showWarningMessage(
-          'To enable scripts, you must first trust this workspace.',
-          'Manage Trust',
-          'Cancel'
-        );
-        if (selection === 'Manage Trust') {
-          await vscode.commands.executeCommand('workbench.trust.manage');
-        }
-        return;
-      }
-
-      // workspace is trusted - toggle scripts setting
-      const extensionConfig = vscode.workspace.getConfiguration('mdx-preview');
-      const scriptsEnabled = extensionConfig.get<boolean>(
-        'preview.enableScripts',
-        false
-      );
-
-      await extensionConfig.update(
-        'preview.enableScripts',
-        !scriptsEnabled,
-        vscode.ConfigurationTarget.Workspace
-      );
-
-      const newState = scriptsEnabled ? 'disabled' : 'enabled';
-      vscode.window.showInformationMessage(`MDX Preview scripts ${newState}.`);
-    }
-  );
+  // register all commands (extracted to commands/ directory)
+  context.subscriptions.push(...registerAllCommands());
 
   // initialize status bar manager (handles trust state & framework display)
   const statusBarManager = getStatusBarManager();
@@ -305,222 +215,13 @@ export async function activate(
     })
   );
 
-  // command to select preview theme
-  const selectPreviewThemeCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.selectPreviewTheme',
-    async () => {
-      debug('[CMD] selectPreviewTheme command triggered');
-
-      const config = vscode.workspace.getConfiguration('mdx-preview');
-      const currentTheme = config.get<PreviewTheme>(
-        'preview.previewTheme',
-        'none'
-      );
-
-      const items = PREVIEW_THEMES.map((theme) => ({
-        label: PREVIEW_THEME_LABELS[theme],
-        description: theme === currentTheme ? '(current)' : undefined,
-        theme,
-      }));
-
-      const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: 'Select preview theme',
-        matchOnDescription: true,
-      });
-
-      if (selected) {
-        await config.update(
-          'preview.previewTheme',
-          selected.theme,
-          vscode.ConfigurationTarget.Global
-        );
-        // refresh previews to apply theme
-        getPreviewManager().refreshAllPreviews();
-      }
-    }
-  );
-
-  // command to select code block theme
-  const selectCodeBlockThemeCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.selectCodeBlockTheme',
-    async () => {
-      debug('[CMD] selectCodeBlockTheme command triggered');
-
-      const config = vscode.workspace.getConfiguration('mdx-preview');
-      const currentTheme = config.get<CodeBlockTheme>(
-        'preview.codeBlockTheme',
-        'auto'
-      );
-
-      const items = CODE_BLOCK_THEMES.map((theme) => ({
-        label: CODE_BLOCK_THEME_LABELS[theme],
-        description: theme === currentTheme ? '(current)' : undefined,
-        theme,
-      }));
-
-      const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: 'Select code block theme',
-        matchOnDescription: true,
-      });
-
-      if (selected) {
-        await config.update(
-          'preview.codeBlockTheme',
-          selected.theme,
-          vscode.ConfigurationTarget.Global
-        );
-        // refresh previews to apply theme
-        getPreviewManager().refreshAllPreviews();
-      }
-    }
-  );
-
-  // zoom commands
-  const zoomInCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.zoomIn',
-    async () => {
-      debug('[CMD] zoomIn command triggered');
-      const preview = getPreviewManager().getCurrentPreview();
-      if (preview?.webviewHandle) {
-        await preview.webviewHandle.zoomIn();
-      }
-    }
-  );
-
-  const zoomOutCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.zoomOut',
-    async () => {
-      debug('[CMD] zoomOut command triggered');
-      const preview = getPreviewManager().getCurrentPreview();
-      if (preview?.webviewHandle) {
-        await preview.webviewHandle.zoomOut();
-      }
-    }
-  );
-
-  const resetZoomCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.resetZoom',
-    async () => {
-      debug('[CMD] resetZoom command triggered');
-      const preview = getPreviewManager().getCurrentPreview();
-      if (preview?.webviewHandle) {
-        await preview.webviewHandle.resetZoom();
-      }
-    }
-  );
-
-  // command to select framework
-  const selectFrameworkCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.selectFramework',
-    async () => {
-      debug('[CMD] selectFramework command triggered');
-
-      const config = vscode.workspace.getConfiguration('mdx-preview');
-      const currentSetting = config.get<string>('framework', 'auto');
-      const frameworkDetector = getFrameworkDetector();
-
-      // get detected framework for display
-      const editor = vscode.window.activeTextEditor;
-      let detectedFramework: Framework = 'generic';
-      if (editor) {
-        const info = frameworkDetector.getFramework(editor.document.uri);
-        if (info.detected) {
-          detectedFramework = info.framework;
-        }
-      }
-
-      const frameworks: Array<{
-        label: string;
-        description?: string;
-        value: string;
-      }> = [
-        {
-          label: 'Auto-detect',
-          description:
-            currentSetting === 'auto'
-              ? `(current - detected: ${frameworkDetector.getFrameworkDisplayName(detectedFramework)})`
-              : `(detected: ${frameworkDetector.getFrameworkDisplayName(detectedFramework)})`,
-          value: 'auto',
-        },
-        {
-          label: 'Generic',
-          description: currentSetting === 'generic' ? '(current)' : undefined,
-          value: 'generic',
-        },
-        {
-          label: 'Docusaurus',
-          description:
-            currentSetting === 'docusaurus' ? '(current)' : undefined,
-          value: 'docusaurus',
-        },
-        {
-          label: 'Next.js',
-          description: currentSetting === 'nextjs' ? '(current)' : undefined,
-          value: 'nextjs',
-        },
-        {
-          label: 'Astro Starlight',
-          description:
-            currentSetting === 'astro-starlight' ? '(current)' : undefined,
-          value: 'astro-starlight',
-        },
-      ];
-
-      const selected = await vscode.window.showQuickPick(frameworks, {
-        placeHolder: 'Select MDX framework',
-        matchOnDescription: true,
-      });
-
-      if (selected) {
-        await config.update(
-          'framework',
-          selected.value,
-          vscode.ConfigurationTarget.Workspace
-        );
-
-        // refresh previews to apply framework changes
-        getPreviewManager().refreshAllPreviews();
-
-        vscode.window.showInformationMessage(
-          `MDX framework set to ${selected.label}.`
-        );
-      }
-    }
-  );
-
-  // command to manually refresh module cache (clears resolver cache)
-  const refreshModuleCacheCommand = vscode.commands.registerCommand(
-    'mdx-preview.commands.refreshModuleCache',
-    () => {
-      debug('[CMD] refreshModuleCache command triggered');
-      clearResolverCache();
-      vscode.window.showInformationMessage('MDX Preview module cache cleared.');
-    }
-  );
-
   // start package.json watcher to auto-invalidate resolver cache
-  const packageJsonWatcher = new PackageJsonWatcher();
-  packageJsonWatcher.start(() => {
+  const packageJsonWatcher = new PackageJsonWatcher(() => {
     clearResolverCache();
     debug('[WATCHER] Resolver cache cleared due to package file change');
   });
+  void packageJsonWatcher.start();
   context.subscriptions.push(packageJsonWatcher);
-
-  context.subscriptions.push(
-    openPreviewCommand,
-    refreshPreviewCommand,
-    toggleUseVscodeMarkdownStylesCommand,
-    toggleUseWhiteBackgroundCommand,
-    toggleChangeSecuritySettings,
-    toggleScriptsCommand,
-    selectPreviewThemeCommand,
-    selectCodeBlockThemeCommand,
-    zoomInCommand,
-    zoomOutCommand,
-    resetZoomCommand,
-    selectFrameworkCommand,
-    refreshModuleCacheCommand
-  );
 
   debug('[ACTIVATE] Extension activation complete');
 }
@@ -529,6 +230,9 @@ export async function activate(
 export function deactivate(): void {
   // clear resolver cache to prevent stale data on reload
   clearResolverCache();
+
+  // dispose Nextra _meta.json file watchers
+  disposeMetaWatchers();
 
   // dispose all registered services in reverse registration order
   // (dependent services like StatusBarManager disposed before their dependencies)

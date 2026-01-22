@@ -1,13 +1,13 @@
 // packages/webview-app/src/themes/index.ts
 // * MPE-style preview themes adapted from crossnote (selectors changed to ".markdown-body")
 
-import type { PreviewTheme, CodeBlockTheme } from '@mdx-preview/shared-types';
+import type { PreviewTheme, CodeBlockTheme } from '@mdx-preview/shared';
 
 export type {
   PreviewTheme,
   CodeBlockTheme,
   WebviewThemeState,
-} from '@mdx-preview/shared-types';
+} from '@mdx-preview/shared';
 
 // preview theme CSS content
 export const previewThemes: Record<PreviewTheme, string> = {

@@ -1,5 +1,5 @@
 // packages/extension/preview/StatusBarManager.ts
-// * manage MDX Preview status bar items (trust state + framework display)
+// manage MDX Preview status bar items for trust state & framework display
 
 import * as vscode from 'vscode';
 import type { TrustState } from '../security/TrustManager';
@@ -12,15 +12,19 @@ import {
   STATUS_BAR_TRUST_PRIORITY,
   STATUS_BAR_FRAMEWORK_PRIORITY,
 } from '../constants';
+import { SingletonService } from '../services/SingletonService';
 
-// * status bar manager singleton for MDX preview status display
-export class StatusBarManager {
-  private static instance: StatusBarManager | null = null;
+// status bar manager singleton for MDX preview status display
+export class StatusBarManager extends SingletonService<StatusBarManager> {
+  protected static override instance: StatusBarManager | undefined;
+  protected readonly logTag = 'STATUS-BAR';
+
   private trustStatusBarItem: vscode.StatusBarItem;
   private frameworkStatusBarItem: vscode.StatusBarItem;
-  private disposables: vscode.Disposable[] = [];
 
-  private constructor() {
+  protected constructor() {
+    super();
+
     // create trust status bar item
     this.trustStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
@@ -28,7 +32,7 @@ export class StatusBarManager {
     );
     this.trustStatusBarItem.command = 'mdx-preview.commands.toggleScripts';
 
-    // create framework status bar item (slightly lower priority than trust item)
+    // create framework status bar item (lower priority than trust item)
     this.frameworkStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
       STATUS_BAR_FRAMEWORK_PRIORITY
@@ -36,26 +40,26 @@ export class StatusBarManager {
     this.frameworkStatusBarItem.command =
       'mdx-preview.commands.selectFramework';
 
-    // initial state
+    // initialize status displays
     this.updateTrustDisplay(getTrustManager().getState());
     this.updateFrameworkDisplay();
 
     // subscribe to trust state changes
-    this.disposables.push(
+    this.addDisposable(
       getTrustManager().subscribe((state) => {
         this.updateTrustDisplay(state);
       })
     );
 
     // subscribe to framework changes
-    this.disposables.push(
+    this.addDisposable(
       getFrameworkDetector().subscribe(() => {
         this.updateFrameworkDisplay();
       })
     );
 
     // subscribe to active editor changes
-    this.disposables.push(
+    this.addDisposable(
       vscode.window.onDidChangeActiveTextEditor(() => {
         this.updateVisibility();
         this.updateFrameworkDisplay();
@@ -63,28 +67,11 @@ export class StatusBarManager {
     );
 
     // subscribe to preview state changes
-    this.disposables.push(
+    this.addDisposable(
       getPreviewManager().subscribe(() => {
         this.updateVisibility();
       })
     );
-  }
-
-  // get singleton instance
-  static getInstance(): StatusBarManager {
-    if (!StatusBarManager.instance) {
-      StatusBarManager.instance = new StatusBarManager();
-    }
-    return StatusBarManager.instance;
-  }
-
-  // static dispose for singleton cleanup
-  static dispose(): void {
-    if (StatusBarManager.instance) {
-      StatusBarManager.instance.dispose();
-      // @ts-expect-error reset singleton for dispose
-      StatusBarManager.instance = undefined;
-    }
   }
 
   // update trust status bar text & tooltip
@@ -134,8 +121,11 @@ export class StatusBarManager {
       case 'nextjs':
         icon = '$(server)';
         break;
-      case 'astro-starlight':
+      case 'starlight':
         icon = '$(star)';
+        break;
+      case 'nextra':
+        icon = '$(notebook)';
         break;
     }
 
@@ -146,7 +136,7 @@ export class StatusBarManager {
     this.frameworkStatusBarItem.show();
   }
 
-  // show/hide based on active editor language & preview state
+  // show/hide status items based on active editor language & preview state
   updateVisibility(): void {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
@@ -158,7 +148,7 @@ export class StatusBarManager {
       }
     }
 
-    // also show if there are any active previews
+    // show if there are active previews
     const previewManager = getPreviewManager();
     if (previewManager.hasActivePreviews()) {
       this.trustStatusBarItem.show();
@@ -174,12 +164,8 @@ export class StatusBarManager {
     return [this.trustStatusBarItem, this.frameworkStatusBarItem];
   }
 
-  // dispose all resources (public for IService interface)
-  dispose(): void {
-    for (const disposable of this.disposables) {
-      disposable.dispose();
-    }
-    this.disposables = [];
+  // dispose status bar items on cleanup
+  protected override onDispose(): void {
     this.trustStatusBarItem.dispose();
     this.frameworkStatusBarItem.dispose();
   }

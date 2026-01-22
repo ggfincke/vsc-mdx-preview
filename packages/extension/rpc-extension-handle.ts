@@ -2,13 +2,12 @@
 // RPC handle exposed to webview (called via Comlink)
 
 import { performance } from 'perf_hooks';
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { Preview } from './preview/preview-manager';
-import { fetchLocal } from './module-fetcher/module-fetcher';
-import { isTrustedModeEnabled } from './security/validateTrust';
-import { checkFsPath } from './security/checkFsPath';
+import { fetchLocal } from './module-system/fetcher/fetchLocal';
+import { getTrustManager, getErrorReporter } from './services';
 import { error as logError, warn as logWarn, debug } from './logging';
+import { ErrorContext } from './errors';
 import {
   validateString,
   validateBoolean,
@@ -16,8 +15,12 @@ import {
   validateUrl,
   validateOptionalNumber,
 } from './utils/validation';
+import {
+  validateAndResolveSecurePath,
+  reportTrustViolationError,
+} from './utils/pathSecurity';
 import { MAX_FETCH_REQUEST_LENGTH } from './constants';
-import type { ExtensionRPC, FetchResult } from '@mdx-preview/shared-types';
+import type { ExtensionRPC, FetchResult } from '@mdx-preview/shared';
 
 // allowed URL schemes for openExternal
 const ALLOWED_EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
@@ -64,10 +67,14 @@ class ExtensionHandle implements ExtensionRPC {
   // report performance metrics from webview
   reportPerformance(evaluationDuration: number): void {
     debug(`[EXT-HANDLE] reportPerformance: ${evaluationDuration}`);
-    const validDuration = validateNumber(evaluationDuration, 'evaluationDuration', {
-      context: 'reportPerformance',
-      finite: true,
-    });
+    const validDuration = validateNumber(
+      evaluationDuration,
+      'evaluationDuration',
+      {
+        context: 'reportPerformance',
+        finite: true,
+      }
+    );
     if (validDuration === undefined) {
       return;
     }
@@ -87,9 +94,10 @@ class ExtensionHandle implements ExtensionRPC {
 
     // type validation using utilities
     const opts = { context: 'fetch', log: logError };
+    // allow empty string, validateFetchRequest handles length
     const validRequest = validateString(request, 'request', {
       ...opts,
-      allowEmpty: true, // allow empty string, validateFetchRequest handles length
+      allowEmpty: true,
     });
     const validIsBare = validateBoolean(isBare, 'isBare', opts);
     const validParentId = validateString(parentId, 'parentId', {
@@ -97,7 +105,11 @@ class ExtensionHandle implements ExtensionRPC {
       allowEmpty: true,
     });
 
-    if (validRequest === undefined || validIsBare === undefined || validParentId === undefined) {
+    if (
+      validRequest === undefined ||
+      validIsBare === undefined ||
+      validParentId === undefined
+    ) {
       return undefined;
     }
 
@@ -107,9 +119,11 @@ class ExtensionHandle implements ExtensionRPC {
       return undefined;
     }
 
-    // trust check (only allow fetch when scripts enabled)
-    if (!isTrustedModeEnabled()) {
-      logWarn('fetch: blocked - scripts not enabled');
+    // document-aware trust check (validates workspace trust, scripts, remote env, scheme)
+    const docUri = this.preview.doc.uri;
+    const trustState = getTrustManager().getStateForDocument(docUri);
+    if (!trustState.canExecute) {
+      logWarn(`fetch: blocked - ${trustState.reason || 'not in Trusted Mode'}`);
       return undefined;
     }
 
@@ -173,31 +187,37 @@ class ExtensionHandle implements ExtensionRPC {
       return;
     }
 
-    // validate line/column if provided (optional, min 1)
-    const validLine = validateOptionalNumber(line, 'line number', { ...opts, min: 1 });
-    const validColumn = validateOptionalNumber(column, 'column number', { ...opts, min: 1 });
-
-    // get current document directory from preview
-    const entryDir = this.preview.entryFsDirectory;
-    if (!entryDir) {
-      logWarn('openDocument: no entry directory');
+    // workspace trust check via TrustManager (not direct vscode.workspace.isTrusted)
+    const trustState = getTrustManager().getState();
+    if (!trustState.workspaceTrusted) {
+      logWarn('openDocument: blocked - workspace not trusted');
       return;
     }
 
-    // resolve relative path
-    const resolvedPath = path.resolve(entryDir, validPath);
+    // validate line/column if provided (optional, min 1)
+    const validLine = validateOptionalNumber(line, 'line number', {
+      ...opts,
+      min: 1,
+    });
+    const validColumn = validateOptionalNumber(column, 'column number', {
+      ...opts,
+      min: 1,
+    });
 
-    // ! security check - ensure path is within workspace
-    if (!checkFsPath(entryDir, resolvedPath)) {
-      logWarn('openDocument: path outside workspace', resolvedPath);
-      vscode.window.showWarningMessage(
-        'Cannot open file outside workspace folder.'
-      );
+    // validate and resolve path securely (entry dir check + path traversal check)
+    const securePathResult = validateAndResolveSecurePath(
+      this.preview,
+      validPath,
+      'openDocument'
+    );
+    if (!securePathResult) {
       return;
     }
 
     try {
-      const doc = await vscode.workspace.openTextDocument(resolvedPath);
+      const doc = await vscode.workspace.openTextDocument(
+        securePathResult.resolvedPath
+      );
 
       // create selection if line is provided (VS Code uses 0-based indexing)
       const options: vscode.TextDocumentShowOptions = {};
@@ -209,9 +229,64 @@ class ExtensionHandle implements ExtensionRPC {
       }
 
       await vscode.window.showTextDocument(doc, options);
-    } catch (err) {
-      logError('openDocument: failed to open', String(err));
-      vscode.window.showErrorMessage(`Could not open file: ${relativePath}`);
+    } catch {
+      getErrorReporter().reportToUser(
+        new Error(`Could not open file: ${relativePath}`),
+        ErrorContext.Extension
+      );
+    }
+  }
+
+  // open preview for an MDX file (used for internal link navigation)
+  async openPreview(relativePath: string): Promise<void> {
+    debug(`[EXT-HANDLE] openPreview: ${relativePath}`);
+
+    const opts = { context: 'openPreview' };
+
+    // validate path (required)
+    const validPath = validateString(relativePath, 'path', opts);
+    if (!validPath) {
+      return;
+    }
+
+    // validate and resolve path securely (entry dir check + path traversal check)
+    const securePathResult = validateAndResolveSecurePath(
+      this.preview,
+      validPath,
+      'openPreview'
+    );
+    if (!securePathResult) {
+      return;
+    }
+
+    // ! trust check for target file - ensures preview can execute safely
+    const targetUri = vscode.Uri.file(securePathResult.resolvedPath);
+    const trustState = getTrustManager().getStateForDocument(targetUri);
+    if (!trustState.canExecute) {
+      reportTrustViolationError(
+        securePathResult.resolvedPath,
+        trustState.reason || 'Target file is not in Trusted Mode',
+        'openPreview'
+      );
+      return;
+    }
+
+    try {
+      // open document in editor (this makes it the active editor)
+      const doc = await vscode.workspace.openTextDocument(
+        securePathResult.resolvedPath
+      );
+      await vscode.window.showTextDocument(doc, { preview: false });
+
+      // dynamically import openPreview to avoid circular dependency
+      // openPreview() uses the active editor's document
+      const { openPreview } = await import('./preview/preview-manager');
+      await openPreview();
+    } catch {
+      getErrorReporter().reportToUser(
+        new Error(`Could not open preview: ${relativePath}`),
+        ErrorContext.Extension
+      );
     }
   }
 }

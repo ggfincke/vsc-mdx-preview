@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/FileTree.tsx
 // Starlight FileTree component shim for MDX Preview
-// provides preview-compatible version of @astrojs/starlight/components FileTree
+// provide preview-compatible version of @astrojs/starlight/components FileTree
 
 import React, {
   ReactNode,
@@ -8,6 +8,8 @@ import React, {
   Children,
   isValidElement,
 } from 'react';
+import { extractTextContent } from '../base/extractTextContent';
+import { FILE_TREE_ICONS } from '../base/icons';
 
 // file tree props (compatible w/ Starlight)
 export interface FileTreeProps {
@@ -22,33 +24,6 @@ interface FileTreeEntry {
   comment?: string;
   isPlaceholder: boolean;
   children?: FileTreeEntry[];
-}
-
-// SVG icons
-const CHEVRON_ICON =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
-
-const FOLDER_ICON =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>';
-
-const FILE_ICON =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
-
-// extract text content from React children
-function extractTextContent(node: ReactNode): string {
-  if (typeof node === 'string') {
-    return node;
-  }
-  if (typeof node === 'number') {
-    return String(node);
-  }
-  if (Array.isArray(node)) {
-    return node.map(extractTextContent).join('');
-  }
-  if (isValidElement(node)) {
-    return extractTextContent(node.props.children);
-  }
-  return '';
 }
 
 // check if a child is a bold element (strong)
@@ -158,28 +133,49 @@ function parseLiElement(li: ReactElement): FileTreeEntry | null {
 }
 
 // parse children (unordered list) into structured entries
+// handles both nested structure (<li>folder/<ul>...</ul></li>) and
+// sibling structure (<li>folder/</li><ul>...</ul>)
 function parseFileTreeChildren(children: ReactNode): FileTreeEntry[] {
   const entries: FileTreeEntry[] = [];
+  const childArray = Children.toArray(children);
 
-  Children.forEach(children, (child) => {
+  for (let i = 0; i < childArray.length; i++) {
+    const child = childArray[i];
+
     if (!isValidElement(child)) {
-      return;
+      continue;
     }
 
-    // Handle <ul> wrapper
+    // Handle <ul> wrapper - recursively process its children
     if (child.type === 'ul') {
       entries.push(...parseFileTreeChildren(child.props.children));
-      return;
+      continue;
     }
 
     // Handle <li> items
     if (child.type === 'li') {
       const entry = parseLiElement(child);
-      if (entry) {
-        entries.push(entry);
+      if (!entry) {
+        continue;
       }
+
+      // Check if next sibling is a <ul> that should be this directory's children
+      // This handles the sibling pattern: <li>folder/</li><ul>...</ul>
+      const nextChild = childArray[i + 1];
+      if (
+        entry.isDirectory &&
+        !entry.children?.length &&
+        isValidElement(nextChild) &&
+        nextChild.type === 'ul'
+      ) {
+        entry.children = parseFileTreeChildren(nextChild.props.children);
+        // skip the <ul> since we've processed it as children
+        i++;
+      }
+
+      entries.push(entry);
     }
-  });
+  }
 
   return entries;
 }
@@ -201,11 +197,11 @@ function FileTreeItem({ entry }: { entry: FileTreeEntry }): ReactElement {
           <summary className={entry.isHighlighted ? 'highlighted' : ''}>
             <span
               className="icon chevron"
-              dangerouslySetInnerHTML={{ __html: CHEVRON_ICON }}
+              dangerouslySetInnerHTML={{ __html: FILE_TREE_ICONS.chevron }}
             />
             <span
               className="icon folder"
-              dangerouslySetInnerHTML={{ __html: FOLDER_ICON }}
+              dangerouslySetInnerHTML={{ __html: FILE_TREE_ICONS.folder }}
             />
             <span className="name">{entry.name}</span>
             {entry.comment && <span className="comment">{entry.comment}</span>}
@@ -228,7 +224,7 @@ function FileTreeItem({ entry }: { entry: FileTreeEntry }): ReactElement {
     >
       <span
         className="icon file"
-        dangerouslySetInnerHTML={{ __html: FILE_ICON }}
+        dangerouslySetInnerHTML={{ __html: FILE_TREE_ICONS.file }}
       />
       <span className="name">{entry.name}</span>
       {entry.comment && <span className="comment">{entry.comment}</span>}

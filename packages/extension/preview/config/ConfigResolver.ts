@@ -1,17 +1,25 @@
 // packages/extension/preview/config/ConfigResolver.ts
 // resolve .mdx-previewrc.json configuration files for custom plugins & components
 
-import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { warn, info, debug } from '../../logging';
-import { ConfigCache } from '../../config/ConfigCache';
+import { info, debug } from '../../logging';
+import { getConfigCache, getErrorReporter } from '../../services';
+import { ConfigError } from '../../errors';
+import { ConfigChangeType } from '../../config/ConfigCache';
+import { validateConfigSchema } from '../../utils/validation';
+import { readJsonSync, pathExists } from '../../utils/file-utils';
 
-// plugin specification format: string (e.g., "remark-toc") or [string, options] tuple (e.g., ["remark-toc", { tight: true }])
-export type PluginSpec = string | [string, Record<string, unknown>];
+// import consolidated types from compiler/types.ts
+import type {
+  PluginSpec,
+  ComponentMapping,
+  UnknownBehavior,
+} from '../../compiler/types';
+import type { FrameworkName } from '@mdx-preview/shared';
 
-// component mapping: MDX component name -> relative path to component file (e.g., { "Callout": "./src/components/Callout.tsx" })
-export type ComponentMapping = Record<string, string>;
+// re-export types for backward compatibility
+export type { PluginSpec, ComponentMapping, UnknownBehavior };
 
 // framework-specific options
 export interface FrameworkOptions {
@@ -36,11 +44,13 @@ export interface MdxPreviewConfig {
   // custom component mappings for MDX
   components?: ComponentMapping;
   // framework override (overrides auto-detection)
-  framework?: 'generic' | 'docusaurus' | 'nextjs' | 'astro-starlight';
+  framework?: FrameworkName;
   // framework-specific options
   frameworkOptions?: FrameworkOptions;
   // Tailwind CSS options
   tailwind?: TailwindOptions;
+  // how to handle unknown JSX components in Safe Mode
+  unknownBehavior?: UnknownBehavior;
 }
 
 // resolved configuration w/ metadata
@@ -56,19 +66,21 @@ export interface ResolvedConfig {
 // config file names to search for (in order of priority)
 const CONFIG_FILE_NAMES = ['.mdx-previewrc.json', '.mdx-previewrc'];
 
-// get ConfigCache instance (lazy - avoids circular dependency issues)
-function getCache(): ConfigCache {
-  return ConfigCache.getInstance();
+// get ConfigCache instance via service locator
+function getCache() {
+  return getConfigCache();
 }
 
-// find & parse .mdx-previewrc.json config file for document (searches from document's directory upward to workspace root)
+// find & parse .mdx-previewrc.json config file for document
+// searches from document's directory upward to workspace root
 export function resolveConfig(documentPath: string): ResolvedConfig | null {
   const documentDir = path.dirname(documentPath);
   const cache = getCache();
 
-  // check cache first
-  if (cache.has(documentDir)) {
-    return cache.get(documentDir) ?? null;
+  // check cache first (use get + undefined check instead of has + get for efficiency)
+  const cached = cache.get(documentDir);
+  if (cached !== undefined) {
+    return cached;
   }
 
   const configPath = findConfigFile(documentDir);
@@ -77,36 +89,49 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
     return null;
   }
 
-  try {
-    const configContent = fs.readFileSync(configPath, 'utf-8');
-    const config = JSON.parse(configContent) as MdxPreviewConfig;
-
-    // validate config structure
-    const validationErrors = validateConfig(config);
-    if (validationErrors.length > 0) {
-      warn(`Invalid config in ${configPath}:`, validationErrors.join(', '));
-      cache.set(documentDir, null);
-      return null;
-    }
-
-    const resolved: ResolvedConfig = {
-      config,
-      configPath,
-      configDir: path.dirname(configPath),
-    };
-
-    cache.set(documentDir, resolved);
-    setupConfigWatcher(configPath);
-
-    info(`Loaded MDX config from ${configPath}`);
-    debug('Config contents:', config);
-
-    return resolved;
-  } catch (err) {
-    warn(`Failed to parse config file ${configPath}:`, err);
+  // read & parse config file
+  const config = readJsonSync<MdxPreviewConfig>(configPath);
+  if (!config) {
+    getErrorReporter().reportConfigError(
+      new ConfigError(
+        'Failed to read or parse config file',
+        'CONFIG_PARSE_ERROR',
+        configPath
+      ),
+      configPath
+    );
     cache.set(documentDir, null);
     return null;
   }
+
+  // validate config structure
+  const validationErrors = validateConfig(config);
+  if (validationErrors.length > 0) {
+    getErrorReporter().reportConfigError(
+      new ConfigError(
+        `Invalid config: ${validationErrors.join(', ')}`,
+        'CONFIG_VALIDATION_ERROR',
+        configPath
+      ),
+      configPath
+    );
+    cache.set(documentDir, null);
+    return null;
+  }
+
+  const resolved: ResolvedConfig = {
+    config,
+    configPath,
+    configDir: path.dirname(configPath),
+  };
+
+  cache.set(documentDir, resolved);
+  setupConfigWatcher(configPath);
+
+  info(`Loaded MDX config from ${configPath}`);
+  debug('Config contents:', config);
+
+  return resolved;
 }
 
 // find config file by walking up directory tree
@@ -115,208 +140,71 @@ function findConfigFile(startDir: string): string | undefined {
   const workspaceFolders = vscode.workspace.workspaceFolders;
   const workspaceRoots = workspaceFolders?.map((f) => f.uri.fsPath) ?? [];
 
+  debug(`[CONFIG] Searching for config starting at: ${startDir}`);
+  debug(`[CONFIG] Workspace roots: ${workspaceRoots.join(', ') || '(none)'}`);
+
   // walk up to workspace root or filesystem root
   while (currentDir) {
     for (const fileName of CONFIG_FILE_NAMES) {
       const configPath = path.join(currentDir, fileName);
-      if (fs.existsSync(configPath)) {
+      if (pathExists(configPath)) {
+        debug(`[CONFIG] Found config file at: ${configPath}`);
         return configPath;
       }
     }
 
     // stop at workspace root
     if (workspaceRoots.some((root) => currentDir === root)) {
+      debug(`[CONFIG] Reached workspace root: ${currentDir}`);
       break;
     }
 
     const parentDir = path.dirname(currentDir);
     if (parentDir === currentDir) {
       // reached filesystem root
+      debug(`[CONFIG] Reached filesystem root`);
       break;
     }
     currentDir = parentDir;
   }
 
+  debug(`[CONFIG] No config file found`);
   return undefined;
 }
 
-// validate config structure
+// validate config structure using centralized validation
 function validateConfig(config: unknown): string[] {
-  const errors: string[] = [];
-
-  if (typeof config !== 'object' || config === null) {
-    errors.push('Config must be an object');
-    return errors;
-  }
-
-  const cfg = config as Record<string, unknown>;
-
-  // validate remarkPlugins
-  if (cfg.remarkPlugins !== undefined) {
-    if (!Array.isArray(cfg.remarkPlugins)) {
-      errors.push('remarkPlugins must be an array');
-    } else {
-      for (let i = 0; i < cfg.remarkPlugins.length; i++) {
-        const plugin = cfg.remarkPlugins[i];
-        if (!isValidPluginSpec(plugin)) {
-          errors.push(
-            `remarkPlugins[${i}] must be a string or [string, options] tuple`
-          );
-        }
-      }
-    }
-  }
-
-  // validate rehypePlugins
-  if (cfg.rehypePlugins !== undefined) {
-    if (!Array.isArray(cfg.rehypePlugins)) {
-      errors.push('rehypePlugins must be an array');
-    } else {
-      for (let i = 0; i < cfg.rehypePlugins.length; i++) {
-        const plugin = cfg.rehypePlugins[i];
-        if (!isValidPluginSpec(plugin)) {
-          errors.push(
-            `rehypePlugins[${i}] must be a string or [string, options] tuple`
-          );
-        }
-      }
-    }
-  }
-
-  // validate components
-  if (cfg.components !== undefined) {
-    if (typeof cfg.components !== 'object' || cfg.components === null) {
-      errors.push('components must be an object');
-    } else {
-      for (const [name, pathValue] of Object.entries(cfg.components)) {
-        if (typeof pathValue !== 'string') {
-          errors.push(`components.${name} must be a string path`);
-        }
-      }
-    }
-  }
-
-  // validate framework
-  if (cfg.framework !== undefined) {
-    const validFrameworks = [
-      'generic',
-      'docusaurus',
-      'nextjs',
-      'astro-starlight',
-    ];
-    if (
-      typeof cfg.framework !== 'string' ||
-      !validFrameworks.includes(cfg.framework)
-    ) {
-      errors.push(`framework must be one of: ${validFrameworks.join(', ')}`);
-    }
-  }
-
-  // validate frameworkOptions
-  if (cfg.frameworkOptions !== undefined) {
-    if (
-      typeof cfg.frameworkOptions !== 'object' ||
-      cfg.frameworkOptions === null
-    ) {
-      errors.push('frameworkOptions must be an object');
-    } else {
-      const opts = cfg.frameworkOptions as Record<string, unknown>;
-
-      // validate enableShims
-      if (
-        opts.enableShims !== undefined &&
-        typeof opts.enableShims !== 'boolean'
-      ) {
-        errors.push('frameworkOptions.enableShims must be a boolean');
-      }
-
-      // validate customAliases
-      if (opts.customAliases !== undefined) {
-        if (
-          typeof opts.customAliases !== 'object' ||
-          opts.customAliases === null
-        ) {
-          errors.push('frameworkOptions.customAliases must be an object');
-        } else {
-          for (const [alias, target] of Object.entries(opts.customAliases)) {
-            if (typeof target !== 'string') {
-              errors.push(
-                `frameworkOptions.customAliases.${alias} must be a string path`
-              );
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // validate tailwind options
-  if (cfg.tailwind !== undefined) {
-    if (typeof cfg.tailwind !== 'object' || cfg.tailwind === null) {
-      errors.push('tailwind must be an object');
-    } else {
-      const tailwind = cfg.tailwind as Record<string, unknown>;
-      const validEnabled = ['auto', 'enabled', 'disabled'];
-      if (
-        tailwind.enabled !== undefined &&
-        (typeof tailwind.enabled !== 'string' ||
-          !validEnabled.includes(tailwind.enabled))
-      ) {
-        errors.push(
-          `tailwind.enabled must be one of: ${validEnabled.join(', ')}`
-        );
-      }
-      if (
-        tailwind.configPath !== undefined &&
-        typeof tailwind.configPath !== 'string'
-      ) {
-        errors.push('tailwind.configPath must be a string path');
-      }
-    }
-  }
-
-  return errors;
-}
-
-// check if value is valid plugin spec
-function isValidPluginSpec(value: unknown): value is PluginSpec {
-  if (typeof value === 'string') {
-    return true;
-  }
-  if (
-    Array.isArray(value) &&
-    value.length === 2 &&
-    typeof value[0] === 'string' &&
-    typeof value[1] === 'object' &&
-    value[1] !== null
-  ) {
-    return true;
-  }
-  return false;
+  const result = validateConfigSchema(config, { context: 'config' });
+  return result.errors;
 }
 
 // setup file watcher for config file changes
 function setupConfigWatcher(configPath: string): void {
   const cache = getCache();
 
+  // already watching
   if (cache.hasWatcher(configPath)) {
-    return; // already watching
+    return;
   }
 
   const watcher = vscode.workspace.createFileSystemWatcher(configPath);
 
-  const handleChange = () => {
+  watcher.onDidChange(() => {
     debug(`Config file changed: ${configPath}`);
     cache.invalidate(configPath);
-    cache.notifyChange(configPath);
-  };
+    cache.notifyChange(configPath, ConfigChangeType.FileChanged);
+  });
 
-  watcher.onDidChange(handleChange);
-  watcher.onDidCreate(handleChange);
+  watcher.onDidCreate(() => {
+    debug(`Config file created: ${configPath}`);
+    cache.invalidate(configPath);
+    cache.notifyChange(configPath, ConfigChangeType.FileCreated);
+  });
+
   watcher.onDidDelete(() => {
     debug(`Config file deleted: ${configPath}`);
     cache.invalidate(configPath);
-    cache.notifyChange(configPath);
+    cache.notifyChange(configPath, ConfigChangeType.FileDeleted);
     // clean up watcher
     cache.removeWatcher(configPath);
   });
@@ -325,8 +213,11 @@ function setupConfigWatcher(configPath: string): void {
 }
 
 // subscribe to config file changes
+// callback receives a ConfigChangeEvent w/ type, configPath, & timestamp
 export function onConfigChange(
-  callback: (configPath: string) => void
+  callback: (
+    event: import('../../config/ConfigCache').ConfigChangeEvent
+  ) => void
 ): vscode.Disposable {
   return getCache().subscribe(callback);
 }
@@ -337,11 +228,11 @@ export function clearConfigCache(): void {
 }
 
 // dispose all config watchers (call during extension deactivation)
-// Note: This is now handled by ConfigCache.dispose() via ServiceRegistry,
-// but we keep this for backward compatibility w/ extension.ts
+// note: now handled by ConfigCache.dispose() via ServiceRegistry,
+// but kept for backward compatibility w/ extension.ts
 export function disposeConfigWatchers(): void {
   // ConfigCache handles cleanup via dispose(), which is called by ServiceRegistry
-  // This function is kept for backward compatibility but delegates to clear()
+  // this function is kept for backward compatibility but delegates to clear()
   getCache().clear();
 }
 
