@@ -7,6 +7,7 @@ import { useMermaidRendering, useImageLightbox, useAsyncEffect } from './hooks';
 import { PreviewContainer } from './components/PreviewContainer';
 import type { TrustedPreviewContent, PreviewError } from './types';
 import { extractErrorInfo } from '@mdx-preview/shared';
+import { loadKatexCss } from './utils/katexLoader';
 
 interface TrustedPreviewRendererProps {
   content: TrustedPreviewContent;
@@ -59,6 +60,17 @@ export function TrustedPreviewRenderer({
       scan();
     }
   }, [evaluatedComponent, scan]);
+
+  // lazy-load KaTeX CSS when math content is detected in rendered output
+  // uses useLayoutEffect for synchronous loading to avoid FOUC
+  useLayoutEffect(() => {
+    if (evaluatedComponent && containerRef.current) {
+      const hasKatex = containerRef.current.querySelector('.katex, .math');
+      if (hasKatex) {
+        loadKatexCss();
+      }
+    }
+  }, [evaluatedComponent]);
 
   // show loading state while evaluating
   if (isEvaluating || !evaluatedComponent) {

@@ -9,8 +9,7 @@ import { LightboxProvider } from './context/LightboxContext';
 import { Lightbox } from './components/Lightbox';
 import App from './App';
 import './index.css';
-// KaTeX math rendering styles
-import 'katex/dist/katex.min.css';
+// KaTeX CSS is lazy-loaded via utils/katexLoader.ts when math content is detected
 // Safe Mode component styles (Callout, Collapsible, Tabs transforms)
 import './styles/safe-components.css';
 // Code block styles (Shiki syntax highlighting w/ copy button, language badge)

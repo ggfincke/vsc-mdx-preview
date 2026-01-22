@@ -1,13 +1,14 @@
 // packages/webview-app/src/SafePreview.tsx
 // render pre-sanitized HTML in Safe Mode (no JavaScript execution)
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import {
   useMermaidRendering,
   useImageLightbox,
   useSafeModeProcessing,
 } from './hooks';
 import { PreviewContainer } from './components/PreviewContainer';
+import { loadKatexCss } from './utils/katexLoader';
 
 interface SafePreviewRendererProps {
   html: string;
@@ -25,6 +26,14 @@ export function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
 
   // process Safe Mode HTML (sanitize, post-process links/images, enhance code blocks)
   useSafeModeProcessing(containerRef, html);
+
+  // lazy-load KaTeX CSS when math content is detected
+  // uses useLayoutEffect for synchronous loading to avoid FOUC
+  useLayoutEffect(() => {
+    if (html.includes('class="katex"') || html.includes('class="math')) {
+      loadKatexCss();
+    }
+  }, [html]);
 
   // add image click event listener (imperative for Safe Mode since HTML is injected)
   useEffect(() => {
