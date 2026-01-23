@@ -25,3 +25,11 @@ export function clearInjectedStyles(): void {
   // clear registry tracking
   registry.clearInjectedStyles();
 }
+
+// remove styles for specific modules (for incremental updates)
+export function removeStylesForModules(moduleIds: string[]): void {
+  for (const id of moduleIds) {
+    StyleInjector.removeModuleCss(id);
+    registry.unmarkStyleInjected(id);
+  }
+}

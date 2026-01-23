@@ -92,6 +92,15 @@ class StyleInjectorImpl {
     this.injectedIds.delete(id);
   }
 
+  // remove CSS for a specific module (for incremental updates)
+  removeModuleCss(moduleId: string): void {
+    const style = document.querySelector(`style[data-module-id="${moduleId}"]`);
+    if (style) {
+      style.remove();
+    }
+    this.injectedIds.delete(moduleId);
+  }
+
   // remove a data attribute from document element
   removeDataAttribute(name: string): void {
     document.documentElement.removeAttribute(name);

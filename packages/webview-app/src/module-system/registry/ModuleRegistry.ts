@@ -53,10 +53,15 @@ export class ModuleRegistry {
   }
 
   // get cached module (updates access time for LRU)
+  // Uses delete + re-insert to maintain Map insertion order (O(1) LRU)
+  // JavaScript Map preserves insertion order, so most recently accessed is at end
   get(id: string): Module | undefined {
     const entry = this.cache.get(id);
     if (entry) {
+      // Move to end (most recently used) via delete + re-insert
+      this.cache.delete(id);
       entry.lastAccessed = Date.now();
+      this.cache.set(id, entry);
       return entry.module;
     }
     return undefined;
@@ -113,22 +118,18 @@ export class ModuleRegistry {
   }
 
   // evict least recently used non-preloaded module
+  // O(p) where p = number of preloaded modules at start of Map (constant in practice)
+  // Since get() moves accessed entries to the end, first entries are oldest
   private evictLRU(): void {
-    let oldestId: string | null = null;
-    let oldestTime = Infinity;
-
-    for (const [id, entry] of this.cache) {
-      if (!this.preloadedIds.has(id) && entry.lastAccessed < oldestTime) {
-        oldestTime = entry.lastAccessed;
-        oldestId = id;
+    // First entry in Map is oldest (LRU) due to insertion order
+    for (const [id] of this.cache) {
+      if (!this.preloadedIds.has(id)) {
+        this.cache.delete(id);
+        // Clean up all related metadata (fixes memory leak)
+        this.cleanDependentsFor(id);
+        this.cleanResolutionMapFor(id);
+        return; // Only evict one
       }
-    }
-
-    if (oldestId) {
-      this.cache.delete(oldestId);
-      // Clean up all related metadata (fixes memory leak)
-      this.cleanDependentsFor(oldestId);
-      this.cleanResolutionMapFor(oldestId);
     }
   }
 
@@ -283,6 +284,11 @@ export class ModuleRegistry {
   // clear injected styles tracking
   clearInjectedStyles(): void {
     this.injectedStyles.clear();
+  }
+
+  // remove style tracking for a single module (for incremental updates)
+  unmarkStyleInjected(id: string): void {
+    this.injectedStyles.delete(id);
   }
 
   // create key for resolution map
