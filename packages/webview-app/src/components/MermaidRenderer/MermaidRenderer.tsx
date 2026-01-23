@@ -37,6 +37,10 @@ function isDarkMermaidTheme(theme: string): boolean {
   return theme === 'dark';
 }
 
+// Cache for mermaid initialization - avoid re-initializing with same config
+let lastInitializedTheme: string | null = null;
+let lastInitializedDark: boolean | null = null;
+
 // * render a single mermaid diagram w/ error handling
 export function MermaidRenderer({ code, id }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,38 +61,47 @@ export function MermaidRenderer({ code, id }: Props) {
       const mermaid = await getMermaid();
       debugLog('mermaid library loaded');
 
-      // initialize mermaid w/ strict config (no foreignObject)
-      // theme is controlled by user setting (mdx-preview.preview.mermaidTheme)
-      mermaid.default.initialize({
-        startOnLoad: false,
-        theme: mermaidTheme,
-        securityLevel: 'strict',
-        // * disable HTML labels to produce pure SVG (no foreignObject)
-        // this keeps DOMPurify allowlist tighter
-        flowchart: { htmlLabels: false },
-        sequence: { useMaxWidth: true },
-        // fix ER diagram relationship label contrast
-        themeCSS: `
-          .edgeLabel text,
-          .edgeLabel tspan,
-          .edgeLabel span,
-          .edgeLabel .label text,
-          .edgeLabel .label tspan,
-          .edgeLabel .label span,
-          .edgeLabel foreignObject div {
-            fill: ${isDark ? '#fff' : '#000'} !important;
-            color: ${isDark ? '#fff' : '#000'} !important;
-          }
-          .relationshipLabelBox,
-          .relationshipLabelBox rect,
-          .edgeLabel .label rect.background {
-            fill: ${isDark ? '#1e1e1e' : '#ffffff'} !important;
-            stroke: ${isDark ? '#555' : '#ccc'} !important;
-            stroke-width: 1px !important;
-            opacity: 1 !important;
-          }
-        `,
-      });
+      // Only re-initialize if theme or dark state changed (perf optimization)
+      const needsReinit =
+        lastInitializedTheme !== mermaidTheme || lastInitializedDark !== isDark;
+
+      if (needsReinit) {
+        debugLog('initializing mermaid with theme', { mermaidTheme, isDark });
+        // initialize mermaid w/ strict config (no foreignObject)
+        // theme is controlled by user setting (mdx-preview.preview.mermaidTheme)
+        mermaid.default.initialize({
+          startOnLoad: false,
+          theme: mermaidTheme,
+          securityLevel: 'strict',
+          // * disable HTML labels to produce pure SVG (no foreignObject)
+          // this keeps DOMPurify allowlist tighter
+          flowchart: { htmlLabels: false },
+          sequence: { useMaxWidth: true },
+          // fix ER diagram relationship label contrast
+          themeCSS: `
+            .edgeLabel text,
+            .edgeLabel tspan,
+            .edgeLabel span,
+            .edgeLabel .label text,
+            .edgeLabel .label tspan,
+            .edgeLabel .label span,
+            .edgeLabel foreignObject div {
+              fill: ${isDark ? '#fff' : '#000'} !important;
+              color: ${isDark ? '#fff' : '#000'} !important;
+            }
+            .relationshipLabelBox,
+            .relationshipLabelBox rect,
+            .edgeLabel .label rect.background {
+              fill: ${isDark ? '#1e1e1e' : '#ffffff'} !important;
+              stroke: ${isDark ? '#555' : '#ccc'} !important;
+              stroke-width: 1px !important;
+              opacity: 1 !important;
+            }
+          `,
+        });
+        lastInitializedTheme = mermaidTheme;
+        lastInitializedDark = isDark;
+      }
 
       if (signal.isCancelled() || !containerRef.current) {
         return;
