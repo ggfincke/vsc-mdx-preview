@@ -54,7 +54,19 @@ export function createBarrelModule(
   };
 
   for (const name of exportNames) {
-    module[name] = moduleExports[name];
+    let exported = moduleExports[name];
+
+    // Unwrap if it's a nested module wrapper with a default export
+    // This can happen with certain bundler configurations where dynamic imports
+    // return nested module objects instead of direct function references
+    if (exported && typeof exported === 'object' && !Array.isArray(exported)) {
+      const obj = exported as Record<string, unknown>;
+      if ('__esModule' in obj && 'default' in obj) {
+        exported = obj.default;
+      }
+    }
+
+    module[name] = exported;
   }
 
   return module;
@@ -67,11 +79,9 @@ export function preloadCoreModules(
 ): void {
   // React
   registry.preload(PRELOADED_MODULE_IDS.react, React);
-  registry.preload(PRELOADED_MODULE_IDS.reactLatest, React);
 
   // ReactDOM (full API including createPortal, flushSync, etc.)
   registry.preload(PRELOADED_MODULE_IDS.reactDom, ReactDOM);
-  registry.preload(PRELOADED_MODULE_IDS.reactDomLatest, ReactDOM);
 
   // ReactDOM/client (createRoot, hydrateRoot)
   registry.preload(PRELOADED_MODULE_IDS.reactDomClient, ReactDOMClient);
@@ -82,12 +92,7 @@ export function preloadCoreModules(
   // MDX React (must include useMDXComponents for MDX 3 compiled code to read context)
   const mdxModule = { __esModule: true as const, MDXProvider, useMDXComponents };
   registry.preload(PRELOADED_MODULE_IDS.mdxReact, mdxModule);
-  registry.preload(PRELOADED_MODULE_IDS.mdxReactLatest, mdxModule);
 
   // VSCode Markdown Layout
   registry.preload(PRELOADED_MODULE_IDS.vscodeLayout, vscodeMarkdownLayout);
-  registry.preload(
-    PRELOADED_MODULE_IDS.vscodeLayoutLatest,
-    vscodeMarkdownLayout
-  );
 }
