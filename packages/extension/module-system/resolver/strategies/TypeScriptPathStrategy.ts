@@ -24,6 +24,56 @@ const INDEX_FILES = [
   'index.mjs',
 ];
 
+// ============================================================================
+// Stat cache for file probing (reduces fs.statSync calls)
+// ============================================================================
+
+interface StatCacheEntry {
+  exists: boolean;
+  isFile: boolean;
+  isDirectory: boolean;
+  timestamp: number;
+}
+
+const STAT_CACHE_TTL_MS = 5000; // 5 seconds
+const statCache = new Map<string, StatCacheEntry>();
+
+function getCachedStat(filePath: string): StatCacheEntry | null {
+  const entry = statCache.get(filePath);
+  if (entry && Date.now() - entry.timestamp < STAT_CACHE_TTL_MS) {
+    return entry;
+  }
+  return null;
+}
+
+function setCachedStat(
+  filePath: string,
+  stat: fs.Stats | null
+): StatCacheEntry {
+  const entry: StatCacheEntry = {
+    exists: stat !== null,
+    isFile: stat?.isFile() ?? false,
+    isDirectory: stat?.isDirectory() ?? false,
+    timestamp: Date.now(),
+  };
+  statCache.set(filePath, entry);
+  return entry;
+}
+
+function getOrCreateStat(filePath: string): StatCacheEntry {
+  const cached = getCachedStat(filePath);
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const stat = fs.statSync(filePath);
+    return setCachedStat(filePath, stat);
+  } catch {
+    return setCachedStat(filePath, null);
+  }
+}
+
 // match specifier against tsconfig paths patterns
 // returns array of possible resolved paths, or null if no match
 function matchTsPaths(
@@ -54,39 +104,27 @@ function matchTsPaths(
   return null;
 }
 
-// probe for file existence with various extensions
+// probe for file existence with various extensions (uses stat cache)
 function probeFile(basePath: string): string | null {
   // try exact path first with various extensions
   for (const ext of PROBE_EXTENSIONS) {
     const fullPath = basePath + ext;
-    try {
-      const stat = fs.statSync(fullPath);
-      if (stat.isFile()) {
-        return fullPath;
-      }
-    } catch {
-      // file doesn't exist, continue
+    const stat = getOrCreateStat(fullPath);
+    if (stat.exists && stat.isFile) {
+      return fullPath;
     }
   }
 
   // try as directory with index file
-  try {
-    const stat = fs.statSync(basePath);
-    if (stat.isDirectory()) {
-      for (const indexFile of INDEX_FILES) {
-        const indexPath = path.join(basePath, indexFile);
-        try {
-          const indexStat = fs.statSync(indexPath);
-          if (indexStat.isFile()) {
-            return indexPath;
-          }
-        } catch {
-          // index file doesn't exist, continue
-        }
+  const baseStat = getOrCreateStat(basePath);
+  if (baseStat.exists && baseStat.isDirectory) {
+    for (const indexFile of INDEX_FILES) {
+      const indexPath = path.join(basePath, indexFile);
+      const indexStat = getOrCreateStat(indexPath);
+      if (indexStat.exists && indexStat.isFile) {
+        return indexPath;
       }
     }
-  } catch {
-    // path doesn't exist, continue
   }
 
   return null;
