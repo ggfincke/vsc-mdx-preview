@@ -1,13 +1,17 @@
 // packages/webview-app/src/components/StaleIndicator/StaleIndicator.tsx
 // display a non-blocking badge when preview content is stale
 
+import { memo } from 'react';
 import './StaleIndicator.css';
 
 interface StaleIndicatorProps {
   isStale: boolean;
 }
 
-export function StaleIndicator({ isStale }: StaleIndicatorProps) {
+// wrapped with React.memo to prevent re-renders when parent updates but isStale unchanged
+export const StaleIndicator = memo(function StaleIndicator({
+  isStale,
+}: StaleIndicatorProps) {
   if (!isStale) {
     return null;
   }
@@ -17,6 +21,6 @@ export function StaleIndicator({ isStale }: StaleIndicatorProps) {
       Outdated
     </div>
   );
-}
+});
 
 export default StaleIndicator;

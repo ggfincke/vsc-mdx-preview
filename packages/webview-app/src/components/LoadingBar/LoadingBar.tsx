@@ -1,7 +1,7 @@
 // packages/webview-app/src/components/LoadingBar/LoadingBar.tsx
 // show VS Code-style progress bar during loading states
 
-import React, { useState, useEffect } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import './LoadingBar.css';
 import { LOADING_BAR_SHOW_DELAY_MS } from '../../constants';
 
@@ -10,7 +10,10 @@ interface LoadingBarProps {
   immediate?: boolean;
 }
 
-const LoadingBar: React.FC<LoadingBarProps> = ({ immediate = false }) => {
+// wrapped with React.memo to prevent re-renders when parent updates but immediate unchanged
+const LoadingBar: React.FC<LoadingBarProps> = memo(function LoadingBar({
+  immediate = false,
+}) {
   const [shouldShow, setShouldShow] = useState(immediate);
 
   useEffect(() => {
@@ -44,6 +47,6 @@ const LoadingBar: React.FC<LoadingBarProps> = ({ immediate = false }) => {
       <p className="mdx-preview-loading-text">Loading preview...</p>
     </div>
   );
-};
+});
 
 export default LoadingBar;
