@@ -6,6 +6,7 @@ import {
   useEffect,
   useCallback,
   useRef,
+  useMemo,
   ComponentType,
   MouseEvent,
 } from 'react';
@@ -39,13 +40,10 @@ import {
 } from './hooks';
 import './App.css';
 import './styles/admonitions.css';
-// Base styles (shared via data-attribute selectors)
+// Base styles (shared via data-attribute selectors) - always needed
 import './components/shims/base/styles/index.css';
-// Framework-specific styles (unique components only)
-import './components/shims/docusaurus/styles.css';
-import './components/shims/starlight/styles.css';
-import './components/shims/nextra/styles.css';
-import './components/shims/generic/styles.css';
+// Framework-specific styles are now lazy-loaded via frameworkCssLoader.ts
+// when the corresponding framework shims are loaded in preload/index.ts
 
 debug('[APP] App.tsx module loaded');
 
@@ -265,12 +263,27 @@ function App() {
     `[APP] Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
   );
 
-  // compute Nextra layout class from metadata
-  const nextraLayoutClass = nextraMeta?.layout === 'full'
-    ? 'nextra-layout-full'
-    : nextraMeta?.layout === 'raw'
-    ? 'nextra-layout-raw'
-    : '';
+  // compute Nextra layout class from metadata (memoized to avoid string recreation)
+  const nextraLayoutClass = useMemo(() => {
+    if (nextraMeta?.layout === 'full') {
+      return 'nextra-layout-full';
+    }
+    if (nextraMeta?.layout === 'raw') {
+      return 'nextra-layout-raw';
+    }
+    return '';
+  }, [nextraMeta?.layout]);
+
+  // memoize zoom style object to avoid new object creation on every render
+  const zoomStyle = useMemo(() => {
+    if (zoomLevel === ZOOM_DEFAULT_PERCENT) {
+      return undefined;
+    }
+    return {
+      transform: `scale(${zoomLevel / ZOOM_DEFAULT_PERCENT})`,
+      transformOrigin: 'top center',
+    };
+  }, [zoomLevel]);
 
   // render loading state during initial load
   if (isLoading && !content && !error) {
@@ -317,17 +330,7 @@ function App() {
       <MDXErrorBoundary
         onError={(err) => setError({ message: err.message, stack: err.stack })}
       >
-        <div
-          className="mdx-preview-content"
-          style={
-            zoomLevel !== ZOOM_DEFAULT_PERCENT
-              ? {
-                  transform: `scale(${zoomLevel / ZOOM_DEFAULT_PERCENT})`,
-                  transformOrigin: 'top center',
-                }
-              : undefined
-          }
-        >
+        <div className="mdx-preview-content" style={zoomStyle}>
           {nextraMeta?.title && (
             <h1 className="nextra-page-title">{nextraMeta.title}</h1>
           )}
