@@ -211,6 +211,15 @@ class RPCWebviewHandle implements WebviewRPC {
     });
   }
 
+  // DIRECT handler - load specific generic shims on demand (conditional preloading)
+  setUsedComponents(components: string[]): void {
+    log.debug(`setUsedComponents called: ${components.join(', ')}`);
+    // ! import dynamically to avoid circular dep w/ module-system
+    void import('./module-system').then(({ ensureGenericShimsLoaded }) => {
+      ensureGenericShimsLoaded(components);
+    });
+  }
+
   // EXCEPTION handler - async w/ dynamic import (kept manual)
   async invalidate(fsPath: string): Promise<void> {
     log.debug(`invalidate called: ${fsPath}`);

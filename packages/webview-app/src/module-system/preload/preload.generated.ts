@@ -5,14 +5,14 @@ import type { ModuleRegistry } from '../registry/ModuleRegistry';
 import { createBarrelModule, createComponentModule } from './core';
 import type { Framework } from '@mdx-preview/shared';
 
-// static imports for generic shims (always loaded)
+// static imports for generic shims (for backward compatibility)
 import generic_Callout from '../../components/shims/generic/Callout';
 import generic_Collapsible from '../../components/shims/generic/Collapsible';
 import generic_Tabs from '../../components/shims/generic/Tabs';
 import generic_TabItem from '../../components/shims/generic/TabItem';
 import generic_CodeGroup from '../../components/shims/generic/CodeGroup';
 
-// preload generic shims synchronously (always needed as fallbacks)
+// preload generic shims synchronously (for backward compatibility)
 export function preloadGenericShims(registry: ModuleRegistry): void {
   registry.preload('npm://@mdx-preview/shims-generic/Callout', createComponentModule(generic_Callout, ["Callout","Alert","Admonition"]));
   registry.preload('npm://@mdx-preview/shims-generic/Collapsible', createComponentModule(generic_Collapsible, ["Collapsible","Accordion","Details"]));
@@ -20,6 +20,30 @@ export function preloadGenericShims(registry: ModuleRegistry): void {
   registry.preload('npm://@mdx-preview/shims-generic/TabItem', createComponentModule(generic_TabItem, ["TabItem","Tab"]));
   registry.preload('npm://@mdx-preview/shims-generic/CodeGroup', createComponentModule(generic_CodeGroup, ["CodeGroup"]));
 }
+
+// individual lazy loaders for conditional generic shim preloading
+export const GENERIC_SHIM_LOADERS: Record<string, (registry: ModuleRegistry) => Promise<void>> = {
+  'Callout': async (registry: ModuleRegistry) => {
+    const component = await import('../../components/shims/generic/Callout').then(m => m.default);
+    registry.preload('npm://@mdx-preview/shims-generic/Callout', createComponentModule(component, ["Callout","Alert","Admonition"]));
+  },
+  'Collapsible': async (registry: ModuleRegistry) => {
+    const component = await import('../../components/shims/generic/Collapsible').then(m => m.default);
+    registry.preload('npm://@mdx-preview/shims-generic/Collapsible', createComponentModule(component, ["Collapsible","Accordion","Details"]));
+  },
+  'Tabs': async (registry: ModuleRegistry) => {
+    const component = await import('../../components/shims/generic/Tabs').then(m => m.default);
+    registry.preload('npm://@mdx-preview/shims-generic/Tabs', createComponentModule(component, ["Tabs"]));
+  },
+  'TabItem': async (registry: ModuleRegistry) => {
+    const component = await import('../../components/shims/generic/TabItem').then(m => m.default);
+    registry.preload('npm://@mdx-preview/shims-generic/TabItem', createComponentModule(component, ["TabItem","Tab"]));
+  },
+  'CodeGroup': async (registry: ModuleRegistry) => {
+    const component = await import('../../components/shims/generic/CodeGroup').then(m => m.default);
+    registry.preload('npm://@mdx-preview/shims-generic/CodeGroup', createComponentModule(component, ["CodeGroup"]));
+  }
+};
 
 // lazy-load docusaurus shims on demand
 export async function loadDocusaurusShims(registry: ModuleRegistry): Promise<void> {

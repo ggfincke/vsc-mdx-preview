@@ -285,6 +285,8 @@ export interface NextraPageMeta {
 export interface WebviewRPC {
   setTrustState(state: TrustState): void;
   setFramework(framework: FrameworkType): void;
+  // inform webview which generic components are used (for conditional shim preloading)
+  setUsedComponents(components: string[]): void;
   updatePreview(
     code: string,
     entryFilePath: string,

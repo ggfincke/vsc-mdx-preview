@@ -127,9 +127,10 @@ function groupEntriesByFramework(
 function generateGenericPreloadFunction(
   entries: ComponentRegistryEntry[],
   options: GeneratePreloadOptions
-): { imports: string[]; func: string } {
+): { imports: string[]; func: string; loaders: string } {
   const importLines: string[] = [];
   const preloadLines: string[] = [];
+  const loaderEntries: string[] = [];
 
   for (const entry of entries) {
     const importVar = toImportVarName(entry);
@@ -138,10 +139,17 @@ function generateGenericPreloadFunction(
 
     if (isComponentEntry(entry)) {
       const exportNames = getComponentExportNames(entry);
+      const exportNamesJson = JSON.stringify(exportNames);
       preloadLines.push(
-        `  registry.preload('${entry.preloadId}', createComponentModule(${importVar}, ${JSON.stringify(
-          exportNames
-        )}));`
+        `  registry.preload('${entry.preloadId}', createComponentModule(${importVar}, ${exportNamesJson}));`
+      );
+
+      // Generate individual lazy loader for conditional preloading
+      loaderEntries.push(
+        `  '${entry.name}': async (registry: ModuleRegistry) => {
+    const component = await import('${relativeImport}').then(m => m.default);
+    registry.preload('${entry.preloadId}', createComponentModule(component, ${exportNamesJson}));
+  }`
       );
     } else {
       preloadLines.push(
@@ -152,12 +160,17 @@ function generateGenericPreloadFunction(
     }
   }
 
-  const func = `// preload generic shims synchronously (always needed as fallbacks)
+  const func = `// preload generic shims synchronously (for backward compatibility)
 export function preloadGenericShims(registry: ModuleRegistry): void {
 ${preloadLines.join('\n')}
 }`;
 
-  return { imports: importLines, func };
+  const loaders = `// individual lazy loaders for conditional generic shim preloading
+export const GENERIC_SHIM_LOADERS: Record<string, (registry: ModuleRegistry) => Promise<void>> = {
+${loaderEntries.join(',\n')}
+};`;
+
+  return { imports: importLines, func, loaders };
 }
 
 function generateFrameworkLoader(
@@ -216,9 +229,9 @@ ${preloadCalls.join('\n')}
 export function generatePreloadTs(options: GeneratePreloadOptions): string {
   const grouped = groupEntriesByFramework(REGISTRY_ENTRIES);
 
-  // generate generic shims (static imports)
+  // generate generic shims (static imports + lazy loaders)
   const genericEntries = grouped.get('generic') ?? [];
-  const { imports: genericImports, func: genericFunc } =
+  const { imports: genericImports, func: genericFunc, loaders: genericLoaders } =
     generateGenericPreloadFunction(genericEntries, options);
 
   // generate framework loaders (dynamic imports)
@@ -241,10 +254,12 @@ import type { ModuleRegistry } from '../registry/ModuleRegistry';
 import { createBarrelModule, createComponentModule } from './core';
 import type { Framework } from '@mdx-preview/shared';
 
-// static imports for generic shims (always loaded)
+// static imports for generic shims (for backward compatibility)
 ${genericImports.join('\n')}
 
 ${genericFunc}
+
+${genericLoaders}
 
 ${frameworkLoaders.join('\n\n')}
 

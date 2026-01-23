@@ -10,6 +10,7 @@ import {
   fallbackLayoutModule,
   getPreservedIds,
   ensureFrameworkShims,
+  ensureGenericShims,
 } from './preload';
 import type { Framework } from '@mdx-preview/shared';
 import type { FetchResult } from './types';
@@ -25,6 +26,7 @@ export type { FetchResult, Module, ModuleRuntime } from './types';
 let preloadedModulesInitialized = false;
 let vscodeMarkdownLayoutModule: unknown = null;
 let pendingFrameworkShimLoad: Promise<void> | null = null;
+let pendingGenericShimLoad: Promise<void> | null = null;
 
 // set the vscode-markdown-layout module - called from App.tsx if the module is available
 export function setVscodeMarkdownLayout(module: unknown): void {
@@ -78,6 +80,15 @@ export function ensureFrameworkShimsLoaded(framework: Framework): void {
   pendingFrameworkShimLoad = ensureFrameworkShims(registry, framework);
 }
 
+// load specific generic shims on demand - called by RPC handler for conditional preloading
+export function ensureGenericShimsLoaded(components: string[]): void {
+  // ensure preloaded modules are ready first
+  ensurePreloadedModules();
+  // store the promise so evaluateModuleToComponent can await it
+  // this fixes the race condition where setUsedComponents is called right before updatePreview
+  pendingGenericShimLoad = ensureGenericShims(registry, components);
+}
+
 // RPC fetcher that delegates to extension via Comlink
 async function rpcFetcher(
   request: string,
@@ -98,6 +109,13 @@ export async function evaluateModuleToComponent(
 ): Promise<ComponentType> {
   // Ensure preloaded modules are ready
   ensurePreloadedModules();
+
+  // Wait for any pending generic shim loading to complete
+  // This fixes the race condition where setUsedComponents is called right before updatePreview
+  if (pendingGenericShimLoad) {
+    await pendingGenericShimLoad;
+    pendingGenericShimLoad = null;
+  }
 
   // Wait for any pending framework shim loading to complete
   // This fixes the race condition where setFramework is called right before updatePreview

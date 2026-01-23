@@ -18,7 +18,11 @@ import type {
 import { debug, warn } from '../logging';
 
 // use shared component registry as single source of truth
-import { isFrameworkComponent } from '@mdx-preview/shared';
+import {
+  isFrameworkComponent,
+  getGenericComponentSet,
+  getCanonicalComponentName,
+} from '@mdx-preview/shared';
 import type { MdxJsxElement } from '../compiler/shared/transforms/types';
 
 // MDX ESM node (imports/exports)
@@ -329,6 +333,33 @@ export function getUnknownComponents(
   result: ComponentDetectionResult
 ): DetectedComponent[] {
   return result.components.filter((c) => c.source === 'unknown');
+}
+
+/**
+ * Extract list of generic component names used in the MDX.
+ * Returns canonical names (e.g., Alert → Callout) for conditional shim preloading.
+ *
+ * @param result - Component detection result from detectComponents()
+ * @returns Array of canonical generic component names (Callout, Tabs, etc.)
+ */
+export function getUsedGenericComponents(
+  result: ComponentDetectionResult
+): string[] {
+  const genericNames = getGenericComponentSet();
+  const used = new Set<string>();
+
+  for (const component of result.components) {
+    // check if this component name is a generic component (including aliases)
+    if (genericNames.has(component.name)) {
+      // resolve to canonical name (e.g., Alert → Callout, Accordion → Collapsible)
+      const canonical = getCanonicalComponentName(component.name);
+      if (canonical) {
+        used.add(canonical);
+      }
+    }
+  }
+
+  return Array.from(used);
 }
 
 // isPascalCase, isHtmlElement, extractImports are internal helpers
