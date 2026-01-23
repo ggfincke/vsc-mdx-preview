@@ -4,7 +4,7 @@
 import { Preview } from '../../preview/preview-manager';
 import * as path from 'path';
 import isModule from 'is-module';
-import { compileTrusted } from '../../compiler/trusted/compile';
+import { createLazyImport } from '../../utils/lazy-import';
 import { transpileWithFallback } from './selector';
 import { debug } from '../../logging';
 import {
@@ -12,6 +12,11 @@ import {
   isTypeScriptExtension,
   isTypeScriptLanguage,
 } from './typescript-transpile';
+
+// lazy load Trusted Mode compiler - only loaded when Trusted Mode is actually used
+const getCompileTrustedModule = createLazyImport(
+  () => import('../../compiler/trusted/compile')
+);
 
 // result type for entry transformation (includes frontmatter)
 export interface TransformEntryResult {
@@ -34,6 +39,7 @@ async function transformEntry(
     languageId === 'mdx' ||
     uri.scheme === 'untitled'
   ) {
+    const { compileTrusted } = await getCompileTrustedModule();
     const mdxResult = await compileTrusted(code, true, preview);
     code = mdxResult.code;
     frontmatter = mdxResult.frontmatter;
@@ -64,6 +70,7 @@ async function transform(
   const extname = path.extname(fsPath);
   if (/\.mdx?$/i.test(extname)) {
     // for dependencies, we only need the code (frontmatter is ignored)
+    const { compileTrusted } = await getCompileTrustedModule();
     const mdxResult = await compileTrusted(code, false, preview);
     code = mdxResult.code;
   }

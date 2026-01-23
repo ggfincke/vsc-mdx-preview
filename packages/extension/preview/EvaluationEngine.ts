@@ -4,8 +4,13 @@
 import * as fs from 'fs';
 import { transformEntry } from '../module-system/transform/transform';
 import { extractImportSpecifiers } from '../module-system/deps/import-extractor';
-import { compileSafe } from '../compiler/safe/compile';
+import { createLazyImport } from '../utils/lazy-import';
 import { debug } from '../logging';
+
+// lazy load Safe Mode compiler - only loaded when Safe Mode is actually used
+const getCompileSafeModule = createLazyImport(
+  () => import('../compiler/safe/compile')
+);
 import { ErrorContext } from '../errors';
 import {
   getTailwindProcessor,
@@ -85,11 +90,11 @@ export class EvaluationEngine {
   ): Promise<SafeEvaluationResult> {
     debug('[ENGINE] evaluateSafe called');
 
+    debug('[ENGINE] Loading Safe Mode compiler...');
+    const { compileSafe } = await getCompileSafeModule();
+
     debug('[ENGINE] Compiling to safe HTML...');
-    const { html, frontmatter } = await compileSafe(
-      text,
-      mdxPreviewConfig
-    );
+    const { html, frontmatter } = await compileSafe(text, mdxPreviewConfig);
     debug(`[ENGINE] Safe HTML compiled, length: ${html.length}`);
 
     return { html, frontmatter };

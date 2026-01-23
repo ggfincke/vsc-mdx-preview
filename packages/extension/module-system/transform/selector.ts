@@ -1,9 +1,14 @@
 // packages/extension/module-system/transform/selector.ts
 // unified transpiler selection w/ automatic fallback from Sucrase to Babel
 
-import { transformAsync as babelTransformAsync } from './babel';
 import { transform as sucraseTransform } from './sucrase';
 import { debug } from '../../logging';
+import { createLazyImport } from '../../utils/lazy-import';
+
+// Lazy-load Babel (~2MB) - only loaded when Sucrase fails or is disabled
+const getBabelTransform = createLazyImport(() =>
+  import('./babel').then((m) => m.transformAsync)
+);
 
 export interface TranspileOptions {
   // whether to prefer Sucrase over Babel
@@ -31,11 +36,13 @@ export async function transpileWithFallback(
         file: filePath,
         error: e,
       });
+      const babelTransformAsync = await getBabelTransform();
       const result = await babelTransformAsync(code);
       return result?.code ?? code;
     }
   }
 
+  const babelTransformAsync = await getBabelTransform();
   const result = await babelTransformAsync(code);
   return result?.code ?? code;
 }
