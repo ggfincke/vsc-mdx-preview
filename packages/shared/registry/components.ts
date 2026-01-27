@@ -430,6 +430,10 @@ export const GENERIC_COMPONENTS = buildGenericComponents();
 // framework component lists (derived from registry)
 export const FRAMEWORK_COMPONENTS = buildFrameworkComponents();
 
+// cached arrays/sets for O(1) lookups (COMPONENT_REGISTRY is immutable)
+let _cachedAllGenericNames: string[] | null = null;
+let _cachedGenericSet: Set<string> | null = null;
+
 function buildGenericComponents(): Record<string, { aliases: string[] }> {
   const entries = COMPONENT_REGISTRY.filter(
     (entry): entry is GenericComponentEntry =>
@@ -464,18 +468,24 @@ function buildFrameworkComponents(): Record<Framework, string[]> {
   return result;
 }
 
-// get all generic component names including aliases
+// get all generic component names including aliases (cached)
 export function getAllGenericComponentNames(): string[] {
-  const names: string[] = [];
-  for (const [name, config] of Object.entries(GENERIC_COMPONENTS)) {
-    names.push(name, ...config.aliases);
+  if (_cachedAllGenericNames === null) {
+    const names: string[] = [];
+    for (const [name, config] of Object.entries(GENERIC_COMPONENTS)) {
+      names.push(name, ...config.aliases);
+    }
+    _cachedAllGenericNames = names;
   }
-  return names;
+  return _cachedAllGenericNames;
 }
 
-// get Set of all generic component names for O(1) lookup
+// get Set of all generic component names for O(1) lookup (cached)
 export function getGenericComponentSet(): Set<string> {
-  return new Set(getAllGenericComponentNames());
+  if (_cachedGenericSet === null) {
+    _cachedGenericSet = new Set(getAllGenericComponentNames());
+  }
+  return _cachedGenericSet;
 }
 
 // get primary generic component names only (no aliases)

@@ -105,8 +105,23 @@ export {
   extractErrorStack,
   normalizeError,
   extractErrorInfo,
+  extractErrorChain,
+  formatErrorWithCause,
   type ErrorInfo,
 } from './utils/errors';
+
+// module ID utilities (npm:// format handling)
+export {
+  NPM_MODULE_PREFIX,
+  isNpmModuleId,
+  isBareImport,
+  parseNpmModuleId,
+  createNpmModuleId,
+  hasUrlScheme,
+  isValidModuleRequest,
+  URL_SCHEME_PATTERN,
+  type ParsedNpmModuleId,
+} from './utils/module-id';
 
 // available preview themes (markdown content styling)
 export type PreviewTheme =

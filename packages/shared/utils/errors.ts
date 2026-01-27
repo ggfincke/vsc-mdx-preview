@@ -43,3 +43,29 @@ export function extractErrorInfo(error: unknown): ErrorInfo {
     stack: extractErrorStack(error),
   };
 }
+
+// extract full error chain including causes (ES2022)
+// walks the cause chain and returns all errors in order
+export function extractErrorChain(error: unknown): Error[] {
+  const chain: Error[] = [];
+  let current: unknown = error;
+
+  while (current) {
+    const normalized = normalizeError(current);
+    chain.push(normalized);
+    current = (normalized as { cause?: unknown }).cause;
+  }
+
+  return chain;
+}
+
+// format error with full cause chain for logging/display
+export function formatErrorWithCause(error: unknown): string {
+  const chain = extractErrorChain(error);
+  return chain
+    .map((err, i) => {
+      const prefix = i === 0 ? '' : '\nCaused by: ';
+      return `${prefix}${err.message}`;
+    })
+    .join('');
+}
