@@ -5,7 +5,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { debug } from '../logging';
 import type { NextraPageMeta } from '@mdx-preview/shared';
-import { readJsonSync, pathExists } from '../utils/file-utils';
+import { readJsonSync } from '../utils/file-utils';
+import { findUp, createContainmentStopPredicate } from '../utils/find-up';
 
 // cache for resolved meta (cache key -> resolved meta or null)
 const metaCache = new Map<string, NextraPageMeta | null>();
@@ -73,28 +74,16 @@ export function resolveNextraMeta(
   return pageSettings;
 }
 
-// find _meta.json by walking up directory tree
+// find _meta.json by walking up directory tree (uses shared find-up utility)
 function findMetaFile(
   startDir: string,
   workspaceRoot: string
 ): string | undefined {
-  let currentDir = startDir;
-
-  while (currentDir && currentDir.startsWith(workspaceRoot)) {
-    const metaPath = path.join(currentDir, '_meta.json');
-    if (pathExists(metaPath)) {
-      return metaPath;
-    }
-
-    const parentDir = path.dirname(currentDir);
-    // filesystem root
-    if (parentDir === currentDir) {
-      break;
-    }
-    currentDir = parentDir;
-  }
-
-  return undefined;
+  return findUp({
+    filename: '_meta.json',
+    startDir,
+    stopAt: createContainmentStopPredicate(workspaceRoot),
+  });
 }
 
 // extract page-specific settings from _meta.json

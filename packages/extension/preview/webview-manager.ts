@@ -23,6 +23,43 @@ const MDX_PREVIEW_FOCUS_CONTEXT_KEY = 'mdxPreviewFocus';
 // NOTE: panel, panelDoc, disposables, & URI state have been moved to PreviewManager
 // for better testability & lifecycle management
 
+// G.3 optimization: Module-level promise for background resource loading
+let webviewResourcesPromise: Promise<void> | null = null;
+let webviewResourcesError: Error | null = null;
+
+/**
+ * Initialize webview HTML resources in the background (non-blocking).
+ * Call this during activation without awaiting.
+ * G.3 optimization: Allows extension activation to proceed without blocking on file I/O.
+ */
+export function initWebviewAppHTMLResourcesAsync(
+  context: vscode.ExtensionContext
+): void {
+  debug('[WEBVIEW-MGR] Starting background webview resource initialization');
+  webviewResourcesPromise = initWebviewAppHTMLResources(context)
+    .then(() => {
+      debug('[WEBVIEW-MGR] Background resource initialization complete');
+    })
+    .catch((err) => {
+      webviewResourcesError = err;
+      debug('[WEBVIEW-MGR] Background resource initialization failed:', err);
+    });
+}
+
+/**
+ * Ensure webview resources are ready before creating a panel.
+ * Awaits the background initialization if it hasn't completed yet.
+ * G.3 optimization: Only blocks when actually creating a panel, not during activation.
+ */
+export async function ensureWebviewResourcesReady(): Promise<void> {
+  if (webviewResourcesPromise) {
+    await webviewResourcesPromise;
+  }
+  if (webviewResourcesError) {
+    throw webviewResourcesError;
+  }
+}
+
 export async function initWebviewAppHTMLResources(
   context: vscode.ExtensionContext
 ): Promise<void> {
@@ -182,8 +219,13 @@ function setPanelHTMLFromPreview(preview: Preview): void {
   }
 }
 
-export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
+export async function createOrShowPanel(preview: Preview): Promise<vscode.WebviewPanel> {
   debug('[WEBVIEW-MGR] createOrShowPanel called');
+
+  // G.3 optimization: Ensure webview resources are ready before proceeding
+  // This only blocks if background init hasn't completed yet (rare case)
+  await ensureWebviewResourcesReady();
+
   const manager = getPreviewManager();
 
   // use ViewColumn.Beside to open preview next to the active editor
@@ -281,6 +323,9 @@ export function createOrShowPanel(preview: Preview): vscode.WebviewPanel {
       manager.setPanelDoc(preview.doc);
     } else {
       debug('[WEBVIEW-MGR] Same doc, just revealing panel');
+      // cancel any stale handshake timeout from previous operations
+      // this prevents timeout errors when the preview was already rendered
+      preview.cancelHandshakeTimeout();
     }
     panel.reveal(previewColumn);
 

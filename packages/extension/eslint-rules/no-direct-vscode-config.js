@@ -1,20 +1,12 @@
 // packages/extension/eslint-rules/no-direct-vscode-config.js
 // Custom ESLint rule to enforce ConfigManager usage for VS Code configuration access
-
-/**
- * ESLint rule: no-direct-vscode-config
- *
- * Prevents direct calls to vscode.workspace.getConfiguration() outside of ConfigManager.
- * All configuration access should go through ConfigManager for:
- * - Centralized type-safe configuration management
- * - Consistent change notification handling
- * - Single source of truth for settings
- *
- * Allowed locations:
- * - ConfigManager.ts (the authorized configuration manager)
- * - Test files (.test.ts, .integration.test.ts)
- * - Mock files (__mocks__/)
- */
+//
+// Prevents direct calls to vscode.workspace.getConfiguration() outside of ConfigManager.
+// All configuration access should go through ConfigManager for centralized
+// type-safe configuration management, consistent change notification handling,
+// & single source of truth for settings.
+//
+// Allowed locations: ConfigManager.ts, test files, mock files
 
 module.exports = {
   meta: {

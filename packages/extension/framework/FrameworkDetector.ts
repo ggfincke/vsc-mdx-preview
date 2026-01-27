@@ -10,6 +10,7 @@ import { SubscriberManager } from '../utils/SubscriberManager';
 import { ErrorContext } from '../errors';
 import { normalizeError, type FrameworkId } from '@mdx-preview/shared';
 import { readJsonSync, pathExists } from '../utils/file-utils';
+import { findUp } from '../utils/find-up';
 
 // re-export FrameworkId as Framework for backward compatibility
 export type Framework = FrameworkId;
@@ -78,9 +79,37 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
   );
   private fileWatcher: vscode.FileSystemWatcher | null = null;
+  // G.2 optimization: Track if file watcher has been lazily initialized
+  private fileWatcherInitialized = false;
 
   protected constructor() {
     super();
+
+    // G.2 optimization: FileSystemWatcher creation moved to ensureFileWatcher()
+    // This defers the expensive watcher creation until first framework detection
+
+    // watch for framework setting changes (lightweight, keep in constructor)
+    this.addDisposable(
+      vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration('mdx-preview.framework')) {
+          this.invalidateAllCaches();
+        }
+      })
+    );
+  }
+
+  /**
+   * Lazily initialize the FileSystemWatcher on first framework detection.
+   * G.2 optimization: This defers the expensive watcher creation until actually needed,
+   * reducing extension activation time.
+   */
+  private ensureFileWatcher(): void {
+    if (this.fileWatcherInitialized) {
+      return;
+    }
+    this.fileWatcherInitialized = true;
+
+    debug('[FRAMEWORK] Initializing package.json FileSystemWatcher');
 
     // watch for package.json changes
     // createFileSystemWatcher args: ignoreCreate, ignoreChange, ignoreDelete
@@ -99,15 +128,6 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     );
     this.addDisposable(
       this.fileWatcher.onDidDelete((uri) => this.onPackageJsonChange(uri))
-    );
-
-    // watch for framework setting changes
-    this.addDisposable(
-      vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration('mdx-preview.framework')) {
-          this.invalidateAllCaches();
-        }
-      })
     );
   }
 
@@ -164,26 +184,21 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   }
 
   // find the closest package.json starting from documentDir up to workspaceRoot
+  // uses shared find-up utility
   private findClosestPackageJsonDir(
     documentDir: string,
     workspaceRoot: string
   ): string {
-    let currentDir = documentDir;
+    const found = findUp({
+      filename: 'package.json',
+      startDir: documentDir,
+      stopAt: workspaceRoot,
+      returnType: 'directory',
+    });
 
-    // walk up from document directory to workspace root
-    while (currentDir.startsWith(workspaceRoot)) {
-      const packageJsonPath = path.join(currentDir, 'package.json');
-      if (pathExists(packageJsonPath)) {
-        debug('[FRAMEWORK] Found package.json at:', packageJsonPath);
-        return currentDir;
-      }
-
-      const parentDir = path.dirname(currentDir);
-      // stop if we've reached the root or can't go up further
-      if (parentDir === currentDir) {
-        break;
-      }
-      currentDir = parentDir;
+    if (found) {
+      debug('[FRAMEWORK] Found package.json at:', path.join(found, 'package.json'));
+      return found;
     }
 
     // fallback to workspace root
@@ -192,6 +207,9 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
 
   // get framework for document (respects manual override)
   getFramework(documentUri: vscode.Uri): FrameworkInfo {
+    // G.2 optimization: Lazy init file watcher on first use
+    this.ensureFileWatcher();
+
     // check manual override setting first
     const manualFramework = getConfigManager().get('framework', documentUri);
 

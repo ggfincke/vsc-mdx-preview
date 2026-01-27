@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 
 import { PreviewManager } from './preview/preview-manager';
 import { TrustManager } from './security/TrustManager';
-import { initWebviewAppHTMLResources } from './preview/webview-manager';
+import { initWebviewAppHTMLResourcesAsync } from './preview/webview-manager';
 import { initWorkspaceHandlers } from './workspace-manager';
 import { info, debug, showOutput, getOutputChannel } from './logging';
 import { StatusBarManager } from './preview/StatusBarManager';
@@ -23,7 +23,10 @@ import {
 import { TailwindProcessor } from './tailwind/TailwindProcessor';
 import { ErrorReporter } from './errors';
 import { PackageJsonWatcher } from './module-system/resolver/PackageJsonWatcher';
-import { clearResolverCache } from './module-system/resolver/resolver-factory';
+import {
+  clearResolverCache,
+  disposeResolverSystem,
+} from './module-system/resolver/resolver-factory';
 import { ConfigManager, ConfigCache } from './config';
 import {
   ComponentDiagnostics,
@@ -177,10 +180,11 @@ export async function activate(
   );
   debug('[ACTIVATE] Services registered');
 
-  // THEN: Initialize resources (now safe to call getPreviewManager())
-  debug('[ACTIVATE] Initializing webview HTML resources...');
-  await initWebviewAppHTMLResources(context);
-  debug('[ACTIVATE] Webview HTML resources initialized');
+  // G.3 optimization: Initialize resources in background (non-blocking)
+  // Resources will be awaited when first preview panel is created
+  debug('[ACTIVATE] Starting webview HTML resource initialization (background)...');
+  initWebviewAppHTMLResourcesAsync(context);
+  debug('[ACTIVATE] Webview HTML resource initialization started');
 
   initWorkspaceHandlers(context);
   debug('[ACTIVATE] Workspace handlers initialized');
@@ -228,8 +232,8 @@ export async function activate(
 
 // deactivate extension
 export function deactivate(): void {
-  // clear resolver cache to prevent stale data on reload
-  clearResolverCache();
+  // dispose all resolver-related caches (including TypeScript stat cache)
+  disposeResolverSystem();
 
   // dispose Nextra _meta.json file watchers
   disposeMetaWatchers();

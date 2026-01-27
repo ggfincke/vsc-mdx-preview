@@ -25,6 +25,34 @@ import {
 } from '@mdx-preview/shared';
 import type { MdxJsxElement } from '../compiler/shared/transforms/types';
 
+// -- caching for parse results --
+
+// cache structure for component detection results
+interface CachedDetection {
+  contentHash: number;
+  result: ComponentDetectionResult;
+}
+
+// Map: document URI string -> CachedDetection
+const parseCache = new Map<string, CachedDetection>();
+
+// maximum cache entries (LRU eviction when exceeded)
+const MAX_CACHE_ENTRIES = 50;
+
+/**
+ * Fast djb2 hash for content-based cache invalidation.
+ * Sufficient for detecting content changes - not cryptographic.
+ */
+function djb2Hash(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
+  }
+  return hash >>> 0; // convert to unsigned 32-bit
+}
+
+// -- types --
+
 // MDX ESM node (imports/exports)
 interface MdxjsEsmNode {
   type: 'mdxjsEsm';
@@ -243,12 +271,25 @@ function determineComponentSource(
 }
 
 // detect JSX components in MDX text
+// pass uri parameter to enable caching of parse results
 export async function detectComponents(
   mdxText: string,
   options: ComponentDetectionOptions = {},
-  configComponents: Set<string> = new Set()
+  configComponents: Set<string> = new Set(),
+  uri?: string // optional: document URI for caching
 ): Promise<ComponentDetectionResult> {
   const { includePositions = true, detectImports = true } = options;
+
+  // check cache if URI is provided
+  if (uri) {
+    const contentHash = djb2Hash(mdxText);
+    const cached = parseCache.get(uri);
+    if (cached && cached.contentHash === contentHash) {
+      debug(`[ComponentDetector] Cache hit for ${uri}`);
+      return cached.result;
+    }
+  }
+
   const components: DetectedComponent[] = [];
   const imports = new Map<string, string>();
   const errors: string[] = [];
@@ -325,7 +366,22 @@ export async function detectComponents(
     errors.push(message);
   }
 
-  return { components, imports, errors };
+  const result = { components, imports, errors };
+
+  // store in cache if URI is provided
+  if (uri) {
+    // LRU eviction: remove oldest entry if at capacity
+    if (parseCache.size >= MAX_CACHE_ENTRIES) {
+      const oldestKey = parseCache.keys().next().value;
+      if (oldestKey) {
+        parseCache.delete(oldestKey);
+      }
+    }
+    parseCache.set(uri, { contentHash: djb2Hash(mdxText), result });
+    debug(`[ComponentDetector] Cached result for ${uri}`);
+  }
+
+  return result;
 }
 
 // get unknown components from detection result
@@ -335,13 +391,8 @@ export function getUnknownComponents(
   return result.components.filter((c) => c.source === 'unknown');
 }
 
-/**
- * Extract list of generic component names used in the MDX.
- * Returns canonical names (e.g., Alert → Callout) for conditional shim preloading.
- *
- * @param result - Component detection result from detectComponents()
- * @returns Array of canonical generic component names (Callout, Tabs, etc.)
- */
+// extract list of generic component names used in the MDX
+// returns canonical names (e.g., Alert → Callout) for conditional shim preloading
 export function getUsedGenericComponents(
   result: ComponentDetectionResult
 ): string[] {
@@ -360,6 +411,25 @@ export function getUsedGenericComponents(
   }
 
   return Array.from(used);
+}
+
+/**
+ * Invalidate cached component detection for a specific document.
+ * Call this when a document is closed or externally modified.
+ */
+export function invalidateComponentCache(uri: string): void {
+  if (parseCache.delete(uri)) {
+    debug(`[ComponentDetector] Invalidated cache for ${uri}`);
+  }
+}
+
+/**
+ * Clear all cached component detections.
+ * Useful for testing or extension reset scenarios.
+ */
+export function clearComponentCache(): void {
+  parseCache.clear();
+  debug(`[ComponentDetector] Cache cleared`);
 }
 
 // isPascalCase, isHtmlElement, extractImports are internal helpers

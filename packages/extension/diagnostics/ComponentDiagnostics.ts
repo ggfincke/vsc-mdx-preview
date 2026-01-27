@@ -2,7 +2,11 @@
 // manages VS Code diagnostics for unknown MDX components
 
 import * as vscode from 'vscode';
-import { detectComponents, getUnknownComponents } from './ComponentDetector';
+import {
+  detectComponents,
+  getUnknownComponents,
+  invalidateComponentCache,
+} from './ComponentDetector';
 import type { DetectedComponent } from './types';
 import { resolveConfig } from '../preview/config/ConfigResolver';
 import { debug, info } from '../logging';
@@ -61,6 +65,8 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
             clearTimeout(timer);
             this.documentTimers.delete(document.uri.toString());
           }
+          // invalidate component detection cache
+          invalidateComponentCache(document.uri.toString());
         }
       })
     );
@@ -114,11 +120,12 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
         config?.config.components ? Object.keys(config.config.components) : []
       );
 
-      // detect components in the document
+      // detect components in the document (pass URI for caching)
       const result = await detectComponents(
         document.getText(),
         { includePositions: true, detectImports: true },
-        configComponents
+        configComponents,
+        document.uri.toString()
       );
 
       // get unknown components

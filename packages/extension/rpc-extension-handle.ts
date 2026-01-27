@@ -20,6 +20,7 @@ import {
   reportTrustViolationError,
 } from './utils/pathSecurity';
 import { MAX_FETCH_REQUEST_LENGTH } from './constants';
+import { isValidModuleRequest } from '@mdx-preview/shared';
 import type { ExtensionRPC, FetchResult } from '@mdx-preview/shared';
 
 // allowed URL schemes for openExternal
@@ -27,15 +28,9 @@ const ALLOWED_EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
 
 // validate fetch request for security
 function validateFetchRequest(request: string): boolean {
-  // no null bytes
-  if (request.includes('\0')) {
-    logWarn('Fetch request contains null byte');
-    return false;
-  }
-
-  // no URL schemes except npm://
-  if (/^[a-z]+:\/\//i.test(request) && !request.startsWith('npm://')) {
-    logWarn('Fetch request contains disallowed URL scheme', request);
+  // use shared module ID validation (null bytes, URL scheme check)
+  if (!isValidModuleRequest(request)) {
+    logWarn('Fetch request failed security validation', request);
     return false;
   }
 

@@ -83,9 +83,12 @@ export default async function evaluateInWebview(
 
       // detect used generic components for conditional shim preloading
       try {
-        const detectionResult = await detectComponents(text, {
-          detectImports: true,
-        });
+        const detectionResult = await detectComponents(
+          text,
+          { detectImports: true },
+          new Set(), // no config components needed here
+          preview.doc.uri.toString() // pass URI for caching
+        );
         const usedGenericComponents = getUsedGenericComponents(detectionResult);
         if (usedGenericComponents.length > 0) {
           debug(

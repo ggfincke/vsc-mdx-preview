@@ -205,6 +205,12 @@ export class Preview {
     this.resolveWebviewHandshakePromise();
   }
 
+  // cancel any pending handshake timeout
+  // call this when reusing a panel to prevent stale timeouts from firing
+  cancelHandshakeTimeout(): void {
+    this.initializer.cancelHandshakeTimeout();
+  }
+
   // delegate performance tracking to PreviewState
   get performanceObserver() {
     return this.state.performanceObserver;
@@ -493,7 +499,7 @@ export async function openPreview(): Promise<void> {
     currentPreview.setDoc(doc);
   }
   debug('[PREVIEW] Calling createOrShowPanel');
-  createOrShowPanel(currentPreview);
+  await createOrShowPanel(currentPreview);
   debug('[PREVIEW] Calling updateWebview');
   await currentPreview.updateWebview();
   debug('[PREVIEW] openPreview complete');

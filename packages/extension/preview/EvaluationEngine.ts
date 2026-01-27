@@ -65,14 +65,20 @@ export class EvaluationEngine {
     debug('[ENGINE] evaluateTrusted called');
 
     debug('[ENGINE] Transforming entry...');
-    const { code, frontmatter } = await transformEntry(text, fsPath, preview);
+    // I.1: transformEntry now returns esmCode for import extraction
+    const { code, esmCode, frontmatter } = await transformEntry(
+      text,
+      fsPath,
+      preview
+    );
     debug(`[ENGINE] Transform complete, code length: ${code.length}`);
 
     // use async fs.promises.realpath instead of sync version
     const entryFilePath = await fs.promises.realpath(fsPath);
 
-    // extract dependencies using shared utility (ESM-first w/ CJS fallback)
-    const dependencies = await extractImportSpecifiers(code);
+    // I.1: extract dependencies from ESM code (BEFORE CommonJS conversion)
+    // es-module-lexer works much better on ESM than on CommonJS output
+    const dependencies = await extractImportSpecifiers(esmCode);
     debug(`[ENGINE] Dependencies: ${dependencies.join(', ')}`);
 
     return {

@@ -25,21 +25,41 @@ export interface HandshakeResult {
 // handles initialization logic for preview instances
 // creates & configures watchers & manages the webview handshake
 export class PreviewInitializer {
+  // timeout ID for handshake timeout (used for cancellation)
+  private handshakeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  // cancel any pending handshake timeout
+  // call this when reusing a panel to prevent stale timeouts from firing
+  cancelHandshakeTimeout(): void {
+    if (this.handshakeTimeoutId) {
+      debug('[PREVIEW] Cancelling existing handshake timeout');
+      clearTimeout(this.handshakeTimeoutId);
+      this.handshakeTimeoutId = null;
+    }
+  }
+
   // create a webview handshake promise w/ timeout
   createHandshake(): HandshakeResult {
     debug('[PREVIEW] initWebviewHandshakePromise called');
+
+    // cancel any existing timeout before creating a new one
+    this.cancelHandshakeTimeout();
+
     let resolveHandshake: () => void;
 
     const handshakePromise = new Promise<void>((resolve) => {
       resolveHandshake = () => {
         debug('[PREVIEW] Handshake resolved!');
+        // clear timeout on successful handshake
+        this.cancelHandshakeTimeout();
         resolve();
       };
     });
 
     const timeoutPromise = new Promise<void>((_, reject) => {
-      setTimeout(() => {
+      this.handshakeTimeoutId = setTimeout(() => {
         debug('[PREVIEW] Handshake TIMEOUT after 10 seconds');
+        this.handshakeTimeoutId = null;
         reject(
           new Error(
             'Webview handshake timeout - the preview failed to initialize within 10 seconds'
