@@ -4,7 +4,7 @@
 // this file consolidates magic numbers from across the Tailwind module
 // to improve maintainability & documentation.
 
-import { STANDARD_CACHE_TTL_MS } from '@mdx-preview/shared';
+import { STANDARD_CACHE_TTL_MS, STANDARD_DEBOUNCE_MS } from '@mdx-preview/shared';
 
 // =============================================================================
 // cache configuration
@@ -12,6 +12,10 @@ import { STANDARD_CACHE_TTL_MS } from '@mdx-preview/shared';
 
 // default maximum entries in the CSS cache (LRU eviction)
 export const CACHE_DEFAULT_MAX_ENTRIES = 20;
+
+// default maximum entries in the per-file scan cache (LRU eviction)
+// higher than CSS cache since we cache per-file instead of per-document
+export const SCAN_CACHE_DEFAULT_MAX_ENTRIES = 200;
 
 // default cache TTL in milliseconds (5 minutes) - uses shared constant
 export const CACHE_DEFAULT_TTL_MS = STANDARD_CACHE_TTL_MS;
@@ -67,7 +71,8 @@ export const MAX_KNOWN_TAILWIND_VERSION = 4;
 
 // debounce delay in milliseconds for Tailwind config file watcher
 // prevents rapid recompilations when files are saved multiple times in quick succession
-export const CONFIG_WATCHER_DEBOUNCE_MS = 300;
+// uses shared standard debounce constant
+export const CONFIG_WATCHER_DEBOUNCE_MS = STANDARD_DEBOUNCE_MS;
 
 // =============================================================================
 // class extraction patterns

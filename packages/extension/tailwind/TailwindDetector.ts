@@ -15,6 +15,7 @@ import { getNodeResolver } from '../module-system/resolver/resolver-factory';
 import { VERSION_CACHE_TTL_MS } from './constants';
 import { pathExists, readFileAsync, readJsonSync } from '../utils/file-utils';
 import { toAbsolutePath } from '../utils/path-utils';
+import { findUp } from '../utils/find-up';
 
 const CONFIG_FILES = [
   'tailwind.config.js',
@@ -155,29 +156,15 @@ export class TailwindDetector {
       return null;
     }
 
-    let currentDir = searchStart;
-    while (currentDir) {
-      for (const fileName of CONFIG_FILES) {
-        const candidate = path.join(currentDir, fileName);
-        if (pathExists(candidate)) {
-          this.configCache.set(cacheKey, candidate);
-          return candidate;
-        }
-      }
+    // use shared find-up utility
+    const found = findUp({
+      filename: CONFIG_FILES,
+      startDir: searchStart,
+      stopAt: workspaceRoot ?? undefined,
+    });
 
-      if (workspaceRoot && currentDir === workspaceRoot) {
-        break;
-      }
-
-      const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) {
-        break;
-      }
-      currentDir = parentDir;
-    }
-
-    this.configCache.set(cacheKey, null);
-    return null;
+    this.configCache.set(cacheKey, found ?? null);
+    return found ?? null;
   }
 
   async resolveEntryCssPath(

@@ -14,6 +14,7 @@ import { ErrorContext, ErrorSeverity } from '../errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
 import { TailwindCache } from './TailwindCache';
+import { TailwindScanCache } from './TailwindScanCache';
 import { TailwindCompiler, type TailwindVersion } from './TailwindCompiler';
 import {
   MIN_SUPPORTED_TAILWIND_VERSION,
@@ -45,6 +46,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   private detector = new TailwindDetector();
   private scanner = new TailwindScanner();
   private cache = new TailwindCache();
+  private scanCache = new TailwindScanCache();
   private compiler = new TailwindCompiler();
 
   // tracks workspaces where v3 deprecation warning has been shown (once per session)
@@ -161,6 +163,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       entryFileDependencies,
       maxFileSizeBytes: tailwindConfig.maxFileSizeBytes,
       resolutionContext,
+      scanCache: this.scanCache, // use incremental scan cache
     });
     const scanDuration = performance.now() - scanStart;
     debug(
@@ -231,7 +234,18 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   // custom cleanup - clear caches
   protected override onDispose(): void {
     this.cache.clear();
+    this.scanCache.clear();
     this.detector.invalidateVersionCache();
+  }
+
+  // invalidate scan cache for a specific file or clear all
+  // useful when DependencyWatcher detects external file changes
+  invalidateScanCache(fsPath?: string): void {
+    if (fsPath) {
+      this.scanCache.invalidate(fsPath);
+    } else {
+      this.scanCache.clear();
+    }
   }
 
   private buildWatchFiles(

@@ -2,6 +2,7 @@
 // coordinator for extracting Tailwind class candidates from MDX/JSX content
 
 import { PatternScanner, ContentScanner, DependencyScanner } from './scanning';
+import { TailwindScanCache } from './TailwindScanCache';
 import type { ResolutionContext } from '../module-system/resolver/UnifiedResolver';
 
 export interface TailwindScanOptions {
@@ -11,6 +12,8 @@ export interface TailwindScanOptions {
   maxFileSizeBytes?: number;
   // resolution context for proper import resolution (parity w/ module-system)
   resolutionContext?: ResolutionContext;
+  // optional scan cache for incremental scanning
+  scanCache?: TailwindScanCache;
 }
 
 export interface TailwindScanResult {
@@ -49,7 +52,8 @@ export class TailwindScanner {
         options.entryFileDependencies,
         sizeLimit,
         (t, cs) => this.extractFromText(t, cs),
-        options.resolutionContext
+        options.resolutionContext,
+        options.scanCache // pass through scan cache for incremental scanning
       );
 
       result.classes.forEach((c) => classSet.add(c));
