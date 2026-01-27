@@ -110,7 +110,7 @@ export const SET_STALE_CONFIG = createSimpleQueuedConfig<boolean>(
 // These handlers call the optional handler if present, no queuing
 // ============================================================================
 
-// factory for creating optional handler configs with identical methodName/handlerKey
+// factory for creating optional handler configs w/ identical methodName/handlerKey
 function createOptionalConfig<K extends keyof import('./handler-factory').OptionalStateHandlers>(
   key: K
 ): OptionalHandlerConfig {

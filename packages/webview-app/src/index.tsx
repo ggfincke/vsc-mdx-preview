@@ -6,6 +6,8 @@ import { initRPCWebviewSide } from './rpc-webview';
 import { debug, debugError } from './utils/debug';
 import { ThemeProvider } from './theme';
 import { LightboxProvider } from './context/LightboxContext';
+// Import directly to avoid barrel export import chain issues
+import { WebviewStateProvider } from './context/WebviewStateProvider';
 import { Lightbox } from './components/Lightbox';
 import App from './App';
 import './index.css';
@@ -31,12 +33,14 @@ if (!container) {
 
 debug('[WEBVIEW] Creating React root...');
 const root = createRoot(container);
-debug('[WEBVIEW] Rendering App with ThemeProvider & LightboxProvider...');
+debug('[WEBVIEW] Rendering App with providers...');
 root.render(
   <ThemeProvider>
     <LightboxProvider>
-      <App />
-      <Lightbox />
+      <WebviewStateProvider>
+        <App />
+        <Lightbox />
+      </WebviewStateProvider>
     </LightboxProvider>
   </ThemeProvider>
 );

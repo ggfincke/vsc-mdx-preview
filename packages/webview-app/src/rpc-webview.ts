@@ -26,6 +26,7 @@ import { createTaggedLogger } from './utils/debug';
 import { StyleInjector, STYLE_IDS } from './utils/StyleInjector';
 import {
   RPC_HANDLER_RETRY_DELAY_MS,
+  RPC_HANDLER_MAX_RETRIES,
   RPC_PENDING_MESSAGES_WARNING_THRESHOLD,
 } from './constants';
 import type {
@@ -85,6 +86,22 @@ let webviewEndpoint: WebviewProxy;
 
 // Module-level state for handlers & pending messages
 let stateHandlers: WebviewStateHandlers | null = null;
+
+// K.1: Cache for ./module-system dynamic import
+// Avoids repeated promise creation on each RPC call
+// Uses error recovery pattern to reset cache on failure
+let moduleSystemPromise: Promise<typeof import('./module-system')> | null = null;
+
+function getModuleSystem(): Promise<typeof import('./module-system')> {
+  if (!moduleSystemPromise) {
+    moduleSystemPromise = import('./module-system').catch((err) => {
+      // Reset cache on failure so subsequent calls can retry
+      moduleSystemPromise = null;
+      throw err;
+    });
+  }
+  return moduleSystemPromise;
+}
 
 // Compile-time exhaustiveness check for message types
 function assertNever(x: never): never {
@@ -205,8 +222,8 @@ class RPCWebviewHandle implements WebviewRPC {
   // DIRECT handler - load framework-specific shims on demand
   setFramework(framework: Framework): void {
     log.debug(`setFramework called: ${framework}`);
-    // ! import dynamically to avoid circular dep w/ module-system
-    void import('./module-system').then(({ ensureFrameworkShimsLoaded }) => {
+    // K.1: use cached module import to avoid repeated promise creation
+    void getModuleSystem().then(({ ensureFrameworkShimsLoaded }) => {
       ensureFrameworkShimsLoaded(framework);
     });
   }
@@ -214,8 +231,8 @@ class RPCWebviewHandle implements WebviewRPC {
   // DIRECT handler - load specific generic shims on demand (conditional preloading)
   setUsedComponents(components: string[]): void {
     log.debug(`setUsedComponents called: ${components.join(', ')}`);
-    // ! import dynamically to avoid circular dep w/ module-system
-    void import('./module-system').then(({ ensureGenericShimsLoaded }) => {
+    // K.1: use cached module import to avoid repeated promise creation
+    void getModuleSystem().then(({ ensureGenericShimsLoaded }) => {
       ensureGenericShimsLoaded(components);
     });
   }
@@ -223,8 +240,8 @@ class RPCWebviewHandle implements WebviewRPC {
   // EXCEPTION handler - async w/ dynamic import (kept manual)
   async invalidate(fsPath: string): Promise<void> {
     log.debug(`invalidate called: ${fsPath}`);
-    // ! import dynamically to avoid circular dep w/ module-system
-    const { invalidateModule } = await import('./module-system');
+    // K.1: use cached module import to avoid repeated promise creation
+    const { invalidateModule } = await getModuleSystem();
     invalidateModule(fsPath);
   }
 }
@@ -250,9 +267,13 @@ export function initRPCWebviewSide(): void {
   log.debug('handshake() called');
 }
 
-// register React state handlers (called by App component on mount)
-export function registerWebviewHandlers(handlers: WebviewStateHandlers): void {
-  log.debug('registerWebviewHandlers called');
+// K.3: Prevent double-registration during retry
+let registrationInProgress = false;
+
+// K.3: Helper for exponential backoff retry
+function attemptRegistration(handlers: WebviewStateHandlers, attempt: number): void {
+  registrationInProgress = true;
+
   try {
     stateHandlers = handlers;
 
@@ -265,20 +286,37 @@ export function registerWebviewHandlers(handlers: WebviewStateHandlers): void {
     }
 
     flushPendingMessages();
+    registrationInProgress = false;
     log.debug('registerWebviewHandlers complete');
   } catch (e) {
-    // ! registration failure is critical - retry after brief delay
-    log.error('Handler registration failed, retrying...', e);
-    setTimeout(() => {
-      try {
-        stateHandlers = handlers;
-        flushPendingMessages();
-        log.debug('registerWebviewHandlers retry successful');
-      } catch (retryError) {
-        log.error('Handler registration retry failed', retryError);
-      }
-    }, RPC_HANDLER_RETRY_DELAY_MS);
+    if (attempt < RPC_HANDLER_MAX_RETRIES) {
+      // Exponential backoff: 100ms, 200ms, 400ms, 800ms delays
+      const delay = RPC_HANDLER_RETRY_DELAY_MS * Math.pow(2, attempt);
+      log.debug(
+        `Handler registration failed (attempt ${attempt + 1}), retrying in ${delay}ms...`
+      );
+      setTimeout(() => attemptRegistration(handlers, attempt + 1), delay);
+    } else {
+      registrationInProgress = false;
+      log.error(
+        `Handler registration failed after ${attempt + 1} attempts`,
+        e
+      );
+    }
   }
+}
+
+// register React state handlers (called by App component on mount)
+export function registerWebviewHandlers(handlers: WebviewStateHandlers): void {
+  log.debug('registerWebviewHandlers called');
+
+  // K.3: Prevent duplicate registration during retry
+  if (registrationInProgress) {
+    log.debug('Registration already in progress, ignoring duplicate call');
+    return;
+  }
+
+  attemptRegistration(handlers, 0);
 }
 
 // get extension handle for calling extension methods
