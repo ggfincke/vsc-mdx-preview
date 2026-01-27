@@ -534,6 +534,14 @@
           ],
           "markdownDescription": "How to handle unknown JSX components that cannot be rendered. In Safe Mode, unknown components are always handled according to this setting.",
           "scope": "resource"
+        },
+        "mdx-preview.advanced.watcherDebounceMs": {
+          "type": "number",
+          "default": 500,
+          "minimum": 0,
+          "maximum": 2000,
+          "description": "Debounce time for file watcher events (ms). Set to 0 for CI environments.",
+          "scope": "window"
         }
       }
     },
@@ -595,8 +603,8 @@
     "build:extension": "npm run typecheck && node esbuild.config.mjs",
     "build:extension:fast": "node esbuild.config.mjs",
     "build:extension:types": "tsc -p ./ --emitDeclarationOnly --declaration --outDir build/extension",
-    "build": "npm run build:extension && npm run build:webview-app",
-    "build:fast": "npm run build:extension:fast && npm run build:webview-app",
+    "build": "concurrently -n ext,web -c blue,green \"npm run build:extension\" \"npm run build:webview-app\"",
+    "build:fast": "concurrently -n ext,web -c blue,green \"npm run build:extension:fast\" \"npm run build:webview-app\"",
     "watch": "tsc -watch -p ./",
     "start:webview-app": "npm run start -w webview",
     "build:webview-app": "npm run build -w webview",
@@ -614,6 +622,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "concurrently": "^9.1.0",
     "sass": "^1.80.0",
     "vitest": "^2.0.0",
     "@types/lodash.debounce": "^4.0.9",
@@ -665,6 +674,8 @@
     "unifiedjs.vscode-mdx"
   ],
   "overrides": {
-    "@types/node": "^20.0.0"
-  }
+    "@types/node": "^20.0.0",
+    "comlink": "^4.4.1"
+  },
+  "sideEffects": false
 }

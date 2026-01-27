@@ -17,10 +17,12 @@ export default tseslint.config(
         ...globals.es2022,
       },
       parserOptions: {
-        project: './tsconfig.json',
         ecmaFeatures: {
           jsx: true,
         },
+        // L.3 optimization: enable incremental type-checking
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     plugins: {

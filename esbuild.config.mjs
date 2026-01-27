@@ -42,8 +42,14 @@ const buildOptions = {
   ...(production && {
     // remove debugger statements
     drop: ['debugger'],
-    // mark console.debug as pure (can be removed if unused)
-    pure: ['console.debug'],
+    // mark pure functions (can be removed if return value unused) - L.5 optimization
+    pure: [
+      'console.debug',
+      'console.trace',
+      'Object.freeze',
+      'Object.seal',
+      'Object.preventExtensions',
+    ],
     // strip license comments to reduce bundle size
     legalComments: 'none',
   }),

@@ -24,9 +24,11 @@ export default defineConfig({
           }
           return 'static/media/[name][extname]';
         },
-        // code splitting for heavy dependencies
+        // code splitting for heavy dependencies (M.4 optimization)
         manualChunks: {
           mermaid: ['mermaid'],
+          katex: ['katex'],
+          dompurify: ['dompurify'],
         },
       },
     },
