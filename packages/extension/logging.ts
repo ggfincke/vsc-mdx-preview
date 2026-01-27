@@ -3,6 +3,10 @@
 
 import * as vscode from 'vscode';
 
+// debug logging is disabled by default for performance
+// set MDX_PREVIEW_DEBUG=true to enable debug output
+const DEBUG_ENABLED = process.env.MDX_PREVIEW_DEBUG === 'true';
+
 let outputChannel: vscode.OutputChannel | undefined;
 
 // get or create output channel for extension
@@ -36,9 +40,21 @@ export function log(level: LogLevel, message: string, data?: unknown): void {
   }
 }
 
-// log debug message
+// log debug message (skipped when DEBUG_ENABLED is false)
 export function debug(message: string, data?: unknown): void {
+  if (!DEBUG_ENABLED) {
+    return;
+  }
   log(LogLevel.Debug, message, data);
+}
+
+// log debug message with lazy evaluation (message function only called when debug is enabled)
+// use for hot paths where string construction overhead matters
+export function debugLazy(messageFn: () => string, data?: unknown): void {
+  if (!DEBUG_ENABLED) {
+    return;
+  }
+  log(LogLevel.Debug, messageFn(), data);
 }
 
 // log info message
