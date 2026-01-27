@@ -123,14 +123,82 @@ export class UnifiedResolver {
     return null;
   }
 
-  // asynchronous resolution (delegates to sync for now)
+  // I.3: asynchronous resolution with parallel file probing
   async resolveAsync(
     specifier: string,
     context: ResolutionContext,
     mode: ResolutionMode = 'dependency'
   ): Promise<ResolutionResult | null> {
-    // enhanced-resolve is sync anyway, so just delegate
-    return this.resolveSync(specifier, context, mode);
+    if (!this.shouldResolve(specifier)) {
+      return null;
+    }
+
+    // step 1: framework alias resolution (for bare imports only) - sync, no I/O
+    if (
+      context.framework &&
+      context.shimsEnabled &&
+      !this.isRelativeImport(specifier)
+    ) {
+      const aliasedPath = resolveAlias(
+        specifier,
+        context.framework,
+        context.workspaceRoot ?? context.baseDir
+      );
+
+      if (aliasedPath !== null) {
+        if (isBuiltInShim(aliasedPath)) {
+          debug(
+            `[UNIFIED-RESOLVER] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
+          );
+          return buildShimResolutionResult(
+            aliasedPath,
+            specifier,
+            ResolutionStrategy.FrameworkShim
+          );
+        }
+        debug(
+          `[UNIFIED-RESOLVER] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
+        );
+        specifier = aliasedPath;
+      }
+    }
+
+    // step 2: TypeScript path resolution (for non-relative imports)
+    // I.3: use async resolution for parallel file probing
+    if (context.tsConfig && !this.isRelativeImport(specifier)) {
+      const strategy = getTypeScriptPathStrategy();
+      const result = strategy.resolveAsync
+        ? await strategy.resolveAsync(specifier, context, mode)
+        : strategy.resolve(specifier, context, mode);
+      if (result) {
+        return result;
+      }
+    }
+
+    // step 3: enhanced-resolve (for node_modules) - uses CachedInputFileSystem internally
+    if (!this.isRelativeImport(specifier)) {
+      const result = getEnhancedResolveStrategy().resolve(specifier, context, mode);
+      if (result) {
+        return result;
+      }
+    }
+
+    // step 4: file probing fallback (for relative imports)
+    // I.3: use async resolution for parallel file probing
+    if (this.isRelativeImport(specifier)) {
+      const strategy = getFileProbeStrategy();
+      const result = strategy.resolveAsync
+        ? await strategy.resolveAsync(specifier, context, mode)
+        : strategy.resolve(specifier, context, mode);
+      if (result) {
+        return result;
+      }
+    }
+
+    debug(
+      `[UNIFIED-RESOLVER] Could not resolve: ${specifier} from ${context.baseDir}`
+    );
+    return null;
   }
 }
 

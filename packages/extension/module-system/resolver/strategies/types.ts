@@ -18,4 +18,11 @@ export interface IResolutionStrategy {
     context: ResolutionContext,
     mode: ResolutionMode
   ): ResolutionResult | null;
+
+  // I.3: optional async resolution for parallel file probing
+  resolveAsync?(
+    specifier: string,
+    context: ResolutionContext,
+    mode: ResolutionMode
+  ): Promise<ResolutionResult | null>;
 }

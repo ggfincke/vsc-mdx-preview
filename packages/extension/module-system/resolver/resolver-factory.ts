@@ -7,6 +7,7 @@ import type { Resolver } from 'enhanced-resolve';
 import { debug } from '../../logging';
 import { RESOLVER_CACHE_TTL_MS } from '../../constants';
 import { createResettableSingleton } from '../../utils/singleton-factory';
+import { clearStatCache } from './strategies/TypeScriptPathStrategy';
 
 // shared cached file system for all resolvers
 const cachedFs = new CachedInputFileSystem(fs, RESOLVER_CACHE_TTL_MS);
@@ -90,4 +91,20 @@ export function clearResolverCache(): void {
   nodeResolverSingleton.reset();
 
   debug('[RESOLVER] Cache cleared');
+}
+
+// dispose all resolver-related caches (call on extension deactivation)
+// includes TypeScript stat cache which clearResolverCache doesn't cover
+export function disposeResolverSystem(): void {
+  // purge the cached file system
+  cachedFs.purge();
+
+  // reset resolver instances
+  browserResolverSingleton.reset();
+  nodeResolverSingleton.reset();
+
+  // clear TypeScript path resolver stat cache (bounded LRU)
+  clearStatCache();
+
+  debug('[RESOLVER] All resolver caches disposed');
 }
