@@ -23,7 +23,7 @@ const BaseCallout = createCallout<CalloutType>({
   layout: 'header',
 });
 
-// Callout component with type normalization
+// Callout component w/ type normalization
 export function Callout(props: CalloutProps): ReactElement {
   // normalize type aliases (success -> tip, error -> danger, etc.)
   const normalizedType = normalizeType(props.type);

@@ -8,7 +8,7 @@ interface StaleIndicatorProps {
   isStale: boolean;
 }
 
-// wrapped with React.memo to prevent re-renders when parent updates but isStale unchanged
+// wrapped w/ React.memo to prevent re-renders when parent updates but isStale unchanged
 export const StaleIndicator = memo(function StaleIndicator({
   isStale,
 }: StaleIndicatorProps) {

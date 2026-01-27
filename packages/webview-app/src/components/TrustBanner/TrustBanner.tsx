@@ -19,7 +19,7 @@ interface TrustBannerProps {
 // - Safe Mode (scripts disabled): show info w/ "Enable Scripts" button
 // - Trusted Mode: hidden (no banner needed)
 //
-// wrapped with React.memo to prevent re-renders when parent updates but trust state unchanged
+// wrapped w/ React.memo to prevent re-renders when parent updates but trust state unchanged
 export const TrustBanner = memo(function TrustBanner({
   trustState,
   dismissible = true,

@@ -10,7 +10,7 @@ interface LoadingBarProps {
   immediate?: boolean;
 }
 
-// wrapped with React.memo to prevent re-renders when parent updates but immediate unchanged
+// wrapped w/ React.memo to prevent re-renders when parent updates but immediate unchanged
 const LoadingBar: React.FC<LoadingBarProps> = memo(function LoadingBar({
   immediate = false,
 }) {

@@ -12,6 +12,7 @@ import {
   isUserCode,
 } from '../../utils/stackTraceParser';
 import { normalizeError } from '@mdx-preview/shared';
+import { ModuleLoadError } from '../../module-system/errors';
 import './ErrorBoundary.css';
 
 // stack trace component
@@ -61,6 +62,10 @@ export function ErrorDisplay({
   onReset,
   title = 'Preview Error',
 }: ErrorDisplayProps) {
+  // Extract suggestions if error is a ModuleLoadError
+  const suggestions =
+    error instanceof ModuleLoadError ? error.suggestions : [];
+
   const handleCopy = useCallback(() => {
     const text = `${error.message}\n\n${error.stack || ''}`;
     navigator.clipboard.writeText(text).catch(console.error);
@@ -75,6 +80,16 @@ export function ErrorDisplay({
         </div>
         <div className="mdx-preview-error-content">
           <pre className="mdx-preview-error-message">{error.message}</pre>
+          {suggestions.length > 0 && (
+            <div className="mdx-preview-error-suggestions">
+              <strong>Try:</strong>
+              <ul>
+                {suggestions.map((suggestion, index) => (
+                  <li key={index}>{suggestion}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {error.stack && (
             <details className="mdx-preview-error-stack-details" open>
               <summary>Stack Trace</summary>

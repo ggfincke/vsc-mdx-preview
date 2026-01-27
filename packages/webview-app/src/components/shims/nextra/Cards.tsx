@@ -10,7 +10,8 @@ import { ArrowIcon } from '../base/icons';
 // Cards props (compatible w/ Nextra)
 export interface CardsProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
-  num?: number; // Number of columns (default: 3)
+  // number of columns (default: 3)
+  num?: number;
 }
 
 // Card props (for Cards.Card subcomponent)

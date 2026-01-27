@@ -16,10 +16,11 @@ export interface TabDefinition {
   label: string;
 }
 
-// Props for a TabItem component
+// props for a TabItem component
 export interface TabItemProps {
   children: ReactNode;
-  value?: string; // Optional - can use label as fallback (Starlight uses label only)
+  // optional - can use label as fallback (Starlight uses label only)
+  value?: string;
   label?: string;
   default?: boolean;
 }

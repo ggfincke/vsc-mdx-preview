@@ -21,12 +21,12 @@ type HeightPreset = 'sm' | 'md' | 'lg' | 'xl' | 'screen' | 'half';
 // Bleed props (compatible w/ Nextra)
 export interface BleedProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
-  size?: TextSize; // Text size: sm, base, lg, xl
-  weight?: FontWeight; // Font weight: normal, medium, semibold, bold
-  italic?: boolean; // Italic text
-  align?: HAlign; // Horizontal alignment: left, center, right
-  valign?: VAlign; // Vertical alignment: top, middle, bottom
-  height?: HeightPreset; // Height preset: sm (100px), md (200px), lg (300px), xl (400px), half (50vh), screen (100vh)
+  size?: TextSize;
+  weight?: FontWeight;
+  italic?: boolean;
+  align?: HAlign;
+  valign?: VAlign;
+  height?: HeightPreset;
 }
 
 // Bleed component

@@ -26,13 +26,15 @@ export interface CollapsibleProps {
   children: ReactNode;
   title: string;
   defaultOpen?: boolean;
-  summary?: string; // alias for title
+  // alias for title
+  summary?: string;
 }
 
 // code group props (multiple code blocks in tabs)
 export interface CodeGroupProps {
   children: ReactNode;
-  labels?: string[]; // explicit labels for tabs
+  // explicit labels for tabs
+  labels?: string[];
 }
 
 // normalize callout type (handle aliases)

@@ -23,6 +23,8 @@ export const STYLE_IDS = {
 class StyleInjectorImpl {
   // track injected style IDs for deduplication
   private injectedIds = new Set<string>();
+  // cache DOM element references for O(1) removal (instead of querySelector)
+  private moduleStyleElements: Map<string, HTMLStyleElement> = new Map();
 
   // inject CSS w/ the given ID - creates or updates a <style> element in document.head
   inject(id: string, css: string, options: StyleInjectorOptions = {}): void {
@@ -81,6 +83,8 @@ class StyleInjectorImpl {
     document.head.appendChild(style);
 
     this.injectedIds.add(moduleId);
+    // Cache DOM reference for O(1) removal
+    this.moduleStyleElements.set(moduleId, style);
   }
 
   // remove a style element by ID
@@ -93,11 +97,13 @@ class StyleInjectorImpl {
   }
 
   // remove CSS for a specific module (for incremental updates)
+  // O(1) via cached DOM reference instead of O(n) querySelector
   removeModuleCss(moduleId: string): void {
-    const style = document.querySelector(`style[data-module-id="${moduleId}"]`);
-    if (style) {
+    const style = this.moduleStyleElements.get(moduleId);
+    if (style?.parentNode) {
       style.remove();
     }
+    this.moduleStyleElements.delete(moduleId);
     this.injectedIds.delete(moduleId);
   }
 
@@ -107,19 +113,19 @@ class StyleInjectorImpl {
   }
 
   // clear styles matching a pattern ('modules' for all module CSS, or a CSS selector string)
+  // O(k) via cached references instead of O(n) querySelectorAll for 'modules'
   clear(selector?: 'modules' | string): void {
     if (selector === 'modules') {
-      // Clear all module-injected styles (data-module-id pattern)
-      const styles = document.querySelectorAll('style[data-module-id]');
-      styles.forEach((style) => {
-        const moduleId = style.getAttribute('data-module-id');
-        if (moduleId) {
-          this.injectedIds.delete(moduleId);
+      // Clear all module-injected styles using cached references
+      for (const [moduleId, style] of this.moduleStyleElements) {
+        if (style.parentNode) {
+          style.remove();
         }
-        style.remove();
-      });
+        this.injectedIds.delete(moduleId);
+      }
+      this.moduleStyleElements.clear();
     } else if (selector) {
-      // Clear by custom selector
+      // Clear by custom selector (rare case, still uses querySelectorAll)
       const styles = document.querySelectorAll(selector);
       styles.forEach((style) => {
         if (style.id) {
@@ -134,6 +140,7 @@ class StyleInjectorImpl {
   // does not remove style elements - use clear() for that
   clearTracking(): void {
     this.injectedIds.clear();
+    this.moduleStyleElements.clear();
   }
 
   // check if a style has been injected

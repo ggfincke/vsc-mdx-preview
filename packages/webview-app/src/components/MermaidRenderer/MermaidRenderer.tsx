@@ -2,6 +2,7 @@
 // * lazy-loaded mermaid diagram renderer w/ error handling & source toggle
 
 import { useRef, useState, useCallback } from 'react';
+import { extractErrorMessage } from '@mdx-preview/shared';
 import { useAsyncEffect } from '../../hooks';
 import { useTheme } from '../../theme';
 import './MermaidRenderer.css';
@@ -37,7 +38,7 @@ function isDarkMermaidTheme(theme: string): boolean {
   return theme === 'dark';
 }
 
-// Cache for mermaid initialization - avoid re-initializing with same config
+// cache for mermaid initialization - avoid re-initializing w/ same config
 let lastInitializedTheme: string | null = null;
 let lastInitializedDark: boolean | null = null;
 
@@ -119,8 +120,7 @@ export function MermaidRenderer({ code, id }: Props) {
     [code, id, mermaidTheme],
     {
       onError: (err) => {
-        const message =
-          err instanceof Error ? err.message : 'Failed to render diagram';
+        const message = extractErrorMessage(err) || 'Failed to render diagram';
         debugLog('render error', { id, error: message });
         setError(message);
       },

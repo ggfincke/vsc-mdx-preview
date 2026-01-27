@@ -8,11 +8,7 @@
 // State: null = not started, Promise = loading, true = loaded, false = failed
 let katexCssState: Promise<void> | boolean | null = null;
 
-/**
- * Load KaTeX CSS (idempotent - safe to call multiple times)
- * Returns a promise that resolves when CSS is loaded.
- * Callers can optionally await, or call fire-and-forget (backward compatible).
- */
+// load KaTeX CSS (idempotent)
 export function loadKatexCss(): Promise<void> {
   // Already loaded successfully
   if (katexCssState === true) {
@@ -31,30 +27,26 @@ export function loadKatexCss(): Promise<void> {
     })
     .catch((error) => {
       console.error('[KATEX] Failed to load KaTeX CSS:', error);
-      katexCssState = false; // Allow retry on next call
-      throw error; // Re-throw for callers who await
+      // allow retry on next call
+      katexCssState = false;
+      // re-throw for callers who await
+      throw error;
     });
 
   return katexCssState;
 }
 
-/**
- * Check if KaTeX CSS has been loaded successfully.
- */
+// check if KaTeX CSS has been loaded successfully
 export function isKatexCssLoaded(): boolean {
   return katexCssState === true;
 }
 
-/**
- * Check if KaTeX CSS loading is in progress.
- */
+// check if KaTeX CSS loading is in progress
 export function isKatexCssLoading(): boolean {
   return katexCssState instanceof Promise;
 }
 
-/**
- * Reset state (for testing only).
- */
+// reset state (for testing)
 export function resetKatexLoader(): void {
   katexCssState = null;
 }

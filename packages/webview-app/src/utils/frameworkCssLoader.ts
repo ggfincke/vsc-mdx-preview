@@ -7,11 +7,7 @@ import type { FrameworkId } from '@mdx-preview/shared';
 // Track which framework CSS has been loaded (idempotent loading)
 const loadedCss = new Set<FrameworkId>();
 
-/**
- * Load CSS for a specific framework.
- * Safe to call multiple times - only loads once per framework.
- * Returns a promise that resolves when CSS is injected into the DOM.
- */
+// load CSS for a specific framework (idempotent)
 export async function loadFrameworkCss(framework: FrameworkId): Promise<void> {
   // Skip if already loaded
   if (loadedCss.has(framework)) {
@@ -44,16 +40,12 @@ export async function loadFrameworkCss(framework: FrameworkId): Promise<void> {
   }
 }
 
-/**
- * Check if CSS for a framework has been loaded.
- */
+// check if CSS for a framework has been loaded
 export function isFrameworkCssLoaded(framework: FrameworkId): boolean {
   return loadedCss.has(framework);
 }
 
-/**
- * Reset the CSS loader state (for testing purposes).
- */
+// reset CSS loader state (for testing)
 export function resetFrameworkCssLoader(): void {
   loadedCss.clear();
 }
