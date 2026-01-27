@@ -3,8 +3,13 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../../logging';
-import { PACKAGE_JSON_WATCHER_DEBOUNCE_MS } from '../../constants';
 import { BaseWatcher } from '../../preview/watchers/BaseWatcher';
+import { getConfigManager } from '../../services';
+
+// get configurable debounce value from ConfigManager
+function getWatcherDebounce(): number {
+  return getConfigManager().get('advanced.watcherDebounceMs');
+}
 
 // watches for package.json & lock file changes to trigger resolver cache invalidation
 // ensures module resolution stays up-to-date when dependencies change
@@ -90,6 +95,6 @@ export class PackageJsonWatcher extends BaseWatcher {
       debug('[PKG-JSON] Triggering cache invalidation');
       this.onInvalidate?.();
       this.debounceTimer = undefined;
-    }, PACKAGE_JSON_WATCHER_DEBOUNCE_MS);
+    }, getWatcherDebounce());
   }
 }

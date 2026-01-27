@@ -7,6 +7,20 @@ import { debug } from '../../logging';
 // lexer initialization state
 let lexerInitialized = false;
 
+// ============================================================================
+// I.4: Fast pre-check to skip parsing for files without imports
+// Pattern matches: import statements, require() calls, export-from statements
+// ============================================================================
+
+const IMPORT_PATTERN =
+  /\b(import\s|require\s*\(|export\s+\*\s+from|export\s+\{[^}]*\}\s+from)\b/;
+
+// fast pre-check: returns true if code might have imports (worth parsing)
+// returns false if definitely no imports (skip parsing for performance)
+function mightHaveImports(code: string): boolean {
+  return IMPORT_PATTERN.test(code);
+}
+
 // ensure es-module-lexer is initialized
 async function ensureLexerInitialized(): Promise<void> {
   if (!lexerInitialized) {
@@ -29,6 +43,12 @@ const REQUIRE_TEMPLATE = /require\s*\(\s*`([^`\\]*(?:\\.[^`\\]*)*)`\s*\)/g;
 // extract import specifiers from JavaScript/TypeScript code
 // uses es-module-lexer for ESM imports, falls back to require() pattern for CJS
 export async function extractImportSpecifiers(code: string): Promise<string[]> {
+  // I.4: Fast path - skip parsing if no import-like patterns detected
+  if (!mightHaveImports(code)) {
+    debug('[IMPORT-EXTRACTOR] Fast path: no import patterns detected');
+    return [];
+  }
+
   await ensureLexerInitialized();
 
   try {

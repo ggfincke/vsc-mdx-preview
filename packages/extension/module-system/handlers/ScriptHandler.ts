@@ -19,10 +19,16 @@ export class ScriptHandler implements FileTypeHandler {
     preview: Preview
   ): Promise<FetchResult> {
     // transform the code (handles MDX, TypeScript, JSX, etc.)
-    const transformedCode = await transform(code, fsPath, preview);
+    // I.1: transform now returns both esmCode and final code
+    const { code: transformedCode, esmCode } = await transform(
+      code,
+      fsPath,
+      preview
+    );
 
-    // extract import dependencies from transformed code
-    const importNames = await extractImports(transformedCode);
+    // I.1: extract import dependencies from ESM code (BEFORE CommonJS conversion)
+    // es-module-lexer works much better on ESM than on CommonJS output
+    const importNames = await extractImports(esmCode);
     const dependencies = importNames.filter(
       (dep): dep is string => dep !== undefined && dep !== null
     );

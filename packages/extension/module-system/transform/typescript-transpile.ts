@@ -5,7 +5,7 @@ import { transform as sucraseTransform } from 'sucrase';
 import type { Preview } from '../../preview/preview-manager';
 
 // transpile TypeScript/TSX code using Sucrase
-// Sucrase is already bundled and provides fast transpilation
+// Sucrase is already bundled & provides fast transpilation
 export function transpileTypeScript(
   code: string,
   fsPath: string,

@@ -21,10 +21,20 @@ const getCompileTrustedModule = createLazyImport(
 // result type for entry transformation (includes frontmatter)
 export interface TransformEntryResult {
   code: string;
+  // I.1: ESM code before CommonJS conversion (for import extraction)
+  esmCode: string;
   frontmatter: Record<string, unknown>;
 }
 
+// I.1: result type for dependency transformation
+// returns both ESM (for import extraction) and CJS (for webview evaluation)
+export interface TransformResult {
+  code: string;      // Final CommonJS for webview evaluation
+  esmCode: string;   // ESM code before CommonJS conversion
+}
+
 // transform entry file (MDX → TS → Babel/Sucrase)
+// I.1: returns both esmCode (for import extraction) and code (for webview)
 async function transformEntry(
   code: string,
   fsPath: string,
@@ -52,21 +62,25 @@ async function transformEntry(
     code = transpileTypeScript(code, fsPath, preview);
   }
 
+  // I.1: Capture ESM code before CommonJS transformation
+  const esmCode = code;
+
   code = await transpileWithFallback(code, {
     useSucrase,
     context: 'entry',
     filePath: fsPath,
   });
 
-  return { code, frontmatter };
+  return { code, esmCode, frontmatter };
 }
 
 // transform dependency file (MDX → TS → Babel/Sucrase, skip node_modules unless ESM)
+// I.1: returns both esmCode (for import extraction) and code (for webview)
 async function transform(
   code: string,
   fsPath: string,
   preview: Preview
-): Promise<string> {
+): Promise<TransformResult> {
   const extname = path.extname(fsPath);
   if (/\.mdx?$/i.test(extname)) {
     // for dependencies, we only need the code (frontmatter is ignored)
@@ -79,6 +93,9 @@ async function transform(
   if (isTypeScriptExtension(extname) && !useSucrase) {
     code = transpileTypeScript(code, fsPath, preview);
   }
+
+  // I.1: Capture ESM code before CommonJS transformation
+  const esmCode = code;
 
   const isInNodeModules = fsPath.split(path.sep).includes('node_modules');
   if (!isInNodeModules || isModule(code)) {
@@ -93,7 +110,7 @@ async function transform(
     });
   }
 
-  return code;
+  return { code, esmCode };
 }
 
 export { transformEntry, transform };
