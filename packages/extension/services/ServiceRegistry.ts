@@ -3,7 +3,7 @@
 
 import type { Disposable } from 'vscode';
 import { debug } from '../logging';
-import { ServiceError } from '../errors';
+import { ServiceError, CircularDependencyError } from '../errors';
 import type { IService, ServiceFactory, ServiceRegistration } from './types';
 
 // * central registry for managing service lifecycle
@@ -17,6 +17,9 @@ export class ServiceRegistry implements Disposable {
   private services = new Map<string, ServiceRegistration<IService>>();
   private registrationCounter = 0;
   private disposed = false;
+
+  // track services currently being initialized (for cycle detection)
+  private initializationStack: string[] = [];
 
   private constructor() {}
 
@@ -65,10 +68,27 @@ export class ServiceRegistry implements Disposable {
       throw new ServiceError(`Service not registered: ${name}`, 'E800', name);
     }
 
-    // lazy initialization
+    // check for circular dependency
+    if (this.initializationStack.includes(name)) {
+      // build the cycle path for clear error reporting
+      const cycleStart = this.initializationStack.indexOf(name);
+      const cycle = [...this.initializationStack.slice(cycleStart), name];
+      throw new CircularDependencyError(cycle);
+    }
+
+    // lazy initialization with cycle tracking
     if (!registration.instance) {
       debug(`[SERVICE-REGISTRY] Creating instance: ${name}`);
-      registration.instance = registration.factory();
+
+      // push onto stack before initialization
+      this.initializationStack.push(name);
+
+      try {
+        registration.instance = registration.factory();
+      } finally {
+        // always pop from stack, even on error
+        this.initializationStack.pop();
+      }
     }
 
     return registration.instance as T;
@@ -82,6 +102,11 @@ export class ServiceRegistry implements Disposable {
   // check if a service instance has been created
   isInitialized(name: string): boolean {
     return this.services.get(name)?.instance !== undefined;
+  }
+
+  // get the current initialization stack (for testing/diagnostics)
+  getInitializationStack(): readonly string[] {
+    return [...this.initializationStack];
   }
 
   // dispose all services in reverse registration order
@@ -117,6 +142,7 @@ export class ServiceRegistry implements Disposable {
   // reset the registry (for testing) - disposes all services & clears registrations
   static reset(): void {
     if (ServiceRegistry.instance) {
+      ServiceRegistry.instance.initializationStack = [];
       ServiceRegistry.instance.dispose();
       ServiceRegistry.instance = undefined;
     }

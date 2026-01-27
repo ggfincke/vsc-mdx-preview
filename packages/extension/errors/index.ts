@@ -165,9 +165,11 @@ export class WebviewError extends ExtensionError {
 // service errors
 // E800 = SERVICE_NOT_REGISTERED
 // E801 = SERVICE_ALREADY_DISPOSED
+// E802 = SERVICE_CIRCULAR_DEPENDENCY
 export type ServiceErrorCode =
   | 'E800'
-  | 'E801';
+  | 'E801'
+  | 'E802';
 
 export class ServiceError extends ExtensionError {
   constructor(
@@ -177,5 +179,17 @@ export class ServiceError extends ExtensionError {
     cause?: Error
   ) {
     super(message, code, cause);
+  }
+}
+
+// circular dependency error for service registry
+export class CircularDependencyError extends ServiceError {
+  constructor(public readonly cycle: string[]) {
+    const cycleStr = cycle.join(' -> ');
+    super(
+      `Circular service dependency detected: ${cycleStr}`,
+      'E802',
+      cycle[0]
+    );
   }
 }
