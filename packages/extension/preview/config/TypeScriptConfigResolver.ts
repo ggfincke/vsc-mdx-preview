@@ -2,9 +2,9 @@
 // resolve TypeScript configuration from tsconfig.json using tsconfck (lightweight)
 
 import * as path from 'path';
-import * as fs from 'fs';
 import { parse, type TSConfckParseResult } from 'tsconfck';
 import { error as logError, debug } from '../../logging';
+import { findUp } from '../../utils/find-up';
 
 // import consolidated type from module-system/types.ts
 import type { TypeScriptConfiguration } from '../../module-system/types';
@@ -15,20 +15,13 @@ export type { TypeScriptConfiguration };
 // cache parsed configs by directory to avoid repeated FS reads
 const configCache = new Map<string, TypeScriptConfiguration | null>();
 
-// find tsconfig.json by walking up the directory tree
+// find tsconfig.json by walking up the directory tree (uses shared find-up utility)
 export function findTsConfig(directory: string): string | undefined {
-  let currentDir = directory;
-  const root = path.parse(currentDir).root;
-
-  while (currentDir !== root) {
-    const configPath = path.join(currentDir, 'tsconfig.json');
-    if (fs.existsSync(configPath)) {
-      return configPath;
-    }
-    currentDir = path.dirname(currentDir);
-  }
-
-  return undefined;
+  return findUp({
+    filename: 'tsconfig.json',
+    startDir: directory,
+    // no stopAt = searches to filesystem root
+  });
 }
 
 // resolve TypeScript configuration from a tsconfig.json file (async)

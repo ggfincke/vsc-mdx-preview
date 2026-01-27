@@ -9,6 +9,7 @@ import { SecurityPolicy } from '../security/security';
 import {
   PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS,
   TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
+  PACKAGE_JSON_WATCHER_DEBOUNCE_MS,
 } from '../constants';
 import type { FrameworkSetting } from '@mdx-preview/shared';
 import {
@@ -43,7 +44,8 @@ export type SettingKey =
   | 'framework'
   | 'framework.componentShims'
   | 'components.builtins'
-  | 'components.unknownBehavior';
+  | 'components.unknownBehavior'
+  | 'advanced.watcherDebounceMs';
 
 // type mapping for settings
 export interface SettingTypes {
@@ -71,6 +73,7 @@ export interface SettingTypes {
   'framework.componentShims': boolean;
   'components.builtins': boolean;
   'components.unknownBehavior': 'strip' | 'placeholder' | 'raw';
+  'advanced.watcherDebounceMs': number;
 }
 
 // default values for all settings
@@ -99,6 +102,7 @@ const DEFAULTS: SettingTypes = {
   'framework.componentShims': true,
   'components.builtins': true,
   'components.unknownBehavior': 'placeholder',
+  'advanced.watcherDebounceMs': PACKAGE_JSON_WATCHER_DEBOUNCE_MS,
 };
 
 type ConfigChangeCallback = (affectedKeys: SettingKey[]) => void;

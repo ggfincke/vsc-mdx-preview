@@ -25,9 +25,18 @@ export interface ConfigChangeEvent {
 
 export type ConfigChangeCallback = (event: ConfigChangeEvent) => void;
 
+// cache entry with LRU timestamp tracking
+interface CacheEntry {
+  value: ResolvedConfig | null;
+  lastAccessed: number;
+}
+
+// max entries before LRU eviction kicks in
+const CONFIG_CACHE_MAX_ENTRIES = 100;
+
 // * manages the cache & file watchers for MDX preview config files
 // encapsulates the global state from ConfigResolver:
-// - configCache: Map of directory -> resolved config
+// - configCache: Map of directory -> resolved config (with LRU eviction)
 // - configWatchers: Map of config path -> file system watcher
 // - configChangeSubscribers: Set of callbacks for config changes
 // registered w/ ServiceRegistry for proper disposal
@@ -35,7 +44,7 @@ export class ConfigCache extends SingletonService<ConfigCache> {
   protected static override instance: ConfigCache | undefined;
   protected readonly logTag = 'CONFIG-CACHE';
 
-  private cache = new Map<string, ResolvedConfig | null>();
+  private cache = new Map<string, CacheEntry>();
   private watchers = new Map<string, vscode.FileSystemWatcher>();
   private subscriberManager = new SubscriberManager<ConfigChangeEvent>(
     'CONFIG-CACHE',
@@ -46,9 +55,20 @@ export class ConfigCache extends SingletonService<ConfigCache> {
     super();
   }
 
-  // get cached config for a directory
+  // get cached config for a directory (updates LRU position)
+  // returns undefined if not cached, null if cached "no config found"
   get(dir: string): ResolvedConfig | null | undefined {
-    return this.cache.get(dir);
+    const entry = this.cache.get(dir);
+    if (entry === undefined) {
+      return undefined; // not cached
+    }
+
+    // Update LRU position (delete + re-insert at end)
+    this.cache.delete(dir);
+    entry.lastAccessed = Date.now();
+    this.cache.set(dir, entry);
+
+    return entry.value;
   }
 
   // check if config is cached for a directory
@@ -56,9 +76,24 @@ export class ConfigCache extends SingletonService<ConfigCache> {
     return this.cache.has(dir);
   }
 
-  // set cached config for a directory
+  // set cached config for a directory (with LRU eviction)
   set(dir: string, config: ResolvedConfig | null): void {
-    this.cache.set(dir, config);
+    // Remove existing entry first (for LRU reordering)
+    this.cache.delete(dir);
+
+    // Evict oldest if at capacity (first entry is LRU due to Map order)
+    while (this.cache.size >= CONFIG_CACHE_MAX_ENTRIES) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey === undefined) {
+        break;
+      }
+      this.cache.delete(oldestKey);
+    }
+
+    this.cache.set(dir, {
+      value: config,
+      lastAccessed: Date.now(),
+    });
   }
 
   // invalidate cache entries affected by a config file change
@@ -66,9 +101,9 @@ export class ConfigCache extends SingletonService<ConfigCache> {
     const configDir = path.dirname(configPath);
 
     // remove all cache entries that could be affected by this config file
-    for (const [cachedDir, resolved] of this.cache.entries()) {
+    for (const [cachedDir, entry] of this.cache.entries()) {
       if (
-        resolved?.configPath === configPath ||
+        entry.value?.configPath === configPath ||
         cachedDir.startsWith(configDir)
       ) {
         this.cache.delete(cachedDir);

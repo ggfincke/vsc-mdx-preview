@@ -8,7 +8,8 @@ import { getConfigCache, getErrorReporter } from '../../services';
 import { ConfigError } from '../../errors';
 import { ConfigChangeType } from '../../config/ConfigCache';
 import { validateConfigSchema } from '../../utils/validation';
-import { readJsonSync, pathExists } from '../../utils/file-utils';
+import { readJsonSync } from '../../utils/file-utils';
+import { findUp, createWorkspaceStopPredicate } from '../../utils/find-up';
 
 // import consolidated types from compiler/types.ts
 import type {
@@ -134,42 +135,23 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
   return resolved;
 }
 
-// find config file by walking up directory tree
+// find config file by walking up directory tree (uses shared find-up utility)
 function findConfigFile(startDir: string): string | undefined {
-  let currentDir = startDir;
-  const workspaceFolders = vscode.workspace.workspaceFolders;
-  const workspaceRoots = workspaceFolders?.map((f) => f.uri.fsPath) ?? [];
-
   debug(`[CONFIG] Searching for config starting at: ${startDir}`);
-  debug(`[CONFIG] Workspace roots: ${workspaceRoots.join(', ') || '(none)'}`);
 
-  // walk up to workspace root or filesystem root
-  while (currentDir) {
-    for (const fileName of CONFIG_FILE_NAMES) {
-      const configPath = path.join(currentDir, fileName);
-      if (pathExists(configPath)) {
-        debug(`[CONFIG] Found config file at: ${configPath}`);
-        return configPath;
-      }
-    }
+  const result = findUp({
+    filename: CONFIG_FILE_NAMES,
+    startDir,
+    stopAt: createWorkspaceStopPredicate(),
+  });
 
-    // stop at workspace root
-    if (workspaceRoots.some((root) => currentDir === root)) {
-      debug(`[CONFIG] Reached workspace root: ${currentDir}`);
-      break;
-    }
-
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) {
-      // reached filesystem root
-      debug(`[CONFIG] Reached filesystem root`);
-      break;
-    }
-    currentDir = parentDir;
+  if (result) {
+    debug(`[CONFIG] Found config file at: ${result}`);
+  } else {
+    debug(`[CONFIG] No config file found`);
   }
 
-  debug(`[CONFIG] No config file found`);
-  return undefined;
+  return result;
 }
 
 // validate config structure using centralized validation
