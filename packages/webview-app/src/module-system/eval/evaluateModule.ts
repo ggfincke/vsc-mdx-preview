@@ -7,7 +7,7 @@
 // 2. CJS-style: uses require/exports/module.exports pattern
 
 import type { ModuleRuntime } from '../types';
-import { extractErrorMessage } from '@mdx-preview/shared';
+import { normalizeError } from '@mdx-preview/shared';
 
 // evaluate a module string
 // for MDX function-body output (outputFormat: 'function-body'):
@@ -50,8 +50,20 @@ export function evaluateModule(
 
     return module.exports;
   } catch (error) {
-    // re-throw w/ module context for better error messages
-    const message = extractErrorMessage(error);
-    throw new Error(`Error evaluating module "${moduleId}": ${message}`);
+    // preserve original error chain using Error.cause (ES2022)
+    const originalError = normalizeError(error);
+    const contextualError = new Error(
+      `Error evaluating module "${moduleId}": ${originalError.message}`
+    );
+
+    // ES2022 cause for tooling that supports it
+    (contextualError as { cause?: Error }).cause = originalError;
+
+    // also include original stack in the stack property for display
+    if (originalError.stack) {
+      contextualError.stack = `${contextualError.message}\n    caused by: ${originalError.stack}`;
+    }
+
+    throw contextualError;
   }
 }

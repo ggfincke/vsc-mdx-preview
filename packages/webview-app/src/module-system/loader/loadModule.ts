@@ -1,12 +1,14 @@
 // packages/webview-app/src/module-system/loader/loadModule.ts
-// Core recursive module loading logic with parallel dependency fetching
+// core recursive module loading logic w/ parallel dependency fetching
 
 import * as jsxRuntime from 'react/jsx-runtime';
+import { isBareImport } from '@mdx-preview/shared';
 import { registry } from '../registry/ModuleRegistry';
 import { evaluateModule } from '../eval/evaluateModule';
 import { injectStyles } from '../styles/injectStyles';
 import { createSyncRequire } from '../runtime/require';
 import { PRELOAD_ALIASES } from '../preload';
+import { createModuleNotFoundError } from '../errors';
 import type { Module, ModuleRuntime, ModuleFetcher, FetchResult } from '../types';
 
 // circular dependency helpers (see circular.ts for details)
@@ -59,7 +61,7 @@ export async function loadModule(
   }
 }
 
-// internal async loading logic with parallel dependency fetching
+// internal async loading logic w/ parallel dependency fetching
 async function loadModuleAsync(
   id: string,
   code: string,
@@ -94,12 +96,8 @@ async function loadModuleAsync(
       continue;
     }
 
-    // Determine if this is bare import
-    const isBare =
-      !dep.startsWith('/') &&
-      !dep.startsWith('./') &&
-      !dep.startsWith('../') &&
-      !dep.startsWith('npm://');
+    // Determine if this is bare import (uses shared utility)
+    const isBare = isBareImport(dep);
 
     toFetch.push({ dep, isBare });
   }
@@ -137,15 +135,7 @@ async function loadModuleAsync(
   const failed = fetchResults.filter((r) => !r.result);
   if (failed.length > 0) {
     const firstFailed = failed[0];
-    throw new Error(
-      `Failed to load module: "${firstFailed.dep}"\n` +
-        `Required by: ${id}\n\n` +
-        `Possible causes:\n` +
-        `  - The file does not exist at the specified path\n` +
-        `  - The path in .mdx-previewrc.json is incorrect\n` +
-        `  - A transpilation error occurred\n\n` +
-        `Check the MDX Preview output channel for details.`
-    );
+    throw createModuleNotFoundError(firstFailed.dep, id);
   }
 
   // =============================================================================

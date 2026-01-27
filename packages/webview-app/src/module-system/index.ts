@@ -110,19 +110,27 @@ export async function evaluateModuleToComponent(
   // Ensure preloaded modules are ready
   ensurePreloadedModules();
 
-  // Wait for any pending generic shim loading to complete
-  // This fixes the race condition where setUsedComponents is called right before updatePreview
+  // K.2: Wait for any pending shim loading to complete in parallel
+  // These operations are independent (different state vars, different registry keys)
+  // This fixes the race condition where setUsedComponents/setFramework is called right before updatePreview
+  const pendingLoads: Promise<void>[] = [];
   if (pendingGenericShimLoad) {
-    await pendingGenericShimLoad;
-    pendingGenericShimLoad = null;
+    pendingLoads.push(pendingGenericShimLoad);
+  }
+  if (pendingFrameworkShimLoad) {
+    pendingLoads.push(pendingFrameworkShimLoad);
   }
 
-  // Wait for any pending framework shim loading to complete
-  // This fixes the race condition where setFramework is called right before updatePreview
-  if (pendingFrameworkShimLoad) {
-    await pendingFrameworkShimLoad;
-    pendingFrameworkShimLoad = null;
+  if (pendingLoads.length > 0) {
+    await Promise.all(pendingLoads);
   }
+
+  // Reset after awaiting (important: do this after Promise.all to avoid race)
+  // Note: if a new setFramework/setUsedComponents call happens during await,
+  // the new promise is set before this nullification, which is fine -
+  // the new caller will await its own promise
+  pendingGenericShimLoad = null;
+  pendingFrameworkShimLoad = null;
 
   // Determine if we need full reset or incremental invalidation
   if (lastEntryPath !== entryFilePath) {
