@@ -2,15 +2,14 @@
 // consolidated import/export specifier extraction from JavaScript/TypeScript code
 
 import { init as initLexer, parse as parseImports } from 'es-module-lexer';
+import { extractErrorMessage } from '@mdx-preview/shared';
 import { debug } from '../../logging';
 
 // lexer initialization state
 let lexerInitialized = false;
 
-// ============================================================================
-// I.4: Fast pre-check to skip parsing for files without imports
-// Pattern matches: import statements, require() calls, export-from statements
-// ============================================================================
+// I.4: fast pre-check to skip parsing for files w/o imports
+// pattern matches: import statements, require() calls, export-from statements
 
 const IMPORT_PATTERN =
   /\b(import\s|require\s*\(|export\s+\*\s+from|export\s+\{[^}]*\}\s+from)\b/;
@@ -66,7 +65,7 @@ export async function extractImportSpecifiers(code: string): Promise<string[]> {
 
     return esmImports;
   } catch (error) {
-    debug(`[IMPORT-EXTRACTOR] Lexer error, falling back to require: ${error}`);
+    debug(`[IMPORT-EXTRACTOR] Lexer error, falling back to require: ${extractErrorMessage(error)}`);
     return extractRequireSpecifiers(code);
   }
 }

@@ -4,6 +4,7 @@
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 import type { FetchResult } from '@mdx-preview/shared';
+import { extractErrorMessage } from '@mdx-preview/shared';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { getBrowserResolver } from '../resolver/resolver-factory';
@@ -32,7 +33,7 @@ async function loadSassFromWorkspace(
 
   try {
     // try CommonJS require first (most common case)
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const mod = require(sassPath);
     const sassModule = (mod.default ?? mod) as SassModule;
 
@@ -71,14 +72,14 @@ async function loadSassFromWorkspace(
         return sassModule;
       } catch (esmError) {
         debug(
-          `[SassHandler] Failed to load ESM sass: ${esmError instanceof Error ? esmError.message : String(esmError)}`
+          `[SassHandler] Failed to load ESM sass: ${extractErrorMessage(esmError)}`
         );
       }
     }
 
     // sass not found or load error
     debug(
-      `[SassHandler] sass not found in workspace: ${error instanceof Error ? error.message : String(error)}`
+      `[SassHandler] sass not found in workspace: ${extractErrorMessage(error)}`
     );
     sassCache.set(workspaceRoot, null);
     return null;
@@ -170,8 +171,7 @@ export class SassHandler implements FileTypeHandler {
       return buildCssResult(fsPath, result.css);
     } catch (error) {
       // sass compilation error - return error as CSS comment for visibility
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = extractErrorMessage(error);
       const errorCss = `/* ════════════════════════════════════════════════════════════════════════════
    MDX Preview: SCSS Compilation Error
    ════════════════════════════════════════════════════════════════════════════

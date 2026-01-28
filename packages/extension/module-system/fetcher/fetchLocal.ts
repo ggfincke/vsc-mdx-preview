@@ -143,7 +143,7 @@ export async function fetchLocal(
       metadata: {
         request,
         parentId,
-        hint: `Verify the path "${request}" exists and is accessible from "${parentId}".`,
+        hint: `Verify the path "${request}" exists & is accessible from "${parentId}".`,
       },
     });
     return undefined;

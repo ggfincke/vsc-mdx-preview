@@ -99,9 +99,9 @@ export function disposeResolverSystem(): void {
   // purge the cached file system
   cachedFs.purge();
 
-  // reset resolver instances
-  browserResolverSingleton.reset();
-  nodeResolverSingleton.reset();
+  // dispose resolver instances (permanent cleanup, not just cache invalidation)
+  browserResolverSingleton.dispose();
+  nodeResolverSingleton.dispose();
 
   // clear TypeScript path resolver stat cache (bounded LRU)
   clearStatCache();

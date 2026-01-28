@@ -1,11 +1,12 @@
 // packages/extension/module-system/types.ts
 // consolidated type definitions for the module system
 
-import type { Framework } from '../framework/FrameworkDetector';
+import type { FrameworkId, FetchResult } from '@mdx-preview/shared';
 
 // re-export shared types
-export type { FetchResult } from '@mdx-preview/shared';
-export type { Framework };
+// Framework is aliased to FrameworkId for backward compatibility
+export type { FetchResult };
+export type Framework = FrameworkId;
 
 // typescript configuration for module resolution (extracted from tsconfig.json)
 // uses lightweight tsconfck parsing instead of full TypeScript compiler

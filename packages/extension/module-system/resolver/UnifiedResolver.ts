@@ -3,6 +3,7 @@
 
 import { resolveAlias, isBuiltInShim } from './alias-resolver';
 import { debug } from '../../logging';
+import { isNpmModuleId } from '@mdx-preview/shared';
 import { createResettableSingleton } from '../../utils/singleton-factory';
 import { buildShimResolutionResult } from './result-builders';
 
@@ -46,7 +47,7 @@ export class UnifiedResolver {
     if (specifier.startsWith('http://') || specifier.startsWith('https://')) {
       return false;
     }
-    if (specifier.startsWith('npm://')) {
+    if (isNpmModuleId(specifier)) {
       return false;
     }
     return true;
@@ -123,7 +124,7 @@ export class UnifiedResolver {
     return null;
   }
 
-  // I.3: asynchronous resolution with parallel file probing
+  // I.3: asynchronous resolution w/ parallel file probing
   async resolveAsync(
     specifier: string,
     context: ResolutionContext,

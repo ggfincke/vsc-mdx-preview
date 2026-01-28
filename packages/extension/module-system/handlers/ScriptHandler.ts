@@ -19,7 +19,7 @@ export class ScriptHandler implements FileTypeHandler {
     preview: Preview
   ): Promise<FetchResult> {
     // transform the code (handles MDX, TypeScript, JSX, etc.)
-    // I.1: transform now returns both esmCode and final code
+    // I.1: transform now returns both esmCode & final code
     const { code: transformedCode, esmCode } = await transform(
       code,
       fsPath,

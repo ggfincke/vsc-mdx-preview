@@ -18,11 +18,9 @@ const getBabel = createLazyImport(() => import('@babel/core'));
 // Config items are only created on first transformAsync() call
 let cachedBabelOptions: BabelCore.TransformOptions | null = null;
 
-/**
- * Lazily initialize Babel options on first use.
- * Config items are cached after first creation to avoid repeated require() calls.
- * This defers the expensive createConfigItem() and require() calls until first transform.
- */
+// lazily initialize Babel options on first use
+// config items are cached after first creation to avoid repeated require() calls
+// this defers the expensive createConfigItem() & require() calls until first transform
 async function getBabelOptions(
   babel: typeof BabelCore
 ): Promise<BabelCore.TransformOptions> {
@@ -30,7 +28,7 @@ async function getBabelOptions(
     return cachedBabelOptions;
   }
 
-  // Only now do we require presets/plugins and create config items
+  // only now do we require presets/plugins & create config items
   cachedBabelOptions = {
     presets: [
       // ES modules -> CommonJS (required for webview Function() evaluation)
@@ -69,9 +67,7 @@ export const transformAsync = async (
   return babel.transformAsync(code, options);
 };
 
-/**
- * Clear cached Babel config (for testing or hot reload scenarios).
- */
+// clear cached Babel config (for testing or hot reload scenarios)
 export function clearBabelConfigCache(): void {
   cachedBabelOptions = null;
 }

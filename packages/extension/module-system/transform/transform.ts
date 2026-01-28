@@ -27,14 +27,14 @@ export interface TransformEntryResult {
 }
 
 // I.1: result type for dependency transformation
-// returns both ESM (for import extraction) and CJS (for webview evaluation)
+// returns both ESM (for import extraction) & CJS (for webview evaluation)
 export interface TransformResult {
   code: string;      // Final CommonJS for webview evaluation
   esmCode: string;   // ESM code before CommonJS conversion
 }
 
 // transform entry file (MDX → TS → Babel/Sucrase)
-// I.1: returns both esmCode (for import extraction) and code (for webview)
+// I.1: returns both esmCode (for import extraction) & code (for webview)
 async function transformEntry(
   code: string,
   fsPath: string,
@@ -75,7 +75,7 @@ async function transformEntry(
 }
 
 // transform dependency file (MDX → TS → Babel/Sucrase, skip node_modules unless ESM)
-// I.1: returns both esmCode (for import extraction) and code (for webview)
+// I.1: returns both esmCode (for import extraction) & code (for webview)
 async function transform(
   code: string,
   fsPath: string,
