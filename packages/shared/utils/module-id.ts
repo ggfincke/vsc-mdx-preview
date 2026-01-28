@@ -1,5 +1,5 @@
 // packages/shared/utils/module-id.ts
-// utilities for working with npm:// module IDs used by the webview module system
+// utilities for working w/ npm:// module IDs used by the webview module system
 //
 // module ID format: npm://<package>@<version> or npm://<package>/<subpath>@<version>
 // examples:
@@ -8,22 +8,16 @@
 //   - npm://@mdx-js/react@3
 //   - npm://@mdx-preview/shims-generic/Callout
 
-/**
- * Module ID prefix for npm packages
- */
+// module ID prefix for npm packages
 export const NPM_MODULE_PREFIX = 'npm://';
 
-/**
- * Check if an ID is an npm module ID (starts with npm://)
- */
+// check if an ID is an npm module ID (starts w/ npm://)
 export function isNpmModuleId(id: string): boolean {
   return id.startsWith(NPM_MODULE_PREFIX);
 }
 
-/**
- * Check if an import specifier is a bare import (not relative, not absolute, not npm://)
- * Bare imports are typically node_modules packages like 'react' or 'lodash/merge'
- */
+// check if an import specifier is a bare import (not relative, not absolute, not npm://)
+// bare imports are typically node_modules packages like 'react' or 'lodash/merge'
 export function isBareImport(specifier: string): boolean {
   return (
     !specifier.startsWith('/') &&
@@ -33,28 +27,22 @@ export function isBareImport(specifier: string): boolean {
   );
 }
 
-/**
- * Parsed npm module ID components
- */
+// parsed npm module ID components
 export interface ParsedNpmModuleId {
-  /** package name (e.g., 'react', '@mdx-js/react') */
+  // package name (e.g., 'react', '@mdx-js/react')
   package: string;
-  /** subpath within package (e.g., '/jsx-runtime', '/client') */
+  // subpath within package (e.g., '/jsx-runtime', '/client')
   subpath?: string;
-  /** version string (e.g., '18', '3') */
+  // version string (e.g., '18', '3')
   version?: string;
 }
 
-/**
- * Parse an npm:// module ID into its components
- *
- * Examples:
- * - 'npm://react@18' -> { package: 'react', version: '18' }
- * - 'npm://react/jsx-runtime@18' -> { package: 'react', subpath: '/jsx-runtime', version: '18' }
- * - 'npm://@mdx-js/react@3' -> { package: '@mdx-js/react', version: '3' }
- *
- * @returns Parsed components or null if not a valid npm module ID
- */
+// parse an npm:// module ID into its components
+// examples:
+// - 'npm://react@18' -> { package: 'react', version: '18' }
+// - 'npm://react/jsx-runtime@18' -> { package: 'react', subpath: '/jsx-runtime', version: '18' }
+// - 'npm://@mdx-js/react@3' -> { package: '@mdx-js/react', version: '3' }
+// returns Parsed components or null if not a valid npm module ID
 export function parseNpmModuleId(id: string): ParsedNpmModuleId | null {
   if (!isNpmModuleId(id)) {
     return null;
@@ -141,9 +129,7 @@ export function parseNpmModuleId(id: string): ParsedNpmModuleId | null {
   };
 }
 
-/**
- * Create an npm module ID from components
- */
+// create an npm module ID from components
 export function createNpmModuleId(
   packageName: string,
   subpath?: string,
@@ -159,27 +145,20 @@ export function createNpmModuleId(
   return id;
 }
 
-/**
- * URL scheme pattern for module ID validation
- * Matches: http://, https://, npm://, file://, etc.
- */
+// URL scheme pattern for module ID validation
+// matches: http://, https://, npm://, file://, etc.
 export const URL_SCHEME_PATTERN = /^[a-z]+:\/\//i;
 
-/**
- * Check if a string looks like a URL (has a scheme)
- */
+// check if a string looks like a URL (has a scheme)
 export function hasUrlScheme(str: string): boolean {
   return URL_SCHEME_PATTERN.test(str);
 }
 
-/**
- * Validate a module fetch request for security
- * Returns true if the request is safe to process
- *
- * Security checks:
- * - No null bytes (potential injection)
- * - Only npm:// scheme allowed (not http://, file://, etc.)
- */
+// validate a module fetch request for security
+// returns true if the request is safe to process
+// security checks:
+// - No null bytes (potential injection)
+// - Only npm:// scheme allowed (not http://, file://, etc.)
 export function isValidModuleRequest(request: string): boolean {
   // No null bytes (potential injection)
   if (request.includes('\0')) {

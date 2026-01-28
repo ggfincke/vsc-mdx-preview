@@ -9,3 +9,21 @@ export const STANDARD_CACHE_TTL_MS = 5 * 60 * 1000;
 
 // standard watcher debounce interval (ms) for package.json, config changes
 export const STANDARD_WATCHER_DEBOUNCE_MS = 500;
+
+// rpc handler retry configuration
+// exponential backoff: 100, 200, 400, 800ms
+export const RPC_HANDLER_RETRY_DELAY_MS = 100;
+
+// maximum retry attempts for handler registration
+// 4 retries = 5 total attempts, ~1.5s total max wait before giving up
+export const RPC_HANDLER_MAX_RETRIES = 4;
+
+// maximum pending messages before logging a warning
+export const RPC_PENDING_MESSAGES_WARNING_THRESHOLD = 50;
+
+// shim loading retry configuration
+// exponential backoff: 200, 400, 800ms
+export const SHIM_LOAD_MAX_RETRIES = 3;
+
+// base delay for shim loading retry (ms)
+export const SHIM_LOAD_RETRY_DELAY_MS = 200;

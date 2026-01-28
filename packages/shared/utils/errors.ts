@@ -45,7 +45,7 @@ export function extractErrorInfo(error: unknown): ErrorInfo {
 }
 
 // extract full error chain including causes (ES2022)
-// walks the cause chain and returns all errors in order
+// walks the cause chain & returns all errors in order
 export function extractErrorChain(error: unknown): Error[] {
   const chain: Error[] = [];
   let current: unknown = error;
