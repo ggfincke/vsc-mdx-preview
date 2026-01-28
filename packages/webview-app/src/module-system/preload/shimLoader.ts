@@ -1,8 +1,5 @@
 // packages/webview-app/src/module-system/preload/shimLoader.ts
-// resilient shim loading with retry and fallback
-//
-// O.3: provides retry mechanism with exponential backoff for framework
-// shim loading failures, with graceful degradation to generic shims
+// resilient shim loading w/ retry & fallback to generic shims (O.3)
 
 import { debug } from '../../utils/debug';
 import { normalizeError, extractErrorMessage } from '@mdx-preview/shared';

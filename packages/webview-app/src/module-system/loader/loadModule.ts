@@ -68,9 +68,7 @@ async function loadModuleAsync(
   dependencies: string[],
   fetcher: ModuleFetcher
 ): Promise<Module> {
-  // =============================================================================
-  // PHASE 1: Categorize dependencies (cached vs needs fetching)
-  // =============================================================================
+  // phase 1: categorize dependencies (cached vs needs fetching)
   interface ToFetch {
     dep: string;
     isBare: boolean;
@@ -102,9 +100,7 @@ async function loadModuleAsync(
     toFetch.push({ dep, isBare });
   }
 
-  // =============================================================================
-  // PHASE 2: Parallel fetch all non-cached dependencies
-  // =============================================================================
+  // phase 2: parallel fetch all non-cached dependencies
   interface FetchedResult {
     dep: string;
     result: FetchResult | undefined;
@@ -113,7 +109,7 @@ async function loadModuleAsync(
   const fetchPromises = toFetch.map(async ({ dep, isBare }): Promise<FetchedResult> => {
     const inFlightKey = makeInFlightKey(id, dep);
 
-    // Check for in-flight fetch with same (parent, dep) pair
+    // check for in-flight fetch w/ same (parent, dep) pair
     let fetchPromise = inFlightFetches.get(inFlightKey);
     if (!fetchPromise) {
       fetchPromise = fetcher(dep, isBare, id);
@@ -129,19 +125,15 @@ async function loadModuleAsync(
   // Wait for all fetches in parallel (main performance win)
   const fetchResults = await Promise.all(fetchPromises);
 
-  // =============================================================================
-  // PHASE 3: Handle fetch errors
-  // =============================================================================
+  // phase 3: handle fetch errors
   const failed = fetchResults.filter((r) => !r.result);
   if (failed.length > 0) {
     const firstFailed = failed[0];
     throw createModuleNotFoundError(firstFailed.dep, id);
   }
 
-  // =============================================================================
-  // PHASE 4: Process results & CSS (sequential for injection order)
-  // Then queue parallel recursive loads for non-CSS dependencies
-  // =============================================================================
+  // phase 4: process results & CSS (sequential for injection order)
+  // then queue parallel recursive loads for non-CSS dependencies
   const loadPromises: Promise<void>[] = [];
 
   for (const { dep, result } of fetchResults) {
@@ -185,14 +177,10 @@ async function loadModuleAsync(
     );
   }
 
-  // =============================================================================
-  // PHASE 5: Wait for all recursive loads (parallel)
-  // =============================================================================
+  // phase 5: wait for all recursive loads (parallel)
   await Promise.all(loadPromises);
 
-  // =============================================================================
-  // PHASE 6: Evaluate this module now that all dependencies are loaded
-  // =============================================================================
+  // phase 6: evaluate this module now that all dependencies are loaded
   const runtime: ModuleRuntime = {
     Fragment: jsxRuntime.Fragment,
     jsx: jsxRuntime.jsx,

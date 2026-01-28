@@ -1,5 +1,5 @@
 // packages/webview-app/src/module-system/errors.ts
-// webview-specific error classes with user-friendly messages
+// webview-specific error classes w/ user-friendly messages
 // these errors provide actionable suggestions appropriate for the webview context
 
 export type ModuleLoadErrorCode =
@@ -43,7 +43,7 @@ export class ModuleLoadError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
   }
 
-  // Format for display in webview with suggestions
+  // format for display in webview w/ suggestions
   toDisplayMessage(): string {
     let msg = this.message;
     if (this.suggestions.length > 0) {
