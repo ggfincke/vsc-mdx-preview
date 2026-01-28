@@ -10,6 +10,7 @@ import { ConfigChangeType } from '../../config/ConfigCache';
 import { validateConfigSchema } from '../../utils/validation';
 import { readJsonSync } from '../../utils/file-utils';
 import { findUp, createWorkspaceStopPredicate } from '../../utils/find-up';
+import { createFileWatcher } from '../../utils/createFileWatcher';
 
 // import consolidated types from compiler/types.ts
 import type {
@@ -169,26 +170,25 @@ function setupConfigWatcher(configPath: string): void {
     return;
   }
 
-  const watcher = vscode.workspace.createFileSystemWatcher(configPath);
-
-  watcher.onDidChange(() => {
-    debug(`Config file changed: ${configPath}`);
-    cache.invalidate(configPath);
-    cache.notifyChange(configPath, ConfigChangeType.FileChanged);
-  });
-
-  watcher.onDidCreate(() => {
-    debug(`Config file created: ${configPath}`);
-    cache.invalidate(configPath);
-    cache.notifyChange(configPath, ConfigChangeType.FileCreated);
-  });
-
-  watcher.onDidDelete(() => {
-    debug(`Config file deleted: ${configPath}`);
-    cache.invalidate(configPath);
-    cache.notifyChange(configPath, ConfigChangeType.FileDeleted);
-    // clean up watcher
-    cache.removeWatcher(configPath);
+  const watcher = createFileWatcher({
+    pattern: configPath,
+    logTag: 'CONFIG',
+    onChange: () => {
+      debug(`[CONFIG] File changed: ${configPath}`);
+      cache.invalidate(configPath);
+      cache.notifyChange(configPath, ConfigChangeType.FileChanged);
+    },
+    onCreate: () => {
+      debug(`[CONFIG] File created: ${configPath}`);
+      cache.invalidate(configPath);
+      cache.notifyChange(configPath, ConfigChangeType.FileCreated);
+    },
+    onDelete: () => {
+      debug(`[CONFIG] File deleted: ${configPath}`);
+      cache.invalidate(configPath);
+      cache.notifyChange(configPath, ConfigChangeType.FileDeleted);
+      cache.removeWatcher(configPath);
+    },
   });
 
   cache.setWatcher(configPath, watcher);

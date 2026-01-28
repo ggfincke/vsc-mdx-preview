@@ -116,7 +116,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
 
   protected constructor() {
     super();
-    // subscribe to VS Code configuration changes
+    // handle VS Code configuration changes
     this.addDisposable(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('mdx-preview')) {
@@ -126,13 +126,13 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     );
   }
 
-  // get config value w/ type safety
+  // retrieve config value w/ type safety
   get<K extends SettingKey>(key: K, scope?: vscode.Uri): SettingTypes[K] {
     const config = vscode.workspace.getConfiguration('mdx-preview', scope);
     return config.get<SettingTypes[K]>(key, DEFAULTS[key]);
   }
 
-  // get all config values as an object
+  // retrieve all config values as an object
   getAll(scope?: vscode.Uri): SettingTypes {
     const result = {} as SettingTypes;
     for (const key of Object.keys(DEFAULTS) as SettingKey[]) {
@@ -154,12 +154,12 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     await config.update(key, value, target);
   }
 
-  // subscribe to configuration changes
+  // register callback for configuration changes
   onDidChangeConfiguration(callback: ConfigChangeCallback): vscode.Disposable {
     return this.subscriberManager.subscribe(callback);
   }
 
-  // check if a specific setting affects the configuration change event
+  // determine if a specific setting affects the configuration change event
   static affectsConfiguration(
     event: vscode.ConfigurationChangeEvent,
     key: SettingKey
@@ -167,7 +167,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     return event.affectsConfiguration(`mdx-preview.${key}`);
   }
 
-  // notify subscribers of configuration changes
+  // dispatch configuration change notifications to subscribers
   private notifySubscribers(event: vscode.ConfigurationChangeEvent): void {
     // determine which keys changed
     const affectedKeys = (Object.keys(DEFAULTS) as SettingKey[]).filter((key) =>
