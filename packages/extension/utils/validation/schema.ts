@@ -1,5 +1,5 @@
 // packages/extension/utils/validation/schema.ts
-// schema and enum validators (config validation)
+// schema & enum validators (config validation)
 
 import {
   formatContext,

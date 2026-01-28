@@ -18,7 +18,7 @@ export function createLazyImport<T>(importFn: () => Promise<T>): () => Promise<T
       return loading;
     }
 
-    // start loading and cache the promise
+    // start loading & cache the promise
     loading = importFn().then((mod) => {
       cached = mod;
       loading = null;
