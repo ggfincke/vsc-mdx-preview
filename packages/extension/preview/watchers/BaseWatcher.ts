@@ -1,5 +1,5 @@
 // packages/extension/preview/watchers/BaseWatcher.ts
-// abstract base class for all watchers providing common lifecycle management
+// abstract base class for all watchers w/ common lifecycle management
 
 import * as vscode from 'vscode';
 import { debug } from '../../logging';
@@ -7,19 +7,16 @@ import {
   disposeCollection as disposeCollectionUtil,
   disposeOne,
 } from '../../utils/disposable';
+import {
+  createFileWatcher as createFileWatcherUtil,
+  type FileWatcherConfig,
+} from '../../utils/createFileWatcher';
 import type { IWatcher } from './types';
 
-// options for creating a file watcher
-interface FileWatcherOptions {
-  onChange?: (uri: vscode.Uri) => void;
-  onCreate?: (uri: vscode.Uri) => void;
-  onDelete?: (uri: vscode.Uri) => void;
-  ignoreCreateEvents?: boolean;
-  ignoreChangeEvents?: boolean;
-  ignoreDeleteEvents?: boolean;
-  // wrap handlers in try-catch w/ error logging (default: true)
-  wrapErrors?: boolean;
-}
+// options for creating a file watcher in BaseWatcher subclasses
+// uses the shared FileWatcherConfig but omits pattern (passed separately)
+// & logTag (derived from the class's logTag property)
+type FileWatcherOptions = Omit<FileWatcherConfig, 'pattern' | 'logTag'>;
 
 // abstract base class for all watchers w/ common lifecycle management
 export abstract class BaseWatcher implements IWatcher {
@@ -32,7 +29,7 @@ export abstract class BaseWatcher implements IWatcher {
   private _readyPromise: Promise<void> | null = null;
   private _readyResolve: (() => void) | null = null;
 
-  // ─── lifecycle methods ─────────────────────────────────────────────
+  // lifecycle methods
 
   async start(): Promise<void> {
     if (this._isActive) {
@@ -72,7 +69,7 @@ export abstract class BaseWatcher implements IWatcher {
     debug(`[${this.logTag}] Stopped`);
   }
 
-  // ─── update & restart pattern ────────────────────────────────────────
+  // update & restart pattern
 
   // stop (if active), run update function, then restart (if was active)
   protected updateAndRestartSync(updateFn: () => void): void {
@@ -98,7 +95,7 @@ export abstract class BaseWatcher implements IWatcher {
     }
   }
 
-  // ─── state query methods ─────────────────────────────────────────────
+  // state query methods
 
   isActive(): boolean {
     return this._isActive;
@@ -143,7 +140,7 @@ export abstract class BaseWatcher implements IWatcher {
     this.onDispose();
   }
 
-  // ─── abstract methods (must implement) ─────────────────────────────
+  // abstract methods (must implement)
 
   // called after _isActive is set to true - setup watchers here
   protected abstract onStart(): Promise<void> | void;
@@ -151,7 +148,7 @@ export abstract class BaseWatcher implements IWatcher {
   // called before _isActive is set to false - cleanup watchers here
   protected abstract onStop(): void;
 
-  // ─── optional hooks (override as needed) ───────────────────────────
+  // optional hooks (override as needed)
 
   // pre-start validation - return false to prevent start() (default: true)
   protected canStart(): boolean {
@@ -166,7 +163,7 @@ export abstract class BaseWatcher implements IWatcher {
   // additional cleanup on dispose (beyond stop) - default: no-op
   protected onDispose(): void {}
 
-  // ─── readiness signaling ───────────────────────────────────────────
+  // readiness signaling
 
   // call this from subclasses when readiness state may have changed
   protected markReady(): void {
@@ -193,7 +190,7 @@ export abstract class BaseWatcher implements IWatcher {
     return this._readyPromise;
   }
 
-  // ─── helper methods for subclasses ─────────────────────────────────
+  // helper methods for subclasses
 
   // dispose a single watcher safely
   protected disposeWatcher(
@@ -209,61 +206,17 @@ export abstract class BaseWatcher implements IWatcher {
     disposeCollectionUtil(collection);
   }
 
-  // ─── file watcher factory ───────────────────────────────────────────
+  // file watcher factory
 
-  // create a file watcher w/ standard event handlers & error wrapping
+  // create file watcher w/ standard event handlers & error wrapping
   protected createFileWatcher(
     pattern: string | vscode.GlobPattern,
     options: FileWatcherOptions = {}
   ): vscode.FileSystemWatcher {
-    const {
-      wrapErrors = true,
-      ignoreCreateEvents = false,
-      ignoreChangeEvents = false,
-      ignoreDeleteEvents = false,
-    } = options;
-
-    const watcher = vscode.workspace.createFileSystemWatcher(
+    return createFileWatcherUtil({
       pattern,
-      ignoreCreateEvents,
-      ignoreChangeEvents,
-      ignoreDeleteEvents
-    );
-
-    // helper to wrap handler w/ error handling
-    const wrap = (
-      handler: ((uri: vscode.Uri) => void) | undefined,
-      eventType: string
-    ): ((uri: vscode.Uri) => void) | undefined => {
-      if (!handler) {
-        return undefined;
-      }
-      if (!wrapErrors) {
-        return handler;
-      }
-      return (uri: vscode.Uri) => {
-        try {
-          handler(uri);
-        } catch (error) {
-          debug(`[${this.logTag}] Error in ${eventType} handler: ${error}`);
-        }
-      };
-    };
-
-    const onChange = wrap(options.onChange, 'change');
-    const onCreate = wrap(options.onCreate, 'create');
-    const onDelete = wrap(options.onDelete, 'delete');
-
-    if (onChange) {
-      watcher.onDidChange(onChange);
-    }
-    if (onCreate) {
-      watcher.onDidCreate(onCreate);
-    }
-    if (onDelete) {
-      watcher.onDidDelete(onDelete);
-    }
-
-    return watcher;
+      logTag: this.logTag,
+      ...options,
+    });
   }
 }

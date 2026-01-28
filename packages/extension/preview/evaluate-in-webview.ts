@@ -98,7 +98,7 @@ export default async function evaluateInWebview(
         }
       } catch (err) {
         // detection failure is non-fatal - webview will load all generic shims as fallback
-        debug(`[EVALUATE] Component detection failed: ${err}`);
+        debug(`[EVALUATE] Component detection failed: ${extractErrorMessage(err)}`);
       }
 
       debug('[EVALUATE] Calling webviewHandle.updatePreview');
@@ -221,6 +221,6 @@ function sendNextraMetaIfNeeded(
     }
   } catch (err) {
     // non-fatal error, log & continue
-    debug(`[EVALUATE] Error resolving Nextra meta: ${err}`);
+    debug(`[EVALUATE] Error resolving Nextra meta: ${extractErrorMessage(err)}`);
   }
 }

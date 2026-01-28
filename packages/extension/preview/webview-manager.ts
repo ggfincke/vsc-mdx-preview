@@ -27,11 +27,9 @@ const MDX_PREVIEW_FOCUS_CONTEXT_KEY = 'mdxPreviewFocus';
 let webviewResourcesPromise: Promise<void> | null = null;
 let webviewResourcesError: Error | null = null;
 
-/**
- * Initialize webview HTML resources in the background (non-blocking).
- * Call this during activation without awaiting.
- * G.3 optimization: Allows extension activation to proceed without blocking on file I/O.
- */
+// initialize webview HTML resources in the background (non-blocking)
+// call this during activation without awaiting
+// G.3 optimization: allows extension activation to proceed without blocking on file I/O
 export function initWebviewAppHTMLResourcesAsync(
   context: vscode.ExtensionContext
 ): void {
@@ -46,11 +44,9 @@ export function initWebviewAppHTMLResourcesAsync(
     });
 }
 
-/**
- * Ensure webview resources are ready before creating a panel.
- * Awaits the background initialization if it hasn't completed yet.
- * G.3 optimization: Only blocks when actually creating a panel, not during activation.
- */
+// ensure webview resources are ready before creating a panel
+// awaits the background initialization if it hasn't completed yet
+// G.3 optimization: only blocks when actually creating a panel, not during activation
 export async function ensureWebviewResourcesReady(): Promise<void> {
   if (webviewResourcesPromise) {
     await webviewResourcesPromise;
