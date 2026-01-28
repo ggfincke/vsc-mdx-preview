@@ -148,14 +148,16 @@ describe('StyleInjector', () => {
       expect(mockHead.children.length).toBe(0);
     });
 
-    it('should not inject duplicate styles with same moduleId', async () => {
+    it('should allow multiple injections with same moduleId (caller must deduplicate via ModuleRegistry)', async () => {
+      // Note: StyleInjector is a pure DOM manipulation layer. Deduplication is
+      // the responsibility of the caller (via ModuleRegistry.hasInjectedStyle).
       const StyleInjector = await getStyleInjector();
 
       StyleInjector.injectModuleCss('module-1', '.test { color: red; }');
       StyleInjector.injectModuleCss('module-1', '.test { color: blue; }');
 
-      expect(mockHead.children.length).toBe(1);
-      expect(mockHead.children[0].textContent).toBe('.test { color: red; }');
+      // Both elements are created - deduplication is caller's responsibility
+      expect(mockHead.children.length).toBe(2);
     });
   });
 
@@ -244,22 +246,33 @@ describe('StyleInjector', () => {
   });
 
   describe('hasInjected', () => {
-    it('should return true for injected modules', async () => {
+    it('should track non-module styles (not module styles - use ModuleRegistry for those)', async () => {
+      // hasInjected only tracks non-module styles (themes, custom CSS, etc.)
+      // For module styles, use ModuleRegistry.hasInjectedStyle()
       const StyleInjector = await getStyleInjector();
 
+      // Module styles are NOT tracked by hasInjected
       StyleInjector.injectModuleCss('module-1', '.test { color: red; }');
+      expect(StyleInjector.hasInjected('module-1')).toBe(false);
 
-      expect(StyleInjector.hasInjected('module-1')).toBe(true);
-      expect(StyleInjector.hasInjected('module-2')).toBe(false);
+      // Non-module styles ARE tracked when using inject() with deduplicate: true
+      StyleInjector.inject('theme-1', '.theme { background: white; }', {
+        deduplicate: true,
+      });
+      expect(StyleInjector.hasInjected('theme-1')).toBe(true);
+      expect(StyleInjector.hasInjected('theme-2')).toBe(false);
     });
 
-    it('should return false after removal', async () => {
+    it('should return false after removal for non-module styles', async () => {
       const StyleInjector = await getStyleInjector();
 
-      StyleInjector.injectModuleCss('module-1', '.test { color: red; }');
-      StyleInjector.removeModuleCss('module-1');
+      StyleInjector.inject('theme-1', '.theme { background: white; }', {
+        deduplicate: true,
+      });
+      expect(StyleInjector.hasInjected('theme-1')).toBe(true);
 
-      expect(StyleInjector.hasInjected('module-1')).toBe(false);
+      StyleInjector.remove('theme-1');
+      expect(StyleInjector.hasInjected('theme-1')).toBe(false);
     });
   });
 });
