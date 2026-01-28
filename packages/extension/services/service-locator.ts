@@ -1,11 +1,39 @@
 // packages/extension/services/service-locator.ts
-// type-safe service access helpers for the ServiceRegistry
+// Type-safe service access helpers for the ServiceRegistry.
+//
+// PREFERRED ACCESS PATTERN FOR SERVICES:
+//
+// This module provides the RECOMMENDED way to access services throughout
+// the extension. Use these typed getter functions instead of:
+// - Direct getInstance() calls (use only within the service class itself)
+// - ServiceRegistry.get() (use only for dynamic/advanced access patterns)
+//
+// USAGE:
+// ```typescript
+// import { getConfigManager, getTrustManager } from './services';
+//
+// const config = getConfigManager();
+// const updateMode = config.get('preview.updateMode');
+//
+// const trustState = getTrustManager().getState();
+// if (trustState.canExecute) {
+//   // proceed w/ trusted operation
+// }
+// ```
+//
+// WHY USE SERVICE LOCATOR FUNCTIONS:
+// 1. Type safety - each getter returns the correct service type
+// 2. Lazy initialization - services created on first access
+// 3. Decoupling - consuming code doesn't depend on service implementation
+// 4. Testability - services can be mocked via ServiceRegistry
+//
+// For more details, see: packages/extension/services/ARCHITECTURE.md
 
 import { ServiceRegistry } from './ServiceRegistry';
 import { ServiceNames, type ServiceName } from './service-names';
 import type { IService } from './types';
 
-// import service types for typed convenience functions
+// Import service types for typed convenience functions
 import type { ConfigManager } from '../config/ConfigManager';
 import type { ConfigCache } from '../config/ConfigCache';
 import type { TrustManager } from '../security/TrustManager';
@@ -39,10 +67,8 @@ export function isServiceInitialized(name: ServiceName): boolean {
   return ServiceRegistry.getInstance().isInitialized(name);
 }
 
-// ============================================================================
 // service getter factory
 // creates typed getter functions for registered services
-// ============================================================================
 
 // factory for creating service getter functions
 // reduces boilerplate for standard getter pattern
@@ -50,41 +76,41 @@ function createServiceGetter<T extends IService>(name: ServiceName): () => T {
   return () => ServiceRegistry.getInstance().get<T>(name);
 }
 
-// ============================================================================
-// typed convenience functions
+// typed service getters (preferred)
 // these provide better IntelliSense & type checking than generic getService()
-// ============================================================================
+// import & use these in your code:
+// import { getConfigManager, getTrustManager } from './services';
 
-// ConfigManager - manages VS Code configuration settings for the extension
+// get the ConfigManager service - manages VS Code configuration settings for the extension
 export const getConfigManager = createServiceGetter<ConfigManager>(ServiceNames.CONFIG_MANAGER);
 
-// ConfigCache - manages config file caching & watchers
+// get the ConfigCache service - manages config file caching & watchers
 export const getConfigCache = createServiceGetter<ConfigCache>(ServiceNames.CONFIG_CACHE);
 
-// TrustManager - manages workspace trust state & security mode
+// get the TrustManager service - manages workspace trust state & security mode
 export const getTrustManager = createServiceGetter<TrustManager>(ServiceNames.TRUST_MANAGER);
 
-// ThemeManager - manages preview & code block theme settings
+// get the ThemeManager service - manages preview & code block theme settings
 export const getThemeManager = createServiceGetter<ThemeManager>(ServiceNames.THEME_MANAGER);
 
-// PreviewManager - manages webview panels & preview lifecycle
+// get the PreviewManager service - manages webview panels & preview lifecycle
 export const getPreviewManager = createServiceGetter<PreviewManager>(ServiceNames.PREVIEW_MANAGER);
 
-// FrameworkDetector - detects documentation frameworks (Docusaurus, Starlight, etc.)
+// get the FrameworkDetector service - detects documentation frameworks (Docusaurus, Starlight, etc.)
 export const getFrameworkDetector = createServiceGetter<FrameworkDetector>(ServiceNames.FRAMEWORK_DETECTOR);
 
-// TailwindProcessor - handles Tailwind CSS detection, scanning, & compilation
+// get the TailwindProcessor service - handles Tailwind CSS detection, scanning, & compilation
 export const getTailwindProcessor = createServiceGetter<TailwindProcessor>(ServiceNames.TAILWIND_PROCESSOR);
 
-// ErrorReporter - centralized error handling & reporting
+// get the ErrorReporter service - centralized error handling & reporting
 export const getErrorReporter = createServiceGetter<ErrorReporter>(ServiceNames.ERROR_REPORTER);
 
-// StatusBarManager - manages status bar items for trust state & framework display
+// get the StatusBarManager service - manages status bar items for trust state & framework display
 export const getStatusBarManager = createServiceGetter<StatusBarManager>(ServiceNames.STATUS_BAR_MANAGER);
 
 // get the OutputChannel instance - used for logging messages to the "MDX Preview" output panel
+// note: OutputChannel is wrapped internally to satisfy IService interface requirements
 export function getOutputChannel(): OutputChannel {
-  // OutputChannel is wrapped in an object to satisfy IService interface
   return ServiceRegistry.getInstance().get<OutputChannelService>(
     ServiceNames.OUTPUT_CHANNEL
   ).channel;

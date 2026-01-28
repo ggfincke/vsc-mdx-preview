@@ -76,7 +76,7 @@ export class ServiceRegistry implements Disposable {
       throw new CircularDependencyError(cycle);
     }
 
-    // lazy initialization with cycle tracking
+    // lazy initialization w/ cycle tracking
     if (!registration.instance) {
       debug(`[SERVICE-REGISTRY] Creating instance: ${name}`);
 
