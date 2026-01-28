@@ -4,9 +4,9 @@
 
 import { useCallback, useEffect, useMemo, useState, type ComponentType, type MouseEvent } from 'react';
 import LoadingBar from './components/LoadingBar/LoadingBar';
-import { MDXErrorBoundary, ErrorDisplay } from './components/ErrorBoundary';
+import { MDXErrorBoundary, ErrorDisplay } from './components/ErrorBoundary/ErrorBoundary';
 import { TrustBanner } from './components/TrustBanner/TrustBanner';
-import { StaleIndicator } from './components/StaleIndicator';
+import { StaleIndicator } from './components/StaleIndicator/StaleIndicator';
 import { SafePreviewRenderer } from './SafePreview';
 import { TrustedPreviewRenderer } from './TrustedPreview';
 import { ExtensionHandle } from './rpc-webview';

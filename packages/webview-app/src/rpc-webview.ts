@@ -1,8 +1,7 @@
 // packages/webview-app/src/rpc-webview.ts
 // * RPC webview side - bidirectional communication btwn webview & extension via Comlink
 //
-// Message Queue Architecture
-// ==========================
+// message queue architecture
 //
 // The webview receives Comlink RPC messages immediately on load, but React
 // may not have mounted yet. This creates a timing race:

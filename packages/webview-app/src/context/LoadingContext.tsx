@@ -1,15 +1,9 @@
 // packages/webview-app/src/context/LoadingContext.tsx
-// React context for loading state - manages loading indicators and stale content state
+// React context for loading state - manages loading indicators & stale content state
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { debug } from '../utils/debug';
+import { createContextProvider } from './createContextProvider';
 
 interface LoadingContextValue {
   isLoading: boolean;
@@ -18,13 +12,8 @@ interface LoadingContextValue {
   setStale: (stale: boolean) => void;
 }
 
-const LoadingContext = createContext<LoadingContextValue | null>(null);
-
-interface LoadingProviderProps {
-  children: ReactNode;
-}
-
-export function LoadingProvider({ children }: LoadingProviderProps) {
+// hook that provides the Loading context value
+function useLoadingProviderValue(): LoadingContextValue {
   const [isLoading, setIsLoadingState] = useState(true);
   const [isStale, setStaleState] = useState(false);
 
@@ -38,7 +27,7 @@ export function LoadingProvider({ children }: LoadingProviderProps) {
     setStaleState(stale);
   }, []);
 
-  const value = useMemo(
+  return useMemo(
     () => ({
       isLoading,
       isStale,
@@ -47,16 +36,12 @@ export function LoadingProvider({ children }: LoadingProviderProps) {
     }),
     [isLoading, isStale, setIsLoading, setStale]
   );
-
-  return (
-    <LoadingContext.Provider value={value}>{children}</LoadingContext.Provider>
-  );
 }
 
-export function useLoading(): LoadingContextValue {
-  const context = useContext(LoadingContext);
-  if (!context) {
-    throw new Error('useLoading must be used within LoadingProvider');
-  }
-  return context;
-}
+const { Provider, useContextValue } = createContextProvider<LoadingContextValue>(
+  'Loading',
+  useLoadingProviderValue
+);
+
+export const LoadingProvider = Provider;
+export const useLoading = useContextValue;

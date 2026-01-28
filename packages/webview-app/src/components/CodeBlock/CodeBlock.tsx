@@ -1,8 +1,8 @@
 // packages/webview-app/src/components/CodeBlock/CodeBlock.tsx
 // * post-process code blocks to add copy button, language badge, & line highlighting
 
-import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../constants';
-import { GITHUB_ICONS } from '../shims/base/icons';
+import { copyWithFeedback } from '../../utils/clipboard';
+import { COPY_ICONS } from '../shims/base/icons';
 import './CodeBlock.css';
 
 // post-process all code blocks in a container to add enhancements
@@ -25,20 +25,13 @@ export function enhanceCodeBlocks(container: HTMLElement): void {
     copyBtn.className = 'mdx-preview-codeblock-copy';
     copyBtn.setAttribute('aria-label', 'Copy code');
     copyBtn.setAttribute('title', 'Copy code');
-    copyBtn.innerHTML = GITHUB_ICONS.copy;
+    copyBtn.innerHTML = COPY_ICONS.copy;
 
-    copyBtn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(code);
-        copyBtn.innerHTML = GITHUB_ICONS.check;
-        copyBtn.classList.add('copied');
-        setTimeout(() => {
-          copyBtn.innerHTML = GITHUB_ICONS.copy;
-          copyBtn.classList.remove('copied');
-        }, CODE_COPY_FEEDBACK_DURATION_MS);
-      } catch {
-        // clipboard API failed
-      }
+    copyBtn.addEventListener('click', () => {
+      void copyWithFeedback(code, copyBtn, {
+        copiedContent: COPY_ICONS.check,
+        originalContent: COPY_ICONS.copy,
+      });
     });
 
     shikiContainer.appendChild(copyBtn);

@@ -132,9 +132,7 @@ export function createTabs(config: BaseTabsConfig): CreateTabsResult {
   return { Tabs, useTabsContext, TabsContext };
 }
 
-// ============================================================================
-// Index-based Tabs Factory (for Nextra-style tabs)
-// ============================================================================
+// index-based Tabs factory (for Nextra-style tabs)
 
 // Configuration for index-based tabs
 export interface IndexTabsConfig {

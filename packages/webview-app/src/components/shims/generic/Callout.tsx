@@ -7,7 +7,7 @@ import {
   createCallout,
   type BaseCalloutProps,
 } from '../base/BaseCallout';
-import { CalloutType, CALLOUT_TITLES } from './types';
+import { CalloutType, CALLOUT_TITLES, normalizeCalloutType } from './types';
 import { CALLOUT_ICONS } from '../base/icons';
 
 // Callout props - extends base props for generic callout
@@ -26,37 +26,8 @@ const BaseCallout = createCallout<CalloutType>({
 // Callout component w/ type normalization
 export function Callout(props: CalloutProps): ReactElement {
   // normalize type aliases (success -> tip, error -> danger, etc.)
-  const normalizedType = normalizeType(props.type);
+  const normalizedType = normalizeCalloutType(props.type);
   return <BaseCallout {...props} type={normalizedType} />;
-}
-
-// normalize callout type (handle aliases)
-function normalizeType(type: string | undefined): CalloutType {
-  if (!type) {
-    return 'note';
-  }
-  const normalized = type.toLowerCase();
-  // handle common aliases
-  switch (normalized) {
-    case 'success':
-      return 'tip';
-    case 'error':
-      return 'danger';
-    case 'warn':
-      return 'warning';
-    case 'hint':
-      return 'tip';
-    default:
-      // check if it's a valid type
-      if (
-        ['note', 'tip', 'warning', 'danger', 'info', 'caution', 'important'].includes(
-          normalized
-        )
-      ) {
-        return normalized as CalloutType;
-      }
-      return 'note';
-  }
 }
 
 // Alert component (alias for Callout)

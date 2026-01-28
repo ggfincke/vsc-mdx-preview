@@ -128,9 +128,7 @@ export function useTabState(options: UseTabStateOptions): UseTabStateResult {
 
 export default useTabState;
 
-// ============================================================================
-// Index-based tab state management (for Nextra-style tabs)
-// ============================================================================
+// index-based tab state management (for Nextra-style tabs)
 
 // options for useIndexTabs hook (used by components w/ index-based tab selection)
 export interface UseIndexTabsOptions<T> {

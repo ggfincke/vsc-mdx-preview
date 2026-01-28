@@ -1,8 +1,15 @@
 // packages/webview-app/src/utils/StyleInjector.ts
 // Unified CSS injection utility for webview
+//
+// ARCHITECTURE NOTE:
+// StyleInjector is a pure DOM manipulation layer. The authoritative source
+// of truth for which styles have been injected is ModuleRegistry (in
+// module-system/registry/ModuleRegistry.ts), which has reference counting
+// and LRU eviction. Callers should check ModuleRegistry before calling
+// injectModuleCss() to avoid duplicate injection.
 
 export interface StyleInjectorOptions {
-  // enable deduplication check (skip if already injected)
+  // enable deduplication check (skip if already injected) - for non-module styles
   deduplicate?: boolean;
   // insert before element w/ this ID (for ordering)
   insertBefore?: string;
@@ -18,15 +25,18 @@ export const STYLE_IDS = {
   TAILWIND_CSS: 'mdx-preview-tailwind-css',
 } as const;
 
-// * centralized style injection manager
+// centralized style injection manager
 // handles module CSS, theme CSS, custom CSS, & Tailwind CSS w/ proper ordering
+// for module CSS specifically, ModuleRegistry is the authoritative tracker
+// call registry.hasInjectedStyle() before calling injectModuleCss()
 class StyleInjectorImpl {
-  // track injected style IDs for deduplication
+  // track non-module injected style IDs for deduplication (themes, custom CSS, etc.)
   private injectedIds = new Set<string>();
   // cache DOM element references for O(1) removal (instead of querySelector)
   private moduleStyleElements: Map<string, HTMLStyleElement> = new Map();
 
   // inject CSS w/ the given ID - creates or updates a <style> element in document.head
+  // for non-module styles (themes, custom CSS, etc.)
   inject(id: string, css: string, options: StyleInjectorOptions = {}): void {
     const { deduplicate = false, insertBefore, dataAttribute } = options;
 
@@ -70,24 +80,20 @@ class StyleInjectorImpl {
   }
 
   // inject CSS for a module (uses data-module-id attribute pattern)
-  // this pattern is used for CSS from imported files
+  // IMPORTANT: callers must check ModuleRegistry.hasInjectedStyle() before calling
+  // this method to avoid duplicate injection - ModuleRegistry is the authoritative
+  // source of truth for module style tracking
   injectModuleCss(moduleId: string, css: string): void {
-    // Don't inject the same module styles twice
-    if (this.injectedIds.has(moduleId)) {
-      return;
-    }
-
     const style = document.createElement('style');
     style.setAttribute('data-module-id', moduleId);
     style.textContent = css;
     document.head.appendChild(style);
 
-    this.injectedIds.add(moduleId);
     // Cache DOM reference for O(1) removal
     this.moduleStyleElements.set(moduleId, style);
   }
 
-  // remove a style element by ID
+  // remove a style element by ID (for non-module styles)
   remove(id: string): void {
     const styleEl = document.getElementById(id);
     if (styleEl) {
@@ -104,7 +110,6 @@ class StyleInjectorImpl {
       style.remove();
     }
     this.moduleStyleElements.delete(moduleId);
-    this.injectedIds.delete(moduleId);
   }
 
   // remove a data attribute from document element
@@ -112,16 +117,16 @@ class StyleInjectorImpl {
     document.documentElement.removeAttribute(name);
   }
 
-  // clear styles matching a pattern ('modules' for all module CSS, or a CSS selector string)
-  // O(k) via cached references instead of O(n) querySelectorAll for 'modules'
+  // clear styles matching a pattern
+  // - 'modules': clears all module CSS via cached references (O(k))
+  // - CSS selector string: clears matching elements via querySelectorAll
   clear(selector?: 'modules' | string): void {
     if (selector === 'modules') {
       // Clear all module-injected styles using cached references
-      for (const [moduleId, style] of this.moduleStyleElements) {
+      for (const [, style] of this.moduleStyleElements) {
         if (style.parentNode) {
           style.remove();
         }
-        this.injectedIds.delete(moduleId);
       }
       this.moduleStyleElements.clear();
     } else if (selector) {
@@ -136,19 +141,19 @@ class StyleInjectorImpl {
     }
   }
 
-  // clear all tracked injection state (for reset operations)
+  // clear all non-module tracked injection state (for reset operations)
   // does not remove style elements - use clear() for that
   clearTracking(): void {
     this.injectedIds.clear();
     this.moduleStyleElements.clear();
   }
 
-  // check if a style has been injected
+  // check if a non-module style has been injected
   hasInjected(id: string): boolean {
     return this.injectedIds.has(id);
   }
 
-  // mark a style as injected (for external tracking synchronization)
+  // mark a non-module style as injected (for external tracking synchronization)
   markInjected(id: string): void {
     this.injectedIds.add(id);
   }

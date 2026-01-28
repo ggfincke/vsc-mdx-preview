@@ -15,6 +15,17 @@ interface HandlerRegistrarProps {
   children: ReactNode;
 }
 
+// wrap a setter to also clear loading state after calling it
+function wrapWithLoadingClear<Args extends unknown[]>(
+  setter: (...args: Args) => void,
+  clearLoading: () => void
+): (...args: Args) => void {
+  return (...args) => {
+    setter(...args);
+    clearLoading();
+  };
+}
+
 // internal component that registers RPC handlers after all contexts are mounted
 function HandlerRegistrar({ children }: HandlerRegistrarProps) {
   const { setTrustState } = useTrust();
@@ -33,22 +44,15 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
     }
     initializedRef.current = true;
 
+    // helper to clear loading state after content updates
+    const clearLoading = () => setIsLoading(false);
+
     debug('[WEBVIEW-STATE] Registering handlers...');
     registerWebviewHandlers({
       setTrustState,
-      // wrap content setters to also set isLoading = false
-      setSafeContent: (html: string) => {
-        setSafeContent(html);
-        setIsLoading(false);
-      },
-      setTrustedContent: (code: string, entryFilePath: string, dependencies: string[]) => {
-        setTrustedContent(code, entryFilePath, dependencies);
-        setIsLoading(false);
-      },
-      setError: (error) => {
-        setError(error);
-        setIsLoading(false);
-      },
+      setSafeContent: wrapWithLoadingClear(setSafeContent, clearLoading),
+      setTrustedContent: wrapWithLoadingClear(setTrustedContent, clearLoading),
+      setError: wrapWithLoadingClear(setError, clearLoading),
       setStale,
       setTheme: setPreviewThemeState,
       setNextraMeta,

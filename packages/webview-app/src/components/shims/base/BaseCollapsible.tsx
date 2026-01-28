@@ -106,9 +106,7 @@ export function BaseCollapsible({
   );
 }
 
-// ============================================================================
-// Preset class configurations for each framework
-// ============================================================================
+// preset class configurations for each framework
 
 // class names for Generic Collapsible
 export const GENERIC_COLLAPSIBLE_CLASSES: CollapsibleClassNames = {

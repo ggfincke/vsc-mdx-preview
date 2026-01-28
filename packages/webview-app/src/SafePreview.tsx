@@ -1,14 +1,11 @@
 // packages/webview-app/src/SafePreview.tsx
 // render pre-sanitized HTML in Safe Mode (no JavaScript execution)
 
-import { memo, useEffect, useLayoutEffect, useRef } from 'react';
-import {
-  useMermaidRendering,
-  useImageLightbox,
-  useSafeModeProcessing,
-} from './hooks';
-import { PreviewContainer } from './components/PreviewContainer';
+import { memo, useEffect, useLayoutEffect } from 'react';
+import { useSafeModeProcessing, usePreviewSetup } from './hooks';
+import { PreviewContainer } from './components/PreviewContainer/PreviewContainer';
 import { loadKatexCss } from './utils/katexLoader';
+import { fastStringEquals } from './utils/memoCompare';
 
 interface SafePreviewRendererProps {
   html: string;
@@ -18,12 +15,9 @@ interface SafePreviewRendererProps {
 // wrapped w/ React.memo to prevent re-renders when only zoom changes (html unchanged)
 export const SafePreviewRenderer = memo(
   function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const { handleImageClick } = useImageLightbox();
-
-    // use shared mermaid hook (after-paint mode for Safe Mode)
-    const { renderPortals } = useMermaidRendering(containerRef, {
-      mode: 'after-paint',
+    // shared preview setup (container ref, mermaid rendering, image lightbox)
+    const { containerRef, handleImageClick, renderPortals } = usePreviewSetup({
+      mermaidMode: 'after-paint',
     });
 
     // process Safe Mode HTML (sanitize, post-process links/images, enhance code blocks)
@@ -48,7 +42,7 @@ export const SafePreviewRenderer = memo(
       return () => {
         container.removeEventListener('click', handleImageClick);
       };
-    }, [handleImageClick]);
+    }, [containerRef, handleImageClick]);
 
     return (
       <PreviewContainer
@@ -61,9 +55,7 @@ export const SafePreviewRenderer = memo(
   },
   // Custom comparison: fast-path length check before full string comparison
   // For large HTML (100KB+), length mismatch returns false in O(1) vs O(n) string compare
-  (prevProps, nextProps) =>
-    prevProps.html.length === nextProps.html.length &&
-    prevProps.html === nextProps.html
+  (prevProps, nextProps) => fastStringEquals(prevProps.html, nextProps.html)
 );
 
 export default SafePreviewRenderer;

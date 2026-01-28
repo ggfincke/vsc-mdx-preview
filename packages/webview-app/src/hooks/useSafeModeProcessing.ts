@@ -3,7 +3,7 @@
 
 import { useEffect, type RefObject } from 'react';
 import DOMPurify from 'dompurify';
-import { enhanceCodeBlocks } from '../components/CodeBlock';
+import { enhanceCodeBlocks } from '../components/CodeBlock/CodeBlock';
 import { DOMPURIFY_CONFIG, ensureSafeModeStyles } from '../security';
 
 // process links in a DocumentFragment or HTMLElement for security

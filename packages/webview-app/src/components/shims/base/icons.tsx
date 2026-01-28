@@ -1,6 +1,5 @@
-// packages/webview-app/src/components/shims/base/icons.ts
-// Shared icon registry for all shim components
-// Consolidates SVG icons used across multiple frameworks
+// packages/webview-app/src/components/shims/base/icons.tsx
+// shared icon registry for all shim components
 
 /* eslint-disable react-refresh/only-export-components -- Icon registry is co-located with icon components */
 
@@ -34,13 +33,6 @@ export const FILE_TREE_ICONS = {
   file: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>',
 } as const;
 
-// code block icons - used by Docusaurus CodeBlock & Starlight Code
-export const CODE_ICONS = {
-  copy: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
-  check:
-    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
-} as const;
-
 // GitHub Primer style icons (filled, 16x16 viewBox)
 export const GITHUB_ICONS = {
   // Callout icons (from Nextra)
@@ -64,13 +56,17 @@ export const GITHUB_ICONS = {
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg>',
 } as const;
 
+// unified copy/check icons for clipboard functionality
+// uses GitHub Primer style for consistency w/ code blocks
+export const COPY_ICONS = {
+  copy: GITHUB_ICONS.copy,
+  check: GITHUB_ICONS.check,
+} as const;
+
 // re-export chevron for backwards compatibility
 export const CHEVRON_ICON = FILE_TREE_ICONS.chevron;
 
-// ============================================================================
-// JSX Icon Components
-// Use these in React components instead of dangerouslySetInnerHTML for security
-// ============================================================================
+// JSX icon components (use instead of dangerouslySetInnerHTML for security)
 
 export interface IconProps {
   size?: number;
@@ -126,7 +122,7 @@ export function ArrowIcon({
     );
   }
 
-  // Lucide style (default)
+  // lucide style (default)
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -187,10 +183,7 @@ export function CheckIcon({ size = 16, className }: IconProps): ReactElement {
   );
 }
 
-// ============================================================================
-// GitHub Primer Style JSX Icon Components (for Nextra)
-// Used by Nextra Callout & Nextra Cards
-// ============================================================================
+// GitHub Primer style JSX icon components (for Nextra Callout & Cards)
 
 // Nextra Callout icon types
 export type NextraCalloutType = 'default' | 'info' | 'warning' | 'error' | 'important';

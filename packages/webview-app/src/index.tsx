@@ -8,7 +8,7 @@ import { ThemeProvider } from './theme';
 import { LightboxProvider } from './context/LightboxContext';
 // Import directly to avoid barrel export import chain issues
 import { WebviewStateProvider } from './context/WebviewStateProvider';
-import { Lightbox } from './components/Lightbox';
+import { Lightbox } from './components/Lightbox/Lightbox';
 import App from './App';
 import './index.css';
 // KaTeX CSS is lazy-loaded via utils/katexLoader.ts when math content is detected

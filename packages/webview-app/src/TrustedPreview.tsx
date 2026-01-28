@@ -5,7 +5,6 @@ import {
   memo,
   useLayoutEffect,
   useState,
-  useRef,
   isValidElement,
   cloneElement,
   createElement,
@@ -13,11 +12,12 @@ import {
   type ReactNode,
 } from 'react';
 import { evaluateModuleToComponent } from './module-system';
-import { useMermaidRendering, useImageLightbox, useAsyncEffect } from './hooks';
-import { PreviewContainer } from './components/PreviewContainer';
+import { usePreviewSetup, useAsyncEffect } from './hooks';
+import { PreviewContainer } from './components/PreviewContainer/PreviewContainer';
 import type { TrustedPreviewContent, PreviewError } from './types';
 import { extractErrorInfo } from '@mdx-preview/shared';
 import { loadKatexCss } from './utils/katexLoader';
+import { shallowArrayEquals, createFieldComparator } from './utils/memoCompare';
 
 // Resolve MDX export to a renderable React node
 // Handles both function components and pre-rendered React elements
@@ -64,36 +64,15 @@ interface TrustedPreviewRendererProps {
 }
 
 // custom comparison for React.memo - checks all content fields including dependencies array
-function arePropsEqual(
-  prevProps: TrustedPreviewRendererProps,
-  nextProps: TrustedPreviewRendererProps
-): boolean {
-  // Check primitive fields
-  if (prevProps.content.code !== nextProps.content.code) {
-    return false;
-  }
-  if (prevProps.content.entryFilePath !== nextProps.content.entryFilePath) {
-    return false;
-  }
-  if (prevProps.evaluatedComponent !== nextProps.evaluatedComponent) {
-    return false;
-  }
-
-  // Check dependencies array (shallow comparison)
-  const prevDeps = prevProps.content.dependencies;
-  const nextDeps = nextProps.content.dependencies;
-  if (prevDeps.length !== nextDeps.length) {
-    return false;
-  }
-  for (let i = 0; i < prevDeps.length; i++) {
-    if (prevDeps[i] !== nextDeps[i]) {
-      return false;
-    }
-  }
-
-  // Callbacks (onComponentReady, onError) are stable via useCallback in App.tsx
-  return true;
-}
+// callbacks (onComponentReady, onError) are stable via useCallback in App.tsx
+const arePropsEqual = createFieldComparator<TrustedPreviewRendererProps>({
+  content: (prev, next) =>
+    prev.code === next.code &&
+    prev.entryFilePath === next.entryFilePath &&
+    shallowArrayEquals(prev.dependencies, next.dependencies),
+  onComponentReady: 'skip',
+  onError: 'skip',
+});
 
 // evaluate transpiled MDX code & render resulting component (evaluation via module loader using new Function())
 // wrapped w/ React.memo to prevent re-renders when only zoom changes (content unchanged)
@@ -104,13 +83,15 @@ export const TrustedPreviewRenderer = memo(
     onComponentReady,
     onError,
   }: TrustedPreviewRendererProps) {
+    // local loading state tracks webview-side module evaluation (distinct from global
+    // isLoading which tracks extension-side compilation). This separation is intentional -
+    // the global loading state controls the LoadingBar overlay, while isEvaluating controls
+    // the TrustedPreview spinner for the evaluation phase
     const [isEvaluating, setIsEvaluating] = useState(false);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const { handleImageClick } = useImageLightbox();
 
-    // use shared mermaid hook (before-paint mode w/ stale filtering for Trusted Mode)
-    const { renderPortals, scan } = useMermaidRendering(containerRef, {
-      mode: 'before-paint',
+    // shared preview setup (container ref, mermaid rendering, image lightbox)
+    const { containerRef, handleImageClick, renderPortals, scan } = usePreviewSetup({
+      mermaidMode: 'before-paint',
       filterStale: true,
     });
 
@@ -140,7 +121,7 @@ export const TrustedPreviewRenderer = memo(
       if (evaluatedComponent && containerRef.current) {
         scan();
       }
-    }, [evaluatedComponent, scan]);
+    }, [containerRef, evaluatedComponent, scan]);
 
     // lazy-load KaTeX CSS when math content is detected in rendered output
     // uses useLayoutEffect for synchronous loading to avoid FOUC
@@ -151,7 +132,7 @@ export const TrustedPreviewRenderer = memo(
           loadKatexCss();
         }
       }
-    }, [evaluatedComponent]);
+    }, [containerRef, evaluatedComponent]);
 
     // show loading state while evaluating
     if (isEvaluating || !evaluatedComponent) {

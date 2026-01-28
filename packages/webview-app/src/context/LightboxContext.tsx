@@ -1,14 +1,8 @@
 // packages/webview-app/src/context/LightboxContext.tsx
 // React context for image lightbox functionality
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { createContextProvider } from './createContextProvider';
 
 interface LightboxImage {
   src: string;
@@ -22,14 +16,8 @@ interface LightboxContextValue {
   closeLightbox: () => void;
 }
 
-const LightboxContext = createContext<LightboxContextValue | null>(null);
-
-interface LightboxProviderProps {
-  children: ReactNode;
-}
-
-// lightbox provider that manages lightbox state
-export function LightboxProvider({ children }: LightboxProviderProps) {
+// hook that provides the Lightbox context value
+function useLightboxProviderValue(): LightboxContextValue {
   const [isOpen, setIsOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState<LightboxImage | null>(null);
 
@@ -46,7 +34,7 @@ export function LightboxProvider({ children }: LightboxProviderProps) {
     }, 200);
   }, []);
 
-  const value = useMemo<LightboxContextValue>(
+  return useMemo(
     () => ({
       isOpen,
       currentImage,
@@ -55,19 +43,12 @@ export function LightboxProvider({ children }: LightboxProviderProps) {
     }),
     [isOpen, currentImage, openLightbox, closeLightbox]
   );
-
-  return (
-    <LightboxContext.Provider value={value}>
-      {children}
-    </LightboxContext.Provider>
-  );
 }
 
-// hook to access the lightbox context
-export function useLightbox(): LightboxContextValue {
-  const context = useContext(LightboxContext);
-  if (!context) {
-    throw new Error('useLightbox must be used within a LightboxProvider');
-  }
-  return context;
-}
+const { Provider, useContextValue } = createContextProvider<LightboxContextValue>(
+  'Lightbox',
+  useLightboxProviderValue
+);
+
+export const LightboxProvider = Provider;
+export const useLightbox = useContextValue;

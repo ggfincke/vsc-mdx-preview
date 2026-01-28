@@ -1,14 +1,7 @@
 // packages/webview-app/src/context/ZoomContext.tsx
 // React context for zoom state - manages preview zoom level
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   ZOOM_MIN_PERCENT,
   ZOOM_MAX_PERCENT,
@@ -16,6 +9,7 @@ import {
   ZOOM_DEFAULT_PERCENT,
 } from '../constants';
 import { debug } from '../utils/debug';
+import { createContextProvider } from './createContextProvider';
 
 interface ZoomContextValue {
   zoomLevel: number;
@@ -24,13 +18,8 @@ interface ZoomContextValue {
   resetZoom: () => void;
 }
 
-const ZoomContext = createContext<ZoomContextValue | null>(null);
-
-interface ZoomProviderProps {
-  children: ReactNode;
-}
-
-export function ZoomProvider({ children }: ZoomProviderProps) {
+// hook that provides the Zoom context value
+function useZoomProviderValue(): ZoomContextValue {
   const [zoomLevel, setZoomLevel] = useState(ZOOM_DEFAULT_PERCENT);
 
   const zoomIn = useCallback(() => {
@@ -48,7 +37,7 @@ export function ZoomProvider({ children }: ZoomProviderProps) {
     setZoomLevel(ZOOM_DEFAULT_PERCENT);
   }, []);
 
-  const value = useMemo(
+  return useMemo(
     () => ({
       zoomLevel,
       zoomIn,
@@ -57,16 +46,12 @@ export function ZoomProvider({ children }: ZoomProviderProps) {
     }),
     [zoomLevel, zoomIn, zoomOut, resetZoom]
   );
-
-  return (
-    <ZoomContext.Provider value={value}>{children}</ZoomContext.Provider>
-  );
 }
 
-export function useZoom(): ZoomContextValue {
-  const context = useContext(ZoomContext);
-  if (!context) {
-    throw new Error('useZoom must be used within ZoomProvider');
-  }
-  return context;
-}
+const { Provider, useContextValue } = createContextProvider<ZoomContextValue>(
+  'Zoom',
+  useZoomProviderValue
+);
+
+export const ZoomProvider = Provider;
+export const useZoom = useContextValue;

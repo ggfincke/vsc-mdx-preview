@@ -11,6 +11,7 @@ import {
   getDisplayPath,
   isUserCode,
 } from '../../utils/stackTraceParser';
+import { copyToClipboard } from '../../utils/clipboard';
 import { normalizeError } from '@mdx-preview/shared';
 import { ModuleLoadError } from '../../module-system/errors';
 import './ErrorBoundary.css';
@@ -68,7 +69,7 @@ export function ErrorDisplay({
 
   const handleCopy = useCallback(() => {
     const text = `${error.message}\n\n${error.stack || ''}`;
-    navigator.clipboard.writeText(text).catch(console.error);
+    void copyToClipboard(text);
   }, [error]);
 
   return (

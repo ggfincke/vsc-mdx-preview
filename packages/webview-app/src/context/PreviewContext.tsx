@@ -1,16 +1,10 @@
 // packages/webview-app/src/context/PreviewContext.tsx
-// React context for preview content state - manages MDX content, errors, and evaluated components
+// React context for preview content state - manages MDX content, errors & evaluated components
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import type { PreviewContent, PreviewError } from '../types';
 import { debug } from '../utils/debug';
+import { createContextProvider } from './createContextProvider';
 
 interface PreviewContextValue {
   content: PreviewContent | null;
@@ -21,13 +15,8 @@ interface PreviewContextValue {
   clearError: () => void;
 }
 
-const PreviewContext = createContext<PreviewContextValue | null>(null);
-
-interface PreviewProviderProps {
-  children: ReactNode;
-}
-
-export function PreviewProvider({ children }: PreviewProviderProps) {
+// hook that provides the Preview context value
+function usePreviewProviderValue(): PreviewContextValue {
   const [content, setContent] = useState<PreviewContent | null>(null);
   const [error, setErrorState] = useState<PreviewError | null>(null);
 
@@ -58,7 +47,7 @@ export function PreviewProvider({ children }: PreviewProviderProps) {
     setErrorState(null);
   }, []);
 
-  const value = useMemo(
+  return useMemo(
     () => ({
       content,
       error,
@@ -76,16 +65,12 @@ export function PreviewProvider({ children }: PreviewProviderProps) {
       clearError,
     ]
   );
-
-  return (
-    <PreviewContext.Provider value={value}>{children}</PreviewContext.Provider>
-  );
 }
 
-export function usePreview(): PreviewContextValue {
-  const context = useContext(PreviewContext);
-  if (!context) {
-    throw new Error('usePreview must be used within PreviewProvider');
-  }
-  return context;
-}
+const { Provider, useContextValue } = createContextProvider<PreviewContextValue>(
+  'Preview',
+  usePreviewProviderValue
+);
+
+export const PreviewProvider = Provider;
+export const usePreview = useContextValue;

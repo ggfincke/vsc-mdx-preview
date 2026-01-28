@@ -1,51 +1,55 @@
 // packages/webview-app/src/utils/frameworkCssLoader.ts
 // Lazy-load framework CSS only when that framework's shims are used
-// Follows the same pattern as katexLoader.ts for consistency
+//
+// Uses createResourceLoader for each framework to ensure idempotent loading
+// w/ proper concurrent call deduplication
 
 import type { FrameworkId } from '@mdx-preview/shared';
+import { createResourceLoader, type ResourceLoader } from './createResourceLoader';
 
-// Track which framework CSS has been loaded (idempotent loading)
-const loadedCss = new Set<FrameworkId>();
+// Create a loader for each framework
+const loaders: Record<FrameworkId, ResourceLoader> = {
+  generic: createResourceLoader(
+    () => import('../components/shims/generic/styles.css').then(() => undefined),
+    { name: 'generic-css', allowRetry: true }
+  ),
+  docusaurus: createResourceLoader(
+    () => import('../components/shims/docusaurus/styles.css').then(() => undefined),
+    { name: 'docusaurus-css', allowRetry: true }
+  ),
+  starlight: createResourceLoader(
+    () => import('../components/shims/starlight/styles.css').then(() => undefined),
+    { name: 'starlight-css', allowRetry: true }
+  ),
+  nextra: createResourceLoader(
+    () => import('../components/shims/nextra/styles.css').then(() => undefined),
+    { name: 'nextra-css', allowRetry: true }
+  ),
+  nextjs: createResourceLoader(
+    // Next.js shims don't have custom styles currently
+    () => Promise.resolve(),
+    { name: 'nextjs-css', allowRetry: false }
+  ),
+};
 
 // load CSS for a specific framework (idempotent)
 export async function loadFrameworkCss(framework: FrameworkId): Promise<void> {
-  // Skip if already loaded
-  if (loadedCss.has(framework)) {
-    return;
+  const loader = loaders[framework];
+  if (loader) {
+    return loader.load();
   }
-
-  // Mark as loaded immediately to prevent duplicate loads
-  loadedCss.add(framework);
-
-  // Dynamic import for framework-specific CSS
-  switch (framework) {
-    case 'generic':
-      await import('../components/shims/generic/styles.css');
-      break;
-    case 'docusaurus':
-      await import('../components/shims/docusaurus/styles.css');
-      break;
-    case 'starlight':
-      await import('../components/shims/starlight/styles.css');
-      break;
-    case 'nextra':
-      await import('../components/shims/nextra/styles.css');
-      break;
-    case 'nextjs':
-      // Next.js shims don't have custom styles currently
-      break;
-    default:
-      // Unknown framework, no CSS to load
-      break;
-  }
+  // Unknown framework, no CSS to load
 }
 
 // check if CSS for a framework has been loaded
 export function isFrameworkCssLoaded(framework: FrameworkId): boolean {
-  return loadedCss.has(framework);
+  const loader = loaders[framework];
+  return loader ? loader.isLoaded() : false;
 }
 
 // reset CSS loader state (for testing)
 export function resetFrameworkCssLoader(): void {
-  loadedCss.clear();
+  for (const loader of Object.values(loaders)) {
+    loader.reset();
+  }
 }
