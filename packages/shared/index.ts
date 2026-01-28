@@ -2,21 +2,43 @@
 // shared type definitions & registries for extension & webview packages
 
 // import types used locally in this file
-import type { Framework as FrameworkType } from './registry/components';
+import type { Framework as FrameworkType } from './registry';
 
 // shared timing & limit constants
 export {
   STANDARD_DEBOUNCE_MS,
   STANDARD_CACHE_TTL_MS,
   STANDARD_WATCHER_DEBOUNCE_MS,
+  RPC_HANDLER_RETRY_DELAY_MS,
+  RPC_HANDLER_MAX_RETRIES,
+  RPC_PENDING_MESSAGES_WARNING_THRESHOLD,
+  SHIM_LOAD_MAX_RETRIES,
+  SHIM_LOAD_RETRY_DELAY_MS,
 } from './constants';
 
 // component registry - single source of truth for all shim definitions
 export {
-  COMPONENT_REGISTRY,
+  // types
   SHIM_PREFIX,
+  type ComponentRegistryEntry,
+  type ComponentDefinition,
+  type ComponentBarrelDefinition,
+  type Framework,
+  type FrameworkId,
+  type FrameworkName,
+  type FrameworkSetting,
+  // registry data
+  COMPONENT_REGISTRY,
   GENERIC_COMPONENTS,
   FRAMEWORK_COMPONENTS,
+  type ComponentRegistryEntryType,
+  type GenericComponentName,
+  type GenericComponentAlias,
+  type DocusaurusComponent,
+  type StarlightComponent,
+  type NextjsComponent,
+  type NextraComponent,
+  // queries
   getAllGenericComponentNames,
   getGenericComponentSet,
   getPrimaryGenericComponentNames,
@@ -26,21 +48,7 @@ export {
   isFrameworkComponent,
   getGenericShimPath,
   getFrameworkShimPath,
-  type ComponentRegistryEntry,
-  type ComponentRegistryEntryType,
-  type ComponentDefinition,
-  type ComponentBarrelDefinition,
-  type Framework,
-  type FrameworkId,
-  type FrameworkName,
-  type FrameworkSetting,
-  type GenericComponentName,
-  type GenericComponentAlias,
-  type DocusaurusComponent,
-  type StarlightComponent,
-  type NextjsComponent,
-  type NextraComponent,
-} from './registry/components';
+} from './registry';
 
 // core preloaded module IDs (React, MDX, layout)
 export {

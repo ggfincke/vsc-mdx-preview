@@ -9,7 +9,7 @@ import {
   type ComponentRegistryEntry,
   type Framework,
   type FrameworkId,
-} from '../registry/components';
+} from '../registry';
 import { PRELOADED_MODULE_IDS } from '../core-modules';
 
 const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT
