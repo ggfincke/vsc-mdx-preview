@@ -8,7 +8,7 @@ import {
   getFrameworkDetector,
   getPreviewManager,
 } from '../services';
-import type { Framework } from '../framework';
+import type { Framework } from '../framework/FrameworkDetector';
 import type { FrameworkSetting } from '@mdx-preview/shared';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from './types';

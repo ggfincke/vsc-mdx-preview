@@ -43,7 +43,6 @@ const selectPreviewTheme = async (): Promise<void> => {
       selected.theme,
       vscode.ConfigurationTarget.Global
     );
-    // refresh previews to apply theme
     getPreviewManager().refreshAllPreviews();
   }
 };
@@ -73,7 +72,6 @@ const selectCodeBlockTheme = async (): Promise<void> => {
       selected.theme,
       vscode.ConfigurationTarget.Global
     );
-    // refresh previews to apply theme
     getPreviewManager().refreshAllPreviews();
   }
 };
@@ -103,7 +101,6 @@ const selectMermaidTheme = async (): Promise<void> => {
       selected.theme,
       vscode.ConfigurationTarget.Global
     );
-    // refresh previews to apply theme
     getPreviewManager().refreshAllPreviews();
   }
 };

@@ -9,6 +9,7 @@ import { visit } from 'unist-util-visit';
 import type { Root } from 'mdast';
 import matter from 'gray-matter';
 import { KNOWN_GENERIC_COMPONENTS } from '../compiler/shared/remark/generic-components';
+import { extractErrorMessage } from '@mdx-preview/shared';
 import type {
   DetectedComponent,
   ComponentDetectionResult,
@@ -25,7 +26,7 @@ import {
 } from '@mdx-preview/shared';
 import type { MdxJsxElement } from '../compiler/shared/transforms/types';
 
-// -- caching for parse results --
+// caching for parse results
 
 // cache structure for component detection results
 interface CachedDetection {
@@ -39,10 +40,8 @@ const parseCache = new Map<string, CachedDetection>();
 // maximum cache entries (LRU eviction when exceeded)
 const MAX_CACHE_ENTRIES = 50;
 
-/**
- * Fast djb2 hash for content-based cache invalidation.
- * Sufficient for detecting content changes - not cryptographic.
- */
+// fast djb2 hash for content-based cache invalidation
+// sufficient for detecting content changes - not cryptographic
 function djb2Hash(str: string): number {
   let hash = 5381;
   for (let i = 0; i < str.length; i++) {
@@ -51,7 +50,7 @@ function djb2Hash(str: string): number {
   return hash >>> 0; // convert to unsigned 32-bit
 }
 
-// -- types --
+// types
 
 // MDX ESM node (imports/exports)
 interface MdxjsEsmNode {
@@ -361,7 +360,7 @@ export async function detectComponents(
 
     debug(`[ComponentDetector] Found ${components.length} components`);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = extractErrorMessage(err);
     warn(`[ComponentDetector] Parse error: ${message}`);
     errors.push(message);
   }
@@ -413,20 +412,16 @@ export function getUsedGenericComponents(
   return Array.from(used);
 }
 
-/**
- * Invalidate cached component detection for a specific document.
- * Call this when a document is closed or externally modified.
- */
+// invalidate cached component detection for a specific document
+// call this when a document is closed or externally modified
 export function invalidateComponentCache(uri: string): void {
   if (parseCache.delete(uri)) {
     debug(`[ComponentDetector] Invalidated cache for ${uri}`);
   }
 }
 
-/**
- * Clear all cached component detections.
- * Useful for testing or extension reset scenarios.
- */
+// clear all cached component detections
+// useful for testing or extension reset scenarios
 export function clearComponentCache(): void {
   parseCache.clear();
   debug(`[ComponentDetector] Cache cleared`);

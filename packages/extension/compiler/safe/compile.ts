@@ -1,5 +1,5 @@
 // packages/extension/compiler/safe/compile.ts
-// * safe MDX parser w/ AST transformation only (no code execution)
+// safe MDX parser w/ AST transformation only (no code execution)
 
 import { unified } from 'unified';
 import type { Pluggable } from 'unified';
@@ -255,7 +255,7 @@ function applyPlugins(processor: any, plugins: Pluggable[]): any {
   return processor;
 }
 
-// * compile MDX to safe static HTML (strips frontmatter, parses AST, removes dangerous nodes, & converts to HTML)
+// compile MDX to safe static HTML (strip frontmatter, parse AST, remove dangerous nodes, & convert to HTML)
 export async function compileSafe(
   mdxText: string,
   config?: ResolvedConfig

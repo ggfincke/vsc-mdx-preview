@@ -8,6 +8,7 @@ import { DIAGNOSTIC_CODES } from './ComponentDiagnostics';
 import { KNOWN_GENERIC_COMPONENTS } from '../compiler/shared/remark/generic-components';
 import { debug, info } from '../logging';
 import { ConfigError, ErrorContext } from '../errors';
+import { extractErrorMessage } from '@mdx-preview/shared';
 import { getErrorReporter } from '../services';
 import { readJsonSync } from '../utils/file-utils';
 
@@ -229,7 +230,7 @@ export async function addComponentToConfig(
 
     info(`[ComponentCodeActions] Added ${componentName} to config`);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = extractErrorMessage(err);
     getErrorReporter().reportToUser(
       new ConfigError(
         `Failed to update ${CONFIG_FILE_NAME}: ${message}`,

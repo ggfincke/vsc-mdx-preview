@@ -41,7 +41,7 @@ export class DependencyScanner {
       maxFileSizeBytes
     );
 
-    // extract classes from each file with optional caching
+    // extract classes from each file w/ optional caching
     for (const [fsPath, content] of fileContents) {
       const hash = computeContentHash(content);
 
@@ -53,7 +53,7 @@ export class DependencyScanner {
           classSet.add(cls);
         }
       } else {
-        // extract classes and cache the result
+        // extract classes & cache the result
         const fileClassSet = new Set<string>();
         extractFromText(content, fileClassSet);
 

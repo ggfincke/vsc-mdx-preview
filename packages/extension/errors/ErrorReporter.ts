@@ -14,6 +14,7 @@ import {
   ERROR_DEDUPE_MAX_ENTRIES,
 } from '../constants';
 import { SingletonService } from '../services/SingletonService';
+import { LRUCache } from '../utils/cache/LRUCache';
 
 // error severity determines handling behavior
 export enum ErrorSeverity {
@@ -89,11 +90,17 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   protected static override instance: ErrorReporter | undefined;
   protected readonly logTag = 'ERROR-REPORTER';
 
-  private recentErrors = new Map<string, number>();
+  // LRU cache for duplicate error tracking (errorKey -> lastSeenTimestamp)
+  // capacity-based eviction prevents unbounded growth
+  private recentErrors: LRUCache<string, number>;
   private readonly DEFAULT_DEDUPE_WINDOW = ERROR_DEDUPE_WINDOW_DEFAULT_MS;
 
   protected constructor() {
     super();
+    this.recentErrors = new LRUCache({
+      maxEntries: ERROR_DEDUPE_MAX_ENTRIES,
+      // no TTL - we check timestamps manually to support custom dedupeWindow
+    });
   }
 
   // * main error reporting method
@@ -412,47 +419,22 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     return prefixes[context];
   }
 
-  // check for duplicate errors
+  // check for duplicate errors using LRU cache
+  // LRUCache handles capacity-based eviction automatically
   private isDuplicate(error: Error, dedupeWindow?: number): boolean {
     const key = `${error.constructor.name}:${error.message}`;
     const now = Date.now();
     const window = dedupeWindow ?? this.DEFAULT_DEDUPE_WINDOW;
 
     const lastSeen = this.recentErrors.get(key);
-    if (lastSeen && now - lastSeen < window) {
+    if (lastSeen !== null && now - lastSeen < window) {
       return true;
     }
 
-    // fifo eviction: if map exceeds max size, delete oldest entries
-    if (this.recentErrors.size >= ERROR_DEDUPE_MAX_ENTRIES) {
-      this.evictOldestEntries(Math.ceil(ERROR_DEDUPE_MAX_ENTRIES * 0.1));
-    }
-
+    // not a duplicate - record timestamp
+    // LRUCache auto-evicts oldest entries when capacity exceeded
     this.recentErrors.set(key, now);
-    this.cleanupOldErrors(now - window);
     return false;
-  }
-
-  // fifo eviction of oldest entries when map exceeds size limit
-  private evictOldestEntries(count: number): void {
-    let evicted = 0;
-    for (const key of this.recentErrors.keys()) {
-      if (evicted >= count) {
-        break;
-      }
-      this.recentErrors.delete(key);
-      evicted++;
-    }
-    logDebug(`[${this.logTag}] Evicted ${evicted} oldest entries (FIFO)`);
-  }
-
-  // clean up old error entries
-  private cleanupOldErrors(threshold: number): void {
-    for (const [key, time] of this.recentErrors) {
-      if (time < threshold) {
-        this.recentErrors.delete(key);
-      }
-    }
   }
 
   // custom cleanup - clear recent errors map

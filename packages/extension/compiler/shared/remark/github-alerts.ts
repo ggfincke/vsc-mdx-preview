@@ -1,5 +1,5 @@
 // packages/extension/compiler/shared/remark/github-alerts.ts
-// * custom remark plugin for GitHub-style blockquote alerts ([!NOTE], [!WARNING], etc.)
+// custom remark plugin for GitHub-style blockquote alerts ([!NOTE], [!WARNING], etc.)
 
 import { visit } from 'unist-util-visit';
 import type { Root, Blockquote, Paragraph, Text, Html } from 'mdast';
@@ -40,7 +40,7 @@ type AlertType = keyof typeof ALERT_CONFIG;
 // match [!TYPE] at start of first paragraph in blockquote
 const ALERT_REGEX = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i;
 
-// * remark plugin that transforms GitHub-style blockquote alerts
+// remark plugin that transforms GitHub-style blockquote alerts
 export default function remarkGithubAlerts() {
   return (tree: Root) => {
     visit(tree, 'blockquote', (node: Blockquote, index, parent) => {
@@ -84,7 +84,7 @@ export default function remarkGithubAlerts() {
       }
 
       // build the alert HTML structure
-      // we use raw HTML nodes since this is simpler than building MDAST for div structure
+      // use raw HTML nodes since simpler than building MDAST for div structure
       const alertHtml: Html = {
         type: 'html',
         value: buildAlertHtml(config, node),
@@ -102,7 +102,7 @@ function buildAlertHtml(
   node: Blockquote
 ): string {
   // convert blockquote children to simple text content
-  // this is a simplified approach - we extract text from remaining children
+  // extract text from remaining children (simplified approach)
   const contentParts: string[] = [];
 
   for (const child of node.children) {

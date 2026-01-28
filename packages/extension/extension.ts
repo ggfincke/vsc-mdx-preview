@@ -12,7 +12,7 @@ import { initWorkspaceHandlers } from './workspace-manager';
 import { info, debug, showOutput, getOutputChannel } from './logging';
 import { StatusBarManager } from './preview/StatusBarManager';
 import { ThemeManager } from './themes';
-import { FrameworkDetector } from './framework';
+import { FrameworkDetector } from './framework/FrameworkDetector';
 import {
   ServiceRegistry,
   ServiceNames,

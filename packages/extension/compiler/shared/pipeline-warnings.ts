@@ -127,8 +127,8 @@ export function createUnknownComponentWarning(
 ): PipelineWarning {
   const actionMap = {
     strip: 'removed from output',
-    placeholder: 'replaced with a placeholder',
-    raw: 'rendered with children only',
+    placeholder: 'replaced w/ a placeholder',
+    raw: 'rendered w/ children only',
   };
 
   return {

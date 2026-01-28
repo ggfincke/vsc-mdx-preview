@@ -11,6 +11,7 @@ import { ErrorContext } from '../errors';
 import { normalizeError, type FrameworkId } from '@mdx-preview/shared';
 import { readJsonSync, pathExists } from '../utils/file-utils';
 import { findUp } from '../utils/find-up';
+import { createFileWatcher } from '../utils/createFileWatcher';
 
 // re-export FrameworkId as Framework for backward compatibility
 export type Framework = FrameworkId;
@@ -98,11 +99,8 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     );
   }
 
-  /**
-   * Lazily initialize the FileSystemWatcher on first framework detection.
-   * G.2 optimization: This defers the expensive watcher creation until actually needed,
-   * reducing extension activation time.
-   */
+  // lazily initialize FileSystemWatcher on first framework detection
+  // G.2 optimization: defer expensive watcher creation until needed, reducing activation time
   private ensureFileWatcher(): void {
     if (this.fileWatcherInitialized) {
       return;
@@ -111,24 +109,17 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
 
     debug('[FRAMEWORK] Initializing package.json FileSystemWatcher');
 
-    // watch for package.json changes
-    // createFileSystemWatcher args: ignoreCreate, ignoreChange, ignoreDelete
-    this.fileWatcher = vscode.workspace.createFileSystemWatcher(
-      '**/package.json',
-      false,
-      false,
-      false
-    );
+    // watch for package.json changes using createFileWatcher utility
+    this.fileWatcher = createFileWatcher({
+      pattern: '**/package.json',
+      logTag: 'FRAMEWORK',
+      onChange: (uri) => this.onPackageJsonChange(uri),
+      onCreate: (uri) => this.onPackageJsonChange(uri),
+      onDelete: (uri) => this.onPackageJsonChange(uri),
+    });
 
-    this.addDisposable(
-      this.fileWatcher.onDidChange((uri) => this.onPackageJsonChange(uri))
-    );
-    this.addDisposable(
-      this.fileWatcher.onDidCreate((uri) => this.onPackageJsonChange(uri))
-    );
-    this.addDisposable(
-      this.fileWatcher.onDidDelete((uri) => this.onPackageJsonChange(uri))
-    );
+    // register for disposal
+    this.addDisposable(this.fileWatcher);
   }
 
   // detect framework from workspace root package.json
@@ -214,15 +205,6 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     const manualFramework = getConfigManager().get('framework', documentUri);
 
     if (manualFramework !== 'auto') {
-      // backward compatibility: migrate deprecated 'astro-starlight' to 'starlight'
-      // cast to string for comparison since old user settings may have the deprecated value
-      if ((manualFramework as string) === 'astro-starlight') {
-        debug('[FRAMEWORK] Migrating deprecated "astro-starlight" to "starlight"');
-        return {
-          framework: 'starlight',
-          detected: false,
-        };
-      }
       return {
         framework: manualFramework as Framework,
         detected: false,

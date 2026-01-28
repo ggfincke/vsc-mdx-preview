@@ -1,5 +1,5 @@
 // packages/extension/compiler/plugins/loader.ts
-// * dynamic loading of custom remark/rehype plugins from workspace node_modules
+// dynamic loading of custom remark/rehype plugins from workspace node_modules
 
 import * as path from 'path';
 import * as vscode from 'vscode';

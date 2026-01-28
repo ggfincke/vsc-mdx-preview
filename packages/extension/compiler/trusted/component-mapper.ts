@@ -120,7 +120,7 @@ export function generateComponentImports(
 
     if (userCount > 0 && builtinCount > 0) {
       info(
-        `Generated imports for ${userCount} custom component(s) and ${builtinCount} built-in shim(s)`
+        `Generated imports for ${userCount} custom component(s) & ${builtinCount} built-in shim(s)`
       );
     } else if (userCount > 0) {
       info(`Generated imports for ${userCount} custom component(s)`);

@@ -205,7 +205,7 @@ export class ContentScanner {
       results.push(match[1].replace(/\\"/g, '"'));
     }
 
-    // extract template literals with recursive interpolation handling
+    // extract template literals w/ recursive interpolation handling
     for (const match of expression.matchAll(/`([^`\\]*(?:\\.[^`\\]*)*)`/g)) {
       const template = match[1];
       this.extractFromTemplateLiteral(template, results, depth);

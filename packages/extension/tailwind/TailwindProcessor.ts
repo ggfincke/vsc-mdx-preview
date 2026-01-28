@@ -125,7 +125,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       versionInfo.major > MAX_KNOWN_TAILWIND_VERSION
     ) {
       warn(
-        `[TAILWIND] Tailwind v${versionInfo.major} detected. This extension supports v3 and v4. ` +
+        `[TAILWIND] Tailwind v${versionInfo.major} detected. This extension supports v3 & v4. ` +
           `v${versionInfo.major} will be treated as v4, which may cause issues.`
       );
     }
@@ -312,7 +312,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
 
     warn(
       '[TAILWIND] Tailwind CSS v3 detected. MDX Preview is optimized for Tailwind v4. ' +
-        'Consider upgrading for improved performance and features.'
+        'Consider upgrading for improved performance & features.'
     );
 
     // show user-facing notification w/ action button

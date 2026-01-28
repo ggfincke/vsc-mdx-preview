@@ -227,7 +227,7 @@ function resolveLanguageAlias(lang: string): string {
   return LANGUAGE_ALIASES[lang] || lang;
 }
 
-// * rehype plugin for Shiki syntax highlighting
+// rehype plugin for Shiki syntax highlighting
 export default function rehypeShiki() {
   return async (tree: Root) => {
     const nodesToProcess: Array<{

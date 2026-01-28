@@ -7,6 +7,7 @@ import { debug } from '../logging';
 import type { NextraPageMeta } from '@mdx-preview/shared';
 import { readJsonSync } from '../utils/file-utils';
 import { findUp, createContainmentStopPredicate } from '../utils/find-up';
+import { createFileWatcher } from '../utils/createFileWatcher';
 
 // cache for resolved meta (cache key -> resolved meta or null)
 const metaCache = new Map<string, NextraPageMeta | null>();
@@ -123,8 +124,6 @@ function setupMetaWatcher(metaPath: string, documentDir: string): void {
     return;
   }
 
-  const watcher = vscode.workspace.createFileSystemWatcher(metaPath);
-
   const handleChange = () => {
     debug(`[NEXTRA-META] _meta.json changed: ${metaPath}`);
     // clear cache entries for this directory
@@ -135,12 +134,16 @@ function setupMetaWatcher(metaPath: string, documentDir: string): void {
     }
   };
 
-  watcher.onDidChange(handleChange);
-  watcher.onDidCreate(handleChange);
-  watcher.onDidDelete(() => {
-    handleChange();
-    metaWatchers.delete(metaPath);
-    watcher.dispose();
+  const watcher = createFileWatcher({
+    pattern: metaPath,
+    logTag: 'NEXTRA-META',
+    onChange: handleChange,
+    onCreate: handleChange,
+    onDelete: () => {
+      handleChange();
+      metaWatchers.delete(metaPath);
+      watcher.dispose();
+    },
   });
 
   metaWatchers.set(metaPath, watcher);

@@ -14,7 +14,7 @@ import {
   validateNumber,
   validateUrl,
   validateOptionalNumber,
-} from './utils/validation';
+} from './utils/validation/index';
 import {
   validateAndResolveSecurePath,
   reportTrustViolationError,
@@ -199,7 +199,7 @@ class ExtensionHandle implements ExtensionRPC {
       min: 1,
     });
 
-    // validate and resolve path securely (entry dir check + path traversal check)
+    // validate & resolve path securely (entry dir check + path traversal check)
     const securePathResult = validateAndResolveSecurePath(
       this.preview,
       validPath,
@@ -244,7 +244,7 @@ class ExtensionHandle implements ExtensionRPC {
       return;
     }
 
-    // validate and resolve path securely (entry dir check + path traversal check)
+    // validate & resolve path securely (entry dir check + path traversal check)
     const securePathResult = validateAndResolveSecurePath(
       this.preview,
       validPath,
