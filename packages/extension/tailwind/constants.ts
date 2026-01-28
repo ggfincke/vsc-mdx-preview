@@ -6,9 +6,7 @@
 
 import { STANDARD_CACHE_TTL_MS, STANDARD_DEBOUNCE_MS } from '@mdx-preview/shared';
 
-// =============================================================================
 // cache configuration
-// =============================================================================
 
 // default maximum entries in the CSS cache (LRU eviction)
 export const CACHE_DEFAULT_MAX_ENTRIES = 20;
@@ -23,9 +21,7 @@ export const CACHE_DEFAULT_TTL_MS = STANDARD_CACHE_TTL_MS;
 // version detection cache TTL in milliseconds (5 minutes) - uses shared constant
 export const VERSION_CACHE_TTL_MS = STANDARD_CACHE_TTL_MS;
 
-// =============================================================================
 // processing limits
-// =============================================================================
 
 // maximum characters per @source inline() directive for Tailwind v4
 // Tailwind v4 uses CSS-based `@source inline("...")` directives instead of the
@@ -45,9 +41,7 @@ export const DEFAULT_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 // default maximum CSS files to search when detecting entry CSS
 export const DEFAULT_MAX_CSS_FILES_TO_SEARCH = 500;
 
-// =============================================================================
 // processor cache defaults (VS Code settings defaults)
-// =============================================================================
 
 // default max entries for processor-level cache
 export const PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES = 50;
@@ -55,9 +49,7 @@ export const PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES = 50;
 // default cache TTL in seconds for processor-level cache (5 minutes)
 export const PROCESSOR_CACHE_DEFAULT_TTL_SECONDS = 300;
 
-// =============================================================================
 // version boundaries
-// =============================================================================
 
 // minimum supported Tailwind CSS major version
 export const MIN_SUPPORTED_TAILWIND_VERSION = 3;
@@ -65,18 +57,14 @@ export const MIN_SUPPORTED_TAILWIND_VERSION = 3;
 // maximum known Tailwind CSS major version (for future-proofing warnings)
 export const MAX_KNOWN_TAILWIND_VERSION = 4;
 
-// =============================================================================
 // watcher configuration
-// =============================================================================
 
 // debounce delay in milliseconds for Tailwind config file watcher
 // prevents rapid recompilations when files are saved multiple times in quick succession
 // uses shared standard debounce constant
 export const CONFIG_WATCHER_DEBOUNCE_MS = STANDARD_DEBOUNCE_MS;
 
-// =============================================================================
 // class extraction patterns
-// =============================================================================
 
 // valid Tailwind class token pattern
 // matches common Tailwind patterns including:
