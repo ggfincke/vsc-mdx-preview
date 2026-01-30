@@ -1,5 +1,5 @@
 // tests/webview/module-errors.test.ts
-// Unit tests for ModuleLoadError and factory functions
+// unit tests for ModuleLoadError & factory functions
 
 import { describe, it, expect } from 'vitest';
 import {
@@ -14,7 +14,7 @@ describe('ModuleLoadError', () => {
   describe('constructor', () => {
     it('should create error with all properties', () => {
       const error = new ModuleLoadError('Test error message', {
-        code: 'MODULE_NOT_FOUND',
+        code: 'E100',
         moduleId: './component.tsx',
         parentModuleId: '/src/App.tsx',
         suggestions: ['Check the path', 'Install dependencies'],
@@ -24,26 +24,28 @@ describe('ModuleLoadError', () => {
       expect(error).toBeInstanceOf(ModuleLoadError);
       expect(error.name).toBe('ModuleLoadError');
       expect(error.message).toBe('Test error message');
-      expect(error.code).toBe('MODULE_NOT_FOUND');
+      expect(error.code).toBe('E100');
       expect(error.moduleId).toBe('./component.tsx');
       expect(error.parentModuleId).toBe('/src/App.tsx');
       expect(error.suggestions).toEqual(['Check the path', 'Install dependencies']);
       expect(error.recoverable).toBe(true);
     });
 
-    it('should default suggestions to empty array', () => {
+    it('should use default suggestions from shared module when not provided', () => {
       const error = new ModuleLoadError('Test error', {
-        code: 'FETCH_FAILED',
+        code: 'E100',
         moduleId: 'test.js',
       });
 
-      expect(error.suggestions).toEqual([]);
+      // should get suggestions from getSuggestionsForCode('E100')
+      expect(error.suggestions.length).toBeGreaterThan(0);
+      expect(error.suggestions.some((s) => s.includes('import path'))).toBe(true);
     });
 
     it('should preserve cause error (ES2022)', () => {
       const cause = new Error('Original error');
       const error = new ModuleLoadError('Wrapped error', {
-        code: 'EVALUATION_FAILED',
+        code: 'E150',
         moduleId: 'test.js',
         cause,
       });
@@ -53,7 +55,7 @@ describe('ModuleLoadError', () => {
 
     it('should maintain proper prototype chain for instanceof', () => {
       const error = new ModuleLoadError('Test', {
-        code: 'MODULE_NOT_FOUND',
+        code: 'E100',
         moduleId: 'test.js',
       });
 
@@ -65,8 +67,9 @@ describe('ModuleLoadError', () => {
   describe('toDisplayMessage()', () => {
     it('should format message without suggestions', () => {
       const error = new ModuleLoadError('Simple error', {
-        code: 'MODULE_NOT_FOUND',
+        code: 'E100',
         moduleId: 'test.js',
+        suggestions: [],
       });
 
       expect(error.toDisplayMessage()).toBe('Simple error');
@@ -74,7 +77,7 @@ describe('ModuleLoadError', () => {
 
     it('should format message with suggestions', () => {
       const error = new ModuleLoadError('Error occurred', {
-        code: 'MODULE_NOT_FOUND',
+        code: 'E100',
         moduleId: 'test.js',
         suggestions: ['First suggestion', 'Second suggestion'],
       });
@@ -87,13 +90,37 @@ describe('ModuleLoadError', () => {
       expect(display).toContain('  - Second suggestion');
     });
   });
+
+  describe('toModuleErrorData()', () => {
+    it('should serialize to ModuleErrorData', () => {
+      const cause = new Error('Original error');
+      const error = new ModuleLoadError('Test error', {
+        code: 'E100',
+        moduleId: './test.ts',
+        parentModuleId: '/src/index.ts',
+        suggestions: ['Check path'],
+        cause,
+      });
+
+      const data = error.toModuleErrorData();
+
+      expect(data.code).toBe('E100');
+      expect(data.message).toBe('Test error');
+      expect(data.moduleId).toBe('./test.ts');
+      expect(data.parentModuleId).toBe('/src/index.ts');
+      expect(data.suggestions).toEqual(['Check path']);
+      expect(data.recoverable).toBe(true);
+      expect(data.causeMessage).toBe('Original error');
+      expect(data.stack).toBeDefined();
+    });
+  });
 });
 
 describe('createModuleNotFoundError', () => {
-  it('should create error with MODULE_NOT_FOUND code', () => {
+  it('should create error with E100 code', () => {
     const error = createModuleNotFoundError('./Button', '/src/App.tsx');
 
-    expect(error.code).toBe('MODULE_NOT_FOUND');
+    expect(error.code).toBe('E100');
     expect(error.moduleId).toBe('./Button');
     expect(error.parentModuleId).toBe('/src/App.tsx');
   });
@@ -107,7 +134,7 @@ describe('createModuleNotFoundError', () => {
     expect(error.message).toContain('Imported from');
   });
 
-  it('should provide helpful suggestions', () => {
+  it('should provide helpful suggestions from shared module', () => {
     const error = createModuleNotFoundError('./Component', '/src/App.tsx');
 
     expect(error.suggestions.length).toBeGreaterThan(0);
@@ -118,13 +145,24 @@ describe('createModuleNotFoundError', () => {
       true
     );
   });
+
+  it('should serialize to ModuleErrorData', () => {
+    const error = createModuleNotFoundError('./Button', '/src/App.tsx');
+    const data = error.toModuleErrorData();
+
+    expect(data.code).toBe('E100');
+    expect(data.moduleId).toBe('./Button');
+    expect(data.parentModuleId).toBe('/src/App.tsx');
+    expect(data.suggestions.length).toBeGreaterThan(0);
+    expect(data.recoverable).toBe(true);
+  });
 });
 
 describe('createFetchFailedError', () => {
-  it('should create error with FETCH_FAILED code', () => {
+  it('should create error with E140 code', () => {
     const error = createFetchFailedError('./api', '/src/index.ts');
 
-    expect(error.code).toBe('FETCH_FAILED');
+    expect(error.code).toBe('E140');
     expect(error.moduleId).toBe('./api');
     expect(error.parentModuleId).toBe('/src/index.ts');
   });
@@ -134,7 +172,7 @@ describe('createFetchFailedError', () => {
     const error = createFetchFailedError('./api', '/src/index.ts', cause);
 
     expect((error as { cause?: Error }).cause).toBe(cause);
-    // Should also include cause message in suggestions
+    // should include cause message in suggestions
     expect(error.suggestions.some((s) => s.includes('Network timeout'))).toBe(
       true
     );
@@ -151,11 +189,11 @@ describe('createFetchFailedError', () => {
 });
 
 describe('createEvaluationFailedError', () => {
-  it('should create error with EVALUATION_FAILED code', () => {
+  it('should create error with E150 code', () => {
     const cause = new Error('ReferenceError: foo is not defined');
     const error = createEvaluationFailedError('/src/module.js', cause);
 
-    expect(error.code).toBe('EVALUATION_FAILED');
+    expect(error.code).toBe('E150');
     expect(error.moduleId).toBe('/src/module.js');
   });
 
@@ -186,11 +224,11 @@ describe('createEvaluationFailedError', () => {
 });
 
 describe('createCircularDependencyError', () => {
-  it('should create error with CIRCULAR_DEPENDENCY code', () => {
+  it('should create error with E102 code', () => {
     const chain = ['A.js', 'B.js', 'A.js'];
     const error = createCircularDependencyError('A.js', chain);
 
-    expect(error.code).toBe('CIRCULAR_DEPENDENCY');
+    expect(error.code).toBe('E102');
     expect(error.moduleId).toBe('A.js');
   });
 
@@ -212,20 +250,19 @@ describe('createCircularDependencyError', () => {
     expect(error.suggestions.length).toBeGreaterThan(0);
     expect(error.suggestions.some((s) => s.includes('restructur'))).toBe(true);
     expect(error.suggestions.some((s) => s.includes('separate file'))).toBe(true);
-    expect(error.suggestions.some((s) => s.includes('lazy') || s.includes('dynamic'))).toBe(
-      true
-    );
+    expect(
+      error.suggestions.some((s) => s.includes('lazy') || s.includes('dynamic'))
+    ).toBe(true);
   });
 });
 
 describe('error code types', () => {
-  it('should only allow valid error codes', () => {
-    // TypeScript should enforce this at compile time, but we can test runtime behavior
-    const codes = ['MODULE_NOT_FOUND', 'FETCH_FAILED', 'CIRCULAR_DEPENDENCY', 'EVALUATION_FAILED'];
+  it('should only allow valid E1xx error codes', () => {
+    const codes = ['E100', 'E102', 'E140', 'E150'];
 
     codes.forEach((code) => {
       const error = new ModuleLoadError('Test', {
-        code: code as 'MODULE_NOT_FOUND',
+        code: code as 'E100',
         moduleId: 'test.js',
       });
       expect(error.code).toBe(code);

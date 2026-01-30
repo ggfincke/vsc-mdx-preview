@@ -38,14 +38,6 @@ describe('logging module', () => {
       expect(typeof logging.disposeOutputChannel).toBe('function');
     });
 
-    it('exports LogLevel enum', async () => {
-      const { LogLevel } = await import('../../packages/extension/logging');
-
-      expect(LogLevel.Debug).toBe('DEBUG');
-      expect(LogLevel.Info).toBe('INFO');
-      expect(LogLevel.Warn).toBe('WARN');
-      expect(LogLevel.Error).toBe('ERROR');
-    });
   });
 
   describe('debug behavior when DEBUG disabled (default)', () => {
@@ -80,6 +72,43 @@ describe('logging module', () => {
     it('error() does not throw', async () => {
       const { error } = await import('../../packages/extension/logging');
       expect(() => error('test message')).not.toThrow();
+    });
+  });
+
+  describe('createTaggedLogger', () => {
+    it('creates a logger w/ all methods', async () => {
+      const { createTaggedLogger } = await import(
+        '../../packages/extension/logging'
+      );
+      const log = createTaggedLogger('TEST');
+
+      expect(typeof log.debug).toBe('function');
+      expect(typeof log.info).toBe('function');
+      expect(typeof log.warn).toBe('function');
+      expect(typeof log.error).toBe('function');
+    });
+
+    it('methods do not throw', async () => {
+      const { createTaggedLogger } = await import(
+        '../../packages/extension/logging'
+      );
+      const log = createTaggedLogger('TEST');
+
+      expect(() => log.debug('test')).not.toThrow();
+      expect(() => log.info('test')).not.toThrow();
+      expect(() => log.warn('test')).not.toThrow();
+      expect(() => log.error('test')).not.toThrow();
+    });
+  });
+
+  describe('logger object', () => {
+    it('exports logger object w/ all methods', async () => {
+      const { logger } = await import('../../packages/extension/logging');
+
+      expect(typeof logger.debug).toBe('function');
+      expect(typeof logger.info).toBe('function');
+      expect(typeof logger.warn).toBe('function');
+      expect(typeof logger.error).toBe('function');
     });
   });
 });
