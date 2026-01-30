@@ -10,11 +10,8 @@ export type Framework = 'docusaurus' | 'starlight' | 'nextjs' | 'nextra';
 // FrameworkId = all frameworks including 'generic' (canonical runtime type)
 export type FrameworkId = Framework | 'generic';
 
-// FrameworkName = alias for FrameworkId (semantic clarity)
-export type FrameworkName = FrameworkId;
-
 // FrameworkSetting = VS Code setting type ('auto' triggers detection)
-export type FrameworkSetting = 'auto' | FrameworkName;
+export type FrameworkSetting = 'auto' | FrameworkId;
 
 export type ComponentKind = 'component' | 'barrel';
 

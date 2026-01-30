@@ -7,7 +7,6 @@ import {
   SHIM_PREFIX,
   type ComponentDefinition,
   type ComponentRegistryEntry,
-  type Framework,
   type FrameworkId,
 } from '../registry';
 import { PRELOADED_MODULE_IDS } from '../core-modules';
@@ -24,7 +23,7 @@ export interface GeneratePreloadOptions {
 const REGISTRY_ENTRIES: readonly ComponentRegistryEntry[] = COMPONENT_REGISTRY;
 
 // frameworks that have lazy-loaded shims (excludes 'generic')
-const LAZY_FRAMEWORKS: Framework[] = [
+const LAZY_FRAMEWORKS: FrameworkId[] = [
   'docusaurus',
   'starlight',
   'nextra',
@@ -160,7 +159,7 @@ function generateGenericPreloadFunction(
     }
   }
 
-  const func = `// preload generic shims synchronously (for backward compatibility)
+  const func = `// preload generic shims synchronously
 export function preloadGenericShims(registry: ModuleRegistry): void {
 ${preloadLines.join('\n')}
 }`;
@@ -174,7 +173,7 @@ ${loaderEntries.join(',\n')}
 }
 
 function generateFrameworkLoader(
-  framework: Framework,
+  framework: FrameworkId,
   entries: ComponentRegistryEntry[],
   options: GeneratePreloadOptions
 ): string {
@@ -252,9 +251,9 @@ export function generatePreloadTs(options: GeneratePreloadOptions): string {
   return `${GENERATED_HEADER}
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
 import { createBarrelModule, createComponentModule } from './core';
-import type { Framework } from '@mdx-preview/shared';
+import type { FrameworkId } from '@mdx-preview/shared';
 
-// static imports for generic shims (for backward compatibility)
+// static imports for generic shims
 ${genericImports.join('\n')}
 
 ${genericFunc}
@@ -265,17 +264,9 @@ ${frameworkLoaders.join('\n\n')}
 
 // map framework name to lazy loader function
 // note: 'generic' is a no-op since generic shims are loaded synchronously via preloadGenericShims
-export const FRAMEWORK_LOADERS: Record<Framework, (registry: ModuleRegistry) => Promise<void>> = {
+export const FRAMEWORK_LOADERS: Record<FrameworkId, (registry: ModuleRegistry) => Promise<void>> = {
 ${loaderMapEntries.join(',\n')}
 };
-
-// preload all shims (for backward compatibility during migration)
-export async function preloadAllShims(registry: ModuleRegistry): Promise<void> {
-  preloadGenericShims(registry);
-  await Promise.all(
-    Object.values(FRAMEWORK_LOADERS).map((loader) => loader(registry))
-  );
-}
 `;
 }
 
