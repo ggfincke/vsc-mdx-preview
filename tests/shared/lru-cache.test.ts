@@ -1,8 +1,7 @@
-// tests/extension/utils/cache/LRUCache.test.ts
+// tests/shared/lru-cache.test.ts
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { LRUCache } from '../../../../packages/extension/utils/cache/LRUCache';
-import { ContentHashCache } from '../../../../packages/extension/utils/cache/ContentHashCache';
+import { LRUCache, ContentHashCache } from '@mdx-preview/shared';
 
 describe('LRUCache', () => {
   describe('basic operations', () => {
@@ -388,6 +387,166 @@ describe('LRUCache', () => {
       expect(entries).toEqual([['b', 2]]);
 
       vi.useRealTimers();
+    });
+  });
+
+  describe('entry protection (isProtected)', () => {
+    it('should not evict protected entries when at capacity', () => {
+      const protectedKeys = new Set(['p1', 'p2']);
+      const cache = new LRUCache<string, number>({
+        maxEntries: 1, // only 1 non-protected entry allowed
+        isProtected: (key) => protectedKeys.has(key),
+      });
+
+      cache.set('p1', 1); // protected
+      cache.set('p2', 2); // protected
+      cache.set('a', 3); // normal (counts as 1)
+      cache.set('b', 4); // should evict 'a', not protected entries
+
+      expect(cache.has('p1')).toBe(true);
+      expect(cache.has('p2')).toBe(true);
+      expect(cache.has('a')).toBe(false); // evicted
+      expect(cache.has('b')).toBe(true);
+    });
+
+    it('should not count protected entries against maxEntries', () => {
+      const protectedKeys = new Set(['p1']);
+      const cache = new LRUCache<string, number>({
+        maxEntries: 2,
+        isProtected: (key) => protectedKeys.has(key),
+      });
+
+      cache.set('p1', 1); // protected, doesn't count
+      cache.set('a', 2); // counts as 1
+      cache.set('b', 3); // counts as 2
+
+      expect(cache.size).toBe(3); // total entries
+      expect(cache.has('p1')).toBe(true);
+      expect(cache.has('a')).toBe(true);
+      expect(cache.has('b')).toBe(true);
+
+      cache.set('c', 4); // should evict 'a' (oldest non-protected)
+      expect(cache.has('a')).toBe(false);
+      expect(cache.has('p1')).toBe(true);
+    });
+
+    it('should not count protected memory against maxMemoryBytes', () => {
+      const protectedKeys = new Set(['protected']);
+      const cache = new LRUCache<string, string>({
+        maxEntries: 100,
+        maxMemoryBytes: 100,
+        estimateSize: (v) => v.length,
+        isProtected: (key) => protectedKeys.has(key),
+      });
+
+      cache.set('protected', 'x'.repeat(80)); // 80 bytes, doesn't count
+      cache.set('a', 'x'.repeat(50)); // 50 bytes
+      cache.set('b', 'x'.repeat(60)); // 60 bytes, would be 110 > 100 without protection
+
+      expect(cache.has('protected')).toBe(true);
+      expect(cache.has('a')).toBe(false); // evicted for memory
+      expect(cache.has('b')).toBe(true);
+    });
+
+    it('should report protectedCount correctly', () => {
+      const protectedKeys = new Set(['p1', 'p2']);
+      const cache = new LRUCache<string, number>({
+        maxEntries: 10,
+        isProtected: (key) => protectedKeys.has(key),
+      });
+
+      cache.set('p1', 1);
+      cache.set('p2', 2);
+      cache.set('a', 3);
+
+      expect(cache.protectedCount).toBe(2);
+      expect(cache.size).toBe(3);
+    });
+
+    it('should call onEvict for evicted non-protected entries', () => {
+      const onEvict = vi.fn();
+      const protectedKeys = new Set(['protected']);
+      const cache = new LRUCache<string, number>({
+        maxEntries: 2,
+        isProtected: (key) => protectedKeys.has(key),
+        onEvict,
+      });
+
+      cache.set('protected', 1);
+      cache.set('a', 2);
+      cache.set('b', 3);
+      cache.set('c', 4); // evicts 'a'
+
+      expect(onEvict).toHaveBeenCalledWith('a', 2);
+      expect(onEvict).toHaveBeenCalledTimes(1);
+    });
+
+    it('should evict oldest non-protected when multiple protected at start', () => {
+      const protectedKeys = new Set(['p1', 'p2', 'p3']);
+      const cache = new LRUCache<string, number>({
+        maxEntries: 2,
+        isProtected: (key) => protectedKeys.has(key),
+      });
+
+      cache.set('p1', 1); // protected
+      cache.set('p2', 2); // protected
+      cache.set('p3', 3); // protected
+      cache.set('a', 4); // normal
+      cache.set('b', 5); // normal
+      cache.set('c', 6); // should evict 'a' (first non-protected)
+
+      expect(cache.size).toBe(5);
+      expect(cache.has('p1')).toBe(true);
+      expect(cache.has('p2')).toBe(true);
+      expect(cache.has('p3')).toBe(true);
+      expect(cache.has('a')).toBe(false);
+      expect(cache.has('b')).toBe(true);
+      expect(cache.has('c')).toBe(true);
+    });
+
+    it('should handle dynamic protection via predicate', () => {
+      const protectedKeys = new Set<string>();
+      const cache = new LRUCache<string, number>({
+        maxEntries: 1, // only 1 non-protected entry allowed
+        isProtected: (key) => protectedKeys.has(key),
+      });
+
+      cache.set('a', 1);
+      cache.set('b', 2); // evicts 'a' (both non-protected, only 1 allowed)
+
+      expect(cache.has('a')).toBe(false);
+      expect(cache.has('b')).toBe(true);
+
+      // Now protect 'b' and add more
+      protectedKeys.add('b');
+
+      cache.set('c', 3); // 'b' protected, 'c' is the only non-protected
+
+      expect(cache.has('b')).toBe(true); // protected
+      expect(cache.has('c')).toBe(true); // only non-protected
+
+      cache.set('d', 4); // should evict 'c' (oldest non-protected)
+
+      expect(cache.has('b')).toBe(true);
+      expect(cache.has('c')).toBe(false);
+      expect(cache.has('d')).toBe(true);
+    });
+
+    it('should stop eviction if all entries are protected', () => {
+      const cache = new LRUCache<string, number>({
+        maxEntries: 2,
+        isProtected: () => true, // everything is protected
+      });
+
+      cache.set('a', 1);
+      cache.set('b', 2);
+      cache.set('c', 3); // cannot evict, cache grows beyond maxEntries
+
+      // All entries should remain (no eviction possible)
+      expect(cache.size).toBe(3);
+      expect(cache.has('a')).toBe(true);
+      expect(cache.has('b')).toBe(true);
+      expect(cache.has('c')).toBe(true);
     });
   });
 });
