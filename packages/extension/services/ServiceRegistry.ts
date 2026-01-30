@@ -3,15 +3,26 @@
 
 import type { Disposable } from 'vscode';
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { ServiceError, CircularDependencyError } from '../errors';
-import type { IService, ServiceFactory, ServiceRegistration } from './types';
+import type { IService, ServiceFactory, ServiceRegistration } from '../types';
+
+// subsystem disposal function type
+type SubsystemDisposeFn = () => void;
+
+// subsystem registration metadata
+interface SubsystemRegistration {
+  name: string;
+  dispose: SubsystemDisposeFn;
+  registrationOrder: number;
+}
 
 // * central registry for managing service lifecycle
 // key features:
 // - lazy initialization: services are created on first access
 // - dependency ordering: services disposed in reverse registration order
 // - singleton pattern: each service type has one instance
-// - backward compatible: works alongside existing getInstance() pattern
+// - compatible w/ existing getInstance() pattern
 export class ServiceRegistry implements Disposable {
   private static instance: ServiceRegistry | undefined;
   private services = new Map<string, ServiceRegistration<IService>>();
@@ -20,6 +31,10 @@ export class ServiceRegistry implements Disposable {
 
   // track services currently being initialized (for cycle detection)
   private initializationStack: string[] = [];
+
+  // subsystem registrations for factory singletons & module-level state
+  private subsystems = new Map<string, SubsystemRegistration>();
+  private subsystemCounter = 0;
 
   private constructor() {}
 
@@ -41,7 +56,7 @@ export class ServiceRegistry implements Disposable {
     }
 
     if (this.services.has(name)) {
-      debug(`[SERVICE-REGISTRY] Warning: Overwriting registration for ${name}`);
+      debug(`[${LogTags.SERVICE_REGISTRY}] Warning: Overwriting registration for ${name}`);
     }
 
     this.services.set(name, {
@@ -51,7 +66,33 @@ export class ServiceRegistry implements Disposable {
       registrationOrder: this.registrationCounter++,
     });
 
-    debug(`[SERVICE-REGISTRY] Registered: ${name}`);
+    debug(`[${LogTags.SERVICE_REGISTRY}] Registered: ${name}`);
+  }
+
+  // register a subsystem w/ disposal function
+  // subsystems are disposed BEFORE services (reverse registration order)
+  // use for factory singletons & module-level state that need cleanup
+  registerSubsystem(name: string, dispose: SubsystemDisposeFn): void {
+    if (this.disposed) {
+      throw new ServiceError(
+        'Cannot register subsystem on disposed registry',
+        'E801'
+      );
+    }
+
+    if (this.subsystems.has(name)) {
+      debug(
+        `[${LogTags.SERVICE_REGISTRY}] Warning: Overwriting subsystem registration for ${name}`
+      );
+    }
+
+    this.subsystems.set(name, {
+      name,
+      dispose,
+      registrationOrder: this.subsystemCounter++,
+    });
+
+    debug(`[${LogTags.SERVICE_REGISTRY}] Registered subsystem: ${name}`);
   }
 
   // get a service instance by name (creates on first access via lazy initialization)
@@ -78,7 +119,7 @@ export class ServiceRegistry implements Disposable {
 
     // lazy initialization w/ cycle tracking
     if (!registration.instance) {
-      debug(`[SERVICE-REGISTRY] Creating instance: ${name}`);
+      debug(`[${LogTags.SERVICE_REGISTRY}] Creating instance: ${name}`);
 
       // push onto stack before initialization
       this.initializationStack.push(name);
@@ -109,40 +150,59 @@ export class ServiceRegistry implements Disposable {
     return [...this.initializationStack];
   }
 
-  // dispose all services in reverse registration order
-  // ensures dependent services are disposed before their dependencies
+  // dispose all subsystems & services
+  // order: subsystems first (reverse order), then services (reverse order)
+  // subsystems depend on services, so they must be disposed first
   dispose(): void {
     if (this.disposed) {
       return;
     }
 
-    debug('[SERVICE-REGISTRY] Starting disposal...');
+    debug(`[${LogTags.SERVICE_REGISTRY}] Starting disposal...`);
 
-    // sort by registration order descending (reverse order)
+    // 1. dispose subsystems in reverse registration order (FIRST)
+    const sortedSubsystems = Array.from(this.subsystems.values()).sort(
+      (a, b) => b.registrationOrder - a.registrationOrder
+    );
+
+    for (const subsystem of sortedSubsystems) {
+      debug(`[${LogTags.SERVICE_REGISTRY}] Disposing subsystem: ${subsystem.name}`);
+      try {
+        subsystem.dispose();
+      } catch (error) {
+        debug(
+          `[${LogTags.SERVICE_REGISTRY}] Error disposing subsystem ${subsystem.name}: ${error}`
+        );
+      }
+    }
+    this.subsystems.clear();
+
+    // 2. dispose services in reverse registration order (SECOND)
     const sortedRegistrations = Array.from(this.services.values())
       .filter((reg) => reg.instance !== undefined)
       .sort((a, b) => b.registrationOrder - a.registrationOrder);
 
     for (const registration of sortedRegistrations) {
-      debug(`[SERVICE-REGISTRY] Disposing: ${registration.name}`);
+      debug(`[${LogTags.SERVICE_REGISTRY}] Disposing service: ${registration.name}`);
       try {
         registration.instance?.dispose?.();
       } catch (error) {
         debug(
-          `[SERVICE-REGISTRY] Error disposing ${registration.name}: ${error}`
+          `[${LogTags.SERVICE_REGISTRY}] Error disposing service ${registration.name}: ${error}`
         );
       }
     }
 
     this.services.clear();
     this.disposed = true;
-    debug('[SERVICE-REGISTRY] All services disposed');
+    debug(`[${LogTags.SERVICE_REGISTRY}] All subsystems & services disposed`);
   }
 
-  // reset the registry (for testing) - disposes all services & clears registrations
+  // reset the registry (for testing) - disposes all subsystems & services, clears registrations
   static reset(): void {
     if (ServiceRegistry.instance) {
       ServiceRegistry.instance.initializationStack = [];
+      // dispose() already clears subsystems & services
       ServiceRegistry.instance.dispose();
       ServiceRegistry.instance = undefined;
     }

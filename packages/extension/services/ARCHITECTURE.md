@@ -76,12 +76,13 @@ reset(); // Clear for next test
 
 ## ServiceRegistry
 
-**Purpose:** Central coordinator for service lifecycle management.
+**Purpose:** Central coordinator for service & subsystem lifecycle management.
 
 **Features:**
 - Lazy initialization via factory functions
 - Circular dependency detection
 - Reverse-order disposal (dependencies disposed last)
+- Subsystem support for factory singletons & module-level state
 - All `SingletonService` instances must register here
 
 **Registration (in extension.ts activate):**
@@ -92,13 +93,51 @@ const registry = ServiceRegistry.getInstance();
 registry.register('CONFIG_MANAGER', () => ConfigManager.getInstance());
 registry.register('TRUST_MANAGER', () => TrustManager.getInstance());
 // ... other services ...
+
+// Register subsystems AFTER services (so they dispose BEFORE services)
+registerResolverSubsystem();
+registerMetaSubsystem();
 ```
 
 **Disposal (in extension.ts deactivate):**
 ```typescript
 ServiceRegistry.getInstance().dispose();
-// All services disposed in reverse registration order
+// 1. Subsystems disposed first (reverse registration order)
+// 2. Services disposed second (reverse registration order)
 ```
+
+## Subsystem Registration
+
+**Purpose:** Unified lifecycle for factory singletons & module-level state.
+
+For modules w/ factory singletons or module-level caches that need cleanup, use subsystem registration instead of manual disposal calls:
+
+```typescript
+import { ServiceRegistry } from './services';
+import { debug } from './logging';
+
+export const MY_SUBSYSTEM = 'MySubsystem';
+
+export function registerMySubsystem(): void {
+  ServiceRegistry.getInstance().registerSubsystem(MY_SUBSYSTEM, () => {
+    debug('[MY-SUBSYSTEM] Disposing...');
+    mySingleton.dispose();
+    myCache.clear();
+    debug('[MY-SUBSYSTEM] Disposed');
+  });
+}
+```
+
+**Key Points:**
+- Subsystems dispose BEFORE services (subsystems depend on services, not vice versa)
+- Use for factory singletons & module-level state (caches, watchers)
+- Keep factory singletons lightweight (no IService overhead required)
+- Register in `activate()` AFTER services
+- Single `ServiceRegistry.dispose()` call handles all cleanup
+
+**Current Subsystems:**
+- `ResolverSubsystem` - Resolver singletons, cached file system, stat/compiled caches
+- `MetaSubsystem` - Nextra `_meta.json` file watchers & cache
 
 ## Service Access Patterns
 
@@ -158,8 +197,10 @@ requireTrustedModeForDocument(documentUri, 'execute module code');
 
 | Scenario | Pattern |
 |----------|---------|
-| Service with lifecycle | `SingletonService` + `ServiceRegistry` |
-| Pure/stateless utility | `createSingleton` |
+| Service w/ lifecycle & subscriptions | `SingletonService` + `ServiceRegistry` |
+| Stateless utility singleton | `createSingleton()` + subsystem registration |
+| Module-level state (cache, watchers) | Subsystem registration |
 | Accessing services | Use `service-locator.ts` getters |
+| Accessing utility singletons | Direct getter (e.g., `getUnifiedResolver()`) |
 | Trust check (conditional) | `TrustManager.getState()` |
 | Trust check (throwing) | `validateTrust.ts` utilities |
