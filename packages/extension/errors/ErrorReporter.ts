@@ -2,8 +2,9 @@
 // centralized error reporting service for consistent error handling
 
 import * as vscode from 'vscode';
-import { ExtensionError } from './index';
+import { ExtensionError, ModuleFetchError } from './index';
 import { formatUserError, formatLogError } from './messages';
+import type { PreviewError } from '@mdx-preview/shared';
 import {
   error as logError,
   warn as logWarn,
@@ -14,7 +15,7 @@ import {
   ERROR_DEDUPE_MAX_ENTRIES,
 } from '../constants';
 import { SingletonService } from '../services/SingletonService';
-import { LRUCache } from '../utils/cache/LRUCache';
+import { LRUCache } from '@mdx-preview/shared';
 
 // error severity determines handling behavior
 export enum ErrorSeverity {
@@ -52,13 +53,7 @@ export enum ErrorContext {
 
 // interface for webview error display
 export interface WebviewErrorHandle {
-  showPreviewError(error: {
-    message: string;
-    code?: string;
-    stack?: string;
-    context?: string;
-    recoverable?: boolean;
-  }): void;
+  showPreviewError(error: PreviewError): void;
 }
 
 // options for reporting an error
@@ -377,27 +372,34 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     const message =
       error instanceof ExtensionError ? formatUserError(error) : error.message;
 
-    handle.showPreviewError({
+    const previewError: PreviewError = {
       message,
       code: error instanceof ExtensionError ? error.code : undefined,
       stack: error.stack,
       context: context,
       recoverable: this.isRecoverableError(error),
-    });
+    };
+
+    // include module error data if this is a ModuleFetchError
+    if (error instanceof ModuleFetchError) {
+      previewError.moduleError = error.toModuleErrorData();
+    }
+
+    handle.showPreviewError(previewError);
   }
 
   // check if error is recoverable (user can fix & retry)
   private isRecoverableError(error: Error): boolean {
     if (error instanceof ExtensionError) {
       // module & transpile errors are typically recoverable by fixing the source
-      // E102 = circular dependency, E120 = parse error, E300 = MDX transpile
       const recoverableCodes = [
-        'MODULE_NOT_FOUND',
-        'PARSE_ERROR',
-        'TRANSPILE_ERROR',
-        'E102',
-        'E120',
-        'E300',
+        // module error codes
+        'E100', // module not found
+        'E102', // circular dependency
+        'E110', // parse error
+        'E120', // transform error
+        // transpile codes
+        'E300', // MDX transpile
       ];
       return recoverableCodes.includes(error.code);
     }

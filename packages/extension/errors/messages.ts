@@ -15,14 +15,13 @@ const USER_MESSAGES: Record<string, string> = {
   E022: "Scripts are disabled. Enable 'mdx-preview.preview.enableScripts' in settings.",
   E023: 'Remote environment detected. Trusted Mode requires local workspaces.',
 
-  // module fetch errors (uses modulePath & parentModule)
-  MODULE_NOT_FOUND:
-    "Cannot find module '{modulePath}'. Did you run npm install?",
-  OUTSIDE_WORKSPACE: "Cannot access '{modulePath}' - outside workspace folders",
-  E102: "Circular dependency detected: '{modulePath}'",
-  PARSE_ERROR: "Syntax error in '{modulePath}'",
-  TRANSFORM_ERROR: "Failed to compile '{modulePath}'",
-  E162: "Failed to read module file: '{modulePath}'",
+  // module fetch errors (uses moduleId & parentModuleId)
+  E100: "Cannot find module '{moduleId}'. Did you run npm install?",
+  E101: "Cannot access '{moduleId}' - outside workspace folders",
+  E102: "Circular dependency detected: '{moduleId}'",
+  E110: "Syntax error in '{moduleId}'",
+  E120: "Failed to compile '{moduleId}'",
+  E162: "Failed to read module file: '{moduleId}'",
 
   // configuration errors (uses configPath)
   CONFIG_PARSE_ERROR: "Failed to parse config file '{configPath}'",
@@ -45,8 +44,7 @@ const USER_MESSAGES: Record<string, string> = {
 
   // tailwind errors (uses phase)
   E500: 'Tailwind CSS not installed in workspace',
-  E501: 'Tailwind version not supported. Minimum: v3',
-  E502: 'Tailwind CSS v3 is deprecated. Upgrade to v4 for improved performance.',
+  E501: 'Tailwind version not supported. Minimum: v4',
   E520: 'Tailwind config not found',
   TAILWIND_COMPILATION_ERROR: 'Tailwind CSS compilation failed',
   E562: 'Invalid Tailwind PostCSS plugin',
@@ -95,7 +93,7 @@ export function formatLogError(error: ExtensionError): Record<string, unknown> {
     result.cause = error.cause.message;
   }
 
-  // add all enumerable custom properties (modulePath, sourceFile, line, etc.)
+  // add all enumerable custom properties (moduleId, sourceFile, line, etc.)
   const errorRecord = error as unknown as Record<string, unknown>;
   for (const key of Object.keys(error)) {
     if (!['name', 'message', 'stack', 'code', 'cause'].includes(key)) {

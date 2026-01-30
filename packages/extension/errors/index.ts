@@ -1,6 +1,13 @@
 // packages/extension/errors/index.ts
 // structured error classes for extension w/ error codes & context
 
+import {
+  type ModuleErrorCode,
+  type ModuleErrorData,
+  getSuggestionsForCode,
+  formatModuleErrorDisplay,
+} from '@mdx-preview/shared';
+
 export {
   ErrorReporter,
   ErrorSeverity,
@@ -10,6 +17,9 @@ export {
 } from './ErrorReporter';
 
 export { ErrorCode } from './error-codes';
+
+// re-export shared module error types for convenience
+export { type ModuleErrorCode, type ModuleErrorData };
 
 // base error class w/ error code for programmatic handling
 export class ExtensionError extends Error {
@@ -27,22 +37,52 @@ export class ExtensionError extends Error {
   }
 }
 
-// module resolution & fetch errors
-export type ModuleFetchErrorCode =
-  | 'MODULE_NOT_FOUND'
-  | 'OUTSIDE_WORKSPACE'
-  | 'PARSE_ERROR'
-  | 'TRANSFORM_ERROR';
+// module resolution & fetch errors (E100-E199)
+// extension-side subset of ModuleErrorCode
+export type ModuleFetchErrorCode = 'E100' | 'E101' | 'E110' | 'E120';
 
 export class ModuleFetchError extends ExtensionError {
+  readonly moduleId: string;
+  readonly parentModuleId?: string;
+  readonly suggestions: string[];
+  readonly recoverable: boolean;
+
   constructor(
     message: string,
     code: ModuleFetchErrorCode,
-    public readonly modulePath?: string,
-    public readonly parentModule?: string,
-    cause?: Error
+    moduleId: string,
+    parentModuleId?: string,
+    options?: {
+      cause?: Error;
+      suggestions?: string[];
+      recoverable?: boolean;
+    }
   ) {
-    super(message, code, cause);
+    super(message, code, options?.cause);
+    this.moduleId = moduleId;
+    this.parentModuleId = parentModuleId;
+    this.suggestions =
+      options?.suggestions ?? getSuggestionsForCode(code as ModuleErrorCode);
+    this.recoverable = options?.recoverable ?? true;
+  }
+
+  // serialize to shared ModuleErrorData for RPC
+  toModuleErrorData(): ModuleErrorData {
+    return {
+      code: this.code as ModuleErrorCode,
+      message: this.message,
+      moduleId: this.moduleId,
+      parentModuleId: this.parentModuleId,
+      suggestions: this.suggestions,
+      recoverable: this.recoverable,
+      stack: this.stack,
+      causeMessage: this.cause?.message,
+    };
+  }
+
+  // format for display w/ suggestions
+  toDisplayMessage(): string {
+    return formatModuleErrorDisplay(this.toModuleErrorData());
   }
 }
 
