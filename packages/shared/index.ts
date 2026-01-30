@@ -3,6 +3,8 @@
 
 // import types used locally in this file
 import type { Framework as FrameworkType } from './registry';
+import type { ModuleErrorData } from './errors';
+import type { LogTag } from './logging';
 
 // shared timing & limit constants
 export {
@@ -25,7 +27,6 @@ export {
   type ComponentBarrelDefinition,
   type Framework,
   type FrameworkId,
-  type FrameworkName,
   type FrameworkSetting,
   // registry data
   COMPONENT_REGISTRY,
@@ -82,6 +83,8 @@ export interface PreviewError {
   context?: string;
   // hint for webview to show retry button
   recoverable?: boolean;
+  // module-specific error data (when error is module-related)
+  moduleError?: ModuleErrorData;
 }
 
 // check if value is a PreviewError
@@ -96,7 +99,7 @@ export function isPreviewError(value: unknown): value is PreviewError {
 
 // format trust state for debug logging
 export function formatTrustStateForDebug(
-  tag: string,
+  tag: LogTag,
   state: TrustState
 ): string {
   return (
@@ -118,6 +121,17 @@ export {
   type ErrorInfo,
 } from './utils/errors';
 
+// module error types (shared between extension & webview)
+export {
+  type ModuleErrorCode,
+  type ModuleErrorData,
+  MODULE_ERROR_LABELS,
+  isModuleErrorData,
+  formatModuleErrorDisplay,
+  MODULE_ERROR_SUGGESTIONS,
+  getSuggestionsForCode,
+} from './errors';
+
 // module ID utilities (npm:// format handling)
 export {
   NPM_MODULE_PREFIX,
@@ -130,6 +144,14 @@ export {
   URL_SCHEME_PATTERN,
   type ParsedNpmModuleId,
 } from './utils/module-id';
+
+// LRU cache utilities
+export {
+  LRUCache,
+  type LRUCacheOptions,
+  ContentHashCache,
+  type ContentHashCacheOptions,
+} from './utils';
 
 // available preview themes (markdown content styling)
 export type PreviewTheme =
@@ -327,3 +349,16 @@ export interface WebviewRPC {
   zoomOut(): void;
   resetZoom(): void;
 }
+
+// logging types & tags (shared between extension & webview)
+export {
+  LogLevel,
+  type LogFn,
+  type LogFnVariadic,
+  type Logger,
+  type LoggerVariadic,
+  type TaggedLogger,
+  type TaggedLoggerFactory,
+  LogTags,
+  type LogTag,
+} from './logging';
