@@ -7,9 +7,8 @@ import {
   resolveTypescriptConfig,
   findTsConfig,
   resolveConfig,
-  type TypeScriptConfiguration,
-  type ResolvedConfig,
 } from './config';
+import type { TypeScriptConfiguration, ResolvedConfig } from '../types';
 import { DocumentTracker, DependencyWatcher, WatcherManager } from './watchers';
 import type { UpdateMode } from '../config';
 

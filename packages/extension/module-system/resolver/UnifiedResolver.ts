@@ -14,23 +14,13 @@ import {
   getFileProbeStrategy,
 } from './strategies';
 
-// import consolidated types from module-system/types.ts
+// import consolidated types from centralized types
 import {
   ResolutionStrategy,
-  type TypeScriptConfiguration,
   type ResolutionContext,
   type ResolutionResult,
   type ResolutionMode,
-} from '../types';
-
-// re-export types for backward compatibility
-export {
-  ResolutionStrategy,
-  type TypeScriptConfiguration,
-  type ResolutionContext,
-  type ResolutionResult,
-  type ResolutionMode,
-};
+} from '../../types';
 
 // * UnifiedResolver orchestrates 4 resolution strategies in priority order
 export class UnifiedResolver {
@@ -204,7 +194,8 @@ export class UnifiedResolver {
 }
 
 // singleton instance (resettable for testing)
-const unifiedResolverSingleton = createResettableSingleton(
+// exported for subsystem registration (resolver-subsystem.ts)
+export const unifiedResolverSingleton = createResettableSingleton(
   () => new UnifiedResolver()
 );
 

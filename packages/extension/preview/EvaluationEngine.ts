@@ -6,6 +6,7 @@ import { transformEntry } from '../module-system/transform/transform';
 import { extractImportSpecifiers } from '../module-system/deps/import-extractor';
 import { createLazyImport } from '../utils/lazy-import';
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 
 // lazy load Safe Mode compiler - only loaded when Safe Mode is actually used
 const getCompileSafeModule = createLazyImport(
@@ -20,7 +21,7 @@ import {
 import { TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS } from '../constants';
 import type { Preview, WebviewHandle } from './preview-manager';
 import type { TrustState } from '@mdx-preview/shared';
-import type { ResolvedConfig } from './config';
+import type { ResolvedConfig } from '../types';
 import type { TailwindConfig } from '../config/EffectivePreviewConfig';
 
 // result of evaluating MDX in Trusted Mode
@@ -62,9 +63,9 @@ export class EvaluationEngine {
     fsPath: string,
     preview: Preview
   ): Promise<TrustedEvaluationResult> {
-    debug('[ENGINE] evaluateTrusted called');
+    debug(`[${LogTags.ENGINE}] evaluateTrusted called`);
 
-    debug('[ENGINE] Transforming entry...');
+    debug(`[${LogTags.ENGINE}] Transforming entry...`);
     // I.1: transformEntry now returns esmCode for import extraction
     const { code, esmCode, frontmatter } = await transformEntry(
       text,
@@ -94,12 +95,12 @@ export class EvaluationEngine {
     text: string,
     mdxPreviewConfig: ResolvedConfig | undefined
   ): Promise<SafeEvaluationResult> {
-    debug('[ENGINE] evaluateSafe called');
+    debug(`[${LogTags.ENGINE}] evaluateSafe called`);
 
-    debug('[ENGINE] Loading Safe Mode compiler...');
+    debug(`[${LogTags.ENGINE}] Loading Safe Mode compiler...`);
     const { compileSafe } = await getCompileSafeModule();
 
-    debug('[ENGINE] Compiling to safe HTML...');
+    debug(`[${LogTags.ENGINE}] Compiling to safe HTML...`);
     const { html, frontmatter } = await compileSafe(text, mdxPreviewConfig);
     debug(`[ENGINE] Safe HTML compiled, length: ${html.length}`);
 
@@ -115,7 +116,7 @@ export class EvaluationEngine {
     webviewHandle: WebviewHandle
   ): Promise<void> {
     try {
-      debug('[ENGINE/TAILWIND] Starting background compilation');
+      debug(`[${LogTags.ENGINE}/TAILWIND] Starting background compilation`);
 
       const compilationTimeout =
         getConfigManager().get('tailwind.compilationTimeout', preview.doc.uri) ??
@@ -134,7 +135,7 @@ export class EvaluationEngine {
       );
 
       if (result === null) {
-        debug('[ENGINE/TAILWIND] Compilation timed out');
+        debug(`[${LogTags.ENGINE}/TAILWIND] Compilation timed out`);
         getErrorReporter().report(new Error('Tailwind compilation timed out'), {
           context: ErrorContext.Tailwind,
           showNotification: true,

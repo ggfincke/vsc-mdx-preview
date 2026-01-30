@@ -1,14 +1,6 @@
 // packages/extension/compiler/shared/transforms/index.ts
 // barrel exports for Safe Mode component transforms
 
-// types
-export type {
-  MdxJsxAttribute,
-  MdxJsxElement,
-  NodeConfig,
-  TransformFunction,
-} from './types';
-
 // utilities
 export {
   getStaticStringProp,

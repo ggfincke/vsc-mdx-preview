@@ -3,22 +3,16 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { SingletonService } from '../services/SingletonService';
 import { SubscriberManager } from '../utils/SubscriberManager';
-
-import { disposeConfigWatchers } from './config';
 
 // Import Preview class for type usage
 import type { Preview } from './Preview';
 
-// Re-export types & classes for backward compatibility
+// Re-export types & classes
 export { Preview, type StyleConfiguration, type WebviewHandle } from './Preview';
 export { openPreview, refreshPreview } from './preview-commands';
-export type { TypeScriptConfiguration } from './config';
-export type { UpdateMode } from './PreviewConfiguration';
-
-// dispose all config watchers (call during extension deactivation)
-export { disposeConfigWatchers };
 
 // webview app URIs (loaded from Vite manifest)
 export interface WebviewAppUris {
@@ -148,8 +142,8 @@ export class PreviewManager extends SingletonService<PreviewManager> {
   }
 }
 
-// get current preview through manager (backward compatibility)
+// get current preview through manager
 export function getCurrentPreview(): Preview | undefined {
-  debug('[PREVIEW-MANAGER] getCurrentPreview called');
+  debug(`[${LogTags.PREVIEW_MANAGER}] getCurrentPreview called`);
   return PreviewManager.getInstance().getCurrentPreview();
 }

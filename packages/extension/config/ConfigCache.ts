@@ -7,9 +7,10 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { warn } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { SingletonService } from '../services/SingletonService';
 import { SubscriberManager } from '../utils/SubscriberManager';
-import { LRUCache } from '../utils/cache';
+import { LRUCache } from '@mdx-preview/shared';
 import { disposeCollection } from '../utils/disposable';
 import type { ResolvedConfig } from '../preview/config/ConfigResolver';
 
@@ -53,8 +54,8 @@ export class ConfigCache extends SingletonService<ConfigCache> {
   });
   private watchers = new Map<string, vscode.FileSystemWatcher>();
   private subscriberManager = new SubscriberManager<ConfigChangeEvent>(
-    'CONFIG-CACHE',
-    (err) => warn('[CONFIG-CACHE] Error in config change callback:', err)
+    LogTags.CONFIG_CACHE,
+    (err) => warn(`[${LogTags.CONFIG_CACHE}] Error in config change callback:`, err)
   );
 
   protected constructor() {

@@ -8,7 +8,7 @@ import {
 } from '../validation-factory';
 import { validateString, validateBoolean } from './primitives';
 import { validateArray, validateObject, validateRecord } from './collections';
-import type { FrameworkName } from '@mdx-preview/shared';
+import type { FrameworkId } from '@mdx-preview/shared';
 
 // validates value is one of allowed enum string values
 export function validateEnumValue<T extends string>(
@@ -98,7 +98,7 @@ export interface ConfigValidationResult {
     remarkPlugins?: PluginSpecValue[];
     rehypePlugins?: PluginSpecValue[];
     components?: Record<string, string>;
-    framework?: FrameworkName;
+    framework?: FrameworkId;
     frameworkOptions?: {
       enableShims?: boolean;
       customAliases?: Record<string, string>;

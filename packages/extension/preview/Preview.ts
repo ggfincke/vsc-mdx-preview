@@ -3,9 +3,10 @@
 
 import * as vscode from 'vscode';
 import { error as logError, debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 
 import { refreshPanel } from './webview-manager';
-import type { ResolvedConfig, TypeScriptConfiguration } from './config';
+import type { ResolvedConfig, TypeScriptConfiguration } from '../types';
 import type { WatcherManager } from './watchers';
 
 // extracted components for Preview class
@@ -155,7 +156,7 @@ export class Preview {
   }
 
   constructor(doc: vscode.TextDocument) {
-    debug('[PREVIEW] Preview constructor called');
+    debug(`[${LogTags.PREVIEW}] Preview constructor called`);
 
     // initialize extracted state component
     this.state = new PreviewState();
@@ -286,7 +287,7 @@ export class Preview {
   }
 
   async refreshWebview(): Promise<void> {
-    debug('[PREVIEW] refreshWebview called');
+    debug(`[${LogTags.PREVIEW}] refreshWebview called`);
     const currentPreview = getPreviewManager().getCurrentPreview();
     if (currentPreview) {
       refreshPanel(currentPreview);

@@ -2,7 +2,6 @@
 // resolve framework-specific import aliases (@theme/*, @astrojs/starlight/components, etc.)
 
 import * as path from 'path';
-import type { Framework } from '../../framework/FrameworkDetector';
 import {
   COMPONENT_REGISTRY,
   SHIM_PREFIX,
@@ -40,7 +39,7 @@ function buildFrameworkAliasMaps(): Record<AliasFrameworkKey, FrameworkAliasMap>
   return maps;
 }
 
-function toAliasFrameworkKey(framework: Framework): AliasFrameworkKey | null {
+function toAliasFrameworkKey(framework: FrameworkId): AliasFrameworkKey | null {
   if (framework === 'generic') {
     return null;
   }
@@ -62,7 +61,7 @@ export function isBuiltInShim(resolvedPath: string): boolean {
 // resolve import using framework aliases
 export function resolveAlias(
   request: string,
-  framework: Framework,
+  framework: FrameworkId,
   workspaceRoot: string
 ): string | null {
   // handle bare imports of generic component names (Callout, Accordion, Alert, etc.)

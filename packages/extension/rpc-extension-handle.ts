@@ -7,6 +7,7 @@ import { Preview } from './preview/preview-manager';
 import { fetchLocal } from './module-system/fetcher/fetchLocal';
 import { getTrustManager, getErrorReporter } from './services';
 import { error as logError, warn as logWarn, debug } from './logging';
+import { LogTags } from '@mdx-preview/shared';
 import { ErrorContext } from './errors';
 import {
   validateString,
@@ -48,20 +49,20 @@ class ExtensionHandle implements ExtensionRPC {
   preview: Preview;
 
   constructor(preview: Preview) {
-    debug('[EXT-HANDLE] ExtensionHandle created');
+    debug(`[${LogTags.EXT_HANDLE}] ExtensionHandle created`);
     this.preview = preview;
   }
 
   // handshake to resolve when webview is ready
   handshake(): void {
-    debug('[EXT-HANDLE] handshake() called from webview!');
+    debug(`[${LogTags.EXT_HANDLE}] handshake() called from webview!`);
     this.preview.completeHandshake();
-    debug('[EXT-HANDLE] completeHandshake called');
+    debug(`[${LogTags.EXT_HANDLE}] completeHandshake called`);
   }
 
   // report performance metrics from webview
   reportPerformance(evaluationDuration: number): void {
-    debug(`[EXT-HANDLE] reportPerformance: ${evaluationDuration}`);
+    debug(`[${LogTags.EXT_HANDLE}] reportPerformance: ${evaluationDuration}`);
     const validDuration = validateNumber(
       evaluationDuration,
       'evaluationDuration',
@@ -85,7 +86,7 @@ class ExtensionHandle implements ExtensionRPC {
     isBare: boolean,
     parentId: string
   ): Promise<FetchResult | undefined> {
-    debug(`[EXT-HANDLE] fetch: request=${request}, isBare=${isBare}`);
+    debug(`[${LogTags.EXT_HANDLE}] fetch: request=${request}, isBare=${isBare}`);
 
     // type validation using utilities
     const opts = { context: 'fetch', log: logError };
@@ -127,7 +128,7 @@ class ExtensionHandle implements ExtensionRPC {
 
   // open VS Code settings (optionally to specific setting)
   openSettings(settingId?: string): void {
-    debug(`[EXT-HANDLE] openSettings: ${settingId}`);
+    debug(`[${LogTags.EXT_HANDLE}] openSettings: ${settingId}`);
     if (settingId && typeof settingId === 'string') {
       vscode.commands.executeCommand(
         'workbench.action.openSettings',
@@ -143,13 +144,13 @@ class ExtensionHandle implements ExtensionRPC {
 
   // open workspace trust management
   manageTrust(): void {
-    debug('[EXT-HANDLE] manageTrust called');
+    debug(`[${LogTags.EXT_HANDLE}] manageTrust called`);
     vscode.commands.executeCommand('workbench.trust.manage');
   }
 
   // open external URL in default browser
   openExternal(url: string): void {
-    debug(`[EXT-HANDLE] openExternal: ${url}`);
+    debug(`[${LogTags.EXT_HANDLE}] openExternal: ${url}`);
 
     // validate URL w/ allowed schemes
     const parsed = validateUrl(url, 'URL', {
@@ -171,7 +172,7 @@ class ExtensionHandle implements ExtensionRPC {
     column?: number
   ): Promise<void> {
     debug(
-      `[EXT-HANDLE] openDocument: ${relativePath}${line ? `:${line}` : ''}${column ? `:${column}` : ''}`
+      `[${LogTags.EXT_HANDLE}] openDocument: ${relativePath}${line ? `:${line}` : ''}${column ? `:${column}` : ''}`
     );
 
     const opts = { context: 'openDocument' };
@@ -234,7 +235,7 @@ class ExtensionHandle implements ExtensionRPC {
 
   // open preview for an MDX file (used for internal link navigation)
   async openPreview(relativePath: string): Promise<void> {
-    debug(`[EXT-HANDLE] openPreview: ${relativePath}`);
+    debug(`[${LogTags.EXT_HANDLE}] openPreview: ${relativePath}`);
 
     const opts = { context: 'openPreview' };
 

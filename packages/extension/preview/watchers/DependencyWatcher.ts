@@ -4,11 +4,9 @@
 import * as vscode from 'vscode';
 import { DEP_WATCHER_MAX_ENTRIES } from '../../constants';
 import { debug } from '../../logging';
-import { LRUCache } from '../../utils/cache/LRUCache';
-import {
-  getUnifiedResolver,
-  type ResolutionContext,
-} from '../../module-system/resolver/UnifiedResolver';
+import { LRUCache } from '@mdx-preview/shared';
+import { getUnifiedResolver } from '../../module-system/resolver/UnifiedResolver';
+import type { ResolutionContext } from '../../types';
 import { BaseWatcher } from './BaseWatcher';
 
 // watch local file dependencies (imports from MDX files) for changes

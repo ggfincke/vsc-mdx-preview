@@ -9,6 +9,7 @@ import { ErrorContext } from '../errors';
 import {
   extractErrorMessage,
   formatTrustStateForDebug,
+  LogTags,
 } from '@mdx-preview/shared';
 import {
   getTrustManager,
@@ -30,38 +31,38 @@ export default async function evaluateInWebview(
   text: string,
   fsPath: string
 ): Promise<void> {
-  debug(`[EVALUATE] evaluateInWebview called for: ${fsPath}`);
+  debug(`[${LogTags.EVALUATE}] evaluateInWebview called for: ${fsPath}`);
   const { webviewHandle } = preview;
   const engine = getEvaluationEngine();
 
   // use document-specific trust check (includes remote/scheme checks)
   const trustState = getTrustManager().getStateForDocument(preview.doc.uri);
-  debug(formatTrustStateForDebug('EVALUATE', trustState));
+  debug(formatTrustStateForDebug(LogTags.EVALUATE, trustState));
 
   try {
     performance.mark('preview/start');
 
-    debug('[EVALUATE] Waiting for webviewHandshakePromise...');
+    debug(`[${LogTags.EVALUATE}] Waiting for webviewHandshakePromise...`);
     await preview.webviewHandshakePromise;
-    debug('[EVALUATE] Handshake complete!');
+    debug(`[${LogTags.EVALUATE}] Handshake complete!`);
 
     // push initial config after handshake
     preview.onWebviewReady();
 
     // send trust state to webview
-    debug('[EVALUATE] Sending trust state to webview');
+    debug(`[${LogTags.EVALUATE}] Sending trust state to webview`);
     webviewHandle.setTrustState(trustState);
 
     // send framework info so webview can lazy-load the right shims
     const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
     if (frameworkInfo.framework !== 'generic') {
-      debug(`[EVALUATE] Sending framework to webview: ${frameworkInfo.framework}`);
+      debug(`[${LogTags.EVALUATE}] Sending framework to webview: ${frameworkInfo.framework}`);
       webviewHandle.setFramework(frameworkInfo.framework);
     }
 
     if (trustState.canExecute) {
       // trusted mode: full code evaluation
-      debug('[EVALUATE] Using Trusted Mode');
+      debug(`[${LogTags.EVALUATE}] Using Trusted Mode`);
 
       const result = await engine.evaluateTrusted(text, fsPath, preview);
 
@@ -92,22 +93,22 @@ export default async function evaluateInWebview(
         const usedGenericComponents = getUsedGenericComponents(detectionResult);
         if (usedGenericComponents.length > 0) {
           debug(
-            `[EVALUATE] Used generic components: ${usedGenericComponents.join(', ')}`
+            `[${LogTags.EVALUATE}] Used generic components: ${usedGenericComponents.join(', ')}`
           );
           webviewHandle.setUsedComponents(usedGenericComponents);
         }
       } catch (err) {
         // detection failure is non-fatal - webview will load all generic shims as fallback
-        debug(`[EVALUATE] Component detection failed: ${extractErrorMessage(err)}`);
+        debug(`[${LogTags.EVALUATE}] Component detection failed: ${extractErrorMessage(err)}`);
       }
 
-      debug('[EVALUATE] Calling webviewHandle.updatePreview');
+      debug(`[${LogTags.EVALUATE}] Calling webviewHandle.updatePreview`);
       webviewHandle.updatePreview(
         result.code,
         result.entryFilePath,
         result.dependencies
       );
-      debug('[EVALUATE] updatePreview called');
+      debug(`[${LogTags.EVALUATE}] updatePreview called`);
 
       // build effective config for Tailwind check
       const effectiveConfig = buildEffectivePreviewConfig({
@@ -142,7 +143,7 @@ export default async function evaluateInWebview(
       }
     } else {
       // safe mode: static HTML rendering
-      debug('[EVALUATE] Using Safe Mode');
+      debug(`[${LogTags.EVALUATE}] Using Safe Mode`);
 
       // disable Tailwind in safe mode
       const tailwindRequestId = preview.nextTailwindRequestId();
@@ -166,15 +167,15 @@ export default async function evaluateInWebview(
         result.frontmatter
       );
 
-      debug('[EVALUATE] Calling webviewHandle.updatePreviewSafe');
+      debug(`[${LogTags.EVALUATE}] Calling webviewHandle.updatePreviewSafe`);
       webviewHandle.updatePreviewSafe(result.html);
-      debug('[EVALUATE] updatePreviewSafe called');
+      debug(`[${LogTags.EVALUATE}] updatePreviewSafe called`);
     }
 
-    debug('[EVALUATE] evaluateInWebview complete');
+    debug(`[${LogTags.EVALUATE}] evaluateInWebview complete`);
   } catch (error) {
     debug(
-      `[EVALUATE] ERROR: ${extractErrorMessage(error)}`
+      `[${LogTags.EVALUATE}] ERROR: ${extractErrorMessage(error)}`
     );
     getErrorReporter().report(error, {
       context: ErrorContext.Transpile,
@@ -216,11 +217,11 @@ function sendNextraMetaIfNeeded(
 
     // only send if we have meaningful metadata
     if (Object.keys(mergedMeta).length > 0) {
-      debug('[EVALUATE] Sending Nextra meta to webview:', mergedMeta);
+      debug(`[${LogTags.EVALUATE}] Sending Nextra meta to webview:`, mergedMeta);
       webviewHandle.setNextraMeta(mergedMeta);
     }
   } catch (err) {
     // non-fatal error, log & continue
-    debug(`[EVALUATE] Error resolving Nextra meta: ${extractErrorMessage(err)}`);
+    debug(`[${LogTags.EVALUATE}] Error resolving Nextra meta: ${extractErrorMessage(err)}`);
   }
 }

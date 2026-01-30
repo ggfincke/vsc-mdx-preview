@@ -5,7 +5,7 @@
 // ensuring both modes use identical plugin ordering for shared plugins
 
 import type { Pluggable } from 'unified';
-import type { UnknownBehavior, PluginPipeline } from '../types';
+import type { UnknownBehavior, PluginPipeline } from '../../types';
 import type { LoadedPlugins } from '../plugins/loader';
 import {
   sharedRemarkPlugins,

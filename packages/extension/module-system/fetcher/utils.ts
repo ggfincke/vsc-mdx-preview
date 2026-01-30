@@ -75,9 +75,6 @@ export function isCoreModule(request: string): boolean {
   return ALL_CORE_MODULES.has(normalized);
 }
 
-// extractImports has been moved to import-extractor.ts
-// import from there instead: import { extractImports } from './import-extractor';
-
 // build a noop result for core modules that can't be shimmed in browser
 export function buildNoopResult(normalizedRequest: string) {
   usedCoreModules.add(normalizedRequest);

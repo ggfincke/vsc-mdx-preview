@@ -4,13 +4,11 @@
 import * as path from 'path';
 import { parse, type TSConfckParseResult } from 'tsconfck';
 import { error as logError, debug } from '../../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { findUp } from '../../utils/find-up';
 
-// import consolidated type from module-system/types.ts
-import type { TypeScriptConfiguration } from '../../module-system/types';
-
-// re-export type for backward compatibility
-export type { TypeScriptConfiguration };
+// import consolidated type from centralized types
+import type { TypeScriptConfiguration } from '../../types';
 
 // cache parsed configs by directory to avoid repeated FS reads
 const configCache = new Map<string, TypeScriptConfiguration | null>();
@@ -51,21 +49,21 @@ export async function resolveTypescriptConfigAsync(
     };
 
     debug(
-      `[TS-CONFIG] Parsed ${configFile}: baseUrl=${config.baseUrl}, paths=${Object.keys(config.paths ?? {}).length} aliases`
+      `[${LogTags.TS_CONFIG}] Parsed ${configFile}: baseUrl=${config.baseUrl}, paths=${Object.keys(config.paths ?? {}).length} aliases`
     );
 
     configCache.set(cacheKey, config);
     return config;
   } catch (err) {
-    logError('[TS-CONFIG] Failed to parse tsconfig:', err);
+    logError(`[${LogTags.TS_CONFIG}] Failed to parse tsconfig:`, err);
     configCache.set(cacheKey, null);
     return null;
   }
 }
 
-// synchronous wrapper for backward compatibility
-// uses cached results if available, otherwise returns null
-// caller should use async version for initial load
+// synchronous wrapper for cached access
+// returns cached result if available, otherwise triggers async load & returns null
+// use async version for guaranteed fresh data
 export function resolveTypescriptConfig(
   configFile: string | null
 ): TypeScriptConfiguration | null {
@@ -90,5 +88,5 @@ export function resolveTypescriptConfig(
 // clear the config cache (for testing or when tsconfig changes)
 export function clearTsConfigCache(): void {
   configCache.clear();
-  debug('[TS-CONFIG] Config cache cleared');
+  debug(`[${LogTags.TS_CONFIG}] Config cache cleared`);
 }

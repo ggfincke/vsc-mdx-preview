@@ -3,9 +3,9 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 
 // re-export types & constants
-export * from './types';
 export { CommandNames, type CommandName } from './command-names';
 
 // import command modules
@@ -17,7 +17,7 @@ import { commands as zoomCommands } from './zoom';
 import { commands as frameworkSelectionCommands } from './framework-selection';
 import { commands as cacheCommands } from './cache';
 
-import type { CommandDefinition } from './types';
+import type { CommandDefinition } from '../types';
 
 // all command definitions aggregated from modules
 const allCommands: CommandDefinition[] = [
@@ -32,13 +32,13 @@ const allCommands: CommandDefinition[] = [
 
 // register all MDX Preview commands w/ VS Code
 export function registerAllCommands(): vscode.Disposable[] {
-  debug('[COMMANDS] Registering all commands...');
+  debug(`[${LogTags.COMMANDS}] Registering all commands...`);
 
   const disposables = allCommands.map(({ id, handler }) => {
-    debug(`[COMMANDS] Registering: ${id}`);
+    debug(`[${LogTags.COMMANDS}] Registering: ${id}`);
     return vscode.commands.registerCommand(id, handler);
   });
 
-  debug(`[COMMANDS] Registered ${disposables.length} commands`);
+  debug(`[${LogTags.COMMANDS}] Registered ${disposables.length} commands`);
   return disposables;
 }

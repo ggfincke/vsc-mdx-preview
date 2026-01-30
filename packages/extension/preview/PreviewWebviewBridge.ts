@@ -3,6 +3,7 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { getThemeManager } from '../services';
 import { DocumentTracker, CustomCssWatcher, WatcherManager } from './watchers';
 import type { WebviewHandleType } from '../rpc-extension';
@@ -47,7 +48,7 @@ export class PreviewWebviewBridge {
 
   // called after webview handshake completes to push initial configuration
   onWebviewReady(docUri: vscode.Uri): void {
-    debug('[PREVIEW] onWebviewReady - pushing initial config');
+    debug(`[${LogTags.PREVIEW}] onWebviewReady - pushing initial config`);
     this.pushThemeState(docUri);
   }
 
@@ -80,7 +81,7 @@ export class PreviewWebviewBridge {
       }
     }
 
-    debug('[PREVIEW] pushThemeState - pushing theme state', themeState);
+    debug(`[${LogTags.PREVIEW}] pushThemeState - pushing theme state`, themeState);
     this.webviewHandle.setTheme(themeState);
   }
 

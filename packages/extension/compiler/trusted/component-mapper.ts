@@ -4,11 +4,11 @@
 import * as vscode from 'vscode';
 import { debug, info } from '../../logging';
 import { toAbsolutePath, toRelativeImportPath } from '../../utils/path-utils';
-import type { ResolvedConfig } from '../../preview/config';
+import type { ResolvedConfig } from '../../types';
 import { getTrustManager } from '../../services';
 
 // use shared component registry as single source of truth
-import { getAllGenericComponentNames } from '@mdx-preview/shared';
+import { getAllGenericComponentNames, LogTags } from '@mdx-preview/shared';
 
 // use consolidated warning utilities
 import {
@@ -46,9 +46,9 @@ export function generateComponentImports(
 ): ComponentImportsResult {
   const { builtinsEnabled = true } = options;
 
-  debug(`[COMPONENT-MAPPER] Called with config: ${config ? JSON.stringify(config.config) : 'undefined'}`);
-  debug(`[COMPONENT-MAPPER] documentDir: ${documentDir}`);
-  debug(`[COMPONENT-MAPPER] builtinsEnabled: ${builtinsEnabled}`);
+  debug(`[${LogTags.COMPONENT_MAPPER}] Called with config: ${config ? JSON.stringify(config.config) : 'undefined'}`);
+  debug(`[${LogTags.COMPONENT_MAPPER}] documentDir: ${documentDir}`);
+  debug(`[${LogTags.COMPONENT_MAPPER}] builtinsEnabled: ${builtinsEnabled}`);
 
   const result: ComponentImportsResult = {
     imports: '',
@@ -58,7 +58,7 @@ export function generateComponentImports(
 
   // check trust state for specific document - validates all 4 security rules
   const trustState = getTrustManager().getStateForDocument(documentUri);
-  debug(`[COMPONENT-MAPPER] trustState.canExecute: ${trustState.canExecute}`);
+  debug(`[${LogTags.COMPONENT_MAPPER}] trustState.canExecute: ${trustState.canExecute}`);
 
   if (!trustState.canExecute) {
     const components = config?.config.components;
@@ -128,10 +128,10 @@ export function generateComponentImports(
       debug(`Injected ${builtinCount} built-in generic shim(s)`);
     }
 
-    debug('[COMPONENT-MAPPER] Generated imports:\n' + result.imports);
-    debug('[COMPONENT-MAPPER] Components object: ' + result.componentsObject);
+    debug(`[${LogTags.COMPONENT_MAPPER}] Generated imports:\n` + result.imports);
+    debug(`[${LogTags.COMPONENT_MAPPER}] Components object: ` + result.componentsObject);
   } else {
-    debug('[COMPONENT-MAPPER] No imports generated');
+    debug(`[${LogTags.COMPONENT_MAPPER}] No imports generated`);
   }
 
   return result;

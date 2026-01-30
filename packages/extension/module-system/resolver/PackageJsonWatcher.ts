@@ -3,6 +3,7 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { BaseWatcher } from '../../preview/watchers/BaseWatcher';
 import { getConfigManager } from '../../services';
 
@@ -26,11 +27,6 @@ export class PackageJsonWatcher extends BaseWatcher {
     if (onInvalidate) {
       this.onInvalidate = onInvalidate;
     }
-  }
-
-  // allow setting callback after construction (for backward compatibility)
-  setOnInvalidate(callback: () => void): void {
-    this.onInvalidate = callback;
   }
 
   protected async onStart(): Promise<void> {
@@ -63,7 +59,7 @@ export class PackageJsonWatcher extends BaseWatcher {
       this.handleChange(uri, 'lock file')
     );
 
-    debug('[PKG-JSON] Started watching package files');
+    debug(`[${LogTags.PKG_JSON}] Started watching package files`);
     this.markReady();
   }
 
@@ -84,7 +80,7 @@ export class PackageJsonWatcher extends BaseWatcher {
 
   // handle file change event w/ debouncing
   private handleChange(uri: vscode.Uri, fileType: string): void {
-    debug(`[PKG-JSON] ${fileType} changed: ${uri.fsPath}`);
+    debug(`[${LogTags.PKG_JSON}] ${fileType} changed: ${uri.fsPath}`);
 
     // debounce rapid changes (e.g., during npm install)
     if (this.debounceTimer) {
@@ -92,7 +88,7 @@ export class PackageJsonWatcher extends BaseWatcher {
     }
 
     this.debounceTimer = setTimeout(() => {
-      debug('[PKG-JSON] Triggering cache invalidation');
+      debug(`[${LogTags.PKG_JSON}] Triggering cache invalidation`);
       this.onInvalidate?.();
       this.debounceTimer = undefined;
     }, getWatcherDebounce());

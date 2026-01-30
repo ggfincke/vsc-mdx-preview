@@ -5,7 +5,8 @@
 // w/ TTL-based expiration
 
 import { debug } from '../logging';
-import { LRUCache } from '../utils/cache';
+import { LogTags } from '@mdx-preview/shared';
+import { LRUCache } from '@mdx-preview/shared';
 import { CACHE_DEFAULT_MAX_ENTRIES, CACHE_DEFAULT_TTL_MS } from './constants';
 
 export interface TailwindCacheOptions {
@@ -34,7 +35,7 @@ export class TailwindCache {
 
   clear(): void {
     this.cache.clear();
-    debug('[TAILWIND] Cache cleared');
+    debug(`[${LogTags.TAILWIND}] Cache cleared`);
   }
 
   updateSettings(options: TailwindCacheOptions): void {

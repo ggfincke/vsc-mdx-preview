@@ -10,11 +10,3 @@ export {
 } from './ComponentCodeActions';
 
 export { detectComponents, getUnknownComponents } from './ComponentDetector';
-
-export type {
-  ComponentSource,
-  DetectedComponent,
-  ComponentDiagnostic,
-  ComponentDetectionResult,
-  ComponentDetectionOptions,
-} from './types';

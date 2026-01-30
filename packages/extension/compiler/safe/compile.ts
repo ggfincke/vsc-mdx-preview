@@ -15,15 +15,13 @@ import {
   getSafeRehypePluginSets,
 } from '../plugins/builder';
 import { warnIgnoredSafeModeConfig } from '../shared/pipeline-warnings';
-import type { ResolvedConfig } from '../../preview/config';
+import type { ResolvedConfig } from '../../types';
 import remarkGenericComponents, {
   KNOWN_GENERIC_COMPONENTS,
 } from '../shared/remark/generic-components';
 import { getConfigManager } from '../../services';
 
-// import & re-export types from consolidated types file
-export type { UnknownBehavior, SafeHTMLResult } from '../types';
-import type { UnknownBehavior, SafeHTMLResult } from '../types';
+import type { UnknownBehavior, SafeHTMLResult } from '../../types';
 
 // options for remarkStripMdx plugin
 interface RemarkStripMdxOptions {
@@ -314,6 +312,3 @@ export async function compileSafe(
     frontmatter: frontmatter as Record<string, unknown>,
   };
 }
-
-// backward-compatible export name
-export const compileToSafeHTML = compileSafe;

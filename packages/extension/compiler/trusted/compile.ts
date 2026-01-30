@@ -16,7 +16,7 @@ import { generateComponentImports } from './component-mapper';
 import { debug, warn } from '../../logging';
 import { getConfigManager } from '../../services';
 
-import type { MdxTranspileResult } from '../types';
+import type { MdxTranspileResult } from '../../types';
 
 // inject MDX layout styles based on configuration
 const injectMDXStyles = (mdxText: string, preview: Preview): string => {
@@ -167,6 +167,3 @@ export async function compileTrusted(
     frontmatter: frontmatter as Record<string, unknown>,
   };
 }
-
-// backward-compatible export name
-export const mdxTranspileAsync = compileTrusted;

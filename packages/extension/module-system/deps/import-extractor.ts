@@ -2,7 +2,7 @@
 // consolidated import/export specifier extraction from JavaScript/TypeScript code
 
 import { init as initLexer, parse as parseImports } from 'es-module-lexer';
-import { extractErrorMessage } from '@mdx-preview/shared';
+import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import { debug } from '../../logging';
 
 // lexer initialization state
@@ -44,7 +44,7 @@ const REQUIRE_TEMPLATE = /require\s*\(\s*`([^`\\]*(?:\\.[^`\\]*)*)`\s*\)/g;
 export async function extractImportSpecifiers(code: string): Promise<string[]> {
   // I.4: Fast path - skip parsing if no import-like patterns detected
   if (!mightHaveImports(code)) {
-    debug('[IMPORT-EXTRACTOR] Fast path: no import patterns detected');
+    debug(`[${LogTags.IMPORT_EXTRACTOR}] Fast path: no import patterns detected`);
     return [];
   }
 
@@ -65,7 +65,7 @@ export async function extractImportSpecifiers(code: string): Promise<string[]> {
 
     return esmImports;
   } catch (error) {
-    debug(`[IMPORT-EXTRACTOR] Lexer error, falling back to require: ${extractErrorMessage(error)}`);
+    debug(`[${LogTags.IMPORT_EXTRACTOR}] Lexer error, falling back to require: ${extractErrorMessage(error)}`);
     return extractRequireSpecifiers(code);
   }
 }
@@ -98,6 +98,3 @@ function extractRequireSpecifiers(code: string): string[] {
 
   return specifiers;
 }
-
-// re-export for backward compatibility
-export { extractImportSpecifiers as extractImports };

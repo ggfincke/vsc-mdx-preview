@@ -3,18 +3,18 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import {
   getConfigManager,
   getFrameworkDetector,
   getPreviewManager,
 } from '../services';
-import type { Framework } from '../framework/FrameworkDetector';
-import type { FrameworkSetting } from '@mdx-preview/shared';
+import type { FrameworkId, FrameworkSetting } from '@mdx-preview/shared';
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from './types';
+import type { CommandDefinition } from '../types';
 
 const selectFramework = async (): Promise<void> => {
-  debug('[CMD] selectFramework command triggered');
+  debug(`[${LogTags.CMD}] selectFramework command triggered`);
 
   const configManager = getConfigManager();
   const currentSetting = configManager.get('framework');
@@ -22,7 +22,7 @@ const selectFramework = async (): Promise<void> => {
 
   // detect framework from active editor
   const editor = vscode.window.activeTextEditor;
-  let detectedFramework: Framework = 'generic';
+  let detectedFramework: FrameworkId = 'generic';
   if (editor) {
     const info = frameworkDetector.getFramework(editor.document.uri);
     if (info.detected) {

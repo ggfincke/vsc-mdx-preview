@@ -1,7 +1,7 @@
 // packages/extension/compiler/shared/transforms/utils.ts
 // shared utilities for Safe Mode component transforms
 
-import type { MdxJsxElement, NodeConfig } from './types';
+import type { MdxJsxElement, NodeConfig } from '../../../types';
 
 // extract a static string prop from an MDX JSX element
 // only processes string literal values; expression values are ignored

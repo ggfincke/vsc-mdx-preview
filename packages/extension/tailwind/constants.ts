@@ -52,10 +52,10 @@ export const PROCESSOR_CACHE_DEFAULT_TTL_SECONDS = 300;
 // version boundaries
 
 // minimum supported Tailwind CSS major version
-export const MIN_SUPPORTED_TAILWIND_VERSION = 3;
+export const MIN_SUPPORTED_TAILWIND_VERSION = 4;
 
 // maximum known Tailwind CSS major version (for future-proofing warnings)
-export const MAX_KNOWN_TAILWIND_VERSION = 4;
+export const MAX_KNOWN_TAILWIND_VERSION = 5;
 
 // watcher configuration
 

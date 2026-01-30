@@ -2,13 +2,10 @@
 // scan imported dependencies for Tailwind classes
 
 import * as path from 'path';
-import {
-  getUnifiedResolver,
-  type ResolutionContext,
-} from '../../module-system/resolver/UnifiedResolver';
+import { getUnifiedResolver } from '../../module-system/resolver/UnifiedResolver';
+import type { ResolutionContext, TextExtractor } from '../../types';
 import { FileScanValidator } from '../FileScanValidator';
 import { TailwindScanCache, computeContentHash } from '../TailwindScanCache';
-import type { TextExtractor } from './types';
 
 // resolves & scans imported dependency files for Tailwind classes
 export class DependencyScanner {

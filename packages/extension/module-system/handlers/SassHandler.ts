@@ -4,7 +4,7 @@
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 import type { FetchResult } from '@mdx-preview/shared';
-import { extractErrorMessage } from '@mdx-preview/shared';
+import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { getBrowserResolver } from '../resolver/resolver-factory';
@@ -39,12 +39,12 @@ async function loadSassFromWorkspace(
 
     // validate it has the expected API
     if (typeof sassModule.compileAsync !== 'function') {
-      warn(`[SassHandler] sass at ${sassPath} missing compileAsync method`);
+      warn(`[${LogTags.SASS_HANDLER}] sass at ${sassPath} missing compileAsync method`);
       sassCache.set(workspaceRoot, null);
       return null;
     }
 
-    debug(`[SassHandler] Loaded sass from workspace: ${sassPath}`);
+    debug(`[${LogTags.SASS_HANDLER}] Loaded sass from workspace: ${sassPath}`);
     sassCache.set(workspaceRoot, sassModule);
     return sassModule;
   } catch (error) {
@@ -62,24 +62,24 @@ async function loadSassFromWorkspace(
           mod) as SassModule;
 
         if (typeof sassModule.compileAsync !== 'function') {
-          warn(`[SassHandler] ESM sass at ${sassPath} missing compileAsync`);
+          warn(`[${LogTags.SASS_HANDLER}] ESM sass at ${sassPath} missing compileAsync`);
           sassCache.set(workspaceRoot, null);
           return null;
         }
 
-        debug(`[SassHandler] Loaded ESM sass from workspace: ${sassPath}`);
+        debug(`[${LogTags.SASS_HANDLER}] Loaded ESM sass from workspace: ${sassPath}`);
         sassCache.set(workspaceRoot, sassModule);
         return sassModule;
       } catch (esmError) {
         debug(
-          `[SassHandler] Failed to load ESM sass: ${extractErrorMessage(esmError)}`
+          `[${LogTags.SASS_HANDLER}] Failed to load ESM sass: ${extractErrorMessage(esmError)}`
         );
       }
     }
 
     // sass not found or load error
     debug(
-      `[SassHandler] sass not found in workspace: ${extractErrorMessage(error)}`
+      `[${LogTags.SASS_HANDLER}] sass not found in workspace: ${extractErrorMessage(error)}`
     );
     sassCache.set(workspaceRoot, null);
     return null;
@@ -89,7 +89,7 @@ async function loadSassFromWorkspace(
 // clear cached sass modules (call when workspace changes or on refresh)
 export function clearSassCache(): void {
   sassCache.clear();
-  debug('[SassHandler] Sass cache cleared');
+  debug(`[${LogTags.SASS_HANDLER}] Sass cache cleared`);
 }
 
 // generate helpful CSS comment when sass is not available
@@ -131,7 +131,7 @@ export class SassHandler implements FileTypeHandler {
 
     // if no workspace root, return helpful message
     if (!workspaceRoot) {
-      debug('[SassHandler] No workspace root available');
+      debug(`[${LogTags.SASS_HANDLER}] No workspace root available`);
       return buildSassNotInstalledResult(fsPath);
     }
 
@@ -141,7 +141,7 @@ export class SassHandler implements FileTypeHandler {
     if (!sass) {
       // return CSS comment explaining how to enable SCSS support
       warn(
-        `[SassHandler] sass not installed in workspace, returning help message for ${fsPath}`
+        `[${LogTags.SASS_HANDLER}] sass not installed in workspace, returning help message for ${fsPath}`
       );
       return buildSassNotInstalledResult(fsPath);
     }
@@ -186,7 +186,7 @@ ${errorMessage
 
    ════════════════════════════════════════════════════════════════════════════ */
 `;
-      warn(`[SassHandler] Compilation error for ${fsPath}: ${errorMessage}`);
+      warn(`[${LogTags.SASS_HANDLER}] Compilation error for ${fsPath}: ${errorMessage}`);
       return buildCssResult(fsPath, errorCss);
     }
   }

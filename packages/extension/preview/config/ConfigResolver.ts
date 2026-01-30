@@ -12,16 +12,13 @@ import { readJsonSync } from '../../utils/file-utils';
 import { findUp, createWorkspaceStopPredicate } from '../../utils/find-up';
 import { createFileWatcher } from '../../utils/createFileWatcher';
 
-// import consolidated types from compiler/types.ts
+// import consolidated types from centralized types
 import type {
   PluginSpec,
   ComponentMapping,
   UnknownBehavior,
-} from '../../compiler/types';
-import type { FrameworkName } from '@mdx-preview/shared';
-
-// re-export types for backward compatibility
-export type { PluginSpec, ComponentMapping, UnknownBehavior };
+} from '../../types';
+import type { FrameworkId } from '@mdx-preview/shared';
 
 // framework-specific options
 export interface FrameworkOptions {
@@ -46,7 +43,7 @@ export interface MdxPreviewConfig {
   // custom component mappings for MDX
   components?: ComponentMapping;
   // framework override (overrides auto-detection)
-  framework?: FrameworkName;
+  framework?: FrameworkId;
   // framework-specific options
   frameworkOptions?: FrameworkOptions;
   // Tailwind CSS options
@@ -206,15 +203,6 @@ export function onConfigChange(
 
 // clear all cached configs (for testing or manual refresh)
 export function clearConfigCache(): void {
-  getCache().clear();
-}
-
-// dispose all config watchers (call during extension deactivation)
-// note: now handled by ConfigCache.dispose() via ServiceRegistry,
-// but kept for backward compatibility w/ extension.ts
-export function disposeConfigWatchers(): void {
-  // ConfigCache handles cleanup via dispose(), which is called by ServiceRegistry
-  // this function is kept for backward compatibility but delegates to clear()
   getCache().clear();
 }
 

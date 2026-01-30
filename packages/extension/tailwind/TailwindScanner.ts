@@ -3,7 +3,7 @@
 
 import { PatternScanner, ContentScanner, DependencyScanner } from './scanning';
 import { TailwindScanCache } from './TailwindScanCache';
-import type { ResolutionContext } from '../module-system/resolver/UnifiedResolver';
+import type { ResolutionContext } from '../types';
 
 export interface TailwindScanOptions {
   includeDependencies: boolean;

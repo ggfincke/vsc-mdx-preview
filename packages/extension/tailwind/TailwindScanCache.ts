@@ -6,7 +6,8 @@
 
 import * as crypto from 'crypto';
 import { debug } from '../logging';
-import { ContentHashCache } from '../utils/cache';
+import { LogTags } from '@mdx-preview/shared';
+import { ContentHashCache } from '@mdx-preview/shared';
 import {
   SCAN_CACHE_DEFAULT_MAX_ENTRIES,
   CACHE_DEFAULT_TTL_MS,
@@ -42,7 +43,7 @@ export class TailwindScanCache {
   get(fsPath: string, contentHash: string): string[] | null {
     const result = this.cache.getIfHashMatches(fsPath, contentHash);
     if (result !== null) {
-      debug(`[TAILWIND-SCAN] Cache hit for ${fsPath}`);
+      debug(`[${LogTags.TAILWIND_SCAN}] Cache hit for ${fsPath}`);
     }
     return result;
   }
@@ -56,14 +57,14 @@ export class TailwindScanCache {
   // call when file is known to have changed (e.g., from DependencyWatcher)
   invalidate(fsPath: string): void {
     if (this.cache.delete(fsPath)) {
-      debug(`[TAILWIND-SCAN] Invalidated cache for ${fsPath}`);
+      debug(`[${LogTags.TAILWIND_SCAN}] Invalidated cache for ${fsPath}`);
     }
   }
 
   // clear all cached scan results
   clear(): void {
     this.cache.clear();
-    debug('[TAILWIND-SCAN] Cache cleared');
+    debug(`[${LogTags.TAILWIND_SCAN}] Cache cleared`);
   }
 
   // get current cache size (for debugging/testing)

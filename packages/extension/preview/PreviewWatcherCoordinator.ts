@@ -6,7 +6,7 @@ import type { WatcherManager } from './watchers';
 import type { PreviewInitializer } from './PreviewInitializer';
 import type { PreviewDocumentHandler } from './PreviewDocumentHandler';
 import type { WebviewHandle } from './PreviewWebviewBridge';
-import type { ResolvedConfig } from './config';
+import type { ResolvedConfig } from '../types';
 
 // watcher coordinator - manages watcher lifecycle for a preview
 // delegates actual watcher creation/setup to PreviewInitializer

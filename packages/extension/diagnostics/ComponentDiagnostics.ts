@@ -7,8 +7,8 @@ import {
   getUnknownComponents,
   invalidateComponentCache,
 } from './ComponentDetector';
-import type { DetectedComponent } from './types';
-import { extractErrorMessage } from '@mdx-preview/shared';
+import type { DetectedComponent } from '../types';
+import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import { resolveConfig } from '../preview/config/ConfigResolver';
 import { debug, info } from '../logging';
 import { SingletonService } from '../services/SingletonService';
@@ -79,7 +79,7 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       }
     }
 
-    info('[COMPONENT-DIAGNOSTICS] Service initialized');
+    info(`[${LogTags.COMPONENT_DIAGNOSTICS}] Service initialized`);
   }
 
   // check if document is MDX
@@ -112,7 +112,7 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       return;
     }
 
-    debug(`[ComponentDiagnostics] Updating diagnostics for ${document.uri}`);
+    debug(`[${LogTags.COMPONENT_DIAGNOSTICS}] Updating diagnostics for ${document.uri}`);
 
     try {
       // get config components
@@ -141,11 +141,11 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       this.diagnosticCollection.set(document.uri, diagnostics);
 
       debug(
-        `[ComponentDiagnostics] Set ${diagnostics.length} diagnostics for ${document.uri}`
+        `[${LogTags.COMPONENT_DIAGNOSTICS}] Set ${diagnostics.length} diagnostics for ${document.uri}`
       );
     } catch (err) {
       const message = extractErrorMessage(err);
-      debug(`[ComponentDiagnostics] Error updating diagnostics: ${message}`);
+      debug(`[${LogTags.COMPONENT_DIAGNOSTICS}] Error updating diagnostics: ${message}`);
     }
   }
 

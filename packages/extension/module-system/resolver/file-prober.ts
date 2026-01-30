@@ -4,7 +4,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { LRUCache } from '../../utils/cache';
+import { LRUCache } from '@mdx-preview/shared';
 
 // extension constants for reuse in resolution strategies
 

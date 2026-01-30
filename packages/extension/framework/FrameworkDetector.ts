@@ -8,17 +8,14 @@ import { SingletonService } from '../services/SingletonService';
 import { getConfigManager, getErrorReporter } from '../services';
 import { SubscriberManager } from '../utils/SubscriberManager';
 import { ErrorContext } from '../errors';
-import { normalizeError, type FrameworkId } from '@mdx-preview/shared';
+import { normalizeError, LogTags, type FrameworkId } from '@mdx-preview/shared';
 import { readJsonSync, pathExists } from '../utils/file-utils';
 import { findUp } from '../utils/find-up';
 import { createFileWatcher } from '../utils/createFileWatcher';
 
-// re-export FrameworkId as Framework for backward compatibility
-export type Framework = FrameworkId;
-
 // framework detection result
 export interface FrameworkInfo {
-  framework: Framework;
+  framework: FrameworkId;
   // true = auto-detected, false = from setting
   detected: boolean;
   version?: string;
@@ -26,7 +23,7 @@ export interface FrameworkInfo {
 
 // framework detection rules
 interface FrameworkRule {
-  framework: Framework;
+  framework: FrameworkId;
   // dependencies to check (any match = detected)
   dependencies: string[];
   // optional secondary dependencies (for frameworks that need multiple packages)
@@ -70,7 +67,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
 
   private cache: Map<string, FrameworkInfo> = new Map();
   private subscriberManager = new SubscriberManager<FrameworkInfo>(
-    'FRAMEWORK',
+    LogTags.FRAMEWORK,
     (error) => {
       getErrorReporter().reportSilent(
         normalizeError(error),
@@ -107,12 +104,12 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
     this.fileWatcherInitialized = true;
 
-    debug('[FRAMEWORK] Initializing package.json FileSystemWatcher');
+    debug(`[${LogTags.FRAMEWORK}] Initializing package.json FileSystemWatcher`);
 
     // watch for package.json changes using createFileWatcher utility
     this.fileWatcher = createFileWatcher({
       pattern: '**/package.json',
-      logTag: 'FRAMEWORK',
+      logTag: LogTags.FRAMEWORK,
       onChange: (uri) => this.onPackageJsonChange(uri),
       onCreate: (uri) => this.onPackageJsonChange(uri),
       onDelete: (uri) => this.onPackageJsonChange(uri),
@@ -132,11 +129,11 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
 
     const packageJson = readJsonSync<PackageJson>(packageJsonPath, {
-      logTag: '[FRAMEWORK]',
+      logTag: `[${LogTags.FRAMEWORK}]`,
     });
 
     if (!packageJson) {
-      debug('[FRAMEWORK] No package.json found or failed to parse at:', packageJsonPath);
+      debug(`[${LogTags.FRAMEWORK}] No package.json found or failed to parse at:`, packageJsonPath);
       return { framework: 'generic', detected: true };
     }
 
@@ -161,7 +158,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
         }
 
         const version = allDeps[rule.dependencies[0]];
-        debug(`[FRAMEWORK] Detected ${rule.framework} (version: ${version})`);
+        debug(`[${LogTags.FRAMEWORK}] Detected ${rule.framework} (version: ${version})`);
         return {
           framework: rule.framework,
           detected: true,
@@ -170,7 +167,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
       }
     }
 
-    debug('[FRAMEWORK] No framework detected, using generic');
+    debug(`[${LogTags.FRAMEWORK}] No framework detected, using generic`);
     return { framework: 'generic', detected: true };
   }
 
@@ -188,7 +185,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     });
 
     if (found) {
-      debug('[FRAMEWORK] Found package.json at:', path.join(found, 'package.json'));
+      debug(`[${LogTags.FRAMEWORK}] Found package.json at:`, path.join(found, 'package.json'));
       return found;
     }
 
@@ -206,7 +203,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
 
     if (manualFramework !== 'auto') {
       return {
-        framework: manualFramework as Framework,
+        framework: manualFramework as FrameworkId,
         detected: false,
       };
     }
@@ -240,7 +237,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   }
 
   // get framework display name for UI
-  getFrameworkDisplayName(framework: Framework): string {
+  getFrameworkDisplayName(framework: FrameworkId): string {
     switch (framework) {
       case 'docusaurus':
         return 'Docusaurus';
@@ -277,7 +274,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     for (const candidate of candidates) {
       const fullPath = path.join(workspaceRoot, candidate);
       if (pathExists(fullPath)) {
-        debug('[FRAMEWORK] Found mdx-components file:', fullPath);
+        debug(`[${LogTags.FRAMEWORK}] Found mdx-components file:`, fullPath);
         return fullPath;
       }
     }
@@ -298,13 +295,13 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   // invalidate cache for workspace
   invalidateCache(workspaceRoot: string): void {
     this.cache.delete(workspaceRoot);
-    debug('[FRAMEWORK] Cache invalidated for:', workspaceRoot);
+    debug(`[${LogTags.FRAMEWORK}] Cache invalidated for:`, workspaceRoot);
   }
 
   // invalidate all caches & notify subscribers
   private invalidateAllCaches(): void {
     this.cache.clear();
-    debug('[FRAMEWORK] All caches invalidated');
+    debug(`[${LogTags.FRAMEWORK}] All caches invalidated`);
 
     // notify subscribers w/ current framework for active editor
     const editor = vscode.window.activeTextEditor;

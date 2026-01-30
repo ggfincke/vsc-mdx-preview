@@ -1,7 +1,7 @@
 // packages/extension/compiler/plugins/utils.ts
 // plugin specification parsing utilities
 
-import type { PluginSpec } from '../types';
+import type { PluginSpec } from '../../types';
 
 // parsed plugin specification w/ separated name & options
 export interface ParsedPluginSpec {

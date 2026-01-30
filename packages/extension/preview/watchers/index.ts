@@ -8,6 +8,3 @@ export { CustomCssWatcher } from './CustomCssWatcher';
 export { TailwindConfigWatcher } from './TailwindConfigWatcher';
 export { WatcherManager } from './WatcherManager';
 
-// types
-export type { IWatcher } from './types';
-export { isWatcher } from './types';

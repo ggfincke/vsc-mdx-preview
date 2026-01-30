@@ -2,6 +2,8 @@
 // centralized logging using VS Code's OutputChannel for user-visible logs
 
 import * as vscode from 'vscode';
+import type { Logger, TaggedLogger, LogTag } from '@mdx-preview/shared';
+import { LogLevel } from '@mdx-preview/shared';
 
 // debug logging is disabled by default for performance
 // set MDX_PREVIEW_DEBUG=true to enable debug output
@@ -15,14 +17,6 @@ export function getOutputChannel(): vscode.OutputChannel {
     outputChannel = vscode.window.createOutputChannel('MDX Preview');
   }
   return outputChannel;
-}
-
-// log levels for extension
-export enum LogLevel {
-  Debug = 'DEBUG',
-  Info = 'INFO',
-  Warn = 'WARN',
-  Error = 'ERROR',
 }
 
 // log message to output channel
@@ -84,3 +78,36 @@ export function disposeOutputChannel(): void {
     outputChannel = undefined;
   }
 }
+
+// * create a tagged logger w/ a fixed prefix for consistent debug output
+// all methods write to the OutputChannel w/ the tag prefix
+export function createTaggedLogger(tag: LogTag): TaggedLogger {
+  const prefix = `[${tag}]`;
+
+  return {
+    debug: (...args: unknown[]) => {
+      const [message, data] = args;
+      debug(`${prefix} ${String(message ?? '')}`, data);
+    },
+    info: (...args: unknown[]) => {
+      const [message, data] = args;
+      info(`${prefix} ${String(message ?? '')}`, data);
+    },
+    warn: (...args: unknown[]) => {
+      const [message, data] = args;
+      warn(`${prefix} ${String(message ?? '')}`, data);
+    },
+    error: (...args: unknown[]) => {
+      const [message, data] = args;
+      error(`${prefix} ${String(message ?? '')}`, data);
+    },
+  };
+}
+
+// default logger instance (module-level functions as object)
+export const logger: Logger = {
+  debug,
+  info,
+  warn,
+  error,
+};

@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
-import type { IService } from './types';
+import type { IService } from '../types';
 
 // abstract base class for singleton services w/ automatic lifecycle management
 export abstract class SingletonService<

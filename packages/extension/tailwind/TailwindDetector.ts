@@ -9,7 +9,7 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { extractErrorMessage } from '@mdx-preview/shared';
+import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import { debug } from '../logging';
 import { getNodeResolver } from '../module-system/resolver/resolver-factory';
 import { VERSION_CACHE_TTL_MS } from './constants';
@@ -192,7 +192,7 @@ export class TailwindDetector {
     );
     if (commonResult) {
       this.entryCssCache.set(cacheKey, commonResult);
-      debug(`[TAILWIND] Found entry CSS in common location: ${commonResult}`);
+      debug(`[${LogTags.TAILWIND}] Found entry CSS in common location: ${commonResult}`);
       return commonResult;
     }
 
@@ -297,7 +297,7 @@ export class TailwindDetector {
     }
 
     if (!resolved) {
-      debug(`[TAILWIND] Tailwind CSS not found in workspace: ${workspaceRoot}`);
+      debug(`[${LogTags.TAILWIND}] Tailwind CSS not found in workspace: ${workspaceRoot}`);
       const info: TailwindVersionInfo = { version: null, major: null };
       this.versionCache.set(cacheKey, {
         info,
@@ -331,7 +331,7 @@ export class TailwindDetector {
       info,
       expiresAt: Date.now() + VERSION_CACHE_TTL_MS,
     });
-    debug(`[TAILWIND] Workspace Tailwind version: ${version ?? 'unknown'}`);
+    debug(`[${LogTags.TAILWIND}] Workspace Tailwind version: ${version ?? 'unknown'}`);
     return info;
   }
 
@@ -341,10 +341,10 @@ export class TailwindDetector {
     if (workspaceRoot !== undefined) {
       const cacheKey = workspaceRoot ?? 'default';
       this.versionCache.delete(cacheKey);
-      debug(`[TAILWIND] Version cache invalidated for: ${cacheKey}`);
+      debug(`[${LogTags.TAILWIND}] Version cache invalidated for: ${cacheKey}`);
     } else {
       this.versionCache.clear();
-      debug('[TAILWIND] All version caches invalidated');
+      debug(`[${LogTags.TAILWIND}] All version caches invalidated`);
     }
   }
 }

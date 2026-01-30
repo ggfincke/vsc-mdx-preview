@@ -11,7 +11,7 @@ import {
   createFileWatcher as createFileWatcherUtil,
   type FileWatcherConfig,
 } from '../../utils/createFileWatcher';
-import type { IWatcher } from './types';
+import type { IWatcher } from '../../types';
 
 // options for creating a file watcher in BaseWatcher subclasses
 // uses the shared FileWatcherConfig but omits pattern (passed separately)

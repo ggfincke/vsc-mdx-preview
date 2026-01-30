@@ -5,12 +5,13 @@ import * as fs from 'fs';
 import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve';
 import type { Resolver } from 'enhanced-resolve';
 import { debug } from '../../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { RESOLVER_CACHE_TTL_MS } from '../../constants';
 import { createResettableSingleton } from '../../utils/singleton-factory';
-import { clearStatCache } from './strategies/TypeScriptPathStrategy';
 
 // shared cached file system for all resolvers
-const cachedFs = new CachedInputFileSystem(fs, RESOLVER_CACHE_TTL_MS);
+// exported for subsystem disposal (resolver-subsystem.ts)
+export const cachedFs = new CachedInputFileSystem(fs, RESOLVER_CACHE_TTL_MS);
 
 // resolver mode determines the resolution strategy
 // - 'browser': prioritizes browser-compatible exports for webview module loading
@@ -67,10 +68,11 @@ function createResolver(mode: ResolverMode): Resolver {
 }
 
 // pre-created resolvers for common use cases (lazily initialized)
-const browserResolverSingleton = createResettableSingleton(
+// exported for subsystem registration (resolver-subsystem.ts)
+export const browserResolverSingleton = createResettableSingleton(
   () => createResolver('browser')
 );
-const nodeResolverSingleton = createResettableSingleton(
+export const nodeResolverSingleton = createResettableSingleton(
   () => createResolver('node')
 );
 
@@ -90,21 +92,6 @@ export function clearResolverCache(): void {
   browserResolverSingleton.reset();
   nodeResolverSingleton.reset();
 
-  debug('[RESOLVER] Cache cleared');
+  debug(`[${LogTags.RESOLVER}] Cache cleared`);
 }
 
-// dispose all resolver-related caches (call on extension deactivation)
-// includes TypeScript stat cache which clearResolverCache doesn't cover
-export function disposeResolverSystem(): void {
-  // purge the cached file system
-  cachedFs.purge();
-
-  // dispose resolver instances (permanent cleanup, not just cache invalidation)
-  browserResolverSingleton.dispose();
-  nodeResolverSingleton.dispose();
-
-  // clear TypeScript path resolver stat cache (bounded LRU)
-  clearStatCache();
-
-  debug('[RESOLVER] All resolver caches disposed');
-}

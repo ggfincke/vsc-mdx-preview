@@ -5,11 +5,10 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { performance } from 'perf_hooks';
-import * as vscode from 'vscode';
 import { debug, warn } from '../logging';
 import { SingletonService } from '../services/SingletonService';
 import { getErrorReporter, getFrameworkDetector } from '../services';
-import type { ResolutionContext } from '../module-system/resolver/UnifiedResolver';
+import type { ResolutionContext } from '../types';
 import { ErrorContext, ErrorSeverity } from '../errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
@@ -21,7 +20,7 @@ import {
   MAX_KNOWN_TAILWIND_VERSION,
 } from './constants';
 import type { Preview } from '../preview/preview-manager';
-import { normalizeError, type TrustState } from '@mdx-preview/shared';
+import { normalizeError, LogTags, type TrustState } from '@mdx-preview/shared';
 import type { TailwindConfig } from '../config/EffectivePreviewConfig';
 
 export interface TailwindProcessOptions {
@@ -49,9 +48,6 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   private scanCache = new TailwindScanCache();
   private compiler = new TailwindCompiler();
 
-  // tracks workspaces where v3 deprecation warning has been shown (once per session)
-  private v3WarningShown = new Set<string>();
-
   protected constructor() {
     super();
   }
@@ -74,7 +70,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       ttlMs: tailwindConfig.cacheTtlSeconds * 1000,
     });
 
-    debug('[TAILWIND] Process start');
+    debug(`[${LogTags.TAILWIND}] Process start`);
 
     if (!trustState.canExecute) {
       return { css: '', watchFiles: [], enabled: false };
@@ -114,7 +110,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       versionInfo.major < MIN_SUPPORTED_TAILWIND_VERSION
     ) {
       debug(
-        `[TAILWIND] Unsupported Tailwind version ${versionInfo.version} (v${versionInfo.major}). Minimum supported: v${MIN_SUPPORTED_TAILWIND_VERSION}`
+        `[${LogTags.TAILWIND}] Unsupported Tailwind version ${versionInfo.version} (v${versionInfo.major}). Minimum supported: v${MIN_SUPPORTED_TAILWIND_VERSION}`
       );
       return { css: '', watchFiles: [], enabled: false };
     }
@@ -125,19 +121,12 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       versionInfo.major > MAX_KNOWN_TAILWIND_VERSION
     ) {
       warn(
-        `[TAILWIND] Tailwind v${versionInfo.major} detected. This extension supports v3 & v4. ` +
+        `[${LogTags.TAILWIND}] Tailwind v${versionInfo.major} detected. This extension supports v4. ` +
           `v${versionInfo.major} will be treated as v4, which may cause issues.`
       );
     }
 
-    // TODO: Add explicit v5 handling when released
-    const tailwindVersion: TailwindVersion =
-      versionInfo.major === 3 ? 'v3' : 'v4';
-
-    // warn about v3 deprecation (once per workspace per session)
-    if (tailwindVersion === 'v3') {
-      this.warnTailwindV3Deprecation(workspaceRoot);
-    }
+    const tailwindVersion: TailwindVersion = 'v4';
 
     const baseDir = configPath
       ? path.dirname(configPath)
@@ -167,7 +156,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     });
     const scanDuration = performance.now() - scanStart;
     debug(
-      `[TAILWIND] Scanned ${scanResult.scannedFiles.length + 1} file(s) in ${Math.round(
+      `[${LogTags.TAILWIND}] Scanned ${scanResult.scannedFiles.length + 1} file(s) in ${Math.round(
         scanDuration
       )}ms`
     );
@@ -192,19 +181,17 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
 
     const compileStart = performance.now();
     try {
-      debug('[TAILWIND] Compiling CSS...');
+      debug(`[${LogTags.TAILWIND}] Compiling CSS...`);
       const css = await this.compiler.compile({
         tailwindVersion,
         configPath,
         entryCssPath,
         content,
-        workspaceTailwindPath:
-          versionInfo.major === 3 ? versionInfo.modulePath : undefined,
         baseDir,
       });
       const compileDuration = performance.now() - compileStart;
       debug(
-        `[TAILWIND] Compiled in ${Math.round(compileDuration)}ms (classes=${scanResult.classList.length})`
+        `[${LogTags.TAILWIND}] Compiled in ${Math.round(compileDuration)}ms (classes=${scanResult.classList.length})`
       );
       this.cache.set(cacheKey, css);
       return {
@@ -297,36 +284,8 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     } catch (error) {
       // return unique error stamp to bust cache on transient errors
       // this prevents stale cache hits when file is temporarily unreadable
-      debug(`[TAILWIND] Failed to stat file ${filePath}: ${error}`);
+      debug(`[${LogTags.TAILWIND}] Failed to stat file ${filePath}: ${error}`);
       return `error:${Date.now()}`;
     }
-  }
-
-  // warn users about Tailwind v3 deprecation (once per workspace per session)
-  private warnTailwindV3Deprecation(workspaceRoot: string | null): void {
-    const key = workspaceRoot ?? 'default';
-    if (this.v3WarningShown.has(key)) {
-      return;
-    }
-    this.v3WarningShown.add(key);
-
-    warn(
-      '[TAILWIND] Tailwind CSS v3 detected. MDX Preview is optimized for Tailwind v4. ' +
-        'Consider upgrading for improved performance & features.'
-    );
-
-    // show user-facing notification w/ action button
-    vscode.window
-      .showWarningMessage(
-        'MDX Preview: Tailwind CSS v3 detected. Consider upgrading to v4 for best results.',
-        'Upgrade Guide'
-      )
-      .then((selection) => {
-        if (selection === 'Upgrade Guide') {
-          vscode.env.openExternal(
-            vscode.Uri.parse('https://tailwindcss.com/docs/upgrade-guide')
-          );
-        }
-      });
   }
 }

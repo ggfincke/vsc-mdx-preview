@@ -2,7 +2,7 @@
 // transform Collapsible/Accordion/Details components to semantic HTML
 
 import type { RootContent } from 'mdast';
-import type { MdxJsxElement } from './types';
+import type { MdxJsxElement } from '../../../types';
 import {
   getStaticStringProp,
   getStaticBooleanProp,

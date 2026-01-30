@@ -1,5 +1,5 @@
 // packages/extension/utils/validation/index.ts
-// barrel export for validation utilities (backward compatibility)
+// barrel export for validation utilities
 
 export {
   validateString,

@@ -15,7 +15,8 @@ import type {
   ComponentDetectionResult,
   ComponentDetectionOptions,
   ComponentSource,
-} from './types';
+  MdxJsxElement,
+} from '../types';
 import { debug, warn } from '../logging';
 
 // use shared component registry as single source of truth
@@ -24,7 +25,6 @@ import {
   getGenericComponentSet,
   getCanonicalComponentName,
 } from '@mdx-preview/shared';
-import type { MdxJsxElement } from '../compiler/shared/transforms/types';
 
 // caching for parse results
 

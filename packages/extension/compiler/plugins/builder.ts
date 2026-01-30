@@ -13,7 +13,7 @@ import {
   rehypeKatex,
 } from './shared-plugins';
 import type { LoadedPlugins } from './loader';
-import type { PluginPipeline } from '../types';
+import type { PluginPipeline } from '../../types';
 
 // rehype-raw configuration w/ MDX-specific passThrough nodes
 // these nodes must not be parsed as raw HTML to preserve MDX semantics

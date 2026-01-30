@@ -2,7 +2,7 @@
 // transform Callout/Alert/Admonition components to semantic HTML
 
 import type { RootContent } from 'mdast';
-import type { MdxJsxElement } from './types';
+import type { MdxJsxElement } from '../../../types';
 import { getStaticStringProp, escapeHtml, createNode } from './utils';
 import { ADMONITION_ICONS } from '../icon-registry';
 

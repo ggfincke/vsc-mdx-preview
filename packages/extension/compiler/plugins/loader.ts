@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import type { Pluggable } from 'unified';
 import { debug, info } from '../../logging';
-import type { PluginSpec, ResolvedConfig } from '../../preview/config';
+import type { PluginSpec, ResolvedConfig } from '../../types';
 import { getTrustManager, getErrorReporter } from '../../services';
 import { getNodeResolver } from '../../module-system/resolver/resolver-factory';
 import { PluginError } from '../../errors';
