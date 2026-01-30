@@ -4,6 +4,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { NextraPageMeta } from '@mdx-preview/shared';
 import { debug } from '../utils/debug';
+import { LogTags } from '@mdx-preview/shared';
 import { createContextProvider } from './createContextProvider';
 
 interface NextraContextValue {
@@ -16,7 +17,7 @@ function useNextraProviderValue(): NextraContextValue {
   const [nextraMeta, setNextraMetaState] = useState<NextraPageMeta | null>(null);
 
   const setNextraMeta = useCallback((meta: NextraPageMeta | null) => {
-    debug('[NEXTRA-CONTEXT] setNextraMeta called', meta);
+    debug(`[${LogTags.NEXTRA_CONTEXT}] setNextraMeta called`, meta);
     setNextraMetaState(meta);
   }, []);
 

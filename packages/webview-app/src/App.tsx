@@ -11,6 +11,7 @@ import { SafePreviewRenderer } from './SafePreview';
 import { TrustedPreviewRenderer } from './TrustedPreview';
 import { ExtensionHandle } from './rpc-webview';
 import { debug } from './utils/debug';
+import { LogTags } from '@mdx-preview/shared';
 import { classifyLink } from './utils/linkHandler';
 import type { TrustedPreviewContent } from './types';
 import { useTheme } from './theme';
@@ -29,10 +30,10 @@ import './components/shims/base/styles/index.css';
 // Framework-specific styles are now lazy-loaded via frameworkCssLoader.ts
 // when the corresponding framework shims are loaded in preload/index.ts
 
-debug('[APP] App.tsx module loaded');
+debug(`[${LogTags.APP}] App.tsx module loaded`);
 
 function App() {
-  debug('[APP] App component rendering');
+  debug(`[${LogTags.APP}] App component rendering`);
 
   // consume state from granular contexts
   const { trustState } = useTrust();
@@ -54,7 +55,7 @@ function App() {
   const { previewTheme } = useTheme();
 
   debug(
-    `[APP] Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
+    `[${LogTags.APP}] Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
   );
 
   // intercept Ctrl/Cmd+clicks on external links & route to extension
@@ -80,7 +81,7 @@ function App() {
       }
 
       event.preventDefault();
-      debug(`[APP] Ctrl/Cmd+click external link: ${href}`);
+      debug(`[${LogTags.APP}] Ctrl/Cmd+click external link: ${href}`);
       ExtensionHandle.openExternal(href);
     }
   }, []);
@@ -109,17 +110,22 @@ function App() {
 
   // render loading state during initial load
   if (isLoading && !content && !error) {
-    debug('[APP] Rendering LoadingBar (initial loading)');
+    debug(`[${LogTags.APP}] Rendering LoadingBar (initial loading)`);
     return <LoadingBar />;
   }
 
   // render error state w/ unified ErrorDisplay component
   if (error) {
-    debug('[APP] Rendering error state');
-    // Convert PreviewError to Error for ErrorDisplay
-    const errorObj = new Error(error.message);
+    debug(`[${LogTags.APP}] Rendering error state`);
+    // Convert PreviewError to Error for ErrorDisplay, preserving moduleError data
+    const errorObj = new Error(error.message) as Error & {
+      moduleError?: typeof error.moduleError;
+    };
     if (error.stack) {
       errorObj.stack = error.stack;
+    }
+    if (error.moduleError) {
+      errorObj.moduleError = error.moduleError;
     }
     return (
       <div className="mdx-preview-container">
@@ -134,12 +140,12 @@ function App() {
 
   // render loading state when awaiting content
   if (!content) {
-    debug('[APP] Rendering LoadingBar (no content)');
+    debug(`[${LogTags.APP}] Rendering LoadingBar (no content)`);
     return <LoadingBar />;
   }
 
   // render preview content in Safe or Trusted Mode
-  debug(`[APP] Rendering content in ${content.mode} mode`);
+  debug(`[${LogTags.APP}] Rendering content in ${content.mode} mode`);
 
   return (
     <div

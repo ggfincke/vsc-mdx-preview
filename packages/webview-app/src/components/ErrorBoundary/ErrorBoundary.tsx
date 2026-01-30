@@ -12,8 +12,12 @@ import {
   isUserCode,
 } from '../../utils/stackTraceParser';
 import { copyToClipboard } from '../../utils/clipboard';
-import { normalizeError } from '@mdx-preview/shared';
+import { normalizeError, isModuleErrorData } from '@mdx-preview/shared';
+import type { ModuleErrorData } from '@mdx-preview/shared';
 import { ModuleLoadError } from '../../module-system/errors';
+
+// type for Error objects that may have moduleError attached (from PreviewError)
+type ErrorWithModuleData = Error & { moduleError?: ModuleErrorData };
 import './ErrorBoundary.css';
 
 // stack trace component
@@ -56,6 +60,20 @@ export interface ErrorDisplayProps {
   title?: string;
 }
 
+// extract suggestions from error (ModuleLoadError or attached moduleError)
+function extractSuggestions(error: Error): string[] {
+  // direct ModuleLoadError (from webview-side errors)
+  if (error instanceof ModuleLoadError) {
+    return error.suggestions;
+  }
+  // Error w/ moduleError attached (from extension via RPC)
+  const errorWithData = error as ErrorWithModuleData;
+  if (errorWithData.moduleError && isModuleErrorData(errorWithData.moduleError)) {
+    return errorWithData.moduleError.suggestions;
+  }
+  return [];
+}
+
 // Error display component w/ VS Code styling
 // Exported for reuse in App.tsx & other error handling contexts
 export function ErrorDisplay({
@@ -63,9 +81,8 @@ export function ErrorDisplay({
   onReset,
   title = 'Preview Error',
 }: ErrorDisplayProps) {
-  // Extract suggestions if error is a ModuleLoadError
-  const suggestions =
-    error instanceof ModuleLoadError ? error.suggestions : [];
+  // extract suggestions from ModuleLoadError or attached moduleError
+  const suggestions = extractSuggestions(error);
 
   const handleCopy = useCallback(() => {
     const text = `${error.message}\n\n${error.stack || ''}`;

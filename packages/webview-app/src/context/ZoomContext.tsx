@@ -9,6 +9,7 @@ import {
   ZOOM_DEFAULT_PERCENT,
 } from '../constants';
 import { debug } from '../utils/debug';
+import { LogTags } from '@mdx-preview/shared';
 import { createContextProvider } from './createContextProvider';
 
 interface ZoomContextValue {
@@ -23,17 +24,17 @@ function useZoomProviderValue(): ZoomContextValue {
   const [zoomLevel, setZoomLevel] = useState(ZOOM_DEFAULT_PERCENT);
 
   const zoomIn = useCallback(() => {
-    debug('[ZOOM-CONTEXT] zoomIn called');
+    debug(`[${LogTags.ZOOM_CONTEXT}] zoomIn called`);
     setZoomLevel((prev) => Math.min(ZOOM_MAX_PERCENT, prev + ZOOM_STEP_PERCENT));
   }, []);
 
   const zoomOut = useCallback(() => {
-    debug('[ZOOM-CONTEXT] zoomOut called');
+    debug(`[${LogTags.ZOOM_CONTEXT}] zoomOut called`);
     setZoomLevel((prev) => Math.max(ZOOM_MIN_PERCENT, prev - ZOOM_STEP_PERCENT));
   }, []);
 
   const resetZoom = useCallback(() => {
-    debug('[ZOOM-CONTEXT] resetZoom called');
+    debug(`[${LogTags.ZOOM_CONTEXT}] resetZoom called`);
     setZoomLevel(ZOOM_DEFAULT_PERCENT);
   }, []);
 

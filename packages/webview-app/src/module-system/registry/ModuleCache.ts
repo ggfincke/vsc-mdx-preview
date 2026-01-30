@@ -1,17 +1,18 @@
 // packages/webview-app/src/module-system/registry/ModuleCache.ts
 // module cache w/ LRU eviction (count + memory based) & pending fetch tracking
+// uses shared LRUCache w/ isProtected for preloaded module protection
 
+import { LRUCache } from '@mdx-preview/shared';
 import type { Module } from '../types';
 
 // LRU configuration defaults
 const DEFAULT_MAX_MODULES = 500;
 const DEFAULT_MAX_MEMORY_BYTES = 50 * 1024 * 1024; // 50MB
 
-// Cache entry w/ access tracking for LRU & memory tracking
+// internal cache entry combining module w/ size estimate
 interface CacheEntry {
   module: Module;
-  lastAccessed: number;
-  estimatedSize: number; // estimated memory footprint in bytes
+  estimatedSize: number;
 }
 
 // LRU configuration options
@@ -21,36 +22,37 @@ export interface ModuleCacheConfig {
 }
 
 // LRU cache for evaluated modules w/ memory-aware eviction
-// uses Map insertion order for O(1) LRU tracking
-// preloaded modules are protected from eviction
+// uses shared LRUCache w/ isProtected predicate for preloaded module protection
+// preloaded modules are protected from eviction & don't count against limits
 export class ModuleCache {
-  private cache: Map<string, CacheEntry> = new Map();
+  private cache: LRUCache<string, CacheEntry>;
   private pendingFetches: Map<string, Promise<Module>> = new Map();
   private preloadedIds: Set<string> = new Set();
 
-  // LRU configuration
-  private maxModules = DEFAULT_MAX_MODULES;
-  private maxMemoryBytes = DEFAULT_MAX_MEMORY_BYTES;
-
-  // Memory tracking
-  private totalMemoryBytes = 0;
-
-  // Callback for cleanup when evicting (set by ModuleRegistry)
+  // callback for cleanup when evicting (set by ModuleRegistry)
   onEvict?: (id: string) => void;
+
+  constructor() {
+    this.cache = new LRUCache<string, CacheEntry>({
+      maxEntries: DEFAULT_MAX_MODULES,
+      maxMemoryBytes: DEFAULT_MAX_MEMORY_BYTES,
+      estimateSize: (entry) => entry.estimatedSize,
+      isProtected: (id) => this.preloadedIds.has(id),
+      onEvict: (id) => this.onEvict?.(id),
+    });
+  }
 
   // configure LRU limits
   configure(options: ModuleCacheConfig): void {
-    if (options.maxModules !== undefined) {
-      this.maxModules = options.maxModules;
-    }
-    if (options.maxMemoryBytes !== undefined) {
-      this.maxMemoryBytes = options.maxMemoryBytes;
-    }
+    this.cache.updateSettings({
+      maxEntries: options.maxModules,
+      maxMemoryBytes: options.maxMemoryBytes,
+    });
   }
 
   // get current memory usage in bytes
   get memoryBytes(): number {
-    return this.totalMemoryBytes;
+    return this.cache.memoryBytes;
   }
 
   // get number of cached modules
@@ -69,30 +71,20 @@ export class ModuleCache {
   }
 
   // preload module (for built-in modules like React)
-  // preloaded modules are protected from eviction & don't count against memory limit
+  // preloaded modules are protected from eviction & don't count against limits
   preload(id: string, exports: unknown): void {
     this.preloadedIds.add(id);
     const estimatedSize = this.estimateExportsSize(exports);
     this.cache.set(id, {
       module: { id, exports, loaded: true },
-      lastAccessed: Date.now(),
       estimatedSize,
     });
-    // Don't count preloaded modules against memory limit
   }
 
-  // get cached module (update access time for LRU)
-  // use delete + re-insert to maintain Map insertion order (O(1) LRU)
+  // get cached module (updates LRU position)
   get(id: string): Module | undefined {
     const entry = this.cache.get(id);
-    if (entry) {
-      // Move to end (most recently used) via delete + re-insert
-      this.cache.delete(id);
-      entry.lastAccessed = Date.now();
-      this.cache.set(id, entry);
-      return entry.module;
-    }
-    return undefined;
+    return entry?.module;
   }
 
   // check if module is cached
@@ -105,63 +97,21 @@ export class ModuleCache {
     return this.preloadedIds.has(id);
   }
 
-  // set module in cache w/ LRU eviction (memory-based + count-based)
-  // evict non-preloaded modules when at capacity
+  // set module in cache w/ automatic LRU eviction
   set(id: string, module: Module): void {
     const estimatedSize = this.estimateExportsSize(module.exports);
-
-    // Evict if at capacity (memory-based primary, count-based secondary)
-    while (
-      (this.totalMemoryBytes + estimatedSize > this.maxMemoryBytes ||
-        this.cache.size >= this.maxModules) &&
-      this.canEvict()
-    ) {
-      this.evictLRU();
-    }
-
-    this.cache.set(id, {
-      module,
-      lastAccessed: Date.now(),
-      estimatedSize,
-    });
-    this.totalMemoryBytes += estimatedSize;
+    this.cache.set(id, { module, estimatedSize });
   }
 
   // delete module from cache, return the estimated size freed
   delete(id: string): number {
-    const entry = this.cache.get(id);
-    if (entry && !this.preloadedIds.has(id)) {
-      this.totalMemoryBytes -= entry.estimatedSize;
-      this.cache.delete(id);
-      return entry.estimatedSize;
+    if (this.preloadedIds.has(id)) {
+      return 0; // don't delete preloaded modules
     }
+    const entry = this.cache.peek(id);
+    const freedSize = entry?.estimatedSize ?? 0;
     this.cache.delete(id);
-    return 0;
-  }
-
-  // check if there's a non-preloaded module to evict
-  private canEvict(): boolean {
-    for (const [id] of this.cache) {
-      if (!this.preloadedIds.has(id)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // evict least recently used non-preloaded module
-  // O(p) where p = number of preloaded modules at start of Map
-  private evictLRU(): void {
-    // First entry in Map is oldest (LRU) due to insertion order
-    for (const [id, entry] of this.cache) {
-      if (!this.preloadedIds.has(id)) {
-        this.cache.delete(id);
-        this.totalMemoryBytes -= entry.estimatedSize;
-        // Notify registry to clean up metadata
-        this.onEvict?.(id);
-        return;
-      }
-    }
+    return freedSize;
   }
 
   // estimate memory size of module exports (rough approximation)
@@ -233,9 +183,8 @@ export class ModuleCache {
 
   // clear all cached modules except preloaded ones
   clearNonPreloaded(): void {
-    for (const [id, entry] of this.cache) {
+    for (const id of this.cache.keys()) {
       if (!this.preloadedIds.has(id)) {
-        this.totalMemoryBytes -= entry.estimatedSize;
         this.cache.delete(id);
       }
     }
@@ -247,6 +196,5 @@ export class ModuleCache {
     this.cache.clear();
     this.pendingFetches.clear();
     this.preloadedIds.clear();
-    this.totalMemoryBytes = 0;
   }
 }

@@ -4,6 +4,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { TrustState } from '../types';
 import { debug } from '../utils/debug';
+import { LogTags } from '@mdx-preview/shared';
 import { createContextProvider } from './createContextProvider';
 
 interface TrustContextValue {
@@ -24,7 +25,7 @@ function useTrustProviderValue(): TrustContextValue {
   const [trustState, setTrustStateInternal] = useState<TrustState>(INITIAL_TRUST_STATE);
 
   const setTrustState = useCallback((state: TrustState) => {
-    debug('[TRUST-CONTEXT] setTrustState called', state);
+    debug(`[${LogTags.TRUST_CONTEXT}] setTrustState called`, state);
     setTrustStateInternal(state);
   }, []);
 

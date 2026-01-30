@@ -4,6 +4,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { PreviewContent, PreviewError } from '../types';
 import { debug } from '../utils/debug';
+import { LogTags } from '@mdx-preview/shared';
 import { createContextProvider } from './createContextProvider';
 
 interface PreviewContextValue {
@@ -21,7 +22,7 @@ function usePreviewProviderValue(): PreviewContextValue {
   const [error, setErrorState] = useState<PreviewError | null>(null);
 
   const setSafeContent = useCallback((html: string) => {
-    debug(`[PREVIEW-CONTEXT] setSafeContent called, html length: ${html.length}`);
+    debug(`[${LogTags.PREVIEW_CONTEXT}] setSafeContent called, html length: ${html.length}`);
     setContent({ mode: 'safe', html });
     setErrorState(null);
   }, []);
@@ -29,7 +30,7 @@ function usePreviewProviderValue(): PreviewContextValue {
   const setTrustedContent = useCallback(
     (code: string, entryFilePath: string, dependencies: string[]) => {
       debug(
-        `[PREVIEW-CONTEXT] setTrustedContent called, code length: ${code.length}, path: ${entryFilePath}`
+        `[${LogTags.PREVIEW_CONTEXT}] setTrustedContent called, code length: ${code.length}, path: ${entryFilePath}`
       );
       setContent({ mode: 'trusted', code, entryFilePath, dependencies });
       setErrorState(null);
@@ -38,12 +39,12 @@ function usePreviewProviderValue(): PreviewContextValue {
   );
 
   const setError = useCallback((error: PreviewError) => {
-    debug('[PREVIEW-CONTEXT] setError called', error);
+    debug(`[${LogTags.PREVIEW_CONTEXT}] setError called`, error);
     setErrorState(error);
   }, []);
 
   const clearError = useCallback(() => {
-    debug('[PREVIEW-CONTEXT] clearError called');
+    debug(`[${LogTags.PREVIEW_CONTEXT}] clearError called`);
     setErrorState(null);
   }, []);
 

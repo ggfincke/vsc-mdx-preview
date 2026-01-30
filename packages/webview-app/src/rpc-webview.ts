@@ -28,12 +28,13 @@ import {
   RPC_HANDLER_MAX_RETRIES,
   RPC_PENDING_MESSAGES_WARNING_THRESHOLD,
 } from './constants';
-import type {
-  ExtensionRPC,
-  WebviewRPC,
-  TrustState,
-  PreviewError,
-  Framework,
+import {
+  LogTags,
+  type ExtensionRPC,
+  type WebviewRPC,
+  type TrustState,
+  type PreviewError,
+  type Framework,
 } from '@mdx-preview/shared';
 import {
   createHandlerFactories,
@@ -55,7 +56,7 @@ import {
 } from './rpc/handler-configs';
 
 // Create tagged logger for this module
-const log = createTaggedLogger('RPC-WEBVIEW');
+const log = createTaggedLogger(LogTags.RPC_WEBVIEW);
 
 declare const acquireVsCodeApi: () => {
   postMessage(message: unknown): void;

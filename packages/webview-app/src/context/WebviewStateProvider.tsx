@@ -10,6 +10,7 @@ import { NextraProvider, useNextra } from './NextraContext';
 import { useTheme } from '../theme';
 import { registerWebviewHandlers } from '../rpc-webview';
 import { debug } from '../utils/debug';
+import { LogTags } from '@mdx-preview/shared';
 
 interface HandlerRegistrarProps {
   children: ReactNode;
@@ -39,7 +40,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
 
   useEffect(() => {
     if (initializedRef.current) {
-      debug('[WEBVIEW-STATE] Already initialized, skipping');
+      debug(`[${LogTags.WEBVIEW_STATE}] Already initialized, skipping`);
       return;
     }
     initializedRef.current = true;
@@ -47,7 +48,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
     // helper to clear loading state after content updates
     const clearLoading = () => setIsLoading(false);
 
-    debug('[WEBVIEW-STATE] Registering handlers...');
+    debug(`[${LogTags.WEBVIEW_STATE}] Registering handlers...`);
     registerWebviewHandlers({
       setTrustState,
       setSafeContent: wrapWithLoadingClear(setSafeContent, clearLoading),
@@ -60,7 +61,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
       zoomOut,
       resetZoom,
     });
-    debug('[WEBVIEW-STATE] Handlers registered');
+    debug(`[${LogTags.WEBVIEW_STATE}] Handlers registered`);
   }, [
     setTrustState,
     setSafeContent,

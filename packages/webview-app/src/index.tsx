@@ -3,7 +3,8 @@
 
 import { createRoot } from 'react-dom/client';
 import { initRPCWebviewSide } from './rpc-webview';
-import { debug, debugError } from './utils/debug';
+import { debug, error } from './utils/debug';
+import { LogTags } from '@mdx-preview/shared';
 import { ThemeProvider } from './theme';
 import { LightboxProvider } from './context/LightboxContext';
 // Import directly to avoid barrel export import chain issues
@@ -17,23 +18,23 @@ import './styles/safe-components.css';
 // Code block styles (Shiki syntax highlighting w/ copy button, language badge)
 import './components/CodeBlock/CodeBlock.css';
 
-debug('[WEBVIEW] index.tsx loaded');
+debug(`[${LogTags.WEBVIEW}] index.tsx loaded`);
 
 // initialize RPC communication w/ extension
-debug('[WEBVIEW] Initializing RPC...');
+debug(`[${LogTags.WEBVIEW}] Initializing RPC...`);
 initRPCWebviewSide();
-debug('[WEBVIEW] RPC initialized');
+debug(`[${LogTags.WEBVIEW}] RPC initialized`);
 
 // React 18 createRoot API
 const container = document.getElementById('root');
 if (!container) {
-  debugError('[WEBVIEW] Root element not found!');
+  error(`[${LogTags.WEBVIEW}] Root element not found!`);
   throw new Error('Root element not found');
 }
 
-debug('[WEBVIEW] Creating React root...');
+debug(`[${LogTags.WEBVIEW}] Creating React root...`);
 const root = createRoot(container);
-debug('[WEBVIEW] Rendering App with providers...');
+debug(`[${LogTags.WEBVIEW}] Rendering App with providers...`);
 root.render(
   <ThemeProvider>
     <LightboxProvider>
@@ -44,4 +45,4 @@ root.render(
     </LightboxProvider>
   </ThemeProvider>
 );
-debug('[WEBVIEW] App rendered');
+debug(`[${LogTags.WEBVIEW}] App rendered`);

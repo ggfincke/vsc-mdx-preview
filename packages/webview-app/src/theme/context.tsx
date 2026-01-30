@@ -21,8 +21,6 @@ import {
 interface ThemeContextValue {
   // VS Code theme (detected locally for UI adjustments)
   vsCodeTheme: VSCodeTheme;
-  // backward compat: alias for vsCodeTheme
-  theme: VSCodeTheme;
   isDark: boolean;
   isHighContrast: boolean;
   // preview theme (pushed from extension)
@@ -77,11 +75,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setIsLight(state.isLight);
   }, []);
 
-  // backward compat alias
   const value = useMemo<ThemeContextValue>(
     () => ({
       vsCodeTheme,
-      theme: vsCodeTheme,
       isDark: vsCodeTheme === 'dark' || vsCodeTheme === 'high-contrast',
       isHighContrast: vsCodeTheme === 'high-contrast',
       previewTheme,

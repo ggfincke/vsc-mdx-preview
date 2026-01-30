@@ -3,16 +3,16 @@
 
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
 import { createBarrelModule, createComponentModule } from './core';
-import type { Framework } from '@mdx-preview/shared';
+import type { FrameworkId } from '@mdx-preview/shared';
 
-// static imports for generic shims (for backward compatibility)
+// static imports for generic shims
 import generic_Callout from '../../components/shims/generic/Callout';
 import generic_Collapsible from '../../components/shims/generic/Collapsible';
 import generic_Tabs from '../../components/shims/generic/Tabs';
 import generic_TabItem from '../../components/shims/generic/TabItem';
 import generic_CodeGroup from '../../components/shims/generic/CodeGroup';
 
-// preload generic shims synchronously (for backward compatibility)
+// preload generic shims synchronously
 export function preloadGenericShims(registry: ModuleRegistry): void {
   registry.preload('npm://@mdx-preview/shims-generic/Callout', createComponentModule(generic_Callout, ["Callout","Alert","Admonition"]));
   registry.preload('npm://@mdx-preview/shims-generic/Collapsible', createComponentModule(generic_Collapsible, ["Collapsible","Accordion","Details"]));
@@ -151,18 +151,10 @@ export async function loadNextjsShims(registry: ModuleRegistry): Promise<void> {
 
 // map framework name to lazy loader function
 // note: 'generic' is a no-op since generic shims are loaded synchronously via preloadGenericShims
-export const FRAMEWORK_LOADERS: Record<Framework, (registry: ModuleRegistry) => Promise<void>> = {
+export const FRAMEWORK_LOADERS: Record<FrameworkId, (registry: ModuleRegistry) => Promise<void>> = {
   generic: async () => {},
   docusaurus: loadDocusaurusShims,
   starlight: loadStarlightShims,
   nextra: loadNextraShims,
   nextjs: loadNextjsShims
 };
-
-// preload all shims (for backward compatibility during migration)
-export async function preloadAllShims(registry: ModuleRegistry): Promise<void> {
-  preloadGenericShims(registry);
-  await Promise.all(
-    Object.values(FRAMEWORK_LOADERS).map((loader) => loader(registry))
-  );
-}

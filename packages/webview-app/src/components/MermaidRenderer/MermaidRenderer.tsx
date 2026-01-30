@@ -2,7 +2,7 @@
 // * lazy-loaded mermaid diagram renderer w/ error handling & source toggle
 
 import { useRef, useState, useCallback } from 'react';
-import { extractErrorMessage } from '@mdx-preview/shared';
+import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import { useAsyncEffect } from '../../hooks';
 import { useTheme } from '../../theme';
 import './MermaidRenderer.css';
@@ -14,7 +14,7 @@ const DEBUG =
 
 function debugLog(...args: unknown[]) {
   if (DEBUG) {
-    console.debug('[MermaidRenderer]', ...args);
+    console.debug(`[${LogTags.MERMAID_RENDERER}]`, ...args);
   }
 }
 

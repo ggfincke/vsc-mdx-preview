@@ -3,6 +3,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { debug } from '../utils/debug';
+import { LogTags } from '@mdx-preview/shared';
 import { createContextProvider } from './createContextProvider';
 
 interface LoadingContextValue {
@@ -18,12 +19,12 @@ function useLoadingProviderValue(): LoadingContextValue {
   const [isStale, setStaleState] = useState(false);
 
   const setIsLoading = useCallback((loading: boolean) => {
-    debug(`[LOADING-CONTEXT] setIsLoading called: ${loading}`);
+    debug(`[${LogTags.LOADING_CONTEXT}] setIsLoading called: ${loading}`);
     setIsLoadingState(loading);
   }, []);
 
   const setStale = useCallback((stale: boolean) => {
-    debug(`[LOADING-CONTEXT] setStale called: ${stale}`);
+    debug(`[${LogTags.LOADING_CONTEXT}] setStale called: ${stale}`);
     setStaleState(stale);
   }, []);
 
