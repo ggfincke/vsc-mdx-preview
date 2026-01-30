@@ -10,6 +10,7 @@ import { TrustManager } from './security/TrustManager';
 import { initWebviewAppHTMLResourcesAsync } from './preview/webview-manager';
 import { initWorkspaceHandlers } from './workspace-manager';
 import { info, debug, showOutput, getOutputChannel } from './logging';
+import { LogTags } from '@mdx-preview/shared';
 import { StatusBarManager } from './preview/StatusBarManager';
 import { ThemeManager } from './themes';
 import { FrameworkDetector } from './framework/FrameworkDetector';
@@ -23,17 +24,15 @@ import {
 import { TailwindProcessor } from './tailwind/TailwindProcessor';
 import { ErrorReporter } from './errors';
 import { PackageJsonWatcher } from './module-system/resolver/PackageJsonWatcher';
-import {
-  clearResolverCache,
-  disposeResolverSystem,
-} from './module-system/resolver/resolver-factory';
+import { clearResolverCache } from './module-system/resolver/resolver-factory';
+import { registerResolverSubsystem } from './module-system/resolver/resolver-subsystem';
 import { ConfigManager, ConfigCache } from './config';
 import {
   ComponentDiagnostics,
   registerComponentCodeActions,
 } from './diagnostics';
 import { registerAllCommands } from './commands';
-import { disposeMetaWatchers } from './nextra/MetaResolver';
+import { registerMetaSubsystem } from './nextra/meta-subsystem';
 
 // show one-time safe mode notification in untrusted workspaces
 async function showSafeModeNotificationIfNeeded(
@@ -133,7 +132,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
 export async function activate(
   context: vscode.ExtensionContext
 ): Promise<void> {
-  debug('[ACTIVATE] Starting extension activation...');
+  debug(`[${LogTags.ACTIVATE}] Starting extension activation...`);
 
   // register services w/ centralized registry before using service locators
   // order matters: register services w/ no dependencies first, then dependent services
@@ -178,16 +177,21 @@ export async function activate(
   registry.register(ServiceNames.COMPONENT_DIAGNOSTICS, () =>
     ComponentDiagnostics.getInstance()
   );
-  debug('[ACTIVATE] Services registered');
+  debug(`[${LogTags.ACTIVATE}] Services registered`);
+
+  // register subsystems (AFTER services, so they dispose BEFORE services)
+  registerResolverSubsystem();
+  registerMetaSubsystem();
+  debug(`[${LogTags.ACTIVATE}] Subsystems registered`);
 
   // G.3 optimization: Initialize resources in background (non-blocking)
   // Resources will be awaited when first preview panel is created
-  debug('[ACTIVATE] Starting webview HTML resource initialization (background)...');
+  debug(`[${LogTags.ACTIVATE}] Starting webview HTML resource initialization (background)...`);
   initWebviewAppHTMLResourcesAsync(context);
-  debug('[ACTIVATE] Webview HTML resource initialization started');
+  debug(`[${LogTags.ACTIVATE}] Webview HTML resource initialization started`);
 
   initWorkspaceHandlers(context);
-  debug('[ACTIVATE] Workspace handlers initialized');
+  debug(`[${LogTags.ACTIVATE}] Workspace handlers initialized`);
 
   info('Extension activated');
 
@@ -214,7 +218,7 @@ export async function activate(
   // listen for VS Code color theme changes to auto-switch preview theme
   context.subscriptions.push(
     vscode.window.onDidChangeActiveColorTheme(() => {
-      debug('[THEME] VS Code color theme changed, refreshing previews');
+      debug(`[${LogTags.THEME}] VS Code color theme changed, refreshing previews`);
       getPreviewManager().refreshAllPreviews();
     })
   );
@@ -222,24 +226,18 @@ export async function activate(
   // start package.json watcher to auto-invalidate resolver cache
   const packageJsonWatcher = new PackageJsonWatcher(() => {
     clearResolverCache();
-    debug('[WATCHER] Resolver cache cleared due to package file change');
+    debug(`[${LogTags.WATCHER}] Resolver cache cleared due to package file change`);
   });
   void packageJsonWatcher.start();
   context.subscriptions.push(packageJsonWatcher);
 
-  debug('[ACTIVATE] Extension activation complete');
+  debug(`[${LogTags.ACTIVATE}] Extension activation complete`);
 }
 
 // deactivate extension
 export function deactivate(): void {
-  // dispose all resolver-related caches (including TypeScript stat cache)
-  disposeResolverSystem();
-
-  // dispose Nextra _meta.json file watchers
-  disposeMetaWatchers();
-
-  // dispose all registered services in reverse registration order
-  // (dependent services like StatusBarManager disposed before their dependencies)
-  // ConfigCache & OutputChannel are now managed by ServiceRegistry
+  // single disposal call handles everything:
+  // 1. subsystems (resolver, meta) disposed first (reverse registration order)
+  // 2. services disposed second (reverse registration order)
   ServiceRegistry.getInstance().dispose();
 }
