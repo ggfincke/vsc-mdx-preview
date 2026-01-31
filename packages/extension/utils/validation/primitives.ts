@@ -9,7 +9,7 @@ import {
   type ValidationOptions,
 } from '../validation-factory';
 
-// validates value is a string, optionally non-empty
+// validate value is a string, optionally non-empty
 export function validateString(
   value: unknown,
   name: string,
@@ -31,7 +31,7 @@ export function validateString(
   return value;
 }
 
-// validates value is a boolean (factory-generated)
+// validate value is a boolean (factory-generated)
 export const validateBoolean = createPrimitiveValidator<boolean>({
   typeName: 'boolean',
   typeCheck: (v): v is boolean => typeof v === 'boolean',
@@ -39,7 +39,7 @@ export const validateBoolean = createPrimitiveValidator<boolean>({
   logValue: false,
 });
 
-// validates value is a number w/ optional constraints
+// validate value is a number w/ optional constraints
 export function validateNumber(
   value: unknown,
   name: string,
@@ -75,7 +75,7 @@ export function validateNumber(
 // callable function type (avoids ESLint no-unsafe-function-type)
 type CallableFunction = (...args: unknown[]) => unknown;
 
-// validates value is a function (factory-generated)
+// validate value is a function (factory-generated)
 export const validateFunction = createPrimitiveValidator<CallableFunction>({
   typeName: 'function',
   typeCheck: (v): v is CallableFunction => typeof v === 'function',

@@ -3,9 +3,13 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
+import type { LogTag } from '@mdx-preview/shared';
 
 // error handler for subscriber notifications (default logs to debug channel)
-export type SubscriberErrorHandler = (error: unknown, subscriberIndex: number) => void;
+export type SubscriberErrorHandler = (
+  error: unknown,
+  subscriberIndex: number
+) => void;
 
 // interface for services that support subscription to state changes
 export interface ISubscribable<T> {
@@ -13,14 +17,14 @@ export interface ISubscribable<T> {
   subscribe(callback: (data: T) => void): vscode.Disposable;
 }
 
-// * generic subscriber manager that implements the pub/sub pattern
+// generic subscriber manager that implements the pub/sub pattern
 export class SubscriberManager<T> {
   private subscribers = new Set<(data: T) => void>();
-  private readonly logTag: string;
+  private readonly logTag: LogTag;
   private readonly errorHandler?: SubscriberErrorHandler;
 
   // create a new SubscriberManager w/ log tag & optional error handler
-  constructor(logTag: string, errorHandler?: SubscriberErrorHandler) {
+  constructor(logTag: LogTag, errorHandler?: SubscriberErrorHandler) {
     this.logTag = logTag;
     this.errorHandler = errorHandler;
   }

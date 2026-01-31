@@ -2,7 +2,7 @@
 // Standalone file watcher factory w/ error wrapping
 //
 // Extracted from BaseWatcher for reuse in standalone watchers that don't
-// need full BaseWatcher lifecycle management.
+// need full BaseWatcher lifecycle management
 //
 // USAGE:
 // ```typescript
@@ -11,12 +11,13 @@
 // const watcher = createFileWatcher({
 //   pattern: '**/tsconfig.json',
 //   onChange: (uri) => { console.log('Changed:', uri.fsPath); },
-//   logTag: 'TSCONFIG',
+//   logTag: LogTags.TS_CONFIG,
 // });
 // ```
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
+import { LogTags, type LogTag } from '@mdx-preview/shared';
 
 // options for creating a file watcher
 export interface FileWatcherConfig {
@@ -36,8 +37,8 @@ export interface FileWatcherConfig {
   ignoreDeleteEvents?: boolean;
   // wrap handlers in try-catch w/ error logging (default: true)
   wrapErrors?: boolean;
-  // tag for debug logging (e.g., 'TSCONFIG', 'CSS'). Required if wrapErrors is true
-  logTag?: string;
+  // use log tag for debug logging (e.g., LogTags.TS_CONFIG, LogTags.CSS) required if wrapErrors is true
+  logTag?: LogTag;
 }
 
 // create a VS Code file system watcher w/ standard error handling
@@ -79,7 +80,7 @@ export function createFileWatcher(
       try {
         handler(uri);
       } catch (error) {
-        const tag = logTag || 'FILE-WATCHER';
+        const tag = logTag ?? LogTags.WATCHER;
         debug(`[${tag}] Error in ${eventType} handler: ${error}`);
       }
     };

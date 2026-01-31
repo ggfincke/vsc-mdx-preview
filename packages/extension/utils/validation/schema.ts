@@ -6,11 +6,16 @@ import {
   getLogger,
   type ValidationOptions,
 } from '../validation-factory';
-import { validateString, validateBoolean } from './primitives';
-import { validateArray, validateObject, validateRecord } from './collections';
-import type { FrameworkId } from '@mdx-preview/shared';
+import Ajv from 'ajv';
+import {
+  FRAMEWORK_IDS,
+  TAILWIND_ENABLED_VALUES,
+  UNKNOWN_BEHAVIOR_VALUES,
+  MDX_PREVIEW_CONFIG_SCHEMA,
+  type FrameworkId,
+} from '@mdx-preview/shared';
 
-// validates value is one of allowed enum string values
+// validate value is one of allowed enum string values
 export function validateEnumValue<T extends string>(
   value: unknown,
   name: string,
@@ -36,7 +41,7 @@ export function validateEnumValue<T extends string>(
 // type for plugin specification: string or [string, options]
 export type PluginSpecValue = string | [string, Record<string, unknown>];
 
-// validates plugin spec: string | [string, Record<string, unknown>]
+// validate plugin spec: string | [string, Record<string, unknown>]
 export function validatePluginSpec(
   value: unknown,
   name: string,
@@ -111,179 +116,50 @@ export interface ConfigValidationResult {
   };
 }
 
-// allowed values for validation
-const FRAMEWORK_VALUES = [
-  'generic',
-  'docusaurus',
-  'nextjs',
-  'starlight',
-  'nextra',
-] as const;
-const TAILWIND_ENABLED_VALUES = ['auto', 'enabled', 'disabled'] as const;
-const UNKNOWN_BEHAVIOR_VALUES = ['strip', 'placeholder', 'raw'] as const;
+// Note: enum arrays imported from @mdx-preview/shared (canonical source)
+// FRAMEWORK_IDS, TAILWIND_ENABLED_VALUES, UNKNOWN_BEHAVIOR_VALUES
 
-// validates complete MDX Preview config schema
-// returns validation result w/ errors array & validated config if valid
+// ajv schema validator singleton
+const configSchemaValidator = new Ajv({
+  allErrors: true,
+  allowUnionTypes: true,
+  strict: false,
+}).compile(MDX_PREVIEW_CONFIG_SCHEMA);
+
+// format ajv errors for display
+function formatAjvError(error: {
+  instancePath?: string;
+  message?: string;
+  keyword?: string;
+}): string {
+  const path = error.instancePath
+    ? `config${error.instancePath.replace(/\//g, '.')}`
+    : 'config';
+  const message = error.message ?? 'is invalid';
+  return `${path} ${message}`;
+}
+
+// validate complete MDX Preview config schema
+// return validation result w/ errors array & validated config if valid
 export function validateConfigSchema(
   config: unknown,
   opts?: Pick<ValidationOptions, 'context'>
 ): ConfigValidationResult {
-  const errors: string[] = [];
-  const collectError = (msg: string) => errors.push(msg);
-  const validationOpts = {
-    context: opts?.context ?? 'config',
-    log: collectError,
-  };
+  const log = getLogger(opts);
+  const ctx = formatContext(opts?.context ?? 'config');
 
-  // validate root is an object
-  const cfg = validateObject(config, 'config', validationOpts);
-  if (!cfg) {
+  const valid = configSchemaValidator(config) as boolean;
+  if (!valid) {
+    const errors = (configSchemaValidator.errors ?? []).map(formatAjvError);
+    for (const error of errors) {
+      log(`${ctx}${error}`);
+    }
     return { valid: false, errors };
   }
 
-  const result: NonNullable<ConfigValidationResult['config']> = {};
-
-  // validate remarkPlugins array
-  if (cfg.remarkPlugins !== undefined) {
-    const validated = validateArray(
-      cfg.remarkPlugins,
-      'remarkPlugins',
-      (plugin, i) =>
-        validatePluginSpec(plugin, `remarkPlugins[${i}]`, validationOpts),
-      validationOpts
-    );
-    if (validated) {
-      result.remarkPlugins = validated;
-    }
-  }
-
-  // validate rehypePlugins array
-  if (cfg.rehypePlugins !== undefined) {
-    const validated = validateArray(
-      cfg.rehypePlugins,
-      'rehypePlugins',
-      (plugin, i) =>
-        validatePluginSpec(plugin, `rehypePlugins[${i}]`, validationOpts),
-      validationOpts
-    );
-    if (validated) {
-      result.rehypePlugins = validated;
-    }
-  }
-
-  // validate components record
-  if (cfg.components !== undefined) {
-    const validated = validateRecord(
-      cfg.components,
-      'components',
-      (v, key) => validateString(v, `components.${key}`, validationOpts),
-      validationOpts
-    );
-    if (validated) {
-      result.components = validated;
-    }
-  }
-
-  // validate framework enum
-  if (cfg.framework !== undefined) {
-    const validated = validateEnumValue(
-      cfg.framework,
-      'framework',
-      FRAMEWORK_VALUES,
-      validationOpts
-    );
-    if (validated) {
-      result.framework = validated;
-    }
-  }
-
-  // validate frameworkOptions object
-  if (cfg.frameworkOptions !== undefined) {
-    const fOpts = validateObject(
-      cfg.frameworkOptions,
-      'frameworkOptions',
-      validationOpts
-    );
-    if (fOpts) {
-      result.frameworkOptions = {};
-
-      if (fOpts.enableShims !== undefined) {
-        const validated = validateBoolean(
-          fOpts.enableShims,
-          'frameworkOptions.enableShims',
-          validationOpts
-        );
-        if (validated !== undefined) {
-          result.frameworkOptions.enableShims = validated;
-        }
-      }
-
-      if (fOpts.customAliases !== undefined) {
-        const validated = validateRecord(
-          fOpts.customAliases,
-          'frameworkOptions.customAliases',
-          (v, key) =>
-            validateString(
-              v,
-              `frameworkOptions.customAliases.${key}`,
-              validationOpts
-            ),
-          validationOpts
-        );
-        if (validated) {
-          result.frameworkOptions.customAliases = validated;
-        }
-      }
-    }
-  }
-
-  // validate tailwind options
-  if (cfg.tailwind !== undefined) {
-    const tw = validateObject(cfg.tailwind, 'tailwind', validationOpts);
-    if (tw) {
-      result.tailwind = {};
-
-      if (tw.enabled !== undefined) {
-        const validated = validateEnumValue(
-          tw.enabled,
-          'tailwind.enabled',
-          TAILWIND_ENABLED_VALUES,
-          validationOpts
-        );
-        if (validated) {
-          result.tailwind.enabled = validated;
-        }
-      }
-
-      if (tw.configPath !== undefined) {
-        const validated = validateString(
-          tw.configPath,
-          'tailwind.configPath',
-          validationOpts
-        );
-        if (validated) {
-          result.tailwind.configPath = validated;
-        }
-      }
-    }
-  }
-
-  // validate unknownBehavior enum
-  if (cfg.unknownBehavior !== undefined) {
-    const validated = validateEnumValue(
-      cfg.unknownBehavior,
-      'unknownBehavior',
-      UNKNOWN_BEHAVIOR_VALUES,
-      validationOpts
-    );
-    if (validated) {
-      result.unknownBehavior = validated;
-    }
-  }
-
   return {
-    valid: errors.length === 0,
-    errors,
-    config: errors.length === 0 ? result : undefined,
+    valid: true,
+    errors: [],
+    config: config as ConfigValidationResult['config'],
   };
 }

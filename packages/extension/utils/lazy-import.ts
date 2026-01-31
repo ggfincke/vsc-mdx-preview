@@ -1,9 +1,11 @@
 // packages/extension/utils/lazy-import.ts
 // utility for lazy-loading modules w/ caching & race condition handling
 
-// create a lazy import function that caches the module after first load
-// handles concurrent calls by sharing the loading promise
-export function createLazyImport<T>(importFn: () => Promise<T>): () => Promise<T> {
+// create lazy import function that caches the module after first load
+// handle concurrent calls by sharing loading promise
+export function createLazyImport<T>(
+  importFn: () => Promise<T>
+): () => Promise<T> {
   let cached: T | null = null;
   let loading: Promise<T> | null = null;
 

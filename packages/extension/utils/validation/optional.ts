@@ -4,8 +4,8 @@
 import { createOptionalValidator } from '../validation-factory';
 import { validateNumber } from './primitives';
 
-// validates an optional number parameter (used for line/column in openDocument)
-// returns the validated number, or undefined if the value is undefined or invalid
+// validate optional number parameter (used for line/column in openDocument)
+// return validated number, or undefined if value is undefined or invalid
 // does not log for undefined values (they're optional) - factory-generated wrapper
 export const validateOptionalNumber = createOptionalValidator(validateNumber);
 

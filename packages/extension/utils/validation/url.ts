@@ -8,7 +8,7 @@ import {
 } from '../validation-factory';
 import { validateString } from './primitives';
 
-// validates & parses a URL string
+// validate & parse URL string
 export function validateUrl(
   value: unknown,
   name: string,

@@ -1,7 +1,7 @@
 // packages/extension/utils/find-up.ts
 // unified upward directory traversal for config file discovery
 //
-// consolidates repeated "find up" patterns from:
+// consolidates repeated "find up" patterns from
 // - ConfigResolver.ts (find .mdx-previewrc.json)
 // - TypeScriptConfigResolver.ts (find tsconfig.json)
 // - FrameworkDetector.ts (find package.json)
@@ -26,7 +26,7 @@ export interface FindUpOptions {
   // - undefined: search to filesystem root
   stopAt?: string | string[] | ((dir: string) => boolean);
 
-  // return type:
+  // return type
   // - 'file': returns full path to found file (default)
   // - 'directory': returns directory containing the file
   returnType?: 'file' | 'directory';
@@ -34,8 +34,8 @@ export interface FindUpOptions {
 
 // search upward from startDir for a file matching filename(s)
 // stops at workspace boundary, custom boundary, or filesystem root
-// returns Found path or undefined if not found
-// example:
+// return found path or undefined if not found
+// example
 // // Find .mdx-previewrc.json, stop at workspace root
 // findUp({
 //   filename: ['.mdx-previewrc.json', '.mdx-previewrc'],
@@ -43,21 +43,21 @@ export interface FindUpOptions {
 //   stopAt: createWorkspaceStopPredicate(),
 // });
 //
-// example:
+// example
 // // Find tsconfig.json, search to filesystem root
 // findUp({
 //   filename: 'tsconfig.json',
-//   startDir: directory,
-// });
+//   startDir: directory
+// })
 //
-// example:
+// example
 // // Find package.json, return containing directory
 // findUp({
 //   filename: 'package.json',
 //   startDir: documentDir,
 //   stopAt: workspaceRoot,
-//   returnType: 'directory',
-// });
+//   returnType: 'directory'
+// })
 export function findUp(options: FindUpOptions): string | undefined {
   const { filename, startDir, stopAt, returnType = 'file' } = options;
 

@@ -7,7 +7,7 @@ import {
   type ValidationOptions,
 } from '../validation-factory';
 
-// validates value is an array, optionally validating each element
+// validate value is an array, optionally validating each element
 // elementValidator receives each element & its index, returns validated value or undefined
 export function validateArray<T>(
   value: unknown,
@@ -40,7 +40,7 @@ export function validateArray<T>(
   return result;
 }
 
-// validates value is a plain object (not null, not array)
+// validate value is a plain object (not null, not array)
 export function validateObject(
   value: unknown,
   name: string,
@@ -57,7 +57,7 @@ export function validateObject(
   return value as Record<string, unknown>;
 }
 
-// validates value is a Record<string, T> w/ value type checking
+// validate value is a Record<string, T> w/ value type checking
 // valueValidator receives each value & its key, returns validated value or undefined
 export function validateRecord<T>(
   value: unknown,
