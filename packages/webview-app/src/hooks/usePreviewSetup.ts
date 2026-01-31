@@ -2,7 +2,10 @@
 // shared preview setup hook - consolidates mermaid, lightbox & container ref
 
 import { useRef, type RefObject, type ReactNode } from 'react';
-import { useMermaidRendering, type MermaidScanMode } from './useMermaidRendering';
+import {
+  useMermaidRendering,
+  type MermaidScanMode,
+} from './useMermaidRendering';
 import { useImageLightbox } from './useImageLightbox';
 
 interface PreviewSetupOptions {
@@ -25,7 +28,9 @@ interface PreviewSetupResult {
 
 // shared preview setup - provides common container ref, mermaid rendering & lightbox
 // use in SafePreview & TrustedPreview to consolidate shared setup logic
-export function usePreviewSetup(options: PreviewSetupOptions): PreviewSetupResult {
+export function usePreviewSetup(
+  options: PreviewSetupOptions
+): PreviewSetupResult {
   const containerRef = useRef<HTMLDivElement>(null);
   const { handleImageClick } = useImageLightbox();
   const { renderPortals, scan } = useMermaidRendering(containerRef, {

@@ -1,5 +1,5 @@
 // packages/webview-app/src/rpc-webview.ts
-// * RPC webview side - bidirectional communication btwn webview & extension via Comlink
+// RPC webview side - bidirectional communication between webview & extension via Comlink
 //
 // message queue architecture
 //
@@ -14,7 +14,7 @@
 // 5. App calls registerWebviewHandlers()
 // 6. Pending messages flushed to React state
 //
-// The pendingMessages queue buffers messages between steps 3-5.
+// pendingMessages queue buffers messages between steps 3-5
 //
 // Queued message types: trust, safe, trusted, error, stale
 // Direct (not queued): theme, zoom, CSS, Tailwind (update DOM directly)
@@ -90,7 +90,8 @@ let stateHandlers: WebviewStateHandlers | null = null;
 // K.1: Cache for ./module-system dynamic import
 // Avoids repeated promise creation on each RPC call
 // Uses error recovery pattern to reset cache on failure
-let moduleSystemPromise: Promise<typeof import('./module-system')> | null = null;
+let moduleSystemPromise: Promise<typeof import('./module-system')> | null =
+  null;
 
 function getModuleSystem(): Promise<typeof import('./module-system')> {
   if (!moduleSystemPromise) {
@@ -271,7 +272,10 @@ export function initRPCWebviewSide(): void {
 let registrationInProgress = false;
 
 // K.3: Helper for exponential backoff retry
-function attemptRegistration(handlers: WebviewStateHandlers, attempt: number): void {
+function attemptRegistration(
+  handlers: WebviewStateHandlers,
+  attempt: number
+): void {
   registrationInProgress = true;
 
   try {
@@ -298,10 +302,7 @@ function attemptRegistration(handlers: WebviewStateHandlers, attempt: number): v
       setTimeout(() => attemptRegistration(handlers, attempt + 1), delay);
     } else {
       registrationInProgress = false;
-      log.error(
-        `Handler registration failed after ${attempt + 1} attempts`,
-        e
-      );
+      log.error(`Handler registration failed after ${attempt + 1} attempts`, e);
     }
   }
 }

@@ -9,7 +9,9 @@ import { DOMPURIFY_CONFIG, ensureSafeModeStyles } from '../security';
 // process links in a DocumentFragment or HTMLElement for security
 // internal anchor links (#...) are left unchanged
 // external links get target="_blank" & rel="noopener noreferrer"
-function processLinksInFragment(container: DocumentFragment | HTMLElement): void {
+function processLinksInFragment(
+  container: DocumentFragment | HTMLElement
+): void {
   const links = container.querySelectorAll('a');
   links.forEach((link) => {
     const href = link.getAttribute('href');
@@ -23,7 +25,9 @@ function processLinksInFragment(container: DocumentFragment | HTMLElement): void
 }
 
 // add clickable cursor to images for lightbox functionality
-function processImagesInFragment(container: DocumentFragment | HTMLElement): void {
+function processImagesInFragment(
+  container: DocumentFragment | HTMLElement
+): void {
   const images = container.querySelectorAll('img');
   images.forEach((img) => {
     (img as HTMLElement).style.cursor = 'zoom-in';
@@ -31,7 +35,7 @@ function processImagesInFragment(container: DocumentFragment | HTMLElement): voi
 }
 
 // hook for processing Safe Mode HTML content
-// handles sanitization, security post-processing, & code block enhancement
+// handle sanitization, security post-processing, & code block enhancement
 // this is necessarily imperative because Safe Mode renders pre-compiled HTML
 // (not React components), requiring DOM manipulation after innerHTML injection
 //

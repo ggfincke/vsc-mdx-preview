@@ -7,7 +7,7 @@ import { debug, info, warn, error } from './debug';
 // re-export TaggedLogger type for convenience
 export type { TaggedLogger, LogTag } from '@mdx-preview/shared';
 
-// creates a tagged logger w/ a fixed prefix for consistent debug output
+// create tagged logger w/ fixed prefix for consistent debug output
 // all methods are no-ops in production builds
 export function createTaggedLogger(tag: LogTag): TaggedLogger {
   const prefix = `[${tag}]`;

@@ -6,7 +6,11 @@
 export { ThemeProvider, useTheme } from './context';
 
 // theme types & constants (from shared package)
-export type { PreviewTheme, CodeBlockTheme, WebviewThemeState } from '@mdx-preview/shared';
+export type {
+  PreviewTheme,
+  CodeBlockTheme,
+  WebviewThemeState,
+} from '@mdx-preview/shared';
 export {
   isLightPreviewTheme,
   PREVIEW_THEMES,

@@ -4,7 +4,7 @@
 import { CODE_COPY_FEEDBACK_DURATION_MS } from '../constants';
 
 // copy text to clipboard
-// returns true on success, false on failure
+// return true on success, false on failure
 export async function copyToClipboard(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);
@@ -41,7 +41,9 @@ export async function copyWithFeedback(
   } = options;
 
   const success = await copyToClipboard(text);
-  if (!success) {return false;}
+  if (!success) {
+    return false;
+  }
 
   // Apply visual feedback
   element.classList.add(copiedClassName);

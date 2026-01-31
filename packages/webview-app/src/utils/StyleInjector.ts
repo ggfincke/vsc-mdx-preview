@@ -5,8 +5,8 @@
 // StyleInjector is a pure DOM manipulation layer. The authoritative source
 // of truth for which styles have been injected is ModuleRegistry (in
 // module-system/registry/ModuleRegistry.ts), which has reference counting
-// and LRU eviction. Callers should check ModuleRegistry before calling
-// injectModuleCss() to avoid duplicate injection.
+// & LRU eviction. Callers should check ModuleRegistry before calling
+// injectModuleCss() to avoid duplicate injection
 
 export interface StyleInjectorOptions {
   // enable deduplication check (skip if already injected) - for non-module styles
@@ -26,7 +26,7 @@ export const STYLE_IDS = {
 } as const;
 
 // centralized style injection manager
-// handles module CSS, theme CSS, custom CSS, & Tailwind CSS w/ proper ordering
+// handle module CSS, theme CSS, custom CSS, & Tailwind CSS w/ proper ordering
 // for module CSS specifically, ModuleRegistry is the authoritative tracker
 // call registry.hasInjectedStyle() before calling injectModuleCss()
 class StyleInjectorImpl {

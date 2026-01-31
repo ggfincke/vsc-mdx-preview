@@ -2,7 +2,7 @@
 // centralized constants for the webview app
 //
 // this file consolidates magic numbers from across the webview
-// to improve maintainability & documentation.
+// to improve maintainability & documentation
 
 // zoom
 

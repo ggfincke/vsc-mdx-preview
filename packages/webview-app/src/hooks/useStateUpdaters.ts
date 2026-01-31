@@ -4,7 +4,7 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { debug } from '../utils/debug';
 
-// creates a memoized setter for a single field in state
+// create memoized setter for a single field in state
 export function useFieldSetter<S extends object, K extends keyof S>(
   setState: Dispatch<SetStateAction<S>>,
   field: K,
@@ -21,7 +21,7 @@ export function useFieldSetter<S extends object, K extends keyof S>(
   );
 }
 
-// creates a memoized setter that sets a field to a constant value
+// create memoized setter that sets a field to a constant value
 export function useFieldResetter<S extends object, K extends keyof S>(
   setState: Dispatch<SetStateAction<S>>,
   field: K,
@@ -36,7 +36,7 @@ export function useFieldResetter<S extends object, K extends keyof S>(
   }, []);
 }
 
-// creates a memoized setter w/ custom debug message formatting
+// create memoized setter w/ custom debug message formatting
 export function useFieldSetterWithFormat<S extends object, K extends keyof S>(
   setState: Dispatch<SetStateAction<S>>,
   field: K,

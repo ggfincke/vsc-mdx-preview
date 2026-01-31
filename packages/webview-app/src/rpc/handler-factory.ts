@@ -10,7 +10,12 @@ import type {
 } from '@mdx-preview/shared';
 
 // message types for queued handlers (can be buffered until React mounts)
-export type QueuedMessageType = 'trust' | 'safe' | 'trusted' | 'error' | 'stale';
+export type QueuedMessageType =
+  | 'trust'
+  | 'safe'
+  | 'trusted'
+  | 'error'
+  | 'stale';
 
 // required state handlers that must be registered by App component
 export interface RequiredStateHandlers {
@@ -36,8 +41,7 @@ export interface OptionalStateHandlers {
 
 // combined state handlers interface (required + optional)
 export interface WebviewStateHandlers
-  extends RequiredStateHandlers,
-    OptionalStateHandlers {}
+  extends RequiredStateHandlers, OptionalStateHandlers {}
 
 // configuration for a QUEUED pattern handler
 export interface QueuedHandlerConfig<TPayload, THandlerArgs extends unknown[]> {
@@ -71,12 +75,12 @@ export type PendingMessage =
   | { type: 'error'; payload: unknown }
   | { type: 'stale'; payload: unknown };
 
-// creates a factory context bound to module-level state
+// create factory context bound to module-level state
 export function createHandlerFactories(
   getHandlers: () => WebviewStateHandlers | null,
   enqueueFn: (msg: PendingMessage) => void
 ) {
-  // creates a QUEUED pattern handler
+  // create QUEUED pattern handler
   function createQueuedHandler<TPayload, THandlerArgs extends unknown[]>(
     config: QueuedHandlerConfig<TPayload, THandlerArgs>,
     log: TaggedLogger
@@ -92,10 +96,11 @@ export function createHandlerFactories(
 
     return (...args: unknown[]): void => {
       // Debug logging
-      const msg = debugFormat
-        ? debugFormat(...args)
-        : `${methodName} called`;
-      log.debug(msg, args.length === 1 ? args[0] : args.length > 1 ? args : undefined);
+      const msg = debugFormat ? debugFormat(...args) : `${methodName} called`;
+      log.debug(
+        msg,
+        args.length === 1 ? args[0] : args.length > 1 ? args : undefined
+      );
 
       const handlers = getHandlers();
       if (handlers) {
@@ -115,7 +120,7 @@ export function createHandlerFactories(
     };
   }
 
-  // creates an OPTIONAL pattern handler
+  // create OPTIONAL pattern handler
   function createOptionalHandler<TArgs extends unknown[]>(
     config: OptionalHandlerConfig,
     log: TaggedLogger

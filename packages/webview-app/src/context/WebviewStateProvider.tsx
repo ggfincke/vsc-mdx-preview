@@ -1,5 +1,5 @@
 // packages/webview-app/src/context/WebviewStateProvider.tsx
-// Composite provider that wraps all state contexts and handles RPC handler registration
+// composite provider that wraps all state contexts & handles RPC handler registration
 
 import { useEffect, useRef, type ReactNode } from 'react';
 import { TrustProvider, useTrust } from './TrustContext';

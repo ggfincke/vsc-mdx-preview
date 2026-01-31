@@ -19,7 +19,7 @@ export interface UseAsyncEffectOptions<T> {
   onLoadingChange?: (isLoading: boolean) => void;
 }
 
-// * hook for running async operations in useEffect w/ automatic cancellation
+// hook for running async operations in useEffect w/ automatic cancellation
 export function useAsyncEffect<T>(
   asyncFn: (signal: CancellationSignal) => Promise<T | void>,
   deps: DependencyList,
@@ -27,9 +27,9 @@ export function useAsyncEffect<T>(
 ): void {
   const { onSuccess, onError, onLoadingChange } = options;
 
-  // Store latest callbacks in ref to avoid requiring them in deps.
+  // Store latest callbacks in ref to avoid requiring them in deps
   // This ensures we always call the most recent callback without
-  // needing the caller to memoize them.
+  // needing the caller to memoize them
   const callbacksRef = useRef({ onSuccess, onError, onLoadingChange });
   callbacksRef.current = { onSuccess, onError, onLoadingChange };
 

@@ -4,9 +4,13 @@
 // shallow comparison of two arrays
 // O(n) but short-circuits on first difference
 export function shallowArrayEquals<T>(a: T[], b: T[]): boolean {
-  if (a.length !== b.length) {return false;}
+  if (a.length !== b.length) {
+    return false;
+  }
   for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) {return false;}
+    if (a[i] !== b[i]) {
+      return false;
+    }
   }
   return true;
 }
@@ -22,14 +26,18 @@ export function fastStringEquals(a: string, b: string): boolean {
 // - 'array': Use shallowArrayEquals for array fields
 // - 'skip': Ignore this field (useful for stable callbacks)
 // - function: Custom comparator (prev, next) => boolean
-type FieldStrategy<V> = 'shallow' | 'array' | 'skip' | ((prev: V, next: V) => boolean);
+type FieldStrategy<V> =
+  | 'shallow'
+  | 'array'
+  | 'skip'
+  | ((prev: V, next: V) => boolean);
 
 // type for field comparator configuration
 type FieldConfig<T> = {
   [K in keyof T]?: FieldStrategy<T[K]>;
 };
 
-// creates a field-selective comparison function for React.memo
+// create field-selective comparison function for React.memo
 // param fields - Object mapping field names to comparison strategy
 // example:
 // const arePropsEqual = createFieldComparator<Props>({
@@ -50,26 +58,34 @@ export function createFieldComparator<T extends object>(
     for (const key of allKeys) {
       const strategy = fields[key];
 
-      if (strategy === 'skip') {continue;}
+      if (strategy === 'skip') {
+        continue;
+      }
 
       const prevVal = prev[key];
       const nextVal = next[key];
 
       // custom comparator function
       if (typeof strategy === 'function') {
-        if (!strategy(prevVal, nextVal)) {return false;}
+        if (!strategy(prevVal, nextVal)) {
+          return false;
+        }
         continue;
       }
 
       if (strategy === 'array') {
         if (!Array.isArray(prevVal) || !Array.isArray(nextVal)) {
-          if (prevVal !== nextVal) {return false;}
+          if (prevVal !== nextVal) {
+            return false;
+          }
         } else if (!shallowArrayEquals(prevVal, nextVal)) {
           return false;
         }
       } else {
         // Default shallow comparison
-        if (prevVal !== nextVal) {return false;}
+        if (prevVal !== nextVal) {
+          return false;
+        }
       }
     }
     return true;

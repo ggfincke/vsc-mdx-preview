@@ -65,7 +65,9 @@ export function createResourceLoader(
 
     // Failed previously & retry not allowed
     if (state === false && !allowRetry) {
-      return Promise.reject(new Error(`[${name}] Loading failed & retry is disabled`));
+      return Promise.reject(
+        new Error(`[${name}] Loading failed & retry is disabled`)
+      );
     }
 
     // Not started (null) or failed previously (false w/ allowRetry) - start loading
