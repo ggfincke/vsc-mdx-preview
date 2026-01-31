@@ -3,6 +3,7 @@
 
 import * as path from 'path';
 import { debug } from '../../../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { createSingleton } from '../../../utils/singleton-factory';
 import {
   ResolutionStrategy,
@@ -30,8 +31,12 @@ export class FileProbeStrategy implements IResolutionStrategy {
     const probed = probeModuleFile(resolved);
 
     if (probed) {
-      debug(`[FILE-PROBE] ${specifier} -> ${probed}`);
-      return buildResolutionResult(probed, specifier, ResolutionStrategy.FileProbe);
+      debug(`[${LogTags.FILE_PROBE}] ${specifier} -> ${probed}`);
+      return buildResolutionResult(
+        probed,
+        specifier,
+        ResolutionStrategy.FileProbe
+      );
     }
     return null;
   }
@@ -45,8 +50,12 @@ export class FileProbeStrategy implements IResolutionStrategy {
     const probed = await probeModuleFileAsync(resolved);
 
     if (probed) {
-      debug(`[FILE-PROBE] ${specifier} -> ${probed}`);
-      return buildResolutionResult(probed, specifier, ResolutionStrategy.FileProbe);
+      debug(`[${LogTags.FILE_PROBE}] ${specifier} -> ${probed}`);
+      return buildResolutionResult(
+        probed,
+        specifier,
+        ResolutionStrategy.FileProbe
+      );
     }
     return null;
   }

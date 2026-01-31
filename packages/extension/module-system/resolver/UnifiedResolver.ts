@@ -3,7 +3,7 @@
 
 import { resolveAlias, isBuiltInShim } from './alias-resolver';
 import { debug } from '../../logging';
-import { isNpmModuleId } from '@mdx-preview/shared';
+import { isNpmModuleId, LogTags } from '@mdx-preview/shared';
 import { createResettableSingleton } from '../../utils/singleton-factory';
 import { buildShimResolutionResult } from './result-builders';
 
@@ -22,7 +22,7 @@ import {
   type ResolutionMode,
 } from '../../types';
 
-// * UnifiedResolver orchestrates 4 resolution strategies in priority order
+// UnifiedResolver orchestrates 4 resolution strategies in priority order
 export class UnifiedResolver {
   // check if specifier is a relative import
   isRelativeImport(specifier: string): boolean {
@@ -68,7 +68,7 @@ export class UnifiedResolver {
       if (aliasedPath !== null) {
         if (isBuiltInShim(aliasedPath)) {
           debug(
-            `[UNIFIED-RESOLVER] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
+            `[${LogTags.UNIFIED_RESOLVER}] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
           );
           return buildShimResolutionResult(
             aliasedPath,
@@ -78,7 +78,7 @@ export class UnifiedResolver {
         }
         // alias resolved to a path - continue w/ that path (will use subsequent strategy)
         debug(
-          `[UNIFIED-RESOLVER] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
+          `[${LogTags.UNIFIED_RESOLVER}] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
         );
         specifier = aliasedPath;
       }
@@ -86,7 +86,11 @@ export class UnifiedResolver {
 
     // step 2: TypeScript path resolution (for non-relative imports)
     if (context.tsConfig && !this.isRelativeImport(specifier)) {
-      const result = getTypeScriptPathStrategy().resolve(specifier, context, mode);
+      const result = getTypeScriptPathStrategy().resolve(
+        specifier,
+        context,
+        mode
+      );
       if (result) {
         return result;
       }
@@ -94,7 +98,11 @@ export class UnifiedResolver {
 
     // step 3: enhanced-resolve (for node_modules)
     if (!this.isRelativeImport(specifier)) {
-      const result = getEnhancedResolveStrategy().resolve(specifier, context, mode);
+      const result = getEnhancedResolveStrategy().resolve(
+        specifier,
+        context,
+        mode
+      );
       if (result) {
         return result;
       }
@@ -109,7 +117,7 @@ export class UnifiedResolver {
     }
 
     debug(
-      `[UNIFIED-RESOLVER] Could not resolve: ${specifier} from ${context.baseDir}`
+      `[${LogTags.UNIFIED_RESOLVER}] Could not resolve: ${specifier} from ${context.baseDir}`
     );
     return null;
   }
@@ -139,7 +147,7 @@ export class UnifiedResolver {
       if (aliasedPath !== null) {
         if (isBuiltInShim(aliasedPath)) {
           debug(
-            `[UNIFIED-RESOLVER] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
+            `[${LogTags.UNIFIED_RESOLVER}] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
           );
           return buildShimResolutionResult(
             aliasedPath,
@@ -148,7 +156,7 @@ export class UnifiedResolver {
           );
         }
         debug(
-          `[UNIFIED-RESOLVER] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
+          `[${LogTags.UNIFIED_RESOLVER}] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
         );
         specifier = aliasedPath;
       }
@@ -168,7 +176,11 @@ export class UnifiedResolver {
 
     // step 3: enhanced-resolve (for node_modules) - uses CachedInputFileSystem internally
     if (!this.isRelativeImport(specifier)) {
-      const result = getEnhancedResolveStrategy().resolve(specifier, context, mode);
+      const result = getEnhancedResolveStrategy().resolve(
+        specifier,
+        context,
+        mode
+      );
       if (result) {
         return result;
       }
@@ -187,7 +199,7 @@ export class UnifiedResolver {
     }
 
     debug(
-      `[UNIFIED-RESOLVER] Could not resolve: ${specifier} from ${context.baseDir}`
+      `[${LogTags.UNIFIED_RESOLVER}] Could not resolve: ${specifier} from ${context.baseDir}`
     );
     return null;
   }

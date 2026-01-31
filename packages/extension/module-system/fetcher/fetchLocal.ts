@@ -9,7 +9,7 @@ import { PathAccessDeniedError, ErrorContext } from '../../errors';
 import { createModuleNotFoundError } from '../../errors/module-error-factories';
 import { getErrorReporter, getFrameworkDetector } from '../../services';
 import { debug } from '../../logging';
-import type { FetchResult } from '@mdx-preview/shared';
+import { LogTags, type FetchResult } from '@mdx-preview/shared';
 
 // import from extracted modules
 import { getUnifiedResolver } from '../resolver/UnifiedResolver';
@@ -74,7 +74,7 @@ export async function fetchLocal(
     // if it's a built-in shim, return empty result (webview has this preloaded)
     if (resolution.isBuiltInShim) {
       debug(
-        `[MODULE-SYSTEM] Built-in shim: ${request} -> ${resolution.fsPath}`
+        `[${LogTags.MODULE_SYSTEM}] Built-in shim: ${request} -> ${resolution.fsPath}`
       );
       return {
         fsPath: resolution.fsPath,
@@ -121,7 +121,7 @@ export async function fetchLocal(
     }
 
     // fallback for unknown file types - treat as script
-      const { ScriptHandler } = await import('../handlers/ScriptHandler');
+    const { ScriptHandler } = await import('../handlers/ScriptHandler');
     const scriptHandler = new ScriptHandler();
     return scriptHandler.handle(code, fsPath, preview);
   } catch (error) {

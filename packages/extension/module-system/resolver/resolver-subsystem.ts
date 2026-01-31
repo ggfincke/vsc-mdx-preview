@@ -12,6 +12,10 @@ import {
 import { unifiedResolverSingleton } from './UnifiedResolver';
 import { clearStatCache } from './file-prober';
 import { clearCompiledIndexCache } from './strategies/TypeScriptPathStrategy';
+import {
+  clearTsConfigCache,
+  disposeConfigWatchers,
+} from '../../preview/config/TypeScriptConfigResolver';
 
 export const RESOLVER_SUBSYSTEM = 'ResolverSubsystem';
 
@@ -32,6 +36,10 @@ export function registerResolverSubsystem(): void {
     // clear all caches
     clearStatCache();
     clearCompiledIndexCache();
+
+    // dispose tsconfig.json watchers & clear cache
+    disposeConfigWatchers();
+    clearTsConfigCache();
 
     debug(`[${LogTags.RESOLVER_SUBSYSTEM}] Disposed`);
   });

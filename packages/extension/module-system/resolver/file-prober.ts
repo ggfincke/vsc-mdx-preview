@@ -32,7 +32,8 @@ export const TYPESCRIPT_INDEX_FILES = [
 // extensions for general file probing (includes MDX)
 // empty string '' is first to try exact path for imports that already have extensions
 export const FILE_PROBE_EXTENSIONS = [
-  '', // Try exact path first (for paths that already have extensions)
+  // try exact path first (for paths w/ extensions)
+  '',
   '.ts',
   '.tsx',
   '.js',
@@ -58,7 +59,8 @@ export interface StatResult {
   isDirectory: boolean;
 }
 
-const STAT_CACHE_TTL_MS = 5000; // 5 seconds
+// 5 seconds
+const STAT_CACHE_TTL_MS = 5000;
 const STAT_CACHE_MAX_ENTRIES = 1000;
 
 // Internal stat cache using LRUCache
@@ -74,13 +76,13 @@ export function clearStatCache(): void {
 }
 
 // get cached stat result for a path
-// returns null if not cached or expired
+// return null if not cached or expired
 export function getCachedStat(filePath: string): StatResult | null {
   return statCache.get(filePath);
 }
 
 // set stat result in cache
-// converts fs.Stats to StatResult (or creates "not exists" result if null)
+// convert fs.Stats to StatResult (or create "not exists" result if null)
 export function setCachedStat(
   filePath: string,
   stat: fs.Stats | null
@@ -293,7 +295,8 @@ export function probeTypeScriptFile(basePath: string): string | null {
   return probeFile(basePath, {
     extensions: TYPESCRIPT_EXTENSIONS,
     indexFiles: TYPESCRIPT_INDEX_FILES,
-    skipNodeModules: false, // TypeScript paths can resolve into node_modules
+    // TypeScript paths can resolve into node_modules
+    skipNodeModules: false,
   });
 }
 
@@ -305,7 +308,8 @@ export async function probeTypeScriptFileAsync(
   return probeFileAsync(basePath, {
     extensions: TYPESCRIPT_EXTENSIONS,
     indexFiles: TYPESCRIPT_INDEX_FILES,
-    skipNodeModules: false, // TypeScript paths can resolve into node_modules
+    // TypeScript paths can resolve into node_modules
+    skipNodeModules: false,
   });
 }
 

@@ -69,11 +69,11 @@ function createResolver(mode: ResolverMode): Resolver {
 
 // pre-created resolvers for common use cases (lazily initialized)
 // exported for subsystem registration (resolver-subsystem.ts)
-export const browserResolverSingleton = createResettableSingleton(
-  () => createResolver('browser')
+export const browserResolverSingleton = createResettableSingleton(() =>
+  createResolver('browser')
 );
-export const nodeResolverSingleton = createResettableSingleton(
-  () => createResolver('node')
+export const nodeResolverSingleton = createResettableSingleton(() =>
+  createResolver('node')
 );
 
 // get the shared browser resolver instance (used for resolving modules to be loaded in the webview)
@@ -94,4 +94,3 @@ export function clearResolverCache(): void {
 
   debug(`[${LogTags.RESOLVER}] Cache cleared`);
 }
-

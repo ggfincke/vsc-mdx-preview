@@ -2,6 +2,7 @@
 // shared utilities for module fetching & resolution
 
 import { debug, warn } from '../../logging';
+import { LogTags } from '@mdx-preview/shared';
 
 // noop module for core/unshimmable modules (CommonJS export format)
 export const NOOP_MODULE = `Object.defineProperty(exports, '__esModule', { value: true });
@@ -83,14 +84,14 @@ export function buildNoopResult(normalizedRequest: string) {
   if (!hasWarnedAboutCoreModules) {
     hasWarnedAboutCoreModules = true;
     warn(
-      `[MODULE-SYSTEM] Node.js core module "${normalizedRequest}" imported. ` +
+      `[${LogTags.MODULE_SYSTEM}] Node.js core module "${normalizedRequest}" imported. ` +
         `Core modules (fs, path, crypto, etc.) are not available in browser preview. ` +
         `Code using these modules will receive no-op stubs.`
     );
   }
 
   debug(
-    `[MODULE-SYSTEM] Core module "${normalizedRequest}" -> noop. ` +
+    `[${LogTags.MODULE_SYSTEM}] Core module "${normalizedRequest}" -> noop. ` +
       `Used so far: ${Array.from(usedCoreModules).join(', ')}`
   );
 
@@ -100,4 +101,3 @@ export function buildNoopResult(normalizedRequest: string) {
     dependencies: [],
   };
 }
-

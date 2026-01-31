@@ -1,10 +1,7 @@
 // packages/extension/module-system/resolver/strategies/index.ts
 // resolution strategy exports
 
-export {
-  FileProbeStrategy,
-  getFileProbeStrategy,
-} from './FileProbeStrategy';
+export { FileProbeStrategy, getFileProbeStrategy } from './FileProbeStrategy';
 
 export {
   TypeScriptPathStrategy,

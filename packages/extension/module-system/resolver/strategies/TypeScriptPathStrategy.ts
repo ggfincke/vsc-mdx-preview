@@ -3,6 +3,7 @@
 
 import * as path from 'path';
 import { debug } from '../../../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { createSingleton } from '../../../utils/singleton-factory';
 import {
   ResolutionStrategy,
@@ -24,8 +25,10 @@ interface CompiledPathPattern {
   originalPattern: string;
   targets: string[];
   isWildcard: boolean;
-  prefix: string; // pattern without '/*' suffix
-  prefixWithSlash: string; // prefix + '/' for startsWith check
+  // pattern without '/*' suffix
+  prefix: string;
+  // prefix + '/' for startsWith check
+  prefixWithSlash: string;
 }
 
 interface CompiledPathsIndex {
@@ -113,7 +116,7 @@ function getCompiledIndex(
     }
   }
 
-  // Compile and cache
+  // compile & cache
   const compiled = compilePathsIndex(paths, absoluteBaseUrl);
   compiledIndexCache.set(cacheKey, compiled);
   return compiled;
@@ -208,7 +211,7 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
         if (resolved.endsWith('.d.ts')) {
           continue;
         }
-        debug(`[TYPESCRIPT] ${specifier} -> ${resolved}`);
+        debug(`[${LogTags.TYPESCRIPT}] ${specifier} -> ${resolved}`);
         return buildResolutionResult(
           resolved,
           specifier,
@@ -258,7 +261,7 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
         if (resolved.endsWith('.d.ts')) {
           continue;
         }
-        debug(`[TYPESCRIPT] ${specifier} -> ${resolved}`);
+        debug(`[${LogTags.TYPESCRIPT}] ${specifier} -> ${resolved}`);
         return buildResolutionResult(
           resolved,
           specifier,

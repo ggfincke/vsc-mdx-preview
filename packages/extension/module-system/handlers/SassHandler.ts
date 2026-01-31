@@ -20,7 +20,7 @@ type CompileResult = import('sass').CompileResult;
 const sassCache = new Map<string, SassModule | null>();
 
 // load sass from workspace's node_modules
-// returns null if sass is not installed (with caching to avoid repeated lookups)
+// return null if sass not installed (w/ caching to avoid repeated lookups)
 async function loadSassFromWorkspace(
   workspaceRoot: string
 ): Promise<SassModule | null> {
@@ -33,13 +33,15 @@ async function loadSassFromWorkspace(
 
   try {
     // try CommonJS require first (most common case)
-     
+
     const mod = require(sassPath);
     const sassModule = (mod.default ?? mod) as SassModule;
 
     // validate it has the expected API
     if (typeof sassModule.compileAsync !== 'function') {
-      warn(`[${LogTags.SASS_HANDLER}] sass at ${sassPath} missing compileAsync method`);
+      warn(
+        `[${LogTags.SASS_HANDLER}] sass at ${sassPath} missing compileAsync method`
+      );
       sassCache.set(workspaceRoot, null);
       return null;
     }
@@ -62,12 +64,16 @@ async function loadSassFromWorkspace(
           mod) as SassModule;
 
         if (typeof sassModule.compileAsync !== 'function') {
-          warn(`[${LogTags.SASS_HANDLER}] ESM sass at ${sassPath} missing compileAsync`);
+          warn(
+            `[${LogTags.SASS_HANDLER}] ESM sass at ${sassPath} missing compileAsync`
+          );
           sassCache.set(workspaceRoot, null);
           return null;
         }
 
-        debug(`[${LogTags.SASS_HANDLER}] Loaded ESM sass from workspace: ${sassPath}`);
+        debug(
+          `[${LogTags.SASS_HANDLER}] Loaded ESM sass from workspace: ${sassPath}`
+        );
         sassCache.set(workspaceRoot, sassModule);
         return sassModule;
       } catch (esmError) {
@@ -186,7 +192,9 @@ ${errorMessage
 
    ════════════════════════════════════════════════════════════════════════════ */
 `;
-      warn(`[${LogTags.SASS_HANDLER}] Compilation error for ${fsPath}: ${errorMessage}`);
+      warn(
+        `[${LogTags.SASS_HANDLER}] Compilation error for ${fsPath}: ${errorMessage}`
+      );
       return buildCssResult(fsPath, errorCss);
     }
   }

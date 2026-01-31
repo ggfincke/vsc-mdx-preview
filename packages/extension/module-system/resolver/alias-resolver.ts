@@ -10,14 +10,16 @@ import {
   getCanonicalComponentName,
 } from '@mdx-preview/shared';
 
-
 type AliasFrameworkKey = Exclude<FrameworkId, 'generic'>;
 
 type FrameworkAliasMap = Map<string, string>;
 
 const FRAMEWORK_ALIAS_MAPS = buildFrameworkAliasMaps();
 
-function buildFrameworkAliasMaps(): Record<AliasFrameworkKey, FrameworkAliasMap> {
+function buildFrameworkAliasMaps(): Record<
+  AliasFrameworkKey,
+  FrameworkAliasMap
+> {
   const maps: Record<AliasFrameworkKey, FrameworkAliasMap> = {
     docusaurus: new Map(),
     starlight: new Map(),

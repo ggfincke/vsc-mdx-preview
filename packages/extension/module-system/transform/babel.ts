@@ -6,7 +6,7 @@
 //
 // G.1 optimization: @babel/core is loaded dynamically on first transform,
 // not at module initialization time. This reduces extension activation time
-// for Safe Mode users who never need Babel.
+// for Safe Mode users who never need Babel
 
 import { createLazyImport } from '../../utils/lazy-import';
 import type * as BabelCore from '@babel/core';
