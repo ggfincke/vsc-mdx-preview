@@ -5,6 +5,7 @@
 // between "not cached" (undefined) & "cached as no config" (null)
 
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { warn } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { SingletonService } from '../services/SingletonService';

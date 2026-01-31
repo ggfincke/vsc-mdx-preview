@@ -8,9 +8,6 @@ import {
 } from '../validation-factory';
 import Ajv from 'ajv';
 import {
-  FRAMEWORK_IDS,
-  TAILWIND_ENABLED_VALUES,
-  UNKNOWN_BEHAVIOR_VALUES,
   MDX_PREVIEW_CONFIG_SCHEMA,
   type FrameworkId,
 } from '@mdx-preview/shared';

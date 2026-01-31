@@ -76,7 +76,7 @@ export function createResourceLoader(
         state = true;
       })
       .catch((error) => {
-        console.error(`[${name}] Failed to load:`, error);
+        console.error(`${name}: Failed to load:`, error);
         // Allow retry on next call (if allowRetry is true, state becomes false)
         // If allowRetry is false, state also becomes false but load() will reject
         state = false;

@@ -82,7 +82,7 @@ function mapDefaults(): SettingTypes {
     'preview.openMdxLinksInPreview':
       SETTINGS_DEFAULTS['preview.openMdxLinksInPreview'],
     'preview.security':
-      SETTINGS_DEFAULTS['preview.security'] === 'disabled'
+      (SETTINGS_DEFAULTS['preview.security'] as string) === 'disabled'
         ? SecurityPolicy.Disabled
         : SecurityPolicy.Strict,
     'preview.useVscodeMarkdownStyles':

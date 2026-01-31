@@ -16,7 +16,7 @@
 // ```
 
 import * as vscode from 'vscode';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags, type LogTag } from '@mdx-preview/shared';
 
 // options for creating a file watcher
@@ -65,6 +65,9 @@ export function createFileWatcher(
     ignoreDeleteEvents
   );
 
+  // create tagged logger for error messages
+  const logger = createTaggedLogger(logTag ?? LogTags.WATCHER);
+
   // helper to wrap handler w/ error handling
   const wrapHandler = (
     handler: ((uri: vscode.Uri) => void) | undefined,
@@ -80,8 +83,7 @@ export function createFileWatcher(
       try {
         handler(uri);
       } catch (error) {
-        const tag = logTag ?? LogTags.WATCHER;
-        debug(`[${tag}] Error in ${eventType} handler: ${error}`);
+        logger.debug(`Error in ${eventType} handler: ${error}`);
       }
     };
   };

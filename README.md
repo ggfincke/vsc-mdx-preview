@@ -35,36 +35,32 @@ Alternatively, click the preview icon in the editor toolbar when viewing `.mdx`,
 
 MDX Preview automatically detects your framework from `package.json` and provides compatible component shims.
 
-| Framework | Detection | Component Shims |
-|-----------|-----------|-----------------|
-| **Docusaurus** | `@docusaurus/core` | `@theme/Tabs`, `@theme/TabItem`, `@theme/CodeBlock`, `@theme/Details` |
-| **Starlight** | `@astrojs/starlight` | `Card`, `CardGrid`, `LinkCard`, `Steps`, `Badge`, `Aside`, `Tabs`, `FileTree`, `Code` |
-| **Nextra** | `nextra` | `Callout`, `Tabs`, `Cards`, `FileTree`, `Steps`, `Bleed` |
-| **Next.js** | `next` + MDX package | `next/image`, `next/link` |
-| **Generic** | (fallback) | `Callout`, `Collapsible`, `Tabs`, `TabItem`, `CodeGroup` |
+| Framework      | Detection            | Component Shims                                                                       |
+| -------------- | -------------------- | ------------------------------------------------------------------------------------- |
+| **Docusaurus** | `@docusaurus/core`   | `@theme/Tabs`, `@theme/TabItem`, `@theme/CodeBlock`, `@theme/Details`                 |
+| **Starlight**  | `@astrojs/starlight` | `Card`, `CardGrid`, `LinkCard`, `Steps`, `Badge`, `Aside`, `Tabs`, `FileTree`, `Code` |
+| **Nextra**     | `nextra`             | `Callout`, `Tabs`, `Cards`, `FileTree`, `Steps`, `Bleed`                              |
+| **Next.js**    | `next` + MDX package | `next/image`, `next/link`                                                             |
+| **Generic**    | (fallback)           | `Callout`, `Collapsible`, `Tabs`, `TabItem`, `CodeGroup`                              |
 
 ### Framework Examples
 
 <details>
 <summary><strong>Docusaurus</strong></summary>
 
-```mdx
+````mdx
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 <Tabs>
   <TabItem value="js" label="JavaScript">
-    ```js
-    console.log('Hello');
-    ```
+    ```js console.log('Hello'); ```
   </TabItem>
   <TabItem value="py" label="Python">
-    ```python
-    print('Hello')
-    ```
+    ```python print('Hello') ```
   </TabItem>
 </Tabs>
-```
+````
 
 Admonitions are also supported:
 
@@ -108,9 +104,7 @@ import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
 ```mdx
 import { Callout, Tabs } from 'nextra/components';
 
-<Callout type="info">
-  This is an informational callout.
-</Callout>
+<Callout type="info">This is an informational callout.</Callout>
 
 <Tabs items={['npm', 'yarn', 'pnpm']}>
   <Tabs.Tab>npm install mdx-preview</Tabs.Tab>
@@ -132,9 +126,7 @@ import Link from 'next/link';
 
 <Image src="/logo.png" alt="Logo" width={200} height={100} />
 
-<Link href="/docs/getting-started">
-  Get Started
-</Link>
+<Link href="/docs/getting-started">Get Started</Link>
 ```
 
 </details>
@@ -145,47 +137,43 @@ For complete framework documentation, see [docs/frameworks.md](docs/frameworks.m
 
 These components are available without imports when `mdx-preview.components.builtins` is enabled (default):
 
-| Component | Aliases | Description |
-|-----------|---------|-------------|
-| `Callout` | `Alert`, `Admonition` | Alert box with type variants (note, tip, info, warning, danger) |
-| `Tabs` | - | Tabbed content sections |
-| `TabItem` | `Tab` | Individual tab pane |
-| `CodeGroup` | - | Multiple code blocks as tabs |
-| `Collapsible` | `Accordion`, `Details` | Expandable/collapsible section |
+| Component     | Aliases                | Description                                                     |
+| ------------- | ---------------------- | --------------------------------------------------------------- |
+| `Callout`     | `Alert`, `Admonition`  | Alert box with type variants (note, tip, info, warning, danger) |
+| `Tabs`        | -                      | Tabbed content sections                                         |
+| `TabItem`     | `Tab`                  | Individual tab pane                                             |
+| `CodeGroup`   | -                      | Multiple code blocks as tabs                                    |
+| `Collapsible` | `Accordion`, `Details` | Expandable/collapsible section                                  |
 
 ```mdx
-<Callout type="warning">
-  This is a warning callout.
-</Callout>
+<Callout type="warning">This is a warning callout.</Callout>
 
 <Tabs>
   <TabItem label="First">Content 1</TabItem>
   <TabItem label="Second">Content 2</TabItem>
 </Tabs>
 
-<Collapsible title="Click to expand">
-  Hidden content here.
-</Collapsible>
+<Collapsible title="Click to expand">Hidden content here.</Collapsible>
 ```
 
 ## Available Commands
 
-| Command | Shortcut | Description |
-|---------|----------|-------------|
-| **MDX: Open Preview** | `Cmd/Ctrl+K X` | Open preview for current file |
-| **MDX: Refresh Preview** | - | Manually refresh the preview |
-| **MDX: Toggle Script Execution** | - | Toggle between Safe Mode and Trusted Mode |
-| **MDX: Select Preview Theme** | - | Choose a preview theme |
-| **MDX: Select Code Block Theme** | - | Choose a syntax highlighting theme |
-| **MDX: Select Mermaid Theme** | - | Choose a Mermaid diagram theme |
-| **MDX: Select Framework** | - | Manually select MDX framework |
-| **MDX: Zoom In** | `Cmd/Ctrl+=` | Zoom in the preview |
-| **MDX: Zoom Out** | `Cmd/Ctrl+-` | Zoom out the preview |
-| **MDX: Reset Zoom** | `Cmd/Ctrl+0` | Reset preview zoom to default |
-| **MDX: Toggle VSCode Markdown Styles** | - | Toggle VS Code markdown styling |
-| **MDX: Toggle White Background** | - | Toggle white background override |
-| **MDX: Change Security Settings** | - | Modify Content Security Policy |
-| **MDX: Refresh Module Cache** | - | Clear cached modules |
+| Command                                | Shortcut       | Description                               |
+| -------------------------------------- | -------------- | ----------------------------------------- |
+| **MDX: Open Preview**                  | `Cmd/Ctrl+K X` | Open preview for current file             |
+| **MDX: Refresh Preview**               | -              | Manually refresh the preview              |
+| **MDX: Toggle Script Execution**       | -              | Toggle between Safe Mode and Trusted Mode |
+| **MDX: Select Preview Theme**          | -              | Choose a preview theme                    |
+| **MDX: Select Code Block Theme**       | -              | Choose a syntax highlighting theme        |
+| **MDX: Select Mermaid Theme**          | -              | Choose a Mermaid diagram theme            |
+| **MDX: Select Framework**              | -              | Manually select MDX framework             |
+| **MDX: Zoom In**                       | `Cmd/Ctrl+=`   | Zoom in the preview                       |
+| **MDX: Zoom Out**                      | `Cmd/Ctrl+-`   | Zoom out the preview                      |
+| **MDX: Reset Zoom**                    | `Cmd/Ctrl+0`   | Reset preview zoom to default             |
+| **MDX: Toggle VSCode Markdown Styles** | -              | Toggle VS Code markdown styling           |
+| **MDX: Toggle White Background**       | -              | Toggle white background override          |
+| **MDX: Change Security Settings**      | -              | Modify Content Security Policy            |
+| **MDX: Refresh Module Cache**          | -              | Clear cached modules                      |
 
 ## Configuration
 
@@ -193,21 +181,21 @@ For complete configuration documentation, see [docs/configuration.md](docs/confi
 
 ### Key Settings
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `mdx-preview.preview.enableScripts` | `false` | Enable JavaScript execution (requires trusted workspace) |
-| `mdx-preview.preview.updateMode` | `"onType"` | When to update: `onType`, `onSave`, `manual` |
-| `mdx-preview.preview.debounceDelay` | `300` | Debounce delay (ms) for on-type updates |
-| `mdx-preview.preview.previewTheme` | `"none"` | Preview theme (github-light, atom-dark, etc.) |
-| `mdx-preview.preview.codeBlockTheme` | `"auto"` | Code syntax theme (`auto` matches preview) |
-| `mdx-preview.preview.mermaidTheme` | `"default"` | Mermaid diagram theme |
-| `mdx-preview.preview.autoTheme` | `true` | Auto light/dark switching with VS Code |
-| `mdx-preview.preview.security` | `"strict"` | CSP policy: `strict` or `disabled` |
-| `mdx-preview.framework` | `"auto"` | Framework: `auto`, `docusaurus`, `starlight`, `nextra`, `nextjs`, `generic` |
-| `mdx-preview.tailwind.enabled` | `"enabled"` | Tailwind CSS: `auto`, `enabled`, `disabled` |
-| `mdx-preview.components.builtins` | `true` | Enable built-in components |
-| `mdx-preview.components.unknownBehavior` | `"placeholder"` | Unknown components: `placeholder`, `strip`, `raw` |
-| `mdx-preview.build.useSucraseTranspiler` | `false` | Use Sucrase instead of Babel |
+| Setting                                  | Default         | Description                                                                 |
+| ---------------------------------------- | --------------- | --------------------------------------------------------------------------- |
+| `mdx-preview.preview.enableScripts`      | `false`         | Enable JavaScript execution (requires trusted workspace)                    |
+| `mdx-preview.preview.updateMode`         | `"onType"`      | When to update: `onType`, `onSave`, `manual`                                |
+| `mdx-preview.preview.debounceDelay`      | `300`           | Debounce delay (ms) for on-type updates                                     |
+| `mdx-preview.preview.previewTheme`       | `"none"`        | Preview theme (github-light, atom-dark, etc.)                               |
+| `mdx-preview.preview.codeBlockTheme`     | `"auto"`        | Code syntax theme (`auto` matches preview)                                  |
+| `mdx-preview.preview.mermaidTheme`       | `"default"`     | Mermaid diagram theme                                                       |
+| `mdx-preview.preview.autoTheme`          | `true`          | Auto light/dark switching with VS Code                                      |
+| `mdx-preview.preview.security`           | `"strict"`      | CSP policy: `strict` or `disabled`                                          |
+| `mdx-preview.framework`                  | `"auto"`        | Framework: `auto`, `docusaurus`, `starlight`, `nextra`, `nextjs`, `generic` |
+| `mdx-preview.tailwind.enabled`           | `"enabled"`     | Tailwind CSS: `auto`, `enabled`, `disabled`                                 |
+| `mdx-preview.components.builtins`        | `true`          | Enable built-in components                                                  |
+| `mdx-preview.components.unknownBehavior` | `"placeholder"` | Unknown components: `placeholder`, `strip`, `raw`                           |
+| `mdx-preview.build.useSucraseTranspiler` | `false`         | Use Sucrase instead of Babel                                                |
 
 ## Themes
 
@@ -215,16 +203,16 @@ For complete configuration documentation, see [docs/configuration.md](docs/confi
 
 16 themes available from Markdown Preview Enhanced:
 
-| Light Themes | Dark Themes |
-|--------------|-------------|
-| `github-light` | `github-dark` |
-| `atom-light` | `atom-dark` |
-| `one-light` | `one-dark` |
+| Light Themes      | Dark Themes      |
+| ----------------- | ---------------- |
+| `github-light`    | `github-dark`    |
+| `atom-light`      | `atom-dark`      |
+| `one-light`       | `one-dark`       |
 | `solarized-light` | `solarized-dark` |
-| `vue` | `atom-material` |
-| `newsprint` | `gothic` |
-| `medium` | `night` |
-| `none` (minimal) | `monokai` |
+| `vue`             | `atom-material`  |
+| `newsprint`       | `gothic`         |
+| `medium`          | `night`          |
+| `none` (minimal)  | `monokai`        |
 
 ### Code Block Themes
 
@@ -232,14 +220,14 @@ For complete configuration documentation, see [docs/configuration.md](docs/confi
 
 ### Mermaid Themes
 
-| Theme | Description |
-|-------|-------------|
+| Theme     | Description               |
+| --------- | ------------------------- |
 | `default` | Light theme (recommended) |
-| `dark` | Dark background theme |
-| `forest` | Green-tinted theme |
-| `neutral` | Grayscale theme |
-| `base` | Minimal styling |
-| `null` | No theme (raw SVG) |
+| `dark`    | Dark background theme     |
+| `forest`  | Green-tinted theme        |
+| `neutral` | Grayscale theme           |
+| `base`    | Minimal styling           |
+| `null`    | No theme (raw SVG)        |
 
 ### Auto Theme Switching
 
@@ -481,17 +469,17 @@ For comprehensive troubleshooting, see [docs/troubleshooting.md](docs/troublesho
 
 The `examples/` directory contains working examples for various use cases:
 
-| Example | Description |
-|---------|-------------|
-| [`basic/`](examples/basic/) | Fundamental MDX features and Tailwind CSS |
-| [`docusaurus/`](examples/docusaurus/) | Docusaurus framework with @theme components |
-| [`starlight/`](examples/starlight/) | Astro Starlight components |
-| [`nextra/`](examples/nextra/) | Nextra framework with _meta.json |
-| [`nextjs/`](examples/nextjs/) | Next.js MDX with next/image and next/link |
-| [`admonitions/`](examples/admonitions/) | Docusaurus-style admonition callouts |
-| [`generic-shims/`](examples/generic-shims/) | Built-in component library |
-| [`custom-plugins/`](examples/custom-plugins/) | Custom remark/rehype plugins |
-| [`safe-mode/`](examples/safe-mode/) | Safe Mode rendering examples |
+| Example                                       | Description                                 |
+| --------------------------------------------- | ------------------------------------------- |
+| [`basic/`](examples/basic/)                   | Fundamental MDX features and Tailwind CSS   |
+| [`docusaurus/`](examples/docusaurus/)         | Docusaurus framework with @theme components |
+| [`starlight/`](examples/starlight/)           | Astro Starlight components                  |
+| [`nextra/`](examples/nextra/)                 | Nextra framework with \_meta.json           |
+| [`nextjs/`](examples/nextjs/)                 | Next.js MDX with next/image and next/link   |
+| [`admonitions/`](examples/admonitions/)       | Docusaurus-style admonition callouts        |
+| [`generic-shims/`](examples/generic-shims/)   | Built-in component library                  |
+| [`custom-plugins/`](examples/custom-plugins/) | Custom remark/rehype plugins                |
+| [`safe-mode/`](examples/safe-mode/)           | Safe Mode rendering examples                |
 
 ## Documentation
 

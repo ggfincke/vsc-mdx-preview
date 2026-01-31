@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-alpha.12] - 2026-01-30
+
+### Added
+
+- **Shared Package Expansion**: Centralized config enums/defaults/schema, logging types, module error types w/ suggestions, callout normalization, codegen scripts
+- **Lazy Import Utility**: `lazyImport()` for deferred module loading
+- **Circular Dependency Detection**: ServiceRegistry now detects circular dependencies
+- **PathCache & WatchableCache**: New cache utilities for extension
+- **Resilient Shim Loading**: Retry & fallback support for webview shim loading
+- **Conditional Shim Preloading**: Generic shims now preload based on usage
+
+### Changed
+
+- **Shared Package Architecture**: Component registry moved to shims module, LRUCache & ContentHashCache moved to shared
+- **Extension Types**: Centralized types directory, shared error types & config enums
+- **Service Registry**: Subsystem registration for resolver & meta subsystems
+- **Preview Subsystem**: Extracted Preview class & commands from PreviewManager
+- **Config System**: Simplified config caching & TypeScript config resolution
+- **Module System**: Simplified resolver strategies, shared file prober, improved transform pipeline
+- **Webview Architecture**: Granular React contexts for reduced re-renders, ModuleRegistry subsystem extraction, context factory pattern
+- **Build System**: Production optimizations, browser mainField in esbuild, parallel builds w/ concurrently
+
+### Performance
+
+- **Lazy Loading**: Babel, MDX compilers, PostCSS, KaTeX CSS, & framework CSS now lazy-load on demand
+- **Resolver Caching**: fs.statSync calls cached w/ 5s TTL, async resolution w/ parallel file probing
+- **Shiki Optimization**: O(1) language lookup & lazy highlighter initialization
+- **Webview Optimizations**: React.memo for components, cached Mermaid init, parallel dependency fetching, memory-based LRU eviction, O(1) style tracking
+- **Tailwind**: Scan cache & improved detector w/ find-up utility
+- **DependencyWatcher**: LRU eviction to bound memory
+
+### Fixed
+
+- **Framework Shims**: Docusaurus detection, Starlight tabs, preload alias resolution
+- **Webview Components**: Misc component improvements & utility updates
+
+### Build
+
+- **Dependencies**: Moved sass/typescript to devDependencies, added tsconfck
+- **Bundle Size**: Comprehensive .vscodeignore cleanup for smaller VSIX
+- **TypeScript**: Replaced TS compiler w/ tsconfck for config parsing, Sucrase for transpilation
+
+### Documentation
+
+- Refreshed README w/ new architecture docs
+- Added service architecture guide & expanded trust validation docs
+
 ## [1.0.0-alpha.11] - 2026-01-21
 
 ### Added

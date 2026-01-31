@@ -4,7 +4,6 @@
 
 /* eslint-disable react-refresh/only-export-components -- Context & hooks are co-located with component */
 
-import React from 'react';
 import {
   createTabs,
   type BaseTabsProps,

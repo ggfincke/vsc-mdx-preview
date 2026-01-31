@@ -34,7 +34,7 @@ export class WatchableCache<K, V> {
 
   constructor(options: WatchableCacheOptions) {
     this.cache = new LRUCache<K, V>({
-      maxEntries: options.maxEntries,
+      maxEntries: options.maxEntries ?? 100,
       ttlMs: options.ttlMs,
     });
     this.logTag = options.logTag;
