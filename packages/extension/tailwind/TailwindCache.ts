@@ -48,7 +48,7 @@ export class TailwindCache {
         ttlMs: options.ttlMs,
       });
       debug(
-        `[TAILWIND] Cache settings updated: maxEntries=${options.maxEntries}, ttlMs=${options.ttlMs}`
+        `[${LogTags.TAILWIND}] Cache settings updated: maxEntries=${options.maxEntries}, ttlMs=${options.ttlMs}`
       );
     }
   }

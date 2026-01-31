@@ -103,7 +103,7 @@ export class TailwindCompiler {
     });
 
     debug(
-      `[TAILWIND] CSS compiled (${result.css.length} chars, version=${options.tailwindVersion})`
+      `[${LogTags.TAILWIND}] CSS compiled (${result.css.length} chars, version=${options.tailwindVersion})`
     );
     return result.css;
   }

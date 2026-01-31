@@ -40,7 +40,7 @@ export interface TailwindProcessResult {
 
 export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   protected static override instance: TailwindProcessor | undefined;
-  protected readonly logTag = 'TAILWIND';
+  protected readonly logTag = LogTags.TAILWIND;
 
   private detector = new TailwindDetector();
   private scanner = new TailwindScanner();
@@ -152,7 +152,8 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       entryFileDependencies,
       maxFileSizeBytes: tailwindConfig.maxFileSizeBytes,
       resolutionContext,
-      scanCache: this.scanCache, // use incremental scan cache
+      // use incremental scan cache
+      scanCache: this.scanCache,
     });
     const scanDuration = performance.now() - scanStart;
     debug(
@@ -202,12 +203,11 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     } catch (error) {
       // Tailwind errors are non-blocking
       getErrorReporter().report(normalizeError(error), {
-          context: ErrorContext.Tailwind,
-          severity: ErrorSeverity.Warning,
-          showNotification: false,
-          metadata: { operation: 'compilation' },
-        }
-      );
+        context: ErrorContext.Tailwind,
+        severity: ErrorSeverity.Warning,
+        showNotification: false,
+        metadata: { operation: 'compilation' },
+      });
       return { css: '', watchFiles: [], enabled: false };
     }
   }
@@ -216,6 +216,11 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   // called when config files change to ensure version is re-detected
   invalidateVersionCache(workspaceRoot?: string | null): void {
     this.detector.invalidateVersionCache(workspaceRoot);
+  }
+
+  // invalidate Tailwind detection caches for config & entry CSS paths
+  invalidateDetectionCaches(changedPaths: string[]): void {
+    this.detector.invalidateDetectionCaches(changedPaths);
   }
 
   // custom cleanup - clear caches

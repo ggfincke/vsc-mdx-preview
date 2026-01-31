@@ -47,13 +47,14 @@ export class TailwindScanner {
     ) {
       const sizeLimit = options.maxFileSizeBytes ?? 1024 * 1024;
 
+      // pass through scan cache for incremental scanning
       const result = await this.dependencyScanner.scanDependencies(
         options.entryFilePath,
         options.entryFileDependencies,
         sizeLimit,
         (t, cs) => this.extractFromText(t, cs),
         options.resolutionContext,
-        options.scanCache // pass through scan cache for incremental scanning
+        options.scanCache
       );
 
       result.classes.forEach((c) => classSet.add(c));

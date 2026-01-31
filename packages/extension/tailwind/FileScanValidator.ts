@@ -2,10 +2,10 @@
 // file validation utilities for Tailwind scanning
 //
 // extracted from TailwindScanner to improve testability & reusability
-// handles file size validation, token validation, & parallel file reading
+// handle file size validation, token validation, & parallel file reading
 
 import * as fs from 'fs';
-import { extractErrorMessage } from '@mdx-preview/shared';
+import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import { debug } from '../logging';
 import { CLASS_TOKEN_RE } from './constants';
 
@@ -19,7 +19,7 @@ export interface FileReadResult {
   content: string | null;
 }
 
-// * validates files before scanning for Tailwind classes
+// validate files before scanning for Tailwind classes
 // consolidates file I/O & validation logic for testability
 export class FileScanValidator {
   // validate file size before reading
@@ -72,13 +72,13 @@ export class FileScanValidator {
     try {
       const stat = await fs.promises.stat(fsPath);
       if (stat.size > maxBytes) {
-        debug(`[TAILWIND] Skipping large file: ${fsPath}`);
+        debug(`[${LogTags.TAILWIND}] Skipping large file: ${fsPath}`);
         return null;
       }
       return await fs.promises.readFile(fsPath, 'utf-8');
     } catch (err) {
       debug(
-        `[TAILWIND] Skipping unreadable file: ${fsPath} (${extractErrorMessage(err)})`
+        `[${LogTags.TAILWIND}] Skipping unreadable file: ${fsPath} (${extractErrorMessage(err)})`
       );
       return null;
     }

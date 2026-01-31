@@ -2,9 +2,16 @@
 // centralized constants for the Tailwind module
 //
 // this file consolidates magic numbers from across the Tailwind module
-// to improve maintainability & documentation.
+// to improve maintainability & documentation
 
-import { STANDARD_CACHE_TTL_MS, STANDARD_DEBOUNCE_MS } from '@mdx-preview/shared';
+import {
+  STANDARD_CACHE_TTL_MS,
+  STANDARD_DEBOUNCE_MS,
+  DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES,
+  DEFAULT_TAILWIND_MAX_CSS_FILES_TO_SEARCH,
+  DEFAULT_TAILWIND_CACHE_MAX_ENTRIES,
+  DEFAULT_TAILWIND_CACHE_TTL_SECONDS,
+} from '@mdx-preview/shared';
 
 // cache configuration
 
@@ -36,18 +43,21 @@ export const MAX_INLINE_SOURCE_CHUNK_SIZE = 2000;
 export const SCANNER_MAX_RECURSION_DEPTH = 10;
 
 // default maximum file size in bytes to process (10 MB)
-export const DEFAULT_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+export const DEFAULT_MAX_FILE_SIZE_BYTES = DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES;
 
 // default maximum CSS files to search when detecting entry CSS
-export const DEFAULT_MAX_CSS_FILES_TO_SEARCH = 500;
+export const DEFAULT_MAX_CSS_FILES_TO_SEARCH =
+  DEFAULT_TAILWIND_MAX_CSS_FILES_TO_SEARCH;
 
 // processor cache defaults (VS Code settings defaults)
 
 // default max entries for processor-level cache
-export const PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES = 50;
+export const PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES =
+  DEFAULT_TAILWIND_CACHE_MAX_ENTRIES;
 
 // default cache TTL in seconds for processor-level cache (5 minutes)
-export const PROCESSOR_CACHE_DEFAULT_TTL_SECONDS = 300;
+export const PROCESSOR_CACHE_DEFAULT_TTL_SECONDS =
+  DEFAULT_TAILWIND_CACHE_TTL_SECONDS;
 
 // version boundaries
 
