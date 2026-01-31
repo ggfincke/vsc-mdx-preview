@@ -33,14 +33,21 @@ let webviewResourcesError: Error | null = null;
 export function initWebviewAppHTMLResourcesAsync(
   context: vscode.ExtensionContext
 ): void {
-  debug(`[${LogTags.WEBVIEW_MGR}] Starting background webview resource initialization`);
+  debug(
+    `[${LogTags.WEBVIEW_MGR}] Starting background webview resource initialization`
+  );
   webviewResourcesPromise = initWebviewAppHTMLResources(context)
     .then(() => {
-      debug(`[${LogTags.WEBVIEW_MGR}] Background resource initialization complete`);
+      debug(
+        `[${LogTags.WEBVIEW_MGR}] Background resource initialization complete`
+      );
     })
     .catch((err) => {
       webviewResourcesError = err;
-      debug(`[${LogTags.WEBVIEW_MGR}] Background resource initialization failed:`, err);
+      debug(
+        `[${LogTags.WEBVIEW_MGR}] Background resource initialization failed:`,
+        err
+      );
     });
 }
 
@@ -72,7 +79,9 @@ export async function initWebviewAppHTMLResources(
     'manifest.json'
   );
 
-  debug(`[WEBVIEW-MGR] Reading manifest from: ${manifestUri.fsPath}`);
+  debug(
+    `[${LogTags.WEBVIEW_MGR}] Reading manifest from: ${manifestUri.fsPath}`
+  );
   // use workspace.fs.readFile for extension resources (works in remote/virtual scenarios)
   const manifestBytes = await vscode.workspace.fs.readFile(manifestUri);
   const manifestContent = new TextDecoder().decode(manifestBytes);
@@ -101,9 +110,11 @@ export async function initWebviewAppHTMLResources(
       : undefined,
   };
   manager.setWebviewAppUris(webviewAppUris);
-  debug(`[WEBVIEW-MGR] Loaded mainScript: ${webviewAppUris.mainScript.fsPath}`);
   debug(
-    `[WEBVIEW-MGR] Loaded mainStyle: ${webviewAppUris.mainStyle?.fsPath ?? 'none'}`
+    `[${LogTags.WEBVIEW_MGR}] Loaded mainScript: ${webviewAppUris.mainScript.fsPath}`
+  );
+  debug(
+    `[${LogTags.WEBVIEW_MGR}] Loaded mainStyle: ${webviewAppUris.mainStyle?.fsPath ?? 'none'}`
   );
 }
 
@@ -116,7 +127,9 @@ function getWebviewAppHTML(
 ): string | undefined {
   const webviewAppUris = getPreviewManager().getWebviewAppUris();
   if (!webviewAppUris) {
-    debug(`[${LogTags.WEBVIEW_MGR}] getWebviewAppHTML: webviewAppUris is undefined!`);
+    debug(
+      `[${LogTags.WEBVIEW_MGR}] getWebviewAppHTML: webviewAppUris is undefined!`
+    );
     return undefined;
   }
 
@@ -128,7 +141,9 @@ function getWebviewAppHTML(
     ? webview.asWebviewUri(webviewAppUris.mainStyle)
     : undefined;
 
-  debug(`[WEBVIEW-MGR] getWebviewAppHTML: scriptUri=${scriptUri.toString()}`);
+  debug(
+    `[${LogTags.WEBVIEW_MGR}] getWebviewAppHTML: scriptUri=${scriptUri.toString()}`
+  );
 
   let styleNodeHTML = '';
   const overrideBodyStyles = useWhiteBackground
@@ -195,7 +210,9 @@ function setPanelHTMLFromPreview(preview: Preview): void {
     trustState,
     preview.securityConfiguration.securityPolicy
   );
-  debug(`[WEBVIEW-MGR] CSP: ${csp.substring(0, CSP_DEBUG_PREVIEW_LENGTH)}...`);
+  debug(
+    `[${LogTags.WEBVIEW_MGR}] CSP: ${csp.substring(0, CSP_DEBUG_PREVIEW_LENGTH)}...`
+  );
 
   const webviewAppHTML = getWebviewAppHTML(
     panel.webview,
@@ -207,7 +224,7 @@ function setPanelHTMLFromPreview(preview: Preview): void {
 
   if (webviewAppHTML) {
     debug(
-      `[WEBVIEW-MGR] Setting webview HTML (${webviewAppHTML.length} chars)`
+      `[${LogTags.WEBVIEW_MGR}] Setting webview HTML (${webviewAppHTML.length} chars)`
     );
     panel.webview.html = webviewAppHTML;
   } else {
@@ -215,7 +232,9 @@ function setPanelHTMLFromPreview(preview: Preview): void {
   }
 }
 
-export async function createOrShowPanel(preview: Preview): Promise<vscode.WebviewPanel> {
+export async function createOrShowPanel(
+  preview: Preview
+): Promise<vscode.WebviewPanel> {
   debug(`[${LogTags.WEBVIEW_MGR}] createOrShowPanel called`);
 
   // G.3 optimization: Ensure webview resources are ready before proceeding
@@ -308,7 +327,7 @@ export async function createOrShowPanel(preview: Preview): Promise<vscode.Webvie
     debug(`[${LogTags.WEBVIEW_MGR}] RPC initialized`);
   } else {
     debug(
-      `[WEBVIEW-MGR] Panel exists, panelDoc=${panelDoc?.uri.fsPath}, preview.doc=${preview.doc.uri.fsPath}`
+      `[${LogTags.WEBVIEW_MGR}] Panel exists, panelDoc=${panelDoc?.uri.fsPath}, preview.doc=${preview.doc.uri.fsPath}`
     );
     if (panelDoc !== preview.doc) {
       debug(`[${LogTags.WEBVIEW_MGR}] Different doc, reinitializing handshake`);

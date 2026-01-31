@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { DEP_WATCHER_MAX_ENTRIES } from '../../constants';
 import { debug } from '../../logging';
-import { LRUCache } from '@mdx-preview/shared';
+import { LRUCache, LogTags } from '@mdx-preview/shared';
 import { getUnifiedResolver } from '../../module-system/resolver/UnifiedResolver';
 import type { ResolutionContext } from '../../types';
 import { BaseWatcher } from './BaseWatcher';
@@ -13,7 +13,7 @@ import { BaseWatcher } from './BaseWatcher';
 // only watches relative imports, skips node_modules & external URLs
 // uses LRUCache for automatic eviction to prevent unbounded watcher growth
 export class DependencyWatcher extends BaseWatcher {
-  protected readonly logTag = 'DEP-WATCHER';
+  protected readonly logTag = LogTags.DEP_WATCHER;
   private watchers: LRUCache<string, vscode.FileSystemWatcher>;
   private documentDir: string = '';
   private onChangeCallback: (fsPath: string) => void;
@@ -26,7 +26,7 @@ export class DependencyWatcher extends BaseWatcher {
     this.watchers = new LRUCache({
       maxEntries: DEP_WATCHER_MAX_ENTRIES,
       onEvict: (fsPath, watcher) => {
-        debug(`[DEP-WATCHER] Disposing watcher: ${fsPath}`);
+        debug(`[${LogTags.DEP_WATCHER}] Disposing watcher: ${fsPath}`);
         watcher.dispose();
       },
     });
@@ -83,14 +83,18 @@ export class DependencyWatcher extends BaseWatcher {
       }
     }
     for (const fsPath of pathsToRemove) {
-      debug(`[DEP-WATCHER] Removing watcher (no longer imported): ${fsPath}`);
-      this.watchers.delete(fsPath); // onEvict disposes watcher
+      debug(
+        `[${LogTags.DEP_WATCHER}] Removing watcher (no longer imported): ${fsPath}`
+      );
+      // onEvict disposes watcher
+      this.watchers.delete(fsPath);
     }
 
     // Step 2: touch existing watchers (get() updates LRU position)
     for (const fsPath of newPaths) {
       if (this.watchers.has(fsPath)) {
-        this.watchers.get(fsPath); // touch to update LRU position
+        // touch to update LRU position
+        this.watchers.get(fsPath);
       }
     }
 
@@ -98,15 +102,16 @@ export class DependencyWatcher extends BaseWatcher {
     // LRUCache auto-evicts oldest when capacity exceeded
     for (const fsPath of newPaths) {
       if (!this.watchers.has(fsPath)) {
-        debug(`[DEP-WATCHER] Adding watcher: ${fsPath}`);
+        debug(`[${LogTags.DEP_WATCHER}] Adding watcher: ${fsPath}`);
         const watcher = this.createFileWatcher(fsPath, {
           onChange: () => {
-            debug(`[DEP-WATCHER] File changed: ${fsPath}`);
+            debug(`[${LogTags.DEP_WATCHER}] File changed: ${fsPath}`);
             this.onChangeCallback(fsPath);
           },
           onDelete: () => {
-            debug(`[DEP-WATCHER] File deleted: ${fsPath}`);
-            this.watchers.delete(fsPath); // onEvict disposes watcher
+            debug(`[${LogTags.DEP_WATCHER}] File deleted: ${fsPath}`);
+            // onEvict disposes watcher
+            this.watchers.delete(fsPath);
             this.onChangeCallback(fsPath);
           },
           ignoreCreateEvents: true,
@@ -116,12 +121,15 @@ export class DependencyWatcher extends BaseWatcher {
       }
     }
 
-    debug(`[DEP-WATCHER] Watching ${this.watchers.size} local dependencies`);
+    debug(
+      `[${LogTags.DEP_WATCHER}] Watching ${this.watchers.size} local dependencies`
+    );
   }
 
   // clear all dependencies & dispose watchers
   clear(): void {
-    this.watchers.clearWithEviction(); // onEvict disposes each watcher
+    // onEvict disposes each watcher
+    this.watchers.clearWithEviction();
   }
 
   protected onStart(): void {

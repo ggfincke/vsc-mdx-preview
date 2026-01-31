@@ -9,8 +9,8 @@ import { getPreviewManager } from '../services';
 import { createOrShowPanel, refreshPanel } from './webview-manager';
 import { Preview } from './Preview';
 
-// * open MDX preview for the active editor document
-// creates a new Preview instance or reuses existing one
+// open MDX preview for the active editor document
+// create new Preview instance or reuse existing one
 export async function openPreview(): Promise<void> {
   debug(`[${LogTags.PREVIEW}] openPreview called`);
   if (!vscode.window.activeTextEditor) {

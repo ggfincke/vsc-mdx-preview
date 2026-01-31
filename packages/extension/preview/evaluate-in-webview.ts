@@ -56,7 +56,9 @@ export default async function evaluateInWebview(
     // send framework info so webview can lazy-load the right shims
     const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
     if (frameworkInfo.framework !== 'generic') {
-      debug(`[${LogTags.EVALUATE}] Sending framework to webview: ${frameworkInfo.framework}`);
+      debug(
+        `[${LogTags.EVALUATE}] Sending framework to webview: ${frameworkInfo.framework}`
+      );
       webviewHandle.setFramework(frameworkInfo.framework);
     }
 
@@ -84,11 +86,13 @@ export default async function evaluateInWebview(
 
       // detect used generic components for conditional shim preloading
       try {
+        // no config components needed here
+        // pass URI for caching
         const detectionResult = await detectComponents(
           text,
           { detectImports: true },
-          new Set(), // no config components needed here
-          preview.doc.uri.toString() // pass URI for caching
+          new Set(),
+          preview.doc.uri.toString()
         );
         const usedGenericComponents = getUsedGenericComponents(detectionResult);
         if (usedGenericComponents.length > 0) {
@@ -99,7 +103,9 @@ export default async function evaluateInWebview(
         }
       } catch (err) {
         // detection failure is non-fatal - webview will load all generic shims as fallback
-        debug(`[${LogTags.EVALUATE}] Component detection failed: ${extractErrorMessage(err)}`);
+        debug(
+          `[${LogTags.EVALUATE}] Component detection failed: ${extractErrorMessage(err)}`
+        );
       }
 
       debug(`[${LogTags.EVALUATE}] Calling webviewHandle.updatePreview`);
@@ -174,9 +180,7 @@ export default async function evaluateInWebview(
 
     debug(`[${LogTags.EVALUATE}] evaluateInWebview complete`);
   } catch (error) {
-    debug(
-      `[${LogTags.EVALUATE}] ERROR: ${extractErrorMessage(error)}`
-    );
+    debug(`[${LogTags.EVALUATE}] ERROR: ${extractErrorMessage(error)}`);
     getErrorReporter().report(error, {
       context: ErrorContext.Transpile,
       showInWebview: true,
@@ -217,11 +221,16 @@ function sendNextraMetaIfNeeded(
 
     // only send if we have meaningful metadata
     if (Object.keys(mergedMeta).length > 0) {
-      debug(`[${LogTags.EVALUATE}] Sending Nextra meta to webview:`, mergedMeta);
+      debug(
+        `[${LogTags.EVALUATE}] Sending Nextra meta to webview:`,
+        mergedMeta
+      );
       webviewHandle.setNextraMeta(mergedMeta);
     }
   } catch (err) {
     // non-fatal error, log & continue
-    debug(`[${LogTags.EVALUATE}] Error resolving Nextra meta: ${extractErrorMessage(err)}`);
+    debug(
+      `[${LogTags.EVALUATE}] Error resolving Nextra meta: ${extractErrorMessage(err)}`
+    );
   }
 }

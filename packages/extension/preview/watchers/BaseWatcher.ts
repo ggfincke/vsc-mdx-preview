@@ -12,6 +12,7 @@ import {
   type FileWatcherConfig,
 } from '../../utils/createFileWatcher';
 import type { IWatcher } from '../../types';
+import type { LogTag } from '@mdx-preview/shared';
 
 // options for creating a file watcher in BaseWatcher subclasses
 // uses the shared FileWatcherConfig but omits pattern (passed separately)
@@ -22,8 +23,8 @@ type FileWatcherOptions = Omit<FileWatcherConfig, 'pattern' | 'logTag'>;
 export abstract class BaseWatcher implements IWatcher {
   protected _isActive = false;
 
-  // unique identifier for debug logging (e.g., 'DEP-WATCHER', 'CSS')
-  protected abstract readonly logTag: string;
+  // use log tag for debug logging (e.g., LogTags.DEP_WATCHER)
+  protected abstract readonly logTag: LogTag;
 
   // Promise-based readiness tracking (replaces polling)
   private _readyPromise: Promise<void> | null = null;

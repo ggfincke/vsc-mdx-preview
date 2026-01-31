@@ -11,7 +11,11 @@ import { SubscriberManager } from '../utils/SubscriberManager';
 import type { Preview } from './Preview';
 
 // Re-export types & classes
-export { Preview, type StyleConfiguration, type WebviewHandle } from './Preview';
+export {
+  Preview,
+  type StyleConfiguration,
+  type WebviewHandle,
+} from './Preview';
 export { openPreview, refreshPreview } from './preview-commands';
 
 // webview app URIs (loaded from Vite manifest)
@@ -21,13 +25,15 @@ export interface WebviewAppUris {
 }
 
 // * singleton manager for all preview instances
-// manages preview lifecycle, panel state, & subscriber notifications
+// manage preview lifecycle, panel state, & subscriber notifications
 export class PreviewManager extends SingletonService<PreviewManager> {
   protected static override instance: PreviewManager | undefined;
-  protected readonly logTag = 'PREVIEW-MANAGER';
+  protected readonly logTag = LogTags.PREVIEW_MANAGER;
 
   private currentPreview: Preview | undefined;
-  private subscriberManager = new SubscriberManager<void>('PREVIEW-MANAGER');
+  private subscriberManager = new SubscriberManager<void>(
+    LogTags.PREVIEW_MANAGER
+  );
 
   // panel state (moved from webview-manager.ts module-level for better testability)
   private _panel: vscode.WebviewPanel | undefined;

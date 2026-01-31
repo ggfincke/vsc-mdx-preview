@@ -53,7 +53,7 @@ export interface TailwindProcessParams {
   tailwindConfig: TailwindConfig;
 }
 
-// * EvaluationEngine handles the core evaluation logic for MDX content
+// EvaluationEngine handles the core evaluation logic for MDX content
 // extracted from evaluate-in-webview.ts for better testability
 export class EvaluationEngine {
   // evaluate MDX content in Trusted Mode
@@ -72,7 +72,9 @@ export class EvaluationEngine {
       fsPath,
       preview
     );
-    debug(`[ENGINE] Transform complete, code length: ${code.length}`);
+    debug(
+      `[${LogTags.ENGINE}] Transform complete, code length: ${code.length}`
+    );
 
     // use async fs.promises.realpath instead of sync version
     const entryFilePath = await fs.promises.realpath(fsPath);
@@ -80,7 +82,7 @@ export class EvaluationEngine {
     // I.1: extract dependencies from ESM code (BEFORE CommonJS conversion)
     // es-module-lexer works much better on ESM than on CommonJS output
     const dependencies = await extractImportSpecifiers(esmCode);
-    debug(`[ENGINE] Dependencies: ${dependencies.join(', ')}`);
+    debug(`[${LogTags.ENGINE}] Dependencies: ${dependencies.join(', ')}`);
 
     return {
       code,
@@ -102,7 +104,7 @@ export class EvaluationEngine {
 
     debug(`[${LogTags.ENGINE}] Compiling to safe HTML...`);
     const { html, frontmatter } = await compileSafe(text, mdxPreviewConfig);
-    debug(`[ENGINE] Safe HTML compiled, length: ${html.length}`);
+    debug(`[${LogTags.ENGINE}] Safe HTML compiled, length: ${html.length}`);
 
     return { html, frontmatter };
   }
@@ -119,8 +121,10 @@ export class EvaluationEngine {
       debug(`[${LogTags.ENGINE}/TAILWIND] Starting background compilation`);
 
       const compilationTimeout =
-        getConfigManager().get('tailwind.compilationTimeout', preview.doc.uri) ??
-        TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS;
+        getConfigManager().get(
+          'tailwind.compilationTimeout',
+          preview.doc.uri
+        ) ?? TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS;
 
       const result = await this.withTimeout(
         getTailwindProcessor().process({

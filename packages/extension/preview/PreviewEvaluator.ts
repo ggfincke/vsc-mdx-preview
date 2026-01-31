@@ -15,8 +15,8 @@ import type {
 } from './PreviewConfiguration';
 import type { Preview } from './preview-manager';
 
-// preview evaluator - orchestrates the evaluation pipeline
-// handles document reading, version tracking, & calling evaluateInWebview
+// preview evaluator - orchestrate evaluation pipeline
+// handle document reading, version tracking, & calling evaluateInWebview
 export class PreviewEvaluator {
   constructor(
     private preview: Preview,
@@ -50,7 +50,7 @@ export class PreviewEvaluator {
     const { uri } = this.doc;
     const { scheme, fsPath } = uri;
     debug(
-      `[PREVIEW-EVALUATOR] updateWebview scheme=${scheme}, fsPath=${fsPath}`
+      `[${LogTags.PREVIEW_EVALUATOR}] updateWebview scheme=${scheme}, fsPath=${fsPath}`
     );
 
     const currentVersion = this.doc.version;
@@ -85,7 +85,9 @@ export class PreviewEvaluator {
       }
       default: {
         // vscode-remote, vscode-vfs, etc.
-        debug(`[PREVIEW-EVALUATOR] updateWebview: default scheme (${scheme})`);
+        debug(
+          `[${LogTags.PREVIEW_EVALUATOR}] updateWebview: default scheme (${scheme})`
+        );
         let text = this.text;
         if (this.configuration.updateMode !== 'onType') {
           try {

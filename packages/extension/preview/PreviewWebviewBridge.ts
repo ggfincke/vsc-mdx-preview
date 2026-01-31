@@ -1,5 +1,5 @@
 // packages/extension/preview/PreviewWebviewBridge.ts
-// * webview communication & theme management for preview instances
+// webview communication & theme management for preview instances
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
@@ -10,8 +10,8 @@ import type { WebviewHandleType } from '../rpc-extension';
 
 export type WebviewHandle = WebviewHandleType;
 
-// manages webview communication & theme state for a preview instance
-// handles the bridge between the extension & webview for theme updates & handle setup
+// manage webview communication & theme state for a preview instance
+// handle bridge between extension & webview for theme updates & handle setup
 export class PreviewWebviewBridge {
   private webviewHandle?: WebviewHandle;
   private webview?: vscode.Webview;
@@ -81,7 +81,10 @@ export class PreviewWebviewBridge {
       }
     }
 
-    debug(`[${LogTags.PREVIEW}] pushThemeState - pushing theme state`, themeState);
+    debug(
+      `[${LogTags.PREVIEW}] pushThemeState - pushing theme state`,
+      themeState
+    );
     this.webviewHandle.setTheme(themeState);
   }
 

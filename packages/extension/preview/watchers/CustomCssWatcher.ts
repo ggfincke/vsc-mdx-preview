@@ -14,7 +14,7 @@ type CssNotifier = Pick<WebviewRPC, 'setCustomCss'>;
 
 // watch custom CSS file & send updates to webview
 export class CustomCssWatcher extends BaseWatcher {
-  protected readonly logTag = 'CSS';
+  protected readonly logTag = LogTags.CSS;
   private watcher?: vscode.FileSystemWatcher;
   private resolvedPath: string | null = null;
   private notifier?: CssNotifier;
@@ -100,12 +100,14 @@ export class CustomCssWatcher extends BaseWatcher {
   // load CSS file & send to webview
   private async loadAndSendCss(cssPath: string): Promise<void> {
     const cssContent = await readFileAsync(cssPath, 'utf-8', {
-      logTag: `[${LogTags.CSS}]`,
+      logTag: LogTags.CSS,
       logOnError: true,
     });
     if (cssContent) {
       this.notifier?.setCustomCss?.(cssContent);
-      debug(`[${LogTags.CSS}] Loaded custom CSS: ${cssPath} (${cssContent.length} chars)`);
+      debug(
+        `[${LogTags.CSS}] Loaded custom CSS: ${cssPath} (${cssContent.length} chars)`
+      );
     }
     // silently fail if null - file might not exist yet
   }

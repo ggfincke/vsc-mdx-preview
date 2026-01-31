@@ -10,7 +10,6 @@ import { ConfigChangeType } from '../../config/ConfigCache';
 import { validateConfigSchema } from '../../utils/validation';
 import { readJsonSync } from '../../utils/file-utils';
 import { findUp, createWorkspaceStopPredicate } from '../../utils/find-up';
-import { createFileWatcher } from '../../utils/createFileWatcher';
 
 // import consolidated types from centralized types
 import type {
@@ -18,7 +17,7 @@ import type {
   ComponentMapping,
   UnknownBehavior,
 } from '../../types';
-import type { FrameworkId } from '@mdx-preview/shared';
+import { LogTags, type FrameworkId } from '@mdx-preview/shared';
 
 // framework-specific options
 export interface FrameworkOptions {
@@ -135,7 +134,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
 
 // find config file by walking up directory tree (uses shared find-up utility)
 function findConfigFile(startDir: string): string | undefined {
-  debug(`[CONFIG] Searching for config starting at: ${startDir}`);
+  debug(`[${LogTags.CONFIG}] Searching for config starting at: ${startDir}`);
 
   const result = findUp({
     filename: CONFIG_FILE_NAMES,
@@ -144,9 +143,9 @@ function findConfigFile(startDir: string): string | undefined {
   });
 
   if (result) {
-    debug(`[CONFIG] Found config file at: ${result}`);
+    debug(`[${LogTags.CONFIG}] Found config file at: ${result}`);
   } else {
-    debug(`[CONFIG] No config file found`);
+    debug(`[${LogTags.CONFIG}] No config file found`);
   }
 
   return result;
@@ -167,28 +166,24 @@ function setupConfigWatcher(configPath: string): void {
     return;
   }
 
-  const watcher = createFileWatcher({
-    pattern: configPath,
-    logTag: 'CONFIG',
+  cache.watchConfigPath(configPath, {
     onChange: () => {
-      debug(`[CONFIG] File changed: ${configPath}`);
+      debug(`[${LogTags.CONFIG}] File changed: ${configPath}`);
       cache.invalidate(configPath);
       cache.notifyChange(configPath, ConfigChangeType.FileChanged);
     },
     onCreate: () => {
-      debug(`[CONFIG] File created: ${configPath}`);
+      debug(`[${LogTags.CONFIG}] File created: ${configPath}`);
       cache.invalidate(configPath);
       cache.notifyChange(configPath, ConfigChangeType.FileCreated);
     },
     onDelete: () => {
-      debug(`[CONFIG] File deleted: ${configPath}`);
+      debug(`[${LogTags.CONFIG}] File deleted: ${configPath}`);
       cache.invalidate(configPath);
       cache.notifyChange(configPath, ConfigChangeType.FileDeleted);
-      cache.removeWatcher(configPath);
+      cache.unwatchConfigPath(configPath);
     },
   });
-
-  cache.setWatcher(configPath, watcher);
 }
 
 // subscribe to config file changes

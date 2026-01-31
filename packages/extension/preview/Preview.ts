@@ -19,7 +19,10 @@ import {
   type StyleConfiguration,
   type ConfigurationState,
 } from './PreviewConfiguration';
-import { PreviewWebviewBridge, type WebviewHandle } from './PreviewWebviewBridge';
+import {
+  PreviewWebviewBridge,
+  type WebviewHandle,
+} from './PreviewWebviewBridge';
 import { PreviewDocumentHandler } from './PreviewDocumentHandler';
 import { PreviewInitializer } from './PreviewInitializer';
 
@@ -41,7 +44,7 @@ function getPreviewManager(): PreviewManager {
 export type { StyleConfiguration, WebviewHandle };
 
 // individual preview instance for a document
-// manages webview state, evaluation, & watchers
+// manage webview state, evaluation, & watchers
 export class Preview {
   active = false;
   private _webview?: vscode.Webview;
@@ -235,7 +238,7 @@ export class Preview {
     this.initializer.setupTailwindConfigWatcher(
       this.watcherManager,
       watchFiles,
-      () => {
+      (_changedPaths) => {
         this.updateWebview(true).catch((err) =>
           logError('Failed to refresh after Tailwind change', err)
         );

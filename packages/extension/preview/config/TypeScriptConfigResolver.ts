@@ -6,12 +6,20 @@ import { parse, type TSConfckParseResult } from 'tsconfck';
 import { error as logError, debug } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { findUp } from '../../utils/find-up';
+import { PathCache } from '../../utils/cache';
 
 // import consolidated type from centralized types
 import type { TypeScriptConfiguration } from '../../types';
 
+// max 50 tsconfig caches (typical monorepo has fewer)
+const TSCONFIG_CACHE_MAX_ENTRIES = 50;
+
 // cache parsed configs by directory to avoid repeated FS reads
-const configCache = new Map<string, TypeScriptConfiguration | null>();
+// use LRUCache to prevent unbounded growth in large workspaces
+const configCache = new PathCache<TypeScriptConfiguration | null>({
+  logTag: LogTags.TS_CONFIG,
+  maxEntries: TSCONFIG_CACHE_MAX_ENTRIES,
+});
 
 // find tsconfig.json by walking up the directory tree (uses shared find-up utility)
 export function findTsConfig(directory: string): string | undefined {
@@ -22,8 +30,31 @@ export function findTsConfig(directory: string): string | undefined {
   });
 }
 
+// setup a file watcher for a tsconfig.json file to invalidate cache on changes
+function setupConfigWatcher(configFile: string): void {
+  if (configCache.hasWatcher(configFile)) {
+    return;
+  }
+
+  const cacheKey = path.dirname(configFile);
+
+  configCache.watchPath(configFile, {
+    onChange: () => {
+      debug(`[${LogTags.TS_CONFIG}] tsconfig.json changed: ${configFile}`);
+      configCache.delete(cacheKey);
+    },
+    onDelete: () => {
+      debug(`[${LogTags.TS_CONFIG}] tsconfig.json deleted: ${configFile}`);
+      configCache.delete(cacheKey);
+      // clean up watcher for deleted file
+      configCache.unwatchPath(configFile);
+    },
+  });
+  debug(`[${LogTags.TS_CONFIG}] Watching: ${configFile}`);
+}
+
 // resolve TypeScript configuration from a tsconfig.json file (async)
-// handles extends, paths, baseUrl using tsconfck
+// handle extends, paths, baseUrl using tsconfck
 export async function resolveTypescriptConfigAsync(
   configFile: string | null
 ): Promise<TypeScriptConfiguration | null> {
@@ -53,6 +84,10 @@ export async function resolveTypescriptConfigAsync(
     );
 
     configCache.set(cacheKey, config);
+
+    // setup watcher to invalidate cache when tsconfig changes
+    setupConfigWatcher(configFile);
+
     return config;
   } catch (err) {
     logError(`[${LogTags.TS_CONFIG}] Failed to parse tsconfig:`, err);
@@ -62,7 +97,7 @@ export async function resolveTypescriptConfigAsync(
 }
 
 // synchronous wrapper for cached access
-// returns cached result if available, otherwise triggers async load & returns null
+// return cached result if available, otherwise trigger async load & return null
 // use async version for guaranteed fresh data
 export function resolveTypescriptConfig(
   configFile: string | null
@@ -76,7 +111,7 @@ export function resolveTypescriptConfig(
     return configCache.get(cacheKey) ?? null;
   }
 
-  // if not cached, trigger async parse and return null for now
+  // if not cached, trigger async parse & return null for now
   // the async version will populate the cache
   resolveTypescriptConfigAsync(configFile).catch(() => {
     // ignore - error already logged
@@ -89,4 +124,10 @@ export function resolveTypescriptConfig(
 export function clearTsConfigCache(): void {
   configCache.clear();
   debug(`[${LogTags.TS_CONFIG}] Config cache cleared`);
+}
+
+// dispose all config file watchers (called during extension deactivation)
+export function disposeConfigWatchers(): void {
+  configCache.dispose();
+  debug(`[${LogTags.TS_CONFIG}] Config watchers disposed`);
 }

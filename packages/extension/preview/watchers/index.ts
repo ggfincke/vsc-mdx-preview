@@ -2,9 +2,9 @@
 // barrel export for watcher modules
 
 export { BaseWatcher } from './BaseWatcher';
+export { FilePathWatcher } from './FilePathWatcher';
 export { DocumentTracker } from './DocumentTracker';
 export { DependencyWatcher } from './DependencyWatcher';
 export { CustomCssWatcher } from './CustomCssWatcher';
 export { TailwindConfigWatcher } from './TailwindConfigWatcher';
 export { WatcherManager } from './WatcherManager';
-
