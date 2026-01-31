@@ -42,7 +42,7 @@ export interface ParsedNpmModuleId {
 // - 'npm://react@18' -> { package: 'react', version: '18' }
 // - 'npm://react/jsx-runtime@18' -> { package: 'react', subpath: '/jsx-runtime', version: '18' }
 // - 'npm://@mdx-js/react@3' -> { package: '@mdx-js/react', version: '3' }
-// returns Parsed components or null if not a valid npm module ID
+// return parsed components or null if not valid npm module ID
 export function parseNpmModuleId(id: string): ParsedNpmModuleId | null {
   if (!isNpmModuleId(id)) {
     return null;
@@ -102,7 +102,7 @@ export function parseNpmModuleId(id: string): ParsedNpmModuleId | null {
     }
   }
 
-  // Extract version and subpath from rest
+  // Extract version & subpath from rest
   let subpath: string | undefined;
   let version: string | undefined;
 
@@ -146,7 +146,8 @@ export function createNpmModuleId(
 }
 
 // URL scheme pattern for module ID validation
-// matches: http://, https://, npm://, file://, etc.
+// matches: http://, https://, npm://, file://, etc
+// (side comment removed - pattern is self-explanatory)
 export const URL_SCHEME_PATTERN = /^[a-z]+:\/\//i;
 
 // check if a string looks like a URL (has a scheme)
@@ -155,7 +156,7 @@ export function hasUrlScheme(str: string): boolean {
 }
 
 // validate a module fetch request for security
-// returns true if the request is safe to process
+// return true if request is safe to process
 // security checks:
 // - No null bytes (potential injection)
 // - Only npm:// scheme allowed (not http://, file://, etc.)

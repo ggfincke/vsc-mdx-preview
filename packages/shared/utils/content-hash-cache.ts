@@ -1,9 +1,9 @@
 // packages/shared/utils/content-hash-cache.ts
 // LRU cache w/ content hash validation
 //
-// Extends LRUCache to validate entries by content hash before returning.
-// Useful for caching computed results based on file content where the
-// file may have changed since caching.
+// extend LRUCache to validate entries by content hash before returning
+// useful for caching computed results based on file content where the
+// file may have changed since caching
 
 import { LRUCache, type LRUCacheOptions } from './lru-cache';
 
@@ -14,13 +14,15 @@ interface HashValidatedEntry<V> {
 }
 
 // configuration options for ContentHashCache
-export interface ContentHashCacheOptions<V>
-  extends Omit<LRUCacheOptions<string, HashValidatedEntry<V>>, 'estimateSize' | 'isProtected'> {
+export interface ContentHashCacheOptions<V> extends Omit<
+  LRUCacheOptions<string, HashValidatedEntry<V>>,
+  'estimateSize' | 'isProtected'
+> {
   // function to estimate size of a value in bytes (optional)
   estimateSize?: (value: V) => number;
 }
 
-// * LRU cache that validates entries by content hash before returning
+// LRU cache that validates entries by content hash before returning
 // example:
 // ```typescript
 // const cache = new ContentHashCache<string[]>({ maxEntries: 50, ttlMs: 300000 });

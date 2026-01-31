@@ -52,10 +52,7 @@ export {
 } from './registry';
 
 // core preloaded module IDs (React, MDX, layout)
-export {
-  PRELOADED_MODULE_IDS,
-  type PreloadedModuleId,
-} from './core-modules';
+export { PRELOADED_MODULE_IDS, type PreloadedModuleId } from './core-modules';
 
 // fetch result w/ module code & dependencies
 export interface FetchResult {
@@ -130,6 +127,8 @@ export {
   formatModuleErrorDisplay,
   MODULE_ERROR_SUGGESTIONS,
   getSuggestionsForCode,
+  ModuleError,
+  type ModuleErrorOptions,
 } from './errors';
 
 // module ID utilities (npm:// format handling)
@@ -173,7 +172,23 @@ export type PreviewTheme =
   | 'vue';
 
 // available mermaid diagram themes
-export type MermaidTheme = 'default' | 'dark' | 'forest' | 'neutral' | 'base' | 'null';
+export type MermaidTheme =
+  | 'default'
+  | 'dark'
+  | 'forest'
+  | 'neutral'
+  | 'base'
+  | 'null';
+
+// available mermaid themes array (canonical source)
+export const MERMAID_THEMES: MermaidTheme[] = [
+  'default',
+  'dark',
+  'forest',
+  'neutral',
+  'base',
+  'null',
+];
 
 // available code block themes (syntax highlighting)
 export type CodeBlockTheme =
@@ -362,3 +377,55 @@ export {
   LogTags,
   type LogTag,
 } from './logging';
+
+// config enums (canonical source for validation & settings)
+export {
+  FRAMEWORK_IDS,
+  FRAMEWORK_SETTINGS,
+  TAILWIND_ENABLED_VALUES,
+  UNKNOWN_BEHAVIOR_VALUES,
+  UPDATE_MODE_VALUES,
+  SECURITY_POLICY_VALUES,
+  DEFAULT_PREVIEW_UPDATE_MODE,
+  DEFAULT_PREVIEW_DEBOUNCE_DELAY_MS,
+  DEFAULT_PREVIEW_ENABLE_SCRIPTS,
+  DEFAULT_PREVIEW_OPEN_MDX_LINKS_IN_PREVIEW,
+  DEFAULT_PREVIEW_SECURITY_POLICY,
+  DEFAULT_PREVIEW_USE_VSCODE_MARKDOWN_STYLES,
+  DEFAULT_PREVIEW_USE_WHITE_BACKGROUND,
+  DEFAULT_PREVIEW_CUSTOM_CSS,
+  DEFAULT_PREVIEW_CUSTOM_LAYOUT_PATH,
+  DEFAULT_PREVIEW_THEME,
+  DEFAULT_CODE_BLOCK_THEME,
+  DEFAULT_MERMAID_THEME,
+  DEFAULT_AUTO_THEME,
+  DEFAULT_USE_SUCRASE_TRANSPILER,
+  DEFAULT_TAILWIND_ENABLED,
+  DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES,
+  DEFAULT_TAILWIND_MAX_CSS_FILES_TO_SEARCH,
+  DEFAULT_TAILWIND_CACHE_MAX_ENTRIES,
+  DEFAULT_TAILWIND_CACHE_TTL_SECONDS,
+  DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS,
+  DEFAULT_FRAMEWORK,
+  DEFAULT_FRAMEWORK_COMPONENT_SHIMS,
+  DEFAULT_COMPONENTS_BUILTINS,
+  DEFAULT_COMPONENTS_UNKNOWN_BEHAVIOR,
+  DEFAULT_WATCHER_DEBOUNCE_MS,
+  SETTINGS_DEFAULTS,
+  MDX_PREVIEW_CONFIG_SCHEMA,
+  type TailwindEnabledValue,
+  type UnknownBehaviorValue,
+  type UpdateModeValue,
+  type SecurityPolicyValue,
+} from './config';
+
+// callout types & normalization (shared between extension & webview)
+export {
+  type CalloutType,
+  VALID_CALLOUT_TYPES,
+  VALID_CALLOUT_TYPE_SET,
+  CALLOUT_TYPE_ALIASES,
+  CALLOUT_TITLES,
+  normalizeCalloutType,
+  isValidCalloutType,
+} from './callout';

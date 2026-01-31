@@ -59,7 +59,7 @@ export function extractErrorChain(error: unknown): Error[] {
   return chain;
 }
 
-// format error with full cause chain for logging/display
+// format error w/ full cause chain for logging/display
 export function formatErrorWithCause(error: unknown): string {
   const chain = extractErrorChain(error);
   return chain

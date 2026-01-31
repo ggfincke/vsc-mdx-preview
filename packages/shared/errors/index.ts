@@ -10,3 +10,4 @@ export {
 } from './module-error-types';
 
 export { MODULE_ERROR_SUGGESTIONS, getSuggestionsForCode } from './suggestions';
+export { ModuleError, type ModuleErrorOptions } from './module-error';

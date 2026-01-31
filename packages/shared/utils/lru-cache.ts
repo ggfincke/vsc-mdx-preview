@@ -28,11 +28,13 @@ export interface LRUCacheOptions<K, V> {
 // internal cache entry w/ metadata
 interface CacheEntry<V> {
   value: V;
-  expiresAt: number | null; // null = no expiration
-  size: number; // 0 if no size estimation
+  // null = no expiration
+  expiresAt: number | null;
+  // 0 if no size estimation
+  size: number;
 }
 
-// * generic LRU cache w/ optional TTL, memory-based eviction, & entry protection
+// generic LRU cache w/ optional TTL, memory-based eviction, & entry protection
 // example:
 // ```typescript
 // const cache = new LRUCache<string, string>({ maxEntries: 100, ttlMs: 60000 });
@@ -107,7 +109,7 @@ export class LRUCache<K, V> {
       this.cache.delete(key);
     }
 
-    // Calculate size and expiration
+    // calculate size & expiration
     const size = this._estimateSize ? this._estimateSize(value) : 0;
     const expiresAt = this._ttlMs ? Date.now() + this._ttlMs : null;
 

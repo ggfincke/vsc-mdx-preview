@@ -3,13 +3,20 @@
 
 // unified module error codes (E100-E199 range)
 export type ModuleErrorCode =
-  | 'E100' // MODULE_NOT_FOUND
-  | 'E101' // OUTSIDE_WORKSPACE
-  | 'E102' // CIRCULAR_DEPENDENCY
-  | 'E110' // PARSE_ERROR
-  | 'E120' // TRANSFORM_ERROR
-  | 'E140' // FETCH_FAILED (webview RPC failure)
-  | 'E150'; // EVALUATION_FAILED (runtime error)
+  // MODULE_NOT_FOUND
+  | 'E100'
+  // OUTSIDE_WORKSPACE
+  | 'E101'
+  // CIRCULAR_DEPENDENCY
+  | 'E102'
+  // PARSE_ERROR
+  | 'E110'
+  // TRANSFORM_ERROR
+  | 'E120'
+  // FETCH_FAILED (webview RPC failure)
+  | 'E140'
+  // EVALUATION_FAILED (runtime error)
+  | 'E150';
 
 // human-readable code labels for display
 export const MODULE_ERROR_LABELS: Record<ModuleErrorCode, string> = {
