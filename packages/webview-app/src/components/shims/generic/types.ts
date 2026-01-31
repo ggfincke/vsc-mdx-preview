@@ -1,17 +1,15 @@
 // packages/webview-app/src/components/shims/generic/types.ts
 // shared prop types for generic component shims
 
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import {
+  type CalloutType,
+  normalizeCalloutType,
+  CALLOUT_TITLES,
+} from '@mdx-preview/shared';
 
-// callout/alert/admonition types
-export type CalloutType =
-  | 'note'
-  | 'tip'
-  | 'warning'
-  | 'danger'
-  | 'info'
-  | 'caution'
-  | 'important';
+// re-export callout types & utilities for consumers
+export { type CalloutType, normalizeCalloutType, CALLOUT_TITLES };
 
 // callout props (shared by Callout, Alert, Admonition)
 export interface CalloutProps {
@@ -36,51 +34,3 @@ export interface CodeGroupProps {
   // explicit labels for tabs
   labels?: string[];
 }
-
-// normalize callout type (handle aliases)
-export function normalizeCalloutType(type: string | undefined): CalloutType {
-  if (!type) {
-    return 'note';
-  }
-
-  const normalized = type.toLowerCase();
-
-  // handle common aliases
-  switch (normalized) {
-    case 'success':
-      return 'tip';
-    case 'error':
-      return 'danger';
-    case 'warn':
-      return 'warning';
-    case 'hint':
-      return 'tip';
-    default:
-      // check if it's a valid type
-      if (
-        [
-          'note',
-          'tip',
-          'warning',
-          'danger',
-          'info',
-          'caution',
-          'important',
-        ].includes(normalized)
-      ) {
-        return normalized as CalloutType;
-      }
-      return 'note';
-  }
-}
-
-// default titles for callout types
-export const CALLOUT_TITLES: Record<CalloutType, string> = {
-  note: 'Note',
-  tip: 'Tip',
-  warning: 'Warning',
-  danger: 'Danger',
-  info: 'Info',
-  caution: 'Caution',
-  important: 'Important',
-};

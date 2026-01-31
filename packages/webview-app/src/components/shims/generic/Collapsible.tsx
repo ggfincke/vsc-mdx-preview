@@ -9,7 +9,7 @@ import {
   GENERIC_COLLAPSIBLE_CLASSES,
 } from '../base/BaseCollapsible';
 
-// * Generic Collapsible component
+// Generic Collapsible component
 // uses BaseCollapsible w/ custom click handling (prevents native toggle)
 export function Collapsible({
   children,

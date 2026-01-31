@@ -1,28 +1,19 @@
-// packages/webview-app/src/components/shims/generic/index.ts
-// barrel exports for generic component shims
+// AUTO-GENERATED FILE - DO NOT EDIT
+// Source: packages/shared/shims/shim-config.ts
+// components/shims/generic/index.ts
 
-// Types
-export {
-  type CalloutType,
-  type CalloutProps,
-  type CollapsibleProps,
-  type CodeGroupProps,
-  normalizeCalloutType,
-  CALLOUT_TITLES,
-} from './types';
+export { normalizeCalloutType, CALLOUT_TITLES } from './types';
+export type { CalloutType, CalloutProps, CollapsibleProps, CodeGroupProps } from './types';
 
-// Callout components
 export { Callout, Alert, Admonition } from './Callout';
 
-// Collapsible components
 export { Collapsible, Accordion } from './Collapsible';
 
-// Tab components
-export { Tabs, useGenericTabsContext, type TabsProps } from './Tabs';
+export { Tabs, useGenericTabsContext } from './Tabs';
+export type { TabsProps } from './Tabs';
+
 export { TabItem, Tab } from './TabItem';
 
-// Code group
 export { CodeGroup } from './CodeGroup';
 
-// Import styles (side effect)
 import './styles.css';

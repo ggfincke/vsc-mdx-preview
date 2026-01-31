@@ -133,7 +133,7 @@ function parseLiElement(li: ReactElement): FileTreeEntry | null {
 }
 
 // parse children (unordered list) into structured entries
-// handles both nested structure (<li>folder/<ul>...</ul></li>) and
+// handles both nested structure (<li>folder/<ul>...</ul></li>) &
 // sibling structure (<li>folder/</li><ul>...</ul>)
 function parseFileTreeChildren(children: ReactNode): FileTreeEntry[] {
   const entries: FileTreeEntry[] = [];

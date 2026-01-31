@@ -1,5 +1,6 @@
-// packages/webview-app/src/components/shims/docusaurus/index.ts
-// re-exports for Docusaurus component shims
+// AUTO-GENERATED FILE - DO NOT EDIT
+// Source: packages/shared/shims/shim-config.ts
+// components/shims/docusaurus/index.ts
 
 export { Tabs, TabItem } from './Tabs';
 export type { TabsProps, TabItemProps } from './Tabs';
