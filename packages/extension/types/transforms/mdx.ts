@@ -35,12 +35,5 @@ export interface NodeConfig {
 // transform function signature for MDX element transforms
 export type TransformFunction = (node: MdxJsxElement) => RootContent;
 
-// callout/admonition types supported in Safe Mode
-export type CalloutType =
-  | 'note'
-  | 'tip'
-  | 'warning'
-  | 'danger'
-  | 'info'
-  | 'caution'
-  | 'important';
+// callout/admonition types - re-export from shared package
+export type { CalloutType } from '@mdx-preview/shared';

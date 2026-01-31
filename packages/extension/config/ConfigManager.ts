@@ -7,17 +7,13 @@ import { SingletonService } from '../services/SingletonService';
 import { SubscriberManager } from '../utils/SubscriberManager';
 import { SecurityPolicy } from '../security/security';
 import {
-  PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS,
-  TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
-  PACKAGE_JSON_WATCHER_DEBOUNCE_MS,
-} from '../constants';
-import type { FrameworkSetting } from '@mdx-preview/shared';
-import {
-  DEFAULT_MAX_FILE_SIZE_BYTES,
-  DEFAULT_MAX_CSS_FILES_TO_SEARCH,
-  PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES,
-  PROCESSOR_CACHE_DEFAULT_TTL_SECONDS,
-} from '../tailwind/constants';
+  type FrameworkSetting,
+  type TailwindEnabledValue,
+  type UnknownBehaviorValue,
+  type UpdateModeValue,
+  LogTags,
+} from '@mdx-preview/shared';
+import { SETTINGS_DEFAULTS } from '@mdx-preview/shared';
 
 // VS Code setting keys (relative to 'mdx-preview' namespace)
 export type SettingKey =
@@ -48,8 +44,9 @@ export type SettingKey =
   | 'advanced.watcherDebounceMs';
 
 // type mapping for settings
+// Note: enum types imported from @mdx-preview/shared (canonical source)
 export interface SettingTypes {
-  'preview.updateMode': 'onType' | 'onSave' | 'manual';
+  'preview.updateMode': UpdateModeValue;
   'preview.debounceDelay': number;
   'preview.enableScripts': boolean;
   'preview.openMdxLinksInPreview': boolean;
@@ -63,7 +60,7 @@ export interface SettingTypes {
   'preview.mermaidTheme': string;
   'preview.autoTheme': boolean;
   'build.useSucraseTranspiler': boolean;
-  'tailwind.enabled': 'auto' | 'enabled' | 'disabled';
+  'tailwind.enabled': TailwindEnabledValue;
   'tailwind.maxFileSizeBytes': number;
   'tailwind.maxCssFilesToSearch': number;
   'tailwind.cacheMaxEntries': number;
@@ -72,47 +69,66 @@ export interface SettingTypes {
   framework: FrameworkSetting;
   'framework.componentShims': boolean;
   'components.builtins': boolean;
-  'components.unknownBehavior': 'strip' | 'placeholder' | 'raw';
+  'components.unknownBehavior': UnknownBehaviorValue;
   'advanced.watcherDebounceMs': number;
 }
 
+// map shared defaults to extension setting types
+function mapDefaults(): SettingTypes {
+  return {
+    'preview.updateMode': SETTINGS_DEFAULTS['preview.updateMode'],
+    'preview.debounceDelay': SETTINGS_DEFAULTS['preview.debounceDelay'],
+    'preview.enableScripts': SETTINGS_DEFAULTS['preview.enableScripts'],
+    'preview.openMdxLinksInPreview':
+      SETTINGS_DEFAULTS['preview.openMdxLinksInPreview'],
+    'preview.security':
+      SETTINGS_DEFAULTS['preview.security'] === 'disabled'
+        ? SecurityPolicy.Disabled
+        : SecurityPolicy.Strict,
+    'preview.useVscodeMarkdownStyles':
+      SETTINGS_DEFAULTS['preview.useVscodeMarkdownStyles'],
+    'preview.useWhiteBackground':
+      SETTINGS_DEFAULTS['preview.useWhiteBackground'],
+    'preview.customCss': SETTINGS_DEFAULTS['preview.customCss'],
+    'preview.mdx.customLayoutFilePath':
+      SETTINGS_DEFAULTS['preview.mdx.customLayoutFilePath'],
+    'preview.previewTheme': SETTINGS_DEFAULTS['preview.previewTheme'],
+    'preview.codeBlockTheme': SETTINGS_DEFAULTS['preview.codeBlockTheme'],
+    'preview.mermaidTheme': SETTINGS_DEFAULTS['preview.mermaidTheme'],
+    'preview.autoTheme': SETTINGS_DEFAULTS['preview.autoTheme'],
+    'build.useSucraseTranspiler':
+      SETTINGS_DEFAULTS['build.useSucraseTranspiler'],
+    'tailwind.enabled': SETTINGS_DEFAULTS['tailwind.enabled'],
+    'tailwind.maxFileSizeBytes': SETTINGS_DEFAULTS['tailwind.maxFileSizeBytes'],
+    'tailwind.maxCssFilesToSearch':
+      SETTINGS_DEFAULTS['tailwind.maxCssFilesToSearch'],
+    'tailwind.cacheMaxEntries': SETTINGS_DEFAULTS['tailwind.cacheMaxEntries'],
+    'tailwind.cacheTtlSeconds': SETTINGS_DEFAULTS['tailwind.cacheTtlSeconds'],
+    'tailwind.compilationTimeout':
+      SETTINGS_DEFAULTS['tailwind.compilationTimeout'],
+    framework: SETTINGS_DEFAULTS.framework,
+    'framework.componentShims': SETTINGS_DEFAULTS['framework.componentShims'],
+    'components.builtins': SETTINGS_DEFAULTS['components.builtins'],
+    'components.unknownBehavior':
+      SETTINGS_DEFAULTS['components.unknownBehavior'],
+    'advanced.watcherDebounceMs':
+      SETTINGS_DEFAULTS['advanced.watcherDebounceMs'],
+  };
+}
+
 // default values for all settings
-const DEFAULTS: SettingTypes = {
-  'preview.updateMode': 'onType',
-  'preview.debounceDelay': PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS,
-  'preview.enableScripts': false,
-  'preview.openMdxLinksInPreview': true,
-  'preview.security': SecurityPolicy.Strict,
-  'preview.useVscodeMarkdownStyles': true,
-  'preview.useWhiteBackground': false,
-  'preview.customCss': '',
-  'preview.mdx.customLayoutFilePath': '',
-  'preview.previewTheme': 'none',
-  'preview.codeBlockTheme': 'auto',
-  'preview.mermaidTheme': 'default',
-  'preview.autoTheme': true,
-  'build.useSucraseTranspiler': false,
-  'tailwind.enabled': 'enabled',
-  'tailwind.maxFileSizeBytes': DEFAULT_MAX_FILE_SIZE_BYTES,
-  'tailwind.maxCssFilesToSearch': DEFAULT_MAX_CSS_FILES_TO_SEARCH,
-  'tailwind.cacheMaxEntries': PROCESSOR_CACHE_DEFAULT_MAX_ENTRIES,
-  'tailwind.cacheTtlSeconds': PROCESSOR_CACHE_DEFAULT_TTL_SECONDS,
-  'tailwind.compilationTimeout': TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
-  framework: 'auto',
-  'framework.componentShims': true,
-  'components.builtins': true,
-  'components.unknownBehavior': 'placeholder',
-  'advanced.watcherDebounceMs': PACKAGE_JSON_WATCHER_DEBOUNCE_MS,
-};
+const DEFAULTS: SettingTypes = mapDefaults();
 
 type ConfigChangeCallback = (affectedKeys: SettingKey[]) => void;
 
 // * centralized configuration manager for MDX Preview w/ type safety & change notifications
 export class ConfigManager extends SingletonService<ConfigManager> {
   protected static override instance: ConfigManager | undefined;
-  protected readonly logTag = 'CONFIG-MANAGER';
+  protected readonly logTag = LogTags.CONFIG_MANAGER;
 
-  private subscriberManager = new SubscriberManager<SettingKey[]>('CONFIG-MANAGER');
+  private subscriberManager = new SubscriberManager<SettingKey[]>(
+    LogTags.CONFIG_MANAGER
+  );
 
   protected constructor() {
     super();
@@ -178,7 +194,9 @@ export class ConfigManager extends SingletonService<ConfigManager> {
       return;
     }
 
-    debug(`[CONFIG-MANAGER] Settings changed: ${affectedKeys.join(', ')}`);
+    debug(
+      `[${LogTags.CONFIG_MANAGER}] Settings changed: ${affectedKeys.join(', ')}`
+    );
     this.subscriberManager.notify(affectedKeys);
   }
 

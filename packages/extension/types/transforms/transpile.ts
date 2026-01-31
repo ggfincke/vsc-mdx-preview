@@ -10,10 +10,12 @@ export interface TransformEntryResult {
 }
 
 // result type for dependency transformation
-// returns both ESM (for import extraction) & CJS (for webview evaluation)
+// return both ESM (for import extraction) & CJS (for webview evaluation)
 export interface TransformResult {
-  code: string; // Final CommonJS for webview evaluation
-  esmCode: string; // ESM code before CommonJS conversion
+  // final CommonJS for webview evaluation
+  code: string;
+  // ESM code before CommonJS conversion
+  esmCode: string;
 }
 
 // options for transpilation

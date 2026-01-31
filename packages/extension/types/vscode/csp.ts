@@ -3,11 +3,9 @@
 
 import type * as vscode from 'vscode';
 
-// security policy selection for CSP (strict or disabled)
-export const enum SecurityPolicy {
-  Strict = 'strict',
-  Disabled = 'disabled',
-}
+// Re-export SecurityPolicy from its canonical source
+// Note: Defined in security/security.ts to avoid circular imports
+export { SecurityPolicy } from '../../security/security';
 
 // options for CSP generation
 export interface CSPOptions {

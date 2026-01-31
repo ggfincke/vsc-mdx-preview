@@ -79,7 +79,7 @@ export function disposeOutputChannel(): void {
   }
 }
 
-// * create a tagged logger w/ a fixed prefix for consistent debug output
+// create a tagged logger w/ a fixed prefix for consistent debug output
 // all methods write to the OutputChannel w/ the tag prefix
 export function createTaggedLogger(tag: LogTag): TaggedLogger {
   const prefix = `[${tag}]`;

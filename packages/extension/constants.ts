@@ -2,8 +2,9 @@
 // centralized constants for the extension package
 
 import {
-  STANDARD_DEBOUNCE_MS,
-  STANDARD_WATCHER_DEBOUNCE_MS,
+  DEFAULT_PREVIEW_DEBOUNCE_DELAY_MS,
+  DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS,
+  DEFAULT_WATCHER_DEBOUNCE_MS,
 } from '@mdx-preview/shared';
 
 // timeouts
@@ -12,15 +13,17 @@ import {
 export const WEBVIEW_HANDSHAKE_TIMEOUT_MS = 10000;
 
 // default Tailwind CSS compilation timeout (ms) - user can override via setting
-export const TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS = 15000;
+export const TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS =
+  DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS;
 
 // debounce intervals
 
-// debounce delay for package.json watcher (ms) - uses shared standard
-export const PACKAGE_JSON_WATCHER_DEBOUNCE_MS = STANDARD_WATCHER_DEBOUNCE_MS;
+// debounce delay for package.json watcher (ms) - uses shared default
+export const PACKAGE_JSON_WATCHER_DEBOUNCE_MS = DEFAULT_WATCHER_DEBOUNCE_MS;
 
-// default preview update debounce delay (ms) - uses shared standard
-export const PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS = STANDARD_DEBOUNCE_MS;
+// default preview update debounce delay (ms) - uses shared default
+export const PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS =
+  DEFAULT_PREVIEW_DEBOUNCE_DELAY_MS;
 
 // error duplicate suppression window (ms)
 export const ERROR_DEDUPE_WINDOW_DEFAULT_MS = 5000;

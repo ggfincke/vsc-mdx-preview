@@ -5,14 +5,12 @@
 // between "not cached" (undefined) & "cached as no config" (null)
 
 import * as path from 'path';
-import * as vscode from 'vscode';
 import { warn } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { SingletonService } from '../services/SingletonService';
 import { SubscriberManager } from '../utils/SubscriberManager';
-import { LRUCache } from '@mdx-preview/shared';
-import { disposeCollection } from '../utils/disposable';
 import type { ResolvedConfig } from '../preview/config/ConfigResolver';
+import { PathCache } from '../utils/cache';
 
 // typed config change event types
 export enum ConfigChangeType {
@@ -38,24 +36,25 @@ interface CacheWrapper {
   config: ResolvedConfig | null;
 }
 
-// manages the cache & file watchers for MDX preview config files
-// encapsulates the global state from ConfigResolver:
+// manage cache & file watchers for MDX preview config files
+// encapsulates the global state from ConfigResolver
 // - configCache: Map of directory -> resolved config (w/ LRU eviction)
-// - configWatchers: Map of config path -> file system watcher
+// - configWatchers: track config path -> watcher instance
 // - configChangeSubscribers: Set of callbacks for config changes
 // registered w/ ServiceRegistry for proper disposal
 export class ConfigCache extends SingletonService<ConfigCache> {
   protected static override instance: ConfigCache | undefined;
-  protected readonly logTag = 'CONFIG-CACHE';
+  protected readonly logTag = LogTags.CONFIG_CACHE;
 
   // wrap LRU cache values to distinguish "not cached" from "cached as null"
-  private cache = new LRUCache<string, CacheWrapper>({
+  private cache = new PathCache<CacheWrapper>({
+    logTag: LogTags.CONFIG_CACHE,
     maxEntries: CONFIG_CACHE_MAX_ENTRIES,
   });
-  private watchers = new Map<string, vscode.FileSystemWatcher>();
   private subscriberManager = new SubscriberManager<ConfigChangeEvent>(
     LogTags.CONFIG_CACHE,
-    (err) => warn(`[${LogTags.CONFIG_CACHE}] Error in config change callback:`, err)
+    (err) =>
+      warn(`[${LogTags.CONFIG_CACHE}] Error in config change callback:`, err)
   );
 
   protected constructor() {
@@ -66,10 +65,10 @@ export class ConfigCache extends SingletonService<ConfigCache> {
   // return undefined if not cached, null if cached as "no config found"
   get(dir: string): ResolvedConfig | null | undefined {
     const wrapper = this.cache.get(dir);
-    if (wrapper === null) {
-      return undefined; // not cached (LRUCache returns null for missing keys)
+    if (!wrapper) {
+      return undefined;
     }
-    return wrapper.config; // may be null or ResolvedConfig
+    return wrapper.config;
   }
 
   // determine if config is cached for a directory
@@ -83,7 +82,7 @@ export class ConfigCache extends SingletonService<ConfigCache> {
   }
 
   // invalidate cache entries affected by a config file change
-  // remove all entries where:
+  // remove all entries where
   // - The entry's configPath matches the changed file
   // - The cached directory is w/in the changed config's directory
   invalidate(configPath: string): void {
@@ -92,9 +91,7 @@ export class ConfigCache extends SingletonService<ConfigCache> {
     // collect keys to delete (can't modify during iteration)
     const toDelete: string[] = [];
 
-    for (const [cachedDir] of this.cache.entries()) {
-      // peek at value w/o updating LRU position
-      const wrapper = this.cache.peek(cachedDir);
+    for (const [cachedDir, wrapper] of this.cache.entries()) {
       if (
         wrapper?.config?.configPath === configPath ||
         cachedDir.startsWith(configDir)
@@ -115,21 +112,20 @@ export class ConfigCache extends SingletonService<ConfigCache> {
 
   // determine if a watcher exists for a config path
   hasWatcher(configPath: string): boolean {
-    return this.watchers.has(configPath);
+    return this.cache.hasWatcher(configPath);
   }
 
-  // register a file watcher for a config path
-  setWatcher(configPath: string, watcher: vscode.FileSystemWatcher): void {
-    this.watchers.set(configPath, watcher);
+  // register handlers for a config path watcher
+  watchConfigPath(
+    configPath: string,
+    handlers: Parameters<PathCache<CacheWrapper>['watchPath']>[1]
+  ): void {
+    this.cache.watchPath(configPath, handlers);
   }
 
   // unregister a watcher for a config path
-  removeWatcher(configPath: string): void {
-    const watcher = this.watchers.get(configPath);
-    if (watcher) {
-      watcher.dispose();
-      this.watchers.delete(configPath);
-    }
+  unwatchConfigPath(configPath: string): void {
+    this.cache.unwatchPath(configPath);
   }
 
   // register callback for config file changes
@@ -151,8 +147,7 @@ export class ConfigCache extends SingletonService<ConfigCache> {
 
   // clean up all caches & watchers
   protected override onDispose(): void {
-    disposeCollection(this.watchers);
+    this.cache.dispose();
     this.subscriberManager.clear();
-    this.cache.clear();
   }
 }

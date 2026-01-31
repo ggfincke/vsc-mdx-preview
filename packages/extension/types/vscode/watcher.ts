@@ -59,24 +59,5 @@ export interface ConfigChangeEvent {
 // callback type for config change notifications
 export type ConfigChangeCallback = (event: ConfigChangeEvent) => void;
 
-// options for creating a file watcher
-export interface FileWatcherConfig {
-  // glob pattern or relative pattern to watch
-  pattern: string | vscode.GlobPattern;
-  // handler called when a watched file changes
-  onChange?: (uri: vscode.Uri) => void;
-  // handler called when a watched file is created
-  onCreate?: (uri: vscode.Uri) => void;
-  // handler called when a watched file is deleted
-  onDelete?: (uri: vscode.Uri) => void;
-  // skip firing create events (default: false)
-  ignoreCreateEvents?: boolean;
-  // skip firing change events (default: false)
-  ignoreChangeEvents?: boolean;
-  // skip firing delete events (default: false)
-  ignoreDeleteEvents?: boolean;
-  // wrap handlers in try-catch w/ error logging (default: true)
-  wrapErrors?: boolean;
-  // tag for debug logging (e.g., 'TSCONFIG', 'CSS'). Required if wrapErrors is true
-  logTag?: string;
-}
+// re-export FileWatcherConfig from canonical location (utils/createFileWatcher.ts)
+export { type FileWatcherConfig } from '../../utils/createFileWatcher';

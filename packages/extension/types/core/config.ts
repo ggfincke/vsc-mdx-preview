@@ -1,88 +1,40 @@
 // packages/extension/types/core/config.ts
 // type definitions for configuration management
+// note: SettingKey & SettingTypes are defined in ConfigManager.ts (canonical source)
+// & imported directly from there - they are NOT re-exported here to avoid duplication
 
 import type * as vscode from 'vscode';
 import type {
   FrameworkId,
-  FrameworkSetting,
   PreviewTheme,
   CodeBlockTheme,
+  TailwindEnabledValue,
+  UnknownBehaviorValue,
+  UpdateModeValue,
+  SecurityPolicyValue,
 } from '@mdx-preview/shared';
-import { SecurityPolicy } from '../vscode/csp';
 import type { PluginSpec, ComponentMapping, UnknownBehavior } from './compiler';
 
-// re-export SecurityPolicy for convenience
-export { SecurityPolicy };
-
-// VS Code setting keys (relative to 'mdx-preview' namespace)
-export type SettingKey =
-  | 'preview.updateMode'
-  | 'preview.debounceDelay'
-  | 'preview.enableScripts'
-  | 'preview.openMdxLinksInPreview'
-  | 'preview.security'
-  | 'preview.useVscodeMarkdownStyles'
-  | 'preview.useWhiteBackground'
-  | 'preview.customCss'
-  | 'preview.mdx.customLayoutFilePath'
-  | 'preview.previewTheme'
-  | 'preview.codeBlockTheme'
-  | 'preview.mermaidTheme'
-  | 'preview.autoTheme'
-  | 'build.useSucraseTranspiler'
-  | 'tailwind.enabled'
-  | 'tailwind.maxFileSizeBytes'
-  | 'tailwind.maxCssFilesToSearch'
-  | 'tailwind.cacheMaxEntries'
-  | 'tailwind.cacheTtlSeconds'
-  | 'tailwind.compilationTimeout'
-  | 'framework'
-  | 'framework.componentShims'
-  | 'components.builtins'
-  | 'components.unknownBehavior'
-  | 'advanced.watcherDebounceMs';
-
-// type mapping for settings
-export interface SettingTypes {
-  'preview.updateMode': 'onType' | 'onSave' | 'manual';
-  'preview.debounceDelay': number;
-  'preview.enableScripts': boolean;
-  'preview.openMdxLinksInPreview': boolean;
-  'preview.security': SecurityPolicy;
-  'preview.useVscodeMarkdownStyles': boolean;
-  'preview.useWhiteBackground': boolean;
-  'preview.customCss': string;
-  'preview.mdx.customLayoutFilePath': string;
-  'preview.previewTheme': string;
-  'preview.codeBlockTheme': string;
-  'preview.mermaidTheme': string;
-  'preview.autoTheme': boolean;
-  'build.useSucraseTranspiler': boolean;
-  'tailwind.enabled': 'auto' | 'enabled' | 'disabled';
-  'tailwind.maxFileSizeBytes': number;
-  'tailwind.maxCssFilesToSearch': number;
-  'tailwind.cacheMaxEntries': number;
-  'tailwind.cacheTtlSeconds': number;
-  'tailwind.compilationTimeout': number;
-  framework: FrameworkSetting;
-  'framework.componentShims': boolean;
-  'components.builtins': boolean;
-  'components.unknownBehavior': 'strip' | 'placeholder' | 'raw';
-  'advanced.watcherDebounceMs': number;
-}
+// Re-export shared types for convenience
+export type {
+  TailwindEnabledValue,
+  UnknownBehaviorValue,
+  UpdateModeValue,
+  SecurityPolicyValue,
+} from '@mdx-preview/shared';
 
 // controls when the preview updates: on typing, on save, or manually
-export type UpdateMode = SettingTypes['preview.updateMode'];
+export type UpdateMode = UpdateModeValue;
 
 // controls Tailwind CSS processing: auto-detect, always enabled, or disabled
-export type TailwindEnabledSetting = SettingTypes['tailwind.enabled'];
+export type TailwindEnabledSetting = TailwindEnabledValue;
 
 // controls how unknown components are rendered
-export type UnknownBehaviorSetting = SettingTypes['components.unknownBehavior'];
+export type UnknownBehaviorSetting = UnknownBehaviorValue;
 
 // Tailwind configuration subset
 export interface TailwindConfig {
-  enabled: SettingTypes['tailwind.enabled'];
+  enabled: TailwindEnabledValue;
   maxFileSizeBytes: number;
   maxCssFilesToSearch: number;
   cacheMaxEntries: number;
@@ -100,13 +52,13 @@ export interface FrameworkOptions {
   customAliases?: Record<string, string>;
 }
 
-// Tailwind CSS options
+// Tailwind CSS options from config file
 export interface TailwindOptions {
-  enabled?: 'auto' | 'enabled' | 'disabled';
+  enabled?: TailwindEnabledValue;
   configPath?: string;
 }
 
-// MDX Preview configuration file schema
+// MDX Preview configuration file schema (.mdx-previewrc.json)
 export interface MdxPreviewConfig {
   // custom remark plugins to add after built-in plugins
   remarkPlugins?: PluginSpec[];
@@ -138,11 +90,11 @@ export interface ResolvedConfig {
 // combines VS Code settings, project config file, & frontmatter overrides
 export interface EffectivePreviewConfig {
   // VS Code settings
-  updateMode: SettingTypes['preview.updateMode'];
+  updateMode: UpdateModeValue;
   debounceDelay: number;
   enableScripts: boolean;
   openMdxLinksInPreview: boolean;
-  securityPolicy: SettingTypes['preview.security'];
+  securityPolicy: SecurityPolicyValue;
   useVscodeMarkdownStyles: boolean;
   useWhiteBackground: boolean;
   customCss: string;
@@ -158,10 +110,11 @@ export interface EffectivePreviewConfig {
   tailwind: TailwindConfig;
 
   // framework
-  framework: SettingTypes['framework'];
+  // FrameworkSetting
+  framework: string;
   frameworkComponentShims: boolean;
   componentsBuiltins: boolean;
-  componentsUnknownBehavior: SettingTypes['components.unknownBehavior'];
+  componentsUnknownBehavior: UnknownBehaviorValue;
 
   // config file additions
   remarkPlugins?: MdxPreviewConfig['remarkPlugins'];
