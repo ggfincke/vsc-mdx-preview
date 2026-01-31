@@ -44,6 +44,8 @@ export default tseslint.config(
       // Custom local rules
       // Enforce ConfigManager usage for VS Code configuration access
       'local/no-direct-vscode-config': 'error',
+      // Enforce LogTags usage for log prefixes
+      'local/no-raw-log-tag': 'error',
     },
   },
   {

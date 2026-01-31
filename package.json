@@ -345,18 +345,6 @@
           "description": "Time-to-live for cached Tailwind CSS in seconds. Default: 300 (5 minutes).",
           "scope": "resource"
         },
-        "mdx-preview.preview.showToc": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show table of contents sidebar in the preview",
-          "scope": "resource"
-        },
-        "mdx-preview.preview.showFrontmatter": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show frontmatter metadata at the top of the preview (collapsed by default)",
-          "scope": "resource"
-        },
         "mdx-preview.preview.previewTheme": {
           "type": "string",
           "default": "none",
@@ -598,7 +586,9 @@
     "vscode:prepublish": "npm run build",
     "vscode:package": "npm run test:all && vsce package",
     "generate:preload": "tsx packages/shared/scripts/generate-preload.ts",
-    "prebuild": "npm run generate:preload",
+    "generate:schema": "tsx packages/shared/scripts/generate-schema.ts",
+    "generate:settings": "tsx packages/shared/scripts/generate-settings.ts",
+    "prebuild": "npm run generate:settings && npm run generate:preload && npm run generate:shims && npm run generate:schema",
     "typecheck": "tsc --noEmit",
     "build:extension": "npm run typecheck && node esbuild.config.mjs",
     "build:extension:fast": "node esbuild.config.mjs",
@@ -608,7 +598,8 @@
     "watch": "tsc -watch -p ./",
     "start:webview-app": "npm run start -w webview",
     "build:webview-app": "npm run build -w webview",
-    "pretest": "npm run generate:preload",
+    "verify:settings": "tsx packages/shared/scripts/verify-settings.ts",
+    "pretest": "npm run generate:settings && npm run generate:preload && npm run generate:shims && npm run verify:settings",
     "test": "vitest run --config tests/vitest.config.ts",
     "test:watch": "vitest --config tests/vitest.config.ts",
     "test:webview": "echo 'No webview tests'",
@@ -618,7 +609,8 @@
     "lint:fix": "eslint packages/extension --fix && npm run lint:fix -w webview",
     "format": "prettier --write \"packages/**/*.{ts,js,json}\" \"*.{md,json}\"",
     "format:check": "prettier --check \"packages/**/*.{ts,js,json}\" \"*.{md,json}\"",
-    "size:report": "node scripts/size-report.mjs"
+    "size:report": "node scripts/size-report.mjs",
+    "generate:shims": "tsx packages/shared/scripts/generate-shims.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
@@ -638,6 +630,7 @@
     "typescript-eslint": "^8.0.0"
   },
   "dependencies": {
+    "ajv": "^8.17.1",
     "@babel/core": "^7.24.0",
     "@babel/plugin-proposal-export-default-from": "^7.24.0",
     "@babel/preset-env": "^7.24.0",

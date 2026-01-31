@@ -78,8 +78,6 @@ In Trusted Mode:
 | `mdx-preview.preview.useWhiteBackground`       | `false`    | Force white background                                   |
 | `mdx-preview.preview.customCss`                | `""`       | Path to custom CSS file for preview styling              |
 | `mdx-preview.preview.mdx.customLayoutFilePath` | `""`       | Path to custom layout component                          |
-| `mdx-preview.preview.showToc`                  | `true`     | Show table of contents sidebar                           |
-| `mdx-preview.preview.showFrontmatter`          | `true`     | Show frontmatter metadata at top of preview              |
 | `mdx-preview.preview.previewTheme`             | `"none"`   | Preview theme (github-light, atom-dark, solarized, etc.) |
 | `mdx-preview.preview.codeBlockTheme`           | `"auto"`   | Code block syntax theme (`auto` matches preview theme)   |
 | `mdx-preview.preview.autoTheme`                | `true`     | Auto-switch light/dark themes based on VS Code theme     |

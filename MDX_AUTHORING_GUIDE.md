@@ -14,9 +14,10 @@ Standard Markdown works as expected:
 
 ```mdx
 # Heading 1
+
 ## Heading 2
 
-**Bold**, *italic*, ~~strikethrough~~
+**Bold**, _italic_, ~~strikethrough~~
 
 - Bullet lists
 - With multiple items
@@ -29,7 +30,7 @@ Standard Markdown works as expected:
 > Blockquotes for emphasis
 
 | Tables | Work |
-|--------|------|
+| ------ | ---- |
 | Like   | This |
 
 - [x] Task lists
@@ -102,6 +103,7 @@ $$
 ```
 
 Common math expressions:
+
 - Fractions: `\frac{a}{b}`
 - Exponents: `x^2`, `e^{-x}`
 - Subscripts: `x_1`, `a_{n+1}`
@@ -213,50 +215,37 @@ These components are available without imports:
   This could cause problems.
 </Callout>
 
-<Callout type="info">
-  Title is optional.
-</Callout>
+<Callout type="info">Title is optional.</Callout>
 ```
 
 Types: `note`, `tip`, `info`, `warning`, `danger`, `caution`, `important`
 
 ### Tabs
 
-```mdx
+````mdx
 <Tabs>
-  <TabItem label="npm">
-    ```bash
-    npm install package-name
-    ```
-  </TabItem>
-  <TabItem label="yarn">
-    ```bash
-    yarn add package-name
-    ```
-  </TabItem>
-  <TabItem label="pnpm">
-    ```bash
-    pnpm add package-name
-    ```
-  </TabItem>
+  <TabItem label="npm">```bash npm install package-name ```</TabItem>
+  <TabItem label="yarn">```bash yarn add package-name ```</TabItem>
+  <TabItem label="pnpm">```bash pnpm add package-name ```</TabItem>
 </Tabs>
-```
+````
 
 ### CodeGroup (Tabbed Code Blocks)
 
-```mdx
+````mdx
 <CodeGroup>
 ```javascript title="example.js"
 const greeting = "Hello";
-```
+````
 
 ```typescript title="example.ts"
-const greeting: string = "Hello";
+const greeting: string = 'Hello';
 ```
 
 ```python title="example.py"
 greeting = "Hello"
 ```
+
 </CodeGroup>
 ```
 
@@ -266,9 +255,9 @@ greeting = "Hello"
 <Collapsible title="Click to expand">
   Hidden content that can be revealed.
 
-  - Supports markdown inside
-  - Multiple paragraphs work
-</Collapsible>
+- Supports markdown inside
+- Multiple paragraphs work
+  </Collapsible>
 
 <Collapsible title="Open by default" defaultOpen>
   This starts expanded.
@@ -298,7 +287,7 @@ import CodeBlock from '@theme/CodeBlock';
 </Tabs>
 
 <CodeBlock language="jsx" title="Component.jsx" showLineNumbers>
-{`function App() {
+  {`function App() {
   return <div>Hello</div>;
 }`}
 </CodeBlock>
@@ -307,7 +296,15 @@ import CodeBlock from '@theme/CodeBlock';
 ### Starlight Projects (Astro)
 
 ```mdx
-import { Card, CardGrid, Steps, Badge, FileTree, Aside, LinkCard } from '@astrojs/starlight/components';
+import {
+  Card,
+  CardGrid,
+  Steps,
+  Badge,
+  FileTree,
+  Aside,
+  LinkCard,
+} from '@astrojs/starlight/components';
 
 <CardGrid>
   <Card title="Getting Started" icon="rocket">
@@ -325,23 +322,15 @@ import { Card, CardGrid, Steps, Badge, FileTree, Aside, LinkCard } from '@astroj
 />
 
 <Steps>
-1. Install dependencies
-2. Configure your project
-3. Start building
+  1. Install dependencies 2. Configure your project 3. Start building
 </Steps>
 
 <Badge text="New" variant="tip" />
 <Badge text="Deprecated" variant="caution" />
 
 <FileTree>
-- src/
-  - components/
-    - **Button.tsx** (highlighted)
-    - Card.tsx
-  - pages/
-    - index.mdx
-- package.json
-- tsconfig.json
+  - src/ - components/ - **Button.tsx** (highlighted) - Card.tsx - pages/ -
+  index.mdx - package.json - tsconfig.json
 </FileTree>
 
 <Aside type="tip" title="Quick Tip">
@@ -455,7 +444,7 @@ Layout options: `default` (centered), `full` (full-width), `raw` (no styling)
 
 ## Example: Complete Documentation Page
 
-```mdx
+````mdx
 ---
 title: Quick Start Guide
 description: Get up and running in 5 minutes
@@ -471,31 +460,24 @@ Get your project running quickly with this guide.
 ## Installation
 
 <Tabs>
-  <TabItem label="npm">
-    ```bash
-    npm create my-app@latest
-    ```
-  </TabItem>
-  <TabItem label="yarn">
-    ```bash
-    yarn create my-app
-    ```
-  </TabItem>
+  <TabItem label="npm">```bash npm create my-app@latest ```</TabItem>
+  <TabItem label="yarn">```bash yarn create my-app ```</TabItem>
 </Tabs>
 
 ## Project Structure
 
 After installation, your project will look like this:
+````
 
-```
 my-app/
 ├── src/
-│   ├── components/
-│   └── pages/
+│ ├── components/
+│ └── pages/
 ├── public/
 ├── package.json
 └── tsconfig.json
-```
+
+````
 
 ## Configuration
 
@@ -508,7 +490,7 @@ export default {
   theme: 'dark',
   language: 'en',
 };
-```
+````
 
 ## How It Works
 
@@ -524,16 +506,17 @@ graph LR
 <Collapsible title="Advanced Configuration">
   For advanced use cases, you can customize:
 
-  - Theme colors
-  - Plugin system
-  - Build pipeline
-</Collapsible>
+- Theme colors
+- Plugin system
+- Build pipeline
+  </Collapsible>
 
 ## Need Help?
 
 > [!NOTE]
 > Check our [FAQ](/faq) or [open an issue](https://github.com/example/repo/issues).
-```
+
+````
 
 ---
 
@@ -549,3 +532,4 @@ graph LR
 | Tabs | `<Tabs><TabItem label="...">` |
 | Collapsible | `<Collapsible title="...">` |
 | Code group | `<CodeGroup>` with code blocks |
+````
