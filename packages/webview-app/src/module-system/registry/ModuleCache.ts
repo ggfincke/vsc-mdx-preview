@@ -7,7 +7,8 @@ import type { Module } from '../types';
 
 // LRU configuration defaults
 const DEFAULT_MAX_MODULES = 500;
-const DEFAULT_MAX_MEMORY_BYTES = 50 * 1024 * 1024; // 50MB
+// 50MB
+const DEFAULT_MAX_MEMORY_BYTES = 50 * 1024 * 1024;
 
 // internal cache entry combining module w/ size estimate
 interface CacheEntry {
@@ -106,7 +107,8 @@ export class ModuleCache {
   // delete module from cache, return the estimated size freed
   delete(id: string): number {
     if (this.preloadedIds.has(id)) {
-      return 0; // don't delete preloaded modules
+      // don't delete preloaded modules
+      return 0;
     }
     const entry = this.cache.peek(id);
     const freedSize = entry?.estimatedSize ?? 0;
@@ -134,27 +136,32 @@ export class ModuleCache {
 
     if (typeof exports === 'object') {
       // Rough estimate: traverse one level deep
-      let size = 40; // object overhead
+      // object overhead
+      let size = 40;
       const obj = exports as Record<string, unknown>;
       for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          size += key.length * 2 + 8; // key + pointer
+          // key + pointer
+          size += key.length * 2 + 8;
           const value = obj[key];
           if (typeof value === 'string') {
             size += value.length * 2;
           } else if (typeof value === 'function') {
             size += value.toString().length * 2 + 100;
           } else if (typeof value === 'object' && value !== null) {
-            size += 200; // rough estimate for nested objects
+            // rough estimate for nested objects
+            size += 200;
           } else {
-            size += 8; // primitive
+            // primitive
+            size += 8;
           }
         }
       }
       return size;
     }
 
-    return 8; // primitive
+    // primitive
+    return 8;
   }
 
   // pending fetch management (for circular dependency detection)

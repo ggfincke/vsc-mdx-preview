@@ -1,7 +1,11 @@
 // packages/webview-app/src/module-system/preload/index.ts
 // preload orchestration for core modules & shim registry
 
-import { PRELOADED_MODULE_IDS, LogTags, type FrameworkId } from '@mdx-preview/shared';
+import {
+  PRELOADED_MODULE_IDS,
+  LogTags,
+  type FrameworkId,
+} from '@mdx-preview/shared';
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
 import { preloadCoreModules } from './core';
 import { PRELOADED_SHIM_IDS } from './aliases.generated';
@@ -47,7 +51,7 @@ export function getLastGenericLoadResult(): {
 }
 
 // initialize preloaded modules in the registry
-// loads only core modules synchronously - generic & framework shims are lazy-loaded
+// load only core modules synchronously - generic & framework shims are lazy-loaded
 // generic shims loaded on demand via ensureGenericShims when extension sends component list
 // framework-specific shims are loaded lazily via ensureFrameworkShims
 export function initPreloadedModules(
@@ -59,11 +63,13 @@ export function initPreloadedModules(
   // for conditional preloading optimization
   // Load generic CSS (always needed for fallback styling)
   loadFrameworkCss('generic');
-  debug(`[${LogTags.PRELOAD}] Core modules initialized (generic shims deferred)`);
+  debug(
+    `[${LogTags.PRELOAD}] Core modules initialized (generic shims deferred)`
+  );
 }
 
 // load framework-specific shims on demand
-// returns immediately if the framework is already loaded
+// return immediately if framework already loaded
 // O.3: uses resilient loading w/ retry & fallback to generic shims
 export async function ensureFrameworkShims(
   registry: ModuleRegistry,
@@ -101,7 +107,8 @@ export async function ensureFrameworkShims(
         registry,
         framework,
         loader,
-        preloadGenericShims // fallback to generic shims on failure
+        // fallback to generic shims on failure
+        preloadGenericShims
       ),
       loadFrameworkCss(framework),
     ]);
@@ -146,7 +153,9 @@ export async function ensureGenericShims(
     return;
   }
 
-  debug(`[${LogTags.PRELOAD}] Loading generic shims w/ retry: ${toLoad.join(', ')}`);
+  debug(
+    `[${LogTags.PRELOAD}] Loading generic shims w/ retry: ${toLoad.join(', ')}`
+  );
 
   // O.3: use resilient loading w/ retry for each shim
   genericShimsLoadPromise = (async () => {
@@ -169,7 +178,9 @@ export async function ensureGenericShims(
       );
     }
 
-    debug(`[${LogTags.PRELOAD}] Generic shims loaded: ${result.loaded.join(', ')}`);
+    debug(
+      `[${LogTags.PRELOAD}] Generic shims loaded: ${result.loaded.join(', ')}`
+    );
   })();
 
   await genericShimsLoadPromise;

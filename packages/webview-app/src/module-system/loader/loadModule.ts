@@ -9,7 +9,12 @@ import { injectStyles } from '../styles/injectStyles';
 import { createSyncRequire } from '../runtime/require';
 import { PRELOAD_ALIASES } from '../preload';
 import { createModuleNotFoundError } from '../errors';
-import type { Module, ModuleRuntime, ModuleFetcher, FetchResult } from '../types';
+import type {
+  Module,
+  ModuleRuntime,
+  ModuleFetcher,
+  FetchResult,
+} from '../types';
 
 // circular dependency helpers (see circular.ts for details)
 import {
@@ -27,7 +32,7 @@ function makeInFlightKey(parentId: string, dep: string): string {
   return `${parentId}\0${dep}`;
 }
 
-// * recursively load a module & all its dependencies
+// recursively load a module & all its dependencies
 export async function loadModule(
   id: string,
   code: string,
@@ -106,21 +111,23 @@ async function loadModuleAsync(
     result: FetchResult | undefined;
   }
 
-  const fetchPromises = toFetch.map(async ({ dep, isBare }): Promise<FetchedResult> => {
-    const inFlightKey = makeInFlightKey(id, dep);
+  const fetchPromises = toFetch.map(
+    async ({ dep, isBare }): Promise<FetchedResult> => {
+      const inFlightKey = makeInFlightKey(id, dep);
 
-    // check for in-flight fetch w/ same (parent, dep) pair
-    let fetchPromise = inFlightFetches.get(inFlightKey);
-    if (!fetchPromise) {
-      fetchPromise = fetcher(dep, isBare, id);
-      inFlightFetches.set(inFlightKey, fetchPromise);
-      // Clean up on completion (success or failure)
-      fetchPromise.finally(() => inFlightFetches.delete(inFlightKey));
+      // check for in-flight fetch w/ same (parent, dep) pair
+      let fetchPromise = inFlightFetches.get(inFlightKey);
+      if (!fetchPromise) {
+        fetchPromise = fetcher(dep, isBare, id);
+        inFlightFetches.set(inFlightKey, fetchPromise);
+        // Clean up on completion (success or failure)
+        fetchPromise.finally(() => inFlightFetches.delete(inFlightKey));
+      }
+
+      const result = await fetchPromise;
+      return { dep, result };
     }
-
-    const result = await fetchPromise;
-    return { dep, result };
-  });
+  );
 
   // Wait for all fetches in parallel (main performance win)
   const fetchResults = await Promise.all(fetchPromises);

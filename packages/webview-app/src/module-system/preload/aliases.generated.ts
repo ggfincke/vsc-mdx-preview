@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/shared/registry/components.ts
+// Source: packages/shared/registry/registry-data.ts
 
 // maps import specifiers to preload IDs
 export const PRELOAD_ALIASES: Record<string, string> = {

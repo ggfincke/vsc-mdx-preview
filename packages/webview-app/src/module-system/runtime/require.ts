@@ -14,7 +14,7 @@ import { PRELOAD_ALIASES } from '../preload';
 // 4. throws error if not found
 //
 // parentId: the ID of the module doing the require
-// returns: a sync require function for use in module evaluation
+// return sync require function for use in module evaluation
 export function createSyncRequire(
   parentId: string
 ): (request: string) => unknown {

@@ -2,7 +2,11 @@
 // resilient shim loading w/ retry & fallback to generic shims (O.3)
 
 import { debug } from '../../utils/debug';
-import { normalizeError, extractErrorMessage, LogTags } from '@mdx-preview/shared';
+import {
+  normalizeError,
+  extractErrorMessage,
+  LogTags,
+} from '@mdx-preview/shared';
 import {
   SHIM_LOAD_MAX_RETRIES,
   SHIM_LOAD_RETRY_DELAY_MS,
@@ -25,13 +29,13 @@ interface RetryResult<T> {
   lastError?: Error;
 }
 
-// utility: delay with exponential backoff
+// utility: delay w/ exponential backoff
 function delay(attempt: number): Promise<void> {
   const ms = SHIM_LOAD_RETRY_DELAY_MS * Math.pow(2, attempt);
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// retry a loader function with exponential backoff
+// retry loader function w/ exponential backoff
 async function retryLoad<T>(
   name: string,
   loader: () => Promise<T>,
@@ -43,7 +47,9 @@ async function retryLoad<T>(
     try {
       const result = await loader();
       if (attempt > 0) {
-        debug(`[${LogTags.SHIM_LOADER}] ${name} succeeded on attempt ${attempt + 1}`);
+        debug(
+          `[${LogTags.SHIM_LOADER}] ${name} succeeded on attempt ${attempt + 1}`
+        );
       }
       return { result, attempts: attempt + 1 };
     } catch (error) {
@@ -61,7 +67,7 @@ async function retryLoad<T>(
   return { result: null, attempts: maxRetries + 1, lastError };
 }
 
-// load framework shims with retry and fallback to generic
+// load framework shims w/ retry & fallback to generic
 export async function loadFrameworkShimsWithRetry(
   registry: ModuleRegistry,
   framework: Framework,
@@ -81,10 +87,9 @@ export async function loadFrameworkShimsWithRetry(
     return result;
   }
 
-  // attempt to load framework-specific shims with retry
-  const loadResult = await retryLoad(
-    `${framework} shims`,
-    () => frameworkLoader(registry)
+  // attempt to load framework-specific shims w/ retry
+  const loadResult = await retryLoad(`${framework} shims`, () =>
+    frameworkLoader(registry)
   );
 
   if (loadResult.result !== null) {
@@ -105,14 +110,16 @@ export async function loadFrameworkShimsWithRetry(
     debug(`[${LogTags.SHIM_LOADER}] Generic fallback loaded for ${framework}`);
   } catch (fallbackError) {
     const errorMessage = extractErrorMessage(fallbackError);
-    debug(`[${LogTags.SHIM_LOADER}] Generic fallback also failed: ${errorMessage}`);
+    debug(
+      `[${LogTags.SHIM_LOADER}] Generic fallback also failed: ${errorMessage}`
+    );
     result.failedShims.push('generic-fallback');
   }
 
   return result;
 }
 
-// load individual generic shims with retry
+// load individual generic shims w/ retry
 export async function loadGenericShimsWithRetry(
   registry: ModuleRegistry,
   componentNames: string[],
@@ -121,7 +128,7 @@ export async function loadGenericShimsWithRetry(
   const loaded: string[] = [];
   const failed: string[] = [];
 
-  // load shims in parallel with individual retry
+  // load shims in parallel w/ individual retry
   const loadPromises = componentNames.map(async (name) => {
     const loader = shimLoaders[name];
     if (!loader) {

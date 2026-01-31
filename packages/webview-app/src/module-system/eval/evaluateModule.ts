@@ -1,5 +1,5 @@
 // packages/webview-app/src/module-system/eval/evaluateModule.ts
-// * module evaluator - evaluates module code using new Function()
+// module evaluator - evaluates module code using new Function()
 // ONLY used in Trusted Mode when canExecute is true
 //
 // supports two module formats:

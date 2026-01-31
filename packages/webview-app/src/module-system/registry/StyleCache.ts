@@ -59,7 +59,8 @@ export class StyleCache {
     } else {
       // Evict if at capacity (only unreferenced can be evicted)
       while (
-        this.referencedStyles.size + this.unreferencedStyles.size >= this.maxStyles &&
+        this.referencedStyles.size + this.unreferencedStyles.size >=
+          this.maxStyles &&
         this.unreferencedStyles.size > 0
       ) {
         if (!this.evictLRU()) {

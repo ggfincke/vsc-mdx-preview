@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/shared/registry/components.ts
+// Source: packages/shared/registry/registry-data.ts
 
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
 import { createBarrelModule, createComponentModule } from './core';

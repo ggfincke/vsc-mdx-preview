@@ -90,7 +90,11 @@ export function preloadCoreModules(
   registry.preload(PRELOADED_MODULE_IDS.jsxRuntime, jsxRuntime);
 
   // MDX React (must include useMDXComponents for MDX 3 compiled code to read context)
-  const mdxModule = { __esModule: true as const, MDXProvider, useMDXComponents };
+  const mdxModule = {
+    __esModule: true as const,
+    MDXProvider,
+    useMDXComponents,
+  };
   registry.preload(PRELOADED_MODULE_IDS.mdxReact, mdxModule);
 
   // VSCode Markdown Layout
