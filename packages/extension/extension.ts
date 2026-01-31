@@ -32,7 +32,7 @@ import {
   registerComponentCodeActions,
 } from './diagnostics';
 import { registerAllCommands } from './commands';
-import { registerMetaSubsystem } from './nextra/meta-subsystem';
+import { MetaResolver } from './nextra/MetaResolver';
 
 // show one-time safe mode notification in untrusted workspaces
 async function showSafeModeNotificationIfNeeded(
@@ -128,7 +128,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
   );
 }
 
-// * activate extension
+// activate extension
 export async function activate(
   context: vscode.ExtensionContext
 ): Promise<void> {
@@ -177,16 +177,21 @@ export async function activate(
   registry.register(ServiceNames.COMPONENT_DIAGNOSTICS, () =>
     ComponentDiagnostics.getInstance()
   );
+  // MetaResolver for Nextra _meta.json resolution
+  registry.register(ServiceNames.META_RESOLVER, () =>
+    MetaResolver.getInstance()
+  );
   debug(`[${LogTags.ACTIVATE}] Services registered`);
 
   // register subsystems (AFTER services, so they dispose BEFORE services)
   registerResolverSubsystem();
-  registerMetaSubsystem();
   debug(`[${LogTags.ACTIVATE}] Subsystems registered`);
 
   // G.3 optimization: Initialize resources in background (non-blocking)
   // Resources will be awaited when first preview panel is created
-  debug(`[${LogTags.ACTIVATE}] Starting webview HTML resource initialization (background)...`);
+  debug(
+    `[${LogTags.ACTIVATE}] Starting webview HTML resource initialization (background)...`
+  );
   initWebviewAppHTMLResourcesAsync(context);
   debug(`[${LogTags.ACTIVATE}] Webview HTML resource initialization started`);
 
@@ -218,7 +223,9 @@ export async function activate(
   // listen for VS Code color theme changes to auto-switch preview theme
   context.subscriptions.push(
     vscode.window.onDidChangeActiveColorTheme(() => {
-      debug(`[${LogTags.THEME}] VS Code color theme changed, refreshing previews`);
+      debug(
+        `[${LogTags.THEME}] VS Code color theme changed, refreshing previews`
+      );
       getPreviewManager().refreshAllPreviews();
     })
   );
@@ -226,7 +233,9 @@ export async function activate(
   // start package.json watcher to auto-invalidate resolver cache
   const packageJsonWatcher = new PackageJsonWatcher(() => {
     clearResolverCache();
-    debug(`[${LogTags.WATCHER}] Resolver cache cleared due to package file change`);
+    debug(
+      `[${LogTags.WATCHER}] Resolver cache cleared due to package file change`
+    );
   });
   void packageJsonWatcher.start();
   context.subscriptions.push(packageJsonWatcher);
@@ -236,7 +245,7 @@ export async function activate(
 
 // deactivate extension
 export function deactivate(): void {
-  // single disposal call handles everything:
+  // single disposal call handles everything
   // 1. subsystems (resolver, meta) disposed first (reverse registration order)
   // 2. services disposed second (reverse registration order)
   ServiceRegistry.getInstance().dispose();
