@@ -1,7 +1,7 @@
 // packages/extension/security/validateTrust.ts
-// Centralized trust validation utilities for trust-gated operations.
+// centralized trust validation utilities for trust-gated operations
 //
-// WHEN TO USE THIS MODULE vs TrustManager DIRECTLY:
+// WHEN TO USE THIS MODULE vs TrustManager DIRECTLY
 //
 // Use validateTrust utilities when:
 // - You want to THROW on trust failure (fail-fast pattern)
@@ -14,7 +14,7 @@
 // - You need to access the full TrustState object for UI display
 // - You want to subscribe to trust state changes
 //
-// EXAMPLES:
+// EXAMPLES
 //
 // Throwing pattern (use validateTrust):
 // ```typescript
@@ -41,7 +41,7 @@
 // ```typescript
 // async function fetchModule(specifier: string, docUri: vscode.Uri) {
 //   requireTrustedModeForDocument(docUri, 'fetch & evaluate modules');
-//   // Proceeds only if workspace is trusted AND document is local
+//   // Proceeds only if workspace is trusted & document is local
 // }
 // ```
 
@@ -51,7 +51,7 @@ import { getTrustManager } from '../services';
 import type { TrustState } from '@mdx-preview/shared';
 
 // error thrown when an operation requires Trusted Mode but the current state is Safe Mode
-// catch this error to handle trust failures gracefully:
+// catch this error to handle trust failures gracefully
 // ```typescript
 // try {
 //   requireTrustedMode('execute user code');
@@ -74,7 +74,7 @@ export class TrustError extends Error {
 // check if Trusted Mode is currently enabled
 // convenience wrapper for `getTrustManager().canExecute()`
 // use this for simple boolean checks where you don't need the full TrustState
-// returns true if code execution is allowed (workspace trusted & enableScripts setting)
+// return true if code execution allowed (workspace trusted & enableScripts setting)
 export function isTrustedModeEnabled(): boolean {
   return getTrustManager().canExecute();
 }
@@ -82,7 +82,7 @@ export function isTrustedModeEnabled(): boolean {
 // check if current security mode is Trusted
 // use this when you need to compare against the SecurityMode enum directly,
 // for example when logging or displaying the current mode
-// returns true if security mode is SecurityMode.Trusted
+// return true if security mode is SecurityMode.Trusted
 export function isSecurityModeTrusted(): boolean {
   return getTrustManager().getMode() === SecurityMode.Trusted;
 }
@@ -91,7 +91,7 @@ export function isSecurityModeTrusted(): boolean {
 // use this for trust-gated operations that should fail loudly
 // the operation description is included in the error message for debugging
 // param operation - Description of the operation being attempted (e.g., "load custom plugins")
-// returns The current TrustState if trusted (for convenience chaining)
+// return current TrustState if trusted (for convenience chaining)
 // throws TrustError if not in Trusted Mode
 // example:
 // ```typescript
@@ -120,8 +120,8 @@ export function requireTrustedMode(operation: string): TrustState {
 // such as module fetching or dependency resolution
 // param docUri - URI of the document being operated on
 // param operation - Description of the operation being attempted
-// returns The current TrustState if trusted
-// throws TrustError if not in Trusted Mode or document is from untrusted source
+// return current TrustState if trusted
+// throw TrustError if not in Trusted Mode or document is from untrusted source
 // example:
 // ```typescript
 // async function fetchLocalModule(specifier: string, docUri: vscode.Uri) {
