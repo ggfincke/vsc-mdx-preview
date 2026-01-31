@@ -20,7 +20,10 @@ export function formatContext(context?: string): string {
 }
 
 // get the log function w/ fallback to default
-export function getLogger(opts?: ValidationOptions, defaultLog: LogFn = logWarn): LogFn {
+export function getLogger(
+  opts?: ValidationOptions,
+  defaultLog: LogFn = logWarn
+): LogFn {
   return opts?.log ?? defaultLog;
 }
 
@@ -39,13 +42,17 @@ export interface PrimitiveValidatorConfig<T> {
   logValue?: boolean;
 }
 
-// * create a primitive type validator function
+// create a primitive type validator function
 export function createPrimitiveValidator<T>(
   config: PrimitiveValidatorConfig<T>
 ): (value: unknown, name: string, opts?: ValidationOptions) => T | undefined {
   const { typeName, typeCheck, defaultLog = logWarn, logValue = true } = config;
 
-  return (value: unknown, name: string, opts?: ValidationOptions): T | undefined => {
+  return (
+    value: unknown,
+    name: string,
+    opts?: ValidationOptions
+  ): T | undefined => {
     const log = getLogger(opts, defaultLog);
     const ctx = formatContext(opts?.context);
 
@@ -63,7 +70,10 @@ export function createPrimitiveValidator<T>(
 }
 
 // create a validator for optional values (undefined passes through without logging)
-export function createOptionalValidator<T, O extends ValidationOptions = ValidationOptions>(
+export function createOptionalValidator<
+  T,
+  O extends ValidationOptions = ValidationOptions,
+>(
   baseValidator: (value: unknown, name: string, opts?: O) => T | undefined
 ): (value: unknown, name: string, opts?: O) => T | undefined {
   return (value: unknown, name: string, opts?: O): T | undefined => {

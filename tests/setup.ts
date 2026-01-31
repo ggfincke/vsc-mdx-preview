@@ -1,6 +1,9 @@
+// tests/setup.ts
+// global test setup & mocks
+
 import { vi, beforeEach, afterEach } from 'vitest';
 
-// Mock logging to prevent noise in test output
+// mock logging to prevent noise in test output
 vi.mock('../packages/extension/logging', () => ({
   debug: vi.fn(),
   info: vi.fn(),
@@ -8,7 +11,7 @@ vi.mock('../packages/extension/logging', () => ({
   error: vi.fn(),
 }));
 
-// Mock services w/ sensible defaults - tests can override as needed
+// mock services w/ sensible defaults (tests can override as needed)
 vi.mock('../packages/extension/services', () => ({
   getConfigManager: vi.fn(() => ({
     get: vi.fn((key: string) => {

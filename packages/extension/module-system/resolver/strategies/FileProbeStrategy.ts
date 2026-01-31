@@ -1,24 +1,24 @@
 // packages/extension/module-system/resolver/strategies/FileProbeStrategy.ts
-// file probing strategy for relative imports without extensions
+// file probing strategy for relative imports w/o extensions
 
 import * as path from 'path';
 import { debug } from '../../../logging';
-import { fileExistsAsFile } from '../../../utils/file-utils';
+import { LogTags } from '@mdx-preview/shared';
 import { createSingleton } from '../../../utils/singleton-factory';
 import {
   ResolutionStrategy,
   type ResolutionContext,
   type ResolutionResult,
   type ResolutionMode,
-} from '../../types';
-import type { IResolutionStrategy } from './types';
+  type IResolutionStrategy,
+} from '../../../types';
 import { buildResolutionResult } from '../result-builders';
-
-// default extensions for file probing
-const DEFAULT_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.mdx', '.md'];
-const INDEX_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx'];
+import { probeModuleFile, probeModuleFileAsync } from '../file-prober';
 
 // file probing strategy for relative imports
+// probes for files w/ common extensions (.ts, .tsx, .js, .jsx, .mdx, .md)
+// & index files when the specifier points to a directory
+// skips node_modules paths (use EnhancedResolveStrategy for those)
 export class FileProbeStrategy implements IResolutionStrategy {
   readonly name = 'FileProbe';
 
@@ -27,46 +27,36 @@ export class FileProbeStrategy implements IResolutionStrategy {
     context: ResolutionContext,
     _mode: ResolutionMode
   ): ResolutionResult | null {
-    const probed = this.probeFile(context.baseDir, specifier);
+    const resolved = path.resolve(context.baseDir, specifier);
+    const probed = probeModuleFile(resolved);
+
     if (probed) {
-      debug(
-        `[FILE-PROBE] ${specifier} -> ${probed}`
+      debug(`[${LogTags.FILE_PROBE}] ${specifier} -> ${probed}`);
+      return buildResolutionResult(
+        probed,
+        specifier,
+        ResolutionStrategy.FileProbe
       );
-      return buildResolutionResult(probed, specifier, ResolutionStrategy.FileProbe);
     }
     return null;
   }
 
-  // probe for a file w/ common extensions
-  private probeFile(baseDir: string, specifier: string): string | null {
-    const resolved = path.resolve(baseDir, specifier);
+  async resolveAsync(
+    specifier: string,
+    context: ResolutionContext,
+    _mode: ResolutionMode
+  ): Promise<ResolutionResult | null> {
+    const resolved = path.resolve(context.baseDir, specifier);
+    const probed = await probeModuleFileAsync(resolved);
 
-    // skip node_modules
-    if (resolved.includes('node_modules')) {
-      return null;
+    if (probed) {
+      debug(`[${LogTags.FILE_PROBE}] ${specifier} -> ${probed}`);
+      return buildResolutionResult(
+        probed,
+        specifier,
+        ResolutionStrategy.FileProbe
+      );
     }
-
-    // check exact path
-    if (fileExistsAsFile(resolved)) {
-      return resolved;
-    }
-
-    // try w/ extensions
-    for (const ext of DEFAULT_EXTENSIONS) {
-      const fullPath = resolved + ext;
-      if (fileExistsAsFile(fullPath)) {
-        return fullPath;
-      }
-    }
-
-    // try index files
-    for (const ext of INDEX_EXTENSIONS) {
-      const indexPath = path.join(resolved, `index${ext}`);
-      if (fileExistsAsFile(indexPath)) {
-        return indexPath;
-      }
-    }
-
     return null;
   }
 }

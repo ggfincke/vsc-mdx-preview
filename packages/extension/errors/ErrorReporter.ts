@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import { ExtensionError } from './index';
 import { formatUserError, formatLogError } from './messages';
+import type { PreviewError } from '@mdx-preview/shared';
 import {
   error as logError,
   warn as logWarn,
@@ -14,6 +15,7 @@ import {
   ERROR_DEDUPE_MAX_ENTRIES,
 } from '../constants';
 import { SingletonService } from '../services/SingletonService';
+import { LRUCache, LogTags, ModuleError } from '@mdx-preview/shared';
 
 // error severity determines handling behavior
 export enum ErrorSeverity {
@@ -51,13 +53,7 @@ export enum ErrorContext {
 
 // interface for webview error display
 export interface WebviewErrorHandle {
-  showPreviewError(error: {
-    message: string;
-    code?: string;
-    stack?: string;
-    context?: string;
-    recoverable?: boolean;
-  }): void;
+  showPreviewError(error: PreviewError): void;
 }
 
 // options for reporting an error
@@ -79,7 +75,7 @@ export interface ReportOptions {
 }
 
 // * centralized error reporting service
-// provides consistent error handling across the extension:
+// provides consistent error handling across the extension
 // - automatic severity inference based on error type & context
 // - unified logging w/ context
 // - configurable user notifications
@@ -87,19 +83,25 @@ export interface ReportOptions {
 // - duplicate error suppression
 export class ErrorReporter extends SingletonService<ErrorReporter> {
   protected static override instance: ErrorReporter | undefined;
-  protected readonly logTag = 'ERROR-REPORTER';
+  protected readonly logTag = LogTags.ERROR_REPORTER;
 
-  private recentErrors = new Map<string, number>();
+  // LRU cache for duplicate error tracking (errorKey -> lastSeenTimestamp)
+  // capacity-based eviction prevents unbounded growth
+  private recentErrors: LRUCache<string, number>;
   private readonly DEFAULT_DEDUPE_WINDOW = ERROR_DEDUPE_WINDOW_DEFAULT_MS;
 
   protected constructor() {
     super();
+    this.recentErrors = new LRUCache({
+      maxEntries: ERROR_DEDUPE_MAX_ENTRIES,
+      // no TTL - we check timestamps manually to support custom dedupeWindow
+    });
   }
 
-  // * main error reporting method
+  // main error reporting method
   // logs the error & optionally shows it to the user
   report(
-    error: Error | ExtensionError | unknown,
+    error: Error | ExtensionError | ModuleError | unknown,
     options: ReportOptions
   ): void {
     const normalizedError = this.normalizeError(error);
@@ -109,7 +111,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     // check for duplicate suppression
     if (this.isDuplicate(normalizedError, options.dedupeWindow)) {
       logDebug(
-        `[ERROR-REPORTER] Suppressed duplicate: ${normalizedError.message}`
+        `[${LogTags.ERROR_REPORTER}] Suppressed duplicate: ${normalizedError.message}`
       );
       return;
     }
@@ -131,7 +133,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
   // convenience method for webview errors - logs & displays the error in the webview
   reportWebviewError(
-    error: Error | ExtensionError | unknown,
+    error: Error | ExtensionError | ModuleError | unknown,
     webviewHandle: WebviewErrorHandle,
     context: ErrorContext = ErrorContext.Extension
   ): void {
@@ -144,7 +146,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
   // convenience method for background/silent errors - only logs, never shows to user
   reportSilent(
-    error: Error | ExtensionError | unknown,
+    error: Error | ExtensionError | ModuleError | unknown,
     context: ErrorContext,
     metadata?: Record<string, unknown>
   ): void {
@@ -159,7 +161,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
   // convenience method for user-facing errors - logs & shows a notification
   reportToUser(
-    error: Error | ExtensionError | unknown,
+    error: Error | ExtensionError | ModuleError | unknown,
     context: ErrorContext
   ): void {
     this.report(error, {
@@ -171,7 +173,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
   // convenience method for config errors - logs & shows warning notification
   reportConfigError(
-    error: Error | ExtensionError | unknown,
+    error: Error | ExtensionError | ModuleError | unknown,
     configPath?: string,
     metadata?: Record<string, unknown>
   ): void {
@@ -186,7 +188,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   // convenience method for plugin errors - logs but does NOT show notification
   // plugin errors are expected in Safe Mode & should not interrupt user
   reportPluginError(
-    error: Error | ExtensionError | unknown,
+    error: Error | ExtensionError | ModuleError | unknown,
     pluginName: string
   ): void {
     this.report(error, {
@@ -200,13 +202,14 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   // convenience method for interactive errors w/ action buttons
   // logs the error & shows a warning w/ clickable actions
   async reportWithActions(
-    error: Error | ExtensionError | unknown,
+    error: Error | ExtensionError | ModuleError | unknown,
     context: ErrorContext,
     actions: { label: string; action: () => void | Promise<void> }[]
   ): Promise<void> {
     const normalizedError = this.normalizeError(error);
     const message =
-      normalizedError instanceof ExtensionError
+      normalizedError instanceof ExtensionError ||
+      normalizedError instanceof ModuleError
         ? formatUserError(normalizedError)
         : normalizedError.message;
 
@@ -229,8 +232,11 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   }
 
   // normalize any error type to ExtensionError or Error
-  private normalizeError(error: unknown): ExtensionError | Error {
+  private normalizeError(error: unknown): ExtensionError | ModuleError | Error {
     if (error instanceof ExtensionError) {
+      return error;
+    }
+    if (error instanceof ModuleError) {
       return error;
     }
     if (error instanceof Error) {
@@ -241,7 +247,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
   // infer severity from error type & context
   private inferSeverity(
-    error: Error | ExtensionError,
+    error: Error | ExtensionError | ModuleError,
     context: ErrorContext
   ): ErrorSeverity {
     // security errors are always critical or warning
@@ -282,7 +288,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     options: ReportOptions
   ): void {
     const logData =
-      error instanceof ExtensionError
+      error instanceof ExtensionError || error instanceof ModuleError
         ? formatLogError(error)
         : { message: error.message, stack: error.stack };
 
@@ -330,12 +336,14 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
   // show VS Code notification
   private showNotification(
-    error: ExtensionError | Error,
+    error: ExtensionError | ModuleError | Error,
     severity: ErrorSeverity,
     context: ErrorContext
   ): void {
     const message =
-      error instanceof ExtensionError ? formatUserError(error) : error.message;
+      error instanceof ExtensionError || error instanceof ModuleError
+        ? formatUserError(error)
+        : error.message;
 
     const prefix = this.getContextPrefix(context);
     const fullMessage = `${prefix}: ${message}`;
@@ -363,33 +371,53 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
   // send error to webview w/ context & recoverable hint
   private sendToWebview(
-    error: ExtensionError | Error,
+    error: ExtensionError | ModuleError | Error,
     handle: WebviewErrorHandle,
     context?: ErrorContext
   ): void {
     const message =
-      error instanceof ExtensionError ? formatUserError(error) : error.message;
+      error instanceof ExtensionError || error instanceof ModuleError
+        ? formatUserError(error)
+        : error.message;
 
-    handle.showPreviewError({
+    const previewError: PreviewError = {
       message,
-      code: error instanceof ExtensionError ? error.code : undefined,
+      code:
+        error instanceof ExtensionError || error instanceof ModuleError
+          ? error.code
+          : undefined,
       stack: error.stack,
       context: context,
       recoverable: this.isRecoverableError(error),
-    });
+    };
+
+    // include module error data for ModuleError
+    if (error instanceof ModuleError) {
+      previewError.moduleError = error.toModuleErrorData();
+    }
+
+    handle.showPreviewError(previewError);
   }
 
   // check if error is recoverable (user can fix & retry)
   private isRecoverableError(error: Error): boolean {
+    if (error instanceof ModuleError) {
+      return error.recoverable;
+    }
     if (error instanceof ExtensionError) {
       // module & transpile errors are typically recoverable by fixing the source
-      // E102 = circular dependency, E120 = parse error, E300 = MDX transpile
       const recoverableCodes = [
-        'MODULE_NOT_FOUND',
-        'PARSE_ERROR',
-        'TRANSPILE_ERROR',
+        // module error codes
+        // module not found
+        'E100',
+        // circular dependency
         'E102',
+        // parse error
+        'E110',
+        // transform error
         'E120',
+        // transpile codes
+        // MDX transpile
         'E300',
       ];
       return recoverableCodes.includes(error.code);
@@ -412,47 +440,22 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     return prefixes[context];
   }
 
-  // check for duplicate errors
+  // check for duplicate errors using LRU cache
+  // LRUCache handles capacity-based eviction automatically
   private isDuplicate(error: Error, dedupeWindow?: number): boolean {
     const key = `${error.constructor.name}:${error.message}`;
     const now = Date.now();
     const window = dedupeWindow ?? this.DEFAULT_DEDUPE_WINDOW;
 
     const lastSeen = this.recentErrors.get(key);
-    if (lastSeen && now - lastSeen < window) {
+    if (lastSeen !== null && now - lastSeen < window) {
       return true;
     }
 
-    // fifo eviction: if map exceeds max size, delete oldest entries
-    if (this.recentErrors.size >= ERROR_DEDUPE_MAX_ENTRIES) {
-      this.evictOldestEntries(Math.ceil(ERROR_DEDUPE_MAX_ENTRIES * 0.1));
-    }
-
+    // not a duplicate - record timestamp
+    // LRUCache auto-evicts oldest entries when capacity exceeded
     this.recentErrors.set(key, now);
-    this.cleanupOldErrors(now - window);
     return false;
-  }
-
-  // fifo eviction of oldest entries when map exceeds size limit
-  private evictOldestEntries(count: number): void {
-    let evicted = 0;
-    for (const key of this.recentErrors.keys()) {
-      if (evicted >= count) {
-        break;
-      }
-      this.recentErrors.delete(key);
-      evicted++;
-    }
-    logDebug(`[${this.logTag}] Evicted ${evicted} oldest entries (FIFO)`);
-  }
-
-  // clean up old error entries
-  private cleanupOldErrors(threshold: number): void {
-    for (const [key, time] of this.recentErrors) {
-      if (time < threshold) {
-        this.recentErrors.delete(key);
-      }
-    }
   }
 
   // custom cleanup - clear recent errors map

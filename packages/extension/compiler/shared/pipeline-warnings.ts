@@ -1,7 +1,7 @@
 // packages/extension/compiler/shared/pipeline-warnings.ts
 // consolidated warning codes & messages for MDX pipeline operations
 //
-// provides consistent warning messages across both Safe & Trusted modes,
+// provides consistent warning messages across both Safe & Trusted modes
 // ensuring users receive uniform feedback about pipeline configuration issues
 
 import { warn, info, debug } from '../../logging';
@@ -127,8 +127,8 @@ export function createUnknownComponentWarning(
 ): PipelineWarning {
   const actionMap = {
     strip: 'removed from output',
-    placeholder: 'replaced with a placeholder',
-    raw: 'rendered with children only',
+    placeholder: 'replaced w/ a placeholder',
+    raw: 'rendered w/ children only',
   };
 
   return {

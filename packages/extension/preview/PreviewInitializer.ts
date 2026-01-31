@@ -3,6 +3,7 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { WEBVIEW_HANDSHAKE_TIMEOUT_MS } from '../constants';
 import {
   DocumentTracker,
@@ -11,10 +12,9 @@ import {
   TailwindConfigWatcher,
   WatcherManager,
 } from './watchers';
-import type { IWatcher } from './watchers';
 import { onConfigChange } from './config';
 import { PackageJsonWatcher } from '../module-system/resolver/PackageJsonWatcher';
-import type { ResolvedConfig } from './config';
+import type { IWatcher, ResolvedConfig } from '../types';
 import { getTailwindProcessor } from '../services';
 
 export interface HandshakeResult {
@@ -22,24 +22,44 @@ export interface HandshakeResult {
   resolve: () => void;
 }
 
-// handles initialization logic for preview instances
-// creates & configures watchers & manages the webview handshake
+// handle initialization logic for preview instances
+// create & configure watchers & manage webview handshake
 export class PreviewInitializer {
+  // timeout ID for handshake timeout (used for cancellation)
+  private handshakeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  // cancel any pending handshake timeout
+  // call this when reusing a panel to prevent stale timeouts from firing
+  cancelHandshakeTimeout(): void {
+    if (this.handshakeTimeoutId) {
+      debug(`[${LogTags.PREVIEW}] Cancelling existing handshake timeout`);
+      clearTimeout(this.handshakeTimeoutId);
+      this.handshakeTimeoutId = null;
+    }
+  }
+
   // create a webview handshake promise w/ timeout
   createHandshake(): HandshakeResult {
-    debug('[PREVIEW] initWebviewHandshakePromise called');
+    debug(`[${LogTags.PREVIEW}] initWebviewHandshakePromise called`);
+
+    // cancel any existing timeout before creating a new one
+    this.cancelHandshakeTimeout();
+
     let resolveHandshake: () => void;
 
     const handshakePromise = new Promise<void>((resolve) => {
       resolveHandshake = () => {
-        debug('[PREVIEW] Handshake resolved!');
+        debug(`[${LogTags.PREVIEW}] Handshake resolved!`);
+        // clear timeout on successful handshake
+        this.cancelHandshakeTimeout();
         resolve();
       };
     });
 
     const timeoutPromise = new Promise<void>((_, reject) => {
-      setTimeout(() => {
-        debug('[PREVIEW] Handshake TIMEOUT after 10 seconds');
+      this.handshakeTimeoutId = setTimeout(() => {
+        debug(`[${LogTags.PREVIEW}] Handshake TIMEOUT after 10 seconds`);
+        this.handshakeTimeoutId = null;
         reject(
           new Error(
             'Webview handshake timeout - the preview failed to initialize within 10 seconds'
@@ -78,7 +98,7 @@ export class PreviewInitializer {
     // dependency watcher for local imports - callback waits for ready gate
     const dependencyWatcher = new DependencyWatcher(async (fsPath) => {
       await watcherManager.waitForGate();
-      debug(`[PREVIEW] Dependency changed: ${fsPath}`);
+      debug(`[${LogTags.PREVIEW}] Dependency changed: ${fsPath}`);
       await onDependencyChange(fsPath);
     });
     watcherManager.register('dependency', dependencyWatcher);
@@ -98,7 +118,7 @@ export class PreviewInitializer {
     if (onPackageJsonChange) {
       const packageJsonWatcher = new PackageJsonWatcher(async () => {
         await watcherManager.waitForGate();
-        debug('[PREVIEW] Package.json changed, invalidating caches');
+        debug(`[${LogTags.PREVIEW}] Package.json changed, invalidating caches`);
         onPackageJsonChange();
       });
       watcherManager.register('packageJson', packageJsonWatcher);
@@ -111,21 +131,6 @@ export class PreviewInitializer {
   // start all watchers after document directory is set
   async startWatchers(watcherManager: WatcherManager): Promise<void> {
     await watcherManager.startAll();
-  }
-
-  // initialize all watchers via WatcherManager (backward compatible)
-  // prefer createWatchers() + startWatchers() for new code
-  initializeWatchers(
-    customCssPath: string,
-    onDependencyChange: (fsPath: string) => Promise<void>
-  ): WatcherManager {
-    const watcherManager = this.createWatchers(
-      customCssPath,
-      onDependencyChange
-    );
-    // start asynchronously (fire-and-forget for backward compatibility)
-    void watcherManager.startAll();
-    return watcherManager;
   }
 
   // setup or teardown config change subscription based on document scheme
@@ -155,22 +160,26 @@ export class PreviewInitializer {
 
     const configSubscriptionWatcher: IWatcher = {
       async start() {
-        if (active) { return; }
+        if (active) {
+          return;
+        }
         subscription = onConfigChange((event) => {
           if (event.configPath === configPath) {
-            debug('[PREVIEW] MDX config file changed, reloading...');
+            debug(`[${LogTags.PREVIEW}] MDX config file changed, reloading...`);
             onConfigChanged();
           }
         });
         active = true;
-        debug(`[CONFIG-SUBSCRIPTION] Watching: ${configPath}`);
+        debug(`[${LogTags.CONFIG_SUBSCRIPTION}] Watching: ${configPath}`);
       },
       stop() {
-        if (!active) { return; }
+        if (!active) {
+          return;
+        }
         subscription?.dispose();
         subscription = null;
         active = false;
-        debug('[CONFIG-SUBSCRIPTION] Stopped');
+        debug(`[${LogTags.CONFIG_SUBSCRIPTION}] Stopped`);
       },
       isActive() {
         return active;
@@ -224,7 +233,7 @@ export class PreviewInitializer {
   setupTailwindConfigWatcher(
     watcherManager: WatcherManager,
     watchFiles: string[],
-    onChange: () => void
+    onChange: (changedPaths: string[]) => void
   ): void {
     watcherManager.unregister('tailwind');
 
@@ -232,12 +241,22 @@ export class PreviewInitializer {
       return;
     }
 
-    const tailwindWatcher = new TailwindConfigWatcher(watchFiles, () => {
-      debug('[PREVIEW] Tailwind config changed, reloading...');
-      // invalidate version cache when config changes (handles v3->v4 upgrades)
-      getTailwindProcessor().invalidateVersionCache();
-      onChange();
-    });
+    const tailwindWatcher = new TailwindConfigWatcher(
+      watchFiles,
+      (changedPaths) => {
+        debug(`[${LogTags.PREVIEW}] Tailwind config changed, reloading...`);
+        const tailwindProcessor = getTailwindProcessor();
+        // invalidate version cache when config changes (handles v3->v4 upgrades)
+        tailwindProcessor.invalidateVersionCache();
+        // invalidate detection cache for config & entry CSS paths
+        tailwindProcessor.invalidateDetectionCaches(changedPaths);
+        // invalidate scan cache for changed files
+        for (const fsPath of changedPaths) {
+          tailwindProcessor.invalidateScanCache(fsPath);
+        }
+        onChange(changedPaths);
+      }
+    );
 
     watcherManager.register('tailwind', tailwindWatcher);
     tailwindWatcher.start();

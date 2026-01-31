@@ -1,0 +1,1295 @@
+---
+title: MDX Preview Architecture
+description: Comprehensive architecture documentation for the VS Code MDX Preview extension
+---
+
+# MDX Preview Architecture
+
+This document provides a comprehensive overview of the VS Code MDX Preview extension architecture, covering the extension lifecycle, security model, module resolution, webview rendering, and all major subsystems.
+
+---
+
+## Overview
+
+MDX Preview is a VS Code extension that provides live preview for MDX documents with full React component support. The extension implements a sophisticated security model with two rendering modes and handles complex module resolution and transpilation in a browser environment.
+
+```mermaid
+graph TB
+    subgraph "VS Code Extension Host (Node.js)"
+        EXT[Extension Entry]
+        SR[Service Registry]
+        PM[Preview Manager]
+        TM[Trust Manager]
+        MR[Module Resolver]
+        TP[Transpiler]
+        TW[Tailwind Processor]
+    end
+
+    subgraph "VS Code Webview (Browser)"
+        WV[React App]
+        MC[Module Cache]
+        ME[Module Evaluator]
+        SP[Safe Preview]
+        TrP[Trusted Preview]
+    end
+
+    EXT --> SR
+    SR --> PM
+    SR --> TM
+    PM --> WV
+    MR --> TP
+    TP --> WV
+    TW --> WV
+    WV --> SP
+    WV --> TrP
+    WV --> MC
+    MC --> ME
+```
+
+### Monorepo Structure
+
+The project uses npm workspaces with three packages:
+
+| Package | Environment | Purpose |
+|---------|-------------|---------|
+| `packages/extension` | Node.js | VS Code extension host - handles compilation, resolution, security |
+| `packages/webview-app` | Browser | React 18 app rendered in VS Code webview iframe |
+| `packages/shared` | Both | Shared TypeScript types and component registry |
+
+> [!NOTE]
+> The extension and webview run in completely separate JavaScript environments. They communicate via Comlink RPC over VS Code's webview messaging API.
+
+---
+
+## Two-Mode Rendering System
+
+The extension operates in two mutually exclusive security modes based on workspace trust and user settings.
+
+### Safe Mode
+
+**Safe Mode** is the default when the workspace is untrusted or scripts are disabled.
+
+| Aspect | Details |
+|--------|---------|
+| **Compilation** | MDX compiled to static HTML (no JavaScript execution) |
+| **Components** | No imports, no React components, no custom plugins |
+| **CSP** | Strict CSP without `unsafe-eval` |
+| **Sanitization** | All HTML sanitized with DOMPurify |
+
+**Supported Features:** Standard Markdown (headings, lists, tables, blockquotes), code blocks with syntax highlighting, Mermaid diagrams, KaTeX math expressions, GitHub-style callouts, images (relative paths resolved), and links (internal and external).
+
+**Not Supported:** JSX expressions, custom component imports, user remark/rehype plugins, and unsanitized HTML.
+
+### Trusted Mode
+
+**Trusted Mode** is enabled when the workspace is trusted AND the `enableScripts` setting is true.
+
+| Aspect | Details |
+|--------|---------|
+| **Compilation** | MDX compiled to executable JavaScript |
+| **Components** | Full React component rendering with imports |
+| **CSP** | Includes `unsafe-eval` for module evaluation |
+| **Communication** | Module fetching via RPC to extension |
+
+**Additional Features:** JSX expressions, custom component imports, user remark/rehype plugins (from config file), export statements, and unsanitized HTML (user's responsibility).
+
+**Requirements:**
+
+| # | Requirement |
+|---|-------------|
+| 1 | VS Code workspace must be trusted |
+| 2 | `mdx-preview.preview.enableScripts` setting must be `true` |
+| 3 | Must NOT be in a remote environment (SSH, Container, WSL) |
+| 4 | Document must be a local file (`file:` or `untitled:` scheme) |
+
+### Trust State Flow
+
+```mermaid
+flowchart TD
+    A[Document Opened] --> B{Workspace Trusted?}
+    B -->|No| C[Safe Mode]
+    B -->|Yes| D{enableScripts = true?}
+    D -->|No| C
+    D -->|Yes| E{Remote Environment?}
+    E -->|Yes| C
+    E -->|No| F{Local File?}
+    F -->|No| C
+    F -->|Yes| G[Trusted Mode]
+
+    C --> H[Compile to HTML]
+    G --> I[Compile to JavaScript]
+
+    H --> J[Sanitize with DOMPurify]
+    I --> K[Evaluate in Webview]
+
+    J --> L[Render Safe Preview]
+    K --> M[Render React Component]
+```
+
+### TrustManager
+
+The `TrustManager` service centrally manages trust state:
+
+```typescript title="packages/extension/security/TrustManager.ts"
+interface TrustState {
+  workspaceTrusted: boolean;      // VS Code workspace trust
+  scriptsEnabled: boolean;        // mdx-preview.preview.enableScripts
+  canExecute: boolean;            // workspaceTrusted && scriptsEnabled
+  reason?: string;                // Explanation if canExecute is false
+  openMdxLinksInPreview: boolean; // Setting for .mdx link handling
+}
+```
+
+**Key Methods:**
+- `getState()` - Returns current trust state (always fresh, no caching)
+- `canUseTrustedMode(docUri)` - Validates all 4 security requirements
+- `getStateForDocument(docUri)` - Trust state with document-specific checks
+- `subscribe(callback)` - Listen for trust state changes
+
+> [!WARNING]
+> Never bypass trust checks. Always use `getTrustManager().getState()` or the throwing utilities in `validateTrust.ts`.
+
+### Content Security Policy
+
+CSP headers are dynamically generated based on trust state:
+
+```typescript title="packages/extension/security/CSP.ts"
+// Safe Mode - Strict CSP
+default-src 'none';
+img-src ${webviewSource} https: data:;
+style-src ${webviewSource} 'unsafe-inline';
+script-src ${webviewSource} 'nonce-${nonce}';
+font-src ${webviewSource};
+
+// Trusted Mode - Includes unsafe-eval
+script-src ${webviewSource} 'nonce-${nonce}' 'unsafe-eval';
+```
+
+---
+
+## Extension Package Architecture
+
+The extension runs in VS Code's extension host (Node.js environment) and manages all compilation, resolution, and security.
+
+### Entry Point and Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant VSCode
+    participant Extension
+    participant Registry as ServiceRegistry
+    participant Preview as PreviewManager
+
+    VSCode->>Extension: activate()
+    Extension->>Registry: Register 12 services
+    Extension->>Extension: initWebviewAppHTMLResourcesAsync() [background]
+    Extension->>Extension: setupTrustHandlers()
+    Extension->>Extension: registerAllCommands()
+
+    Note over Extension: Extension ready
+
+    VSCode->>Extension: User opens preview
+    Extension->>Preview: ensureWebviewResourcesReady()
+    Extension->>Preview: Create Preview instance
+    Preview->>Preview: RPC handshake with webview
+
+    Note over Preview: Preview active
+
+    VSCode->>Extension: deactivate()
+    Extension->>Registry: dispose()
+    Registry->>Registry: Dispose subsystems (reverse order)
+    Registry->>Registry: Dispose services (reverse order)
+```
+
+**Activation Flow (`extension.ts`):**
+
+1. **Service Registration** - Register 12 services in dependency order
+2. **Background Resource Loading** - Load Vite manifest asynchronously (non-blocking)
+3. **Event Handlers** - Trust events, settings changes, theme changes
+4. **Commands** - Register all preview/zoom/config commands
+5. **File Watchers** - Package.json watcher for resolver cache invalidation
+
+**Deactivation:**
+- Single call to `ServiceRegistry.dispose()` handles all cleanup in reverse order
+
+### Service Registry Pattern
+
+The extension uses a centralized Service Registry for dependency injection and lifecycle management.
+
+```mermaid
+graph TD
+    subgraph "ServiceRegistry"
+        REG[Registry Singleton]
+        REG --> CM[ConfigManager]
+        REG --> CC[ConfigCache]
+        REG --> TM[TrustManager]
+        REG --> ThM[ThemeManager]
+        REG --> PM[PreviewManager]
+        REG --> FD[FrameworkDetector]
+        REG --> TP[TailwindProcessor]
+        REG --> ER[ErrorReporter]
+        REG --> SB[StatusBarManager]
+        REG --> CD[ComponentDiagnostics]
+        REG --> MR[MetaResolver]
+    end
+
+    subgraph "Subsystems"
+        RS[ResolverSubsystem]
+        MS[MetaSubsystem]
+    end
+
+    REG --> RS
+    REG --> MS
+```
+
+**Key Features:**
+- **Lazy Initialization** - Services created on first access via factory functions
+- **Circular Dependency Detection** - Throws `CircularDependencyError` with cycle path
+- **Ordered Disposal** - Subsystems first, then services, in reverse registration order
+
+**Two Singleton Patterns:**
+
+| Pattern | Use Case | Example |
+|---------|----------|---------|
+| `SingletonService` (class-based) | Services with lifecycle, subscriptions, disposables | TrustManager, PreviewManager |
+| `createSingleton` (factory-based) | Stateless utilities, cached results | FileProbeStrategy, Resolvers |
+
+**Service Access:**
+
+```typescript title="Preferred access pattern"
+import { getConfigManager, getTrustManager } from './services';
+
+const config = getConfigManager();
+const trustState = getTrustManager().getState();
+```
+
+> [!TIP]
+> Always use service-locator functions from `service-locator.ts` rather than direct `getInstance()` calls. This provides type safety and decoupling.
+
+### Preview Management
+
+The `PreviewManager` singleton manages all preview instances and webview panels.
+
+```typescript title="packages/extension/preview/preview-manager.ts"
+class PreviewManager extends SingletonService<PreviewManager> {
+  private currentPreview: Preview | undefined;
+  private _panel: vscode.WebviewPanel | undefined;
+
+  // Key methods
+  getCurrentPreview(): Preview | undefined
+  setCurrentPreview(preview: Preview): void
+  refreshAllPreviews(): void
+  pushThemeToAllPreviews(): void
+}
+```
+
+**Preview Instance Composition:**
+
+Each `Preview` instance is composed of specialized modules:
+
+| Module | Responsibility |
+|--------|----------------|
+| `PreviewConfiguration` | Per-instance settings (updateMode, debounce, security) |
+| `PreviewWebviewBridge` | Webview communication and theme management |
+| `PreviewDocumentHandler` | Document tracking and version management |
+| `PreviewInitializer` | Initial setup and handshake |
+| `WatcherManager` | Dependency and config file watchers |
+| `PreviewState` | Evaluation results and Tailwind tracking |
+| `PreviewEvaluator` | Document reading and evaluation orchestration |
+
+**Handshake Protocol:**
+
+```mermaid
+sequenceDiagram
+    participant Extension
+    participant Webview
+
+    Extension->>Webview: Create webview panel with HTML
+    Webview->>Webview: React app mounts
+    Webview->>Extension: ExtensionHandle.handshake()
+    Extension->>Extension: Resolve webviewHandshakePromise
+    Extension->>Webview: Push trust state
+    Extension->>Webview: Push theme state
+    Extension->>Webview: Push preview content
+
+    Note over Extension,Webview: Preview ready for updates
+```
+
+### RPC Communication
+
+Extension and webview communicate using Comlink for type-safe RPC over VS Code's webview messaging API.
+
+#### Extension to Webview
+
+The extension calls methods on the webview via `WebviewHandle`:
+
+```typescript title="packages/extension/rpc-extension.ts"
+interface WebviewRemoteHandle {
+  // State management
+  setTrustState(state: TrustState): void
+  updatePreview(code: string, path: string, deps: string[]): void
+  updatePreviewSafe(html: string): void
+  showPreviewError(error: PreviewError): void
+
+  // Styling
+  setTheme(state: ThemeState): void
+  setCustomCss(css: string): void
+  setTailwindCss(css: string): void
+
+  // Module invalidation
+  invalidate(fsPath: string): Promise<void>
+  setStale(isStale: boolean): void
+
+  // Nextra support
+  setNextraMeta(meta: NextraPageMeta): void
+
+  // Zoom controls
+  zoomIn(): void
+  zoomOut(): void
+  resetZoom(): void
+}
+```
+
+#### Webview to Extension
+
+The webview calls methods on the extension via `ExtensionHandle`:
+
+```typescript title="packages/extension/rpc-extension-handle.ts"
+class ExtensionHandle {
+  // Lifecycle
+  handshake(): void
+
+  // Performance tracking
+  reportPerformance(evaluationDuration: number): void
+
+  // Module fetching (Trusted Mode only)
+  fetch(
+    request: string,
+    isBare: boolean,
+    parentId: string
+  ): Promise<FetchResult | undefined>
+
+  // Document access
+  getDocument(uri: string): Promise<string | undefined>
+  openTextDocument(fsPath: string): Promise<void>
+
+  // External links
+  openExternal(url: string): Promise<void>
+}
+```
+
+> [!IMPORTANT]
+> The `fetch` method is the primary attack surface. All inputs are validated: type validation (strings, booleans), length checks, security validation via `isValidModuleRequest()`, and trust validation via `requireTrustedModeForDocument()`.
+
+---
+
+## Module Resolution System
+
+In Trusted Mode, the webview cannot access the file system directly. The extension resolves and transpiles modules on demand.
+
+### Module Fetching Flow
+
+```mermaid
+sequenceDiagram
+    participant Webview
+    participant Extension
+    participant Resolver as UnifiedResolver
+    participant Handler as FileHandler
+    participant Transpiler
+
+    Webview->>Extension: fetch("./Button", true, "/path/to/entry.mdx")
+    Extension->>Extension: Validate request and trust
+
+    Extension->>Resolver: resolveSync("./Button", context)
+    Resolver->>Resolver: Try 4 strategies in order
+    Resolver-->>Extension: { fsPath, strategy }
+
+    Extension->>Extension: checkFsPath() security validation
+    Extension->>Extension: Read file content
+
+    Extension->>Handler: handleByExtension(code, fsPath, ".tsx")
+    Handler->>Transpiler: transform(code, fsPath)
+    Transpiler-->>Handler: { code, esmCode }
+    Handler->>Handler: extractImportSpecifiers(esmCode)
+    Handler-->>Extension: { code, dependencies, css? }
+
+    Extension-->>Webview: FetchResult
+    Webview->>Webview: Evaluate module
+    Webview->>Webview: Recursively fetch dependencies
+```
+
+### UnifiedResolver - 4-Strategy Chain
+
+The `UnifiedResolver` chains 4 resolution strategies in priority order:
+
+```mermaid
+flowchart TD
+    A[Import Specifier] --> B{Strategy 1: Framework Shim}
+    B -->|Match| C["@theme/Tabs -> @mdx-preview/shims/docusaurus/Tabs"]
+    B -->|No Match| D{Strategy 2: TypeScript Paths}
+    D -->|Match| E["@/components/Button -> src/components/Button.tsx"]
+    D -->|No Match| F{Strategy 3: Enhanced-Resolve}
+    F -->|Match| G[node_modules resolution]
+    F -->|No Match| H{Strategy 4: File Probe}
+    H -->|Match| I[Relative import with extension probing]
+    H -->|No Match| J[Resolution Failed]
+```
+
+**Strategy Details:**
+
+| # | Strategy | Use Case | Example |
+|---|----------|----------|---------|
+| 1 | Framework Shim | Framework-specific imports | `@theme/Tabs` to built-in shim |
+| 2 | TypeScript Paths | tsconfig.json path aliases | `@/lib/utils` to `src/lib/utils.ts` |
+| 3 | Enhanced-Resolve | node_modules packages | `lodash` to `node_modules/lodash/index.js` |
+| 4 | File Probe | Relative imports without extensions | `./Button` to `./Button.tsx` |
+
+**Resolution Context:**
+
+```typescript title="packages/extension/types/core/module-system.ts"
+interface ResolutionContext {
+  baseDir: string;              // Directory containing the importing file
+  tsConfig?: TypeScriptConfiguration;
+  framework?: FrameworkId;      // docusaurus, starlight, nextra, nextjs
+  workspaceRoot?: string;
+  shimsEnabled?: boolean;       // Whether to use built-in component shims
+}
+```
+
+### File Type Handlers
+
+The handler registry dispatches to specialized handlers based on file extension:
+
+| Handler | Extensions | Behavior |
+|---------|------------|----------|
+| `ScriptHandler` | `.js`, `.ts`, `.jsx`, `.tsx`, `.mdx`, `.md` | Transpile, extract dependencies |
+| `CssHandler` | `.css` | Return CSS for injection |
+| `SassHandler` | `.scss`, `.sass` | Compile via workspace sass, return CSS |
+| `JsonHandler` | `.json` | Wrap as `module.exports = {...}` |
+| `ImageHandler` | `.png`, `.jpg`, `.svg`, `.gif`, `.webp` | Convert to webview URI |
+
+**Handler Interface:**
+
+```typescript title="packages/extension/module-system/handlers/index.ts"
+interface FileTypeHandler {
+  extensions: string[];
+  handle(
+    code: string,
+    fsPath: string,
+    preview: Preview
+  ): Promise<FetchResult>;
+}
+```
+
+### Transpilation Pipeline
+
+#### Entry File Transformation
+
+Entry file transformation (MDX documents) follows these steps:
+
+| Step | Action |
+|------|--------|
+| 1. MDX Compilation | If `.mdx` or `.md`, compile via `@mdx-js/mdx` |
+| 2. TypeScript Stripping | If TypeScript, strip types via Sucrase |
+| 3. ESM Capture | Save ESM code for dependency extraction |
+| 4. Transpilation | Convert to CommonJS via Babel or Sucrase |
+
+```typescript title="packages/extension/module-system/transform/transform.ts"
+async function transformEntryFile(
+  code: string,
+  fsPath: string,
+  preview: Preview
+): Promise<TransformResult> {
+  // Returns: { code, esmCode, frontmatter }
+}
+```
+
+#### Dependency Transformation
+
+Dependency transformation (imported files) follows these steps:
+
+| Step | Action |
+|------|--------|
+| 1. MDX Compilation | If `.mdx` or `.md` |
+| 2. TypeScript Stripping | If TypeScript extension |
+| 3. ESM Capture | For dependency extraction |
+| 4. Smart Transpilation | Skip if in `node_modules` and not a module; use Sucrase for `node_modules` (faster); use Babel for local code (full features) |
+
+```typescript title="packages/extension/module-system/transform/transform.ts"
+async function transformDependency(
+  code: string,
+  fsPath: string,
+  useSucrase: boolean
+): Promise<{ code: string; esmCode: string }>
+```
+
+**Transpiler Selection:**
+
+| Transpiler | Use Case | Features |
+|------------|----------|----------|
+| **Babel** (default) | Full transformation | `@babel/preset-env`, `@babel/preset-react`, ES2022+ |
+| **Sucrase** (fast) | Simple transformations | JSX, TypeScript, imports only |
+
+> [!NOTE]
+> Babel is lazy-loaded (~2MB) only when first needed. Sucrase is bundled and used for `node_modules` by default.
+
+### Dependency Extraction
+
+Imports are extracted from ESM code using `es-module-lexer`:
+
+```typescript title="packages/extension/module-system/deps/import-extractor.ts"
+// Fast pre-check regex
+const IMPORT_PATTERN = /\b(import\s|require\s*\(|export\s+\*\s+from|export\s+\{[^}]*\}\s+from)\b/;
+
+async function extractImportSpecifiers(code: string): Promise<string[]> {
+  // 1. Fast pre-check - skip parsing if no import patterns
+  if (!IMPORT_PATTERN.test(code)) return [];
+
+  // 2. Parse with es-module-lexer
+  const [imports] = await parse(code);
+
+  // 3. Extract specifier names
+  return imports.map(imp => imp.n).filter(Boolean);
+}
+```
+
+---
+
+## Webview Application
+
+The webview is a React 18 application built with Vite, rendered in a VS Code webview iframe.
+
+### Application Structure
+
+```mermaid
+graph TD
+    subgraph "App.tsx"
+        APP[App Root]
+        APP --> LB[LoadingBar]
+        APP --> SI[StaleIndicator]
+        APP --> TB[TrustBanner]
+        APP --> EB[ErrorBoundary]
+    end
+
+    subgraph "Rendering Modes"
+        EB --> SP[SafePreviewRenderer]
+        EB --> TP[TrustedPreviewRenderer]
+    end
+
+    subgraph "Module System"
+        TP --> MS[evaluateModuleToComponent]
+        MS --> LM[loadModule]
+        LM --> EV[evaluateModule]
+        LM --> MC[ModuleCache]
+        LM --> SC[StyleCache]
+        LM --> DT[DependencyTracker]
+    end
+```
+
+### Safe vs Trusted Rendering
+
+#### SafePreviewRenderer
+
+Renders pre-sanitized HTML without JavaScript execution.
+
+```typescript title="packages/webview-app/src/SafePreview.tsx"
+function SafePreviewRenderer({ content }: Props) {
+  const { containerRef, renderPortals } = usePreviewSetup({ mode: 'after-paint' });
+
+  // Sanitize with DOMPurify, post-process links/images
+  const processedHtml = useSafeModeProcessing(content.html);
+
+  // Lazy-load KaTeX CSS when math detected
+  useKatexDetection(containerRef);
+
+  return (
+    <div
+      ref={containerRef}
+      className="markdown-body"
+      dangerouslySetInnerHTML={{ __html: processedHtml }}
+    />
+  );
+}
+```
+
+**Processing Pipeline:** DOMPurify sanitization, link post-processing (add target="_blank"), image path resolution, code block enhancement (copy button), and Mermaid diagram rendering.
+
+#### TrustedPreviewRenderer
+
+Evaluates transpiled code and renders React component.
+
+```typescript title="packages/webview-app/src/TrustedPreview.tsx"
+function TrustedPreviewRenderer({ content }: Props) {
+  const [component, setComponent] = useState<React.ReactNode>(null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+
+  useAsyncEffect(async () => {
+    setIsEvaluating(true);
+    try {
+      const result = await evaluateModuleToComponent(
+        content.code,
+        content.entryFilePath,
+        content.dependencies,
+        extensionHandle.fetch
+      );
+      setComponent(resolveMdxNode(result));
+    } finally {
+      setIsEvaluating(false);
+    }
+  }, [content.code, content.entryFilePath]);
+
+  if (isEvaluating) return <Spinner />;
+  return <div className="markdown-body">{component}</div>;
+}
+```
+
+### Module System Architecture
+
+The webview module system handles code evaluation with caching and dependency tracking.
+
+```mermaid
+graph TB
+    subgraph "ModuleRegistry Facade"
+        MR[ModuleRegistry]
+    end
+
+    subgraph "Subsystems"
+        MC[ModuleCache<br/>LRU + Memory Tracking]
+        SC[StyleCache<br/>Reference Counting]
+        DT[DependencyTracker<br/>Reverse Indexes]
+    end
+
+    MR --> MC
+    MR --> SC
+    MR --> DT
+
+    subgraph "Operations"
+        GET[get/set modules]
+        INV[invalidate]
+        PRE[preload]
+    end
+
+    MC --> GET
+    SC --> GET
+    DT --> INV
+    MC --> PRE
+```
+
+**ModuleCache:**
+- LRU cache with configurable limits (default: 500 modules, 50MB)
+- Memory estimation for proper eviction
+- Preloaded modules protected from eviction
+- Pending fetch tracking for circular dependency detection
+
+**StyleCache:**
+- Dual-map architecture (referenced vs unreferenced)
+- Reference counting for proper cleanup
+- O(1) LRU eviction via Map insertion order
+
+**DependencyTracker:**
+- Resolution map: `(parentId, request) -> fsPath`
+- Reverse indexes for O(k) cleanup
+- Transitive dependent collection for cascading invalidation
+
+### Module Loading Process
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant Loader as loadModule
+    participant Cache as ModuleCache
+    participant RPC as Extension RPC
+    participant Eval as evaluateModule
+
+    App->>Loader: loadModule(entryPath, fetcher)
+
+    Loader->>Cache: Check cache
+    alt Cached
+        Cache-->>Loader: Return cached module
+    else Not cached
+        Loader->>Cache: Check pending fetches
+        alt Pending
+            Cache-->>Loader: Return pending promise
+        else New fetch
+            Loader->>Cache: Register pending
+            Loader->>Loader: Categorize dependencies
+            Loader->>RPC: Parallel fetch (deduplicated)
+            RPC-->>Loader: FetchResults
+
+            loop For each dependency
+                Loader->>Loader: Register resolution
+                alt CSS
+                    Loader->>Loader: Inject styles
+                else Module
+                    Loader->>Loader: Queue recursive load
+                end
+            end
+
+            Loader->>Loader: Wait for all recursive loads
+            Loader->>Eval: evaluateModule(code, runtime)
+            Eval-->>Loader: Module exports
+            Loader->>Cache: Store module
+        end
+    end
+
+    Loader-->>App: Module exports
+```
+
+### Module Evaluation
+
+Modules are evaluated safely using the Function constructor:
+
+```typescript title="packages/webview-app/src/module-system/eval/evaluateModule.ts"
+function evaluateModule(
+  code: string,
+  runtime: ModuleRuntime,
+  moduleId: string
+): unknown {
+  // Create function with runtime injected
+  const fn = new Function(
+    'runtime',
+    'exports',
+    'module',
+    '__filename',
+    `const require = runtime.require;
+     ${code}
+     return module.exports;`
+  );
+
+  const module = { exports: {} };
+  const result = fn(runtime, module.exports, module, moduleId);
+
+  return result ?? module.exports;
+}
+```
+
+**Runtime Context:**
+- `Fragment`, `jsx`, `jsxs` - React JSX runtime
+- `require` - Module require function with cache lookup
+
+### Preloaded Modules
+
+Core modules are preloaded and protected from cache eviction:
+
+| Module ID | Package | Purpose |
+|-----------|---------|---------|
+| `npm://react` | react | React library |
+| `npm://react-dom` | react-dom | Full DOM API |
+| `npm://react-dom/client` | react-dom/client | createRoot, hydrateRoot |
+| `npm://react/jsx-runtime` | react/jsx-runtime | JSX transformation |
+| `npm://@mdx-js/react` | @mdx-js/react | MDXProvider, useMDXComponents |
+
+**Framework Shims:**
+
+Framework-specific components are loaded on-demand:
+
+```typescript title="packages/webview-app/src/module-system/preload/shimLoader.ts"
+// Docusaurus shims
+'npm://@mdx-preview/shims-docusaurus/Tabs'
+'npm://@mdx-preview/shims-docusaurus/TabItem'
+'npm://@mdx-preview/shims-docusaurus/Admonition'
+
+// Starlight shims
+'npm://@mdx-preview/shims-starlight/Card'
+'npm://@mdx-preview/shims-starlight/CardGrid'
+'npm://@mdx-preview/shims-starlight/Aside'
+```
+
+### RPC Message Queue
+
+Messages received before React mounts are buffered and flushed when handlers register:
+
+```typescript title="packages/webview-app/src/rpc-webview.ts"
+// Message types that get queued
+type QueuedMessageType = 'trust' | 'safe' | 'trusted' | 'error' | 'stale';
+
+// Flush order matters!
+const FLUSH_ORDER: QueuedMessageType[] = [
+  'trust',    // Must come first (sets rendering mode)
+  'safe',     // Content (mutually exclusive with trusted)
+  'trusted',
+  'error',    // Overlays
+  'stale',
+];
+```
+
+---
+
+## Framework Support
+
+The extension auto-detects MDX frameworks and provides compatible component shims.
+
+### Framework Detection
+
+```typescript title="packages/extension/framework/FrameworkDetector.ts"
+// Detection priority (checked in order)
+const FRAMEWORK_PRIORITY = [
+  'docusaurus',  // @docusaurus/core
+  'starlight',   // @astrojs/starlight
+  'nextra',      // nextra
+  'nextjs',      // next + MDX
+  'generic',     // fallback
+];
+```
+
+### Supported Frameworks
+
+| Framework | Detection Package | Example Aliases |
+|-----------|-------------------|-----------------|
+| Docusaurus | `@docusaurus/core` | `@theme/Tabs`, `@theme/Admonition` |
+| Starlight | `@astrojs/starlight` | `@astrojs/starlight/components` |
+| Nextra | `nextra` | `nextra/components` |
+| Next.js | `next` + MDX config | `next/image`, `next/link` |
+| Generic | (fallback) | `Callout`, `Tabs`, `Collapsible` |
+
+### Alias Resolution Flow
+
+```mermaid
+flowchart LR
+    A["@theme/Tabs"] -->|1. Extension| B["@mdx-preview/shims/docusaurus/Tabs"]
+    B -->|2. Webview| C["npm://@mdx-preview/shims-docusaurus/Tabs"]
+    C -->|3. Preload| D[Preloaded Component]
+```
+
+### Nextra _meta.json Support
+
+For Nextra projects, the extension resolves `_meta.json` files:
+
+```typescript title="packages/extension/nextra/MetaResolver.ts"
+interface NextraPageMeta {
+  title?: string;
+  layout?: 'default' | 'full' | 'raw';
+  toc?: boolean;
+}
+```
+
+**Resolution:**
+1. Walk up from document directory to workspace root
+2. Find nearest `_meta.json` file
+3. Extract page-level settings
+4. Merge with frontmatter (frontmatter takes precedence)
+
+---
+
+## Tailwind CSS Pipeline
+
+The extension includes built-in Tailwind CSS support for utility-first styling.
+
+### Pipeline Overview
+
+```mermaid
+graph TD
+    A[MDX Document] --> B[TailwindProcessor.process]
+
+    B --> C{Trust Check}
+    C -->|Untrusted| D[Return Empty]
+    C -->|Trusted| E[Settings Resolution]
+
+    E --> F[TailwindDetector]
+    F --> F1[Find Config]
+    F --> F2[Find Entry CSS]
+    F --> F3[Detect Version]
+
+    F3 --> G[TailwindScanner]
+    G --> G1[PatternScanner]
+    G --> G2[ContentScanner]
+    G --> G3[DependencyScanner]
+
+    G3 --> H{Cache Lookup}
+    H -->|Hit| I[Return Cached CSS]
+    H -->|Miss| J[TailwindCompiler]
+
+    J --> K{Version}
+    K -->|v3| L[tailwindcss plugin]
+    K -->|v4| M["@tailwindcss/postcss"]
+
+    L --> N[Return CSS]
+    M --> N
+```
+
+### Scanner Architecture
+
+| Scanner | Purpose | Patterns |
+|---------|---------|----------|
+| **PatternScanner** | Static patterns | `className="..."`, `@apply ...` |
+| **ContentScanner** | Dynamic expressions | `className={...}`, clsx/cn/classnames, CVA |
+| **DependencyScanner** | Imported files | Scans local imports for additional classes |
+
+### Caching Strategy
+
+**Two-Level Cache:**
+
+| Level | Purpose | Key | TTL |
+|-------|---------|-----|-----|
+| Version Cache | Avoid package.json lookups | Workspace root | 5 min |
+| CSS Cache | Avoid recompilation | SHA1(version + content + config + stamps) | 5 min |
+
+**Cache Key Composition:**
+
+```typescript
+buildCacheKey(
+  tailwindVersion,      // 'v3' or 'v4'
+  extractedClasses,     // 'flex gap-4 text-sm ...'
+  configPath,           // '/path/to/tailwind.config.js'
+  configFileStamp,      // mtime or error marker
+  entryCssPath,         // '/path/to/globals.css'
+  entryFileStamp        // mtime or error marker
+) // returns SHA1 hash
+```
+
+### Version Support
+
+| Version | Status | Plugin |
+|---------|--------|--------|
+| v1, v2 | Not Supported | - |
+| v3 | Deprecated | `tailwindcss` |
+| v4 | Recommended | `@tailwindcss/postcss` |
+
+---
+
+## Configuration System
+
+MDX Preview supports per-project customization via configuration files.
+
+### Configuration Precedence
+
+```mermaid
+flowchart LR
+    A[Frontmatter] -->|Highest| FINAL
+    B[".mdx-previewrc.json"] --> FINAL
+    C[VS Code Workspace Settings] --> FINAL
+    D[VS Code User Settings] --> FINAL
+    E[Defaults] -->|Lowest| FINAL
+
+    FINAL[Effective Config]
+```
+
+### VS Code Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `mdx-preview.preview.enableScripts` | boolean | false | Enable Trusted Mode |
+| `mdx-preview.preview.updateMode` | string | "onType" | When to update preview |
+| `mdx-preview.preview.debounceDelay` | number | 300 | Debounce delay (ms) |
+| `mdx-preview.preview.previewTheme` | string | "github-light" | Preview theme |
+| `mdx-preview.preview.codeBlockTheme` | string | "auto" | Code block theme |
+| `mdx-preview.preview.autoTheme` | boolean | true | Auto light/dark switching |
+| `mdx-preview.framework` | string | "auto" | MDX framework |
+| `mdx-preview.tailwind.enabled` | string | "auto" | Tailwind processing |
+| `mdx-preview.build.useSucraseTranspiler` | boolean | false | Use Sucrase over Babel |
+
+### Project Configuration File
+
+`.mdx-previewrc.json` in project root:
+
+```json title=".mdx-previewrc.json"
+{
+  "remarkPlugins": [
+    "remark-gfm",
+    ["remark-toc", { "heading": "contents" }]
+  ],
+  "rehypePlugins": [
+    "rehype-slug"
+  ],
+  "components": {
+    "Callout": "./src/components/Callout.tsx",
+    "Button": "./src/components/Button.tsx"
+  },
+  "tailwind": {
+    "enabled": "auto",
+    "configPath": "./tailwind.config.js"
+  }
+}
+```
+
+### Plugin Loading
+
+Plugins are loaded from workspace `node_modules` in Trusted Mode only:
+
+```typescript title="packages/extension/compiler/plugins/loader.ts"
+// Plugin spec formats
+"plugin-name"                    // Just name
+["plugin-name", { option: true }]  // With options
+
+// Resolution
+const pluginPath = resolve(pluginName, {
+  basedir: configDir,
+  // enhanced-resolve options
+});
+```
+
+> [!WARNING]
+> Plugin loading is restricted to Trusted Mode for security. Never load plugins in Safe Mode.
+
+---
+
+## Theming System
+
+The extension supports configurable preview and code block themes.
+
+### Preview Themes
+
+15+ themes from Markdown Preview Enhanced:
+
+| Light Themes | Dark Themes |
+|--------------|-------------|
+| github-light | github-dark |
+| vue | atom-dark |
+| solarized-light | solarized-dark |
+| newsprint | gothic |
+| medium | night |
+
+### Code Block Themes
+
+24 syntax highlighting themes via Shiki with CSS variables:
+
+```typescript title="packages/extension/themes/types.ts"
+type CodeBlockTheme =
+  | 'auto'          // Match preview theme
+  | 'github-light'
+  | 'github-dark'
+  | 'one-dark-pro'
+  | 'dracula'
+  // ... 20 more
+```
+
+### Auto Theme Switching
+
+When `mdx-preview.preview.autoTheme` is enabled (default):
+
+1. ThemeManager observes VS Code color theme changes
+2. Detects if VS Code theme is light or dark
+3. Automatically switches between theme variants
+4. Pushes updated theme to webview
+
+```mermaid
+sequenceDiagram
+    participant VSCode
+    participant ThemeManager
+    participant Preview
+    participant Webview
+
+    VSCode->>ThemeManager: onDidChangeActiveColorTheme
+    ThemeManager->>ThemeManager: Detect light/dark
+    ThemeManager->>Preview: getCurrentPreview()
+    ThemeManager->>Webview: pushThemeState()
+    Webview->>Webview: Apply theme CSS
+```
+
+---
+
+## Testing Infrastructure
+
+The extension uses Vitest for all testing with different configurations.
+
+### Test Types
+
+| Type | Config | Environment | Purpose |
+|------|--------|-------------|---------|
+| Unit | `vitest.config.ts` | Node + mocked vscode | Test isolated logic |
+| Integration | `vitest.integration.config.ts` | Real VS Code | Test VS Code API usage |
+| Webview | `vitest.config.ts` (webview-app) | jsdom | Test React components |
+
+### Running Tests
+
+```bash title="Test commands"
+# Unit tests
+npm test
+npm run test:watch
+
+# Integration tests (requires VS Code)
+npm run test:integration
+
+# Webview tests
+npm run test:webview
+
+# All tests
+npm run test:all
+```
+
+### Test Fixtures
+
+```
+packages/extension/test/
+├── __mocks__/
+│   └── vscode.ts        # VS Code API mock
+├── fixtures/
+│   ├── basic.mdx        # Basic MDX samples
+│   ├── components.mdx   # Component imports
+│   └── security.mdx     # XSS edge cases
+└── InMemoryDocument.ts  # Test document utility
+```
+
+### Key Testing Patterns
+
+**Mocking VS Code:**
+
+```typescript title="packages/extension/test/__mocks__/vscode.ts"
+export const workspace = {
+  isTrusted: true,
+  getConfiguration: vi.fn(),
+  onDidChangeConfiguration: vi.fn(),
+  // ...
+};
+```
+
+**Testing Trust State:**
+
+```typescript title="Example test"
+import { getTrustManager } from '../services';
+
+test('returns false when workspace untrusted', () => {
+  vi.mocked(vscode.workspace.isTrusted).mockReturnValue(false);
+
+  const state = getTrustManager().getState();
+
+  expect(state.canExecute).toBe(false);
+  expect(state.reason).toContain('untrusted');
+});
+```
+
+---
+
+## Security Considerations
+
+### Trust Validation
+
+Always validate trust before sensitive operations:
+
+```typescript title="Two validation patterns"
+// Pattern 1: Conditional (when fallback exists)
+const trustState = getTrustManager().getState();
+if (trustState.canExecute) {
+  // Trusted operation
+} else {
+  // Safe fallback
+}
+
+// Pattern 2: Throwing (when operation must fail)
+import { requireTrustedMode } from './security/validateTrust';
+requireTrustedMode('load plugins');  // Throws TrustError if not trusted
+```
+
+### Path Validation
+
+Prevent directory traversal attacks:
+
+```typescript title="packages/extension/security/checkFsPath.ts"
+function checkFsPath(baseDir: string, fsPath: string): void {
+  const resolved = path.resolve(fsPath);
+  if (!resolved.startsWith(baseDir)) {
+    throw new SecurityError('Path outside allowed directory');
+  }
+}
+```
+
+### HTML Sanitization
+
+All HTML in Safe Mode is sanitized:
+
+```typescript title="packages/webview-app/src/SafePreview.tsx"
+import DOMPurify from 'dompurify';
+
+const sanitized = DOMPurify.sanitize(html, {
+  ADD_ATTR: ['target'],
+  ADD_TAGS: ['mermaid'],
+});
+```
+
+### Security Checklist
+
+> [!CAUTION]
+> When modifying security-sensitive code:
+>
+> 1. **Never bypass trust checks** - Always use TrustManager or validateTrust utilities
+> 2. **Validate file paths** - Use `checkFsPath()` for all file system access
+> 3. **Sanitize HTML** - DOMPurify is mandatory in Safe Mode
+> 4. **Maintain CSP** - Don't add `unsafe-*` directives without security review
+> 5. **Prevent eval injection** - Module code is pre-transpiled; validate all inputs
+
+---
+
+## Performance Optimizations
+
+### Caching Strategy
+
+| Cache | Location | Size | TTL | Purpose |
+|-------|----------|------|-----|---------|
+| File Stat | file-prober.ts | 1000 | 5s | Avoid repeated stat calls |
+| TS Pattern Index | TypeScriptPathStrategy | Per-config | Validated | O(1) path matching |
+| Resolver FS | resolver-factory.ts | Shared | 5s | Node resolution caching |
+| Babel Config | babel.ts | 1 | Forever | Avoid preset recreation |
+| Sass Module | SassHandler.ts | Per-workspace | Forever | Lazy workspace sass |
+| Module Cache | ModuleCache.ts | 500/50MB | Forever | Webview module caching |
+| Tailwind CSS | TailwindCache.ts | 20 | 5min | Avoid recompilation |
+
+### Lazy Loading
+
+- **Babel** (~2MB) - Loaded on first transform, not activation
+- **Sass** - Loaded from workspace `node_modules` on first .scss
+- **KaTeX CSS** - Loaded in webview only when math detected
+- **Framework Shims** - Loaded on-demand per framework
+
+### Parallel Operations
+
+- File probing uses `Promise.all` for extension checks
+- Dependency scanning reads files in parallel
+- Module loading fetches dependencies in parallel with deduplication
+- Tailwind scans dependencies in parallel
+
+---
+
+## File Reference
+
+### Extension Package
+
+| Directory | Purpose |
+|-----------|---------|
+| `extension.ts` | Entry point, activation, deactivation |
+| `preview/` | Preview management, webview bridge, evaluation |
+| `compiler/` | MDX compilation (safe/trusted), plugins |
+| `module-system/` | Resolution, handlers, transpilation |
+| `security/` | Trust management, CSP, path validation |
+| `services/` | Service registry, singleton services |
+| `config/` | Configuration management, caching |
+| `themes/` | Theme management, auto-switching |
+| `tailwind/` | Tailwind detection, scanning, compilation |
+| `framework/` | Framework detection |
+| `nextra/` | Nextra _meta.json support |
+| `diagnostics/` | Component detection, code actions |
+| `commands/` | VS Code command handlers |
+
+### Webview Package
+
+| Directory | Purpose |
+|-----------|---------|
+| `src/App.tsx` | Root component, mode switching |
+| `src/SafePreview.tsx` | Safe Mode rendering |
+| `src/TrustedPreview.tsx` | Trusted Mode rendering |
+| `src/module-system/` | Module caching, loading, evaluation |
+| `src/rpc-webview.ts` | RPC communication, message queue |
+| `src/context/` | React contexts for state |
+| `src/hooks/` | Shared React hooks |
+| `src/themes/` | Theme loading, application |
+
+### Shared Package
+
+| File | Purpose |
+|------|---------|
+| `index.ts` | Shared types (TrustState, FetchResult, etc.) |
+| `registry/` | Component registry (generic, framework shims) |
+
+---
+
+## Conclusion
+
+MDX Preview implements a sophisticated architecture balancing security, performance, and extensibility:
+
+- **Two-mode security model** ensures safe defaults while enabling power users
+- **Service-based architecture** provides clean separation and lifecycle management
+- **Comlink RPC** enables type-safe communication between extension and webview
+- **4-strategy module resolution** handles all import patterns
+- **Comprehensive caching** minimizes redundant work
+- **Framework detection** provides seamless experience across MDX ecosystems
+
+For implementation details, refer to the source files linked throughout this document.

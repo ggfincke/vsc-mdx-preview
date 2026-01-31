@@ -11,7 +11,13 @@ import {
   getDisplayPath,
   isUserCode,
 } from '../../utils/stackTraceParser';
-import { normalizeError } from '@mdx-preview/shared';
+import { copyToClipboard } from '../../utils/clipboard';
+import { normalizeError, isModuleErrorData } from '@mdx-preview/shared';
+import type { ModuleErrorData } from '@mdx-preview/shared';
+import { ModuleError } from '../../module-system/errors';
+
+// type for Error objects that may have moduleError attached (from PreviewError)
+type ErrorWithModuleData = Error & { moduleError?: ModuleErrorData };
 import './ErrorBoundary.css';
 
 // stack trace component
@@ -54,6 +60,20 @@ export interface ErrorDisplayProps {
   title?: string;
 }
 
+// extract suggestions from ModuleError or attached moduleError
+function extractSuggestions(error: Error): string[] {
+  // handle direct ModuleError from webview-side errors
+  if (error instanceof ModuleError) {
+    return error.suggestions;
+  }
+  // handle Error w/ moduleError attached from extension via RPC
+  const errorWithData = error as ErrorWithModuleData;
+  if (errorWithData.moduleError && isModuleErrorData(errorWithData.moduleError)) {
+    return errorWithData.moduleError.suggestions;
+  }
+  return [];
+}
+
 // Error display component w/ VS Code styling
 // Exported for reuse in App.tsx & other error handling contexts
 export function ErrorDisplay({
@@ -61,9 +81,12 @@ export function ErrorDisplay({
   onReset,
   title = 'Preview Error',
 }: ErrorDisplayProps) {
+  // extract suggestions from ModuleError or attached moduleError
+  const suggestions = extractSuggestions(error);
+
   const handleCopy = useCallback(() => {
     const text = `${error.message}\n\n${error.stack || ''}`;
-    navigator.clipboard.writeText(text).catch(console.error);
+    void copyToClipboard(text);
   }, [error]);
 
   return (
@@ -75,6 +98,16 @@ export function ErrorDisplay({
         </div>
         <div className="mdx-preview-error-content">
           <pre className="mdx-preview-error-message">{error.message}</pre>
+          {suggestions.length > 0 && (
+            <div className="mdx-preview-error-suggestions">
+              <strong>Try:</strong>
+              <ul>
+                {suggestions.map((suggestion, index) => (
+                  <li key={index}>{suggestion}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {error.stack && (
             <details className="mdx-preview-error-stack-details" open>
               <summary>Stack Trace</summary>

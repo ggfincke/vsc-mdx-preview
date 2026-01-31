@@ -5,11 +5,13 @@ import * as fs from 'fs';
 import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve';
 import type { Resolver } from 'enhanced-resolve';
 import { debug } from '../../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { RESOLVER_CACHE_TTL_MS } from '../../constants';
 import { createResettableSingleton } from '../../utils/singleton-factory';
 
 // shared cached file system for all resolvers
-const cachedFs = new CachedInputFileSystem(fs, RESOLVER_CACHE_TTL_MS);
+// exported for subsystem disposal (resolver-subsystem.ts)
+export const cachedFs = new CachedInputFileSystem(fs, RESOLVER_CACHE_TTL_MS);
 
 // resolver mode determines the resolution strategy
 // - 'browser': prioritizes browser-compatible exports for webview module loading
@@ -66,11 +68,12 @@ function createResolver(mode: ResolverMode): Resolver {
 }
 
 // pre-created resolvers for common use cases (lazily initialized)
-const browserResolverSingleton = createResettableSingleton(
-  () => createResolver('browser')
+// exported for subsystem registration (resolver-subsystem.ts)
+export const browserResolverSingleton = createResettableSingleton(() =>
+  createResolver('browser')
 );
-const nodeResolverSingleton = createResettableSingleton(
-  () => createResolver('node')
+export const nodeResolverSingleton = createResettableSingleton(() =>
+  createResolver('node')
 );
 
 // get the shared browser resolver instance (used for resolving modules to be loaded in the webview)
@@ -89,5 +92,5 @@ export function clearResolverCache(): void {
   browserResolverSingleton.reset();
   nodeResolverSingleton.reset();
 
-  debug('[RESOLVER] Cache cleared');
+  debug(`[${LogTags.RESOLVER}] Cache cleared`);
 }

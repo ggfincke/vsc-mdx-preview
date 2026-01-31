@@ -16,7 +16,7 @@ export function getCurrentVSCodeTheme(): VSCodeTheme {
 }
 
 // subscribe to VS Code theme changes via MutationObserver on body class
-// returns a cleanup function to disconnect the observer
+// return cleanup function to disconnect observer
 export function onVSCodeThemeChange(
   callback: (theme: VSCodeTheme) => void
 ): () => void {

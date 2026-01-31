@@ -1,12 +1,11 @@
-// packages/webview-app/src/components/shims/base/icons.ts
-// Shared icon registry for all shim components
-// Consolidates SVG icons used across multiple frameworks
+// packages/webview-app/src/components/shims/base/icons.tsx
+// shared icon registry for all shim components
 
 /* eslint-disable react-refresh/only-export-components -- Icon registry is co-located with icon components */
 
 import React, { ReactElement } from 'react';
 
-// base SVG icons (Lucide style) - reused with aliases
+// base SVG icons (Lucide style) - reused w/ aliases
 const INFO_ICON_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
 const WARNING_ICON_SVG =
@@ -15,10 +14,12 @@ const WARNING_ICON_SVG =
 // callout/aside icons - used by generic Callout & Starlight Aside (Lucide style)
 export const CALLOUT_ICONS = {
   note: INFO_ICON_SVG,
-  info: INFO_ICON_SVG, // alias for note
+  // alias for note
+  info: INFO_ICON_SVG,
   tip: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path></svg>',
   warning: WARNING_ICON_SVG,
-  caution: WARNING_ICON_SVG, // alias for warning
+  // alias for warning
+  caution: WARNING_ICON_SVG,
   danger:
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
   important:
@@ -32,13 +33,6 @@ export const FILE_TREE_ICONS = {
   folder:
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>',
   file: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>',
-} as const;
-
-// code block icons - used by Docusaurus CodeBlock & Starlight Code
-export const CODE_ICONS = {
-  copy: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
-  check:
-    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>',
 } as const;
 
 // GitHub Primer style icons (filled, 16x16 viewBox)
@@ -64,13 +58,17 @@ export const GITHUB_ICONS = {
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg>',
 } as const;
 
+// unified copy/check icons for clipboard functionality
+// uses GitHub Primer style for consistency w/ code blocks
+export const COPY_ICONS = {
+  copy: GITHUB_ICONS.copy,
+  check: GITHUB_ICONS.check,
+} as const;
+
 // re-export chevron for backwards compatibility
 export const CHEVRON_ICON = FILE_TREE_ICONS.chevron;
 
-// ============================================================================
-// JSX Icon Components
-// Use these in React components instead of dangerouslySetInnerHTML for security
-// ============================================================================
+// JSX icon components (use instead of dangerouslySetInnerHTML for security)
 
 export interface IconProps {
   size?: number;
@@ -126,7 +124,7 @@ export function ArrowIcon({
     );
   }
 
-  // Lucide style (default)
+  // lucide style (default)
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -187,10 +185,7 @@ export function CheckIcon({ size = 16, className }: IconProps): ReactElement {
   );
 }
 
-// ============================================================================
-// GitHub Primer Style JSX Icon Components (for Nextra)
-// Used by Nextra Callout & Nextra Cards
-// ============================================================================
+// GitHub Primer style JSX icon components (for Nextra Callout & Cards)
 
 // Nextra Callout icon types
 export type NextraCalloutType = 'default' | 'info' | 'warning' | 'error' | 'important';

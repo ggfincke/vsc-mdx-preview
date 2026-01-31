@@ -9,7 +9,10 @@ import {
   initPreloadedModules,
   fallbackLayoutModule,
   getPreservedIds,
+  ensureFrameworkShims,
+  ensureGenericShims,
 } from './preload';
+import type { Framework } from '@mdx-preview/shared';
 import type { FetchResult } from './types';
 import { ExtensionHandle } from '../rpc-webview';
 
@@ -22,6 +25,8 @@ export type { FetchResult, Module, ModuleRuntime } from './types';
 // State
 let preloadedModulesInitialized = false;
 let vscodeMarkdownLayoutModule: unknown = null;
+let pendingFrameworkShimLoad: Promise<void> | null = null;
+let pendingGenericShimLoad: Promise<void> | null = null;
 
 // set the vscode-markdown-layout module - called from App.tsx if the module is available
 export function setVscodeMarkdownLayout(module: unknown): void {
@@ -67,6 +72,23 @@ export function invalidateModuleWithDependents(id: string): Set<string> {
   return registry.invalidateWithDependents(id);
 }
 
+// load framework-specific shims on demand - called by RPC handler when extension sends framework info
+export function ensureFrameworkShimsLoaded(framework: Framework): void {
+  // ensure preloaded modules are ready first
+  ensurePreloadedModules();
+  // store the promise so evaluateModuleToComponent can await it
+  pendingFrameworkShimLoad = ensureFrameworkShims(registry, framework);
+}
+
+// load specific generic shims on demand - called by RPC handler for conditional preloading
+export function ensureGenericShimsLoaded(components: string[]): void {
+  // ensure preloaded modules are ready first
+  ensurePreloadedModules();
+  // store the promise so evaluateModuleToComponent can await it
+  // this fixes the race condition where setUsedComponents is called right before updatePreview
+  pendingGenericShimLoad = ensureGenericShims(registry, components);
+}
+
 // RPC fetcher that delegates to extension via Comlink
 async function rpcFetcher(
   request: string,
@@ -87,6 +109,28 @@ export async function evaluateModuleToComponent(
 ): Promise<ComponentType> {
   // Ensure preloaded modules are ready
   ensurePreloadedModules();
+
+  // K.2: Wait for any pending shim loading to complete in parallel
+  // These operations are independent (different state vars, different registry keys)
+  // This fixes the race condition where setUsedComponents/setFramework is called right before updatePreview
+  const pendingLoads: Promise<void>[] = [];
+  if (pendingGenericShimLoad) {
+    pendingLoads.push(pendingGenericShimLoad);
+  }
+  if (pendingFrameworkShimLoad) {
+    pendingLoads.push(pendingFrameworkShimLoad);
+  }
+
+  if (pendingLoads.length > 0) {
+    await Promise.all(pendingLoads);
+  }
+
+  // Reset after awaiting (important: do this after Promise.all to avoid race)
+  // Note: if a new setFramework/setUsedComponents call happens during await,
+  // the new promise is set before this nullification, which is fine -
+  // the new caller will await its own promise
+  pendingGenericShimLoad = null;
+  pendingFrameworkShimLoad = null;
 
   // Determine if we need full reset or incremental invalidation
   if (lastEntryPath !== entryFilePath) {

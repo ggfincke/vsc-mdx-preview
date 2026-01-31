@@ -2,6 +2,7 @@
 // Shared hook for copy-to-clipboard functionality
 
 import { useState, useCallback } from 'react';
+import { copyToClipboard } from '../../../utils/clipboard';
 import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../../constants';
 
 // result from useCopyToClipboard hook
@@ -17,12 +18,10 @@ export function useCopyToClipboard(): UseCopyToClipboardResult {
   const [copied, setCopied] = useState(false);
 
   const copy = useCallback(async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
+    const success = await copyToClipboard(text);
+    if (success) {
       setCopied(true);
       setTimeout(() => setCopied(false), CODE_COPY_FEEDBACK_DURATION_MS);
-    } catch (err) {
-      console.error('Failed to copy:', err);
     }
   }, []);
 

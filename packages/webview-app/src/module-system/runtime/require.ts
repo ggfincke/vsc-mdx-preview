@@ -11,11 +11,10 @@ import { PRELOAD_ALIASES } from '../preload';
 // 1. direct cache hit on the request string
 // 2. resolution map lookup (for relative imports resolved from parent)
 // 3. PRELOAD_ALIASES lookup
-// 4. npm://* prefixed versions
-// 5. throws error if not found
+// 4. throws error if not found
 //
 // parentId: the ID of the module doing the require
-// returns: a sync require function for use in module evaluation
+// return sync require function for use in module evaluation
 export function createSyncRequire(
   parentId: string
 ): (request: string) => unknown {
@@ -44,14 +43,7 @@ export function createSyncRequire(
       }
     }
 
-    // 4. npm:// prefixed fallback
-    const npmId = `npm://${request}@latest`;
-    const npmCached = registry.get(npmId);
-    if (npmCached) {
-      return npmCached.exports;
-    }
-
-    // Module not found (should have been pre-fetched)
+    // Module not found (should have been pre-fetched via PRELOAD_ALIASES or resolution map)
     throw new Error(
       `Module not found: "${request}" (required by "${parentId}"). ` +
         `Make sure all dependencies are fetched before evaluation.`

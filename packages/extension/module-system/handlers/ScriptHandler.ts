@@ -5,7 +5,7 @@ import type { FetchResult } from '@mdx-preview/shared';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { transform } from '../transform/transform';
-import { extractImports } from '../deps/import-extractor';
+import { extractImportSpecifiers } from '../deps/import-extractor';
 import { buildScriptResult } from './result-builders';
 
 // handler for JavaScript/TypeScript files - delegates transpilation to transform.ts & extracts dependencies
@@ -19,10 +19,16 @@ export class ScriptHandler implements FileTypeHandler {
     preview: Preview
   ): Promise<FetchResult> {
     // transform the code (handles MDX, TypeScript, JSX, etc.)
-    const transformedCode = await transform(code, fsPath, preview);
+    // I.1: transform now returns both esmCode & final code
+    const { code: transformedCode, esmCode } = await transform(
+      code,
+      fsPath,
+      preview
+    );
 
-    // extract import dependencies from transformed code
-    const importNames = await extractImports(transformedCode);
+    // I.1: extract import dependencies from ESM code (BEFORE CommonJS conversion)
+    // es-module-lexer works much better on ESM than on CommonJS output
+    const importNames = await extractImportSpecifiers(esmCode);
     const dependencies = importNames.filter(
       (dep): dep is string => dep !== undefined && dep !== null
     );

@@ -1,70 +1,133 @@
 // packages/extension/preview/config/TypeScriptConfigResolver.ts
-// resolve TypeScript configuration from tsconfig.json for MDX compilation
+// resolve TypeScript configuration from tsconfig.json using tsconfck (lightweight)
 
-import * as typescript from 'typescript';
-import { error as logError } from '../../logging';
+import * as path from 'path';
+import { parse, type TSConfckParseResult } from 'tsconfck';
+import { error as logError, debug } from '../../logging';
+import { LogTags } from '@mdx-preview/shared';
+import { findUp } from '../../utils/find-up';
+import { PathCache } from '../../utils/cache';
 
-// import consolidated type from module-system/types.ts
-import type { TypeScriptConfiguration } from '../../module-system/types';
+// import consolidated type from centralized types
+import type { TypeScriptConfiguration } from '../../types';
 
-// re-export type for backward compatibility
-export type { TypeScriptConfiguration };
+// max 50 tsconfig caches (typical monorepo has fewer)
+const TSCONFIG_CACHE_MAX_ENTRIES = 50;
 
-// resolve TypeScript configuration from a tsconfig.json file
-// handles extends, paths, baseUrl, references, etc
-export function resolveTypescriptConfig(
-  configFile: string | null
-): TypeScriptConfiguration {
-  let tsCompilerOptions: typescript.CompilerOptions;
+// cache parsed configs by directory to avoid repeated FS reads
+// use LRUCache to prevent unbounded growth in large workspaces
+const configCache = new PathCache<TypeScriptConfiguration | null>({
+  logTag: LogTags.TS_CONFIG,
+  maxEntries: TSCONFIG_CACHE_MAX_ENTRIES,
+});
 
-  if (configFile) {
-    // use getParsedCommandLineOfConfigFile for full tsconfig resolution
-    // properly handles extends, paths, baseUrl, references
-    const parsedConfig = typescript.getParsedCommandLineOfConfigFile(
-      configFile,
-      // existing options to merge
-      {},
-      {
-        ...typescript.sys,
-        onUnRecoverableConfigFileDiagnostic: (diagnostic) => {
-          logError(
-            'TypeScript config error',
-            typescript.flattenDiagnosticMessageText(
-              diagnostic.messageText,
-              '\n'
-            )
-          );
-        },
-      }
-    );
-
-    if (parsedConfig) {
-      tsCompilerOptions = parsedConfig.options;
-    } else {
-      // fallback if parsing fails
-      tsCompilerOptions = typescript.getDefaultCompilerOptions();
-    }
-  } else {
-    tsCompilerOptions = typescript.getDefaultCompilerOptions();
-  }
-
-  // override certain options for preview purposes
-  delete tsCompilerOptions.emitDeclarationOnly;
-  delete tsCompilerOptions.declaration;
-  tsCompilerOptions.module = typescript.ModuleKind.ESNext;
-  tsCompilerOptions.target = typescript.ScriptTarget.ESNext;
-  tsCompilerOptions.noEmitHelpers = false;
-  tsCompilerOptions.importHelpers = false;
-
-  const tsCompilerHost = typescript.createCompilerHost(tsCompilerOptions);
-
-  return {
-    tsCompilerHost,
-    tsCompilerOptions,
-  };
+// find tsconfig.json by walking up the directory tree (uses shared find-up utility)
+export function findTsConfig(directory: string): string | undefined {
+  return findUp({
+    filename: 'tsconfig.json',
+    startDir: directory,
+    // no stopAt = searches to filesystem root
+  });
 }
 
-// find tsconfig.json for a given directory
-export function findTsConfig(directory: string): string | undefined {
-  return typescript.findConfigFile(directory, typescript.sys.fileExists);
+// setup a file watcher for a tsconfig.json file to invalidate cache on changes
+function setupConfigWatcher(configFile: string): void {
+  if (configCache.hasWatcher(configFile)) {
+    return;
+  }
+
+  const cacheKey = path.dirname(configFile);
+
+  configCache.watchPath(configFile, {
+    onChange: () => {
+      debug(`[${LogTags.TS_CONFIG}] tsconfig.json changed: ${configFile}`);
+      configCache.delete(cacheKey);
+    },
+    onDelete: () => {
+      debug(`[${LogTags.TS_CONFIG}] tsconfig.json deleted: ${configFile}`);
+      configCache.delete(cacheKey);
+      // clean up watcher for deleted file
+      configCache.unwatchPath(configFile);
+    },
+  });
+  debug(`[${LogTags.TS_CONFIG}] Watching: ${configFile}`);
+}
+
+// resolve TypeScript configuration from a tsconfig.json file (async)
+// handle extends, paths, baseUrl using tsconfck
+export async function resolveTypescriptConfigAsync(
+  configFile: string | null
+): Promise<TypeScriptConfiguration | null> {
+  if (!configFile) {
+    return null;
+  }
+
+  // check cache
+  const cacheKey = path.dirname(configFile);
+  if (configCache.has(cacheKey)) {
+    return configCache.get(cacheKey) ?? null;
+  }
+
+  try {
+    const result: TSConfckParseResult = await parse(configFile);
+    const compilerOptions = result.tsconfig?.compilerOptions ?? {};
+
+    const config: TypeScriptConfiguration = {
+      baseUrl: compilerOptions.baseUrl,
+      paths: compilerOptions.paths,
+      rootDir: compilerOptions.rootDir,
+      configPath: configFile,
+    };
+
+    debug(
+      `[${LogTags.TS_CONFIG}] Parsed ${configFile}: baseUrl=${config.baseUrl}, paths=${Object.keys(config.paths ?? {}).length} aliases`
+    );
+
+    configCache.set(cacheKey, config);
+
+    // setup watcher to invalidate cache when tsconfig changes
+    setupConfigWatcher(configFile);
+
+    return config;
+  } catch (err) {
+    logError(`[${LogTags.TS_CONFIG}] Failed to parse tsconfig:`, err);
+    configCache.set(cacheKey, null);
+    return null;
+  }
+}
+
+// synchronous wrapper for cached access
+// return cached result if available, otherwise trigger async load & return null
+// use async version for guaranteed fresh data
+export function resolveTypescriptConfig(
+  configFile: string | null
+): TypeScriptConfiguration | null {
+  if (!configFile) {
+    return null;
+  }
+
+  const cacheKey = path.dirname(configFile);
+  if (configCache.has(cacheKey)) {
+    return configCache.get(cacheKey) ?? null;
+  }
+
+  // if not cached, trigger async parse & return null for now
+  // the async version will populate the cache
+  resolveTypescriptConfigAsync(configFile).catch(() => {
+    // ignore - error already logged
+  });
+
+  return null;
+}
+
+// clear the config cache (for testing or when tsconfig changes)
+export function clearTsConfigCache(): void {
+  configCache.clear();
+  debug(`[${LogTags.TS_CONFIG}] Config cache cleared`);
+}
+
+// dispose all config file watchers (called during extension deactivation)
+export function disposeConfigWatchers(): void {
+  configCache.dispose();
+  debug(`[${LogTags.TS_CONFIG}] Config watchers disposed`);
 }

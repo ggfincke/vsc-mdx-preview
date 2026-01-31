@@ -3,7 +3,6 @@
 
 export { ServiceRegistry } from './ServiceRegistry';
 export { ServiceNames, type ServiceName } from './service-names';
-export type { IService, ServiceFactory, ServiceRegistration } from './types';
 
 // service locator utilities for type-safe service access
 export {

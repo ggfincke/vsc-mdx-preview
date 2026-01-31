@@ -1,6 +1,5 @@
-/**
- * MDX Preview App Styles
- */
+/* packages/webview-app/src/App.css */
+/* MDX Preview App styles */
 
 .mdx-preview-container {
   min-height: 100vh;
@@ -189,7 +188,7 @@ body.scrollBeyondLastLine .markdown-body {
 }
 
 
-/* Prevent `sub` and `sup` elements from affecting line height */
+/* Prevent `sub` & `sup` elements from affecting line height */
 .markdown-body sub,
 .markdown-body sup {
   line-height: 0;

@@ -15,8 +15,9 @@ import { loadPluginsFromConfig } from '../plugins/loader';
 import { generateComponentImports } from './component-mapper';
 import { debug, warn } from '../../logging';
 import { getConfigManager } from '../../services';
+import { LogTags } from '@mdx-preview/shared';
 
-import type { MdxTranspileResult } from '../types';
+import type { MdxTranspileResult } from '../../types';
 
 // inject MDX layout styles based on configuration
 const injectMDXStyles = (mdxText: string, preview: Preview): string => {
@@ -120,9 +121,11 @@ export async function compileTrusted(
   const documentDir = path.dirname(preview.fsPath);
   const builtinsEnabled = getConfigManager().get('components.builtins');
 
-  debug(`[COMPILE] mdxPreviewConfig: ${preview.mdxPreviewConfig ? JSON.stringify(preview.mdxPreviewConfig.config) : 'undefined'}`);
-  debug(`[COMPILE] documentDir: ${documentDir}`);
-  debug(`[COMPILE] builtinsEnabled: ${builtinsEnabled}`);
+  debug(
+    `[${LogTags.COMPILE}] mdxPreviewConfig: ${preview.mdxPreviewConfig ? JSON.stringify(preview.mdxPreviewConfig.config) : 'undefined'}`
+  );
+  debug(`[${LogTags.COMPILE}] documentDir: ${documentDir}`);
+  debug(`[${LogTags.COMPILE}] builtinsEnabled: ${builtinsEnabled}`);
 
   const componentImports = generateComponentImports(
     preview.mdxPreviewConfig,
@@ -131,11 +134,13 @@ export async function compileTrusted(
     { builtinsEnabled }
   );
 
-  debug(`[COMPILE] componentImports.hasComponents: ${componentImports.hasComponents}`);
+  debug(
+    `[${LogTags.COMPILE}] componentImports.hasComponents: ${componentImports.hasComponents}`
+  );
 
   // prepend component imports to MDX source (before compilation)
   if (componentImports.hasComponents) {
-    debug(`[COMPILE] Prepending component imports to MDX source`);
+    debug(`[${LogTags.COMPILE}] Prepending component imports to MDX source`);
     mdxTextToCompile = componentImports.imports + '\n\n' + mdxTextToCompile;
   }
 
@@ -167,6 +172,3 @@ export async function compileTrusted(
     frontmatter: frontmatter as Record<string, unknown>,
   };
 }
-
-// backward-compatible export name
-export const mdxTranspileAsync = compileTrusted;

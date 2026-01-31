@@ -15,7 +15,7 @@
           },
           {
             "type": "array",
-            "description": "Plugin with options: [packageName, options]",
+            "description": "Plugin w/ options: [packageName, options]",
             "items": [
               {
                 "type": "string",
@@ -33,8 +33,18 @@
         ]
       },
       "examples": [
-        ["remark-toc"],
-        [["remark-toc", { "tight": true, "maxDepth": 3 }]]
+        [
+          "remark-toc"
+        ],
+        [
+          [
+            "remark-toc",
+            {
+              "tight": true,
+              "maxDepth": 3
+            }
+          ]
+        ]
       ]
     },
     "rehypePlugins": {
@@ -48,7 +58,7 @@
           },
           {
             "type": "array",
-            "description": "Plugin with options: [packageName, options]",
+            "description": "Plugin w/ options: [packageName, options]",
             "items": [
               {
                 "type": "string",
@@ -66,8 +76,20 @@
         ]
       },
       "examples": [
-        ["rehype-external-links"],
-        [["rehype-external-links", { "target": "_blank", "rel": ["noopener"] }]]
+        [
+          "rehype-external-links"
+        ],
+        [
+          [
+            "rehype-external-links",
+            {
+              "target": "_blank",
+              "rel": [
+                "noopener"
+              ]
+            }
+          ]
+        ]
       ]
     },
     "components": {
@@ -86,9 +108,19 @@
     },
     "framework": {
       "type": "string",
-      "enum": ["generic", "docusaurus", "nextjs", "starlight", "nextra"],
+      "enum": [
+        "generic",
+        "docusaurus",
+        "nextjs",
+        "starlight",
+        "nextra"
+      ],
       "description": "Framework override. Overrides auto-detection from package.json.",
-      "examples": ["docusaurus", "nextjs", "starlight"]
+      "examples": [
+        "docusaurus",
+        "nextjs",
+        "starlight"
+      ]
     },
     "frameworkOptions": {
       "type": "object",
@@ -122,7 +154,11 @@
       "properties": {
         "enabled": {
           "type": "string",
-          "enum": ["auto", "enabled", "disabled"],
+          "enum": [
+            "auto",
+            "enabled",
+            "disabled"
+          ],
           "default": "enabled",
           "description": "Enable Tailwind CSS compilation in previews."
         },
@@ -135,10 +171,18 @@
     },
     "unknownBehavior": {
       "type": "string",
-      "enum": ["strip", "placeholder", "raw"],
+      "enum": [
+        "strip",
+        "placeholder",
+        "raw"
+      ],
       "default": "placeholder",
-      "description": "How to handle unknown JSX components in Safe Mode. 'strip' removes entirely, 'placeholder' shows a styled box with name and children, 'raw' renders children without wrapper.",
-      "examples": ["placeholder", "strip", "raw"]
+      "description": "How to handle unknown JSX components in Safe Mode. 'strip' removes entirely, 'placeholder' shows a styled box w/ name & children, 'raw' renders children without wrapper.",
+      "examples": [
+        "placeholder",
+        "strip",
+        "raw"
+      ]
     }
   },
   "additionalProperties": false

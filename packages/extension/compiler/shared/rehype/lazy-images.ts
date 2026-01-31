@@ -4,7 +4,7 @@
 import { visit } from 'unist-util-visit';
 import type { Root, Element } from 'hast';
 
-// rehype plugin to add lazy loading to images
+// add lazy loading to images
 export default function rehypeLazyImages() {
   return (tree: Root) => {
     visit(tree, 'element', (node: Element) => {

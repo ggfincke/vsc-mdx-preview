@@ -13,11 +13,16 @@ export {
   isLightPreviewTheme,
   PREVIEW_THEMES,
   CODE_BLOCK_THEMES,
+  MERMAID_THEMES,
   THEME_PAIRS,
   getOppositeTheme,
 } from '@mdx-preview/shared';
 
-import type { PreviewTheme, CodeBlockTheme, MermaidTheme } from '@mdx-preview/shared';
+import type {
+  PreviewTheme,
+  CodeBlockTheme,
+  MermaidTheme,
+} from '@mdx-preview/shared';
 
 // theme configuration (extension-only)
 export interface ThemeConfiguration {
@@ -83,4 +88,4 @@ export const MERMAID_THEME_LABELS: Record<MermaidTheme, string> = {
   null: 'None (Raw)',
 };
 
-export const MERMAID_THEMES: MermaidTheme[] = ['default', 'dark', 'forest', 'neutral', 'base', 'null'];
+// Note: MERMAID_THEMES is now re-exported from @mdx-preview/shared (canonical source)

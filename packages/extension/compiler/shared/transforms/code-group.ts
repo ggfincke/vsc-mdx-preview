@@ -2,7 +2,7 @@
 // transform CodeGroup component to semantic HTML
 
 import type { RootContent } from 'mdast';
-import type { MdxJsxElement } from './types';
+import type { MdxJsxElement } from '../../../types';
 import { createNode } from './utils';
 
 // transform CodeGroup container component to semantic HTML (non-interactive in Safe Mode)

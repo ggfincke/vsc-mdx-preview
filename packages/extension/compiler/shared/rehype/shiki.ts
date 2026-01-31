@@ -86,6 +86,9 @@ const COMMON_LANGUAGES: BundledLanguage[] = [
   'latex',
 ];
 
+// O(1) lookup Set for language support checking
+const SUPPORTED_LANGUAGE_SET = new Set<string>(COMMON_LANGUAGES);
+
 // create CSS variables theme for dynamic theming (outputs CSS vars instead of hardcoded colors)
 const cssVariablesTheme = createCssVariablesTheme({
   name: 'css-variables',
@@ -198,9 +201,9 @@ function extractLanguage(className: unknown): string | null {
   return null;
 }
 
-// check if language is supported
+// check if language is supported (O(1) lookup via Set)
 function isLanguageSupported(lang: string): lang is BundledLanguage {
-  return COMMON_LANGUAGES.includes(lang as BundledLanguage);
+  return SUPPORTED_LANGUAGE_SET.has(lang);
 }
 
 // language alias mapping (short names to Shiki-supported canonical names)
@@ -224,10 +227,9 @@ function resolveLanguageAlias(lang: string): string {
   return LANGUAGE_ALIASES[lang] || lang;
 }
 
-// * rehype plugin for Shiki syntax highlighting
+// rehype plugin for Shiki syntax highlighting
 export default function rehypeShiki() {
   return async (tree: Root) => {
-    const highlighter = await getHighlighter();
     const nodesToProcess: Array<{
       node: Element;
       parent: Element;
@@ -287,6 +289,14 @@ export default function rehypeShiki() {
         meta,
       });
     });
+
+    // early return: skip highlighter init if no code blocks
+    if (nodesToProcess.length === 0) {
+      return;
+    }
+
+    // lazy init highlighter only when code blocks exist
+    const highlighter = await getHighlighter();
 
     // second pass: apply highlighting
     for (const { parent, index, lang, code, meta } of nodesToProcess) {

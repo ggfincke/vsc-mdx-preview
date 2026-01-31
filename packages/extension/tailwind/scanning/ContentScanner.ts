@@ -2,6 +2,7 @@
 // extract Tailwind classes from dynamic expressions (className={...}, clsx(), cva())
 
 import { debug } from '../../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { CLASS_TOKEN_RE, SCANNER_MAX_RECURSION_DEPTH } from '../constants';
 
 // pattern to find the start of a className/class expression: className={
@@ -188,7 +189,7 @@ export class ContentScanner {
     // guard against stack overflow from pathological nested template literals
     if (depth > SCANNER_MAX_RECURSION_DEPTH) {
       debug(
-        `[TAILWIND-SCANNER] Max recursion depth (${SCANNER_MAX_RECURSION_DEPTH}) reached, skipping nested extraction`
+        `[${LogTags.TAILWIND_SCAN}] Max recursion depth (${SCANNER_MAX_RECURSION_DEPTH}) reached, skipping nested extraction`
       );
       return [];
     }
@@ -205,7 +206,7 @@ export class ContentScanner {
       results.push(match[1].replace(/\\"/g, '"'));
     }
 
-    // extract template literals with recursive interpolation handling
+    // extract template literals w/ recursive interpolation handling
     for (const match of expression.matchAll(/`([^`\\]*(?:\\.[^`\\]*)*)`/g)) {
       const template = match[1];
       this.extractFromTemplateLiteral(template, results, depth);

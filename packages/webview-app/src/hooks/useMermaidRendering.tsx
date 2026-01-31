@@ -11,7 +11,7 @@ import {
   ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { MermaidRenderer } from '../components/MermaidRenderer';
+import { MermaidRenderer } from '../components/MermaidRenderer/MermaidRenderer';
 import {
   findMermaidContainers,
   MermaidDiagramInfo,

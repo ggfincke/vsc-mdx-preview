@@ -4,5 +4,6 @@
 module.exports = {
   rules: {
     'no-direct-vscode-config': require('./no-direct-vscode-config'),
+    'no-raw-log-tag': require('./no-raw-log-tag'),
   },
 };

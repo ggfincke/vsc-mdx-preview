@@ -3,6 +3,7 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../../logging';
+import { LogTags } from '@mdx-preview/shared';
 import type { WebviewRPC } from '@mdx-preview/shared';
 import { BaseWatcher } from './BaseWatcher';
 import { readFileAsync } from '../../utils/file-utils';
@@ -13,7 +14,7 @@ type CssNotifier = Pick<WebviewRPC, 'setCustomCss'>;
 
 // watch custom CSS file & send updates to webview
 export class CustomCssWatcher extends BaseWatcher {
-  protected readonly logTag = 'CSS';
+  protected readonly logTag = LogTags.CSS;
   private watcher?: vscode.FileSystemWatcher;
   private resolvedPath: string | null = null;
   private notifier?: CssNotifier;
@@ -54,25 +55,25 @@ export class CustomCssWatcher extends BaseWatcher {
     // use createFileWatcher from base class w/ error wrapping
     this.watcher = this.createFileWatcher(this.resolvedPath, {
       onChange: () => {
-        debug('[CSS] Custom CSS file changed');
+        debug(`[${LogTags.CSS}] Custom CSS file changed`);
         if (this.resolvedPath) {
           this.loadAndSendCss(this.resolvedPath);
         }
       },
       onCreate: () => {
-        debug('[CSS] Custom CSS file created');
+        debug(`[${LogTags.CSS}] Custom CSS file created`);
         if (this.resolvedPath) {
           this.loadAndSendCss(this.resolvedPath);
         }
       },
       onDelete: () => {
-        debug('[CSS] Custom CSS file deleted');
+        debug(`[${LogTags.CSS}] Custom CSS file deleted`);
         this.notifier?.setCustomCss?.('');
       },
       wrapErrors: true,
     });
 
-    debug('[CSS] Watching custom CSS file');
+    debug(`[${LogTags.CSS}] Watching custom CSS file`);
     // signal ready after setup complete
     this.markReady();
   }
@@ -87,11 +88,6 @@ export class CustomCssWatcher extends BaseWatcher {
     return this.resolvedPath !== null;
   }
 
-  // alias for backward compatibility
-  watch(): void {
-    this.start();
-  }
-
   // resolve CSS path (relative to workspace or absolute)
   private resolvePath(cssPath: string): string | null {
     return resolvePathWithFallbacks({
@@ -104,12 +100,14 @@ export class CustomCssWatcher extends BaseWatcher {
   // load CSS file & send to webview
   private async loadAndSendCss(cssPath: string): Promise<void> {
     const cssContent = await readFileAsync(cssPath, 'utf-8', {
-      logTag: '[CSS]',
+      logTag: LogTags.CSS,
       logOnError: true,
     });
     if (cssContent) {
       this.notifier?.setCustomCss?.(cssContent);
-      debug(`[CSS] Loaded custom CSS: ${cssPath} (${cssContent.length} chars)`);
+      debug(
+        `[${LogTags.CSS}] Loaded custom CSS: ${cssPath} (${cssContent.length} chars)`
+      );
     }
     // silently fail if null - file might not exist yet
   }
@@ -124,6 +122,6 @@ export class CustomCssWatcher extends BaseWatcher {
     this.cssPath = cssPath;
     this.workspaceFolders = workspaceFolders;
     this.documentDirectory = documentDirectory;
-    this.watch();
+    this.start();
   }
 }

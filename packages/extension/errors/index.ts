@@ -1,6 +1,12 @@
 // packages/extension/errors/index.ts
 // structured error classes for extension w/ error codes & context
 
+import {
+  type ModuleErrorCode,
+  type ModuleErrorData,
+  ModuleError,
+} from '@mdx-preview/shared';
+
 export {
   ErrorReporter,
   ErrorSeverity,
@@ -10,6 +16,9 @@ export {
 } from './ErrorReporter';
 
 export { ErrorCode } from './error-codes';
+
+// re-export shared module error types for convenience
+export { ModuleError, type ModuleErrorCode, type ModuleErrorData };
 
 // base error class w/ error code for programmatic handling
 export class ExtensionError extends Error {
@@ -27,24 +36,13 @@ export class ExtensionError extends Error {
   }
 }
 
-// module resolution & fetch errors
-export type ModuleFetchErrorCode =
-  | 'MODULE_NOT_FOUND'
-  | 'OUTSIDE_WORKSPACE'
-  | 'PARSE_ERROR'
-  | 'TRANSFORM_ERROR';
-
-export class ModuleFetchError extends ExtensionError {
-  constructor(
-    message: string,
-    code: ModuleFetchErrorCode,
-    public readonly modulePath?: string,
-    public readonly parentModule?: string,
-    cause?: Error
-  ) {
-    super(message, code, cause);
-  }
-}
+// module resolution & fetch errors (E100-E199)
+// extension-side subset of ModuleErrorCode
+export type ModuleFetchErrorCode = Extract<
+  ModuleErrorCode,
+  'E100' | 'E101' | 'E110' | 'E120'
+>;
+export type ModuleFetchError = ModuleError<ModuleFetchErrorCode>;
 
 // transpilation errors w/ source location
 export class TranspileError extends ExtensionError {
@@ -146,10 +144,7 @@ export class TailwindError extends ExtensionError {
 // E600 = WEBVIEW_MANIFEST_ERROR
 // E620 = WEBVIEW_HANDSHAKE_TIMEOUT
 // E640 = WEBVIEW_RPC_ERROR
-export type WebviewErrorCode =
-  | 'E600'
-  | 'E620'
-  | 'E640';
+export type WebviewErrorCode = 'E600' | 'E620' | 'E640';
 
 export class WebviewError extends ExtensionError {
   constructor(
@@ -165,9 +160,8 @@ export class WebviewError extends ExtensionError {
 // service errors
 // E800 = SERVICE_NOT_REGISTERED
 // E801 = SERVICE_ALREADY_DISPOSED
-export type ServiceErrorCode =
-  | 'E800'
-  | 'E801';
+// E802 = SERVICE_CIRCULAR_DEPENDENCY
+export type ServiceErrorCode = 'E800' | 'E801' | 'E802';
 
 export class ServiceError extends ExtensionError {
   constructor(
@@ -177,5 +171,17 @@ export class ServiceError extends ExtensionError {
     cause?: Error
   ) {
     super(message, code, cause);
+  }
+}
+
+// circular dependency error for service registry
+export class CircularDependencyError extends ServiceError {
+  constructor(public readonly cycle: string[]) {
+    const cycleStr = cycle.join(' -> ');
+    super(
+      `Circular service dependency detected: ${cycleStr}`,
+      'E802',
+      cycle[0]
+    );
   }
 }

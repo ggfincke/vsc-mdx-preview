@@ -5,20 +5,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Preview } from '../../preview/preview-manager';
 import { checkFsPath } from '../security/checkFsPath';
-import {
-  ModuleFetchError,
-  PathAccessDeniedError,
-  ErrorContext,
-} from '../../errors';
+import { PathAccessDeniedError, ErrorContext } from '../../errors';
+import { createModuleNotFoundError } from '../../errors/module-error-factories';
 import { getErrorReporter, getFrameworkDetector } from '../../services';
 import { debug } from '../../logging';
-import type { FetchResult } from '@mdx-preview/shared';
+import { LogTags, type FetchResult } from '@mdx-preview/shared';
 
 // import from extracted modules
-import {
-  getUnifiedResolver,
-  type ResolutionContext,
-} from '../resolver/UnifiedResolver';
+import { getUnifiedResolver } from '../resolver/UnifiedResolver';
+import type { ResolutionContext } from '../../types';
 import {
   normalizeNodePrefix,
   isCoreModule,
@@ -73,18 +68,13 @@ export async function fetchLocal(
     );
 
     if (!resolution) {
-      throw new ModuleFetchError(
-        `Cannot resolve module: ${request} from ${resolutionContext.baseDir}`,
-        'MODULE_NOT_FOUND',
-        request,
-        resolutionContext.baseDir
-      );
+      throw createModuleNotFoundError(request, resolutionContext.baseDir);
     }
 
     // if it's a built-in shim, return empty result (webview has this preloaded)
     if (resolution.isBuiltInShim) {
       debug(
-        `[MODULE-SYSTEM] Built-in shim: ${request} -> ${resolution.fsPath}`
+        `[${LogTags.MODULE_SYSTEM}] Built-in shim: ${request} -> ${resolution.fsPath}`
       );
       return {
         fsPath: resolution.fsPath,
@@ -131,7 +121,7 @@ export async function fetchLocal(
     }
 
     // fallback for unknown file types - treat as script
-      const { ScriptHandler } = await import('../handlers/ScriptHandler');
+    const { ScriptHandler } = await import('../handlers/ScriptHandler');
     const scriptHandler = new ScriptHandler();
     return scriptHandler.handle(code, fsPath, preview);
   } catch (error) {
@@ -143,7 +133,7 @@ export async function fetchLocal(
       metadata: {
         request,
         parentId,
-        hint: `Verify the path "${request}" exists and is accessible from "${parentId}".`,
+        hint: `Verify the path "${request}" exists & is accessible from "${parentId}".`,
       },
     });
     return undefined;

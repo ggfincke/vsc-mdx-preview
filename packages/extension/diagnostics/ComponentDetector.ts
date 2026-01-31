@@ -9,17 +9,49 @@ import { visit } from 'unist-util-visit';
 import type { Root } from 'mdast';
 import matter from 'gray-matter';
 import { KNOWN_GENERIC_COMPONENTS } from '../compiler/shared/remark/generic-components';
+import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import type {
   DetectedComponent,
   ComponentDetectionResult,
   ComponentDetectionOptions,
   ComponentSource,
-} from './types';
+  MdxJsxElement,
+} from '../types';
 import { debug, warn } from '../logging';
 
 // use shared component registry as single source of truth
-import { isFrameworkComponent } from '@mdx-preview/shared';
-import type { MdxJsxElement } from '../compiler/shared/transforms/types';
+import {
+  isFrameworkComponent,
+  getGenericComponentSet,
+  getCanonicalComponentName,
+} from '@mdx-preview/shared';
+
+// caching for parse results
+
+// cache structure for component detection results
+interface CachedDetection {
+  contentHash: number;
+  result: ComponentDetectionResult;
+}
+
+// Map: document URI string -> CachedDetection
+const parseCache = new Map<string, CachedDetection>();
+
+// maximum cache entries (LRU eviction when exceeded)
+const MAX_CACHE_ENTRIES = 50;
+
+// fast djb2 hash for content-based cache invalidation
+// sufficient for detecting content changes - not cryptographic
+function djb2Hash(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
+  }
+  // convert to unsigned 32-bit
+  return hash >>> 0;
+}
+
+// types
 
 // MDX ESM node (imports/exports)
 interface MdxjsEsmNode {
@@ -239,12 +271,26 @@ function determineComponentSource(
 }
 
 // detect JSX components in MDX text
+// pass uri parameter to enable caching of parse results
 export async function detectComponents(
   mdxText: string,
   options: ComponentDetectionOptions = {},
-  configComponents: Set<string> = new Set()
+  configComponents: Set<string> = new Set(),
+  // optional: document URI for caching
+  uri?: string
 ): Promise<ComponentDetectionResult> {
   const { includePositions = true, detectImports = true } = options;
+
+  // check cache if URI is provided
+  if (uri) {
+    const contentHash = djb2Hash(mdxText);
+    const cached = parseCache.get(uri);
+    if (cached && cached.contentHash === contentHash) {
+      debug(`[${LogTags.COMPONENT_DETECTOR}] Cache hit for ${uri}`);
+      return cached.result;
+    }
+  }
+
   const components: DetectedComponent[] = [];
   const imports = new Map<string, string>();
   const errors: string[] = [];
@@ -314,14 +360,31 @@ export async function detectComponents(
       });
     });
 
-    debug(`[ComponentDetector] Found ${components.length} components`);
+    debug(
+      `[${LogTags.COMPONENT_DETECTOR}] Found ${components.length} components`
+    );
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    warn(`[ComponentDetector] Parse error: ${message}`);
+    const message = extractErrorMessage(err);
+    warn(`[${LogTags.COMPONENT_DETECTOR}] Parse error: ${message}`);
     errors.push(message);
   }
 
-  return { components, imports, errors };
+  const result = { components, imports, errors };
+
+  // store in cache if URI is provided
+  if (uri) {
+    // LRU eviction: remove oldest entry if at capacity
+    if (parseCache.size >= MAX_CACHE_ENTRIES) {
+      const oldestKey = parseCache.keys().next().value;
+      if (oldestKey) {
+        parseCache.delete(oldestKey);
+      }
+    }
+    parseCache.set(uri, { contentHash: djb2Hash(mdxText), result });
+    debug(`[${LogTags.COMPONENT_DETECTOR}] Cached result for ${uri}`);
+  }
+
+  return result;
 }
 
 // get unknown components from detection result
@@ -329,6 +392,43 @@ export function getUnknownComponents(
   result: ComponentDetectionResult
 ): DetectedComponent[] {
   return result.components.filter((c) => c.source === 'unknown');
+}
+
+// extract list of generic component names used in the MDX
+// return canonical names (e.g., Alert → Callout) for conditional shim preloading
+export function getUsedGenericComponents(
+  result: ComponentDetectionResult
+): string[] {
+  const genericNames = getGenericComponentSet();
+  const used = new Set<string>();
+
+  for (const component of result.components) {
+    // check if this component name is a generic component (including aliases)
+    if (genericNames.has(component.name)) {
+      // resolve to canonical name (e.g., Alert → Callout, Accordion → Collapsible)
+      const canonical = getCanonicalComponentName(component.name);
+      if (canonical) {
+        used.add(canonical);
+      }
+    }
+  }
+
+  return Array.from(used);
+}
+
+// invalidate cached component detection for a specific document
+// call this when a document is closed or externally modified
+export function invalidateComponentCache(uri: string): void {
+  if (parseCache.delete(uri)) {
+    debug(`[${LogTags.COMPONENT_DETECTOR}] Invalidated cache for ${uri}`);
+  }
+}
+
+// clear all cached component detections
+// useful for testing or extension reset scenarios
+export function clearComponentCache(): void {
+  parseCache.clear();
+  debug(`[${LogTags.COMPONENT_DETECTOR}] Cache cleared`);
 }
 
 // isPascalCase, isHtmlElement, extractImports are internal helpers

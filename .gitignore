@@ -1,10 +1,46 @@
-build
-node_modules
+# Build outputs
+build/
+dist/
+out/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+
+# VS Code extension
 .vscode-test/
 *.vsix
+
+# Environment & secrets
+.env
+.env.*
+*.local
+
+# Logs
 *.log
-archive
-dev-docs/
+npm-debug.log*
+
+# Coverage & testing
 coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+
+# Caches
+.vite/
+.turbo/
+.cache/
+*.cache
+
+# Project specific
+archive/
+dev-docs/
+.claude/
+
+# AI instructions (local only)
 AGENTS.md
 CLAUDE.md

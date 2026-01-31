@@ -2,20 +2,21 @@
 // preview lifecycle commands
 
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import {
   openPreview as doOpenPreview,
   refreshPreview as doRefreshPreview,
 } from '../preview/preview-manager';
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from './types';
+import type { CommandDefinition } from '../types';
 
 const openPreview = (): void => {
-  debug('[CMD] openPreview command triggered');
+  debug(`[${LogTags.CMD}] openPreview command triggered`);
   doOpenPreview();
 };
 
 const refreshPreview = (): void => {
-  debug('[CMD] refreshPreview command triggered');
+  debug(`[${LogTags.CMD}] refreshPreview command triggered`);
   doRefreshPreview();
 };
 

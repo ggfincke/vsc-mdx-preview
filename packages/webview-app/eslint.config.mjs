@@ -6,6 +6,7 @@ import tseslint from 'typescript-eslint';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import localRules from '../extension/eslint-rules/index.js';
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -17,15 +18,18 @@ export default tseslint.config(
         ...globals.es2022,
       },
       parserOptions: {
-        project: './tsconfig.json',
         ecmaFeatures: {
           jsx: true,
         },
+        // L.3 optimization: enable incremental type-checking
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
+      local: localRules,
     },
     rules: {
       // React hooks rules
@@ -49,10 +53,13 @@ export default tseslint.config(
       'no-unused-expressions': 'warn',
       curly: 'error',
       eqeqeq: ['error', 'always'],
+
+      // enforce local lint rules
+      'local/no-raw-log-tag': 'error',
     },
   },
-  // Context files export both Provider components and useX hooks by design.
-  // This is the standard React Context pattern and a known exception to Fast Refresh.
+  // Context files export both Provider components & useX hooks by design (exception: react-refresh rule)
+  // This is the standard React Context pattern & a known exception to Fast Refresh
   {
     files: ['**/context.tsx', '**/*Context.tsx'],
     rules: {

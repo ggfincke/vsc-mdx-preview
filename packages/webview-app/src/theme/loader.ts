@@ -16,7 +16,7 @@ export function injectPreviewTheme(theme: PreviewTheme): void {
 }
 
 // inject code block theme CSS into the document
-// sets Shiki CSS variables for syntax highlighting colors
+// set Shiki CSS variables for syntax highlighting colors
 export function injectCodeBlockTheme(
   theme: CodeBlockTheme,
   isLight: boolean

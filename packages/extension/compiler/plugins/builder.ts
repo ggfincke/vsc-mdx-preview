@@ -13,7 +13,7 @@ import {
   rehypeKatex,
 } from './shared-plugins';
 import type { LoadedPlugins } from './loader';
-import type { PluginPipeline } from '../types';
+import type { PluginPipeline } from '../../types';
 
 // rehype-raw configuration w/ MDX-specific passThrough nodes
 // these nodes must not be parsed as raw HTML to preserve MDX semantics
@@ -41,7 +41,7 @@ export function buildTrustedRemarkPlugins(
 
 // build the rehype plugin array for Trusted Mode
 // includes rehype-raw w/ MDX passThrough, math plugins, & custom plugins
-// plugin order:
+// plugin order
 // 1. rehype-raw (parse raw HTML, preserve MDX nodes)
 // 2. pre-math plugins (mermaid placeholder)
 // 3. rehype-katex (math rendering)
@@ -64,7 +64,7 @@ export function buildTrustedRehypePlugins(
 }
 
 // build the complete plugin pipeline for Trusted Mode
-// returns arrays suitable for @mdx-js/mdx compile() options
+// return arrays suitable for @mdx-js/mdx compile() options
 export function buildTrustedPluginPipeline(
   customPlugins: LoadedPlugins
 ): PluginPipeline {
@@ -80,8 +80,8 @@ export function getSafeRemarkPlugins(): Pluggable[] {
 }
 
 // get shared rehype plugins for Safe Mode
-// returns separate arrays for use w/ unified processor
-// Safe Mode uses unified() w/ .use() calls instead of compile() options,
+// return separate arrays for use w/ unified processor
+// Safe Mode uses unified() w/ .use() calls instead of compile() options
 // so plugins need to be applied separately rather than as a single array
 export function getSafeRehypePluginSets(): {
   preMath: Pluggable[];

@@ -2,12 +2,13 @@
 // webview zoom control commands
 
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { getPreviewManager } from '../services';
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from './types';
+import type { CommandDefinition } from '../types';
 
 const zoomIn = async (): Promise<void> => {
-  debug('[CMD] zoomIn command triggered');
+  debug(`[${LogTags.CMD}] zoomIn command triggered`);
   const preview = getPreviewManager().getCurrentPreview();
   if (preview?.webviewHandle) {
     await preview.webviewHandle.zoomIn();
@@ -15,7 +16,7 @@ const zoomIn = async (): Promise<void> => {
 };
 
 const zoomOut = async (): Promise<void> => {
-  debug('[CMD] zoomOut command triggered');
+  debug(`[${LogTags.CMD}] zoomOut command triggered`);
   const preview = getPreviewManager().getCurrentPreview();
   if (preview?.webviewHandle) {
     await preview.webviewHandle.zoomOut();
@@ -23,7 +24,7 @@ const zoomOut = async (): Promise<void> => {
 };
 
 const resetZoom = async (): Promise<void> => {
-  debug('[CMD] resetZoom command triggered');
+  debug(`[${LogTags.CMD}] resetZoom command triggered`);
   const preview = getPreviewManager().getCurrentPreview();
   if (preview?.webviewHandle) {
     await preview.webviewHandle.resetZoom();

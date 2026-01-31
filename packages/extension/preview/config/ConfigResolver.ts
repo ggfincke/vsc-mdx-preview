@@ -8,18 +8,16 @@ import { getConfigCache, getErrorReporter } from '../../services';
 import { ConfigError } from '../../errors';
 import { ConfigChangeType } from '../../config/ConfigCache';
 import { validateConfigSchema } from '../../utils/validation';
-import { readJsonSync, pathExists } from '../../utils/file-utils';
+import { readJsonSync } from '../../utils/file-utils';
+import { findUp, createWorkspaceStopPredicate } from '../../utils/find-up';
 
-// import consolidated types from compiler/types.ts
+// import consolidated types from centralized types
 import type {
   PluginSpec,
   ComponentMapping,
   UnknownBehavior,
-} from '../../compiler/types';
-import type { FrameworkName } from '@mdx-preview/shared';
-
-// re-export types for backward compatibility
-export type { PluginSpec, ComponentMapping, UnknownBehavior };
+} from '../../types';
+import { LogTags, type FrameworkId } from '@mdx-preview/shared';
 
 // framework-specific options
 export interface FrameworkOptions {
@@ -44,7 +42,7 @@ export interface MdxPreviewConfig {
   // custom component mappings for MDX
   components?: ComponentMapping;
   // framework override (overrides auto-detection)
-  framework?: FrameworkName;
+  framework?: FrameworkId;
   // framework-specific options
   frameworkOptions?: FrameworkOptions;
   // Tailwind CSS options
@@ -134,42 +132,23 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
   return resolved;
 }
 
-// find config file by walking up directory tree
+// find config file by walking up directory tree (uses shared find-up utility)
 function findConfigFile(startDir: string): string | undefined {
-  let currentDir = startDir;
-  const workspaceFolders = vscode.workspace.workspaceFolders;
-  const workspaceRoots = workspaceFolders?.map((f) => f.uri.fsPath) ?? [];
+  debug(`[${LogTags.CONFIG}] Searching for config starting at: ${startDir}`);
 
-  debug(`[CONFIG] Searching for config starting at: ${startDir}`);
-  debug(`[CONFIG] Workspace roots: ${workspaceRoots.join(', ') || '(none)'}`);
+  const result = findUp({
+    filename: CONFIG_FILE_NAMES,
+    startDir,
+    stopAt: createWorkspaceStopPredicate(),
+  });
 
-  // walk up to workspace root or filesystem root
-  while (currentDir) {
-    for (const fileName of CONFIG_FILE_NAMES) {
-      const configPath = path.join(currentDir, fileName);
-      if (pathExists(configPath)) {
-        debug(`[CONFIG] Found config file at: ${configPath}`);
-        return configPath;
-      }
-    }
-
-    // stop at workspace root
-    if (workspaceRoots.some((root) => currentDir === root)) {
-      debug(`[CONFIG] Reached workspace root: ${currentDir}`);
-      break;
-    }
-
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) {
-      // reached filesystem root
-      debug(`[CONFIG] Reached filesystem root`);
-      break;
-    }
-    currentDir = parentDir;
+  if (result) {
+    debug(`[${LogTags.CONFIG}] Found config file at: ${result}`);
+  } else {
+    debug(`[${LogTags.CONFIG}] No config file found`);
   }
 
-  debug(`[CONFIG] No config file found`);
-  return undefined;
+  return result;
 }
 
 // validate config structure using centralized validation
@@ -187,29 +166,24 @@ function setupConfigWatcher(configPath: string): void {
     return;
   }
 
-  const watcher = vscode.workspace.createFileSystemWatcher(configPath);
-
-  watcher.onDidChange(() => {
-    debug(`Config file changed: ${configPath}`);
-    cache.invalidate(configPath);
-    cache.notifyChange(configPath, ConfigChangeType.FileChanged);
+  cache.watchConfigPath(configPath, {
+    onChange: () => {
+      debug(`[${LogTags.CONFIG}] File changed: ${configPath}`);
+      cache.invalidate(configPath);
+      cache.notifyChange(configPath, ConfigChangeType.FileChanged);
+    },
+    onCreate: () => {
+      debug(`[${LogTags.CONFIG}] File created: ${configPath}`);
+      cache.invalidate(configPath);
+      cache.notifyChange(configPath, ConfigChangeType.FileCreated);
+    },
+    onDelete: () => {
+      debug(`[${LogTags.CONFIG}] File deleted: ${configPath}`);
+      cache.invalidate(configPath);
+      cache.notifyChange(configPath, ConfigChangeType.FileDeleted);
+      cache.unwatchConfigPath(configPath);
+    },
   });
-
-  watcher.onDidCreate(() => {
-    debug(`Config file created: ${configPath}`);
-    cache.invalidate(configPath);
-    cache.notifyChange(configPath, ConfigChangeType.FileCreated);
-  });
-
-  watcher.onDidDelete(() => {
-    debug(`Config file deleted: ${configPath}`);
-    cache.invalidate(configPath);
-    cache.notifyChange(configPath, ConfigChangeType.FileDeleted);
-    // clean up watcher
-    cache.removeWatcher(configPath);
-  });
-
-  cache.setWatcher(configPath, watcher);
 }
 
 // subscribe to config file changes
@@ -224,15 +198,6 @@ export function onConfigChange(
 
 // clear all cached configs (for testing or manual refresh)
 export function clearConfigCache(): void {
-  getCache().clear();
-}
-
-// dispose all config watchers (call during extension deactivation)
-// note: now handled by ConfigCache.dispose() via ServiceRegistry,
-// but kept for backward compatibility w/ extension.ts
-export function disposeConfigWatchers(): void {
-  // ConfigCache handles cleanup via dispose(), which is called by ServiceRegistry
-  // this function is kept for backward compatibility but delegates to clear()
   getCache().clear();
 }
 

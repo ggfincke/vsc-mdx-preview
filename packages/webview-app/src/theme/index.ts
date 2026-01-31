@@ -1,11 +1,16 @@
 // packages/webview-app/src/theme/index.ts
-// barrel exports for theme module
+// barrel exports for theme module (context, hooks, utilities)
+// NOTE: For raw CSS theme data, see themes/ (sibling directory)
 
 // context & hooks
 export { ThemeProvider, useTheme } from './context';
 
 // theme types & constants (from shared package)
-export type { PreviewTheme, CodeBlockTheme, WebviewThemeState } from '@mdx-preview/shared';
+export type {
+  PreviewTheme,
+  CodeBlockTheme,
+  WebviewThemeState,
+} from '@mdx-preview/shared';
 export {
   isLightPreviewTheme,
   PREVIEW_THEMES,

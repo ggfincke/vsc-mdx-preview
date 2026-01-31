@@ -1,0 +1,8 @@
+{
+  "name": "mdx-preview-nextra-example",
+  "description": "MDX Preview example for Nextra projects",
+  "private": true,
+  "dependencies": {
+    "nextra": "^3.0.0"
+  }
+}

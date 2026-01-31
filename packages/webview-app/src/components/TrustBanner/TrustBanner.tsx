@@ -1,7 +1,7 @@
 // packages/webview-app/src/components/TrustBanner/TrustBanner.tsx
 // banner displayed in Safe Mode to inform user & provide actions to enable Trusted Mode
 
-import { useState, useCallback } from 'react';
+import { memo, useState, useCallback } from 'react';
 import type { TrustState } from '../../types';
 import { ExtensionHandle } from '../../rpc-webview';
 import './TrustBanner.css';
@@ -18,7 +18,9 @@ interface TrustBannerProps {
 // - Safe Mode (untrusted workspace): show warning w/ "Manage Trust" button
 // - Safe Mode (scripts disabled): show info w/ "Enable Scripts" button
 // - Trusted Mode: hidden (no banner needed)
-export function TrustBanner({
+//
+// wrapped w/ React.memo to prevent re-renders when parent updates but trust state unchanged
+export const TrustBanner = memo(function TrustBanner({
   trustState,
   dismissible = true,
 }: TrustBannerProps) {
@@ -89,7 +91,15 @@ export function TrustBanner({
       </div>
     </div>
   );
-}
+},
+// Custom comparison: only re-render if relevant trust state fields change
+(prevProps, nextProps) =>
+  prevProps.trustState.workspaceTrusted === nextProps.trustState.workspaceTrusted &&
+  prevProps.trustState.scriptsEnabled === nextProps.trustState.scriptsEnabled &&
+  prevProps.trustState.canExecute === nextProps.trustState.canExecute &&
+  prevProps.trustState.reason === nextProps.trustState.reason &&
+  prevProps.dismissible === nextProps.dismissible
+);
 
 interface BannerConfig {
   type: 'warning' | 'info';

@@ -7,7 +7,7 @@ import { SecurityPolicy } from '../security/security';
 import { getConfigManager } from '../services';
 import type { UpdateMode, TailwindEnabledSetting } from '../config';
 
-// re-export for backward compatibility
+// re-export types
 export type { UpdateMode, TailwindEnabledSetting };
 
 export interface StyleConfiguration {
@@ -34,7 +34,7 @@ export interface ConfigChangeResult {
   oldCssPath: string;
 }
 
-// manages preview configuration state & updates
+// manage preview configuration state & updates
 // reads from VS Code settings & tracks changes that require preview refresh
 export class PreviewConfiguration {
   private _configuration: ConfigurationState;

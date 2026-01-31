@@ -1,11 +1,11 @@
 // packages/extension/compiler/shared/pipeline-config.ts
 // unified pipeline configuration for Safe & Trusted MDX modes
 //
-// provides a single source of truth for pipeline configuration,
+// provides a single source of truth for pipeline configuration
 // ensuring both modes use identical plugin ordering for shared plugins
 
 import type { Pluggable } from 'unified';
-import type { UnknownBehavior, PluginPipeline } from '../types';
+import type { UnknownBehavior, PluginPipeline } from '../../types';
 import type { LoadedPlugins } from '../plugins/loader';
 import {
   sharedRemarkPlugins,

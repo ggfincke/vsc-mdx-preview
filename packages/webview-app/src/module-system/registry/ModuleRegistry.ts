@@ -1,313 +1,186 @@
 // packages/webview-app/src/module-system/registry/ModuleRegistry.ts
-// cache evaluated modules w/ LRU eviction & track pending fetches
+// facade over ModuleCache, StyleCache, & DependencyTracker subsystems
 
 import type { Module } from '../types';
+import { ModuleCache, type ModuleCacheConfig } from './ModuleCache';
+import { StyleCache, type StyleCacheConfig } from './StyleCache';
+import { DependencyTracker } from './DependencyTracker';
 
-// LRU configuration defaults
-const DEFAULT_MAX_MODULES = 500;
-const DEFAULT_MAX_STYLES = 100;
+// LRU configuration options
+export interface LRUConfig extends ModuleCacheConfig, StyleCacheConfig {}
 
-// Cache entry w/ access tracking for LRU
-interface CacheEntry {
-  module: Module;
-  lastAccessed: number;
-}
-
-// Style tracking w/ reference counting
-interface StyleEntry {
-  refCount: number;
-  lastAccessed: number;
-}
-
+// module registry that coordinates:
+// - ModuleCache: LRU cache w/ memory tracking & pending fetches
+// - StyleCache: Reference-counted style tracking w/ dual-map LRU
+// - DependencyTracker: Dependency graph & resolution map
 export class ModuleRegistry {
-  private cache: Map<string, CacheEntry> = new Map();
-  private pendingFetches: Map<string, Promise<Module>> = new Map();
-  private injectedStyles: Map<string, StyleEntry> = new Map();
-  // map (parentId, request) -> resolved fsPath for relative imports
-  private resolutionMap: Map<string, string> = new Map();
-  // reverse dependency graph: moduleId -> set of modules that depend on it
-  private dependents: Map<string, Set<string>> = new Map();
+  private moduleCache = new ModuleCache();
+  private styleCache = new StyleCache();
+  private dependencyTracker = new DependencyTracker();
+
+  constructor() {
+    // Wire up eviction callback for coordinated cleanup
+    this.moduleCache.onEvict = (id: string) => {
+      this.dependencyTracker.cleanDependentsFor(id);
+      this.dependencyTracker.cleanResolutionMapFor(id);
+    };
+  }
 
   // LRU configuration
-  private maxModules = DEFAULT_MAX_MODULES;
-  private maxStyles = DEFAULT_MAX_STYLES;
-  private preloadedIds: Set<string> = new Set();
 
-  // Configure LRU limits
-  configureLRU(options: { maxModules?: number; maxStyles?: number }): void {
-    if (options.maxModules !== undefined) {
-      this.maxModules = options.maxModules;
-    }
-    if (options.maxStyles !== undefined) {
-      this.maxStyles = options.maxStyles;
-    }
+  // configure LRU limits for modules & styles
+  configureLRU(options: LRUConfig): void {
+    this.moduleCache.configure(options);
+    this.styleCache.configure(options);
   }
+
+  // module cache operations (delegated to ModuleCache)
 
   // preload module (for built-in modules like React)
+  // preloaded modules are protected from eviction & don't count against memory limit
   preload(id: string, exports: unknown): void {
-    this.preloadedIds.add(id);
-    this.cache.set(id, {
-      module: { id, exports, loaded: true },
-      lastAccessed: Date.now(),
-    });
+    this.moduleCache.preload(id, exports);
   }
 
-  // get cached module (updates access time for LRU)
+  // get cached module (update access time for LRU)
   get(id: string): Module | undefined {
-    const entry = this.cache.get(id);
-    if (entry) {
-      entry.lastAccessed = Date.now();
-      return entry.module;
-    }
-    return undefined;
+    return this.moduleCache.get(id);
   }
 
   // check if module is cached
   has(id: string): boolean {
-    return this.cache.has(id);
+    return this.moduleCache.has(id);
   }
 
-  // set module in cache w/ LRU eviction
+  // check if module is preloaded (protected from eviction)
+  isPreloaded(id: string): boolean {
+    return this.moduleCache.isPreloaded(id);
+  }
+
+  // set module in cache w/ LRU eviction (memory-based + count-based)
   set(id: string, module: Module): void {
-    // Evict if at capacity (don't evict preloaded)
-    while (this.cache.size >= this.maxModules && this.canEvict()) {
-      this.evictLRU();
-    }
-
-    this.cache.set(id, {
-      module,
-      lastAccessed: Date.now(),
-    });
+    this.moduleCache.set(id, module);
   }
 
-  // check if there's a non-preloaded module to evict
-  private canEvict(): boolean {
-    for (const [id] of this.cache) {
-      if (!this.preloadedIds.has(id)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // remove all resolutionMap entries for moduleId (as parent or target)
-  private cleanResolutionMapFor(moduleId: string): void {
-    for (const [key, value] of this.resolutionMap) {
-      // key format: "parentId\0request"
-      const parentId = key.split('\0')[0];
-      if (parentId === moduleId || value === moduleId) {
-        this.resolutionMap.delete(key);
-      }
-    }
-  }
-
-  // remove module from all dependents sets & delete its own entry
-  private cleanDependentsFor(moduleId: string): void {
-    // Remove this module's entry as a dependency target
-    this.dependents.delete(moduleId);
-
-    // Remove this module from all other modules' dependent sets
-    for (const [, deps] of this.dependents) {
-      deps.delete(moduleId);
-    }
-  }
-
-  // evict least recently used non-preloaded module
-  private evictLRU(): void {
-    let oldestId: string | null = null;
-    let oldestTime = Infinity;
-
-    for (const [id, entry] of this.cache) {
-      if (!this.preloadedIds.has(id) && entry.lastAccessed < oldestTime) {
-        oldestTime = entry.lastAccessed;
-        oldestId = id;
-      }
-    }
-
-    if (oldestId) {
-      this.cache.delete(oldestId);
-      // Clean up all related metadata (fixes memory leak)
-      this.cleanDependentsFor(oldestId);
-      this.cleanResolutionMapFor(oldestId);
-    }
-  }
+  // pending fetch operations (delegated to ModuleCache)
 
   // get pending fetch promise (for circular dependency detection)
   getPending(id: string): Promise<Module> | undefined {
-    return this.pendingFetches.get(id);
+    return this.moduleCache.getPending(id);
   }
 
   // set pending fetch promise
   setPending(id: string, promise: Promise<Module>): void {
-    this.pendingFetches.set(id, promise);
+    this.moduleCache.setPending(id, promise);
   }
 
   // clear pending fetch
   clearPending(id: string): void {
-    this.pendingFetches.delete(id);
+    this.moduleCache.clearPending(id);
   }
+
+  // invalidation (coordinated across subsystems)
 
   // invalidate cached module (for hot reload)
-  // cleans up all related metadata to prevent memory leaks
+  // clean up all related metadata to prevent memory leaks
   invalidate(id: string): void {
-    this.cache.delete(id);
-    this.cleanDependentsFor(id);
-    this.cleanResolutionMapFor(id);
-    this.pendingFetches.delete(id);
-  }
-
-  // record that moduleId depends on dependsOnId
-  addDependency(moduleId: string, dependsOnId: string): void {
-    if (!this.dependents.has(dependsOnId)) {
-      this.dependents.set(dependsOnId, new Set());
-    }
-    this.dependents.get(dependsOnId)!.add(moduleId);
+    // Delete from cache (returns freed bytes for non-preloaded)
+    this.moduleCache.delete(id);
+    // Clean up dependency tracking
+    this.dependencyTracker.cleanDependentsFor(id);
+    this.dependencyTracker.cleanResolutionMapFor(id);
+    // Clean up pending fetch
+    this.moduleCache.clearPending(id);
   }
 
   // invalidate module & all modules that depend on it (cascade)
-  // cleans up all related metadata to prevent memory leaks
+  // clean up all related metadata to prevent memory leaks
   invalidateWithDependents(id: string): Set<string> {
-    const invalidated = new Set<string>();
-    const queue = [id];
+    const invalidated = this.dependencyTracker.invalidateWithDependents(id);
 
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      if (invalidated.has(current)) {
-        continue;
-      }
-
-      // delete from cache
-      this.cache.delete(current);
-      invalidated.add(current);
-
-      // queue all modules that depend on this one
-      // (get deps BEFORE cleaning, needed for cascade traversal)
-      const deps = this.dependents.get(current);
-      if (deps) {
-        for (const dep of deps) {
-          if (!invalidated.has(dep)) {
-            queue.push(dep);
-          }
-        }
-      }
-    }
-
-    // Clean up all metadata for ALL invalidated modules (batch cleanup)
+    // Delete all invalidated modules from cache
     for (const moduleId of invalidated) {
-      this.cleanDependentsFor(moduleId);
-      this.cleanResolutionMapFor(moduleId);
-      this.pendingFetches.delete(moduleId);
+      this.moduleCache.delete(moduleId);
+      this.moduleCache.clearPending(moduleId);
     }
 
     return invalidated;
   }
 
+  // dependency operations (delegated to DependencyTracker)
+
+  // record that moduleId depends on dependsOnId
+  addDependency(moduleId: string, dependsOnId: string): void {
+    this.dependencyTracker.addDependency(moduleId, dependsOnId);
+  }
+
   // clear the dependency graph (but keep module cache)
   clearDependencies(): void {
-    this.dependents.clear();
+    this.dependencyTracker.clearDependencies();
   }
 
-  // clear all cached modules except preloaded ones
-  clearNonPreloaded(preloadedIds: string[]): void {
-    const preloadedSet = new Set(preloadedIds);
-    for (const [id] of this.cache) {
-      if (!preloadedSet.has(id)) {
-        this.cache.delete(id);
-      }
-    }
-    this.pendingFetches.clear();
-    this.resolutionMap.clear();
-    this.dependents.clear();
-  }
-
-  // clear all cached modules
-  clear(): void {
-    this.cache.clear();
-    this.pendingFetches.clear();
-    this.resolutionMap.clear();
-    this.dependents.clear();
-    this.injectedStyles.clear();
-    this.preloadedIds.clear();
-  }
-
-  // check if CSS has been injected for module
-  hasInjectedStyle(id: string): boolean {
-    return this.injectedStyles.has(id);
-  }
-
-  // mark CSS as injected for module (w/ reference counting)
-  markStyleInjected(id: string): void {
-    const existing = this.injectedStyles.get(id);
-    if (existing) {
-      existing.refCount++;
-      existing.lastAccessed = Date.now();
-    } else {
-      // Evict old unreferenced styles if at capacity
-      while (this.injectedStyles.size >= this.maxStyles) {
-        // no more unreferenced styles to evict
-        if (!this.evictUnreferencedStyle()) {
-          break;
-        }
-      }
-      this.injectedStyles.set(id, { refCount: 1, lastAccessed: Date.now() });
-    }
-  }
-
-  // Decrement style reference count
-  decrementStyleRef(id: string): void {
-    const entry = this.injectedStyles.get(id);
-    if (entry) {
-      entry.refCount = Math.max(0, entry.refCount - 1);
-    }
-  }
-
-  // Evict oldest unreferenced style
-  private evictUnreferencedStyle(): boolean {
-    let oldestId: string | null = null;
-    let oldestTime = Infinity;
-
-    for (const [id, entry] of this.injectedStyles) {
-      if (entry.refCount === 0 && entry.lastAccessed < oldestTime) {
-        oldestTime = entry.lastAccessed;
-        oldestId = id;
-      }
-    }
-
-    if (oldestId) {
-      this.injectedStyles.delete(oldestId);
-      return true;
-    }
-    return false;
-  }
-
-  // clear injected styles tracking
-  clearInjectedStyles(): void {
-    this.injectedStyles.clear();
-  }
-
-  // create key for resolution map
-  private makeResolutionKey(parentId: string, request: string): string {
-    return `${parentId}\0${request}`;
-  }
+  // resolution map operations (delegated to DependencyTracker)
 
   // register a resolved path for a (parent, request) pair
   setResolution(parentId: string, request: string, fsPath: string): void {
-    const key = this.makeResolutionKey(parentId, request);
-    this.resolutionMap.set(key, fsPath);
+    this.dependencyTracker.setResolution(parentId, request, fsPath);
   }
 
   // get resolved fsPath for a (parent, request) pair
   getResolution(parentId: string, request: string): string | undefined {
-    const key = this.makeResolutionKey(parentId, request);
-    return this.resolutionMap.get(key);
+    return this.dependencyTracker.getResolution(parentId, request);
   }
 
   // clear resolution map (called on reset)
   clearResolutions(): void {
-    this.resolutionMap.clear();
+    this.dependencyTracker.clearResolutions();
   }
 
-  // Get cache statistics (for debugging/monitoring)
+  // style operations (delegated to StyleCache)
+
+  // check if CSS has been injected for module
+  hasInjectedStyle(id: string): boolean {
+    return this.styleCache.hasInjectedStyle(id);
+  }
+
+  // mark CSS as injected for module (w/ reference counting)
+  markStyleInjected(id: string): void {
+    this.styleCache.markStyleInjected(id);
+  }
+
+  // decrement style reference count
+  decrementStyleRef(id: string): void {
+    this.styleCache.decrementStyleRef(id);
+  }
+
+  // clear injected styles tracking
+  clearInjectedStyles(): void {
+    this.styleCache.clear();
+  }
+
+  // remove style tracking for a single module (for incremental updates)
+  unmarkStyleInjected(id: string): void {
+    this.styleCache.unmarkStyleInjected(id);
+  }
+
+  // bulk operations (coordinated across subsystems)
+
+  // clear all cached modules except preloaded ones
+  clearNonPreloaded(_preloadedIds?: string[]): void {
+    this.moduleCache.clearNonPreloaded();
+    this.dependencyTracker.clear();
+  }
+
+  // clear all cached modules & metadata
+  clear(): void {
+    this.moduleCache.clear();
+    this.styleCache.clear();
+    this.dependencyTracker.clear();
+  }
+
+  // statistics (aggregated from subsystems)
+
+  // get cache statistics (for debugging/monitoring)
   getStats(): {
     modules: number;
     styles: number;
@@ -315,14 +188,17 @@ export class ModuleRegistry {
     pending: number;
     resolutions: number;
     dependents: number;
+    memoryBytes: number;
   } {
+    const depStats = this.dependencyTracker.getStats();
     return {
-      modules: this.cache.size,
-      styles: this.injectedStyles.size,
-      preloaded: this.preloadedIds.size,
-      pending: this.pendingFetches.size,
-      resolutions: this.resolutionMap.size,
-      dependents: this.dependents.size,
+      modules: this.moduleCache.size,
+      styles: this.styleCache.size,
+      preloaded: this.moduleCache.preloadedCount,
+      pending: this.moduleCache.pendingCount,
+      resolutions: depStats.resolutions,
+      dependents: depStats.dependents,
+      memoryBytes: this.moduleCache.memoryBytes,
     };
   }
 }

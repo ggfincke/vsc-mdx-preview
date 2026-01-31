@@ -1,243 +1,311 @@
 // packages/extension/test/__mocks__/vscode.ts
-// Mock implementation of VS Code API for unit tests
+// provide minimal vscode API for tests
 
-import { vi } from 'vitest';
+type Disposable = { dispose: () => void };
 
-// Mock Uri class
+type EventHandler<T> = (event: T) => void;
+
+function createDisposable(onDispose?: () => void): Disposable {
+  return {
+    dispose: () => {
+      onDispose?.();
+    },
+  };
+}
+
+export class EventEmitter<T> {
+  private listeners = new Set<EventHandler<T>>();
+
+  event = (listener: EventHandler<T>): Disposable => {
+    this.listeners.add(listener);
+    return createDisposable(() => this.listeners.delete(listener));
+  };
+
+  fire(event: T): void {
+    for (const listener of this.listeners) {
+      listener(event);
+    }
+  }
+
+  dispose(): void {
+    this.listeners.clear();
+  }
+}
+
 export class Uri {
-  readonly scheme: string;
-  readonly authority: string;
-  readonly path: string;
-  readonly query: string;
-  readonly fragment: string;
-  readonly fsPath: string;
+  scheme: string;
+  fsPath: string;
+  path: string;
 
-  private constructor(
-    scheme: string,
-    authority: string,
-    path: string,
-    query: string,
-    fragment: string
-  ) {
+  private constructor(scheme: string, fsPath: string) {
     this.scheme = scheme;
-    this.authority = authority;
-    this.path = path;
-    this.query = query;
-    this.fragment = fragment;
-    this.fsPath = path;
+    this.fsPath = fsPath;
+    this.path = fsPath;
   }
 
   static file(path: string): Uri {
-    return new Uri('file', '', path, '', '');
+    return new Uri('file', path);
   }
 
-  static parse(value: string): Uri {
-    try {
-      const url = new URL(value);
-      return new Uri(
-        url.protocol.replace(':', ''),
-        url.host,
-        url.pathname,
-        url.search.replace('?', ''),
-        url.hash.replace('#', '')
-      );
-    } catch {
-      return new Uri('file', '', value, '', '');
-    }
+  static parse(uri: string): Uri {
+    const url = new URL(uri);
+    const scheme = url.protocol.replace(':', '');
+    return new Uri(scheme, url.pathname);
   }
 
   toString(): string {
-    return `${this.scheme}://${this.authority}${this.path}`;
-  }
-
-  with(change: {
-    scheme?: string;
-    authority?: string;
-    path?: string;
-    query?: string;
-    fragment?: string;
-  }): Uri {
-    return new Uri(
-      change.scheme ?? this.scheme,
-      change.authority ?? this.authority,
-      change.path ?? this.path,
-      change.query ?? this.query,
-      change.fragment ?? this.fragment
-    );
+    return `${this.scheme}://${this.fsPath}`;
   }
 }
 
-// Mock Position class
 export class Position {
-  constructor(
-    public readonly line: number,
-    public readonly character: number
-  ) {}
+  line: number;
+  character: number;
+
+  constructor(line: number, character: number) {
+    this.line = line;
+    this.character = character;
+  }
 }
 
-// Mock Range class
 export class Range {
+  start: Position;
+  end: Position;
+
   constructor(
-    public readonly start: Position,
-    public readonly end: Position
-  ) {}
-}
-
-// Mock Disposable class
-export class Disposable {
-  private disposed = false;
-  constructor(private callOnDispose: () => void) {}
-
-  dispose(): void {
-    if (!this.disposed) {
-      this.disposed = true;
-      this.callOnDispose();
+    startLineOrPos: number | Position,
+    startCharOrPos: number | Position,
+    endLine?: number,
+    endChar?: number
+  ) {
+    if (
+      startLineOrPos instanceof Position &&
+      startCharOrPos instanceof Position
+    ) {
+      this.start = startLineOrPos;
+      this.end = startCharOrPos;
+      return;
     }
-  }
 
-  static from(...disposables: { dispose(): unknown }[]): Disposable {
-    return new Disposable(() => {
-      disposables.forEach((d) => d.dispose());
-    });
+    const startLine = startLineOrPos as number;
+    const startChar = startCharOrPos as number;
+    this.start = new Position(startLine, startChar);
+    this.end = new Position(endLine ?? startLine, endChar ?? startChar);
   }
 }
 
-// Mock EventEmitter class
-export class EventEmitter<T> {
-  private listeners: ((e: T) => void)[] = [];
+export class Selection extends Range {}
 
-  event = (listener: (e: T) => void): Disposable => {
-    this.listeners.push(listener);
-    return new Disposable(() => {
-      const index = this.listeners.indexOf(listener);
-      if (index >= 0) {
-        this.listeners.splice(index, 1);
-      }
-    });
-  };
+export class Location {
+  uri: Uri;
+  range: Range;
 
-  fire(data: T): void {
-    this.listeners.forEach((listener) => listener(data));
+  constructor(uri: Uri, range: Range) {
+    this.uri = uri;
+    this.range = range;
+  }
+}
+
+export enum DiagnosticSeverity {
+  Error = 0,
+  Warning = 1,
+  Information = 2,
+  Hint = 3,
+}
+
+export class Diagnostic {
+  range: Range;
+  message: string;
+  severity: DiagnosticSeverity;
+  source?: string;
+  code?: string;
+  relatedInformation?: DiagnosticRelatedInformation[];
+
+  constructor(range: Range, message: string, severity: DiagnosticSeverity) {
+    this.range = range;
+    this.message = message;
+    this.severity = severity;
+  }
+}
+
+export class DiagnosticRelatedInformation {
+  location: Location;
+  message: string;
+
+  constructor(location: Location, message: string) {
+    this.location = location;
+    this.message = message;
+  }
+}
+
+class MockDiagnosticCollection {
+  private data = new Map<string, Diagnostic[]>();
+
+  set(uri: Uri, diagnostics: Diagnostic[]): void {
+    this.data.set(uri.toString(), diagnostics);
+  }
+
+  get(uri: Uri): Diagnostic[] | undefined {
+    return this.data.get(uri.toString());
+  }
+
+  delete(uri: Uri): void {
+    this.data.delete(uri.toString());
+  }
+
+  clear(): void {
+    this.data.clear();
   }
 
   dispose(): void {
-    this.listeners = [];
+    this.clear();
   }
 }
 
-// Mock workspace
+export class WorkspaceEdit {
+  edits: Array<{ uri: Uri; range: Range; newText: string }> = [];
+
+  replace(uri: Uri, range: Range, newText: string): void {
+    this.edits.push({ uri, range, newText });
+  }
+}
+
+export class CodeAction {
+  title: string;
+  kind?: string;
+  diagnostics?: Diagnostic[];
+  isPreferred?: boolean;
+  command?: { title: string; command: string; arguments?: unknown[] };
+  edit?: WorkspaceEdit;
+
+  constructor(title: string, kind?: string) {
+    this.title = title;
+    this.kind = kind;
+  }
+}
+
+export const CodeActionKind = {
+  QuickFix: 'quickfix',
+};
+
+export class FileSystemWatcher {
+  private changeEmitter = new EventEmitter<Uri>();
+  private createEmitter = new EventEmitter<Uri>();
+  private deleteEmitter = new EventEmitter<Uri>();
+
+  onDidChange(handler: EventHandler<Uri>): Disposable {
+    return this.changeEmitter.event(handler);
+  }
+
+  onDidCreate(handler: EventHandler<Uri>): Disposable {
+    return this.createEmitter.event(handler);
+  }
+
+  onDidDelete(handler: EventHandler<Uri>): Disposable {
+    return this.deleteEmitter.event(handler);
+  }
+
+  fireChange(uri: Uri): void {
+    this.changeEmitter.fire(uri);
+  }
+
+  fireCreate(uri: Uri): void {
+    this.createEmitter.fire(uri);
+  }
+
+  fireDelete(uri: Uri): void {
+    this.deleteEmitter.fire(uri);
+  }
+
+  dispose(): void {
+    this.changeEmitter.dispose();
+    this.createEmitter.dispose();
+    this.deleteEmitter.dispose();
+  }
+}
+
+export const languages = {
+  createDiagnosticCollection: (_name: string) => new MockDiagnosticCollection(),
+};
+
 export const workspace = {
+  workspaceFolders: [] as Array<{ uri: Uri }>,
+  textDocuments: [] as Array<{
+    uri: Uri;
+    languageId?: string;
+    fileName?: string;
+    getText?: () => string;
+  }>,
   isTrusted: true,
-  workspaceFolders: [
-    { uri: Uri.file('/workspace'), name: 'workspace', index: 0 },
-  ],
-  getConfiguration: vi.fn((section?: string) => ({
-    get: vi.fn((key: string, defaultValue?: unknown) => {
-      if (section === 'mdx-preview') {
-        if (key === 'preview.enableScripts') return true;
-        if (key === 'preview.security') return 'strict';
-        if (key === 'preview.openMdxLinksInPreview') return true;
-      }
-      return defaultValue;
-    }),
-    update: vi.fn(),
-    has: vi.fn(() => true),
-    inspect: vi.fn(),
-  })),
-  onDidChangeWorkspaceTrust: vi.fn(() => new Disposable(() => {})),
-  onDidGrantWorkspaceTrust: vi.fn(() => new Disposable(() => {})),
-  onDidChangeConfiguration: vi.fn(() => new Disposable(() => {})),
-  onDidChangeWorkspaceFolders: vi.fn(() => new Disposable(() => {})),
-  openTextDocument: vi.fn(),
-  fs: {
-    readFile: vi.fn(),
-    writeFile: vi.fn(),
-    stat: vi.fn(),
+  onDidChangeConfiguration: (
+    _handler: EventHandler<{ affectsConfiguration: (key: string) => boolean }>
+  ): Disposable => {
+    return createDisposable();
+  },
+  onDidChangeTextDocument: (
+    _handler: EventHandler<{ document: any }>
+  ): Disposable => {
+    return createDisposable();
+  },
+  onDidOpenTextDocument: (_handler: EventHandler<any>): Disposable => {
+    return createDisposable();
+  },
+  onDidCloseTextDocument: (_handler: EventHandler<any>): Disposable => {
+    return createDisposable();
+  },
+  createFileSystemWatcher: (_pattern: any): FileSystemWatcher => {
+    return new FileSystemWatcher();
+  },
+  openTextDocument: async (pathOrUri: string | Uri): Promise<any> => {
+    const uri = typeof pathOrUri === 'string' ? Uri.file(pathOrUri) : pathOrUri;
+    return {
+      uri,
+      fileName: uri.fsPath,
+      getText: () => '',
+      languageId: 'mdx',
+    };
+  },
+  getWorkspaceFolder: (uri: Uri): { uri: Uri } | undefined => {
+    return workspace.workspaceFolders.find((folder) =>
+      uri.fsPath.startsWith(folder.uri.fsPath)
+    );
   },
 };
 
-// Mock window
 export const window = {
-  showTextDocument: vi.fn(),
-  showInformationMessage: vi.fn(),
-  showWarningMessage: vi.fn(),
-  showErrorMessage: vi.fn(),
-  showQuickPick: vi.fn(),
-  createWebviewPanel: vi.fn(),
-  // ColorThemeKind.Dark
-  activeColorTheme: { kind: 2 },
-  onDidChangeActiveColorTheme: vi.fn(() => new Disposable(() => {})),
+  activeTextEditor: undefined as any,
+  showTextDocument: async (_doc: any, _options?: any): Promise<any> =>
+    undefined,
 };
 
-// Mock env
+export const commands = {
+  executeCommand: async (
+    _command: string,
+    ..._args: unknown[]
+  ): Promise<unknown> => undefined,
+};
+
 export const env = {
   remoteName: undefined as string | undefined,
-  openExternal: vi.fn(),
-  appName: 'Visual Studio Code',
-  appRoot: '/app',
-  uriScheme: 'vscode',
-  language: 'en',
+  openExternal: async (_uri: Uri): Promise<boolean> => true,
 };
 
-// Mock commands
-export const commands = {
-  executeCommand: vi.fn(),
-  registerCommand: vi.fn(() => new Disposable(() => {})),
-};
-
-// Mock ConfigurationTarget enum
-export enum ConfigurationTarget {
-  Global = 1,
-  Workspace = 2,
-  WorkspaceFolder = 3,
-}
-
-// Mock ColorThemeKind enum
-export enum ColorThemeKind {
-  Light = 1,
-  Dark = 2,
-  HighContrast = 3,
-  HighContrastLight = 4,
-}
-
-// Mock TextDocumentShowOptions
-export interface TextDocumentShowOptions {
-  viewColumn?: number;
-  preserveFocus?: boolean;
-  preview?: boolean;
+export type TextDocumentShowOptions = {
   selection?: Range;
-}
-
-// Mock WebviewPanel
-export class WebviewPanel {
-  webview = {
-    html: '',
-    cspSource: 'https://example.com',
-    onDidReceiveMessage: vi.fn(() => new Disposable(() => {})),
-    postMessage: vi.fn(),
-    asWebviewUri: vi.fn((uri: Uri) => uri),
-  };
-  onDidDispose = vi.fn(() => new Disposable(() => {}));
-  onDidChangeViewState = vi.fn(() => new Disposable(() => {}));
-  dispose = vi.fn();
-  reveal = vi.fn();
-  visible = true;
-  active = true;
-  viewColumn = 1;
-}
-
-// Default export for module
-export default {
-  Uri,
-  Position,
-  Range,
-  Disposable,
-  EventEmitter,
-  workspace,
-  window,
-  env,
-  commands,
-  ConfigurationTarget,
-  ColorThemeKind,
-  WebviewPanel,
+  preview?: boolean;
 };
+
+export type TextDocument = {
+  uri: Uri;
+  languageId: string;
+  fileName: string;
+  getText(): string;
+};
+
+export type CodeActionContext = {
+  diagnostics: Diagnostic[];
+};
+
+export type CancellationToken = unknown;
+
+export type GlobPattern = string;

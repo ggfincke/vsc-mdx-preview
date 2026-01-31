@@ -1,7 +1,13 @@
 // packages/webview-app/src/components/shims/base/useTabState.ts
 // shared hook for tab state management across framework shims
 
-import { useState, useCallback, ReactNode, isValidElement, Children } from 'react';
+import {
+  useState,
+  useCallback,
+  ReactNode,
+  isValidElement,
+  Children,
+} from 'react';
 
 // Tab item extracted from children
 export interface TabItem {
@@ -16,10 +22,11 @@ export interface TabDefinition {
   label: string;
 }
 
-// Props for a TabItem component
+// props for a TabItem component
 export interface TabItemProps {
   children: ReactNode;
-  value: string;
+  // optional - can use label as fallback (Starlight uses label only)
+  value?: string;
   label?: string;
   default?: boolean;
 }
@@ -49,10 +56,12 @@ export function extractTabItems(children: ReactNode): TabItem[] {
     }
 
     const props = child.props as TabItemProps;
-    if (props.value !== undefined) {
+    // Accept either 'value' (Docusaurus) or 'label' (Starlight) as identifier
+    const value = props.value ?? props.label;
+    if (value !== undefined) {
       items.push({
-        value: props.value,
-        label: props.label || props.value,
+        value,
+        label: props.label || value,
         content: props.children,
       });
     }
@@ -61,7 +70,7 @@ export function extractTabItems(children: ReactNode): TabItem[] {
   return items;
 }
 
-// finds the default tab value from children
+// find default tab value from children
 function findDefaultFromChildren(
   children: ReactNode,
   tabItems: TabItem[]
@@ -85,8 +94,8 @@ function findDefaultFromChildren(
 }
 
 // hook for managing tab state
-// extracts tab items from children, determines initial active value,
-// & provides state management for tab selection.
+// extracts tab items from children, determines initial active value
+// & provides state management for tab selection
 export function useTabState(options: UseTabStateOptions): UseTabStateResult {
   const { children, defaultValue, values } = options;
 
@@ -125,9 +134,7 @@ export function useTabState(options: UseTabStateOptions): UseTabStateResult {
 
 export default useTabState;
 
-// ============================================================================
-// Index-based tab state management (for Nextra-style tabs)
-// ============================================================================
+// index-based tab state management (for Nextra-style tabs)
 
 // options for useIndexTabs hook (used by components w/ index-based tab selection)
 export interface UseIndexTabsOptions<T> {

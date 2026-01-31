@@ -13,11 +13,12 @@ import {
   STATUS_BAR_FRAMEWORK_PRIORITY,
 } from '../constants';
 import { SingletonService } from '../services/SingletonService';
+import { LogTags } from '@mdx-preview/shared';
 
 // status bar manager singleton for MDX preview status display
 export class StatusBarManager extends SingletonService<StatusBarManager> {
   protected static override instance: StatusBarManager | undefined;
-  protected readonly logTag = 'STATUS-BAR';
+  protected readonly logTag = LogTags.STATUS_BAR;
 
   private trustStatusBarItem: vscode.StatusBarItem;
   private frameworkStatusBarItem: vscode.StatusBarItem;

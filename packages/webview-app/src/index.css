@@ -27,7 +27,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* clickable images for lightbox (both Safe and Trusted mode) */
+/* clickable images for lightbox (both Safe & Trusted mode) */
 .mdx-trusted-preview img,
 .mdx-safe-preview img {
   cursor: zoom-in;

@@ -2,10 +2,23 @@
 // consolidated import/export specifier extraction from JavaScript/TypeScript code
 
 import { init as initLexer, parse as parseImports } from 'es-module-lexer';
+import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import { debug } from '../../logging';
 
 // lexer initialization state
 let lexerInitialized = false;
+
+// I.4: fast pre-check to skip parsing for files w/o imports
+// pattern matches: import statements, require() calls, export-from statements
+
+const IMPORT_PATTERN =
+  /\b(import\s|require\s*\(|export\s+\*\s+from|export\s+\{[^}]*\}\s+from)\b/;
+
+// fast pre-check: return true if code might have imports (worth parsing)
+// return false if definitely no imports (skip parsing for performance)
+function mightHaveImports(code: string): boolean {
+  return IMPORT_PATTERN.test(code);
+}
 
 // ensure es-module-lexer is initialized
 async function ensureLexerInitialized(): Promise<void> {
@@ -20,7 +33,8 @@ async function ensureLexerInitialized(): Promise<void> {
 
 // pattern 1: standard string quotes (single, double) w/ escaped char support
 // matches: require('lodash'), require("express"), require('path\'s/file')
-const REQUIRE_QUOTED = /require\s*\(\s*(['"])([^'"\\]*(?:\\.[^'"\\]*)*)\1\s*\)/g;
+const REQUIRE_QUOTED =
+  /require\s*\(\s*(['"])([^'"\\]*(?:\\.[^'"\\]*)*)\1\s*\)/g;
 
 // pattern 2: template literals (simple, no interpolation)
 // matches: require(`lodash`) but NOT require(`${dynamic}`)
@@ -29,6 +43,14 @@ const REQUIRE_TEMPLATE = /require\s*\(\s*`([^`\\]*(?:\\.[^`\\]*)*)`\s*\)/g;
 // extract import specifiers from JavaScript/TypeScript code
 // uses es-module-lexer for ESM imports, falls back to require() pattern for CJS
 export async function extractImportSpecifiers(code: string): Promise<string[]> {
+  // I.4: Fast path - skip parsing if no import-like patterns detected
+  if (!mightHaveImports(code)) {
+    debug(
+      `[${LogTags.IMPORT_EXTRACTOR}] Fast path: no import patterns detected`
+    );
+    return [];
+  }
+
   await ensureLexerInitialized();
 
   try {
@@ -46,7 +68,9 @@ export async function extractImportSpecifiers(code: string): Promise<string[]> {
 
     return esmImports;
   } catch (error) {
-    debug(`[IMPORT-EXTRACTOR] Lexer error, falling back to require: ${error}`);
+    debug(
+      `[${LogTags.IMPORT_EXTRACTOR}] Lexer error, falling back to require: ${extractErrorMessage(error)}`
+    );
     return extractRequireSpecifiers(code);
   }
 }
@@ -72,13 +96,14 @@ function extractRequireSpecifiers(code: string): string[] {
   while ((match = REQUIRE_TEMPLATE.exec(code)) !== null) {
     const specifier = match[1];
     // skip if contains ${} interpolation (can't statically analyze)
-    if (specifier && !specifier.includes('${') && !specifiers.includes(specifier)) {
+    if (
+      specifier &&
+      !specifier.includes('${') &&
+      !specifiers.includes(specifier)
+    ) {
       specifiers.push(specifier);
     }
   }
 
   return specifiers;
 }
-
-// re-export for backward compatibility
-export { extractImportSpecifiers as extractImports };

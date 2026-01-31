@@ -7,11 +7,8 @@ import * as path from 'path';
 // re-export PathAccessDeniedError from centralized errors module
 export { PathAccessDeniedError } from '../../errors';
 
-// check if path is inside another path (replaces deprecated path-is-inside package)
-function isPathInside(childPath: string, parentPath: string): boolean {
-  const relative = path.relative(parentPath, childPath);
-  return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
-}
+// use shared path utility (consolidation: removed duplicate isPathInside)
+import { isPathInside } from '../../utils/path-utils';
 
 const rootDirectoryCache = new Map<string, string>();
 

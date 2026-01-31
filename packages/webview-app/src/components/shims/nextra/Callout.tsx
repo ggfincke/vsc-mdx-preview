@@ -39,7 +39,7 @@ const BaseCallout = createCallout<NextraCalloutType>({
   layout: 'inline',
 });
 
-// * Nextra Callout component
+// Nextra Callout component
 // wraps the base callout to support Nextra-specific props (emoji, className, spread props)
 export function Callout({
   children,

@@ -9,6 +9,7 @@ import ExtensionHandle from './rpc-extension-handle';
 import { Preview } from './preview/preview-manager';
 import type { WebviewRPC } from '@mdx-preview/shared';
 import { debug } from './logging';
+import { LogTags } from '@mdx-preview/shared';
 
 type AllowedTypeForComlink = 'message';
 
@@ -37,13 +38,13 @@ class ExtensionEndpoint implements Endpoint {
   currentListener?: EventListenerOrEventListenerObject;
 
   constructor(webview: vscode.Webview, disposables: vscode.Disposable[]) {
-    debug('[RPC-EXT] ExtensionEndpoint created');
+    debug(`[${LogTags.RPC_EXT}] ExtensionEndpoint created`);
     this.webview = webview;
     this.disposables = disposables;
   }
 
   postMessage(message: unknown): void {
-    debug('[RPC-EXT] postMessage called');
+    debug(`[${LogTags.RPC_EXT}] postMessage called`);
     this.webview.postMessage(message);
   }
 
@@ -51,11 +52,11 @@ class ExtensionEndpoint implements Endpoint {
     _type: AllowedTypeForComlink,
     listener: EventListenerOrEventListenerObject
   ): void {
-    debug('[RPC-EXT] addEventListener called');
+    debug(`[${LogTags.RPC_EXT}] addEventListener called`);
     this.currentListener = listener;
     this.disposeEventListener = this.webview.onDidReceiveMessage(
       (message) => {
-        debug('[RPC-EXT] Received message from webview');
+        debug(`[${LogTags.RPC_EXT}] Received message from webview`);
         const messageEvent = {
           data: message,
         } as MessageEvent;
@@ -74,7 +75,7 @@ class ExtensionEndpoint implements Endpoint {
     _type: AllowedTypeForComlink,
     listener: EventListenerOrEventListenerObject
   ): void {
-    debug('[RPC-EXT] removeEventListener called');
+    debug(`[${LogTags.RPC_EXT}] removeEventListener called`);
     if (this.currentListener === listener && this.disposeEventListener) {
       this.disposeEventListener.dispose();
     }
@@ -89,18 +90,18 @@ export function initRPCExtensionSide(
   webview: vscode.Webview,
   disposables: vscode.Disposable[]
 ): WebviewHandleType {
-  debug('[RPC-EXT] initRPCExtensionSide called');
+  debug(`[${LogTags.RPC_EXT}] initRPCExtensionSide called`);
   const extensionEndpoint = new ExtensionEndpoint(webview, disposables);
 
   // webview to extension calls
-  debug('[RPC-EXT] Creating ExtensionHandle');
+  debug(`[${LogTags.RPC_EXT}] Creating ExtensionHandle`);
   const handle = new ExtensionHandle(preview);
-  debug('[RPC-EXT] Exposing ExtensionHandle via comlink');
+  debug(`[${LogTags.RPC_EXT}] Exposing ExtensionHandle via comlink`);
   comlink.expose(handle, extensionEndpoint);
 
   // extension to webview calls
-  debug('[RPC-EXT] Wrapping WebviewHandle via comlink');
+  debug(`[${LogTags.RPC_EXT}] Wrapping WebviewHandle via comlink`);
   const WebviewHandle = comlink.wrap<WebviewRemoteHandle>(extensionEndpoint);
-  debug('[RPC-EXT] initRPCExtensionSide complete');
+  debug(`[${LogTags.RPC_EXT}] initRPCExtensionSide complete`);
   return WebviewHandle;
 }

@@ -3,6 +3,7 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { getConfigManager, getPreviewManager } from '../services';
 import {
   PREVIEW_THEMES,
@@ -16,10 +17,10 @@ import {
   type MermaidTheme,
 } from '../themes';
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from './types';
+import type { CommandDefinition } from '../types';
 
 const selectPreviewTheme = async (): Promise<void> => {
-  debug('[CMD] selectPreviewTheme command triggered');
+  debug(`[${LogTags.CMD}] selectPreviewTheme command triggered`);
 
   const configManager = getConfigManager();
   const currentTheme = configManager.get(
@@ -43,13 +44,12 @@ const selectPreviewTheme = async (): Promise<void> => {
       selected.theme,
       vscode.ConfigurationTarget.Global
     );
-    // refresh previews to apply theme
     getPreviewManager().refreshAllPreviews();
   }
 };
 
 const selectCodeBlockTheme = async (): Promise<void> => {
-  debug('[CMD] selectCodeBlockTheme command triggered');
+  debug(`[${LogTags.CMD}] selectCodeBlockTheme command triggered`);
 
   const configManager = getConfigManager();
   const currentTheme = configManager.get(
@@ -73,13 +73,12 @@ const selectCodeBlockTheme = async (): Promise<void> => {
       selected.theme,
       vscode.ConfigurationTarget.Global
     );
-    // refresh previews to apply theme
     getPreviewManager().refreshAllPreviews();
   }
 };
 
 const selectMermaidTheme = async (): Promise<void> => {
-  debug('[CMD] selectMermaidTheme command triggered');
+  debug(`[${LogTags.CMD}] selectMermaidTheme command triggered`);
 
   const configManager = getConfigManager();
   const currentTheme = configManager.get(
@@ -103,7 +102,6 @@ const selectMermaidTheme = async (): Promise<void> => {
       selected.theme,
       vscode.ConfigurationTarget.Global
     );
-    // refresh previews to apply theme
     getPreviewManager().refreshAllPreviews();
   }
 };

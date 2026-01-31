@@ -101,6 +101,50 @@ describe('generateCSP()', () => {
 
     expect(csp).toContain("default-src 'none'");
   });
+
+  it('includes required directives', () => {
+    const csp = generateCSP({
+      webview: mockWebview as any,
+      nonce: 'test-nonce',
+      allowUnsafeEval: false,
+    });
+
+    expect(csp).toContain('default-src');
+    expect(csp).toContain('img-src');
+    expect(csp).toContain('style-src');
+    expect(csp).toContain('script-src');
+    expect(csp).toContain('font-src');
+  });
+
+  it('allows data: URIs for images', () => {
+    const csp = generateCSP({
+      webview: mockWebview as any,
+      nonce: 'test-nonce',
+      allowUnsafeEval: false,
+    });
+
+    expect(csp).toMatch(/img-src[^;]*data:/);
+  });
+
+  it('allows https: for images', () => {
+    const csp = generateCSP({
+      webview: mockWebview as any,
+      nonce: 'test-nonce',
+      allowUnsafeEval: false,
+    });
+
+    expect(csp).toMatch(/img-src[^;]*https:/);
+  });
+
+  it("allows 'unsafe-inline' for styles", () => {
+    const csp = generateCSP({
+      webview: mockWebview as any,
+      nonce: 'test-nonce',
+      allowUnsafeEval: false,
+    });
+
+    expect(csp).toMatch(/style-src[^;]*'unsafe-inline'/);
+  });
 });
 
 describe('getCSP()', () => {
@@ -126,6 +170,20 @@ describe('getCSP()', () => {
     );
 
     expect(csp).toBe('');
+  });
+
+  it('defaults to Strict policy when not specified', () => {
+    const trustState: TrustState = {
+      workspaceTrusted: true,
+      scriptsEnabled: true,
+      canExecute: true,
+      openMdxLinksInPreview: true,
+    };
+
+    const csp = getCSP(mockWebview as any, 'test-nonce', trustState);
+
+    expect(csp).not.toBe('');
+    expect(csp).toContain("default-src 'none'");
   });
 
   it('includes unsafe-eval when trust state allows execution', () => {

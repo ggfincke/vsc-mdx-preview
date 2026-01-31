@@ -3,7 +3,7 @@
 
 import React, { ReactElement } from 'react';
 import { useCopyToClipboard } from './useCopyToClipboard';
-import { CODE_ICONS } from './icons';
+import { COPY_ICONS } from './icons';
 
 // props for CopyButton component
 export interface CopyButtonProps {
@@ -34,7 +34,7 @@ export function CopyButton({
     >
       <span
         dangerouslySetInnerHTML={{
-          __html: copied ? CODE_ICONS.check : CODE_ICONS.copy,
+          __html: copied ? COPY_ICONS.check : COPY_ICONS.copy,
         }}
       />
     </button>

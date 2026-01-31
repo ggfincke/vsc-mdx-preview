@@ -1,8 +1,8 @@
 // packages/extension/module-system/resolver/result-builders.ts
 // builder functions for constructing ResolutionResult objects consistently
 
-import type { ResolutionResult } from '../types';
-import { ResolutionStrategy } from '../types';
+import type { ResolutionResult } from '../../types';
+import { ResolutionStrategy } from '../../types';
 
 // build a standard ResolutionResult for non-shim modules
 export function buildResolutionResult(

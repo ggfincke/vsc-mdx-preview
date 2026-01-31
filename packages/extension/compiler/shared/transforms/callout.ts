@@ -2,93 +2,59 @@
 // transform Callout/Alert/Admonition components to semantic HTML
 
 import type { RootContent } from 'mdast';
-import type { MdxJsxElement } from './types';
+import type { MdxJsxElement } from '../../../types';
 import { getStaticStringProp, escapeHtml, createNode } from './utils';
 import { ADMONITION_ICONS } from '../icon-registry';
+import {
+  type CalloutType,
+  CALLOUT_TITLES,
+  normalizeCalloutType,
+} from '@mdx-preview/shared';
 
-export type CalloutType =
-  | 'note'
-  | 'tip'
-  | 'warning'
-  | 'danger'
-  | 'info'
-  | 'caution'
-  | 'important';
+// re-export for consumers that import from this file
+export { type CalloutType, normalizeCalloutType } from '@mdx-preview/shared';
 
+// callout defaults w/ icons & CSS class names for Safe Mode HTML rendering
 export const CALLOUT_DEFAULTS: Record<
   CalloutType,
   { label: string; className: string; icon: string }
 > = {
   note: {
-    label: 'Note',
+    label: CALLOUT_TITLES.note,
     className: 'mdx-safe-callout-note',
     icon: ADMONITION_ICONS.note,
   },
   info: {
-    label: 'Info',
+    label: CALLOUT_TITLES.info,
     className: 'mdx-safe-callout-info',
     icon: ADMONITION_ICONS.info,
   },
   tip: {
-    label: 'Tip',
+    label: CALLOUT_TITLES.tip,
     className: 'mdx-safe-callout-tip',
     icon: ADMONITION_ICONS.tip,
   },
   warning: {
-    label: 'Warning',
+    label: CALLOUT_TITLES.warning,
     className: 'mdx-safe-callout-warning',
     icon: ADMONITION_ICONS.warning,
   },
   caution: {
-    label: 'Caution',
+    label: CALLOUT_TITLES.caution,
     className: 'mdx-safe-callout-caution',
     icon: ADMONITION_ICONS.caution,
   },
   danger: {
-    label: 'Danger',
+    label: CALLOUT_TITLES.danger,
     className: 'mdx-safe-callout-danger',
     icon: ADMONITION_ICONS.danger,
   },
   important: {
-    label: 'Important',
+    label: CALLOUT_TITLES.important,
     className: 'mdx-safe-callout-important',
     icon: ADMONITION_ICONS.important,
   },
 };
-
-// normalize callout type string to canonical type
-// maps common aliases (success→tip, error→danger, warn→warning, hint→tip)
-export function normalizeCalloutType(type: string | undefined): CalloutType {
-  if (!type) {
-    return 'note';
-  }
-  const normalized = type.toLowerCase();
-  switch (normalized) {
-    case 'success':
-      return 'tip';
-    case 'error':
-      return 'danger';
-    case 'warn':
-      return 'warning';
-    case 'hint':
-      return 'tip';
-    default:
-      if (
-        [
-          'note',
-          'tip',
-          'warning',
-          'danger',
-          'info',
-          'caution',
-          'important',
-        ].includes(normalized)
-      ) {
-        return normalized as CalloutType;
-      }
-      return 'note';
-  }
-}
 
 // transform Callout/Alert/Admonition component to semantic HTML
 export function transformCallout(node: MdxJsxElement): RootContent {

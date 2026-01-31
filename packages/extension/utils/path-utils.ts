@@ -50,7 +50,7 @@ export interface ResolvePathOptions {
   checkExists?: boolean;
 }
 
-// * resolve a path w/ multiple fallback directories
+// resolve a path w/ multiple fallback directories
 export function resolvePathWithFallbacks(
   options: ResolvePathOptions
 ): string | null {

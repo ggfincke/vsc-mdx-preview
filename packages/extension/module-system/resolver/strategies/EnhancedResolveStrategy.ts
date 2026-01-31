@@ -4,14 +4,15 @@
 import type { Resolver } from 'enhanced-resolve';
 import { getBrowserResolver, getNodeResolver } from '../resolver-factory';
 import { debug } from '../../../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { createSingleton } from '../../../utils/singleton-factory';
 import {
   ResolutionStrategy,
   type ResolutionContext,
   type ResolutionResult,
   type ResolutionMode,
-} from '../../types';
-import type { IResolutionStrategy } from './types';
+  type IResolutionStrategy,
+} from '../../../types';
 import { buildResolutionResult } from '../result-builders';
 
 // enhanced-resolve strategy for node_modules resolution
@@ -36,8 +37,12 @@ export class EnhancedResolveStrategy implements IResolutionStrategy {
     try {
       const resolved = resolver.resolveSync({}, context.baseDir, specifier);
       if (resolved) {
-        debug(`[ENHANCED-RESOLVE] ${specifier} -> ${resolved}`);
-        return buildResolutionResult(resolved, specifier, ResolutionStrategy.EnhancedResolve);
+        debug(`[${LogTags.ENHANCED_RESOLVE}] ${specifier} -> ${resolved}`);
+        return buildResolutionResult(
+          resolved,
+          specifier,
+          ResolutionStrategy.EnhancedResolve
+        );
       }
     } catch {
       // module not found - continue to next strategy
@@ -53,4 +58,3 @@ const { get: getEnhancedResolveStrategy } = createSingleton(
 );
 
 export { getEnhancedResolveStrategy };
-

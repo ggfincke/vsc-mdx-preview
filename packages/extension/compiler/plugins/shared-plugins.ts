@@ -1,9 +1,9 @@
 // packages/extension/compiler/plugins/shared-plugins.ts
-// * shared remark/rehype plugin configurations for MDX pipelines
+// shared remark/rehype plugin configurations for MDX pipelines
 //
 // ! plugin ordering is critical - do not reorder w/o testing both Safe & Trusted modes
-// ! remarkDirective must run first (parses ::: syntax)
-// ! remarkAdmonitions must run after remarkDirective (transforms directives)
+// ! remarkDirective must run first (parse ::: syntax)
+// ! remarkAdmonitions must run after remarkDirective (transform directives)
 // ! remarkGithubAlerts must run before remarkGfm
 
 import remarkDirective from 'remark-directive';

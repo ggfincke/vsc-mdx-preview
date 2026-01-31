@@ -170,6 +170,28 @@ describe('TrustManager', () => {
       expect(state.canExecute).toBe(true);
       expect(state.reason).toBeUndefined();
     });
+
+    it('returns canExecute: true for untitled: scheme in trusted workspace', () => {
+      mockWorkspace.isTrusted = true;
+      mockEnv.remoteName = undefined;
+      mockConfigManager.get.mockReturnValue(true);
+
+      const docUri = { scheme: 'untitled', fsPath: 'Untitled-1', path: 'Untitled-1' };
+      const state = trustManager.getStateForDocument(docUri as any);
+
+      expect(state.canExecute).toBe(true);
+    });
+
+    it('includes reason when blocked', () => {
+      mockWorkspace.isTrusted = false;
+
+      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const state = trustManager.getStateForDocument(docUri as any);
+
+      expect(state.canExecute).toBe(false);
+      expect(state.reason).toBeDefined();
+      expect(state.reason).toContain('Workspace is not trusted');
+    });
   });
 
   describe('getMode()', () => {
@@ -203,6 +225,80 @@ describe('TrustManager', () => {
       mockWorkspace.isTrusted = false;
 
       expect(trustManager.canExecute()).toBe(false);
+    });
+  });
+
+  describe('canUseTrustedMode()', () => {
+    it('returns allowed: false w/ reason for remote environment', () => {
+      mockWorkspace.isTrusted = true;
+      mockEnv.remoteName = 'ssh-remote';
+      mockConfigManager.get.mockReturnValue(true);
+
+      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const result = trustManager.canUseTrustedMode(docUri as any);
+
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toContain('Remote environment');
+    });
+
+    it('returns allowed: false w/ reason for unsupported scheme', () => {
+      mockWorkspace.isTrusted = true;
+      mockEnv.remoteName = undefined;
+      mockConfigManager.get.mockReturnValue(true);
+
+      const docUri = { scheme: 'http', fsPath: '/test.mdx', path: '/test.mdx' };
+      const result = trustManager.canUseTrustedMode(docUri as any);
+
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toContain('Unsupported document scheme');
+    });
+
+    it('returns allowed: true for valid local file', () => {
+      mockWorkspace.isTrusted = true;
+      mockEnv.remoteName = undefined;
+      mockConfigManager.get.mockReturnValue(true);
+
+      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const result = trustManager.canUseTrustedMode(docUri as any);
+
+      expect(result.allowed).toBe(true);
+      expect(result.reason).toBeUndefined();
+    });
+
+    it('returns allowed: false when workspace not trusted', () => {
+      mockWorkspace.isTrusted = false;
+
+      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const result = trustManager.canUseTrustedMode(docUri as any);
+
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toContain('Workspace is not trusted');
+    });
+
+    it('returns allowed: false when scripts disabled', () => {
+      mockWorkspace.isTrusted = true;
+      mockConfigManager.get.mockImplementation((key: string) => {
+        if (key === 'preview.enableScripts') return false;
+        return undefined;
+      });
+
+      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const result = trustManager.canUseTrustedMode(docUri as any);
+
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toContain('Scripts are not enabled');
+    });
+  });
+
+  describe('subscribe()', () => {
+    it('returns a disposable subscription', () => {
+      const listener = vi.fn();
+      const subscription = trustManager.subscribe(listener);
+
+      expect(subscription).toBeDefined();
+      expect(typeof subscription.dispose).toBe('function');
+
+      subscription.dispose();
     });
   });
 });

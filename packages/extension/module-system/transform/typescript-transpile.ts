@@ -1,27 +1,30 @@
 // packages/extension/module-system/transform/typescript-transpile.ts
-// unified TypeScript transpilation helper - centralizes logic to eliminate duplication
+// unified TypeScript transpilation helper using Sucrase (lightweight)
 
-import { transpileModule as tsTranspileModule } from 'typescript';
+import { transform as sucraseTransform } from 'sucrase';
 import type { Preview } from '../../preview/preview-manager';
-import { resolveTypescriptConfig } from '../../preview/config';
 
-// * transpile TypeScript/TSX code using the workspace's tsconfig
+// transpile TypeScript/TSX code using Sucrase
+// Sucrase is already bundled & provides fast transpilation
 export function transpileTypeScript(
   code: string,
   fsPath: string,
-  preview: Preview
+  _preview: Preview
 ): string {
-  // lazily resolve TypeScript configuration
-  if (!preview.typescriptConfiguration) {
-    preview.typescriptConfiguration = resolveTypescriptConfig(null);
-  }
+  // determine transforms based on file extension
+  const isTsx = fsPath.endsWith('.tsx');
+  const transforms: ('typescript' | 'jsx')[] = isTsx
+    ? ['typescript', 'jsx']
+    : ['typescript'];
 
-  const { tsCompilerOptions } = preview.typescriptConfiguration;
+  const result = sucraseTransform(code, {
+    transforms,
+    filePath: fsPath,
+    // preserve import/export for subsequent Babel processing
+    disableESTransforms: true,
+  });
 
-  return tsTranspileModule(code, {
-    compilerOptions: tsCompilerOptions,
-    fileName: fsPath,
-  }).outputText;
+  return result.code;
 }
 
 // check if file extension indicates TypeScript (.ts or .tsx, case-insensitive)

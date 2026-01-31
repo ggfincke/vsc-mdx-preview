@@ -3,6 +3,7 @@
 
 import * as vscode from 'vscode';
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import { selectSecurityPolicy } from '../security/security';
 import {
   getConfigManager,
@@ -11,14 +12,14 @@ import {
 } from '../services';
 import { ErrorContext } from '../errors';
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from './types';
+import type { CommandDefinition } from '../types';
 
 const changeSecuritySettings = (): void => {
   selectSecurityPolicy();
 };
 
 const toggleScripts = async (): Promise<void> => {
-  debug('[CMD] toggleScripts command triggered');
+  debug(`[${LogTags.CMD}] toggleScripts command triggered`);
 
   const trustState = getTrustManager().getState();
 

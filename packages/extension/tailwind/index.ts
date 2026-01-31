@@ -29,6 +29,10 @@ export type {
 export { TailwindCache } from './TailwindCache';
 export type { TailwindCacheOptions } from './TailwindCache';
 
+// scan caching - per-file class extraction cache
+export { TailwindScanCache, computeContentHash } from './TailwindScanCache';
+export type { TailwindScanCacheOptions } from './TailwindScanCache';
+
 // compilation - PostCSS integration for v3/v4
 export { TailwindCompiler } from './TailwindCompiler';
 export type {
@@ -40,6 +44,7 @@ export type {
 export {
   CACHE_DEFAULT_MAX_ENTRIES,
   CACHE_DEFAULT_TTL_MS,
+  SCAN_CACHE_DEFAULT_MAX_ENTRIES,
   VERSION_CACHE_TTL_MS,
   MAX_INLINE_SOURCE_CHUNK_SIZE,
   SCANNER_MAX_RECURSION_DEPTH,

@@ -4,7 +4,6 @@
 
 /* eslint-disable react-refresh/only-export-components -- Context & hooks are co-located with component */
 
-import React, { useContext, ReactElement } from 'react';
 import {
   createTabs,
   type BaseTabsProps,
@@ -22,6 +21,7 @@ export type { TabDefinition };
 // Supports groupId for tab synchronization
 const {
   Tabs,
+  TabItem,
   useTabsContext,
   TabsContext,
 } = createTabs({
@@ -31,20 +31,5 @@ const {
   contextName: 'DocusaurusTabs',
 });
 
-// TabItem component (Docusaurus-specific)
-// Renders children directly when outside Tabs context
-export function TabItem({ children, value: _value }: TabItemProps): ReactElement {
-  const isInsideTabs = useContext(TabsContext);
-
-  // If used outside of Tabs context, render directly
-  if (!isInsideTabs) {
-    return <div className="mdx-preview-tabs-item">{children}</div>;
-  }
-
-  // When inside Tabs, content is rendered by parent
-  // This component is mainly for prop extraction
-  return <>{children}</>;
-}
-
-export { Tabs, useTabsContext, TabsContext };
+export { Tabs, TabItem, useTabsContext, TabsContext };
 export default Tabs;

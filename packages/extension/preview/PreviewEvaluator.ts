@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { TextDecoder } from 'util';
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import evaluateInWebview from './evaluate-in-webview';
 import type { WatcherManager, DocumentTracker } from './watchers';
 import type { PreviewDocumentHandler } from './PreviewDocumentHandler';
@@ -14,8 +15,8 @@ import type {
 } from './PreviewConfiguration';
 import type { Preview } from './preview-manager';
 
-// preview evaluator - orchestrates the evaluation pipeline
-// handles document reading, version tracking, & calling evaluateInWebview
+// preview evaluator - orchestrate evaluation pipeline
+// handle document reading, version tracking, & calling evaluateInWebview
 export class PreviewEvaluator {
   constructor(
     private preview: Preview,
@@ -45,11 +46,11 @@ export class PreviewEvaluator {
   // - force: bypass version tracking (always re-render)
   // - handles different URI schemes: untitled, file, vscode-remote, etc.
   async updateWebview(force = false): Promise<void> {
-    debug('[PREVIEW-EVALUATOR] updateWebview called');
+    debug(`[${LogTags.PREVIEW_EVALUATOR}] updateWebview called`);
     const { uri } = this.doc;
     const { scheme, fsPath } = uri;
     debug(
-      `[PREVIEW-EVALUATOR] updateWebview scheme=${scheme}, fsPath=${fsPath}`
+      `[${LogTags.PREVIEW_EVALUATOR}] updateWebview scheme=${scheme}, fsPath=${fsPath}`
     );
 
     const currentVersion = this.doc.version;
@@ -57,13 +58,13 @@ export class PreviewEvaluator {
 
     // skip if we've already rendered this version (unless forced)
     if (!force && docTracker?.hasRenderedVersion(currentVersion)) {
-      debug('[PREVIEW-EVALUATOR] Skipping update - same version');
+      debug(`[${LogTags.PREVIEW_EVALUATOR}] Skipping update - same version`);
       return;
     }
 
     switch (scheme) {
       case 'untitled': {
-        debug('[PREVIEW-EVALUATOR] updateWebview: untitled scheme');
+        debug(`[${LogTags.PREVIEW_EVALUATOR}] updateWebview: untitled scheme`);
         await evaluateInWebview(
           this.preview,
           this.text,
@@ -72,7 +73,7 @@ export class PreviewEvaluator {
         break;
       }
       case 'file': {
-        debug('[PREVIEW-EVALUATOR] updateWebview: file scheme');
+        debug(`[${LogTags.PREVIEW_EVALUATOR}] updateWebview: file scheme`);
         if (this.configuration.updateMode === 'onType') {
           await evaluateInWebview(this.preview, this.text, fsPath);
         } else {
@@ -84,7 +85,9 @@ export class PreviewEvaluator {
       }
       default: {
         // vscode-remote, vscode-vfs, etc.
-        debug(`[PREVIEW-EVALUATOR] updateWebview: default scheme (${scheme})`);
+        debug(
+          `[${LogTags.PREVIEW_EVALUATOR}] updateWebview: default scheme (${scheme})`
+        );
         let text = this.text;
         if (this.configuration.updateMode !== 'onType') {
           try {

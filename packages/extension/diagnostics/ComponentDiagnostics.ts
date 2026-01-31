@@ -1,9 +1,14 @@
 // packages/extension/diagnostics/ComponentDiagnostics.ts
-// manages VS Code diagnostics for unknown MDX components
+// manage VS Code diagnostics for unknown MDX components
 
 import * as vscode from 'vscode';
-import { detectComponents, getUnknownComponents } from './ComponentDetector';
-import type { DetectedComponent } from './types';
+import {
+  detectComponents,
+  getUnknownComponents,
+  invalidateComponentCache,
+} from './ComponentDetector';
+import type { DetectedComponent } from '../types';
+import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import { resolveConfig } from '../preview/config/ConfigResolver';
 import { debug, info } from '../logging';
 import { SingletonService } from '../services/SingletonService';
@@ -16,11 +21,11 @@ export const DIAGNOSTIC_CODES = {
 // diagnostic source name
 const DIAGNOSTIC_SOURCE = 'MDX Preview';
 
-// * ComponentDiagnostics service
-// manages a DiagnosticCollection for MDX component issues
+// ComponentDiagnostics service
+// manage DiagnosticCollection for MDX component issues
 export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics> {
   protected static override instance: ComponentDiagnostics | undefined;
-  protected readonly logTag = 'COMPONENT-DIAGNOSTICS';
+  protected readonly logTag = LogTags.COMPONENT_DIAGNOSTICS;
 
   private diagnosticCollection: vscode.DiagnosticCollection;
   private documentTimers = new Map<string, NodeJS.Timeout>();
@@ -61,6 +66,8 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
             clearTimeout(timer);
             this.documentTimers.delete(document.uri.toString());
           }
+          // invalidate component detection cache
+          invalidateComponentCache(document.uri.toString());
         }
       })
     );
@@ -72,7 +79,7 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       }
     }
 
-    info('[COMPONENT-DIAGNOSTICS] Service initialized');
+    info(`[${LogTags.COMPONENT_DIAGNOSTICS}] Service initialized`);
   }
 
   // check if document is MDX
@@ -105,7 +112,9 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       return;
     }
 
-    debug(`[ComponentDiagnostics] Updating diagnostics for ${document.uri}`);
+    debug(
+      `[${LogTags.COMPONENT_DIAGNOSTICS}] Updating diagnostics for ${document.uri}`
+    );
 
     try {
       // get config components
@@ -114,11 +123,12 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
         config?.config.components ? Object.keys(config.config.components) : []
       );
 
-      // detect components in the document
+      // detect components in the document (pass URI for caching)
       const result = await detectComponents(
         document.getText(),
         { includePositions: true, detectImports: true },
-        configComponents
+        configComponents,
+        document.uri.toString()
       );
 
       // get unknown components
@@ -133,11 +143,13 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       this.diagnosticCollection.set(document.uri, diagnostics);
 
       debug(
-        `[ComponentDiagnostics] Set ${diagnostics.length} diagnostics for ${document.uri}`
+        `[${LogTags.COMPONENT_DIAGNOSTICS}] Set ${diagnostics.length} diagnostics for ${document.uri}`
       );
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      debug(`[ComponentDiagnostics] Error updating diagnostics: ${message}`);
+      const message = extractErrorMessage(err);
+      debug(
+        `[${LogTags.COMPONENT_DIAGNOSTICS}] Error updating diagnostics: ${message}`
+      );
     }
   }
 

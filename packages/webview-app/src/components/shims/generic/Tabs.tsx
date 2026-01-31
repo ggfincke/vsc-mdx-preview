@@ -14,12 +14,14 @@ export type { TabDefinition };
 // Uses 'mdx-preview-generic-tabs' class prefix for styling
 const {
   Tabs,
+  TabItem,
   useTabsContext: useGenericTabsContext,
   TabsContext: GenericTabsContext,
 } = createTabs({
   classPrefix: 'mdx-preview-generic-tabs',
+  tabItemClassName: 'mdx-preview-generic-tab-item',
   contextName: 'GenericTabs',
 });
 
-export { Tabs, useGenericTabsContext, GenericTabsContext };
+export { Tabs, TabItem, useGenericTabsContext, GenericTabsContext };
 export default Tabs;

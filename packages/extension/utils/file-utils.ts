@@ -8,18 +8,17 @@
 
 import * as fs from 'fs';
 import { debug as logDebug } from '../logging';
+import { extractErrorMessage, LogTags, type LogTag } from '@mdx-preview/shared';
 
 // options for file operations
 export interface FileOptions {
   // enable debug logging on failure (default: false)
   logOnError?: boolean;
-  // log tag for debug messages (e.g., '[FRAMEWORK]')
-  logTag?: string;
+  // use log tag for debug messages (e.g., LogTags.FRAMEWORK)
+  logTag?: LogTag;
 }
 
-// ============================================================================
 // synchronous file operations
-// ============================================================================
 
 // safely read a file synchronously, returning null on any failure
 export function readFileSync(
@@ -31,9 +30,9 @@ export function readFileSync(
     return fs.readFileSync(filePath, encoding);
   } catch (err) {
     if (options?.logOnError) {
-      const tag = options.logTag ?? '[FILE]';
-      const message = err instanceof Error ? err.message : String(err);
-      logDebug(`${tag} Failed to read ${filePath}: ${message}`);
+      const logTag = options.logTag ?? LogTags.FILE;
+      const message = extractErrorMessage(err);
+      logDebug(`[${logTag}] Failed to read ${filePath}: ${message}`);
     }
     return null;
   }
@@ -53,9 +52,9 @@ export function readJsonSync<T = unknown>(
     return JSON.parse(content) as T;
   } catch (err) {
     if (options?.logOnError) {
-      const tag = options.logTag ?? '[FILE]';
-      const message = err instanceof Error ? err.message : String(err);
-      logDebug(`${tag} Failed to parse JSON at ${filePath}: ${message}`);
+      const logTag = options.logTag ?? LogTags.FILE;
+      const message = extractErrorMessage(err);
+      logDebug(`[${logTag}] Failed to parse JSON at ${filePath}: ${message}`);
     }
     return null;
   }
@@ -86,9 +85,7 @@ export function directoryExists(dirPath: string): boolean {
   }
 }
 
-// ============================================================================
 // asynchronous file operations
-// ============================================================================
 
 // safely read a file asynchronously, returning null on any failure
 export async function readFileAsync(
@@ -100,9 +97,9 @@ export async function readFileAsync(
     return await fs.promises.readFile(filePath, encoding);
   } catch (err) {
     if (options?.logOnError) {
-      const tag = options.logTag ?? '[FILE]';
-      const message = err instanceof Error ? err.message : String(err);
-      logDebug(`${tag} Failed to read ${filePath}: ${message}`);
+      const logTag = options.logTag ?? LogTags.FILE;
+      const message = extractErrorMessage(err);
+      logDebug(`[${logTag}] Failed to read ${filePath}: ${message}`);
     }
     return null;
   }
@@ -122,9 +119,9 @@ export async function readJsonAsync<T = unknown>(
     return JSON.parse(content) as T;
   } catch (err) {
     if (options?.logOnError) {
-      const tag = options.logTag ?? '[FILE]';
-      const message = err instanceof Error ? err.message : String(err);
-      logDebug(`${tag} Failed to parse JSON at ${filePath}: ${message}`);
+      const logTag = options.logTag ?? LogTags.FILE;
+      const message = extractErrorMessage(err);
+      logDebug(`[${logTag}] Failed to parse JSON at ${filePath}: ${message}`);
     }
     return null;
   }
@@ -160,9 +157,9 @@ export async function readFileIfUnderSize(
     const stat = await fs.promises.stat(filePath);
     if (stat.size > maxBytes) {
       if (options?.logOnError) {
-        const tag = options.logTag ?? '[FILE]';
+        const logTag = options.logTag ?? LogTags.FILE;
         logDebug(
-          `${tag} Skipping large file: ${filePath} (${stat.size} > ${maxBytes})`
+          `[${logTag}] Skipping large file: ${filePath} (${stat.size} > ${maxBytes})`
         );
       }
       return null;
@@ -170,9 +167,9 @@ export async function readFileIfUnderSize(
     return await fs.promises.readFile(filePath, 'utf-8');
   } catch (err) {
     if (options?.logOnError) {
-      const tag = options.logTag ?? '[FILE]';
-      const message = err instanceof Error ? err.message : String(err);
-      logDebug(`${tag} Failed to read ${filePath}: ${message}`);
+      const logTag = options.logTag ?? LogTags.FILE;
+      const message = extractErrorMessage(err);
+      logDebug(`[${logTag}] Failed to read ${filePath}: ${message}`);
     }
     return null;
   }

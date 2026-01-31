@@ -1,186 +1,61 @@
 // packages/webview-app/src/App.tsx
-// * MDX Preview App - single React root managing preview rendering (Safe & Trusted mode via React state)
+// MDX Preview App - single React root managing preview rendering (Safe & Trusted mode)
+// State is now managed via granular React contexts for reduced re-renders
 
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  ComponentType,
-  MouseEvent,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState, type ComponentType, type MouseEvent } from 'react';
 import LoadingBar from './components/LoadingBar/LoadingBar';
-import { MDXErrorBoundary, ErrorDisplay } from './components/ErrorBoundary';
+import { MDXErrorBoundary, ErrorDisplay } from './components/ErrorBoundary/ErrorBoundary';
 import { TrustBanner } from './components/TrustBanner/TrustBanner';
-import { StaleIndicator } from './components/StaleIndicator';
+import { StaleIndicator } from './components/StaleIndicator/StaleIndicator';
 import { SafePreviewRenderer } from './SafePreview';
 import { TrustedPreviewRenderer } from './TrustedPreview';
-import { registerWebviewHandlers, ExtensionHandle } from './rpc-webview';
+import { ExtensionHandle } from './rpc-webview';
 import { debug } from './utils/debug';
+import { LogTags } from '@mdx-preview/shared';
 import { classifyLink } from './utils/linkHandler';
-import type {
-  TrustState,
-  PreviewContent,
-  PreviewError,
-  TrustedPreviewContent,
-} from './types';
-import type { NextraPageMeta } from '@mdx-preview/shared';
+import type { TrustedPreviewContent } from './types';
 import { useTheme } from './theme';
+import { ZOOM_DEFAULT_PERCENT } from './constants';
 import {
-  ZOOM_MIN_PERCENT,
-  ZOOM_MAX_PERCENT,
-  ZOOM_STEP_PERCENT,
-  ZOOM_DEFAULT_PERCENT,
-} from './constants';
-import {
-  useFieldSetter,
-  useFieldResetter,
-  useFieldSetterWithFormat,
-} from './hooks';
+  useTrust,
+  usePreview,
+  useLoading,
+  useZoom,
+  useNextra,
+} from './context';
 import './App.css';
 import './styles/admonitions.css';
-// Base styles (shared via data-attribute selectors)
+// Base styles (shared via data-attribute selectors) - always needed
 import './components/shims/base/styles/index.css';
-// Framework-specific styles (unique components only)
-import './components/shims/docusaurus/styles.css';
-import './components/shims/starlight/styles.css';
-import './components/shims/nextra/styles.css';
-import './components/shims/generic/styles.css';
+// Framework-specific styles are now lazy-loaded via frameworkCssLoader.ts
+// when the corresponding framework shims are loaded in preload/index.ts
 
-debug('[APP] App.tsx module loaded');
-
-// initial trust state (Safe Mode by default)
-const INITIAL_TRUST_STATE: TrustState = {
-  workspaceTrusted: false,
-  scriptsEnabled: false,
-  canExecute: false,
-  openMdxLinksInPreview: true,
-};
-
-// app state interface
-interface AppState {
-  trustState: TrustState;
-  content: PreviewContent | null;
-  error: PreviewError | null;
-  isLoading: boolean;
-  // evaluated MDX component for Trusted Mode
-  evaluatedComponent: ComponentType | null;
-  // whether preview content is stale
-  isStale: boolean;
-  // zoom level (percentage, 100 = 100%)
-  zoomLevel: number;
-  // Nextra page metadata (title, layout, etc.)
-  nextraMeta: NextraPageMeta | null;
-}
+debug(`[${LogTags.APP}] App.tsx module loaded`);
 
 function App() {
-  debug('[APP] App component rendering');
+  debug(`[${LogTags.APP}] App component rendering`);
 
-  const [state, setState] = useState<AppState>({
-    trustState: INITIAL_TRUST_STATE,
-    content: null,
-    error: null,
-    isLoading: true,
-    evaluatedComponent: null,
-    isStale: false,
-    zoomLevel: ZOOM_DEFAULT_PERCENT,
-    nextraMeta: null,
-  });
+  // consume state from granular contexts
+  const { trustState } = useTrust();
+  const { content, error, setError, clearError } = usePreview();
+  const { isLoading, isStale } = useLoading();
 
-  // track if we've completed initial setup
-  const initializedRef = useRef(false);
+  // evaluatedComponent kept in local state (not context) to avoid React #130 issue
+  // The context's useMemo was causing the component function to become an object
+  const [evaluatedComponent, setEvaluatedComponent] = useState<ComponentType | null>(null);
+
+  // clear evaluated component when content changes (new file or file modified)
+  useEffect(() => {
+    setEvaluatedComponent(null);
+  }, [content]);
+  const { zoomLevel } = useZoom();
+  const { nextraMeta } = useNextra();
 
   // get theme context for MPE preview themes
-  const { previewTheme, setPreviewThemeState } = useTheme();
+  const { previewTheme } = useTheme();
 
-  // simple field setters using factory hooks
-  const setTrustState = useFieldSetter(setState, 'trustState', 'APP');
-
-  // set Safe Mode content (called by RPC handler)
-  const setSafeContent = useCallback((html: string) => {
-    debug(`[APP] setSafeContent called, html length: ${html.length}`);
-    setState((prev) => ({
-      ...prev,
-      content: { mode: 'safe', html },
-      error: null,
-      isLoading: false,
-      evaluatedComponent: null,
-    }));
-  }, []);
-
-  // set Trusted Mode content (called by RPC handler) - component evaluation happens in TrustedPreviewRenderer
-  const setTrustedContent = useCallback(
-    (code: string, entryFilePath: string, dependencies: string[]) => {
-      debug(
-        `[APP] setTrustedContent called, code length: ${code.length}, path: ${entryFilePath}`
-      );
-      setState((prev) => ({
-        ...prev,
-        content: {
-          mode: 'trusted',
-          code,
-          entryFilePath,
-          dependencies,
-        },
-        error: null,
-        isLoading: false,
-        // will be set after evaluation
-        evaluatedComponent: null,
-      }));
-    },
-    []
-  );
-
-  // set error state (called by RPC handler or on evaluation error)
-  const setError = useCallback((error: PreviewError) => {
-    debug('[APP] setError called', error);
-    setState((prev) => ({
-      ...prev,
-      error,
-      isLoading: false,
-    }));
-  }, []);
-
-  // clear error & retry
-  const clearError = useFieldResetter(setState, 'error', null, 'APP', 'clearError');
-
-  // set evaluated component after Trusted Mode evaluation
-  const setEvaluatedComponent = useFieldSetterWithFormat(
-    setState,
-    'evaluatedComponent',
-    'APP',
-    (comp) => `setEvaluatedComponent called, ${comp ? 'has component' : 'null'}`
-  );
-
-  // set stale indicator state
-  const setStale = useFieldSetter(setState, 'isStale', 'APP');
-
-  // set Nextra page metadata (called by RPC handler)
-  const setNextraMeta = useFieldSetter(setState, 'nextraMeta', 'APP');
-
-  // zoom controls
-  const zoomIn = useCallback(() => {
-    debug('[APP] zoomIn called');
-    setState((prev) => ({
-      ...prev,
-      zoomLevel: Math.min(ZOOM_MAX_PERCENT, prev.zoomLevel + ZOOM_STEP_PERCENT),
-    }));
-  }, []);
-
-  const zoomOut = useCallback(() => {
-    debug('[APP] zoomOut called');
-    setState((prev) => ({
-      ...prev,
-      zoomLevel: Math.max(ZOOM_MIN_PERCENT, prev.zoomLevel - ZOOM_STEP_PERCENT),
-    }));
-  }, []);
-
-  const resetZoom = useFieldResetter(
-    setState,
-    'zoomLevel',
-    ZOOM_DEFAULT_PERCENT,
-    'APP',
-    'resetZoom'
+  debug(
+    `[${LogTags.APP}] Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
   );
 
   // intercept Ctrl/Cmd+clicks on external links & route to extension
@@ -206,85 +81,51 @@ function App() {
       }
 
       event.preventDefault();
-      debug(`[APP] Ctrl/Cmd+click external link: ${href}`);
+      debug(`[${LogTags.APP}] Ctrl/Cmd+click external link: ${href}`);
       ExtensionHandle.openExternal(href);
     }
   }, []);
 
-  // register RPC handlers on mount
-  useEffect(() => {
-    debug(
-      '[APP] useEffect running, initializedRef.current:',
-      initializedRef.current
-    );
-    if (initializedRef.current) {
-      debug('[APP] Already initialized, skipping');
-      return;
+  // compute Nextra layout class from metadata (memoized to avoid string recreation)
+  const nextraLayoutClass = useMemo(() => {
+    if (nextraMeta?.layout === 'full') {
+      return 'nextra-layout-full';
     }
-    initializedRef.current = true;
+    if (nextraMeta?.layout === 'raw') {
+      return 'nextra-layout-raw';
+    }
+    return '';
+  }, [nextraMeta?.layout]);
 
-    debug('[APP] Registering webview handlers...');
-    registerWebviewHandlers({
-      setTrustState,
-      setSafeContent,
-      setTrustedContent,
-      setError,
-      setStale,
-      setTheme: setPreviewThemeState,
-      setNextraMeta,
-      zoomIn,
-      zoomOut,
-      resetZoom,
-    });
-    debug('[APP] Webview handlers registered');
-  }, [
-    setTrustState,
-    setSafeContent,
-    setTrustedContent,
-    setError,
-    setStale,
-    setPreviewThemeState,
-    setNextraMeta,
-    zoomIn,
-    zoomOut,
-    resetZoom,
-  ]);
-
-  // destructure state for rendering
-  const {
-    trustState,
-    content,
-    error,
-    isLoading,
-    evaluatedComponent,
-    isStale,
-    zoomLevel,
-    nextraMeta,
-  } = state;
-  debug(
-    `[APP] Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
-  );
-
-  // compute Nextra layout class from metadata
-  const nextraLayoutClass = nextraMeta?.layout === 'full'
-    ? 'nextra-layout-full'
-    : nextraMeta?.layout === 'raw'
-    ? 'nextra-layout-raw'
-    : '';
+  // memoize zoom style object to avoid new object creation on every render
+  const zoomStyle = useMemo(() => {
+    if (zoomLevel === ZOOM_DEFAULT_PERCENT) {
+      return undefined;
+    }
+    return {
+      transform: `scale(${zoomLevel / ZOOM_DEFAULT_PERCENT})`,
+      transformOrigin: 'top center',
+    };
+  }, [zoomLevel]);
 
   // render loading state during initial load
   if (isLoading && !content && !error) {
-    debug('[APP] Rendering LoadingBar (initial loading)');
+    debug(`[${LogTags.APP}] Rendering LoadingBar (initial loading)`);
     return <LoadingBar />;
   }
 
   // render error state w/ unified ErrorDisplay component
   if (error) {
-    debug('[APP] Rendering error state');
-    // Convert PreviewError to Error for ErrorDisplay
-    const errorObj = new Error(error.message);
+    debug(`[${LogTags.APP}] Rendering error state`);
+    // Convert PreviewError to Error for ErrorDisplay, preserving moduleError data
+    const errorObj = new Error(error.message) as Error & {
+      moduleError?: typeof error.moduleError;
+    };
     if (error.stack) {
       errorObj.stack = error.stack;
+    }
+    if (error.moduleError) {
+      errorObj.moduleError = error.moduleError;
     }
     return (
       <div className="mdx-preview-container">
@@ -299,12 +140,12 @@ function App() {
 
   // render loading state when awaiting content
   if (!content) {
-    debug('[APP] Rendering LoadingBar (no content)');
+    debug(`[${LogTags.APP}] Rendering LoadingBar (no content)`);
     return <LoadingBar />;
   }
 
   // render preview content in Safe or Trusted Mode
-  debug(`[APP] Rendering content in ${content.mode} mode`);
+  debug(`[${LogTags.APP}] Rendering content in ${content.mode} mode`);
 
   return (
     <div
@@ -317,17 +158,7 @@ function App() {
       <MDXErrorBoundary
         onError={(err) => setError({ message: err.message, stack: err.stack })}
       >
-        <div
-          className="mdx-preview-content"
-          style={
-            zoomLevel !== ZOOM_DEFAULT_PERCENT
-              ? {
-                  transform: `scale(${zoomLevel / ZOOM_DEFAULT_PERCENT})`,
-                  transformOrigin: 'top center',
-                }
-              : undefined
-          }
-        >
+        <div className="mdx-preview-content" style={zoomStyle}>
           {nextraMeta?.title && (
             <h1 className="nextra-page-title">{nextraMeta.title}</h1>
           )}

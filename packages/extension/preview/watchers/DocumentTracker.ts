@@ -1,7 +1,7 @@
 // packages/extension/preview/watchers/DocumentTracker.ts
 // track document versions & stale state for preview updates
 
-import type { WebviewRPC } from '@mdx-preview/shared';
+import { LogTags, type WebviewRPC } from '@mdx-preview/shared';
 import { BaseWatcher } from './BaseWatcher';
 
 // webview handle w/ setStale method
@@ -11,7 +11,7 @@ type StaleNotifier = Pick<WebviewRPC, 'setStale'>;
 // extends BaseWatcher for consistency, though start/stop are no-ops
 // since this is a state tracker rather than a file watcher
 export class DocumentTracker extends BaseWatcher {
-  protected readonly logTag = 'DOC-TRACKER';
+  protected readonly logTag = LogTags.DOC_TRACKER;
 
   private lastRenderedVersion = -1;
   private _isStale = false;

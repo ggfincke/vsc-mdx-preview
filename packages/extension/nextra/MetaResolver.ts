@@ -2,15 +2,13 @@
 // resolve Nextra _meta.json files for page-level settings
 
 import * as path from 'path';
-import * as vscode from 'vscode';
 import { debug } from '../logging';
+import { LogTags } from '@mdx-preview/shared';
 import type { NextraPageMeta } from '@mdx-preview/shared';
-import { readJsonSync, pathExists } from '../utils/file-utils';
-
-// cache for resolved meta (cache key -> resolved meta or null)
-const metaCache = new Map<string, NextraPageMeta | null>();
-// track file watchers
-const metaWatchers = new Map<string, vscode.FileSystemWatcher>();
+import { readJsonSync } from '../utils/file-utils';
+import { findUp, createContainmentStopPredicate } from '../utils/find-up';
+import { SingletonService } from '../services/SingletonService';
+import { PathCache } from '../utils/cache';
 
 // raw _meta.json entry structure (simplified for preview-relevant fields)
 type MetaEntry =
@@ -27,134 +25,163 @@ type MetaEntry =
       };
     };
 
-// * resolve _meta.json settings for a specific MDX file
+// Nextra _meta.json resolver service
+// resolves page-level settings from _meta.json files for Nextra-based docs
+export class MetaResolver extends SingletonService<MetaResolver> {
+  protected static override instance: MetaResolver | undefined;
+  protected readonly logTag = LogTags.NEXTRA_META;
+
+  // cache for resolved meta (cache key -> resolved meta or null)
+  private metaCache = new PathCache<NextraPageMeta | null>({
+    logTag: LogTags.NEXTRA_META,
+  });
+
+  protected constructor() {
+    super();
+  }
+
+  // resolve _meta.json settings for a specific MDX file
+  resolveNextraMeta(
+    mdxFilePath: string,
+    workspaceRoot: string
+  ): NextraPageMeta | null {
+    const documentDir = path.dirname(mdxFilePath);
+    const pageBaseName = path.basename(mdxFilePath, path.extname(mdxFilePath));
+
+    // check cache (use get + undefined check instead of has + get for efficiency)
+    const cacheKey = `${documentDir}:${pageBaseName}`;
+    const cached = this.metaCache.get(cacheKey);
+    if (cached !== undefined) {
+      debug(`[${this.logTag}] Cache hit for ${cacheKey}`);
+      return cached;
+    }
+
+    // search for _meta.json upward
+    const metaPath = this.findMetaFile(documentDir, workspaceRoot);
+    if (!metaPath) {
+      debug(`[${this.logTag}] No _meta.json found for ${mdxFilePath}`);
+      this.metaCache.set(cacheKey, null);
+      return null;
+    }
+
+    debug(`[${this.logTag}] Found _meta.json at ${metaPath}`);
+    const meta = readJsonSync<Record<string, MetaEntry>>(metaPath, {
+      logTag: this.logTag,
+      logOnError: true,
+    });
+
+    if (!meta) {
+      this.metaCache.set(cacheKey, null);
+      return null;
+    }
+
+    // extract settings for this page
+    const pageSettings = this.extractPageSettings(meta, pageBaseName);
+
+    // setup watcher for this _meta.json file
+    this.setupMetaWatcher(metaPath, documentDir);
+
+    this.metaCache.set(cacheKey, pageSettings);
+    debug(`[${this.logTag}] Resolved meta for ${pageBaseName}:`, pageSettings);
+    return pageSettings;
+  }
+
+  // merge _meta.json settings w/ frontmatter (frontmatter wins)
+  mergeNextraMeta(
+    metaJson: NextraPageMeta | null,
+    frontmatter: Partial<NextraPageMeta>
+  ): NextraPageMeta {
+    return {
+      ...metaJson,
+      // frontmatter overrides _meta.json
+      ...frontmatter,
+    };
+  }
+
+  // find _meta.json by walking up directory tree (uses shared find-up utility)
+  private findMetaFile(
+    startDir: string,
+    workspaceRoot: string
+  ): string | undefined {
+    return findUp({
+      filename: '_meta.json',
+      startDir,
+      stopAt: createContainmentStopPredicate(workspaceRoot),
+    });
+  }
+
+  // extract page-specific settings from _meta.json
+  private extractPageSettings(
+    meta: Record<string, MetaEntry>,
+    pageBaseName: string
+  ): NextraPageMeta | null {
+    const entry = meta[pageBaseName];
+    if (!entry) {
+      return null;
+    }
+
+    const result: NextraPageMeta = {};
+
+    if (typeof entry === 'string') {
+      // simple string entry is just a title
+      result.title = entry;
+    } else if (typeof entry === 'object') {
+      // object entry w/ full settings
+      if (entry.title) {
+        result.title = entry.title;
+      }
+      if (entry.theme?.layout) {
+        result.layout = entry.theme.layout;
+      }
+      if (typeof entry.theme?.toc === 'boolean') {
+        result.toc = entry.theme.toc;
+      }
+    }
+
+    return Object.keys(result).length > 0 ? result : null;
+  }
+
+  // setup file watcher for _meta.json changes
+  private setupMetaWatcher(metaPath: string, documentDir: string): void {
+    if (this.metaCache.hasWatcher(metaPath)) {
+      return;
+    }
+
+    const handleChange = () => {
+      debug(`[${this.logTag}] _meta.json changed: ${metaPath}`);
+      // clear cache entries for this directory
+      this.metaCache.invalidateByPrefix(`${documentDir}:`);
+    };
+
+    this.metaCache.watchPath(metaPath, {
+      onChange: handleChange,
+      onCreate: handleChange,
+      onDelete: () => {
+        handleChange();
+        this.metaCache.unwatchPath(metaPath);
+      },
+    });
+  }
+
+  // clean up all file watchers & caches on dispose
+  protected override onDispose(): void {
+    this.metaCache.dispose();
+    debug(`[${this.logTag}] Disposed`);
+  }
+}
+
+// backward-compatible function exports
+// these delegate to the singleton service instance
+
+// resolve _meta.json settings for a specific MDX file
 export function resolveNextraMeta(
   mdxFilePath: string,
   workspaceRoot: string
 ): NextraPageMeta | null {
-  const documentDir = path.dirname(mdxFilePath);
-  const pageBaseName = path.basename(mdxFilePath, path.extname(mdxFilePath));
-
-  // check cache (use get + undefined check instead of has + get for efficiency)
-  const cacheKey = `${documentDir}:${pageBaseName}`;
-  const cached = metaCache.get(cacheKey);
-  if (cached !== undefined) {
-    debug(`[NEXTRA-META] Cache hit for ${cacheKey}`);
-    return cached;
-  }
-
-  // search for _meta.json upward
-  const metaPath = findMetaFile(documentDir, workspaceRoot);
-  if (!metaPath) {
-    debug(`[NEXTRA-META] No _meta.json found for ${mdxFilePath}`);
-    metaCache.set(cacheKey, null);
-    return null;
-  }
-
-  debug(`[NEXTRA-META] Found _meta.json at ${metaPath}`);
-  const meta = readJsonSync<Record<string, MetaEntry>>(metaPath, {
-    logTag: '[NEXTRA-META]',
-    logOnError: true,
-  });
-
-  if (!meta) {
-    metaCache.set(cacheKey, null);
-    return null;
-  }
-
-  // extract settings for this page
-  const pageSettings = extractPageSettings(meta, pageBaseName);
-
-  // setup watcher for this _meta.json file
-  setupMetaWatcher(metaPath, documentDir);
-
-  metaCache.set(cacheKey, pageSettings);
-  debug(`[NEXTRA-META] Resolved meta for ${pageBaseName}:`, pageSettings);
-  return pageSettings;
-}
-
-// find _meta.json by walking up directory tree
-function findMetaFile(
-  startDir: string,
-  workspaceRoot: string
-): string | undefined {
-  let currentDir = startDir;
-
-  while (currentDir && currentDir.startsWith(workspaceRoot)) {
-    const metaPath = path.join(currentDir, '_meta.json');
-    if (pathExists(metaPath)) {
-      return metaPath;
-    }
-
-    const parentDir = path.dirname(currentDir);
-    // filesystem root
-    if (parentDir === currentDir) {
-      break;
-    }
-    currentDir = parentDir;
-  }
-
-  return undefined;
-}
-
-// extract page-specific settings from _meta.json
-function extractPageSettings(
-  meta: Record<string, MetaEntry>,
-  pageBaseName: string
-): NextraPageMeta | null {
-  const entry = meta[pageBaseName];
-  if (!entry) {
-    return null;
-  }
-
-  const result: NextraPageMeta = {};
-
-  if (typeof entry === 'string') {
-    // simple string entry is just a title
-    result.title = entry;
-  } else if (typeof entry === 'object') {
-    // object entry w/ full settings
-    if (entry.title) {
-      result.title = entry.title;
-    }
-    if (entry.theme?.layout) {
-      result.layout = entry.theme.layout;
-    }
-    if (typeof entry.theme?.toc === 'boolean') {
-      result.toc = entry.theme.toc;
-    }
-  }
-
-  return Object.keys(result).length > 0 ? result : null;
-}
-
-// setup file watcher for _meta.json changes
-function setupMetaWatcher(metaPath: string, documentDir: string): void {
-  if (metaWatchers.has(metaPath)) {
-    return;
-  }
-
-  const watcher = vscode.workspace.createFileSystemWatcher(metaPath);
-
-  const handleChange = () => {
-    debug(`[NEXTRA-META] _meta.json changed: ${metaPath}`);
-    // clear cache entries for this directory
-    for (const key of metaCache.keys()) {
-      if (key.startsWith(documentDir)) {
-        metaCache.delete(key);
-      }
-    }
-  };
-
-  watcher.onDidChange(handleChange);
-  watcher.onDidCreate(handleChange);
-  watcher.onDidDelete(() => {
-    handleChange();
-    metaWatchers.delete(metaPath);
-    watcher.dispose();
-  });
-
-  metaWatchers.set(metaPath, watcher);
+  return MetaResolver.getInstance().resolveNextraMeta(
+    mdxFilePath,
+    workspaceRoot
+  );
 }
 
 // merge _meta.json settings w/ frontmatter (frontmatter wins)
@@ -162,17 +189,5 @@ export function mergeNextraMeta(
   metaJson: NextraPageMeta | null,
   frontmatter: Partial<NextraPageMeta>
 ): NextraPageMeta {
-  return {
-    ...metaJson,
-    // frontmatter overrides _meta.json
-    ...frontmatter,
-  };
-}
-
-// dispose all file watchers (call during extension deactivation)
-export function disposeMetaWatchers(): void {
-  for (const watcher of metaWatchers.values()) {
-    watcher.dispose();
-  }
-  metaWatchers.clear();
+  return MetaResolver.getInstance().mergeNextraMeta(metaJson, frontmatter);
 }

@@ -3,42 +3,46 @@
 
 import { createRoot } from 'react-dom/client';
 import { initRPCWebviewSide } from './rpc-webview';
-import { debug, debugError } from './utils/debug';
+import { debug, error } from './utils/debug';
+import { LogTags } from '@mdx-preview/shared';
 import { ThemeProvider } from './theme';
 import { LightboxProvider } from './context/LightboxContext';
-import { Lightbox } from './components/Lightbox';
+// Import directly to avoid barrel export import chain issues
+import { WebviewStateProvider } from './context/WebviewStateProvider';
+import { Lightbox } from './components/Lightbox/Lightbox';
 import App from './App';
 import './index.css';
-// KaTeX math rendering styles
-import 'katex/dist/katex.min.css';
+// KaTeX CSS is lazy-loaded via utils/katexLoader.ts when math content is detected
 // Safe Mode component styles (Callout, Collapsible, Tabs transforms)
 import './styles/safe-components.css';
 // Code block styles (Shiki syntax highlighting w/ copy button, language badge)
 import './components/CodeBlock/CodeBlock.css';
 
-debug('[WEBVIEW] index.tsx loaded');
+debug(`[${LogTags.WEBVIEW}] index.tsx loaded`);
 
 // initialize RPC communication w/ extension
-debug('[WEBVIEW] Initializing RPC...');
+debug(`[${LogTags.WEBVIEW}] Initializing RPC...`);
 initRPCWebviewSide();
-debug('[WEBVIEW] RPC initialized');
+debug(`[${LogTags.WEBVIEW}] RPC initialized`);
 
 // React 18 createRoot API
 const container = document.getElementById('root');
 if (!container) {
-  debugError('[WEBVIEW] Root element not found!');
+  error(`[${LogTags.WEBVIEW}] Root element not found!`);
   throw new Error('Root element not found');
 }
 
-debug('[WEBVIEW] Creating React root...');
+debug(`[${LogTags.WEBVIEW}] Creating React root...`);
 const root = createRoot(container);
-debug('[WEBVIEW] Rendering App with ThemeProvider & LightboxProvider...');
+debug(`[${LogTags.WEBVIEW}] Rendering App with providers...`);
 root.render(
   <ThemeProvider>
     <LightboxProvider>
-      <App />
-      <Lightbox />
+      <WebviewStateProvider>
+        <App />
+        <Lightbox />
+      </WebviewStateProvider>
     </LightboxProvider>
   </ThemeProvider>
 );
-debug('[WEBVIEW] App rendered');
+debug(`[${LogTags.WEBVIEW}] App rendered`);

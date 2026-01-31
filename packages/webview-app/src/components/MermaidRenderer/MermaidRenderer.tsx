@@ -1,7 +1,8 @@
 // packages/webview-app/src/components/MermaidRenderer/MermaidRenderer.tsx
-// * lazy-loaded mermaid diagram renderer w/ error handling & source toggle
+// lazy-loaded mermaid diagram renderer w/ error handling & source toggle
 
 import { useRef, useState, useCallback } from 'react';
+import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import { useAsyncEffect } from '../../hooks';
 import { useTheme } from '../../theme';
 import './MermaidRenderer.css';
@@ -13,7 +14,7 @@ const DEBUG =
 
 function debugLog(...args: unknown[]) {
   if (DEBUG) {
-    console.debug('[MermaidRenderer]', ...args);
+    console.debug(`[${LogTags.MERMAID_RENDERER}]`, ...args);
   }
 }
 
@@ -37,7 +38,11 @@ function isDarkMermaidTheme(theme: string): boolean {
   return theme === 'dark';
 }
 
-// * render a single mermaid diagram w/ error handling
+// cache for mermaid initialization - avoid re-initializing w/ same config
+let lastInitializedTheme: string | null = null;
+let lastInitializedDark: boolean | null = null;
+
+// render a single mermaid diagram w/ error handling
 export function MermaidRenderer({ code, id }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { mermaidTheme } = useTheme();
@@ -57,38 +62,47 @@ export function MermaidRenderer({ code, id }: Props) {
       const mermaid = await getMermaid();
       debugLog('mermaid library loaded');
 
-      // initialize mermaid w/ strict config (no foreignObject)
-      // theme is controlled by user setting (mdx-preview.preview.mermaidTheme)
-      mermaid.default.initialize({
-        startOnLoad: false,
-        theme: mermaidTheme,
-        securityLevel: 'strict',
-        // * disable HTML labels to produce pure SVG (no foreignObject)
-        // this keeps DOMPurify allowlist tighter
-        flowchart: { htmlLabels: false },
-        sequence: { useMaxWidth: true },
-        // fix ER diagram relationship label contrast
-        themeCSS: `
-          .edgeLabel text,
-          .edgeLabel tspan,
-          .edgeLabel span,
-          .edgeLabel .label text,
-          .edgeLabel .label tspan,
-          .edgeLabel .label span,
-          .edgeLabel foreignObject div {
-            fill: ${isDark ? '#fff' : '#000'} !important;
-            color: ${isDark ? '#fff' : '#000'} !important;
-          }
-          .relationshipLabelBox,
-          .relationshipLabelBox rect,
-          .edgeLabel .label rect.background {
-            fill: ${isDark ? '#1e1e1e' : '#ffffff'} !important;
-            stroke: ${isDark ? '#555' : '#ccc'} !important;
-            stroke-width: 1px !important;
-            opacity: 1 !important;
-          }
-        `,
-      });
+      // Only re-initialize if theme or dark state changed (perf optimization)
+      const needsReinit =
+        lastInitializedTheme !== mermaidTheme || lastInitializedDark !== isDark;
+
+      if (needsReinit) {
+        debugLog('initializing mermaid with theme', { mermaidTheme, isDark });
+        // initialize mermaid w/ strict config (no foreignObject)
+        // theme is controlled by user setting (mdx-preview.preview.mermaidTheme)
+        mermaid.default.initialize({
+          startOnLoad: false,
+          theme: mermaidTheme,
+          securityLevel: 'strict',
+          // disable HTML labels to produce pure SVG (no foreignObject)
+          // this keeps DOMPurify allowlist tighter
+          flowchart: { htmlLabels: false },
+          sequence: { useMaxWidth: true },
+          // fix ER diagram relationship label contrast
+          themeCSS: `
+            .edgeLabel text,
+            .edgeLabel tspan,
+            .edgeLabel span,
+            .edgeLabel .label text,
+            .edgeLabel .label tspan,
+            .edgeLabel .label span,
+            .edgeLabel foreignObject div {
+              fill: ${isDark ? '#fff' : '#000'} !important;
+              color: ${isDark ? '#fff' : '#000'} !important;
+            }
+            .relationshipLabelBox,
+            .relationshipLabelBox rect,
+            .edgeLabel .label rect.background {
+              fill: ${isDark ? '#1e1e1e' : '#ffffff'} !important;
+              stroke: ${isDark ? '#555' : '#ccc'} !important;
+              stroke-width: 1px !important;
+              opacity: 1 !important;
+            }
+          `,
+        });
+        lastInitializedTheme = mermaidTheme;
+        lastInitializedDark = isDark;
+      }
 
       if (signal.isCancelled() || !containerRef.current) {
         return;
@@ -106,8 +120,7 @@ export function MermaidRenderer({ code, id }: Props) {
     [code, id, mermaidTheme],
     {
       onError: (err) => {
-        const message =
-          err instanceof Error ? err.message : 'Failed to render diagram';
+        const message = extractErrorMessage(err) || 'Failed to render diagram';
         debugLog('render error', { id, error: message });
         setError(message);
       },
@@ -141,7 +154,7 @@ export function MermaidRenderer({ code, id }: Props) {
     );
   }
 
-  // * always render container so ref is available for mermaid.render()
+  // always render container so ref is available for mermaid.render()
   // show loading overlay on top while loading, hide diagram until ready
   return (
     <div className="mdx-preview-mermaid">

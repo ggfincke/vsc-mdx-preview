@@ -43,7 +43,7 @@ export interface BaseCollapsibleProps {
   applyOpenClassToWrapper?: boolean;
 }
 
-// * BaseCollapsible - shared collapsible/details component base
+// BaseCollapsible - shared collapsible/details component base
 export function BaseCollapsible({
   children,
   summary,
@@ -106,9 +106,7 @@ export function BaseCollapsible({
   );
 }
 
-// ============================================================================
-// Preset class configurations for each framework
-// ============================================================================
+// preset class configurations for each framework
 
 // class names for Generic Collapsible
 export const GENERIC_COLLAPSIBLE_CLASSES: CollapsibleClassNames = {

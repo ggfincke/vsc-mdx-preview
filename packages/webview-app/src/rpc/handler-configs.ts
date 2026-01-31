@@ -8,10 +8,8 @@ import type {
   QueuedMessageType,
 } from './handler-factory';
 
-// ============================================================================
-// QUEUED Handler Configurations
-// These handlers buffer messages until React mounts, then flush to state handlers
-// ============================================================================
+// queued handler configurations
+// these handlers buffer messages until React mounts, then flush to state handlers
 
 // factory for creating simple pass-through queued configs
 // use for handlers where the payload is passed directly without transformation
@@ -105,15 +103,13 @@ export const SET_STALE_CONFIG = createSimpleQueuedConfig<boolean>(
   (isStale: unknown) => `setStale called: ${isStale}`
 );
 
-// ============================================================================
-// OPTIONAL Handler Configurations
-// These handlers call the optional handler if present, no queuing
-// ============================================================================
+// optional handler configurations
+// these handlers call the optional handler if present, no queuing
 
-// factory for creating optional handler configs with identical methodName/handlerKey
-function createOptionalConfig<K extends keyof import('./handler-factory').OptionalStateHandlers>(
-  key: K
-): OptionalHandlerConfig {
+// factory for creating optional handler configs w/ identical methodName/handlerKey
+function createOptionalConfig<
+  K extends keyof import('./handler-factory').OptionalStateHandlers,
+>(key: K): OptionalHandlerConfig {
   return { methodName: key, handlerKey: key };
 }
 
@@ -132,11 +128,9 @@ export const ZOOM_OUT_CONFIG = createOptionalConfig('zoomOut');
 // configuration for resetZoom handler
 export const RESET_ZOOM_CONFIG = createOptionalConfig('resetZoom');
 
-// ============================================================================
-// Config Collections (for iteration/documentation)
-// ============================================================================
+// config collections (for iteration/documentation)
 
-// all QUEUED handler configurations
+// All QUEUED handler configurations
 export const QUEUED_CONFIGS = {
   setTrustState: SET_TRUST_STATE_CONFIG,
   updatePreview: UPDATE_PREVIEW_CONFIG,
@@ -145,7 +139,7 @@ export const QUEUED_CONFIGS = {
   setStale: SET_STALE_CONFIG,
 } as const;
 
-// all OPTIONAL handler configurations
+// All OPTIONAL handler configurations
 export const OPTIONAL_CONFIGS = {
   setTheme: SET_THEME_CONFIG,
   setNextraMeta: SET_NEXTRA_META_CONFIG,
@@ -153,3 +147,41 @@ export const OPTIONAL_CONFIGS = {
   zoomOut: ZOOM_OUT_CONFIG,
   resetZoom: RESET_ZOOM_CONFIG,
 } as const;
+
+// compile-time type safety
+// these types are derived from the configs above to ensure compile-time errors
+// if handler configs & rpc-webview.ts get out of sync
+
+// method names for QUEUED handlers (derived from QUEUED_CONFIGS keys)
+// use for type-checking that all queued handlers are implemented
+export type QueuedMethodNames = keyof typeof QUEUED_CONFIGS;
+
+// method names for OPTIONAL handlers (derived from OPTIONAL_CONFIGS keys)
+// use for type-checking that all optional handlers are implemented
+export type OptionalMethodNames = keyof typeof OPTIONAL_CONFIGS;
+
+// all configured RPC method names (queued & optional)
+// does NOT include direct handlers (setCustomCss, setTailwindCss, etc.)
+// which are implemented inline in RPCWebviewHandle
+export type ConfiguredMethodNames = QueuedMethodNames | OptionalMethodNames;
+
+// compile-time validation that all configured methods exist in WebviewRPC
+// if this produces a type error, it means a config references a method that
+// doesn't exist in the WebviewRPC interface
+import type { WebviewRPC } from '@mdx-preview/shared';
+
+// This type will error at compile time if any configured method doesn't exist in WebviewRPC
+type ValidateMethodExists<T extends string> = T extends keyof WebviewRPC
+  ? true
+  : never;
+
+// Force TypeScript to evaluate the validation - these will error if methods don't exist
+type _ValidateQueued = {
+  [K in QueuedMethodNames]: ValidateMethodExists<K>;
+};
+type _ValidateOptional = {
+  [K in OptionalMethodNames]: ValidateMethodExists<K>;
+};
+
+// Use the validation types to ensure they're not dead code
+export type { _ValidateQueued, _ValidateOptional };

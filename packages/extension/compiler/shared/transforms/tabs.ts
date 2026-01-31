@@ -2,7 +2,7 @@
 // transform Tabs/TabItem/Tab components to semantic HTML
 
 import type { RootContent } from 'mdast';
-import type { MdxJsxElement } from './types';
+import type { MdxJsxElement } from '../../../types';
 import { getStaticStringProp, escapeHtml, createNode } from './utils';
 
 // transform Tabs container component to semantic HTML (non-interactive in Safe Mode)

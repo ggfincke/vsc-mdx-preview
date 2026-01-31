@@ -3,13 +3,8 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import {
-  resolveTypescriptConfig,
-  findTsConfig,
-  resolveConfig,
-  type TypeScriptConfiguration,
-  type ResolvedConfig,
-} from './config';
+import { resolveTypescriptConfig, findTsConfig, resolveConfig } from './config';
+import type { TypeScriptConfiguration, ResolvedConfig } from '../types';
 import { DocumentTracker, DependencyWatcher, WatcherManager } from './watchers';
 import type { UpdateMode } from '../config';
 
@@ -20,7 +15,7 @@ export interface DocumentState {
   mdxPreviewConfig?: ResolvedConfig;
 }
 
-// handles document state, tracking, & change events for a preview instance
+// handle document state, tracking, & change events for a preview instance
 export class PreviewDocumentHandler {
   private _doc!: vscode.TextDocument;
   private _dependentFsPaths: Set<string> = new Set();
@@ -80,7 +75,8 @@ export class PreviewDocumentHandler {
 
     const configFile = findTsConfig(this.entryFsDirectory ?? '');
     if (configFile) {
-      this._typescriptConfiguration = resolveTypescriptConfig(configFile);
+      this._typescriptConfiguration =
+        resolveTypescriptConfig(configFile) ?? undefined;
     } else {
       this._typescriptConfiguration = undefined;
     }

@@ -16,15 +16,17 @@ const buildOptions = {
   // vscode is provided by VS Code at runtime
   // @babel/preset-typescript/package.json is dynamically required by @babel/core
   // for module type detection (optional, not used in this project)
-  external: ['vscode', '@babel/preset-typescript/package.json'],
+  // sass is loaded from workspace's node_modules at runtime (not bundled)
+  // typescript is replaced with tsconfck + Sucrase (not bundled)
+  external: ['vscode', '@babel/preset-typescript/package.json', 'sass', 'typescript'],
   // VS Code extension host requires CommonJS
   format: 'cjs',
   platform: 'node',
   target: 'node20',
   sourcemap: !production,
   minify: production,
-  // handle ESM-only packages by bundling them
-  mainFields: ['module', 'main'],
+  // handle ESM-only packages by bundling them (browser first for smaller bundles)
+  mainFields: ['browser', 'module', 'main'],
   // preserve dynamic imports for code splitting if needed
   splitting: false,
   // tree shaking
@@ -35,6 +37,22 @@ const buildOptions = {
   },
   // log level
   logLevel: 'info',
+
+  // production-only optimizations
+  ...(production && {
+    // remove debugger statements
+    drop: ['debugger'],
+    // mark pure functions (can be removed if return value unused) - L.5 optimization
+    pure: [
+      'console.debug',
+      'console.trace',
+      'Object.freeze',
+      'Object.seal',
+      'Object.preventExtensions',
+    ],
+    // strip license comments to reduce bundle size
+    legalComments: 'none',
+  }),
 };
 
 async function build() {

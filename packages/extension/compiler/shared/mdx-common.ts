@@ -4,9 +4,7 @@
 import matter from 'gray-matter';
 import type { NextraPageMeta } from '@mdx-preview/shared';
 
-// import & re-export types from consolidated types file
-export type { UnknownBehavior, FrontmatterResult } from '../types';
-import type { FrontmatterResult, UnknownBehavior } from '../types';
+import type { FrontmatterResult, UnknownBehavior } from '../../types';
 
 // extract frontmatter from MDX text w/ gray-matter (returns content & parsed data)
 export function extractFrontmatter(mdxText: string): FrontmatterResult {

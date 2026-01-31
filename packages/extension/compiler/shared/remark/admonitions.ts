@@ -1,8 +1,8 @@
 // packages/extension/compiler/shared/remark/admonitions.ts
-// remark plugin to transform directive syntax (:::note, :::warning, etc.) to admonition HTML
+// transform directive syntax (:::note, :::warning, etc.) to admonition HTML
 //
 // this plugin transforms container directives from remark-directive into admonition HTML
-// it supports Docusaurus/Starlight-style admonition syntax:
+// it supports Docusaurus/Starlight-style admonition syntax
 //
 //   :::note
 //   this is a note
@@ -194,7 +194,10 @@ function createAdmonitionNode(
         className: ['mdx-preview-admonition-header'],
       },
     },
-    children: [htmlNode, textNode] as unknown as (BlockContent | PhrasingContent)[],
+    children: [htmlNode, textNode] as unknown as (
+      | BlockContent
+      | PhrasingContent
+    )[],
   };
 
   const contentNode: AdmonitionContentNode = {
@@ -217,13 +220,16 @@ function createAdmonitionNode(
         'data-admonition-type': type.label.toLowerCase(),
       },
     },
-    children: [headerNode, contentNode] as unknown as (BlockContent | PhrasingContent)[],
+    children: [headerNode, contentNode] as unknown as (
+      | BlockContent
+      | PhrasingContent
+    )[],
   };
 
   return admonitionNode as Parent;
 }
 
-// remark plugin to transform container directives to admonitions
+// transform container directives to admonitions
 export default function remarkAdmonitions() {
   return (tree: Root) => {
     visit(

@@ -7,7 +7,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  // * use relative base so dynamic chunk imports resolve relative to main.js
+  // use relative base so dynamic chunk imports resolve relative to main.js
   // (not the document's base href which points to the MDX file's directory)
   base: './',
   build: {
@@ -24,9 +24,11 @@ export default defineConfig({
           }
           return 'static/media/[name][extname]';
         },
-        // code splitting for heavy dependencies
+        // code splitting for heavy dependencies (M.4 optimization)
         manualChunks: {
           mermaid: ['mermaid'],
+          katex: ['katex'],
+          dompurify: ['dompurify'],
         },
       },
     },

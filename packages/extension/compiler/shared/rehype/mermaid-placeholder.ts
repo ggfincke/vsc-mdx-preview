@@ -1,10 +1,10 @@
 // packages/extension/compiler/shared/rehype/mermaid-placeholder.ts
-// * convert mermaid code blocks to placeholders for client-side rendering
+// convert mermaid code blocks to placeholders for client-side rendering
 
 import { visit } from 'unist-util-visit';
 import type { Root, Element, Text } from 'hast';
 
-// * rehype plugin that transforms mermaid code blocks into placeholder divs
+// rehype plugin that transforms mermaid code blocks into placeholder divs
 // the webview renders these client-side using mermaid.js
 export default function rehypeMermaidPlaceholder() {
   return (tree: Root) => {

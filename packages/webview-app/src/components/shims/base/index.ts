@@ -29,7 +29,7 @@ export { extractTextContent } from './extractTextContent';
 
 export { CopyButton, type CopyButtonProps } from './CopyButton';
 
-export { CALLOUT_ICONS, FILE_TREE_ICONS, CODE_ICONS } from './icons';
+export { CALLOUT_ICONS, FILE_TREE_ICONS } from './icons';
 
 export {
   createCallout,
@@ -37,3 +37,8 @@ export {
   type BaseCalloutProps,
   type IconSource,
 } from './BaseCallout';
+
+export { createCodeBlock, type BaseCodeBlockProps } from './BaseCodeBlock';
+
+// re-export generic callout normalization for discoverability
+export { normalizeCalloutType, type CalloutType } from '../generic/types';

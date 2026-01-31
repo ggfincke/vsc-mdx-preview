@@ -2,12 +2,10 @@
 // scan imported dependencies for Tailwind classes
 
 import * as path from 'path';
-import {
-  getUnifiedResolver,
-  type ResolutionContext,
-} from '../../module-system/resolver/UnifiedResolver';
+import { getUnifiedResolver } from '../../module-system/resolver/UnifiedResolver';
+import type { ResolutionContext, TextExtractor } from '../../types';
 import { FileScanValidator } from '../FileScanValidator';
-import type { TextExtractor } from './types';
+import { TailwindScanCache, computeContentHash } from '../TailwindScanCache';
 
 // resolves & scans imported dependency files for Tailwind classes
 export class DependencyScanner {
@@ -15,12 +13,14 @@ export class DependencyScanner {
   private readonly resolver = getUnifiedResolver();
 
   // scan dependency files for Tailwind classes
+  // optionally uses scanCache to avoid re-scanning unchanged files
   async scanDependencies(
     entryFilePath: string,
     imports: string[],
     maxFileSizeBytes: number,
     extractFromText: TextExtractor,
-    providedContext?: ResolutionContext
+    providedContext?: ResolutionContext,
+    scanCache?: TailwindScanCache
   ): Promise<{ classes: Set<string>; scannedFiles: string[] }> {
     const classSet = new Set<string>();
     const scannedFiles: string[] = [];
@@ -38,9 +38,31 @@ export class DependencyScanner {
       maxFileSizeBytes
     );
 
-    // extract classes from each file
+    // extract classes from each file w/ optional caching
     for (const [fsPath, content] of fileContents) {
-      extractFromText(content, classSet);
+      const hash = computeContentHash(content);
+
+      // check cache first
+      const cached = scanCache?.get(fsPath, hash);
+      if (cached) {
+        // use cached classes
+        for (const cls of cached) {
+          classSet.add(cls);
+        }
+      } else {
+        // extract classes & cache the result
+        const fileClassSet = new Set<string>();
+        extractFromText(content, fileClassSet);
+
+        // add to main class set
+        for (const cls of fileClassSet) {
+          classSet.add(cls);
+        }
+
+        // store in cache
+        scanCache?.set(fsPath, hash, Array.from(fileClassSet));
+      }
+
       scannedFiles.push(fsPath);
     }
 

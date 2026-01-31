@@ -1,38 +1,73 @@
 // packages/extension/module-system/transform/babel.ts
 // babel configuration for transpiling user code in MDX files
+//
+// webview evaluates modules using new Function() which requires CommonJS format
+// preset-env converts ES modules (import/export) to CommonJS (require/module.exports)
+//
+// G.1 optimization: @babel/core is loaded dynamically on first transform,
+// not at module initialization time. This reduces extension activation time
+// for Safe Mode users who never need Babel
 
-import * as babel from '@babel/core';
+import { createLazyImport } from '../../utils/lazy-import';
+import type * as BabelCore from '@babel/core';
 
-// babel configuration (@babel/preset-env handles dynamic imports)
-const babelOptions = {
-  presets: [
-    babel.createConfigItem([
-      require('@babel/preset-env'),
-      { exclude: ['transform-regenerator'] },
-    ]),
-    babel.createConfigItem(require('@babel/preset-react')),
-  ],
-  plugins: [
-    // stage-1 proposal: export default from (kept for real-world compatibility)
-    babel.createConfigItem(
-      require('@babel/plugin-proposal-export-default-from')
-    ),
-    // standard ES2020+ transforms (renamed from deprecated plugin-proposal-* packages)
-    babel.createConfigItem(
-      require('@babel/plugin-transform-export-namespace-from')
-    ),
-    babel.createConfigItem(require('@babel/plugin-transform-class-properties')),
-    babel.createConfigItem(
-      require('@babel/plugin-transform-optional-chaining')
-    ),
-    babel.createConfigItem(
-      require('@babel/plugin-transform-nullish-coalescing-operator')
-    ),
-  ],
-};
+// Lazy load @babel/core - only imported when first transform is requested
+const getBabel = createLazyImport(() => import('@babel/core'));
 
-export const transformAsync = (
+// Module-level cache for lazily-initialized config items (G.4 optimization)
+// Config items are only created on first transformAsync() call
+let cachedBabelOptions: BabelCore.TransformOptions | null = null;
+
+// lazily initialize Babel options on first use
+// config items are cached after first creation to avoid repeated require() calls
+// this defers the expensive createConfigItem() & require() calls until first transform
+async function getBabelOptions(
+  babel: typeof BabelCore
+): Promise<BabelCore.TransformOptions> {
+  if (cachedBabelOptions) {
+    return cachedBabelOptions;
+  }
+
+  // only now do we require presets/plugins & create config items
+  cachedBabelOptions = {
+    presets: [
+      // ES modules -> CommonJS (required for webview Function() evaluation)
+      babel.createConfigItem([
+        require('@babel/preset-env'),
+        {
+          modules: 'commonjs',
+          // only transform modules, not syntax (Node 20+ handles rest)
+          targets: { node: 'current' },
+        },
+      ]),
+      // JSX transformation (required for React components)
+      babel.createConfigItem(require('@babel/preset-react')),
+    ],
+    plugins: [
+      // stage-1 proposal: export default from (not native in Node/browsers)
+      babel.createConfigItem(
+        require('@babel/plugin-proposal-export-default-from')
+      ),
+    ],
+    // Explicit options for performance
+    ast: false,
+    sourceMaps: false,
+    configFile: false,
+    babelrc: false,
+  };
+
+  return cachedBabelOptions;
+}
+
+export const transformAsync = async (
   code: string
-): Promise<babel.BabelFileResult | null> => {
-  return babel.transformAsync(code, babelOptions);
+): Promise<BabelCore.BabelFileResult | null> => {
+  const babel = await getBabel();
+  const options = await getBabelOptions(babel);
+  return babel.transformAsync(code, options);
 };
+
+// clear cached Babel config (for testing or hot reload scenarios)
+export function clearBabelConfigCache(): void {
+  cachedBabelOptions = null;
+}

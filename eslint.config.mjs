@@ -16,8 +16,10 @@ export default tseslint.config(
       globals: {
         ...globals.node,
       },
+      // L.3 optimization: enable incremental type-checking
       parserOptions: {
-        project: './tsconfig.json',
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     plugins: {
@@ -42,6 +44,8 @@ export default tseslint.config(
       // Custom local rules
       // Enforce ConfigManager usage for VS Code configuration access
       'local/no-direct-vscode-config': 'error',
+      // Enforce LogTags usage for log prefixes
+      'local/no-raw-log-tag': 'error',
     },
   },
   {

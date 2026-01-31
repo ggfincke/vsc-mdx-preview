@@ -3,6 +3,7 @@
 
 import { resolveAlias, isBuiltInShim } from './alias-resolver';
 import { debug } from '../../logging';
+import { isNpmModuleId, LogTags } from '@mdx-preview/shared';
 import { createResettableSingleton } from '../../utils/singleton-factory';
 import { buildShimResolutionResult } from './result-builders';
 
@@ -13,25 +14,15 @@ import {
   getFileProbeStrategy,
 } from './strategies';
 
-// import consolidated types from module-system/types.ts
+// import consolidated types from centralized types
 import {
   ResolutionStrategy,
-  type TypeScriptConfiguration,
   type ResolutionContext,
   type ResolutionResult,
   type ResolutionMode,
-} from '../types';
+} from '../../types';
 
-// re-export types for backward compatibility
-export {
-  ResolutionStrategy,
-  type TypeScriptConfiguration,
-  type ResolutionContext,
-  type ResolutionResult,
-  type ResolutionMode,
-};
-
-// * UnifiedResolver orchestrates 4 resolution strategies in priority order
+// UnifiedResolver orchestrates 4 resolution strategies in priority order
 export class UnifiedResolver {
   // check if specifier is a relative import
   isRelativeImport(specifier: string): boolean {
@@ -46,7 +37,7 @@ export class UnifiedResolver {
     if (specifier.startsWith('http://') || specifier.startsWith('https://')) {
       return false;
     }
-    if (specifier.startsWith('npm://')) {
+    if (isNpmModuleId(specifier)) {
       return false;
     }
     return true;
@@ -77,7 +68,7 @@ export class UnifiedResolver {
       if (aliasedPath !== null) {
         if (isBuiltInShim(aliasedPath)) {
           debug(
-            `[UNIFIED-RESOLVER] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
+            `[${LogTags.UNIFIED_RESOLVER}] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
           );
           return buildShimResolutionResult(
             aliasedPath,
@@ -87,7 +78,7 @@ export class UnifiedResolver {
         }
         // alias resolved to a path - continue w/ that path (will use subsequent strategy)
         debug(
-          `[UNIFIED-RESOLVER] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
+          `[${LogTags.UNIFIED_RESOLVER}] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
         );
         specifier = aliasedPath;
       }
@@ -95,7 +86,11 @@ export class UnifiedResolver {
 
     // step 2: TypeScript path resolution (for non-relative imports)
     if (context.tsConfig && !this.isRelativeImport(specifier)) {
-      const result = getTypeScriptPathStrategy().resolve(specifier, context, mode);
+      const result = getTypeScriptPathStrategy().resolve(
+        specifier,
+        context,
+        mode
+      );
       if (result) {
         return result;
       }
@@ -103,7 +98,11 @@ export class UnifiedResolver {
 
     // step 3: enhanced-resolve (for node_modules)
     if (!this.isRelativeImport(specifier)) {
-      const result = getEnhancedResolveStrategy().resolve(specifier, context, mode);
+      const result = getEnhancedResolveStrategy().resolve(
+        specifier,
+        context,
+        mode
+      );
       if (result) {
         return result;
       }
@@ -118,24 +117,97 @@ export class UnifiedResolver {
     }
 
     debug(
-      `[UNIFIED-RESOLVER] Could not resolve: ${specifier} from ${context.baseDir}`
+      `[${LogTags.UNIFIED_RESOLVER}] Could not resolve: ${specifier} from ${context.baseDir}`
     );
     return null;
   }
 
-  // asynchronous resolution (delegates to sync for now)
+  // I.3: asynchronous resolution w/ parallel file probing
   async resolveAsync(
     specifier: string,
     context: ResolutionContext,
     mode: ResolutionMode = 'dependency'
   ): Promise<ResolutionResult | null> {
-    // enhanced-resolve is sync anyway, so just delegate
-    return this.resolveSync(specifier, context, mode);
+    if (!this.shouldResolve(specifier)) {
+      return null;
+    }
+
+    // step 1: framework alias resolution (for bare imports only) - sync, no I/O
+    if (
+      context.framework &&
+      context.shimsEnabled &&
+      !this.isRelativeImport(specifier)
+    ) {
+      const aliasedPath = resolveAlias(
+        specifier,
+        context.framework,
+        context.workspaceRoot ?? context.baseDir
+      );
+
+      if (aliasedPath !== null) {
+        if (isBuiltInShim(aliasedPath)) {
+          debug(
+            `[${LogTags.UNIFIED_RESOLVER}] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
+          );
+          return buildShimResolutionResult(
+            aliasedPath,
+            specifier,
+            ResolutionStrategy.FrameworkShim
+          );
+        }
+        debug(
+          `[${LogTags.UNIFIED_RESOLVER}] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
+        );
+        specifier = aliasedPath;
+      }
+    }
+
+    // step 2: TypeScript path resolution (for non-relative imports)
+    // I.3: use async resolution for parallel file probing
+    if (context.tsConfig && !this.isRelativeImport(specifier)) {
+      const strategy = getTypeScriptPathStrategy();
+      const result = strategy.resolveAsync
+        ? await strategy.resolveAsync(specifier, context, mode)
+        : strategy.resolve(specifier, context, mode);
+      if (result) {
+        return result;
+      }
+    }
+
+    // step 3: enhanced-resolve (for node_modules) - uses CachedInputFileSystem internally
+    if (!this.isRelativeImport(specifier)) {
+      const result = getEnhancedResolveStrategy().resolve(
+        specifier,
+        context,
+        mode
+      );
+      if (result) {
+        return result;
+      }
+    }
+
+    // step 4: file probing fallback (for relative imports)
+    // I.3: use async resolution for parallel file probing
+    if (this.isRelativeImport(specifier)) {
+      const strategy = getFileProbeStrategy();
+      const result = strategy.resolveAsync
+        ? await strategy.resolveAsync(specifier, context, mode)
+        : strategy.resolve(specifier, context, mode);
+      if (result) {
+        return result;
+      }
+    }
+
+    debug(
+      `[${LogTags.UNIFIED_RESOLVER}] Could not resolve: ${specifier} from ${context.baseDir}`
+    );
+    return null;
   }
 }
 
 // singleton instance (resettable for testing)
-const unifiedResolverSingleton = createResettableSingleton(
+// exported for subsystem registration (resolver-subsystem.ts)
+export const unifiedResolverSingleton = createResettableSingleton(
   () => new UnifiedResolver()
 );
 

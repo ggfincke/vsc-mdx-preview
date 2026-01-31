@@ -1,6 +1,6 @@
-// packages/webview-app/src/components/shims/starlight/index.ts
-// Re-exports for Starlight component shims
-// provides all components available in @astrojs/starlight/components
+// AUTO-GENERATED FILE - DO NOT EDIT
+// Source: packages/shared/shims/shim-config.ts
+// components/shims/starlight/index.ts
 
 export { Card } from './Card';
 export type { CardProps } from './Card';
@@ -20,7 +20,6 @@ export type { BadgeProps, BadgeVariant } from './Badge';
 export { Aside } from './Aside';
 export type { AsideProps, AsideType } from './Aside';
 
-// Tabs - re-exported from Docusaurus (compatible API)
 export { Tabs, TabItem } from './Tabs';
 export type { TabsProps, TabItemProps } from './Tabs';
 

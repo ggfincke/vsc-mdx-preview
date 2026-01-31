@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { SingletonService } from '../services/SingletonService';
 import { getConfigManager } from '../services';
 import { SubscriberManager } from '../utils/SubscriberManager';
+import { LogTags } from '@mdx-preview/shared';
 import type {
   PreviewTheme,
   CodeBlockTheme,
@@ -16,9 +17,11 @@ import { getOppositeTheme, isLightPreviewTheme } from './types';
 
 export class ThemeManager extends SingletonService<ThemeManager> {
   protected static override instance: ThemeManager | undefined;
-  protected readonly logTag = 'THEME-MANAGER';
+  protected readonly logTag = LogTags.THEME_MANAGER;
 
-  private subscriberManager = new SubscriberManager<WebviewThemeState>('THEME-MANAGER');
+  private subscriberManager = new SubscriberManager<WebviewThemeState>(
+    LogTags.THEME_MANAGER
+  );
 
   protected constructor() {
     super();

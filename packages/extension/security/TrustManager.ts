@@ -6,7 +6,7 @@ import { error as logError } from '../logging';
 import { SingletonService } from '../services/SingletonService';
 import { getConfigManager } from '../services';
 import { SubscriberManager } from '../utils/SubscriberManager';
-import type { TrustState } from '@mdx-preview/shared';
+import { LogTags, type TrustState } from '@mdx-preview/shared';
 
 export type { TrustState } from '@mdx-preview/shared';
 
@@ -27,14 +27,18 @@ export interface TrustedModeCheck {
   reason?: string;
 }
 
-// * manage trust state for MDX preview
+// manage trust state for MDX preview
 export class TrustManager extends SingletonService<TrustManager> {
   protected static override instance: TrustManager | undefined;
-  protected readonly logTag = 'TRUST-MANAGER';
+  protected readonly logTag = LogTags.TRUST_MANAGER;
 
   private subscriberManager = new SubscriberManager<TrustState>(
-    'TRUST-MANAGER',
-    (error) => logError('Error in TrustManager listener', error)
+    LogTags.TRUST_MANAGER,
+    (error) =>
+      logError(
+        `[${LogTags.TRUST_MANAGER}] Error in TrustManager listener`,
+        error
+      )
   );
 
   protected constructor() {
@@ -96,7 +100,7 @@ export class TrustManager extends SingletonService<TrustManager> {
     return getSecurityMode(this.getState());
   }
 
-  // ! check if Trusted Mode can be used for specific document (validates 4 security rules)
+  // check if Trusted Mode can be used for specific document (validates 4 security rules)
   canUseTrustedMode(docUri: vscode.Uri): TrustedModeCheck {
     // rule 1: workspace must be trusted
     if (!vscode.workspace.isTrusted) {

@@ -71,7 +71,7 @@ export interface BuildEffectiveConfigOptions {
   frontmatter?: Record<string, unknown>;
 }
 
-// * build unified effective preview configuration
+// build unified effective preview configuration
 export function buildEffectivePreviewConfig(
   options: BuildEffectiveConfigOptions
 ): EffectivePreviewConfig {

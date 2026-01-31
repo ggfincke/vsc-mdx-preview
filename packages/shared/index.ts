@@ -1,19 +1,45 @@
 // packages/shared/index.ts
 // shared type definitions & registries for extension & webview packages
 
+// import types used locally in this file
+import type { Framework as FrameworkType } from './registry';
+import type { ModuleErrorData } from './errors';
+import type { LogTag } from './logging';
+
 // shared timing & limit constants
 export {
   STANDARD_DEBOUNCE_MS,
   STANDARD_CACHE_TTL_MS,
   STANDARD_WATCHER_DEBOUNCE_MS,
+  RPC_HANDLER_RETRY_DELAY_MS,
+  RPC_HANDLER_MAX_RETRIES,
+  RPC_PENDING_MESSAGES_WARNING_THRESHOLD,
+  SHIM_LOAD_MAX_RETRIES,
+  SHIM_LOAD_RETRY_DELAY_MS,
 } from './constants';
 
 // component registry - single source of truth for all shim definitions
 export {
-  COMPONENT_REGISTRY,
+  // types
   SHIM_PREFIX,
+  type ComponentRegistryEntry,
+  type ComponentDefinition,
+  type ComponentBarrelDefinition,
+  type Framework,
+  type FrameworkId,
+  type FrameworkSetting,
+  // registry data
+  COMPONENT_REGISTRY,
   GENERIC_COMPONENTS,
   FRAMEWORK_COMPONENTS,
+  type ComponentRegistryEntryType,
+  type GenericComponentName,
+  type GenericComponentAlias,
+  type DocusaurusComponent,
+  type StarlightComponent,
+  type NextjsComponent,
+  type NextraComponent,
+  // queries
   getAllGenericComponentNames,
   getGenericComponentSet,
   getPrimaryGenericComponentNames,
@@ -23,27 +49,10 @@ export {
   isFrameworkComponent,
   getGenericShimPath,
   getFrameworkShimPath,
-  type ComponentRegistryEntry,
-  type ComponentRegistryEntryType,
-  type ComponentDefinition,
-  type ComponentBarrelDefinition,
-  type Framework,
-  type FrameworkId,
-  type FrameworkName,
-  type FrameworkSetting,
-  type GenericComponentName,
-  type GenericComponentAlias,
-  type DocusaurusComponent,
-  type StarlightComponent,
-  type NextjsComponent,
-  type NextraComponent,
-} from './registry/components';
+} from './registry';
 
 // core preloaded module IDs (React, MDX, layout)
-export {
-  PRELOADED_MODULE_IDS,
-  type PreloadedModuleId,
-} from './core-modules';
+export { PRELOADED_MODULE_IDS, type PreloadedModuleId } from './core-modules';
 
 // fetch result w/ module code & dependencies
 export interface FetchResult {
@@ -71,6 +80,8 @@ export interface PreviewError {
   context?: string;
   // hint for webview to show retry button
   recoverable?: boolean;
+  // module-specific error data (when error is module-related)
+  moduleError?: ModuleErrorData;
 }
 
 // check if value is a PreviewError
@@ -85,7 +96,7 @@ export function isPreviewError(value: unknown): value is PreviewError {
 
 // format trust state for debug logging
 export function formatTrustStateForDebug(
-  tag: string,
+  tag: LogTag,
   state: TrustState
 ): string {
   return (
@@ -102,8 +113,44 @@ export {
   extractErrorStack,
   normalizeError,
   extractErrorInfo,
+  extractErrorChain,
+  formatErrorWithCause,
   type ErrorInfo,
 } from './utils/errors';
+
+// module error types (shared between extension & webview)
+export {
+  type ModuleErrorCode,
+  type ModuleErrorData,
+  MODULE_ERROR_LABELS,
+  isModuleErrorData,
+  formatModuleErrorDisplay,
+  MODULE_ERROR_SUGGESTIONS,
+  getSuggestionsForCode,
+  ModuleError,
+  type ModuleErrorOptions,
+} from './errors';
+
+// module ID utilities (npm:// format handling)
+export {
+  NPM_MODULE_PREFIX,
+  isNpmModuleId,
+  isBareImport,
+  parseNpmModuleId,
+  createNpmModuleId,
+  hasUrlScheme,
+  isValidModuleRequest,
+  URL_SCHEME_PATTERN,
+  type ParsedNpmModuleId,
+} from './utils/module-id';
+
+// LRU cache utilities
+export {
+  LRUCache,
+  type LRUCacheOptions,
+  ContentHashCache,
+  type ContentHashCacheOptions,
+} from './utils';
 
 // available preview themes (markdown content styling)
 export type PreviewTheme =
@@ -125,7 +172,23 @@ export type PreviewTheme =
   | 'vue';
 
 // available mermaid diagram themes
-export type MermaidTheme = 'default' | 'dark' | 'forest' | 'neutral' | 'base' | 'null';
+export type MermaidTheme =
+  | 'default'
+  | 'dark'
+  | 'forest'
+  | 'neutral'
+  | 'base'
+  | 'null';
+
+// available mermaid themes array (canonical source)
+export const MERMAID_THEMES: MermaidTheme[] = [
+  'default',
+  'dark',
+  'forest',
+  'neutral',
+  'base',
+  'null',
+];
 
 // available code block themes (syntax highlighting)
 export type CodeBlockTheme =
@@ -281,6 +344,9 @@ export interface NextraPageMeta {
 // webview-exposed RPC methods
 export interface WebviewRPC {
   setTrustState(state: TrustState): void;
+  setFramework(framework: FrameworkType): void;
+  // inform webview which generic components are used (for conditional shim preloading)
+  setUsedComponents(components: string[]): void;
   updatePreview(
     code: string,
     entryFilePath: string,
@@ -298,3 +364,68 @@ export interface WebviewRPC {
   zoomOut(): void;
   resetZoom(): void;
 }
+
+// logging types & tags (shared between extension & webview)
+export {
+  LogLevel,
+  type LogFn,
+  type LogFnVariadic,
+  type Logger,
+  type LoggerVariadic,
+  type TaggedLogger,
+  type TaggedLoggerFactory,
+  LogTags,
+  type LogTag,
+} from './logging';
+
+// config enums (canonical source for validation & settings)
+export {
+  FRAMEWORK_IDS,
+  FRAMEWORK_SETTINGS,
+  TAILWIND_ENABLED_VALUES,
+  UNKNOWN_BEHAVIOR_VALUES,
+  UPDATE_MODE_VALUES,
+  SECURITY_POLICY_VALUES,
+  DEFAULT_PREVIEW_UPDATE_MODE,
+  DEFAULT_PREVIEW_DEBOUNCE_DELAY_MS,
+  DEFAULT_PREVIEW_ENABLE_SCRIPTS,
+  DEFAULT_PREVIEW_OPEN_MDX_LINKS_IN_PREVIEW,
+  DEFAULT_PREVIEW_SECURITY_POLICY,
+  DEFAULT_PREVIEW_USE_VSCODE_MARKDOWN_STYLES,
+  DEFAULT_PREVIEW_USE_WHITE_BACKGROUND,
+  DEFAULT_PREVIEW_CUSTOM_CSS,
+  DEFAULT_PREVIEW_CUSTOM_LAYOUT_PATH,
+  DEFAULT_PREVIEW_THEME,
+  DEFAULT_CODE_BLOCK_THEME,
+  DEFAULT_MERMAID_THEME,
+  DEFAULT_AUTO_THEME,
+  DEFAULT_USE_SUCRASE_TRANSPILER,
+  DEFAULT_TAILWIND_ENABLED,
+  DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES,
+  DEFAULT_TAILWIND_MAX_CSS_FILES_TO_SEARCH,
+  DEFAULT_TAILWIND_CACHE_MAX_ENTRIES,
+  DEFAULT_TAILWIND_CACHE_TTL_SECONDS,
+  DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS,
+  DEFAULT_FRAMEWORK,
+  DEFAULT_FRAMEWORK_COMPONENT_SHIMS,
+  DEFAULT_COMPONENTS_BUILTINS,
+  DEFAULT_COMPONENTS_UNKNOWN_BEHAVIOR,
+  DEFAULT_WATCHER_DEBOUNCE_MS,
+  SETTINGS_DEFAULTS,
+  MDX_PREVIEW_CONFIG_SCHEMA,
+  type TailwindEnabledValue,
+  type UnknownBehaviorValue,
+  type UpdateModeValue,
+  type SecurityPolicyValue,
+} from './config';
+
+// callout types & normalization (shared between extension & webview)
+export {
+  type CalloutType,
+  VALID_CALLOUT_TYPES,
+  VALID_CALLOUT_TYPE_SET,
+  CALLOUT_TYPE_ALIASES,
+  CALLOUT_TITLES,
+  normalizeCalloutType,
+  isValidCalloutType,
+} from './callout';
