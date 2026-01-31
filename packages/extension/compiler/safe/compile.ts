@@ -75,12 +75,13 @@ function remarkStripMdx(options: RemarkStripMdxOptions = {}) {
         const isKnownComponent =
           builtinsEnabled && KNOWN_GENERIC_COMPONENTS.has(name);
 
+        // pass true for isFlowElement
         const replacement = createJsxReplacement(
           jsxNode,
           name,
           unknownBehavior,
           isKnownComponent,
-          true // isFlowElement
+          true
         );
 
         if (replacement === null) {
@@ -104,12 +105,13 @@ function remarkStripMdx(options: RemarkStripMdxOptions = {}) {
         const isKnownComponent =
           builtinsEnabled && KNOWN_GENERIC_COMPONENTS.has(name);
 
+        // pass false for isFlowElement
         const replacement = createJsxReplacement(
           jsxNode,
           name,
           unknownBehavior,
           isKnownComponent,
-          false // isFlowElement
+          false
         );
 
         if (replacement === null) {

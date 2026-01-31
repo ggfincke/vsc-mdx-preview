@@ -6,7 +6,11 @@ import * as vscode from 'vscode';
 import type { Pluggable } from 'unified';
 import { debug, info } from '../../logging';
 import type { PluginSpec, ResolvedConfig } from '../../types';
-import { getTrustManager, getErrorReporter } from '../../services';
+import { getErrorReporter } from '../../services';
+import {
+  TrustError,
+  requireTrustedModeForDocument,
+} from '../../security/validateTrust';
 import { getNodeResolver } from '../../module-system/resolver/resolver-factory';
 import { PluginError } from '../../errors';
 import { validateFunction } from '../../utils/validation';
@@ -101,20 +105,24 @@ export async function loadPluginsFromConfig(
     return result;
   }
 
-  // check trust state - only load plugins in Trusted Mode (document-aware)
-  const trustState = getTrustManager().getStateForDocument(documentUri);
-  if (!trustState.canExecute) {
-    const pluginCount =
-      (remarkPlugins?.length ?? 0) + (rehypePlugins?.length ?? 0);
-    getErrorReporter().reportPluginError(
-      new PluginError(
-        `Custom plugins configured but cannot load: ${trustState.reason || 'Safe Mode'}. ${pluginCount} plugin(s) will be ignored.`,
-        'PLUGIN_LOAD_ERROR',
+  // require Trusted Mode for custom plugin loading
+  try {
+    requireTrustedModeForDocument(documentUri, 'load custom MDX plugins');
+  } catch (error) {
+    if (error instanceof TrustError) {
+      const pluginCount =
+        (remarkPlugins?.length ?? 0) + (rehypePlugins?.length ?? 0);
+      getErrorReporter().reportPluginError(
+        new PluginError(
+          `Custom plugins configured but cannot load: ${error.message}. ${pluginCount} plugin(s) will be ignored.`,
+          'PLUGIN_LOAD_ERROR',
+          'custom-plugins'
+        ),
         'custom-plugins'
-      ),
-      'custom-plugins'
-    );
-    return result;
+      );
+      return result;
+    }
+    throw error;
   }
 
   const configDir = config.configDir;

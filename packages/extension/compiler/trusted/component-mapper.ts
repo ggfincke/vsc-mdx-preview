@@ -5,7 +5,10 @@ import * as vscode from 'vscode';
 import { debug, info } from '../../logging';
 import { toAbsolutePath, toRelativeImportPath } from '../../utils/path-utils';
 import type { ResolvedConfig } from '../../types';
-import { getTrustManager } from '../../services';
+import {
+  TrustError,
+  requireTrustedModeForDocument,
+} from '../../security/validateTrust';
 
 // use shared component registry as single source of truth
 import { getAllGenericComponentNames, LogTags } from '@mdx-preview/shared';
@@ -46,7 +49,9 @@ export function generateComponentImports(
 ): ComponentImportsResult {
   const { builtinsEnabled = true } = options;
 
-  debug(`[${LogTags.COMPONENT_MAPPER}] Called with config: ${config ? JSON.stringify(config.config) : 'undefined'}`);
+  debug(
+    `[${LogTags.COMPONENT_MAPPER}] Called with config: ${config ? JSON.stringify(config.config) : 'undefined'}`
+  );
   debug(`[${LogTags.COMPONENT_MAPPER}] documentDir: ${documentDir}`);
   debug(`[${LogTags.COMPONENT_MAPPER}] builtinsEnabled: ${builtinsEnabled}`);
 
@@ -56,16 +61,24 @@ export function generateComponentImports(
     hasComponents: false,
   };
 
-  // check trust state for specific document - validates all 4 security rules
-  const trustState = getTrustManager().getStateForDocument(documentUri);
-  debug(`[${LogTags.COMPONENT_MAPPER}] trustState.canExecute: ${trustState.canExecute}`);
-
-  if (!trustState.canExecute) {
-    const components = config?.config.components;
-    if (components && Object.keys(components).length > 0) {
-      emitWarning(createIgnoredComponentsWarning(Object.keys(components)));
+  // require Trusted Mode for component imports
+  try {
+    const trustState = requireTrustedModeForDocument(
+      documentUri,
+      'generate component imports'
+    );
+    debug(
+      `[${LogTags.COMPONENT_MAPPER}] trustState.canExecute: ${trustState.canExecute}`
+    );
+  } catch (error) {
+    if (error instanceof TrustError) {
+      const components = config?.config.components;
+      if (components && Object.keys(components).length > 0) {
+        emitWarning(createIgnoredComponentsWarning(Object.keys(components)));
+      }
+      return result;
     }
-    return result;
+    throw error;
   }
 
   const importStatements: string[] = [];
@@ -128,8 +141,13 @@ export function generateComponentImports(
       debug(`Injected ${builtinCount} built-in generic shim(s)`);
     }
 
-    debug(`[${LogTags.COMPONENT_MAPPER}] Generated imports:\n` + result.imports);
-    debug(`[${LogTags.COMPONENT_MAPPER}] Components object: ` + result.componentsObject);
+    debug(
+      `[${LogTags.COMPONENT_MAPPER}] Generated imports:\n` + result.imports
+    );
+    debug(
+      `[${LogTags.COMPONENT_MAPPER}] Components object: ` +
+        result.componentsObject
+    );
   } else {
     debug(`[${LogTags.COMPONENT_MAPPER}] No imports generated`);
   }
