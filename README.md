@@ -8,17 +8,20 @@ Preview [MDX](https://mdxjs.com) files with live refresh and React component sup
 
 - **Live Preview**: See your MDX rendered instantly as you type with debounced updates
 - **React Components**: Full support for importing and rendering React components in Trusted Mode
+- **Framework Support**: Auto-detection and component shims for Docusaurus, Starlight, Nextra, and Next.js
 - **MDX 3 Support**: Built on the latest MDX compiler with modern React 18
 - **TypeScript Support**: Preview `.tsx` and `.ts` files that render to `#root`
 - **Security Model**: Safe Mode for untrusted content, Trusted Mode for full rendering
-- **Syntax Highlighting**: Shiki-based code highlighting with configurable themes
+- **Syntax Highlighting**: Shiki-based code highlighting with 100+ languages and 24 themes
 - **Preview Themes**: 15+ preview themes (GitHub, Atom, Solarized, etc.) with auto light/dark switching
+- **Tailwind CSS**: Built-in Tailwind v4 support with automatic detection and compilation
 - **Mermaid Diagrams**: Client-side rendering of flowcharts, sequence diagrams, state diagrams, and more
 - **GitHub Alerts**: Support for GitHub-style callouts (NOTE, TIP, WARNING, CAUTION, IMPORTANT)
 - **Math Expressions**: KaTeX integration for inline and block math expressions
 - **Table of Contents**: Automatic TOC generation with collapsible sections
 - **Frontmatter Display**: Visual display of YAML frontmatter metadata
 - **Zoom Controls**: Zoom in/out with keyboard shortcuts
+- **Custom Plugins**: Load custom remark/rehype plugins from your project
 
 ## Quick Start
 
@@ -28,166 +31,228 @@ Preview [MDX](https://mdxjs.com) files with live refresh and React component sup
 
 Alternatively, click the preview icon in the editor toolbar when viewing `.mdx`, `.md`, `.tsx`, or `.js` files.
 
+## Supported Frameworks
+
+MDX Preview automatically detects your framework from `package.json` and provides compatible component shims.
+
+| Framework | Detection | Component Shims |
+|-----------|-----------|-----------------|
+| **Docusaurus** | `@docusaurus/core` | `@theme/Tabs`, `@theme/TabItem`, `@theme/CodeBlock`, `@theme/Details` |
+| **Starlight** | `@astrojs/starlight` | `Card`, `CardGrid`, `LinkCard`, `Steps`, `Badge`, `Aside`, `Tabs`, `FileTree`, `Code` |
+| **Nextra** | `nextra` | `Callout`, `Tabs`, `Cards`, `FileTree`, `Steps`, `Bleed` |
+| **Next.js** | `next` + MDX package | `next/image`, `next/link` |
+| **Generic** | (fallback) | `Callout`, `Collapsible`, `Tabs`, `TabItem`, `CodeGroup` |
+
+### Framework Examples
+
+<details>
+<summary><strong>Docusaurus</strong></summary>
+
+```mdx
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs>
+  <TabItem value="js" label="JavaScript">
+    ```js
+    console.log('Hello');
+    ```
+  </TabItem>
+  <TabItem value="py" label="Python">
+    ```python
+    print('Hello')
+    ```
+  </TabItem>
+</Tabs>
+```
+
+Admonitions are also supported:
+
+```mdx
+:::note
+This is a note admonition.
+:::
+
+:::tip Pro Tip
+You can add a custom title!
+:::
+```
+
+</details>
+
+<details>
+<summary><strong>Astro Starlight</strong></summary>
+
+```mdx
+import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="Getting Started" icon="rocket">
+    Start building your documentation site.
+  </Card>
+  <Card title="Configuration" icon="setting">
+    Learn how to configure your site.
+  </Card>
+</CardGrid>
+
+<Aside type="tip" title="Pro Tip">
+  You can customize these components with CSS variables.
+</Aside>
+```
+
+</details>
+
+<details>
+<summary><strong>Nextra</strong></summary>
+
+```mdx
+import { Callout, Tabs } from 'nextra/components';
+
+<Callout type="info">
+  This is an informational callout.
+</Callout>
+
+<Tabs items={['npm', 'yarn', 'pnpm']}>
+  <Tabs.Tab>npm install mdx-preview</Tabs.Tab>
+  <Tabs.Tab>yarn add mdx-preview</Tabs.Tab>
+  <Tabs.Tab>pnpm add mdx-preview</Tabs.Tab>
+</Tabs>
+```
+
+Nextra's `_meta.json` files are also supported for page-level settings.
+
+</details>
+
+<details>
+<summary><strong>Next.js</strong></summary>
+
+```mdx
+import Image from 'next/image';
+import Link from 'next/link';
+
+<Image src="/logo.png" alt="Logo" width={200} height={100} />
+
+<Link href="/docs/getting-started">
+  Get Started
+</Link>
+```
+
+</details>
+
+For complete framework documentation, see [docs/frameworks.md](docs/frameworks.md).
+
+## Built-in Components
+
+These components are available without imports when `mdx-preview.components.builtins` is enabled (default):
+
+| Component | Aliases | Description |
+|-----------|---------|-------------|
+| `Callout` | `Alert`, `Admonition` | Alert box with type variants (note, tip, info, warning, danger) |
+| `Tabs` | - | Tabbed content sections |
+| `TabItem` | `Tab` | Individual tab pane |
+| `CodeGroup` | - | Multiple code blocks as tabs |
+| `Collapsible` | `Accordion`, `Details` | Expandable/collapsible section |
+
+```mdx
+<Callout type="warning">
+  This is a warning callout.
+</Callout>
+
+<Tabs>
+  <TabItem label="First">Content 1</TabItem>
+  <TabItem label="Second">Content 2</TabItem>
+</Tabs>
+
+<Collapsible title="Click to expand">
+  Hidden content here.
+</Collapsible>
+```
+
 ## Available Commands
 
-- **MDX: Open Preview** (`Cmd+K X` / `Ctrl+K X`) - Open preview for current file
-- **MDX: Refresh Preview** - Manually refresh the preview
-- **MDX: Toggle Script Execution** - Toggle between Safe Mode and Trusted Mode
-- **MDX: Toggle Using VSCode Markdown Styles** - Toggle VS Code markdown styling
-- **MDX: Toggle Using White Background** - Toggle white background override
-- **MDX: Change Security Settings** - Modify Content Security Policy settings
-- **MDX: Select Preview Theme** - Choose a preview theme (GitHub, Atom, Solarized, etc.)
-- **MDX: Select Code Block Theme** - Choose a syntax highlighting theme for code blocks
-- **MDX: Zoom In** (`Cmd+=` / `Ctrl+=`) - Zoom in the preview
-- **MDX: Zoom Out** (`Cmd+-` / `Ctrl+-`) - Zoom out the preview
-- **MDX: Reset Zoom** (`Cmd+0` / `Ctrl+0`) - Reset preview zoom to default
-
-## Security Model
-
-MDX Preview has two security modes:
-
-### Safe Mode (Default)
-
-- Renders MDX as static HTML without JavaScript execution
-- Used automatically in untrusted workspaces
-- No custom React components or imports
-
-### Trusted Mode
-
-Requires **both**:
-
-1. A trusted workspace (VS Code Workspace Trust)
-2. `mdx-preview.preview.enableScripts` setting enabled
-
-In Trusted Mode:
-
-- Full MDX rendering with React components
-- JavaScript execution enabled
-- Import statements work
-
-> **Note**: Trusted Mode is only available for local workspaces. Remote environments (SSH, WSL, Dev Containers, Codespaces) always use Safe Mode.
+| Command | Shortcut | Description |
+|---------|----------|-------------|
+| **MDX: Open Preview** | `Cmd/Ctrl+K X` | Open preview for current file |
+| **MDX: Refresh Preview** | - | Manually refresh the preview |
+| **MDX: Toggle Script Execution** | - | Toggle between Safe Mode and Trusted Mode |
+| **MDX: Select Preview Theme** | - | Choose a preview theme |
+| **MDX: Select Code Block Theme** | - | Choose a syntax highlighting theme |
+| **MDX: Select Mermaid Theme** | - | Choose a Mermaid diagram theme |
+| **MDX: Select Framework** | - | Manually select MDX framework |
+| **MDX: Zoom In** | `Cmd/Ctrl+=` | Zoom in the preview |
+| **MDX: Zoom Out** | `Cmd/Ctrl+-` | Zoom out the preview |
+| **MDX: Reset Zoom** | `Cmd/Ctrl+0` | Reset preview zoom to default |
+| **MDX: Toggle VSCode Markdown Styles** | - | Toggle VS Code markdown styling |
+| **MDX: Toggle White Background** | - | Toggle white background override |
+| **MDX: Change Security Settings** | - | Modify Content Security Policy |
+| **MDX: Refresh Module Cache** | - | Clear cached modules |
 
 ## Configuration
 
-| Setting                                        | Default    | Description                                              |
-| ---------------------------------------------- | ---------- | -------------------------------------------------------- |
-| `mdx-preview.preview.enableScripts`            | `false`    | Enable JavaScript execution (requires trusted workspace) |
-| `mdx-preview.preview.updateMode`               | `"onType"` | When to update preview (`onType`, `onSave`, `manual`)    |
-| `mdx-preview.preview.debounceDelay`            | `300`      | Debounce delay in milliseconds for on-type updates       |
-| `mdx-preview.preview.useVscodeMarkdownStyles`  | `true`     | Apply VS Code's markdown styling                         |
-| `mdx-preview.preview.useWhiteBackground`       | `false`    | Force white background                                   |
-| `mdx-preview.preview.customCss`                | `""`       | Path to custom CSS file for preview styling              |
-| `mdx-preview.preview.mdx.customLayoutFilePath` | `""`       | Path to custom layout component                          |
-| `mdx-preview.preview.previewTheme`             | `"none"`   | Preview theme (github-light, atom-dark, solarized, etc.) |
-| `mdx-preview.preview.codeBlockTheme`           | `"auto"`   | Code block syntax theme (`auto` matches preview theme)   |
-| `mdx-preview.preview.autoTheme`                | `true`     | Auto-switch light/dark themes based on VS Code theme     |
-| `mdx-preview.preview.security`                 | `"strict"` | CSP policy (`strict` or `disabled`)                      |
-| `mdx-preview.build.useSucraseTranspiler`       | `false`    | Use Sucrase instead of Babel                             |
+For complete configuration documentation, see [docs/configuration.md](docs/configuration.md).
 
-## Custom Layouts
+### Key Settings
 
-Apply custom layouts to your MDX in three ways:
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `mdx-preview.preview.enableScripts` | `false` | Enable JavaScript execution (requires trusted workspace) |
+| `mdx-preview.preview.updateMode` | `"onType"` | When to update: `onType`, `onSave`, `manual` |
+| `mdx-preview.preview.debounceDelay` | `300` | Debounce delay (ms) for on-type updates |
+| `mdx-preview.preview.previewTheme` | `"none"` | Preview theme (github-light, atom-dark, etc.) |
+| `mdx-preview.preview.codeBlockTheme` | `"auto"` | Code syntax theme (`auto` matches preview) |
+| `mdx-preview.preview.mermaidTheme` | `"default"` | Mermaid diagram theme |
+| `mdx-preview.preview.autoTheme` | `true` | Auto light/dark switching with VS Code |
+| `mdx-preview.preview.security` | `"strict"` | CSP policy: `strict` or `disabled` |
+| `mdx-preview.framework` | `"auto"` | Framework: `auto`, `docusaurus`, `starlight`, `nextra`, `nextjs`, `generic` |
+| `mdx-preview.tailwind.enabled` | `"enabled"` | Tailwind CSS: `auto`, `enabled`, `disabled` |
+| `mdx-preview.components.builtins` | `true` | Enable built-in components |
+| `mdx-preview.components.unknownBehavior` | `"placeholder"` | Unknown components: `placeholder`, `strip`, `raw` |
+| `mdx-preview.build.useSucraseTranspiler` | `false` | Use Sucrase instead of Babel |
 
-### 1. Export Default Layout
+## Themes
 
-```mdx
-import Layout from './components/Layout';
+### Preview Themes
 
-export default Layout;
+16 themes available from Markdown Preview Enhanced:
 
-# Hello World
+| Light Themes | Dark Themes |
+|--------------|-------------|
+| `github-light` | `github-dark` |
+| `atom-light` | `atom-dark` |
+| `one-light` | `one-dark` |
+| `solarized-light` | `solarized-dark` |
+| `vue` | `atom-material` |
+| `newsprint` | `gothic` |
+| `medium` | `night` |
+| `none` (minimal) | `monokai` |
 
-This content will be wrapped in Layout.
-```
+### Code Block Themes
 
-### 2. Configuration Setting
+24 syntax highlighting themes including: `auto`, `default`, `atom-dark`, `atom-light`, `darcula`, `github`, `github-dark`, `monokai`, `one-dark`, `one-light`, `solarized-dark`, `solarized-light`, `vs`, and more.
 
-Set `mdx-preview.preview.mdx.customLayoutFilePath` to the absolute path of your layout file.
+### Mermaid Themes
 
-### 3. VS Code Markdown Styles (Default)
+| Theme | Description |
+|-------|-------------|
+| `default` | Light theme (recommended) |
+| `dark` | Dark background theme |
+| `forest` | Green-tinted theme |
+| `neutral` | Grayscale theme |
+| `base` | Minimal styling |
+| `null` | No theme (raw SVG) |
 
-When no custom layout is specified, VS Code's built-in markdown styling is applied.
+### Auto Theme Switching
 
-## Configuration Files (Trusted Mode)
-
-MDX Preview supports project-level customization through `.mdx-previewrc.json` configuration files. This allows you to add custom remark/rehype plugins and define component mappings.
-
-### Requirements
-
-Configuration files only work in **Trusted Mode**:
-
-1. Workspace must be trusted (VS Code Workspace Trust)
-2. Enable scripts: Set `"mdx-preview.preview.enableScripts": true` in settings
-3. Local workspace only (not supported in remote environments)
-
-### Configuration File Format
-
-Create a `.mdx-previewrc.json` file in your workspace root or project directory:
-
-```json
-{
-  "remarkPlugins": ["remark-toc", ["remark-emoji", { "emoticon": true }]],
-  "rehypePlugins": ["rehype-external-links"],
-  "components": {
-    "Callout": "./src/components/Callout.tsx",
-    "Card": "./src/components/Card.tsx"
-  }
-}
-```
-
-### Plugin Configuration
-
-Plugins must be installed in your project's `node_modules`:
-
-```bash
-npm install remark-toc remark-emoji rehype-external-links
-```
-
-**Plugin Formats**:
-
-- String: `"plugin-name"` (no options)
-- Tuple: `["plugin-name", { options }]` (with options)
-
-### Component Mapping
-
-Map component names to file paths for automatic imports:
-
-```json
-{
-  "components": {
-    "Button": "./components/Button.tsx"
-  }
-}
-```
-
-This allows you to use `<Button />` in MDX without explicit imports:
-
-```mdx
-# My Document
-
-<Button>Click me</Button>
-```
-
-The extension automatically prepends: `import Button from './components/Button.tsx'`
-
-### Config File Discovery
-
-MDX Preview searches for config files upward from the document directory to the workspace root. The first found config is used.
-
-### Security Note
-
-Custom plugins and components execute arbitrary code. They are **only available in Trusted Mode** for security. Untrusted workspaces will use Safe Mode, which ignores these settings.
-
-For more details, see [examples/custom-plugins/](examples/custom-plugins/).
+When `autoTheme` is enabled (default), the extension automatically switches between light/dark theme variants based on your VS Code color theme.
 
 ## Tailwind CSS Support
 
-MDX Preview includes built-in Tailwind CSS support for utility-first styling in your MDX documents.
+MDX Preview includes built-in Tailwind CSS support with automatic detection and compilation.
 
 ### Requirements
 
 - **Tailwind CSS v4** (recommended) - Full support with `@tailwindcss/postcss`
-- **Tailwind CSS v3** - Supported but deprecated; upgrade to v4 is encouraged
+- **Tailwind CSS v3** - Supported but deprecated
 
 ### Auto-Detection
 
@@ -195,25 +260,6 @@ Tailwind is enabled automatically when the extension detects:
 
 - A `tailwind.config.{js,ts,mjs,cjs}` file in your workspace, OR
 - A CSS file with `@import "tailwindcss"` or `@tailwind` directives
-
-### Configuration
-
-Control Tailwind via VS Code settings:
-
-| Setting                           | Default  | Description                            |
-| --------------------------------- | -------- | -------------------------------------- |
-| `mdx-preview.tailwind.enabled`    | `"auto"` | `"auto"`, `"enabled"`, or `"disabled"` |
-| `mdx-preview.tailwind.configPath` | `""`     | Custom path to Tailwind config file    |
-
-Or in `.mdx-previewrc.json`:
-
-```json
-{
-  "tailwind": {
-    "enabled": "auto"
-  }
-}
-```
 
 ### Supported Patterns
 
@@ -225,16 +271,32 @@ The extension extracts Tailwind classes from:
 - CVA: `cva('base', { variants: {...} })`
 - `@apply` directives in CSS
 
-### Limitations
+## Configuration Files
 
-- Truly dynamic classes like `text-${size}` cannot be detected statically
-- Use Tailwind's `safelist` option for classes that can't be statically analyzed
+MDX Preview supports per-project customization through `.mdx-previewrc.json` files. Configuration files only work in **Trusted Mode**.
+
+```json
+{
+  "remarkPlugins": ["remark-toc", ["remark-emoji", { "emoticon": true }]],
+  "rehypePlugins": ["rehype-external-links"],
+  "components": {
+    "Button": "./src/components/Button.tsx",
+    "Card": "./src/components/Card.tsx"
+  },
+  "framework": "docusaurus",
+  "tailwind": {
+    "enabled": "auto"
+  }
+}
+```
+
+Plugins must be installed in your project's `node_modules`. For complete configuration options, see [docs/configuration.md](docs/configuration.md).
 
 ## Advanced Features
 
 ### Syntax Highlighting
 
-Code blocks are automatically highlighted using Shiki, matching your VS Code theme:
+Code blocks are highlighted using Shiki with 100+ supported languages:
 
 ````mdx
 ```typescript
@@ -242,6 +304,8 @@ const greeting: string = 'Hello, MDX!';
 console.log(greeting);
 ```
 ````
+
+**Language Aliases**: Common aliases are supported (`js`→`javascript`, `ts`→`typescript`, `sh`→`bash`, `py`→`python`, etc.)
 
 ### Mermaid Diagrams
 
@@ -255,6 +319,8 @@ graph TD
     B -->|No| D[Debug it]
 ```
 ````
+
+Supported diagram types: flowcharts, sequence diagrams, class diagrams, state diagrams, ER diagrams, gantt charts, pie charts, journey maps, and more.
 
 ### Math Expressions
 
@@ -336,6 +402,51 @@ tags: [mdx, react, preview]
 Content goes here...
 ```
 
+### Custom Layouts
+
+Apply custom layouts to your MDX:
+
+```mdx
+import Layout from './components/Layout';
+
+export default Layout;
+
+# Hello World
+
+This content will be wrapped in Layout.
+```
+
+Or set globally via `mdx-preview.preview.mdx.customLayoutFilePath`.
+
+## Security Model
+
+MDX Preview has two security modes:
+
+### Safe Mode (Default)
+
+- Renders MDX as static HTML without JavaScript execution
+- Used automatically in untrusted workspaces
+- No custom React components or imports
+- Strict Content Security Policy
+
+### Trusted Mode
+
+Requires **both**:
+
+1. A trusted workspace (VS Code Workspace Trust)
+2. `mdx-preview.preview.enableScripts` setting enabled
+
+In Trusted Mode:
+
+- Full MDX rendering with React components
+- JavaScript execution enabled
+- Import statements work
+- Custom plugins load from `node_modules`
+
+> **Note**: Trusted Mode is only available for local workspaces. Remote environments (SSH, WSL, Dev Containers, Codespaces) always use Safe Mode.
+
+For complete security documentation, see [docs/security.md](docs/security.md).
+
 ## Webview Limitations
 
 VS Code webviews have some inherent limitations:
@@ -343,6 +454,7 @@ VS Code webviews have some inherent limitations:
 - No Service Workers or Local Storage
 - Use `MemoryRouter` instead of `BrowserRouter` for React Router
 - Some third-party components may not work
+- `next/image` optimization features are not available (renders as standard `<img>`)
 
 ## Troubleshooting
 
@@ -350,31 +462,62 @@ VS Code webviews have some inherent limitations:
 
 1. Open Command Palette and run **"Developer: Open Webview Developer Tools"**
 2. Check the console for errors
-3. Try enabling `mdx-preview.build.useSucraseTranspiler`
+3. Verify you're in Trusted Mode
+4. Try enabling `mdx-preview.build.useSucraseTranspiler`
 
 ### Preview shows "Safe Mode"?
 
 1. Trust the workspace: Command Palette > **"Workspaces: Manage Workspace Trust"**
 2. Enable scripts: Set `mdx-preview.preview.enableScripts` to `true`
 
+### Framework not detected?
+
+1. Verify the framework package is in your `package.json`
+2. Manually set the framework: `mdx-preview.framework`
+
+For comprehensive troubleshooting, see [docs/troubleshooting.md](docs/troubleshooting.md).
+
+## Example Projects
+
+The `examples/` directory contains working examples for various use cases:
+
+| Example | Description |
+|---------|-------------|
+| [`basic/`](examples/basic/) | Fundamental MDX features and Tailwind CSS |
+| [`docusaurus/`](examples/docusaurus/) | Docusaurus framework with @theme components |
+| [`starlight/`](examples/starlight/) | Astro Starlight components |
+| [`nextra/`](examples/nextra/) | Nextra framework with _meta.json |
+| [`nextjs/`](examples/nextjs/) | Next.js MDX with next/image and next/link |
+| [`admonitions/`](examples/admonitions/) | Docusaurus-style admonition callouts |
+| [`generic-shims/`](examples/generic-shims/) | Built-in component library |
+| [`custom-plugins/`](examples/custom-plugins/) | Custom remark/rehype plugins |
+| [`safe-mode/`](examples/safe-mode/) | Safe Mode rendering examples |
+
+## Documentation
+
+Comprehensive documentation is available in the `docs/` folder:
+
+- [Configuration](docs/configuration.md) - Full configuration reference
+- [Frameworks](docs/frameworks.md) - Framework support and component shims
+- [Security](docs/security.md) - Security model deep dive
+- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
+- [Contributing](docs/contributing.md) - Development setup and guidelines
+- [Architecture](docs/architecture.mdx) - Technical architecture overview
+
 ## Project Status
 
-This extension is currently in **alpha** (version 1.0.0-alpha.5). While it is functional and includes many powerful features, you may encounter bugs or limitations. Please report issues on [GitHub](https://github.com/ggfincke/vscode-mdx-preview/issues).
+This extension is currently in **alpha** (version 1.0.0-alpha.12). While it is functional and includes many powerful features, you may encounter bugs or limitations. Please report issues on [GitHub](https://github.com/ggfincke/vscode-mdx-preview/issues).
 
 ## Requirements
 
 - VS Code 1.90.0 or higher
-- Node.js and npm for workspaces with dependencies (when using custom components)
+- Node.js 18+ for workspaces with dependencies (when using custom components or plugins)
 
 ## Extension Pack
 
 This extension automatically installs:
 
 - [MDX](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) - Modern MDX language support with syntax highlighting and validation
-
-## Contributing
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
 
 ## Credits
 
