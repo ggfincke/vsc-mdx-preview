@@ -38,10 +38,7 @@ export {
   type IconSource,
 } from './BaseCallout';
 
-export {
-  createCodeBlock,
-  type BaseCodeBlockProps,
-} from './BaseCodeBlock';
+export { createCodeBlock, type BaseCodeBlockProps } from './BaseCodeBlock';
 
 // re-export generic callout normalization for discoverability
 export { normalizeCalloutType, type CalloutType } from '../generic/types';

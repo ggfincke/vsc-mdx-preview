@@ -48,7 +48,7 @@ interface BaseCodeBlockProps {
 // export props type for consumers
 export type { BaseCodeBlockProps };
 
-// create a code block component with the given configuration
+// create code block component w/ given configuration
 export function createCodeBlock(config: CodeBlockConfig): React.FC<BaseCodeBlockProps> {
   const {
     classPrefix,
@@ -68,7 +68,7 @@ export function createCodeBlock(config: CodeBlockConfig): React.FC<BaseCodeBlock
     className,
     showLineNumbers,
   }: BaseCodeBlockProps): ReactElement {
-    // resolve language (supports both `language` and `lang` props)
+    // resolve language (supports both `language` & `lang` props)
     const effectiveLanguage = language ?? lang;
 
     // extract code text: from `code` prop if codeAsString, otherwise from children

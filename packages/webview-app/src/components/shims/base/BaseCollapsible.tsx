@@ -43,7 +43,7 @@ export interface BaseCollapsibleProps {
   applyOpenClassToWrapper?: boolean;
 }
 
-// * BaseCollapsible - shared collapsible/details component base
+// BaseCollapsible - shared collapsible/details component base
 export function BaseCollapsible({
   children,
   summary,

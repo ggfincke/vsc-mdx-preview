@@ -67,7 +67,7 @@ function ComponentIcon({
   );
 }
 
-// * factory function to create framework-specific Callout components
+// factory function to create framework-specific Callout components
 // all implementations share the same core logic
 export function createCallout<T extends string>(
   config: BaseCalloutConfig<T>

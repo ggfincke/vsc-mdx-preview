@@ -27,6 +27,8 @@ export interface BaseTabsConfig {
   wrapperClass?: string;
   // Whether to support groupId attribute for tab synchronization
   supportsGroupId?: boolean;
+  // Optional class for TabItem rendered outside Tabs context
+  tabItemClassName?: string;
   // Context name for debugging
   contextName: string;
 }
@@ -47,16 +49,24 @@ export interface BaseTabsProps {
 export interface CreateTabsResult {
   // The Tabs component
   Tabs: React.FC<BaseTabsProps>;
+  // expose TabItem for framework shims
+  TabItem: React.FC<TabItemProps>;
   // Hook to check if inside Tabs context
   useTabsContext: () => boolean;
   // The context itself (for advanced use cases)
   TabsContext: Context<boolean>;
 }
 
-// * Factory function to create framework-specific Tabs components
+// Factory function to create framework-specific Tabs components
 // all implementations share the same core logic via useTabState hook
 export function createTabs(config: BaseTabsConfig): CreateTabsResult {
-  const { classPrefix, wrapperClass, supportsGroupId = false, contextName } = config;
+  const {
+    classPrefix,
+    wrapperClass,
+    supportsGroupId = false,
+    tabItemClassName = `${classPrefix}-item`,
+    contextName,
+  } = config;
 
   // Create a unique context for this tabs implementation
   const TabsContext = createContext<boolean>(false);
@@ -124,12 +134,27 @@ export function createTabs(config: BaseTabsConfig): CreateTabsResult {
 
   Tabs.displayName = contextName;
 
+  // provide TabItem for shared props extraction
+  function TabItem({ children }: TabItemProps): ReactElement {
+    const isInsideTabs = useContext(TabsContext);
+
+    // If used outside of Tabs context, render directly
+    if (!isInsideTabs) {
+      return <div className={tabItemClassName}>{children}</div>;
+    }
+
+    // render content via parent when inside Tabs
+    return <>{children}</>;
+  }
+
+  TabItem.displayName = `${contextName}TabItem`;
+
   // Hook to check if inside Tabs context
   function useTabsContext(): boolean {
     return useContext(TabsContext);
   }
 
-  return { Tabs, useTabsContext, TabsContext };
+  return { Tabs, TabItem, useTabsContext, TabsContext };
 }
 
 // index-based Tabs factory (for Nextra-style tabs)
@@ -166,7 +191,7 @@ export interface CreateIndexTabsResult<T> {
   TabsContext: Context<boolean>;
 }
 
-// * Factory for creating index-based Tabs components (Nextra style)
+// Factory for creating index-based Tabs components (Nextra style)
 // uses items array instead of extracting tabs from children
 export function createIndexTabs<T>(
   config: IndexTabsConfig,
