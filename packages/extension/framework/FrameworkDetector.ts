@@ -11,7 +11,7 @@ import { ErrorContext } from '../errors';
 import { normalizeError, LogTags, type FrameworkId } from '@mdx-preview/shared';
 import { readJsonSync, pathExists } from '../utils/file-utils';
 import { findUp } from '../utils/find-up';
-import { createFileWatcher } from '../utils/createFileWatcher';
+import { PathCache } from '../utils/cache';
 
 // framework detection result
 export interface FrameworkInfo {
@@ -63,9 +63,11 @@ const FRAMEWORK_RULES: FrameworkRule[] = [
 // singleton framework detector
 export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   protected static override instance: FrameworkDetector | undefined;
-  protected readonly logTag = 'FRAMEWORK';
+  protected readonly logTag = LogTags.FRAMEWORK;
 
-  private cache: Map<string, FrameworkInfo> = new Map();
+  private cache = new PathCache<FrameworkInfo>({
+    logTag: LogTags.FRAMEWORK,
+  });
   private subscriberManager = new SubscriberManager<FrameworkInfo>(
     LogTags.FRAMEWORK,
     (error) => {
@@ -76,9 +78,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
       );
     }
   );
-  private fileWatcher: vscode.FileSystemWatcher | null = null;
-  // G.2 optimization: Track if file watcher has been lazily initialized
-  private fileWatcherInitialized = false;
+  private watcherReady = false;
 
   protected constructor() {
     super();
@@ -99,24 +99,19 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   // lazily initialize FileSystemWatcher on first framework detection
   // G.2 optimization: defer expensive watcher creation until needed, reducing activation time
   private ensureFileWatcher(): void {
-    if (this.fileWatcherInitialized) {
-      return;
+    if (!this.watcherReady) {
+      debug(
+        `[${LogTags.FRAMEWORK}] Initializing package.json FileSystemWatcher`
+      );
+
+      this.cache.watchPath('**/package.json', {
+        onChange: (eventPath) => this.onPackageJsonChange(eventPath),
+        onCreate: (eventPath) => this.onPackageJsonChange(eventPath),
+        onDelete: (eventPath) => this.onPackageJsonChange(eventPath),
+      });
+
+      this.watcherReady = true;
     }
-    this.fileWatcherInitialized = true;
-
-    debug(`[${LogTags.FRAMEWORK}] Initializing package.json FileSystemWatcher`);
-
-    // watch for package.json changes using createFileWatcher utility
-    this.fileWatcher = createFileWatcher({
-      pattern: '**/package.json',
-      logTag: LogTags.FRAMEWORK,
-      onChange: (uri) => this.onPackageJsonChange(uri),
-      onCreate: (uri) => this.onPackageJsonChange(uri),
-      onDelete: (uri) => this.onPackageJsonChange(uri),
-    });
-
-    // register for disposal
-    this.addDisposable(this.fileWatcher);
   }
 
   // detect framework from workspace root package.json
@@ -129,11 +124,14 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
 
     const packageJson = readJsonSync<PackageJson>(packageJsonPath, {
-      logTag: `[${LogTags.FRAMEWORK}]`,
+      logTag: LogTags.FRAMEWORK,
     });
 
     if (!packageJson) {
-      debug(`[${LogTags.FRAMEWORK}] No package.json found or failed to parse at:`, packageJsonPath);
+      debug(
+        `[${LogTags.FRAMEWORK}] No package.json found or failed to parse at:`,
+        packageJsonPath
+      );
       return { framework: 'generic', detected: true };
     }
 
@@ -158,7 +156,9 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
         }
 
         const version = allDeps[rule.dependencies[0]];
-        debug(`[${LogTags.FRAMEWORK}] Detected ${rule.framework} (version: ${version})`);
+        debug(
+          `[${LogTags.FRAMEWORK}] Detected ${rule.framework} (version: ${version})`
+        );
         return {
           framework: rule.framework,
           detected: true,
@@ -185,7 +185,10 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     });
 
     if (found) {
-      debug(`[${LogTags.FRAMEWORK}] Found package.json at:`, path.join(found, 'package.json'));
+      debug(
+        `[${LogTags.FRAMEWORK}] Found package.json at:`,
+        path.join(found, 'package.json')
+      );
       return found;
     }
 
@@ -312,15 +315,17 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   }
 
   // handle package.json change & invalidate cache
-  private onPackageJsonChange(uri: vscode.Uri): void {
+  private onPackageJsonChange(fsPath: string): void {
     // invalidate the cache for the directory containing this package.json
-    const packageJsonDir = path.dirname(uri.fsPath);
+    const packageJsonDir = path.dirname(fsPath);
     this.invalidateCache(packageJsonDir);
 
     // notify subscribers if this affects the active editor
     const editor = vscode.window.activeTextEditor;
     if (editor) {
-      const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+      const workspaceFolder = vscode.workspace.getWorkspaceFolder(
+        vscode.Uri.file(fsPath)
+      );
       const editorFolder = vscode.workspace.getWorkspaceFolder(
         editor.document.uri
       );
@@ -337,12 +342,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
 
   // clear file watcher, cache, & subscriptions on dispose
   protected override onDispose(): void {
-    if (this.fileWatcher) {
-      this.fileWatcher.dispose();
-      this.fileWatcher = null;
-    }
-
-    this.cache.clear();
+    this.cache.dispose();
     this.subscriberManager.clear();
   }
 }

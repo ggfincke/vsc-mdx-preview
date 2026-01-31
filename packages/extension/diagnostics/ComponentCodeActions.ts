@@ -197,7 +197,9 @@ export async function addComponentToConfig(
   componentName: string,
   configPath: string
 ): Promise<void> {
-  debug(`[${LogTags.COMPONENT_CODE_ACTIONS}] Adding ${componentName} to ${configPath}`);
+  debug(
+    `[${LogTags.COMPONENT_CODE_ACTIONS}] Adding ${componentName} to ${configPath}`
+  );
 
   try {
     // read existing config or start w/ empty object
@@ -228,7 +230,9 @@ export async function addComponentToConfig(
       `Added "${componentName}" to ${CONFIG_FILE_NAME}. Update the path to your component file.`
     );
 
-    info(`[${LogTags.COMPONENT_CODE_ACTIONS}] Added ${componentName} to config`);
+    info(
+      `[${LogTags.COMPONENT_CODE_ACTIONS}] Added ${componentName} to config`
+    );
   } catch (err) {
     const message = extractErrorMessage(err);
     getErrorReporter().reportToUser(

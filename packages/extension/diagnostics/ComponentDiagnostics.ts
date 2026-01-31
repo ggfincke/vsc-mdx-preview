@@ -1,5 +1,5 @@
 // packages/extension/diagnostics/ComponentDiagnostics.ts
-// manages VS Code diagnostics for unknown MDX components
+// manage VS Code diagnostics for unknown MDX components
 
 import * as vscode from 'vscode';
 import {
@@ -21,11 +21,11 @@ export const DIAGNOSTIC_CODES = {
 // diagnostic source name
 const DIAGNOSTIC_SOURCE = 'MDX Preview';
 
-// * ComponentDiagnostics service
-// manages a DiagnosticCollection for MDX component issues
+// ComponentDiagnostics service
+// manage DiagnosticCollection for MDX component issues
 export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics> {
   protected static override instance: ComponentDiagnostics | undefined;
-  protected readonly logTag = 'COMPONENT-DIAGNOSTICS';
+  protected readonly logTag = LogTags.COMPONENT_DIAGNOSTICS;
 
   private diagnosticCollection: vscode.DiagnosticCollection;
   private documentTimers = new Map<string, NodeJS.Timeout>();
@@ -112,7 +112,9 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       return;
     }
 
-    debug(`[${LogTags.COMPONENT_DIAGNOSTICS}] Updating diagnostics for ${document.uri}`);
+    debug(
+      `[${LogTags.COMPONENT_DIAGNOSTICS}] Updating diagnostics for ${document.uri}`
+    );
 
     try {
       // get config components
@@ -145,7 +147,9 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       );
     } catch (err) {
       const message = extractErrorMessage(err);
-      debug(`[${LogTags.COMPONENT_DIAGNOSTICS}] Error updating diagnostics: ${message}`);
+      debug(
+        `[${LogTags.COMPONENT_DIAGNOSTICS}] Error updating diagnostics: ${message}`
+      );
     }
   }
 

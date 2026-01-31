@@ -9,7 +9,7 @@ import { visit } from 'unist-util-visit';
 import type { Root } from 'mdast';
 import matter from 'gray-matter';
 import { KNOWN_GENERIC_COMPONENTS } from '../compiler/shared/remark/generic-components';
-import { extractErrorMessage } from '@mdx-preview/shared';
+import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import type {
   DetectedComponent,
   ComponentDetectionResult,
@@ -47,7 +47,8 @@ function djb2Hash(str: string): number {
   for (let i = 0; i < str.length; i++) {
     hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
   }
-  return hash >>> 0; // convert to unsigned 32-bit
+  // convert to unsigned 32-bit
+  return hash >>> 0;
 }
 
 // types
@@ -275,7 +276,8 @@ export async function detectComponents(
   mdxText: string,
   options: ComponentDetectionOptions = {},
   configComponents: Set<string> = new Set(),
-  uri?: string // optional: document URI for caching
+  // optional: document URI for caching
+  uri?: string
 ): Promise<ComponentDetectionResult> {
   const { includePositions = true, detectImports = true } = options;
 
@@ -284,7 +286,7 @@ export async function detectComponents(
     const contentHash = djb2Hash(mdxText);
     const cached = parseCache.get(uri);
     if (cached && cached.contentHash === contentHash) {
-      debug(`[ComponentDetector] Cache hit for ${uri}`);
+      debug(`[${LogTags.COMPONENT_DETECTOR}] Cache hit for ${uri}`);
       return cached.result;
     }
   }
@@ -358,10 +360,12 @@ export async function detectComponents(
       });
     });
 
-    debug(`[ComponentDetector] Found ${components.length} components`);
+    debug(
+      `[${LogTags.COMPONENT_DETECTOR}] Found ${components.length} components`
+    );
   } catch (err) {
     const message = extractErrorMessage(err);
-    warn(`[ComponentDetector] Parse error: ${message}`);
+    warn(`[${LogTags.COMPONENT_DETECTOR}] Parse error: ${message}`);
     errors.push(message);
   }
 
@@ -377,7 +381,7 @@ export async function detectComponents(
       }
     }
     parseCache.set(uri, { contentHash: djb2Hash(mdxText), result });
-    debug(`[ComponentDetector] Cached result for ${uri}`);
+    debug(`[${LogTags.COMPONENT_DETECTOR}] Cached result for ${uri}`);
   }
 
   return result;
@@ -391,7 +395,7 @@ export function getUnknownComponents(
 }
 
 // extract list of generic component names used in the MDX
-// returns canonical names (e.g., Alert → Callout) for conditional shim preloading
+// return canonical names (e.g., Alert → Callout) for conditional shim preloading
 export function getUsedGenericComponents(
   result: ComponentDetectionResult
 ): string[] {
@@ -416,7 +420,7 @@ export function getUsedGenericComponents(
 // call this when a document is closed or externally modified
 export function invalidateComponentCache(uri: string): void {
   if (parseCache.delete(uri)) {
-    debug(`[ComponentDetector] Invalidated cache for ${uri}`);
+    debug(`[${LogTags.COMPONENT_DETECTOR}] Invalidated cache for ${uri}`);
   }
 }
 
@@ -424,7 +428,7 @@ export function invalidateComponentCache(uri: string): void {
 // useful for testing or extension reset scenarios
 export function clearComponentCache(): void {
   parseCache.clear();
-  debug(`[ComponentDetector] Cache cleared`);
+  debug(`[${LogTags.COMPONENT_DETECTOR}] Cache cleared`);
 }
 
 // isPascalCase, isHtmlElement, extractImports are internal helpers

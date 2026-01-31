@@ -6,6 +6,10 @@ import * as vscode from 'vscode';
 import { Preview } from './preview/preview-manager';
 import { fetchLocal } from './module-system/fetcher/fetchLocal';
 import { getTrustManager, getErrorReporter } from './services';
+import {
+  TrustError,
+  requireTrustedModeForDocument,
+} from './security/validateTrust';
 import { error as logError, warn as logWarn, debug } from './logging';
 import { LogTags } from '@mdx-preview/shared';
 import { ErrorContext } from './errors';
@@ -80,13 +84,15 @@ class ExtensionHandle implements ExtensionRPC {
     performance.measure('preview duration', 'preview/start', 'preview/end');
   }
 
-  // ! fetch module for webview (primary attack surface - validates input & checks trust)
+  // fetch module for webview (primary attack surface - validates input & checks trust)
   async fetch(
     request: string,
     isBare: boolean,
     parentId: string
   ): Promise<FetchResult | undefined> {
-    debug(`[${LogTags.EXT_HANDLE}] fetch: request=${request}, isBare=${isBare}`);
+    debug(
+      `[${LogTags.EXT_HANDLE}] fetch: request=${request}, isBare=${isBare}`
+    );
 
     // type validation using utilities
     const opts = { context: 'fetch', log: logError };
@@ -115,12 +121,16 @@ class ExtensionHandle implements ExtensionRPC {
       return undefined;
     }
 
-    // document-aware trust check (validates workspace trust, scripts, remote env, scheme)
+    // require Trusted Mode for module fetch
     const docUri = this.preview.doc.uri;
-    const trustState = getTrustManager().getStateForDocument(docUri);
-    if (!trustState.canExecute) {
-      logWarn(`fetch: blocked - ${trustState.reason || 'not in Trusted Mode'}`);
-      return undefined;
+    try {
+      requireTrustedModeForDocument(docUri, 'fetch module');
+    } catch (error) {
+      if (error instanceof TrustError) {
+        logWarn(`fetch: blocked - ${error.message}`);
+        return undefined;
+      }
+      throw error;
     }
 
     return fetchLocal(validRequest, validIsBare, validParentId, this.preview);
@@ -255,16 +265,20 @@ class ExtensionHandle implements ExtensionRPC {
       return;
     }
 
-    // ! trust check for target file - ensures preview can execute safely
+    // require Trusted Mode for target file - ensures preview can execute safely
     const targetUri = vscode.Uri.file(securePathResult.resolvedPath);
-    const trustState = getTrustManager().getStateForDocument(targetUri);
-    if (!trustState.canExecute) {
-      reportTrustViolationError(
-        securePathResult.resolvedPath,
-        trustState.reason || 'Target file is not in Trusted Mode',
-        'openPreview'
-      );
-      return;
+    try {
+      requireTrustedModeForDocument(targetUri, 'open preview');
+    } catch (error) {
+      if (error instanceof TrustError) {
+        reportTrustViolationError(
+          securePathResult.resolvedPath,
+          error.message,
+          'openPreview'
+        );
+        return;
+      }
+      throw error;
     }
 
     try {
