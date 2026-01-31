@@ -34,12 +34,14 @@ describe('ServiceRegistry circular dependency detection', () => {
   describe('direct circular dependency (A -> B -> A)', () => {
     it('should throw CircularDependencyError', () => {
       registry.register('ServiceA', () => {
-        registry.get('ServiceB'); // This will trigger B's factory
+        // This will trigger B's factory
+        registry.get('ServiceB');
         return { dispose: vi.fn() };
       });
 
       registry.register('ServiceB', () => {
-        registry.get('ServiceA'); // This creates the cycle
+        // create the cycle
+        registry.get('ServiceA');
         return { dispose: vi.fn() };
       });
 
@@ -82,7 +84,8 @@ describe('ServiceRegistry circular dependency detection', () => {
       });
 
       registry.register('ServiceC', () => {
-        registry.get('ServiceA'); // Cycle back to A
+        // Cycle back to A
+        registry.get('ServiceA');
         return { dispose: vi.fn() };
       });
 
@@ -120,7 +123,8 @@ describe('ServiceRegistry circular dependency detection', () => {
   describe('self-reference cycle (A -> A)', () => {
     it('should throw CircularDependencyError', () => {
       registry.register('SelfService', () => {
-        registry.get('SelfService'); // Self-reference
+        // Self-reference
+        registry.get('SelfService');
         return { dispose: vi.fn() };
       });
 
@@ -147,7 +151,8 @@ describe('ServiceRegistry circular dependency detection', () => {
   describe('initialization stack management', () => {
     it('should clear initialization stack after error', () => {
       registry.register('A', () => {
-        registry.get('A'); // Self-cycle
+        // Self-cycle
+        registry.get('A');
         return { dispose: vi.fn() };
       });
 
@@ -331,7 +336,8 @@ describe('ServiceRegistry circular dependency detection', () => {
       const services = ['A', 'B', 'C', 'D', 'E'];
 
       services.forEach((name, i) => {
-        const nextService = services[(i + 1) % services.length]; // Wraps around
+        // Wraps around
+        const nextService = services[(i + 1) % services.length];
         registry.register(name, () => {
           registry.get(nextService);
           return { dispose: vi.fn() };

@@ -196,4 +196,19 @@ describe('requireTrustedModeForDocument()', () => {
       requireTrustedModeForDocument(docUri as any, 'compile MDX')
     ).toThrow(/Remote environment detected/);
   });
+
+  it('works without reason in trust state', () => {
+    mockTrustManager.getStateForDocument.mockReturnValue({
+      workspaceTrusted: false,
+      scriptsEnabled: true,
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    });
+
+    const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx' };
+
+    expect(() =>
+      requireTrustedModeForDocument(docUri as any, 'open preview')
+    ).toThrow(TrustError);
+  });
 });

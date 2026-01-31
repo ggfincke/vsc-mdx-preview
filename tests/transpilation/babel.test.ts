@@ -22,7 +22,7 @@ describe('transformAsync()', () => {
     const result = await transformAsync(code);
 
     expect(result).not.toBeNull();
-    // Optional chaining is natively supported in Node 20 and modern Chromium
+    // Optional chaining is natively supported in Node 20 & modern Chromium
     // so it should be preserved (not transformed)
     expect(result!.code).toContain('?.');
   });
@@ -33,7 +33,7 @@ describe('transformAsync()', () => {
     const result = await transformAsync(code);
 
     expect(result).not.toBeNull();
-    // Nullish coalescing is natively supported in Node 20 and modern Chromium
+    // Nullish coalescing is natively supported in Node 20 & modern Chromium
     // so it should be preserved (not transformed)
     expect(result!.code).toContain('??');
   });
