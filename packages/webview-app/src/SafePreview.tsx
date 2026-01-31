@@ -1,10 +1,13 @@
 // packages/webview-app/src/SafePreview.tsx
 // render pre-sanitized HTML in Safe Mode (no JavaScript execution)
 
-import { memo, useEffect, useLayoutEffect } from 'react';
-import { useSafeModeProcessing, usePreviewSetup } from './hooks';
+import { memo, useEffect } from 'react';
+import {
+  useSafeModeProcessing,
+  usePreviewSetup,
+  useKatexDetection,
+} from './hooks';
 import { PreviewContainer } from './components/PreviewContainer/PreviewContainer';
-import { loadKatexCss } from './utils/katexLoader';
 import { fastStringEquals } from './utils/memoCompare';
 
 interface SafePreviewRendererProps {
@@ -23,13 +26,8 @@ export const SafePreviewRenderer = memo(
     // process Safe Mode HTML (sanitize, post-process links/images, enhance code blocks)
     useSafeModeProcessing(containerRef, html);
 
-    // lazy-load KaTeX CSS when math content is detected
-    // uses useLayoutEffect for synchronous loading to avoid FOUC
-    useLayoutEffect(() => {
-      if (html.includes('class="katex"') || html.includes('class="math')) {
-        loadKatexCss();
-      }
-    }, [html]);
+    // lazy-load KaTeX CSS when math content is detected (string-based detection)
+    useKatexDetection({ html });
 
     // add image click event listener (imperative for Safe Mode since HTML is injected)
     useEffect(() => {

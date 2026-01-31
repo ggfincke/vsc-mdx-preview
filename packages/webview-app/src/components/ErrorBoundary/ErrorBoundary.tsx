@@ -14,7 +14,7 @@ import {
 import { copyToClipboard } from '../../utils/clipboard';
 import { normalizeError, isModuleErrorData } from '@mdx-preview/shared';
 import type { ModuleErrorData } from '@mdx-preview/shared';
-import { ModuleLoadError } from '../../module-system/errors';
+import { ModuleError } from '../../module-system/errors';
 
 // type for Error objects that may have moduleError attached (from PreviewError)
 type ErrorWithModuleData = Error & { moduleError?: ModuleErrorData };
@@ -60,13 +60,13 @@ export interface ErrorDisplayProps {
   title?: string;
 }
 
-// extract suggestions from error (ModuleLoadError or attached moduleError)
+// extract suggestions from ModuleError or attached moduleError
 function extractSuggestions(error: Error): string[] {
-  // direct ModuleLoadError (from webview-side errors)
-  if (error instanceof ModuleLoadError) {
+  // handle direct ModuleError from webview-side errors
+  if (error instanceof ModuleError) {
     return error.suggestions;
   }
-  // Error w/ moduleError attached (from extension via RPC)
+  // handle Error w/ moduleError attached from extension via RPC
   const errorWithData = error as ErrorWithModuleData;
   if (errorWithData.moduleError && isModuleErrorData(errorWithData.moduleError)) {
     return errorWithData.moduleError.suggestions;
@@ -81,7 +81,7 @@ export function ErrorDisplay({
   onReset,
   title = 'Preview Error',
 }: ErrorDisplayProps) {
-  // extract suggestions from ModuleLoadError or attached moduleError
+  // extract suggestions from ModuleError or attached moduleError
   const suggestions = extractSuggestions(error);
 
   const handleCopy = useCallback(() => {

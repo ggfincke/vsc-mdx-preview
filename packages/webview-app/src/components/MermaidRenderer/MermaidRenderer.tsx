@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/MermaidRenderer/MermaidRenderer.tsx
-// * lazy-loaded mermaid diagram renderer w/ error handling & source toggle
+// lazy-loaded mermaid diagram renderer w/ error handling & source toggle
 
 import { useRef, useState, useCallback } from 'react';
 import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
@@ -42,7 +42,7 @@ function isDarkMermaidTheme(theme: string): boolean {
 let lastInitializedTheme: string | null = null;
 let lastInitializedDark: boolean | null = null;
 
-// * render a single mermaid diagram w/ error handling
+// render a single mermaid diagram w/ error handling
 export function MermaidRenderer({ code, id }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { mermaidTheme } = useTheme();
@@ -74,7 +74,7 @@ export function MermaidRenderer({ code, id }: Props) {
           startOnLoad: false,
           theme: mermaidTheme,
           securityLevel: 'strict',
-          // * disable HTML labels to produce pure SVG (no foreignObject)
+          // disable HTML labels to produce pure SVG (no foreignObject)
           // this keeps DOMPurify allowlist tighter
           flowchart: { htmlLabels: false },
           sequence: { useMaxWidth: true },
@@ -154,7 +154,7 @@ export function MermaidRenderer({ code, id }: Props) {
     );
   }
 
-  // * always render container so ref is available for mermaid.render()
+  // always render container so ref is available for mermaid.render()
   // show loading overlay on top while loading, hide diagram until ready
   return (
     <div className="mdx-preview-mermaid">

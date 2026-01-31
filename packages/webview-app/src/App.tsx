@@ -1,6 +1,6 @@
 // packages/webview-app/src/App.tsx
-// * MDX Preview App - single React root managing preview rendering (Safe & Trusted mode)
-// * State is now managed via granular React contexts for reduced re-renders
+// MDX Preview App - single React root managing preview rendering (Safe & Trusted mode)
+// State is now managed via granular React contexts for reduced re-renders
 
 import { useCallback, useEffect, useMemo, useState, type ComponentType, type MouseEvent } from 'react';
 import LoadingBar from './components/LoadingBar/LoadingBar';

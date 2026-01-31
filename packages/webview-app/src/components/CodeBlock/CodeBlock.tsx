@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/CodeBlock/CodeBlock.tsx
-// * post-process code blocks to add copy button, language badge, & line highlighting
+// post-process code blocks to add copy button, language badge, & line highlighting
 
 import { copyWithFeedback } from '../../utils/clipboard';
 import { COPY_ICONS } from '../shims/base/icons';
