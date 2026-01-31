@@ -12,7 +12,7 @@ import {
 import { PRELOADED_MODULE_IDS } from '../core-modules';
 
 const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/shared/registry/components.ts
+// Source: packages/shared/registry/registry-data.ts
 `;
 
 export interface GeneratePreloadOptions {
@@ -48,7 +48,10 @@ function getRelativeWebviewImport(
   entry: ComponentRegistryEntry,
   options: GeneratePreloadOptions
 ): string {
-  const absoluteTarget = path.resolve(options.webviewSrcDir, entry.webviewImport);
+  const absoluteTarget = path.resolve(
+    options.webviewSrcDir,
+    entry.webviewImport
+  );
   const relative = path.relative(options.outputDir, absoluteTarget);
   return normalizeImportPath(relative);
 }
@@ -230,21 +233,27 @@ export function generatePreloadTs(options: GeneratePreloadOptions): string {
 
   // generate generic shims (static imports + lazy loaders)
   const genericEntries = grouped.get('generic') ?? [];
-  const { imports: genericImports, func: genericFunc, loaders: genericLoaders } =
-    generateGenericPreloadFunction(genericEntries, options);
+  const {
+    imports: genericImports,
+    func: genericFunc,
+    loaders: genericLoaders,
+  } = generateGenericPreloadFunction(genericEntries, options);
 
   // generate framework loaders (dynamic imports)
   const frameworkLoaders: string[] = [];
   for (const framework of LAZY_FRAMEWORKS) {
     const entries = grouped.get(framework) ?? [];
     if (entries.length > 0) {
-      frameworkLoaders.push(generateFrameworkLoader(framework, entries, options));
+      frameworkLoaders.push(
+        generateFrameworkLoader(framework, entries, options)
+      );
     }
   }
 
   // generate FRAMEWORK_LOADERS map (includes generic as no-op since it's loaded synchronously)
   const loaderMapEntries = [
-    '  generic: async () => {}', // generic shims loaded synchronously via preloadGenericShims
+    // generic shims loaded synchronously via preloadGenericShims
+    '  generic: async () => {}',
     ...LAZY_FRAMEWORKS.map((fw) => `  ${fw}: load${capitalize(fw)}Shims`),
   ];
 
@@ -277,9 +286,7 @@ function setAlias(
 ): void {
   const existing = aliases[key];
   if (existing && existing !== value) {
-    throw new Error(
-      `Alias collision for "${key}": ${existing} vs ${value}`
-    );
+    throw new Error(`Alias collision for "${key}": ${existing} vs ${value}`);
   }
   aliases[key] = value;
 }

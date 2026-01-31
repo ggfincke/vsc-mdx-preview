@@ -3,7 +3,10 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { generatePreloadAliasesTs, generatePreloadTs } from '../codegen/generate';
+import {
+  generatePreloadAliasesTs,
+  generatePreloadTs,
+} from '../codegen/generate';
 
 const ROOT_DIR = path.resolve(__dirname, '../../..');
 const WEBVIEW_SRC_DIR = path.join(ROOT_DIR, 'packages/webview-app/src');
