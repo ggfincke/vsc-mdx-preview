@@ -56,7 +56,9 @@ export class ServiceRegistry implements Disposable {
     }
 
     if (this.services.has(name)) {
-      debug(`[${LogTags.SERVICE_REGISTRY}] Warning: Overwriting registration for ${name}`);
+      debug(
+        `[${LogTags.SERVICE_REGISTRY}] Warning: Overwriting registration for ${name}`
+      );
     }
 
     this.services.set(name, {
@@ -166,7 +168,9 @@ export class ServiceRegistry implements Disposable {
     );
 
     for (const subsystem of sortedSubsystems) {
-      debug(`[${LogTags.SERVICE_REGISTRY}] Disposing subsystem: ${subsystem.name}`);
+      debug(
+        `[${LogTags.SERVICE_REGISTRY}] Disposing subsystem: ${subsystem.name}`
+      );
       try {
         subsystem.dispose();
       } catch (error) {
@@ -183,7 +187,9 @@ export class ServiceRegistry implements Disposable {
       .sort((a, b) => b.registrationOrder - a.registrationOrder);
 
     for (const registration of sortedRegistrations) {
-      debug(`[${LogTags.SERVICE_REGISTRY}] Disposing service: ${registration.name}`);
+      debug(
+        `[${LogTags.SERVICE_REGISTRY}] Disposing service: ${registration.name}`
+      );
       try {
         registration.instance?.dispose?.();
       } catch (error) {

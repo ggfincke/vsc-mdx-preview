@@ -1,18 +1,20 @@
 // packages/extension/errors/module-error-factories.ts
-// factory functions for creating ModuleFetchError instances
+// create module fetch errors
 
-import { ModuleFetchError } from './index';
+import { ModuleError, type ModuleFetchErrorCode } from './index';
 
 // factory: module not found error
 export function createModuleNotFoundError(
   moduleId: string,
   parentModuleId: string
-): ModuleFetchError {
-  return new ModuleFetchError(
+): ModuleError<ModuleFetchErrorCode> {
+  return new ModuleError(
     `Cannot find module "${moduleId}"\nImported from: ${parentModuleId}`,
-    'E100',
-    moduleId,
-    parentModuleId
+    {
+      code: 'E100',
+      moduleId,
+      parentModuleId,
+    }
   );
 }
 
@@ -20,24 +22,23 @@ export function createModuleNotFoundError(
 export function createOutsideWorkspaceError(
   moduleId: string,
   parentModuleId?: string
-): ModuleFetchError {
-  return new ModuleFetchError(
-    `Module "${moduleId}" is outside workspace folders`,
-    'E101',
+): ModuleError<ModuleFetchErrorCode> {
+  return new ModuleError(`Module "${moduleId}" is outside workspace folders`, {
+    code: 'E101',
     moduleId,
-    parentModuleId
-  );
+    parentModuleId,
+  });
 }
 
 // factory: parse error
 export function createParseError(
   moduleId: string,
   cause?: Error
-): ModuleFetchError {
+): ModuleError<ModuleFetchErrorCode> {
   const message = cause
     ? `Syntax error in "${moduleId}": ${cause.message}`
     : `Syntax error in "${moduleId}"`;
-  return new ModuleFetchError(message, 'E110', moduleId, undefined, { cause });
+  return new ModuleError(message, { code: 'E110', moduleId, cause });
 }
 
 // factory: transform error
@@ -45,11 +46,14 @@ export function createTransformError(
   moduleId: string,
   parentModuleId?: string,
   cause?: Error
-): ModuleFetchError {
+): ModuleError<ModuleFetchErrorCode> {
   const message = cause
     ? `Failed to compile "${moduleId}": ${cause.message}`
     : `Failed to compile "${moduleId}"`;
-  return new ModuleFetchError(message, 'E120', moduleId, parentModuleId, {
+  return new ModuleError(message, {
+    code: 'E120',
+    moduleId,
+    parentModuleId,
     cause,
   });
 }

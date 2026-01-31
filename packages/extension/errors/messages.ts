@@ -2,6 +2,7 @@
 // user-friendly error message templates & formatting
 
 import type { ExtensionError } from './index';
+import type { ModuleError } from '@mdx-preview/shared';
 
 // message templates w/ {placeholder} syntax
 // ! Placeholders must match actual field names on error classes
@@ -69,7 +70,7 @@ const USER_MESSAGES: Record<string, string> = {
 };
 
 // format error for user display (replaces placeholders w/ error context)
-export function formatUserError(error: ExtensionError): string {
+export function formatUserError(error: ExtensionError | ModuleError): string {
   const template = USER_MESSAGES[error.code] || error.message;
 
   // replace {key} placeholders w/ values from error object
@@ -82,7 +83,9 @@ export function formatUserError(error: ExtensionError): string {
 }
 
 // format error for logging (includes full context)
-export function formatLogError(error: ExtensionError): Record<string, unknown> {
+export function formatLogError(
+  error: ExtensionError | ModuleError
+): Record<string, unknown> {
   const result: Record<string, unknown> = {
     code: error.code,
     message: error.message,

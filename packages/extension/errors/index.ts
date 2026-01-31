@@ -4,8 +4,7 @@
 import {
   type ModuleErrorCode,
   type ModuleErrorData,
-  getSuggestionsForCode,
-  formatModuleErrorDisplay,
+  ModuleError,
 } from '@mdx-preview/shared';
 
 export {
@@ -19,7 +18,7 @@ export {
 export { ErrorCode } from './error-codes';
 
 // re-export shared module error types for convenience
-export { type ModuleErrorCode, type ModuleErrorData };
+export { ModuleError, type ModuleErrorCode, type ModuleErrorData };
 
 // base error class w/ error code for programmatic handling
 export class ExtensionError extends Error {
@@ -39,52 +38,11 @@ export class ExtensionError extends Error {
 
 // module resolution & fetch errors (E100-E199)
 // extension-side subset of ModuleErrorCode
-export type ModuleFetchErrorCode = 'E100' | 'E101' | 'E110' | 'E120';
-
-export class ModuleFetchError extends ExtensionError {
-  readonly moduleId: string;
-  readonly parentModuleId?: string;
-  readonly suggestions: string[];
-  readonly recoverable: boolean;
-
-  constructor(
-    message: string,
-    code: ModuleFetchErrorCode,
-    moduleId: string,
-    parentModuleId?: string,
-    options?: {
-      cause?: Error;
-      suggestions?: string[];
-      recoverable?: boolean;
-    }
-  ) {
-    super(message, code, options?.cause);
-    this.moduleId = moduleId;
-    this.parentModuleId = parentModuleId;
-    this.suggestions =
-      options?.suggestions ?? getSuggestionsForCode(code as ModuleErrorCode);
-    this.recoverable = options?.recoverable ?? true;
-  }
-
-  // serialize to shared ModuleErrorData for RPC
-  toModuleErrorData(): ModuleErrorData {
-    return {
-      code: this.code as ModuleErrorCode,
-      message: this.message,
-      moduleId: this.moduleId,
-      parentModuleId: this.parentModuleId,
-      suggestions: this.suggestions,
-      recoverable: this.recoverable,
-      stack: this.stack,
-      causeMessage: this.cause?.message,
-    };
-  }
-
-  // format for display w/ suggestions
-  toDisplayMessage(): string {
-    return formatModuleErrorDisplay(this.toModuleErrorData());
-  }
-}
+export type ModuleFetchErrorCode = Extract<
+  ModuleErrorCode,
+  'E100' | 'E101' | 'E110' | 'E120'
+>;
+export type ModuleFetchError = ModuleError<ModuleFetchErrorCode>;
 
 // transpilation errors w/ source location
 export class TranspileError extends ExtensionError {
@@ -186,10 +144,7 @@ export class TailwindError extends ExtensionError {
 // E600 = WEBVIEW_MANIFEST_ERROR
 // E620 = WEBVIEW_HANDSHAKE_TIMEOUT
 // E640 = WEBVIEW_RPC_ERROR
-export type WebviewErrorCode =
-  | 'E600'
-  | 'E620'
-  | 'E640';
+export type WebviewErrorCode = 'E600' | 'E620' | 'E640';
 
 export class WebviewError extends ExtensionError {
   constructor(
@@ -206,10 +161,7 @@ export class WebviewError extends ExtensionError {
 // E800 = SERVICE_NOT_REGISTERED
 // E801 = SERVICE_ALREADY_DISPOSED
 // E802 = SERVICE_CIRCULAR_DEPENDENCY
-export type ServiceErrorCode =
-  | 'E800'
-  | 'E801'
-  | 'E802';
+export type ServiceErrorCode = 'E800' | 'E801' | 'E802';
 
 export class ServiceError extends ExtensionError {
   constructor(

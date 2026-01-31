@@ -143,7 +143,7 @@ export function registerMySubsystem(): void {
 
 **Preferred (in order):**
 
-1. **Service-locator functions** (most common):
+1. **Service-locator functions** (RECOMMENDED for all external code):
    ```typescript
    import { getConfigManager, getTrustManager } from './services';
 
@@ -151,16 +151,46 @@ export function registerMySubsystem(): void {
    const trustState = getTrustManager().getState();
    ```
 
-2. **ServiceRegistry.get()** (for dynamic access):
+2. **ServiceRegistry.get()** (for dynamic access only):
    ```typescript
    const service = ServiceRegistry.getInstance().get<MyService>('MY_SERVICE');
    ```
 
-3. **Direct getInstance()** (only within the service class itself):
+3. **Direct getInstance()** (ONLY within the service class or its tests):
    ```typescript
    // Only use inside the class or its tests
    const instance = MyService.getInstance();
    ```
+
+### When NOT to use getInstance() directly
+
+- In consuming code outside the service module - use service-locators instead
+- When a service is registered w/ ServiceRegistry - use the corresponding getter
+- When a service-locator function exists - always prefer it over direct access
+
+### Migration checklist for legacy code
+
+If you encounter direct `getInstance()` calls in consuming code, refactor to use service-locators:
+
+| Instead of... | Use... |
+|---------------|--------|
+| `ConfigManager.getInstance()` | `getConfigManager()` |
+| `TrustManager.getInstance()` | `getTrustManager()` |
+| `ThemeManager.getInstance()` | `getThemeManager()` |
+| `PreviewManager.getInstance()` | `getPreviewManager()` |
+| `FrameworkDetector.getInstance()` | `getFrameworkDetector()` |
+| `TailwindProcessor.getInstance()` | `getTailwindProcessor()` |
+| `ErrorReporter.getInstance()` | `getErrorReporter()` |
+| `StatusBarManager.getInstance()` | `getStatusBarManager()` |
+| `ConfigCache.getInstance()` | `getConfigCache()` |
+
+### Rationale
+
+Service-locators provide:
+- Type safety w/o explicit type imports
+- Decoupling from implementation details
+- Consistent access pattern across the codebase
+- Single point of control for testing & mocking
 
 ## Trust Validation
 

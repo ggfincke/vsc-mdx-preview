@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import { debug } from '../logging';
 import type { IService } from '../types';
+import type { LogTag } from '@mdx-preview/shared';
 
 // abstract base class for singleton services w/ automatic lifecycle management
 export abstract class SingletonService<
@@ -15,8 +16,8 @@ export abstract class SingletonService<
   // disposables managed by this service - cleaned up automatically on dispose
   protected disposables: vscode.Disposable[] = [];
 
-  // unique identifier for debug logging (e.g., 'CONFIG-MANAGER', 'TRUST-MANAGER')
-  protected abstract readonly logTag: string;
+  // use log tag for debug logging (e.g., LogTags.CONFIG_MANAGER)
+  protected abstract readonly logTag: LogTag;
 
   // note: don't access abstract properties (like logTag) here - they aren't available yet
   protected constructor() {
@@ -25,10 +26,8 @@ export abstract class SingletonService<
 
   // get singleton instance (creates new instance if none exists)
   // note: using a permissive `this` type that only requires prototype,
-  // allowing classes w/ protected constructors & protected instance to use getInstance().
-  static getInstance<S extends SingletonService<S>>(
-    this: { prototype: S }
-  ): S {
+  // allowing classes w/ protected constructors & protected instance to use getInstance()
+  static getInstance<S extends SingletonService<S>>(this: { prototype: S }): S {
     // cast to access protected static 'instance' & call protected constructor
     const ctor = this as unknown as { instance?: S; new (): S };
     if (!ctor.instance) {

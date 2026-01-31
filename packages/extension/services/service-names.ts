@@ -14,6 +14,7 @@ export const ServiceNames = {
   TAILWIND_PROCESSOR: 'TailwindProcessor',
   ERROR_REPORTER: 'ErrorReporter',
   OUTPUT_CHANNEL: 'OutputChannel',
+  META_RESOLVER: 'MetaResolver',
 
   // services w/ dependencies (disposed first)
   STATUS_BAR_MANAGER: 'StatusBarManager',

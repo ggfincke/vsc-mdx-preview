@@ -1,7 +1,7 @@
 // packages/extension/errors/error-codes.ts
 // centralized error codes enum for consistent error handling
 //
-// error code structure follows numeric prefixes by category:
+// error code structure follows numeric prefixes by category
 // - E001-E099: Trust & Security
 // - E100-E199: Module Fetch
 // - E200-E299: Configuration
