@@ -42,6 +42,8 @@ import {
   isSecurityModeTrusted,
   requireTrustedMode,
   requireTrustedModeForDocument,
+  tryRequireTrustedMode,
+  tryRequireTrustedModeForDocument,
 } from '../../packages/extension/security/validateTrust';
 import { SecurityMode } from '../../packages/extension/security/TrustManager';
 
@@ -210,5 +212,223 @@ describe('requireTrustedModeForDocument()', () => {
     expect(() =>
       requireTrustedModeForDocument(docUri as any, 'open preview')
     ).toThrow(TrustError);
+  });
+});
+
+describe('tryRequireTrustedModeForDocument()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns TrustState when document passes all checks', () => {
+    const mockState = {
+      workspaceTrusted: true,
+      scriptsEnabled: true,
+      canExecute: true,
+      openMdxLinksInPreview: true,
+    };
+    mockTrustManager.getStateForDocument.mockReturnValue(mockState);
+
+    const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx' };
+    const result = tryRequireTrustedModeForDocument(
+      docUri as any,
+      'test operation'
+    );
+
+    expect(result).toEqual(mockState);
+  });
+
+  it('returns undefined when TrustError is thrown', () => {
+    mockTrustManager.getStateForDocument.mockReturnValue({
+      workspaceTrusted: true,
+      scriptsEnabled: true,
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    });
+
+    const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx' };
+    const result = tryRequireTrustedModeForDocument(
+      docUri as any,
+      'test operation'
+    );
+
+    expect(result).toBeUndefined();
+  });
+
+  it('calls onTrustError callback when TrustError is thrown', () => {
+    mockTrustManager.getStateForDocument.mockReturnValue({
+      workspaceTrusted: false,
+      scriptsEnabled: true,
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    });
+
+    const onTrustError = vi.fn();
+    const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx' };
+
+    tryRequireTrustedModeForDocument(
+      docUri as any,
+      'test operation',
+      onTrustError
+    );
+
+    expect(onTrustError).toHaveBeenCalledTimes(1);
+    expect(onTrustError).toHaveBeenCalledWith(expect.any(TrustError));
+  });
+
+  it('does not call callback when trust check passes', () => {
+    mockTrustManager.getStateForDocument.mockReturnValue({
+      workspaceTrusted: true,
+      scriptsEnabled: true,
+      canExecute: true,
+      openMdxLinksInPreview: true,
+    });
+
+    const onTrustError = vi.fn();
+    const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx' };
+
+    tryRequireTrustedModeForDocument(
+      docUri as any,
+      'test operation',
+      onTrustError
+    );
+
+    expect(onTrustError).not.toHaveBeenCalled();
+  });
+
+  it('works without callback (callback is optional)', () => {
+    mockTrustManager.getStateForDocument.mockReturnValue({
+      workspaceTrusted: false,
+      scriptsEnabled: true,
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    });
+
+    const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx' };
+    const result = tryRequireTrustedModeForDocument(
+      docUri as any,
+      'test operation'
+    );
+
+    expect(result).toBeUndefined();
+  });
+
+  it('re-throws non-TrustError exceptions', () => {
+    const unexpectedError = new Error('Unexpected error');
+    mockTrustManager.getStateForDocument.mockImplementation(() => {
+      throw unexpectedError;
+    });
+
+    const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx' };
+
+    expect(() =>
+      tryRequireTrustedModeForDocument(docUri as any, 'test operation')
+    ).toThrow(unexpectedError);
+  });
+
+  it('provides error message in callback', () => {
+    mockTrustManager.getStateForDocument.mockReturnValue({
+      workspaceTrusted: false,
+      scriptsEnabled: true,
+      canExecute: false,
+      openMdxLinksInPreview: true,
+      reason: 'Workspace not trusted',
+    });
+
+    let capturedMessage = '';
+    const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx' };
+
+    tryRequireTrustedModeForDocument(docUri as any, 'load plugins', (error) => {
+      capturedMessage = error.message;
+    });
+
+    expect(capturedMessage).toContain('load plugins');
+    expect(capturedMessage).toContain('Trusted Mode');
+  });
+});
+
+describe('tryRequireTrustedMode()', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns TrustState when trusted', () => {
+    const mockState = {
+      workspaceTrusted: true,
+      scriptsEnabled: true,
+      canExecute: true,
+      openMdxLinksInPreview: true,
+    };
+    mockTrustManager.getState.mockReturnValue(mockState);
+
+    const result = tryRequireTrustedMode('test operation');
+
+    expect(result).toEqual(mockState);
+  });
+
+  it('returns undefined when not trusted', () => {
+    mockTrustManager.getState.mockReturnValue({
+      workspaceTrusted: false,
+      scriptsEnabled: true,
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    });
+
+    const result = tryRequireTrustedMode('test operation');
+
+    expect(result).toBeUndefined();
+  });
+
+  it('calls onTrustError callback when not trusted', () => {
+    mockTrustManager.getState.mockReturnValue({
+      workspaceTrusted: false,
+      scriptsEnabled: true,
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    });
+
+    const onTrustError = vi.fn();
+    tryRequireTrustedMode('test operation', onTrustError);
+
+    expect(onTrustError).toHaveBeenCalledTimes(1);
+    expect(onTrustError).toHaveBeenCalledWith(expect.any(TrustError));
+  });
+
+  it('does not call callback when trust check passes', () => {
+    mockTrustManager.getState.mockReturnValue({
+      workspaceTrusted: true,
+      scriptsEnabled: true,
+      canExecute: true,
+      openMdxLinksInPreview: true,
+    });
+
+    const onTrustError = vi.fn();
+    tryRequireTrustedMode('test operation', onTrustError);
+
+    expect(onTrustError).not.toHaveBeenCalled();
+  });
+
+  it('works without callback (callback is optional)', () => {
+    mockTrustManager.getState.mockReturnValue({
+      workspaceTrusted: false,
+      scriptsEnabled: true,
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    });
+
+    const result = tryRequireTrustedMode('test operation');
+
+    expect(result).toBeUndefined();
+  });
+
+  it('re-throws non-TrustError exceptions', () => {
+    const unexpectedError = new Error('Service unavailable');
+    mockTrustManager.getState.mockImplementation(() => {
+      throw unexpectedError;
+    });
+
+    expect(() => tryRequireTrustedMode('test operation')).toThrow(
+      unexpectedError
+    );
   });
 });

@@ -143,3 +143,42 @@ export function requireTrustedModeForDocument(
   }
   return trustState;
 }
+
+// non-throwing trust check for document-specific operations
+// returns TrustState on success, undefined on TrustError
+// calls optional callback w/ error before returning undefined
+// re-throws non-TrustError exceptions
+export function tryRequireTrustedModeForDocument(
+  docUri: vscode.Uri,
+  operation: string,
+  onTrustError?: (error: TrustError) => void
+): TrustState | undefined {
+  try {
+    return requireTrustedModeForDocument(docUri, operation);
+  } catch (error) {
+    if (error instanceof TrustError) {
+      onTrustError?.(error);
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+// non-throwing trust check for general operations
+// returns TrustState on success, undefined on TrustError
+// calls optional callback w/ error before returning undefined
+// re-throws non-TrustError exceptions
+export function tryRequireTrustedMode(
+  operation: string,
+  onTrustError?: (error: TrustError) => void
+): TrustState | undefined {
+  try {
+    return requireTrustedMode(operation);
+  } catch (error) {
+    if (error instanceof TrustError) {
+      onTrustError?.(error);
+      return undefined;
+    }
+    throw error;
+  }
+}
