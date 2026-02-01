@@ -28,6 +28,10 @@ export const CACHE_DEFAULT_TTL_MS = STANDARD_CACHE_TTL_MS;
 // version detection cache TTL in milliseconds (5 minutes) - uses shared constant
 export const VERSION_CACHE_TTL_MS = STANDARD_CACHE_TTL_MS;
 
+// cache schema version - bump when cache key structure or compilation behavior changes
+// this ensures stale caches are invalidated on extension updates
+export const TAILWIND_CACHE_SCHEMA_VERSION = 1;
+
 // processing limits
 
 // maximum characters per @source inline() directive for Tailwind v4
@@ -41,6 +45,14 @@ export const MAX_INLINE_SOURCE_CHUNK_SIZE = 2000;
 // maximum recursion depth for nested template literal extraction
 // prevents stack overflow from pathological input like deeply nested templates
 export const SCANNER_MAX_RECURSION_DEPTH = 10;
+
+// concurrency limits
+
+// maximum concurrent dependency resolution operations
+export const TAILWIND_DEPENDENCY_RESOLUTION_LIMIT = 10;
+
+// maximum concurrent file read operations
+export const TAILWIND_FILE_READ_LIMIT = 8;
 
 // default maximum file size in bytes to process (10 MB)
 export const DEFAULT_MAX_FILE_SIZE_BYTES = DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES;

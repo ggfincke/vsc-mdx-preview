@@ -18,6 +18,7 @@ import { TailwindCompiler, type TailwindVersion } from './TailwindCompiler';
 import {
   MIN_SUPPORTED_TAILWIND_VERSION,
   MAX_KNOWN_TAILWIND_VERSION,
+  TAILWIND_CACHE_SCHEMA_VERSION,
 } from './constants';
 import type { Preview } from '../preview/preview-manager';
 import { normalizeError, LogTags, type TrustState } from '@mdx-preview/shared';
@@ -267,6 +268,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     ]);
 
     const payload = JSON.stringify({
+      schemaVersion: TAILWIND_CACHE_SCHEMA_VERSION,
       version,
       content,
       configPath,

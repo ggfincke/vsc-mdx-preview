@@ -7,7 +7,10 @@
 import * as fs from 'fs';
 import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import { debug } from '../logging';
-import { CLASS_TOKEN_RE } from './constants';
+import { Semaphore } from '../utils/Semaphore';
+import { CLASS_TOKEN_RE, TAILWIND_FILE_READ_LIMIT } from './constants';
+
+const readSemaphore = new Semaphore(TAILWIND_FILE_READ_LIMIT);
 
 export interface FileValidationResult {
   valid: boolean;
@@ -91,10 +94,16 @@ export class FileScanValidator {
   ): Promise<Map<string, string>> {
     const results = new Map<string, string>();
 
+    // read files w/ concurrency limit to prevent I/O exhaustion
     const readPromises = fsPaths.map(
       async (fsPath): Promise<FileReadResult> => {
-        const content = await this.readFileIfValid(fsPath, maxBytes);
-        return { fsPath, content };
+        await readSemaphore.acquire();
+        try {
+          const content = await this.readFileIfValid(fsPath, maxBytes);
+          return { fsPath, content };
+        } finally {
+          readSemaphore.release();
+        }
       }
     );
 

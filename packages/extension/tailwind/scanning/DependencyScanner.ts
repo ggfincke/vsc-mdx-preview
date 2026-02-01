@@ -4,8 +4,12 @@
 import * as path from 'path';
 import { getUnifiedResolver } from '../../module-system/resolver/UnifiedResolver';
 import type { ResolutionContext, TextExtractor } from '../../types';
+import { Semaphore } from '../../utils/Semaphore';
 import { FileScanValidator } from '../FileScanValidator';
 import { TailwindScanCache, computeContentHash } from '../TailwindScanCache';
+import { TAILWIND_DEPENDENCY_RESOLUTION_LIMIT } from '../constants';
+
+const resolveSemaphore = new Semaphore(TAILWIND_DEPENDENCY_RESOLUTION_LIMIT);
 
 // resolves & scans imported dependency files for Tailwind classes
 export class DependencyScanner {
@@ -83,23 +87,28 @@ export class DependencyScanner {
       ? { ...providedContext, baseDir: entryDir }
       : { baseDir: entryDir };
 
-    // filter to resolvable relative imports & resolve in parallel
-    const resolutionPromises = imports
-      .filter((specifier) => {
-        // must be resolvable & relative
-        return (
-          this.resolver.shouldResolve(specifier) &&
-          this.resolver.isRelativeImport(specifier)
-        );
-      })
-      .map(async (specifier) => {
+    // filter to resolvable relative imports
+    const toResolve = imports.filter((specifier) => {
+      return (
+        this.resolver.shouldResolve(specifier) &&
+        this.resolver.isRelativeImport(specifier)
+      );
+    });
+
+    // resolve w/ concurrency limit to prevent resource exhaustion
+    const resolutionPromises = toResolve.map(async (specifier) => {
+      await resolveSemaphore.acquire();
+      try {
         const result = await this.resolver.resolveAsync(
           specifier,
           context,
           'dependency'
         );
         return result && !result.isBuiltInShim ? result.fsPath : null;
-      });
+      } finally {
+        resolveSemaphore.release();
+      }
+    });
 
     const results = await Promise.all(resolutionPromises);
     return results.filter((target): target is string => target !== null);
