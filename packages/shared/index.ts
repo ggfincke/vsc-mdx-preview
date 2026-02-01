@@ -129,6 +129,17 @@ export {
   getSuggestionsForCode,
   ModuleError,
   type ModuleErrorOptions,
+  // error factory functions
+  type ExtensionModuleErrorCode,
+  type WebviewModuleErrorCode,
+  createModuleNotFoundError,
+  createOutsideWorkspaceError,
+  createParseError,
+  createTransformError,
+  createCircularDependencyError,
+  createFetchFailedError,
+  createEvaluationFailedError,
+  createModuleDepthExceededError,
 } from './errors';
 
 // module ID utilities (npm:// format handling)
@@ -431,3 +442,15 @@ export {
   normalizeCalloutType,
   isValidCalloutType,
 } from './callout';
+
+// centralized icon definitions (shared between extension & webview)
+export {
+  CALLOUT_ICONS,
+  GITHUB_ICONS,
+  GITHUB_ALERT_ICONS,
+  FILE_TREE_ICONS,
+  type CalloutIconType,
+  type GitHubIconType,
+  type GitHubAlertIconType,
+  type FileTreeIconType,
+} from './icons';
