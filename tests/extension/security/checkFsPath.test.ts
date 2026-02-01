@@ -17,8 +17,10 @@ vi.mock('vscode', () => ({
 // Import after mocks
 import {
   checkFsPath,
+  checkFsPathAsync,
   handleDidChangeWorkspaceFolders,
 } from '../../../packages/extension/module-system/security/checkFsPath';
+import { normalizePathForComparison } from '../../../packages/extension/utils/path-utils';
 
 describe('checkFsPath', () => {
   beforeEach(() => {
@@ -355,5 +357,148 @@ describe('checkFsPath', () => {
         false
       );
     });
+  });
+});
+
+// ============================================
+// checkFsPathAsync tests (w/ symlink resolution & case normalization)
+// ============================================
+describe('checkFsPathAsync', () => {
+  const createWorkspaceFolder = (fsPath: string) => ({
+    uri: { fsPath },
+    name: path.basename(fsPath),
+    index: 0,
+  });
+
+  beforeEach(() => {
+    handleDidChangeWorkspaceFolders();
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('basic async validation', () => {
+    it('should return true for path inside workspace', async () => {
+      mockWorkspaceFolders.mockReturnValue([
+        createWorkspaceFolder('/workspace'),
+      ]);
+
+      const result = await checkFsPathAsync(
+        '/workspace/src',
+        '/workspace/src/file.ts'
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should return false for path outside workspace', async () => {
+      mockWorkspaceFolders.mockReturnValue([
+        createWorkspaceFolder('/workspace'),
+      ]);
+
+      const result = await checkFsPathAsync('/workspace/src', '/etc/passwd');
+      expect(result).toBe(false);
+    });
+
+    it('should return false when no workspace folders', async () => {
+      mockWorkspaceFolders.mockReturnValue(undefined);
+
+      const result = await checkFsPathAsync(
+        '/workspace/src',
+        '/workspace/src/file.ts'
+      );
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('path traversal prevention (async)', () => {
+    it('should block traversal escaping workspace', async () => {
+      mockWorkspaceFolders.mockReturnValue([
+        createWorkspaceFolder('/workspace'),
+      ]);
+
+      const result = await checkFsPathAsync(
+        '/workspace/src',
+        '/workspace/../etc/passwd'
+      );
+      expect(result).toBe(false);
+    });
+
+    it('should allow traversal staying within workspace', async () => {
+      mockWorkspaceFolders.mockReturnValue([
+        createWorkspaceFolder('/workspace'),
+      ]);
+
+      const result = await checkFsPathAsync(
+        '/workspace/src',
+        '/workspace/src/../lib/file.ts'
+      );
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('prefix collision attacks (async)', () => {
+    it('should not be fooled by workspace name prefixes', async () => {
+      mockWorkspaceFolders.mockReturnValue([
+        createWorkspaceFolder('/workspace'),
+      ]);
+
+      const result1 = await checkFsPathAsync(
+        '/workspace/src',
+        '/workspace-malicious/file.ts'
+      );
+      expect(result1).toBe(false);
+
+      const result2 = await checkFsPathAsync(
+        '/workspace/src',
+        '/workspaceExtra/file.ts'
+      );
+      expect(result2).toBe(false);
+    });
+  });
+
+  describe('multi-workspace (async)', () => {
+    it('should work w/ multiple workspace folders', async () => {
+      mockWorkspaceFolders.mockReturnValue([
+        createWorkspaceFolder('/workspace1'),
+        createWorkspaceFolder('/workspace2'),
+      ]);
+
+      const result1 = await checkFsPathAsync(
+        '/workspace1/src',
+        '/workspace1/src/file.ts'
+      );
+      expect(result1).toBe(true);
+
+      const result2 = await checkFsPathAsync(
+        '/workspace1/src',
+        '/workspace2/src/file.ts'
+      );
+      expect(result2).toBe(false);
+    });
+  });
+});
+
+// ============================================
+// path-utils unit tests for new async functions
+// ============================================
+describe('normalizePathForComparison', () => {
+  const originalPlatform = process.platform;
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
+  });
+
+  it('should lowercase paths on Windows', () => {
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+    const result = normalizePathForComparison('C:\\Users\\Test\\File.ts');
+    expect(result).toBe('c:\\users\\test\\file.ts');
+  });
+
+  it('should preserve case on Unix', () => {
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+    const result = normalizePathForComparison('/Users/Test/File.ts');
+    expect(result).toBe('/Users/Test/File.ts');
   });
 });

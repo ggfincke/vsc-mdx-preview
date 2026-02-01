@@ -114,6 +114,47 @@ export function isPathInside(childPath: string, parentPath: string): boolean {
   return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
+// resolve real path w/ symlink resolution (async)
+// returns null if path doesn't exist or can't be resolved
+export async function resolveRealPath(
+  targetPath: string
+): Promise<string | null> {
+  try {
+    return await fs.promises.realpath(targetPath);
+  } catch {
+    return null;
+  }
+}
+
+// normalize path for case-insensitive comparison on Windows
+// Windows NTFS is case-insensitive, so we lowercase for comparisons
+export function normalizePathForComparison(filePath: string): string {
+  const normalized = path.normalize(filePath);
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
+// async version of isPathInside w/ symlink resolution & case normalization
+// ! use this for security-critical path checks
+export async function isPathInsideAsync(
+  childPath: string,
+  parentPath: string
+): Promise<boolean> {
+  // resolve symlinks for both paths
+  const realChild = await resolveRealPath(childPath);
+  const realParent = await resolveRealPath(parentPath);
+
+  if (!realChild || !realParent) {
+    return false;
+  }
+
+  // normalize for case-insensitive filesystems (Windows)
+  const normChild = normalizePathForComparison(realChild);
+  const normParent = normalizePathForComparison(realParent);
+
+  const relative = path.relative(normParent, normChild);
+  return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
 // join path segments & normalize to forward slashes
 export function joinAsImportPath(...segments: string[]): string {
   return normalizePathSeparators(path.join(...segments));
