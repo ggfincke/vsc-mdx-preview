@@ -9,10 +9,11 @@ import { debug } from '../../logging';
 let lexerInitialized = false;
 
 // I.4: fast pre-check to skip parsing for files w/o imports
-// pattern matches: import statements, require() calls, export-from statements
+// pattern matches: import statements (all forms), require() calls, export-from statements
+// biased toward false positives - es-module-lexer handles actual parsing
 
 const IMPORT_PATTERN =
-  /\b(import\s|require\s*\(|export\s+\*\s+from|export\s+\{[^}]*\}\s+from)\b/;
+  /\b(import\s|import\s*\(|require\s*\(|export\s+[*{]|export\s+type\s+\{|from\s+['"`])/;
 
 // fast pre-check: return true if code might have imports (worth parsing)
 // return false if definitely no imports (skip parsing for performance)
