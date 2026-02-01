@@ -4,12 +4,12 @@
 
 import { MDX_PREVIEW_CONFIG_SCHEMA } from '../config/schema';
 
-// Static schema structure from shared config schema
+// return static schema structure from shared config schema
 export function generateConfigSchema(): object {
   return MDX_PREVIEW_CONFIG_SCHEMA;
 }
 
-// Generate JSON string w/ proper formatting
+// generate JSON string w/ proper formatting
 export function generateConfigSchemaJson(): string {
   const schema = generateConfigSchema();
   return JSON.stringify(schema, null, 2) + '\n';

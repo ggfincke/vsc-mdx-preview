@@ -51,7 +51,7 @@ export {
   getFrameworkShimPath,
 } from './registry';
 
-// core preloaded module IDs (React, MDX, layout)
+// core preloaded module IDs (react, mdx, layout)
 export { PRELOADED_MODULE_IDS, type PreloadedModuleId } from './core-modules';
 
 // fetch result w/ module code & dependencies

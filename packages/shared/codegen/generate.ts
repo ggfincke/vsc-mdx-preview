@@ -146,7 +146,7 @@ function generateGenericPreloadFunction(
         `  registry.preload('${entry.preloadId}', createComponentModule(${importVar}, ${exportNamesJson}));`
       );
 
-      // Generate individual lazy loader for conditional preloading
+      // generate individual lazy loader for conditional preloading
       loaderEntries.push(
         `  '${entry.name}': async (registry: ModuleRegistry) => {
     const component = await import('${relativeImport}').then(m => m.default);
@@ -182,7 +182,7 @@ function generateFrameworkLoader(
 ): string {
   const funcName = `load${capitalize(framework)}Shims`;
 
-  // generate dynamic import promises
+  // build dynamic import promises
   const importPromises: string[] = [];
   const varNames: string[] = [];
 
@@ -194,7 +194,7 @@ function generateFrameworkLoader(
     varNames.push(varName);
   }
 
-  // generate preload calls
+  // build preload calls
   const preloadCalls: string[] = [];
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
@@ -252,7 +252,7 @@ export function generatePreloadTs(options: GeneratePreloadOptions): string {
 
   // generate FRAMEWORK_LOADERS map (includes generic as no-op since it's loaded synchronously)
   const loaderMapEntries = [
-    // generic shims loaded synchronously via preloadGenericShims
+    // generic shims are loaded synchronously via preloadGenericShims
     '  generic: async () => {}',
     ...LAZY_FRAMEWORKS.map((fw) => `  ${fw}: load${capitalize(fw)}Shims`),
   ];
@@ -293,7 +293,7 @@ function setAlias(
 
 function buildCoreAliases(): Record<string, string> {
   return {
-    // React core aliases
+    // react core aliases
     react: PRELOADED_MODULE_IDS.react,
     'npm://react': PRELOADED_MODULE_IDS.react,
     'react-dom': PRELOADED_MODULE_IDS.reactDom,
@@ -303,11 +303,11 @@ function buildCoreAliases(): Record<string, string> {
     'react/jsx-runtime': PRELOADED_MODULE_IDS.jsxRuntime,
     'npm://react/jsx-runtime': PRELOADED_MODULE_IDS.jsxRuntime,
 
-    // MDX aliases
+    // mdx aliases
     '@mdx-js/react': PRELOADED_MODULE_IDS.mdxReact,
     'npm://@mdx-js/react': PRELOADED_MODULE_IDS.mdxReact,
 
-    // Layout aliases
+    // layout aliases
     'vscode-markdown-layout': PRELOADED_MODULE_IDS.vscodeLayout,
     'npm://vscode-markdown-layout': PRELOADED_MODULE_IDS.vscodeLayout,
   };

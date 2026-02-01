@@ -23,7 +23,7 @@ export interface ContentHashCacheOptions<V> extends Omit<
 }
 
 // LRU cache that validates entries by content hash before returning
-// example:
+// example
 // ```typescript
 // const cache = new ContentHashCache<string[]>({ maxEntries: 50, ttlMs: 300000 });
 //
@@ -59,10 +59,10 @@ export class ContentHashCache<V> {
       return null;
     }
 
-    // Hash mismatch - content has changed
+    // hash mismatch means content has changed
     if (entry.hash !== contentHash) {
-      // Don't delete - let LRU eviction handle it
-      // The entry might still be valid for other purposes
+      // don't delete - let LRU eviction handle it
+      // the entry might still be valid for other purposes
       return null;
     }
 
@@ -107,7 +107,7 @@ export class ContentHashCache<V> {
 
   // update cache settings dynamically
   updateSettings(options: Partial<ContentHashCacheOptions<V>>): void {
-    // Note: estimateSize updates not supported after construction
+    // note: estimateSize updates not supported after construction
     // due to wrapper complexity
     this.cache.updateSettings({
       maxEntries: options.maxEntries,

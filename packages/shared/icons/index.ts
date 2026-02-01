@@ -8,7 +8,7 @@ const INFO_ICON_SVG =
 const WARNING_ICON_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
 
-// Lucide-style callout icons (24x24 viewBox, stroke-based)
+// lucide-style callout icons (24x24 viewBox, stroke-based)
 // used by generic Callout & Starlight Aside
 export const CALLOUT_ICONS = {
   note: INFO_ICON_SVG,
@@ -24,7 +24,7 @@ export const CALLOUT_ICONS = {
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
 } as const;
 
-// GitHub Primer style icons (16x16 viewBox, fill-based)
+// github Primer style icons (16x16 viewBox, fill-based)
 // used by Nextra callouts & GitHub-style alerts
 export const GITHUB_ICONS = {
   // lightbulb - used for tip/default callout

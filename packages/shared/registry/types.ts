@@ -1,5 +1,5 @@
 // packages/shared/registry/types.ts
-// interface definitions for component registry (NOT derived from COMPONENT_REGISTRY)
+// interface definitions for component registry (not derived from COMPONENT_REGISTRY)
 
 export const SHIM_PREFIX = '@mdx-preview/shims' as const;
 
