@@ -4,8 +4,7 @@
 import { visit } from 'unist-util-visit';
 import type { Root, Element, Text } from 'hast';
 
-// rehype plugin that transforms mermaid code blocks into placeholder divs
-// the webview renders these client-side using mermaid.js
+// rehype plugin to transform mermaid code blocks into placeholder divs for client-side rendering
 export default function rehypeMermaidPlaceholder() {
   return (tree: Root) => {
     visit(tree, 'element', (node: Element, index, parent) => {

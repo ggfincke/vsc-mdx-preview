@@ -54,13 +54,11 @@ export function extractPreviewFrontmatter(
   return result;
 }
 
-// Nextra-specific frontmatter keys
+// Nextra-specific frontmatter keys (sidebarTitle takes precedence over title)
 export const NEXTRA_FRONTMATTER_KEYS = [
   'title',
-  // takes precedence over title
   'sidebarTitle',
   'description',
-  // 'default' | 'full' | 'raw'
   'layout',
 ] as const;
 

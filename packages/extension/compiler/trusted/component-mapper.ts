@@ -32,9 +32,7 @@ export interface ComponentImportsOptions {
   builtinsEnabled?: boolean;
 }
 
-// built-in generic component names that can be auto-injected
-// these map directly to preloaded shims in the webview
-// now derived from the shared component registry
+// built-in generic component names derived from shared component registry
 const BUILTIN_GENERIC_COMPONENTS = getAllGenericComponentNames();
 
 // generate import statements & components object for custom component mapping (only generates in Trusted Mode)

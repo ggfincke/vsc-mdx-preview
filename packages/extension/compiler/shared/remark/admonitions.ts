@@ -1,16 +1,5 @@
 // packages/extension/compiler/shared/remark/admonitions.ts
 // transform directive syntax (:::note, :::warning, etc.) to admonition HTML
-//
-// this plugin transforms container directives from remark-directive into admonition HTML
-// it supports Docusaurus/Starlight-style admonition syntax
-//
-//   :::note
-//   this is a note
-//   :::
-//
-//   :::warning[Custom Title]
-//   this is a warning w/ a custom title
-//   :::
 
 import { visit } from 'unist-util-visit';
 import type { Root, Parent, PhrasingContent, BlockContent } from 'mdast';
@@ -25,7 +14,6 @@ interface AdmonitionType {
 }
 
 // supported admonition types (Docusaurus + Starlight compatible)
-// CSS naming convention: mdx-preview-admonition-*
 const ADMONITION_TYPES: Record<string, AdmonitionType> = {
   note: {
     className: 'mdx-preview-admonition-note',
@@ -74,8 +62,7 @@ function isContainerDirective(node: unknown): node is ContainerDirective {
   );
 }
 
-// extract custom title from directive children
-// e.g., :::note[Custom Title] creates a directiveLabel node
+// extract custom title from directive children (e.g., :::note[Custom Title])
 function extractCustomTitle(node: ContainerDirective): string | null {
   // check attributes first (some parsers put it there)
   if (node.attributes && 'title' in node.attributes) {
@@ -131,8 +118,7 @@ function getDirectiveName(node: ContainerDirective): string {
   return node.name.toLowerCase();
 }
 
-// custom mdast node types for admonitions
-// these are converted to HTML by rehype via hName/hProperties
+// custom mdast node types for admonitions (converted to HTML via hName/hProperties)
 interface AdmonitionNode extends Parent {
   type: 'admonition';
   data: {

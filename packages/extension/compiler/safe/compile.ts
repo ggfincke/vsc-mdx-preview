@@ -69,9 +69,7 @@ function remarkStripMdx(options: RemarkStripMdxOptions = {}) {
         const jsxNode = node as unknown as MdxJsxElement;
         const name = jsxNode.name || 'Component';
 
-        // check if this is a known generic component (already transformed by remarkGenericComponents)
-        // if builtins are enabled & this is a known component, it should have been transformed
-        // if we still see it here, it means transformation failed or builtins are disabled
+        // check if this is a known generic component that should have been transformed
         const isKnownComponent =
           builtinsEnabled && KNOWN_GENERIC_COMPONENTS.has(name);
 
@@ -241,13 +239,22 @@ function createJsxReplacement(
   }
 }
 
+// unified processor type for dynamic plugin pipeline building
+interface PluginPipeline {
+  use(plugin: Pluggable, settings?: unknown): PluginPipeline;
+  process(file: string): Promise<{ toString(): string }>;
+}
+
 // apply plugins from array to unified processor
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function applyPlugins(processor: any, plugins: Pluggable[]): any {
+function applyPlugins<T extends PluginPipeline>(
+  processor: T,
+  plugins: Pluggable[]
+): T {
   for (const plugin of plugins) {
     if (Array.isArray(plugin)) {
       // plugin w/ options: [pluginFn, options]
-      processor.use(plugin[0], plugin[1]);
+      const [pluginFn, options] = plugin;
+      processor.use(pluginFn as Pluggable, options);
     } else {
       processor.use(plugin);
     }
@@ -276,36 +283,40 @@ export async function compileSafe(
     (config?.config.unknownBehavior as UnknownBehavior) ||
     configManager.get('components.unknownBehavior');
 
-  // build unified pipeline w/ shared plugins via plugin-builder
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let processor: any = unified()
-    .use(remarkParse)
-    .use(remarkMdx)
-    // transform known generic components to semantic HTML (before stripping)
-    .use(remarkGenericComponents, { enabled: builtinsEnabled })
-    // strip unknown JSX elements based on configured behavior
-    .use(remarkStripMdx, { unknownBehavior, builtinsEnabled });
-
-  // add shared remark plugins (GFM, GitHub alerts, math)
-  processor = applyPlugins(processor, getSafeRemarkPlugins());
-
-  // convert to rehype
-  processor = processor.use(remarkRehype, { allowDangerousHtml: true });
-
   // get rehype plugin sets from plugin-builder
   const { preMath, math, postMath } = getSafeRehypePluginSets();
 
-  // add pre-math rehype plugins (mermaid placeholder)
-  processor = applyPlugins(processor, preMath);
+  // build unified pipeline w/ shared plugins via plugin-builder
+  const remarkPlugins = getSafeRemarkPlugins();
 
-  // add KaTeX for math rendering
-  processor = processor.use(math);
+  // stage 1: parse MDX & apply remark plugins
+  const remarkProcessor = applyPlugins(
+    unified()
+      .use(remarkParse)
+      .use(remarkMdx)
+      // transform known generic components to semantic HTML (before stripping)
+      .use(remarkGenericComponents, { enabled: builtinsEnabled })
+      // strip unknown JSX elements based on configured behavior
+      .use(remarkStripMdx, { unknownBehavior, builtinsEnabled }),
+    remarkPlugins
+  );
 
-  // add post-math rehype plugins (shiki, slug, autolink, lazy images)
-  processor = applyPlugins(processor, postMath);
+  // stage 2: convert to rehype & apply rehype plugins
+  const rehypeProcessor = applyPlugins(
+    applyPlugins(
+      applyPlugins(
+        remarkProcessor.use(remarkRehype, { allowDangerousHtml: true }),
+        preMath
+      ),
+      [math]
+    ),
+    postMath
+  );
 
-  // stringify to HTML
-  processor = processor.use(rehypeStringify, { allowDangerousHtml: true });
+  // stage 3: stringify to HTML
+  const processor = rehypeProcessor.use(rehypeStringify, {
+    allowDangerousHtml: true,
+  });
 
   const result = await processor.process(content);
 

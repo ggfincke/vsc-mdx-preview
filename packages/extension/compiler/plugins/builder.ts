@@ -1,8 +1,5 @@
 // packages/extension/compiler/plugins/builder.ts
-// shared MDX plugin pipeline construction
-//
-// extracts plugin pipeline building from trusted/safe compilers
-// for better testability & single source of truth
+// shared MDX plugin pipeline construction for trusted & safe compilers
 
 import type { Pluggable } from 'unified';
 import rehypeRawPkg from 'rehype-raw';
@@ -15,8 +12,7 @@ import {
 import type { LoadedPlugins } from './loader';
 import type { PluginPipeline } from '../../types';
 
-// rehype-raw configuration w/ MDX-specific passThrough nodes
-// these nodes must not be parsed as raw HTML to preserve MDX semantics
+// rehype-raw configuration w/ MDX-specific passThrough nodes to preserve MDX semantics
 export const REHYPE_RAW_CONFIG = {
   passThrough: [
     'mdxJsxFlowElement',
@@ -28,8 +24,7 @@ export const REHYPE_RAW_CONFIG = {
   ],
 } as const;
 
-// build the remark plugin array for Trusted Mode
-// merges shared plugins w/ custom plugins from config
+// build the remark plugin array for Trusted Mode (merge shared & custom plugins)
 export function buildTrustedRemarkPlugins(
   customPlugins: LoadedPlugins
 ): Pluggable[] {
@@ -39,14 +34,7 @@ export function buildTrustedRemarkPlugins(
   return [...sharedRemarkPlugins, ...customPlugins.remarkPlugins];
 }
 
-// build the rehype plugin array for Trusted Mode
-// includes rehype-raw w/ MDX passThrough, math plugins, & custom plugins
-// plugin order
-// 1. rehype-raw (parse raw HTML, preserve MDX nodes)
-// 2. pre-math plugins (mermaid placeholder)
-// 3. rehype-katex (math rendering)
-// 4. post-math plugins (shiki, slug, autolink, lazy images)
-// 5. custom plugins from config
+// build the rehype plugin array for Trusted Mode (rehype-raw, math, shiki, custom)
 export function buildTrustedRehypePlugins(
   customPlugins: LoadedPlugins
 ): Pluggable[] {
@@ -64,7 +52,6 @@ export function buildTrustedRehypePlugins(
 }
 
 // build the complete plugin pipeline for Trusted Mode
-// return arrays suitable for @mdx-js/mdx compile() options
 export function buildTrustedPluginPipeline(
   customPlugins: LoadedPlugins
 ): PluginPipeline {
@@ -79,10 +66,7 @@ export function getSafeRemarkPlugins(): Pluggable[] {
   return sharedRemarkPlugins;
 }
 
-// get shared rehype plugins for Safe Mode
-// return separate arrays for use w/ unified processor
-// Safe Mode uses unified() w/ .use() calls instead of compile() options
-// so plugins need to be applied separately rather than as a single array
+// get shared rehype plugins for Safe Mode (separate arrays for unified().use() pattern)
 export function getSafeRehypePluginSets(): {
   preMath: Pluggable[];
   math: Pluggable;
