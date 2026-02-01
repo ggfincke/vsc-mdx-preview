@@ -41,10 +41,11 @@ export type SettingKey =
   | 'framework.componentShims'
   | 'components.builtins'
   | 'components.unknownBehavior'
-  | 'advanced.watcherDebounceMs';
+  | 'advanced.watcherDebounceMs'
+  | 'advanced.debugOutput';
 
 // type mapping for settings
-// Note: enum types imported from @mdx-preview/shared (canonical source)
+// enum types imported from @mdx-preview/shared (canonical source)
 export interface SettingTypes {
   'preview.updateMode': UpdateModeValue;
   'preview.debounceDelay': number;
@@ -71,6 +72,7 @@ export interface SettingTypes {
   'components.builtins': boolean;
   'components.unknownBehavior': UnknownBehaviorValue;
   'advanced.watcherDebounceMs': number;
+  'advanced.debugOutput': boolean;
 }
 
 // map shared defaults to extension setting types
@@ -113,11 +115,32 @@ function mapDefaults(): SettingTypes {
       SETTINGS_DEFAULTS['components.unknownBehavior'],
     'advanced.watcherDebounceMs':
       SETTINGS_DEFAULTS['advanced.watcherDebounceMs'],
+    'advanced.debugOutput': SETTINGS_DEFAULTS['advanced.debugOutput'],
   };
 }
 
 // default values for all settings
 const DEFAULTS: SettingTypes = mapDefaults();
+
+// key groups for common subscription patterns
+export const THEME_KEYS: readonly SettingKey[] = [
+  'preview.previewTheme',
+  'preview.codeBlockTheme',
+  'preview.mermaidTheme',
+  'preview.autoTheme',
+] as const;
+
+export const PREVIEW_CONFIG_KEYS: readonly SettingKey[] = [
+  'preview.updateMode',
+  'preview.debounceDelay',
+  'preview.useVscodeMarkdownStyles',
+  'preview.useWhiteBackground',
+  'preview.customCss',
+  'preview.mdx.customLayoutFilePath',
+  'preview.security',
+  'tailwind.enabled',
+  'build.useSucraseTranspiler',
+] as const;
 
 type ConfigChangeCallback = (affectedKeys: SettingKey[]) => void;
 
@@ -189,6 +212,19 @@ export class ConfigManager extends SingletonService<ConfigManager> {
   // register callback for configuration changes
   onDidChangeConfiguration(callback: ConfigChangeCallback): vscode.Disposable {
     return this.subscriberManager.subscribe(callback);
+  }
+
+  // subscribe to changes for specific keys (convenience wrapper)
+  onDidChangeKey(
+    keys: SettingKey | SettingKey[],
+    callback: () => void
+  ): vscode.Disposable {
+    const keySet = new Set(Array.isArray(keys) ? keys : [keys]);
+    return this.onDidChangeConfiguration((affectedKeys) => {
+      if (affectedKeys.some((k) => keySet.has(k))) {
+        callback();
+      }
+    });
   }
 
   // determine if a specific setting affects the configuration change event

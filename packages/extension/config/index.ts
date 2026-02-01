@@ -3,6 +3,8 @@
 
 export {
   ConfigManager,
+  THEME_KEYS,
+  PREVIEW_CONFIG_KEYS,
   type SettingKey,
   type SettingTypes,
 } from './ConfigManager';
