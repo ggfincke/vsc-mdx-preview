@@ -2,7 +2,7 @@
 // centralized path validation utilities for security-sensitive operations
 
 import * as path from 'path';
-import { checkFsPath } from '../module-system/security/checkFsPath';
+import { checkFsPathAsync } from '../module-system/security/checkFsPath';
 import { SecurityError, ErrorContext, ErrorSeverity } from '../errors';
 import { getErrorReporter } from '../services';
 import { warn as logWarn } from '../logging';
@@ -18,11 +18,11 @@ export interface SecurePathResult {
 
 // validate & resolve a relative path securely within a preview's context
 // performs entry directory validation & path traversal checks
-export function validateAndResolveSecurePath(
+export async function validateAndResolveSecurePath(
   preview: Preview,
   relativePath: string,
   context: string
-): SecurePathResult | undefined {
+): Promise<SecurePathResult | undefined> {
   // check entry directory exists
   const entryDir = preview.entryFsDirectory;
   if (!entryDir) {
@@ -34,7 +34,7 @@ export function validateAndResolveSecurePath(
   const resolvedPath = path.resolve(entryDir, relativePath);
 
   // security check - ensure path is within workspace
-  if (!checkFsPath(entryDir, resolvedPath)) {
+  if (!(await checkFsPathAsync(entryDir, resolvedPath))) {
     reportPathTraversalError(resolvedPath, context);
     return undefined;
   }

@@ -22,7 +22,7 @@ import {
 } from './constants';
 import type { Preview } from '../preview/preview-manager';
 import { normalizeError, LogTags, type TrustState } from '@mdx-preview/shared';
-import type { TailwindConfig } from '../config/EffectivePreviewConfig';
+import type { TailwindConfig } from '../types';
 
 export interface TailwindProcessOptions {
   preview: Preview;

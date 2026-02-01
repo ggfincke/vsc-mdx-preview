@@ -90,7 +90,7 @@ export function ErrorDisplay({
   }, [error]);
 
   return (
-    <div className="mdx-preview-error-overlay">
+    <div className="mdx-preview-error-overlay" role="alert" aria-live="assertive">
       <div className="mdx-preview-error-container">
         <div className="mdx-preview-error-header">
           <span className="mdx-preview-error-icon">!</span>

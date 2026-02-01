@@ -31,7 +31,6 @@ export const CommandNames = {
   SELECT_FRAMEWORK: 'mdx-preview.commands.selectFramework',
 
   // cache commands
-  REFRESH_MODULE_CACHE: 'mdx-preview.commands.refreshModuleCache',
   CLEAR_ALL_CACHES: 'mdx-preview.commands.clearAllCaches',
 
   // config info commands

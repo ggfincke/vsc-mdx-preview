@@ -28,6 +28,7 @@ import { PackageJsonWatcher } from './module-system/resolver/PackageJsonWatcher'
 import { clearResolverCache } from './module-system/resolver/resolver-factory';
 import { clearSassCache } from './module-system/handlers';
 import { registerResolverSubsystem } from './module-system/resolver/resolver-subsystem';
+import { registerCacheSubsystem } from './cache-subsystem';
 import { ConfigManager, ConfigCache } from './config';
 import {
   ComponentDiagnostics,
@@ -85,7 +86,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
     const previewManager = getPreviewManager();
 
     // refresh all previews w/ updated trust state
-    previewManager.refreshAllPreviews();
+    await previewManager.refreshAllPreviews();
 
     if (trusted) {
       // offer to enable scripts
@@ -104,7 +105,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
       }
     } else {
       // show safe mode notification if trust was revoked
-      showSafeModeNotificationIfNeeded(context);
+      await showSafeModeNotificationIfNeeded(context);
     }
   };
 
@@ -187,6 +188,7 @@ export async function activate(
 
   // register subsystems (AFTER services, so they dispose BEFORE services)
   registerResolverSubsystem();
+  registerCacheSubsystem();
   debug(`[${LogTags.ACTIVATE}] Subsystems registered`);
 
   // G.3 optimization: Initialize resources in background (non-blocking)
