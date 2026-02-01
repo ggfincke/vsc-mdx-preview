@@ -60,9 +60,9 @@ export class PreviewManager extends SingletonService<PreviewManager> {
   }
 
   // refresh all active previews (e.g., when trust state changes)
-  refreshAllPreviews(): void {
+  async refreshAllPreviews(): Promise<void> {
     if (this.currentPreview?.active) {
-      this.currentPreview.refreshWebview();
+      await this.currentPreview.refreshWebview();
     }
   }
 

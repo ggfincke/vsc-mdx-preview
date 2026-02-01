@@ -5,10 +5,7 @@ import * as vscode from 'vscode';
 import { debug, info } from '../../logging';
 import { toAbsolutePath, toRelativeImportPath } from '../../utils/path-utils';
 import type { ResolvedConfig } from '../../types';
-import {
-  TrustError,
-  requireTrustedModeForDocument,
-} from '../../security/validateTrust';
+import { tryRequireTrustedModeForDocument } from '../../security/validateTrust';
 
 // use shared component registry as single source of truth
 import { getAllGenericComponentNames, LogTags } from '@mdx-preview/shared';
@@ -62,24 +59,22 @@ export function generateComponentImports(
   };
 
   // require Trusted Mode for component imports
-  try {
-    const trustState = requireTrustedModeForDocument(
-      documentUri,
-      'generate component imports'
-    );
-    debug(
-      `[${LogTags.COMPONENT_MAPPER}] trustState.canExecute: ${trustState.canExecute}`
-    );
-  } catch (error) {
-    if (error instanceof TrustError) {
+  const trustState = tryRequireTrustedModeForDocument(
+    documentUri,
+    'generate component imports',
+    () => {
       const components = config?.config.components;
       if (components && Object.keys(components).length > 0) {
         emitWarning(createIgnoredComponentsWarning(Object.keys(components)));
       }
-      return result;
     }
-    throw error;
+  );
+  if (!trustState) {
+    return result;
   }
+  debug(
+    `[${LogTags.COMPONENT_MAPPER}] trustState.canExecute: ${trustState.canExecute}`
+  );
 
   const importStatements: string[] = [];
   const componentEntries: string[] = [];

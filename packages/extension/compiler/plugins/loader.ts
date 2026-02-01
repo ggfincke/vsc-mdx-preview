@@ -7,10 +7,7 @@ import type { Pluggable } from 'unified';
 import { debug, info } from '../../logging';
 import type { PluginSpec, ResolvedConfig } from '../../types';
 import { getErrorReporter } from '../../services';
-import {
-  TrustError,
-  requireTrustedModeForDocument,
-} from '../../security/validateTrust';
+import { tryRequireTrustedModeForDocument } from '../../security/validateTrust';
 import { getNodeResolver } from '../../module-system/resolver/resolver-factory';
 import { PluginError } from '../../errors';
 import { validateFunction } from '../../utils/validation';
@@ -106,23 +103,25 @@ export async function loadPluginsFromConfig(
   }
 
   // require Trusted Mode for custom plugin loading
-  try {
-    requireTrustedModeForDocument(documentUri, 'load custom MDX plugins');
-  } catch (error) {
-    if (error instanceof TrustError) {
-      const pluginCount =
-        (remarkPlugins?.length ?? 0) + (rehypePlugins?.length ?? 0);
-      getErrorReporter().reportPluginError(
-        new PluginError(
-          `Custom plugins configured but cannot load: ${error.message}. ${pluginCount} plugin(s) will be ignored.`,
-          'PLUGIN_LOAD_ERROR',
+  if (
+    !tryRequireTrustedModeForDocument(
+      documentUri,
+      'load custom MDX plugins',
+      (error) => {
+        const pluginCount =
+          (remarkPlugins?.length ?? 0) + (rehypePlugins?.length ?? 0);
+        getErrorReporter().reportPluginError(
+          new PluginError(
+            `Custom plugins configured but cannot load: ${error.message}. ${pluginCount} plugin(s) will be ignored.`,
+            'PLUGIN_LOAD_ERROR',
+            'custom-plugins'
+          ),
           'custom-plugins'
-        ),
-        'custom-plugins'
-      );
-      return result;
-    }
-    throw error;
+        );
+      }
+    )
+  ) {
+    return result;
   }
 
   const configDir = config.configDir;

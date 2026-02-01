@@ -18,11 +18,13 @@ import {
   getErrorReporter,
   getConfigManager,
 } from '../services';
-import { TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS } from '../constants';
+import {
+  TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
+  MDX_COMPILATION_TIMEOUT_MS,
+} from '../constants';
 import type { Preview, WebviewHandle } from './preview-manager';
 import type { TrustState } from '@mdx-preview/shared';
-import type { ResolvedConfig } from '../types';
-import type { TailwindConfig } from '../config/EffectivePreviewConfig';
+import type { ResolvedConfig, TailwindConfig } from '../types';
 
 // result of evaluating MDX in Trusted Mode
 export interface TrustedEvaluationResult {
@@ -67,11 +69,19 @@ export class EvaluationEngine {
 
     debug(`[${LogTags.ENGINE}] Transforming entry...`);
     // I.1: transformEntry now returns esmCode for import extraction
-    const { code, esmCode, frontmatter } = await transformEntry(
-      text,
-      fsPath,
-      preview
+    // wrap w/ timeout to prevent hang on malicious/large MDX
+    const transformResult = await this.withTimeout(
+      transformEntry(text, fsPath, preview),
+      MDX_COMPILATION_TIMEOUT_MS
     );
+
+    if (transformResult === null) {
+      throw new Error(
+        `MDX compilation timed out after ${MDX_COMPILATION_TIMEOUT_MS / 1000}s`
+      );
+    }
+
+    const { code, esmCode, frontmatter } = transformResult;
     debug(
       `[${LogTags.ENGINE}] Transform complete, code length: ${code.length}`
     );

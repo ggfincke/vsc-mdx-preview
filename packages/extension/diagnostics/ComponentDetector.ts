@@ -9,7 +9,12 @@ import { visit } from 'unist-util-visit';
 import type { Root } from 'mdast';
 import matter from 'gray-matter';
 import { KNOWN_GENERIC_COMPONENTS } from '../compiler/shared/remark/generic-components';
-import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
+import {
+  extractErrorMessage,
+  LogTags,
+  ContentHashCache,
+  STANDARD_CACHE_TTL_MS,
+} from '@mdx-preview/shared';
 import type {
   DetectedComponent,
   ComponentDetectionResult,
@@ -28,27 +33,23 @@ import {
 
 // caching for parse results
 
-// cache structure for component detection results
-interface CachedDetection {
-  contentHash: number;
-  result: ComponentDetectionResult;
-}
+// max cache entries for component detection
+const COMPONENT_CACHE_MAX_ENTRIES = 50;
 
-// Map: document URI string -> CachedDetection
-const parseCache = new Map<string, CachedDetection>();
-
-// maximum cache entries (LRU eviction when exceeded)
-const MAX_CACHE_ENTRIES = 50;
+// cache for component detection results w/ content-hash validation
+const parseCache = new ContentHashCache<ComponentDetectionResult>({
+  maxEntries: COMPONENT_CACHE_MAX_ENTRIES,
+  ttlMs: STANDARD_CACHE_TTL_MS,
+});
 
 // fast djb2 hash for content-based cache invalidation
-// sufficient for detecting content changes - not cryptographic
-function djb2Hash(str: string): number {
+// returns hex string for ContentHashCache compatibility
+function contentHash(str: string): string {
   let hash = 5381;
   for (let i = 0; i < str.length; i++) {
     hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
   }
-  // convert to unsigned 32-bit
-  return hash >>> 0;
+  return (hash >>> 0).toString(16);
 }
 
 // types
@@ -283,11 +284,11 @@ export async function detectComponents(
 
   // check cache if URI is provided
   if (uri) {
-    const contentHash = djb2Hash(mdxText);
-    const cached = parseCache.get(uri);
-    if (cached && cached.contentHash === contentHash) {
+    const hash = contentHash(mdxText);
+    const cached = parseCache.getIfHashMatches(uri, hash);
+    if (cached) {
       debug(`[${LogTags.COMPONENT_DETECTOR}] Cache hit for ${uri}`);
-      return cached.result;
+      return cached;
     }
   }
 
@@ -373,14 +374,7 @@ export async function detectComponents(
 
   // store in cache if URI is provided
   if (uri) {
-    // LRU eviction: remove oldest entry if at capacity
-    if (parseCache.size >= MAX_CACHE_ENTRIES) {
-      const oldestKey = parseCache.keys().next().value;
-      if (oldestKey) {
-        parseCache.delete(oldestKey);
-      }
-    }
-    parseCache.set(uri, { contentHash: djb2Hash(mdxText), result });
+    parseCache.setWithHash(uri, contentHash(mdxText), result);
     debug(`[${LogTags.COMPONENT_DETECTOR}] Cached result for ${uri}`);
   }
 

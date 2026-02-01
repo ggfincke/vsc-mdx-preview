@@ -12,54 +12,8 @@ import { readJsonSync } from '../../utils/file-utils';
 import { findUp, createWorkspaceStopPredicate } from '../../utils/find-up';
 
 // import consolidated types from centralized types
-import type {
-  PluginSpec,
-  ComponentMapping,
-  UnknownBehavior,
-} from '../../types';
-import { LogTags, type FrameworkId } from '@mdx-preview/shared';
-
-// framework-specific options
-export interface FrameworkOptions {
-  // enable/disable component shims for this project
-  enableShims?: boolean;
-  // custom import aliases (e.g., { "@components": "./src/components" })
-  customAliases?: Record<string, string>;
-}
-
-// Tailwind CSS options
-export interface TailwindOptions {
-  enabled?: 'auto' | 'enabled' | 'disabled';
-  configPath?: string;
-}
-
-// MDX Preview configuration file schema
-export interface MdxPreviewConfig {
-  // custom remark plugins to add after built-in plugins
-  remarkPlugins?: PluginSpec[];
-  // custom rehype plugins to add after built-in plugins
-  rehypePlugins?: PluginSpec[];
-  // custom component mappings for MDX
-  components?: ComponentMapping;
-  // framework override (overrides auto-detection)
-  framework?: FrameworkId;
-  // framework-specific options
-  frameworkOptions?: FrameworkOptions;
-  // Tailwind CSS options
-  tailwind?: TailwindOptions;
-  // how to handle unknown JSX components in Safe Mode
-  unknownBehavior?: UnknownBehavior;
-}
-
-// resolved configuration w/ metadata
-export interface ResolvedConfig {
-  // the parsed configuration
-  config: MdxPreviewConfig;
-  // absolute path to the config file
-  configPath: string;
-  // directory containing the config file (for resolving relative paths)
-  configDir: string;
-}
+import type { MdxPreviewConfig, ResolvedConfig } from '../../types';
+import { LogTags } from '@mdx-preview/shared';
 
 // config file names to search for (in order of priority)
 const CONFIG_FILE_NAMES = ['.mdx-previewrc.json', '.mdx-previewrc'];

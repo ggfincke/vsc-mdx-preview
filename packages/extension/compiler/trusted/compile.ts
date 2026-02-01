@@ -36,7 +36,10 @@ const injectMDXStyles = (mdxText: string, preview: Preview): string => {
 export default Layout;
 
 ${mdxText}`;
-    } catch {
+    } catch (err) {
+      warn(
+        `[${LogTags.COMPILE}] Failed to load custom layout from ${customLayoutFilePath}: ${err}`
+      );
       return mdxText;
     }
   } else if (useVscodeMarkdownStyles) {

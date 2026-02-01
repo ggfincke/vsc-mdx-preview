@@ -10,7 +10,7 @@ import { warn } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { SingletonService } from '../services/SingletonService';
 import { SubscriberManager } from '../utils/SubscriberManager';
-import type { ResolvedConfig } from '../preview/config/ConfigResolver';
+import type { ResolvedConfig } from '../types';
 import { PathCache } from '../utils/cache';
 
 // typed config change event types

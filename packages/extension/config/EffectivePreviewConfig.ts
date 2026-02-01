@@ -2,74 +2,15 @@
 // unified config object merging VS Code settings + config file + frontmatter
 // precedence: frontmatter > config file > VS Code settings
 
-import * as vscode from 'vscode';
-import type { SettingTypes } from './ConfigManager';
 import { getConfigManager, getThemeManager } from '../services';
-import {
-  resolveConfig,
-  type ResolvedConfig,
-  type MdxPreviewConfig,
-} from '../preview/config/ConfigResolver';
+import { resolveConfig } from '../preview/config/ConfigResolver';
 import type { PreviewTheme, CodeBlockTheme } from '../themes/types';
 
-// Tailwind configuration subset
-export interface TailwindConfig {
-  enabled: SettingTypes['tailwind.enabled'];
-  maxFileSizeBytes: number;
-  maxCssFilesToSearch: number;
-  cacheMaxEntries: number;
-  cacheTtlSeconds: number;
-  compilationTimeout: number;
-  // from config file
-  configPath?: string;
-}
-
-// unified effective preview configuration
-// combines VS Code settings, project config file, & frontmatter overrides
-export interface EffectivePreviewConfig {
-  // VS Code settings
-  updateMode: SettingTypes['preview.updateMode'];
-  debounceDelay: number;
-  enableScripts: boolean;
-  openMdxLinksInPreview: boolean;
-  securityPolicy: SettingTypes['preview.security'];
-  useVscodeMarkdownStyles: boolean;
-  useWhiteBackground: boolean;
-  customCss: string;
-  customLayoutFilePath: string;
-  useSucraseTranspiler: boolean;
-
-  // theme (frontmatter can override)
-  previewTheme: PreviewTheme;
-  codeBlockTheme: CodeBlockTheme;
-  autoTheme: boolean;
-
-  // Tailwind (consolidated)
-  tailwind: TailwindConfig;
-
-  // framework
-  framework: SettingTypes['framework'];
-  frameworkComponentShims: boolean;
-  componentsBuiltins: boolean;
-  componentsUnknownBehavior: SettingTypes['components.unknownBehavior'];
-
-  // config file additions
-  remarkPlugins?: MdxPreviewConfig['remarkPlugins'];
-  rehypePlugins?: MdxPreviewConfig['rehypePlugins'];
-  components?: MdxPreviewConfig['components'];
-  frameworkOverride?: MdxPreviewConfig['framework'];
-  frameworkOptions?: MdxPreviewConfig['frameworkOptions'];
-
-  // metadata
-  configFile: ResolvedConfig | null;
-}
-
-// options for building effective config
-export interface BuildEffectiveConfigOptions {
-  docUri: vscode.Uri;
-  docFsPath: string;
-  frontmatter?: Record<string, unknown>;
-}
+// import consolidated types from centralized types
+import type {
+  EffectivePreviewConfig,
+  BuildEffectiveConfigOptions,
+} from '../types';
 
 // build unified effective preview configuration
 export function buildEffectivePreviewConfig(
