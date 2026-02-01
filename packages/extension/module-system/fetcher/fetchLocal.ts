@@ -5,14 +5,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Preview } from '../../preview/preview-manager';
 import { checkFsPathAsync } from '../security/checkFsPath';
-import { PathAccessDeniedError, ErrorContext } from '../../errors';
-import { createModuleNotFoundError } from '../../errors/module-error-factories';
+import {
+  PathAccessDeniedError,
+  ErrorContext,
+  createModuleNotFoundError,
+} from '../../errors';
 import { getErrorReporter, getFrameworkDetector } from '../../services';
 import { debug, warn } from '../../logging';
 import { LogTags, type FetchResult } from '@mdx-preview/shared';
 import {
   MAX_MODULE_FILE_SIZE_BYTES,
   MAX_DEPENDENCIES_PER_MODULE,
+  MODULE_FETCH_TIMEOUT_MS,
 } from '../../constants';
 
 // import from extracted modules
@@ -27,6 +31,63 @@ import {
 import { handleByExtension } from '../handlers';
 
 export type { FetchResult } from '@mdx-preview/shared';
+
+// binary file magic bytes signatures
+const BINARY_SIGNATURES: readonly number[][] = [
+  // PNG
+  [0x89, 0x50, 0x4e, 0x47],
+  // JPEG
+  [0xff, 0xd8, 0xff],
+  // GIF
+  [0x47, 0x49, 0x46],
+  // PDF
+  [0x25, 0x50, 0x44, 0x46],
+  // ZIP/DOCX
+  [0x50, 0x4b, 0x03, 0x04],
+  // WEBP (RIFF header)
+  [0x52, 0x49, 0x46, 0x46],
+  // various binary formats (MP4, etc)
+  [0x00, 0x00, 0x00],
+];
+
+// check if a file is binary by reading magic bytes
+async function isBinaryFile(filePath: string): Promise<boolean> {
+  let fd: fs.promises.FileHandle | null = null;
+  try {
+    fd = await fs.promises.open(filePath, 'r');
+    const buffer = Buffer.alloc(8);
+    await fd.read(buffer, 0, 8, 0);
+    return BINARY_SIGNATURES.some((sig) =>
+      sig.every((byte, i) => buffer[i] === byte)
+    );
+  } catch {
+    // if we can't read the file, assume it's not binary
+    return false;
+  } finally {
+    await fd?.close();
+  }
+}
+
+// wrap a promise w/ a timeout
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  errorMessage: string
+): Promise<T> {
+  let timeoutHandle: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(
+      () => reject(new Error(errorMessage)),
+      timeoutMs
+    );
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutHandle!);
+  }
+}
 
 export async function fetchLocal(
   request: string,
@@ -109,6 +170,15 @@ export async function fetchLocal(
       );
     }
 
+    // check for binary files before reading as text
+    if (await isBinaryFile(fsPath)) {
+      const ext = path.extname(fsPath).toLowerCase();
+      throw new Error(
+        `Cannot import binary file "${path.basename(fsPath)}" (${ext}). ` +
+          `Binary files like images should be referenced via URL or data URI.`
+      );
+    }
+
     let code: string;
     // in onType mode, use in-memory document if available
     if (
@@ -118,8 +188,12 @@ export async function fetchLocal(
     ) {
       code = preview.editingDoc.getText();
     } else {
-      // use async fs.promises.readFile
-      code = await fs.promises.readFile(fsPath, 'utf-8');
+      // use async fs.promises.readFile w/ timeout
+      code = await withTimeout(
+        fs.promises.readFile(fsPath, 'utf-8'),
+        MODULE_FETCH_TIMEOUT_MS,
+        `Module fetch timed out after ${MODULE_FETCH_TIMEOUT_MS / 1000}s: ${path.basename(fsPath)}`
+      );
     }
 
     const extname = path.extname(fsPath);

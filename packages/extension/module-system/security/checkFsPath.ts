@@ -3,6 +3,7 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { LRUCache, STANDARD_CACHE_TTL_MS } from '@mdx-preview/shared';
 
 // re-export PathAccessDeniedError from centralized errors module
 export { PathAccessDeniedError } from '../../errors';
@@ -15,18 +16,27 @@ import {
   normalizePathForComparison,
 } from '../../utils/path-utils';
 
-// cache for sync lookups (legacy)
-const rootDirectoryCache = new Map<string, string>();
+// max entries for path security caches
+const PATH_CACHE_MAX_ENTRIES = 200;
 
-// cache for async lookups w/ symlink resolution
-const asyncRootDirectoryCache = new Map<string, string>();
-const realPathCache = new Map<string, string>();
+// cache for resolved workspace roots by entry directory
+const asyncRootDirectoryCache = new LRUCache<string, string>({
+  maxEntries: PATH_CACHE_MAX_ENTRIES,
+  ttlMs: STANDARD_CACHE_TTL_MS,
+});
+
+// cache for resolved real paths (symlink resolution)
+const realPathCache = new LRUCache<string, string>({
+  maxEntries: PATH_CACHE_MAX_ENTRIES,
+  ttlMs: STANDARD_CACHE_TTL_MS,
+});
 
 // get cached real path (async w/ caching)
 async function getCachedRealPath(filePath: string): Promise<string | null> {
   const cacheKey = normalizePathForComparison(filePath);
-  if (realPathCache.has(cacheKey)) {
-    return realPathCache.get(cacheKey)!;
+  const cached = realPathCache.get(cacheKey);
+  if (cached !== null) {
+    return cached;
   }
   const realPath = await resolveRealPath(filePath);
   if (realPath) {
@@ -47,8 +57,9 @@ async function getRootDirectoryPathAsync(
   const effectiveEntryDir = realEntryDir || path.normalize(entryFsDirectory);
 
   const cacheKey = normalizePathForComparison(effectiveEntryDir);
-  if (asyncRootDirectoryCache.has(cacheKey)) {
-    return asyncRootDirectoryCache.get(cacheKey);
+  const cached = asyncRootDirectoryCache.get(cacheKey);
+  if (cached !== null) {
+    return cached;
   }
 
   const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -87,37 +98,8 @@ async function getRootDirectoryPathAsync(
   return undefined;
 }
 
-// get root directory path for entry file (sync, legacy)
-function getRootDirectoryPath(entryFsDirectory: string): string | undefined {
-  if (rootDirectoryCache.has(entryFsDirectory)) {
-    return rootDirectoryCache.get(entryFsDirectory);
-  }
-
-  const workspaceFolders = vscode.workspace.workspaceFolders;
-  if (!workspaceFolders) {
-    return undefined;
-  }
-
-  const rootDirectories = workspaceFolders.filter((workspaceFolder) => {
-    return isPathInside(entryFsDirectory, workspaceFolder.uri.fsPath);
-  });
-
-  const rootDirectory = rootDirectories.sort((d1, d2) => {
-    return d1.uri.fsPath.length - d2.uri.fsPath.length;
-  })[0];
-
-  if (rootDirectory?.uri.fsPath) {
-    const rootDirectoryPath = rootDirectory.uri.fsPath;
-    rootDirectoryCache.set(entryFsDirectory, rootDirectoryPath);
-    return rootDirectoryPath;
-  }
-
-  return undefined;
-}
-
 // clear all caches when workspace folders change
 export function handleDidChangeWorkspaceFolders(): void {
-  rootDirectoryCache.clear();
   asyncRootDirectoryCache.clear();
   realPathCache.clear();
 }
@@ -149,17 +131,8 @@ export async function checkFsPathAsync(
   return isPathInsideAsync(realFsPath, rootDirectory);
 }
 
-// ! sync check if file path is inside workspace (legacy, no symlink resolution)
-// deprecated: prefer checkFsPathAsync for full security
-export function checkFsPath(entryFsDirectory: string, fsPath: string): boolean {
-  const rootDirectory = getRootDirectoryPath(entryFsDirectory);
-  if (!rootDirectory) {
-    return false;
-  }
-
-  if (path.sep === '\\') {
-    fsPath = path.normalize(fsPath);
-  }
-
-  return isPathInside(fsPath, rootDirectory);
+// clear all path security caches (for testing & disposal)
+export function clearPathSecurityCaches(): void {
+  asyncRootDirectoryCache.clear();
+  realPathCache.clear();
 }
