@@ -551,6 +551,35 @@ If you discover a security vulnerability:
 
 ---
 
+## Known Vulnerabilities
+
+MDX Preview maintains awareness of dependency vulnerabilities via `npm audit`. The following moderate vulnerabilities are accepted risks:
+
+### lodash-es Prototype Pollution (GHSA-xxjr-mmjv-4gpg)
+
+**Path:** `mermaid → @mermaid-js/parser → langium → chevrotain → lodash-es`
+
+**Assessment:** Low risk
+- lodash-es is an internal dependency of Mermaid's parser
+- Not exposed to user-controlled code paths
+- Mermaid processes only trusted internal diagram definitions
+- No user input flows through the affected `_.unset` or `_.omit` functions
+
+**Mitigation:** Monitoring upstream for patches. Will update when chevrotain/langium releases fix.
+
+### esbuild Request Forgery (GHSA-67mh-4wv8-2f99)
+
+**Path:** `vitest → vite → esbuild`
+
+**Assessment:** No production risk
+- Development dependency only
+- Not included in extension bundle
+- Only affects local dev server during testing
+
+**Mitigation:** Will update when vitest 4.x stabilizes.
+
+---
+
 ## Summary
 
 MDX Preview's security model provides:
