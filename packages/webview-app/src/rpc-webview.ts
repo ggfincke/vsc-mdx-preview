@@ -113,6 +113,9 @@ function assertNever(x: never): never {
 // This prevents stale messages from replaying out of order when React mounts slowly
 const pendingMessages = new Map<QueuedMessageType, PendingMessage>();
 
+// track current trust state for content validation
+let currentTrustState: TrustState | null = null;
+
 function enqueueMessage(message: PendingMessage): void {
   const hadPrevious = pendingMessages.has(message.type);
   log.debug(
@@ -122,66 +125,104 @@ function enqueueMessage(message: PendingMessage): void {
   pendingMessages.set(message.type, message);
 }
 
+// validate content mode matches trust state
+// returns true if content should be processed, false if it should be discarded
+function validateContentMode(
+  trustState: TrustState | null,
+  contentMode: 'safe' | 'trusted'
+): boolean {
+  if (!trustState) {
+    // no trust state yet - can't validate, allow content through
+    return true;
+  }
+
+  if (contentMode === 'trusted' && !trustState.canExecute) {
+    log.warn(
+      'Discarding trusted content - trust state is not canExecute (scripts disabled or workspace untrusted)'
+    );
+    return false;
+  }
+
+  // safe content is always allowed (fallback mode)
+  return true;
+}
+
 function flushPendingMessages(): void {
   log.debug(`flushPendingMessages: ${pendingMessages.size} pending`);
   if (!stateHandlers || pendingMessages.size === 0) {
     return;
   }
 
-  // Process in a defined order for consistency:
-  // 1. Trust state first (sets rendering mode)
-  // 2. Content second (safe or trusted - only one will be present due to coalescing)
-  // 3. Error/stale last (overlays)
-  const processingOrder: QueuedMessageType[] = [
-    'trust',
-    'safe',
-    'trusted',
-    'error',
-    'stale',
-  ];
-
   // Copy & clear atomically
   const messages = new Map(pendingMessages);
   pendingMessages.clear();
 
-  for (const type of processingOrder) {
-    const message = messages.get(type);
-    if (!message) {
-      continue;
-    }
+  // Phase 1: process trust state first (sets rendering mode)
+  const trustMessage = messages.get('trust');
+  if (trustMessage) {
+    log.debug('Flushing trust state first');
+    currentTrustState = trustMessage.payload as TrustState;
+    stateHandlers.setTrustState(currentTrustState);
+  }
 
-    log.debug(`Flushing message: ${message.type}`);
-    switch (message.type) {
-      case 'trust':
-        stateHandlers.setTrustState(message.payload as TrustState);
-        break;
-      case 'safe':
-        stateHandlers.setSafeContent(
-          (message.payload as { html: string }).html
-        );
-        break;
-      case 'trusted': {
-        const payload = message.payload as {
+  // Phase 2: process content w/ validation
+  // only one of safe/trusted should be present, but handle both defensively
+  const safeMsg = messages.get('safe');
+  const trustedMsg = messages.get('trusted');
+
+  if (safeMsg && trustedMsg) {
+    // both present - use the one matching trust state, discard other
+    log.warn('Both safe & trusted content queued - selecting based on trust');
+    if (currentTrustState?.canExecute) {
+      // prefer trusted in trusted mode
+      if (validateContentMode(currentTrustState, 'trusted')) {
+        const payload = trustedMsg.payload as {
           code: string;
           entryFilePath: string;
           dependencies: string[];
         };
+        log.debug('Flushing trusted content (trusted mode active)');
         stateHandlers.setTrustedContent(
           payload.code,
           payload.entryFilePath,
           payload.dependencies
         );
-        break;
       }
-      case 'error':
-        stateHandlers.setError(message.payload as PreviewError);
-        break;
-      case 'stale':
-        stateHandlers.setStale(message.payload as boolean);
-        break;
-      default:
-        assertNever(message);
+    } else {
+      // use safe in safe mode
+      log.debug('Flushing safe content (safe mode active)');
+      stateHandlers.setSafeContent((safeMsg.payload as { html: string }).html);
     }
+  } else if (trustedMsg) {
+    if (validateContentMode(currentTrustState, 'trusted')) {
+      const payload = trustedMsg.payload as {
+        code: string;
+        entryFilePath: string;
+        dependencies: string[];
+      };
+      log.debug('Flushing trusted content');
+      stateHandlers.setTrustedContent(
+        payload.code,
+        payload.entryFilePath,
+        payload.dependencies
+      );
+    }
+  } else if (safeMsg) {
+    log.debug('Flushing safe content');
+    stateHandlers.setSafeContent((safeMsg.payload as { html: string }).html);
+  }
+
+  // Phase 3: process overlays (error, stale)
+  const errorMsg = messages.get('error');
+  if (errorMsg) {
+    log.debug('Flushing error');
+    stateHandlers.setError(errorMsg.payload as PreviewError);
+  }
+
+  const staleMsg = messages.get('stale');
+  if (staleMsg) {
+    log.debug('Flushing stale');
+    stateHandlers.setStale(staleMsg.payload as boolean);
   }
 }
 
@@ -244,6 +285,17 @@ class RPCWebviewHandle implements WebviewRPC {
     // K.1: use cached module import to avoid repeated promise creation
     const { invalidateModule } = await getModuleSystem();
     invalidateModule(fsPath);
+  }
+
+  // clear all module & style caches (for manual cache refresh command)
+  async clearAllCaches(): Promise<void> {
+    log.debug('clearAllCaches called');
+    const { clearAllCaches } = await getModuleSystem();
+    clearAllCaches();
+    // also clear any injected styles from DOM
+    const styleElements = document.querySelectorAll('style[data-mdx-module]');
+    styleElements.forEach((el) => el.remove());
+    log.debug('clearAllCaches complete');
   }
 }
 

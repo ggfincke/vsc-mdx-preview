@@ -276,6 +276,11 @@ export class Preview {
     this.webviewBridge.pushThemeState(this.doc.uri, frontmatter);
   }
 
+  // clear all caches in the webview (for manual cache refresh command)
+  async clearAllCaches(): Promise<void> {
+    await this.webviewBridge.clearAllCaches();
+  }
+
   markStale(): void {
     this.documentHandler.markStale(this.watcherManager);
   }

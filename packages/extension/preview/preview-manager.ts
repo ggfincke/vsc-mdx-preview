@@ -73,6 +73,19 @@ export class PreviewManager extends SingletonService<PreviewManager> {
     }
   }
 
+  // clear webview caches for all active previews (via RPC)
+  async clearAllWebviewCaches(): Promise<void> {
+    if (this.currentPreview?.active) {
+      try {
+        await this.currentPreview.clearAllCaches();
+      } catch (error) {
+        debug(
+          `[${LogTags.PREVIEW_MANAGER}] Failed to clear webview cache: ${error}`
+        );
+      }
+    }
+  }
+
   // check if there are any active previews
   hasActivePreviews(): boolean {
     return this.currentPreview?.active ?? false;

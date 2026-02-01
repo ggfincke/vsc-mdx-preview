@@ -355,6 +355,8 @@ export interface WebviewRPC {
   updatePreviewSafe(html: string): void;
   showPreviewError(error: PreviewError): void;
   invalidate(fsPath: string): Promise<void>;
+  // clear all module & style caches (for manual cache refresh command)
+  clearAllCaches(): Promise<void>;
   setStale(isStale: boolean): void;
   setCustomCss(css: string): void;
   setTailwindCss(css: string): void;

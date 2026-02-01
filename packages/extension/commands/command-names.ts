@@ -32,6 +32,10 @@ export const CommandNames = {
 
   // cache commands
   REFRESH_MODULE_CACHE: 'mdx-preview.commands.refreshModuleCache',
+  CLEAR_ALL_CACHES: 'mdx-preview.commands.clearAllCaches',
+
+  // config info commands
+  SHOW_EFFECTIVE_CONFIG: 'mdx-preview.commands.showEffectiveConfig',
 } as const;
 
 export type CommandName = (typeof CommandNames)[keyof typeof CommandNames];

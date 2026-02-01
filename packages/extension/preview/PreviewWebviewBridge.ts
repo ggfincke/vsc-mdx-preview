@@ -94,4 +94,11 @@ export class PreviewWebviewBridge {
       await this.webviewHandle.invalidate(fsPath);
     }
   }
+
+  // clear all caches in the webview (for manual cache refresh command)
+  async clearAllCaches(): Promise<void> {
+    if (this.webviewHandle) {
+      await this.webviewHandle.clearAllCaches();
+    }
+  }
 }

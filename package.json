@@ -142,6 +142,16 @@
         "command": "mdx-preview.commands.refreshModuleCache",
         "title": "Refresh Module Cache",
         "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.clearAllCaches",
+        "title": "Clear All Caches",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.showEffectiveConfig",
+        "title": "Show Effective Configuration",
+        "category": "MDX"
       }
     ],
     "menus": {
