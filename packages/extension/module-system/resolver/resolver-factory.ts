@@ -6,7 +6,11 @@ import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve';
 import type { Resolver } from 'enhanced-resolve';
 import { debug } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
-import { RESOLVER_CACHE_TTL_MS } from '../../constants';
+import {
+  RESOLVER_CACHE_TTL_MS,
+  BROWSER_RESOLVE_EXTENSIONS,
+  NODE_RESOLVE_EXTENSIONS,
+} from '../../constants';
 import { createResettableSingleton } from '../../utils/singleton-factory';
 
 // shared cached file system for all resolvers
@@ -33,14 +37,14 @@ const MODE_CONFIGS: Record<ResolverMode, ModeConfig> = {
     mainFields: ['browser', 'module', 'main'],
     // support browser field aliasing
     aliasFields: ['browser'],
-    extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json'],
+    extensions: [...BROWSER_RESOLVE_EXTENSIONS],
   },
   node: {
     // node resolution: node > import > require > default
     conditionNames: ['node', 'import', 'require', 'default'],
     mainFields: ['main', 'module'],
     aliasFields: [],
-    extensions: ['.js', '.mjs', '.cjs'],
+    extensions: [...NODE_RESOLVE_EXTENSIONS],
   },
 };
 

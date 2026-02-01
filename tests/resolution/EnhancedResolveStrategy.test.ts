@@ -54,18 +54,14 @@ describe('EnhancedResolveStrategy', () => {
     workspaceRoot: '/workspace',
   });
 
-  // ============================================
-  // Basic Strategy Behavior
-  // ============================================
+  // * Basic Strategy Behavior
   describe('basic strategy behavior', () => {
     it('should have correct name', () => {
       expect(strategy.name).toBe('EnhancedResolve');
     });
   });
 
-  // ============================================
-  // Synchronous Resolution
-  // ============================================
+  // * Synchronous Resolution
   describe('resolve()', () => {
     it('should resolve node_modules package', () => {
       const context = createContext('/workspace/src');
@@ -131,9 +127,7 @@ describe('EnhancedResolveStrategy', () => {
     });
   });
 
-  // ============================================
-  // Resolution Mode Handling
-  // ============================================
+  // * Resolution Mode Handling
   describe('resolution mode handling', () => {
     it('should use browser resolver for dependency mode', () => {
       const context = createContext('/workspace/src');
@@ -172,9 +166,7 @@ describe('EnhancedResolveStrategy', () => {
     });
   });
 
-  // ============================================
-  // Error Handling
-  // ============================================
+  // * Error Handling
   describe('error handling', () => {
     it('should catch resolver exceptions and return null', () => {
       const context = createContext('/workspace/src');
@@ -199,9 +191,7 @@ describe('EnhancedResolveStrategy', () => {
     });
   });
 
-  // ============================================
-  // Resolver Call Arguments
-  // ============================================
+  // * Resolver Call Arguments
   describe('resolver call arguments', () => {
     it('should pass correct arguments to resolver', () => {
       const context = createContext('/workspace/src');
@@ -232,9 +222,7 @@ describe('EnhancedResolveStrategy', () => {
     });
   });
 
-  // ============================================
-  // Result Structure
-  // ============================================
+  // * Result Structure
   describe('result structure', () => {
     it('should return correct ResolutionResult structure', () => {
       const context = createContext('/workspace/src');
@@ -268,9 +256,7 @@ describe('EnhancedResolveStrategy', () => {
     });
   });
 
-  // ============================================
-  // Singleton Behavior
-  // ============================================
+  // * Singleton Behavior
   describe('singleton behavior', () => {
     it('getEnhancedResolveStrategy should return same instance', () => {
       const instance1 = getEnhancedResolveStrategy();
@@ -285,9 +271,7 @@ describe('EnhancedResolveStrategy', () => {
     });
   });
 
-  // ============================================
-  // Edge Cases
-  // ============================================
+  // * Edge Cases
   describe('edge cases', () => {
     it('should handle deeply nested package paths', () => {
       const context = createContext('/workspace/src');

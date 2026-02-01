@@ -49,18 +49,14 @@ describe('FileProbeStrategy', () => {
     workspaceRoot: '/workspace',
   });
 
-  // ============================================
-  // Basic Strategy Behavior
-  // ============================================
+  // * Basic Strategy Behavior
   describe('basic strategy behavior', () => {
     it('should have correct name', () => {
       expect(strategy.name).toBe('FileProbe');
     });
   });
 
-  // ============================================
-  // Synchronous Resolution
-  // ============================================
+  // * Synchronous Resolution
   describe('resolve()', () => {
     it('should resolve relative path with extension probing', () => {
       const context = createContext('/workspace/src');
@@ -150,9 +146,7 @@ describe('FileProbeStrategy', () => {
     });
   });
 
-  // ============================================
-  // Asynchronous Resolution
-  // ============================================
+  // * Asynchronous Resolution
   describe('resolveAsync()', () => {
     it('should resolve asynchronously', async () => {
       const context = createContext('/workspace/src');
@@ -207,9 +201,7 @@ describe('FileProbeStrategy', () => {
     });
   });
 
-  // ============================================
-  // Result Structure
-  // ============================================
+  // * Result Structure
   describe('result structure', () => {
     it('should return correct ResolutionResult structure', () => {
       const context = createContext('/workspace/src');
@@ -235,9 +227,7 @@ describe('FileProbeStrategy', () => {
     });
   });
 
-  // ============================================
-  // Singleton Behavior
-  // ============================================
+  // * Singleton Behavior
   describe('singleton behavior', () => {
     it('getFileProbeStrategy should return same instance', () => {
       const instance1 = getFileProbeStrategy();
@@ -252,9 +242,7 @@ describe('FileProbeStrategy', () => {
     });
   });
 
-  // ============================================
-  // Edge Cases
-  // ============================================
+  // * Edge Cases
   describe('edge cases', () => {
     it('should handle current directory specifier', () => {
       const context = createContext('/workspace/src');

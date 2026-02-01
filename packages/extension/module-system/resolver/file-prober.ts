@@ -1,54 +1,16 @@
 // packages/extension/module-system/resolver/file-prober.ts
 // shared file probing utility for module resolution strategies
-// provides predefined extension sets, sync & async probing w/ stat caching
+// provides sync & async probing w/ stat caching
 
 import * as path from 'path';
 import * as fs from 'fs';
 import { LRUCache } from '@mdx-preview/shared';
-
-// extension constants for reuse in resolution strategies
-
-// extensions for TypeScript path resolution
-// includes empty string '' to probe exact path w/o extension
-export const TYPESCRIPT_EXTENSIONS = [
-  '.ts',
-  '.tsx',
-  '.js',
-  '.jsx',
-  '.mjs',
-  '.json',
-  '',
-];
-
-// index files to probe for TypeScript/JavaScript modules
-export const TYPESCRIPT_INDEX_FILES = [
-  'index.ts',
-  'index.tsx',
-  'index.js',
-  'index.jsx',
-  'index.mjs',
-];
-
-// extensions for general file probing (includes MDX)
-// empty string '' is first to try exact path for imports that already have extensions
-export const FILE_PROBE_EXTENSIONS = [
-  // try exact path first (for paths w/ extensions)
-  '',
-  '.ts',
-  '.tsx',
-  '.js',
-  '.jsx',
-  '.mdx',
-  '.md',
-];
-
-// index files for general module probing
-export const FILE_PROBE_INDEX_FILES = [
-  'index.ts',
-  'index.tsx',
-  'index.js',
-  'index.jsx',
-];
+import {
+  TYPESCRIPT_RESOLUTION_EXTENSIONS,
+  TS_INDEX_FILES,
+  FILE_PROBE_EXTENSIONS,
+  FILE_PROBE_INDEX_FILES,
+} from '../../constants';
 
 // stat cache (LRU w/ TTL for file stat results)
 
@@ -158,19 +120,77 @@ export async function batchStatAsync(
 // options for file probing
 export interface FileProbingOptions {
   // extensions to try (in priority order)
-  extensions: string[];
+  extensions: readonly string[];
   // index files to try when path is a directory
-  indexFiles: string[];
+  indexFiles: readonly string[];
   // skip paths containing node_modules (default: true)
   skipNodeModules?: boolean;
 }
 
-// default options for file probing
-export const DEFAULT_PROBING_OPTIONS: FileProbingOptions = {
+// parsed probing options w/ defaults applied
+export interface ParsedProbingOptions {
+  extensions: readonly string[];
+  indexFiles: readonly string[];
+  skipNodeModules: boolean;
+}
+
+// default options for file probing (Required to ensure defaults are always present)
+export const DEFAULT_PROBING_OPTIONS: Required<FileProbingOptions> = {
   extensions: FILE_PROBE_EXTENSIONS,
   indexFiles: FILE_PROBE_INDEX_FILES,
   skipNodeModules: true,
 };
+
+// parse probing options w/ defaults
+export function parseProbingOptions(
+  options: Partial<FileProbingOptions>
+): ParsedProbingOptions {
+  return {
+    extensions: options.extensions ?? DEFAULT_PROBING_OPTIONS.extensions,
+    indexFiles: options.indexFiles ?? DEFAULT_PROBING_OPTIONS.indexFiles,
+    skipNodeModules:
+      options.skipNodeModules ?? DEFAULT_PROBING_OPTIONS.skipNodeModules,
+  };
+}
+
+// check if path should be skipped (node_modules guard)
+export function shouldSkipPath(
+  basePath: string,
+  skipNodeModules: boolean
+): boolean {
+  return skipNodeModules && basePath.includes('node_modules');
+}
+
+// find first matching index file from stat results (async batched)
+export function findIndexFileInResults(
+  basePath: string,
+  indexFiles: readonly string[],
+  statResults: Map<string, StatResult>
+): string | null {
+  for (const indexFile of indexFiles) {
+    const indexPath = path.join(basePath, indexFile);
+    const result = statResults.get(indexPath);
+    if (result?.exists && result.isFile) {
+      return indexPath;
+    }
+  }
+  return null;
+}
+
+// find first matching index file using sync stat
+export function findIndexFileSync(
+  basePath: string,
+  indexFiles: readonly string[]
+): string | null {
+  for (const indexFile of indexFiles) {
+    const indexPath = path.join(basePath, indexFile);
+    const stat = getOrCreateStat(indexPath);
+    if (stat.exists && stat.isFile) {
+      return indexPath;
+    }
+  }
+  return null;
+}
 
 // probe for a file w/ various extensions (sync)
 // tries the base path w/ each extension in priority order
@@ -179,14 +199,10 @@ export function probeFile(
   basePath: string,
   options: Partial<FileProbingOptions> = {}
 ): string | null {
-  const {
-    extensions = DEFAULT_PROBING_OPTIONS.extensions,
-    indexFiles = DEFAULT_PROBING_OPTIONS.indexFiles,
-    skipNodeModules = DEFAULT_PROBING_OPTIONS.skipNodeModules,
-  } = options;
+  const { extensions, indexFiles, skipNodeModules } =
+    parseProbingOptions(options);
 
-  // Skip node_modules if configured
-  if (skipNodeModules && basePath.includes('node_modules')) {
+  if (shouldSkipPath(basePath, skipNodeModules)) {
     return null;
   }
 
@@ -202,13 +218,7 @@ export function probeFile(
   // try as directory w/ index file
   const baseStat = getOrCreateStat(basePath);
   if (baseStat.exists && baseStat.isDirectory) {
-    for (const indexFile of indexFiles) {
-      const indexPath = path.join(basePath, indexFile);
-      const indexStat = getOrCreateStat(indexPath);
-      if (indexStat.exists && indexStat.isFile) {
-        return indexPath;
-      }
-    }
+    return findIndexFileSync(basePath, indexFiles);
   }
 
   return null;
@@ -221,14 +231,10 @@ export async function probeFileAsync(
   basePath: string,
   options: Partial<FileProbingOptions> = {}
 ): Promise<string | null> {
-  const {
-    extensions = DEFAULT_PROBING_OPTIONS.extensions,
-    indexFiles = DEFAULT_PROBING_OPTIONS.indexFiles,
-    skipNodeModules = DEFAULT_PROBING_OPTIONS.skipNodeModules,
-  } = options;
+  const { extensions, indexFiles, skipNodeModules } =
+    parseProbingOptions(options);
 
-  // Skip node_modules if configured
-  if (skipNodeModules && basePath.includes('node_modules')) {
+  if (shouldSkipPath(basePath, skipNodeModules)) {
     return null;
   }
 
@@ -256,32 +262,14 @@ export async function probeFileAsync(
     const stat = await batchStatAsync([basePath]);
     const baseStat = stat.get(basePath);
     if (baseStat?.exists && baseStat.isDirectory) {
-      // Batch stat index files
       const indexPaths = indexFiles.map((idx) => path.join(basePath, idx));
       const indexResults = await batchStatAsync(indexPaths);
-
-      // Check in priority order
-      for (const indexFile of indexFiles) {
-        const indexPath = path.join(basePath, indexFile);
-        const result = indexResults.get(indexPath);
-        if (result?.exists && result.isFile) {
-          return indexPath;
-        }
-      }
+      return findIndexFileInResults(basePath, indexFiles, indexResults);
     }
   } else if (isDirectory) {
-    // Batch stat index files
     const indexPaths = indexFiles.map((idx) => path.join(basePath, idx));
     const indexResults = await batchStatAsync(indexPaths);
-
-    // Check in priority order
-    for (const indexFile of indexFiles) {
-      const indexPath = path.join(basePath, indexFile);
-      const result = indexResults.get(indexPath);
-      if (result?.exists && result.isFile) {
-        return indexPath;
-      }
-    }
+    return findIndexFileInResults(basePath, indexFiles, indexResults);
   }
 
   return null;
@@ -290,24 +278,24 @@ export async function probeFileAsync(
 // convenience functions (pre-configured probing for common use cases)
 
 // probe for TypeScript/JavaScript files (sync)
-// uses TYPESCRIPT_EXTENSIONS & TYPESCRIPT_INDEX_FILES
+// uses TYPESCRIPT_RESOLUTION_EXTENSIONS & TS_INDEX_FILES
 export function probeTypeScriptFile(basePath: string): string | null {
   return probeFile(basePath, {
-    extensions: TYPESCRIPT_EXTENSIONS,
-    indexFiles: TYPESCRIPT_INDEX_FILES,
+    extensions: TYPESCRIPT_RESOLUTION_EXTENSIONS,
+    indexFiles: TS_INDEX_FILES,
     // TypeScript paths can resolve into node_modules
     skipNodeModules: false,
   });
 }
 
 // probe for TypeScript/JavaScript files (async)
-// uses TYPESCRIPT_EXTENSIONS & TYPESCRIPT_INDEX_FILES
+// uses TYPESCRIPT_RESOLUTION_EXTENSIONS & TS_INDEX_FILES
 export async function probeTypeScriptFileAsync(
   basePath: string
 ): Promise<string | null> {
   return probeFileAsync(basePath, {
-    extensions: TYPESCRIPT_EXTENSIONS,
-    indexFiles: TYPESCRIPT_INDEX_FILES,
+    extensions: TYPESCRIPT_RESOLUTION_EXTENSIONS,
+    indexFiles: TS_INDEX_FILES,
     // TypeScript paths can resolve into node_modules
     skipNodeModules: false,
   });

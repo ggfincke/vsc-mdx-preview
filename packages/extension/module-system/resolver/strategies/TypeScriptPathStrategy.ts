@@ -167,6 +167,43 @@ function matchTsPathsOptimized(
   return null;
 }
 
+// result of candidate resolution setup
+export interface CandidateResolutionSetup {
+  candidates: string[];
+  absoluteBaseUrl: string;
+}
+
+// get resolution candidates from tsconfig paths
+// extracted to share between sync & async methods
+export function getResolutionCandidates(
+  specifier: string,
+  context: ResolutionContext
+): CandidateResolutionSetup | null {
+  const tsConfig = context.tsConfig;
+  if (!tsConfig?.paths) {
+    return null;
+  }
+
+  const absoluteBaseUrl = computeAbsoluteBaseUrl(
+    tsConfig.configPath,
+    tsConfig.baseUrl,
+    context.baseDir
+  );
+
+  const compiledIndex = getCompiledIndex(
+    tsConfig.paths,
+    absoluteBaseUrl,
+    tsConfig.configPath
+  );
+
+  const candidates = matchTsPathsOptimized(specifier, compiledIndex);
+  if (!candidates) {
+    return null;
+  }
+
+  return { candidates, absoluteBaseUrl };
+}
+
 // TypeScript path resolution strategy (tsconfig.json paths)
 // uses custom pattern matching instead of TypeScript compiler for performance
 // patterns are compiled once per tsconfig & cached
@@ -178,33 +215,13 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
     context: ResolutionContext,
     _mode: ResolutionMode
   ): ResolutionResult | null {
-    const tsConfig = context.tsConfig;
-    if (!tsConfig?.paths) {
-      return null;
-    }
-
-    // Compute absolute baseUrl using shared helper
-    const absoluteBaseUrl = computeAbsoluteBaseUrl(
-      tsConfig.configPath,
-      tsConfig.baseUrl,
-      context.baseDir
-    );
-
-    // Get compiled pattern index (cached per tsconfig)
-    const compiledIndex = getCompiledIndex(
-      tsConfig.paths,
-      absoluteBaseUrl,
-      tsConfig.configPath
-    );
-
-    // Use optimized pattern matching (O(1) exact, O(m) wildcard)
-    const candidates = matchTsPathsOptimized(specifier, compiledIndex);
-    if (!candidates) {
+    const setup = getResolutionCandidates(specifier, context);
+    if (!setup) {
       return null;
     }
 
     // Try each candidate path using shared file prober
-    for (const candidate of candidates) {
+    for (const candidate of setup.candidates) {
       const resolved = probeTypeScriptFile(candidate);
       if (resolved) {
         // Skip .d.ts files
@@ -228,33 +245,13 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
     context: ResolutionContext,
     _mode: ResolutionMode
   ): Promise<ResolutionResult | null> {
-    const tsConfig = context.tsConfig;
-    if (!tsConfig?.paths) {
-      return null;
-    }
-
-    // Compute absolute baseUrl using shared helper
-    const absoluteBaseUrl = computeAbsoluteBaseUrl(
-      tsConfig.configPath,
-      tsConfig.baseUrl,
-      context.baseDir
-    );
-
-    // Get compiled pattern index (cached per tsconfig)
-    const compiledIndex = getCompiledIndex(
-      tsConfig.paths,
-      absoluteBaseUrl,
-      tsConfig.configPath
-    );
-
-    // Use optimized pattern matching
-    const candidates = matchTsPathsOptimized(specifier, compiledIndex);
-    if (!candidates) {
+    const setup = getResolutionCandidates(specifier, context);
+    if (!setup) {
       return null;
     }
 
     // try each candidate path w/ async probing
-    for (const candidate of candidates) {
+    for (const candidate of setup.candidates) {
       const resolved = await probeTypeScriptFileAsync(candidate);
       if (resolved) {
         // Skip .d.ts files

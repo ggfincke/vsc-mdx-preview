@@ -41,6 +41,7 @@ import {
   UnifiedResolver,
   getUnifiedResolver,
   resetUnifiedResolver,
+  resolveFrameworkAliasStep,
 } from '../../packages/extension/module-system/resolver/UnifiedResolver';
 import { ResolutionStrategy } from '../../packages/extension/types';
 
@@ -189,9 +190,7 @@ describe('UnifiedResolver', () => {
     });
   });
 
-  // ============================================
-  // Asynchronous Resolution (resolveAsync)
-  // ============================================
+  // * Asynchronous Resolution (resolveAsync)
   describe('resolveAsync()', () => {
     it('returns null for HTTP URLs', async () => {
       const context = { baseDir: '/workspace' };
@@ -339,9 +338,7 @@ describe('UnifiedResolver', () => {
     });
   });
 
-  // ============================================
-  // Strategy Priority Order
-  // ============================================
+  // * Strategy Priority Order
   describe('strategy priority order', () => {
     it('resolveSync: framework alias > TypeScript > enhanced-resolve > file-probe', () => {
       // Test that strategies are called in the correct order
@@ -410,9 +407,7 @@ describe('UnifiedResolver', () => {
     });
   });
 
-  // ============================================
-  // Edge Cases
-  // ============================================
+  // * Edge Cases
   describe('edge cases', () => {
     it('handles empty specifier', () => {
       const context = { baseDir: '/workspace' };
@@ -492,9 +487,7 @@ describe('UnifiedResolver', () => {
     });
   });
 
-  // ============================================
-  // Framework Alias Behavior
-  // ============================================
+  // * Framework Alias Behavior
   describe('framework alias behavior', () => {
     it('rewrites specifier when alias resolves to non-shim path', () => {
       const context = {
@@ -531,6 +524,113 @@ describe('UnifiedResolver', () => {
       // generic framework has no aliases, so @theme/Tabs goes to other strategies
       expect(result).toBeNull();
       expect(mockEnhancedResolveStrategy.resolve).toHaveBeenCalled();
+    });
+  });
+
+  // * resolveFrameworkAliasStep() Helper
+  describe('resolveFrameworkAliasStep()', () => {
+    it('returns unchanged specifier when no framework', () => {
+      const context = {
+        baseDir: '/workspace/src',
+        workspaceRoot: '/workspace',
+        shimsEnabled: true,
+      };
+
+      const result = resolveFrameworkAliasStep('@theme/Tabs', context);
+
+      expect(result.specifier).toBe('@theme/Tabs');
+      expect(result.earlyResult).toBeUndefined();
+    });
+
+    it('returns unchanged specifier when shims disabled', () => {
+      const context = {
+        baseDir: '/workspace/src',
+        workspaceRoot: '/workspace',
+        framework: 'docusaurus' as const,
+        shimsEnabled: false,
+      };
+
+      const result = resolveFrameworkAliasStep('@theme/Tabs', context);
+
+      expect(result.specifier).toBe('@theme/Tabs');
+      expect(result.earlyResult).toBeUndefined();
+    });
+
+    it('returns unchanged specifier for relative imports', () => {
+      const context = {
+        baseDir: '/workspace/src',
+        workspaceRoot: '/workspace',
+        framework: 'docusaurus' as const,
+        shimsEnabled: true,
+      };
+
+      const result = resolveFrameworkAliasStep('./Button', context);
+
+      expect(result.specifier).toBe('./Button');
+      expect(result.earlyResult).toBeUndefined();
+    });
+
+    it('returns unchanged specifier for ../ relative imports', () => {
+      const context = {
+        baseDir: '/workspace/src',
+        workspaceRoot: '/workspace',
+        framework: 'docusaurus' as const,
+        shimsEnabled: true,
+      };
+
+      const result = resolveFrameworkAliasStep('../utils/helpers', context);
+
+      expect(result.specifier).toBe('../utils/helpers');
+      expect(result.earlyResult).toBeUndefined();
+    });
+
+    it('returns earlyResult for built-in shim', () => {
+      const context = {
+        baseDir: '/workspace/docs',
+        workspaceRoot: '/workspace',
+        framework: 'docusaurus' as const,
+        shimsEnabled: true,
+      };
+
+      const result = resolveFrameworkAliasStep('@theme/Tabs', context);
+
+      expect(result.earlyResult).not.toBeUndefined();
+      expect(result.earlyResult?.isBuiltInShim).toBe(true);
+      expect(result.earlyResult?.fsPath).toContain('@mdx-preview/shims');
+    });
+
+    it('rewrites specifier for non-shim alias', () => {
+      const context = {
+        baseDir: '/workspace/docs',
+        workspaceRoot: '/workspace',
+        framework: 'docusaurus' as const,
+        shimsEnabled: true,
+      };
+
+      // @site resolves to workspace path, not a shim
+      const result = resolveFrameworkAliasStep(
+        '@site/src/components/Button',
+        context
+      );
+
+      // specifier gets rewritten, no early result
+      expect(result.earlyResult).toBeUndefined();
+      expect(result.specifier).not.toBe('@site/src/components/Button');
+    });
+
+    it('returns unchanged specifier when alias does not match', () => {
+      const context = {
+        baseDir: '/workspace/src',
+        workspaceRoot: '/workspace',
+        framework: 'docusaurus' as const,
+        shimsEnabled: true,
+      };
+
+      const result = resolveFrameworkAliasStep('react', context);
+
+      // react is not a docusaurus alias
+      expect(result.specifier).toBe('react');
+      expect(result.earlyResult).toBeUndefined();
     });
   });
 });

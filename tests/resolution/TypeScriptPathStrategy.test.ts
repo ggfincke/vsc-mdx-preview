@@ -31,6 +31,7 @@ import {
   getTypeScriptPathStrategy,
   clearStatCache,
   clearCompiledIndexCache,
+  getResolutionCandidates,
 } from '../../packages/extension/module-system/resolver/strategies/TypeScriptPathStrategy';
 import { ResolutionStrategy } from '../../packages/extension/types';
 
@@ -68,9 +69,7 @@ describe('TypeScriptPathStrategy', () => {
       : undefined,
   });
 
-  // ============================================
-  // Basic Strategy Behavior
-  // ============================================
+  // * Basic Strategy Behavior
   describe('basic strategy behavior', () => {
     it('should have correct name', () => {
       expect(strategy.name).toBe('TypeScript');
@@ -97,9 +96,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // Exact Path Matching (O(1))
-  // ============================================
+  // * Exact Path Matching (O(1))
   describe('exact path matching', () => {
     it('should resolve exact path alias', () => {
       const context = createContext('/workspace/src', {
@@ -138,9 +135,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // Wildcard Path Matching (O(m))
-  // ============================================
+  // * Wildcard Path Matching (O(m))
   describe('wildcard path matching', () => {
     it('should resolve wildcard path alias', () => {
       const context = createContext('/workspace/src', {
@@ -207,9 +202,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // BaseUrl Resolution
-  // ============================================
+  // * BaseUrl Resolution
   describe('baseUrl resolution', () => {
     it('should resolve paths relative to baseUrl', () => {
       const context = createContext('/workspace/src', {
@@ -259,9 +252,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // Multiple Target Paths
-  // ============================================
+  // * Multiple Target Paths
   describe('multiple target paths', () => {
     it('should try multiple targets in order', () => {
       const context = createContext('/workspace/src', {
@@ -292,9 +283,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // .d.ts File Skipping
-  // ============================================
+  // * .d.ts File Skipping
   describe('.d.ts file skipping', () => {
     it('should skip .d.ts files', () => {
       const context = createContext('/workspace/src', {
@@ -334,9 +323,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // No Match Scenarios
-  // ============================================
+  // * No Match Scenarios
   describe('no match scenarios', () => {
     it('should return null for non-matching specifier', () => {
       const context = createContext('/workspace/src', {
@@ -372,9 +359,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // Async Resolution
-  // ============================================
+  // * Async Resolution
   describe('async resolution', () => {
     it('should resolve asynchronously', async () => {
       const context = createContext('/workspace/src', {
@@ -439,9 +424,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // Cache Behavior
-  // ============================================
+  // * Cache Behavior
   describe('cache behavior', () => {
     it('should cache compiled index for same tsconfig', () => {
       const context = createContext('/workspace/src', {
@@ -500,9 +483,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // Cache Clearing Functions
-  // ============================================
+  // * Cache Clearing Functions
   describe('cache clearing', () => {
     it('clearStatCache should clear caches', () => {
       // Just verify it doesn't throw
@@ -515,9 +496,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // Singleton Behavior
-  // ============================================
+  // * Singleton Behavior
   describe('singleton behavior', () => {
     it('getTypeScriptPathStrategy should return same instance', () => {
       const instance1 = getTypeScriptPathStrategy();
@@ -532,9 +511,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // Result Structure
-  // ============================================
+  // * Result Structure
   describe('result structure', () => {
     it('should return correct ResolutionResult structure', () => {
       const context = createContext('/workspace/src', {
@@ -559,9 +536,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // ============================================
-  // Edge Cases
-  // ============================================
+  // * Edge Cases
   describe('edge cases', () => {
     it('should handle empty paths object', () => {
       const context = createContext('/workspace/src', {
@@ -592,6 +567,105 @@ describe('TypeScriptPathStrategy', () => {
 
       // Should match since specifier === prefix
       expect(result?.fsPath).toBe('/workspace/src/components/index.ts');
+    });
+  });
+
+  // * getResolutionCandidates() Helper
+  describe('getResolutionCandidates()', () => {
+    it('returns null when tsConfig is undefined', () => {
+      const context = createContext('/workspace/src');
+
+      const result = getResolutionCandidates('@utils/helpers', context);
+
+      expect(result).toBeNull();
+    });
+
+    it('returns null when tsConfig has no paths', () => {
+      const context = createContext('/workspace/src', {
+        configPath: '/workspace/tsconfig.json',
+        baseUrl: '.',
+        paths: undefined,
+      });
+
+      const result = getResolutionCandidates('@utils/helpers', context);
+
+      expect(result).toBeNull();
+    });
+
+    it('returns null when specifier does not match any path', () => {
+      const context = createContext('/workspace/src', {
+        configPath: '/workspace/tsconfig.json',
+        baseUrl: '.',
+        paths: {
+          '@utils/*': ['./src/utils/*'],
+        },
+      });
+
+      const result = getResolutionCandidates('@components/Button', context);
+
+      expect(result).toBeNull();
+    });
+
+    it('returns candidates for exact match', () => {
+      const context = createContext('/workspace/src', {
+        configPath: '/workspace/tsconfig.json',
+        baseUrl: '.',
+        paths: {
+          '@utils': ['./src/utils'],
+        },
+      });
+
+      const result = getResolutionCandidates('@utils', context);
+
+      expect(result).not.toBeNull();
+      expect(result?.candidates).toHaveLength(1);
+      expect(result?.candidates[0]).toBe('/workspace/src/utils');
+    });
+
+    it('returns candidates for wildcard match', () => {
+      const context = createContext('/workspace/src', {
+        configPath: '/workspace/tsconfig.json',
+        baseUrl: '.',
+        paths: {
+          '@components/*': ['./src/components/*'],
+        },
+      });
+
+      const result = getResolutionCandidates('@components/Button', context);
+
+      expect(result).not.toBeNull();
+      expect(result?.candidates).toHaveLength(1);
+      expect(result?.candidates[0]).toContain('Button');
+    });
+
+    it('returns multiple candidates for multiple targets', () => {
+      const context = createContext('/workspace/src', {
+        configPath: '/workspace/tsconfig.json',
+        baseUrl: '.',
+        paths: {
+          '@shared/*': ['./src/shared/*', './node_modules/@company/shared/*'],
+        },
+      });
+
+      const result = getResolutionCandidates('@shared/utils', context);
+
+      expect(result).not.toBeNull();
+      expect(result?.candidates).toHaveLength(2);
+    });
+
+    it('includes absoluteBaseUrl in result', () => {
+      const context = createContext('/workspace/src', {
+        configPath: '/workspace/tsconfig.json',
+        baseUrl: './src',
+        paths: {
+          '@utils/*': ['utils/*'],
+        },
+      });
+
+      const result = getResolutionCandidates('@utils/helpers', context);
+
+      expect(result).not.toBeNull();
+      expect(result?.absoluteBaseUrl).toBe('/workspace/src');
     });
   });
 });
