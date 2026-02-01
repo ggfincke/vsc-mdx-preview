@@ -16,6 +16,7 @@ import { commands as themeSelectionCommands } from './theme-selection';
 import { commands as zoomCommands } from './zoom';
 import { commands as frameworkSelectionCommands } from './framework-selection';
 import { commands as cacheCommands } from './cache';
+import { commands as configInfoCommands } from './config-info';
 
 import type { CommandDefinition } from '../types';
 
@@ -28,6 +29,7 @@ const allCommands: CommandDefinition[] = [
   ...zoomCommands,
   ...frameworkSelectionCommands,
   ...cacheCommands,
+  ...configInfoCommands,
 ];
 
 // register all MDX Preview commands w/ VS Code

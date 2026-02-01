@@ -170,6 +170,22 @@ export class ConfigManager extends SingletonService<ConfigManager> {
     await config.update(key, value, target);
   }
 
+  // inspect config value at different scopes (user, workspace, folder, default)
+  inspect<K extends SettingKey>(
+    key: K,
+    scope?: vscode.Uri
+  ):
+    | {
+        defaultValue?: SettingTypes[K];
+        globalValue?: SettingTypes[K];
+        workspaceValue?: SettingTypes[K];
+        workspaceFolderValue?: SettingTypes[K];
+      }
+    | undefined {
+    const config = vscode.workspace.getConfiguration('mdx-preview', scope);
+    return config.inspect<SettingTypes[K]>(key);
+  }
+
   // register callback for configuration changes
   onDidChangeConfiguration(callback: ConfigChangeCallback): vscode.Disposable {
     return this.subscriberManager.subscribe(callback);
