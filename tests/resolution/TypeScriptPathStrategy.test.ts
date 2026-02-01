@@ -69,7 +69,7 @@ describe('TypeScriptPathStrategy', () => {
       : undefined,
   });
 
-  // * Basic Strategy Behavior
+  // basic strategy behavior
   describe('basic strategy behavior', () => {
     it('should have correct name', () => {
       expect(strategy.name).toBe('TypeScript');
@@ -96,7 +96,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * Exact Path Matching (O(1))
+  // exact path matching (O(1))
   describe('exact path matching', () => {
     it('should resolve exact path alias', () => {
       const context = createContext('/workspace/src', {
@@ -135,7 +135,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * Wildcard Path Matching (O(m))
+  // wildcard path matching (O(m))
   describe('wildcard path matching', () => {
     it('should resolve wildcard path alias', () => {
       const context = createContext('/workspace/src', {
@@ -202,7 +202,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * BaseUrl Resolution
+  // baseUrl resolution
   describe('baseUrl resolution', () => {
     it('should resolve paths relative to baseUrl', () => {
       const context = createContext('/workspace/src', {
@@ -252,7 +252,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * Multiple Target Paths
+  // multiple target paths
   describe('multiple target paths', () => {
     it('should try multiple targets in order', () => {
       const context = createContext('/workspace/src', {
@@ -283,7 +283,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * .d.ts File Skipping
+  // .d.ts file skipping
   describe('.d.ts file skipping', () => {
     it('should skip .d.ts files', () => {
       const context = createContext('/workspace/src', {
@@ -323,7 +323,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * No Match Scenarios
+  // no match scenarios
   describe('no match scenarios', () => {
     it('should return null for non-matching specifier', () => {
       const context = createContext('/workspace/src', {
@@ -359,7 +359,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * Async Resolution
+  // async resolution
   describe('async resolution', () => {
     it('should resolve asynchronously', async () => {
       const context = createContext('/workspace/src', {
@@ -424,7 +424,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * Cache Behavior
+  // cache behavior
   describe('cache behavior', () => {
     it('should cache compiled index for same tsconfig', () => {
       const context = createContext('/workspace/src', {
@@ -483,7 +483,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * Cache Clearing Functions
+  // cache clearing functions
   describe('cache clearing', () => {
     it('clearStatCache should clear caches', () => {
       // Just verify it doesn't throw
@@ -496,7 +496,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * Singleton Behavior
+  // singleton behavior
   describe('singleton behavior', () => {
     it('getTypeScriptPathStrategy should return same instance', () => {
       const instance1 = getTypeScriptPathStrategy();
@@ -511,7 +511,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * Result Structure
+  // result structure
   describe('result structure', () => {
     it('should return correct ResolutionResult structure', () => {
       const context = createContext('/workspace/src', {
@@ -536,7 +536,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * Edge Cases
+  // edge cases
   describe('edge cases', () => {
     it('should handle empty paths object', () => {
       const context = createContext('/workspace/src', {
@@ -570,7 +570,7 @@ describe('TypeScriptPathStrategy', () => {
     });
   });
 
-  // * getResolutionCandidates() Helper
+  // getResolutionCandidates() helper
   describe('getResolutionCandidates()', () => {
     it('returns null when tsConfig is undefined', () => {
       const context = createContext('/workspace/src');

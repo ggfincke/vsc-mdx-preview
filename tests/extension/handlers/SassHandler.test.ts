@@ -6,14 +6,14 @@ import { SassHandler, clearSassCache } from '../../../packages/extension/module-
 import type { Preview } from '../../../packages/extension/preview/preview-manager';
 import * as path from 'path';
 
-// mock Preview w/ workspace root
+// create Preview mock w/ workspace root
 function createMockPreview(entryFsDirectory: string): Preview {
   return {
     entryFsDirectory,
   } as Preview;
 }
 
-// mock sass module
+// mock Sass module
 const mockCompileAsync = vi.fn();
 const mockSassModule = {
   compileAsync: mockCompileAsync,
@@ -110,7 +110,7 @@ describe('SassHandler', () => {
       `;
 
       // note: actual compilation won't happen in test because sass not really loaded
-      // this test validate the handler structure
+      // this test validates the handler structure
       const result = await handler.handle(scssCode, fsPath, preview);
 
       // in real scenario w/ sass installed, should return compiled CSS
@@ -144,12 +144,10 @@ describe('SassHandler', () => {
       const fsPath = '/workspace/broken.scss';
       const invalidScss = '.broken { color: ; }';
 
-      // if sass were loaded, compilation would fail
-      // handler should catch error & return CSS comment
+      // if sass were loaded, compilation would fail (handler catches error & returns CSS comment)
       const result = await handler.handle(invalidScss, fsPath, preview);
 
-      // when sass not available, return installation message
-      // when sass fails compilation, should return error comment
+      // when sass not available returns installation message, on failure returns error comment
       expect(result.css).toBeDefined();
       expect(result.code).toBe('');
     });
@@ -164,14 +162,13 @@ describe('SassHandler', () => {
     });
 
     it('should include error details in CSS comment', async () => {
-      // simulating what would happen if sass compilation fails
-      // actual implementation catches errors & formats them as CSS comments
+      // simulate sass compilation failure (implementation catches errors & formats as CSS comments)
       const preview = createMockPreview('/workspace');
       const fsPath = '/workspace/error.scss';
 
       const result = await handler.handle('', fsPath, preview);
 
-      // result should always have CSS (either compiled or error/help message)
+      // result always has CSS (either compiled or error/help message)
       expect(result.css).toBeDefined();
       expect(typeof result.css).toBe('string');
     });
@@ -179,7 +176,7 @@ describe('SassHandler', () => {
 
   describe('Cache Behavior', () => {
     it('should cache sass instance per workspace', async () => {
-      // sass module should be loaded once per workspace & cached
+      // sass module is loaded once per workspace & cached
       const preview1 = createMockPreview('/workspace1');
       // same workspace
       const preview2 = createMockPreview('/workspace1');
@@ -187,8 +184,8 @@ describe('SassHandler', () => {
       await handler.handle('', '/workspace1/a.scss', preview1);
       await handler.handle('', '/workspace1/b.scss', preview2);
 
-      // sass should be loaded once (cached for workspace1)
-      // note: actual caching verified by implementation, test validate structure
+      // sass is loaded once (cached for workspace1)
+      // note: actual caching verified by implementation, test validates structure
     });
 
     it('should use different sass instances for different workspaces', async () => {
@@ -198,8 +195,7 @@ describe('SassHandler', () => {
       await handler.handle('', '/workspace1/a.scss', preview1);
       await handler.handle('', '/workspace2/b.scss', preview2);
 
-      // different workspaces can have different sass versions
-      // implementation should cache per workspace root
+      // different workspaces can have different sass versions (cached per workspace root)
     });
 
     it('should clear sass cache when clearSassCache called', async () => {
@@ -216,8 +212,7 @@ describe('SassHandler', () => {
 
   describe('Import Resolution', () => {
     it('should use browser resolver for sass imports', async () => {
-      // sass handler uses browserResolver for import resolution
-      // this enables workspace-specific path resolution
+      // sass handler uses browserResolver for workspace-specific path resolution
       const preview = createMockPreview('/workspace');
       const fsPath = '/workspace/main.scss';
 
@@ -227,7 +222,7 @@ describe('SassHandler', () => {
         preview
       );
 
-      // handler should pass importers to sass.compileAsync
+      // handler passes importers to sass.compileAsync
       expect(result).toBeDefined();
     });
 
@@ -236,9 +231,7 @@ describe('SassHandler', () => {
       const fsPath = '/workspace/main.scss';
 
       const scssWithPartials = `
-        // should resolve to _variables.scss
         @import "variables";
-        // should resolve to _mixins.scss
         @import "mixins";
       `;
 
@@ -327,7 +320,7 @@ describe('SassHandler', () => {
   color: blue
       `;
 
-      // handler should work for both .scss (CSS-like) & .sass (indented)
+      // handler works for both .scss (CSS-like) & .sass (indented)
       const result = await handler.handle(sassCode, '/workspace/test.sass', preview);
 
       expect(result).toBeDefined();
@@ -375,7 +368,7 @@ describe('SassHandler', () => {
       await handler.handle(scss, '/workspace/test.scss', preview);
       const duration = Date.now() - start;
 
-      // should be fast even w/o sass (return help message)
+      // fast even w/o sass (returns help message)
       expect(duration).toBeLessThan(100);
     });
   });
@@ -407,8 +400,7 @@ describe('SassHandler', () => {
 
   describe('ESM vs CommonJS Sass', () => {
     it('should handle CommonJS sass package', async () => {
-      // handler tries CommonJS require first
-      // implementation detail: loads via require()
+      // handler tries CommonJS require first (loads via require())
       const preview = createMockPreview('/workspace');
       const result = await handler.handle('', '/workspace/test.scss', preview);
 
@@ -416,8 +408,7 @@ describe('SassHandler', () => {
     });
 
     it('should fallback to ESM import if CommonJS fails', async () => {
-      // if require throws ERR_REQUIRE_ESM, handler should try dynamic import
-      // implementation handle both module formats
+      // if require throws ERR_REQUIRE_ESM, handler tries dynamic import
       const preview = createMockPreview('/workspace');
       const result = await handler.handle('', '/workspace/test.scss', preview);
 
@@ -425,24 +416,22 @@ describe('SassHandler', () => {
     });
 
     it('should validate sass module has compileAsync method', async () => {
-      // handler validate loaded module has expected API
-      // if compileAsync missing, should treat as not installed
+      // handler validates loaded module has expected API
       const preview = createMockPreview('/workspace');
       const result = await handler.handle('', '/workspace/test.scss', preview);
 
-      // should either compile or return help message
+      // either compiles or returns help message
       expect(result.css).toBeDefined();
     });
   });
 
   describe('Error Message Formatting', () => {
     it('should format compilation errors as CSS comments', async () => {
-      // when compilation fails, error should be formatted as visible CSS comment
-      // structure: /* === header === \n error details \n === footer === */
+      // when compilation fails, error is formatted as visible CSS comment
       const preview = createMockPreview('/workspace');
       const result = await handler.handle('', '/workspace/test.scss', preview);
 
-      // should always return CSS (never undefined)
+      // always returns CSS (never undefined)
       expect(result.css).toBeDefined();
       expect(typeof result.css).toBe('string');
     });
@@ -452,7 +441,7 @@ describe('SassHandler', () => {
       const fsPath = '/workspace/styles/complex/button.scss';
       const result = await handler.handle('', fsPath, preview);
 
-      // error/help messages should mention the file
+      // error/help messages mention the file
       const basename = path.basename(fsPath);
       if (result.css.includes('MDX Preview:')) {
         expect(result.css).toContain(basename);

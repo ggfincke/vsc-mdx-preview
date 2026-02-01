@@ -29,6 +29,8 @@ vi.mock('../packages/extension/services', () => ({
       };
       return defaults[key];
     }),
+    onDidChangeConfiguration: vi.fn(() => ({ dispose: vi.fn() })),
+    onDidChangeKey: vi.fn(() => ({ dispose: vi.fn() })),
   })),
   getTrustManager: vi.fn(() => ({
     getState: vi.fn(() => ({ canExecute: false })),

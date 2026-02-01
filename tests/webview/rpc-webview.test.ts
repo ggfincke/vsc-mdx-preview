@@ -1,9 +1,8 @@
 // tests/webview/rpc-webview.test.ts
-// Unit tests for RPC webview handler factory & message patterns (P0-3)
+// unit tests for RPC webview handler factory & message patterns
 //
-// Note: rpc-webview.ts cannot be imported directly in tests because it calls
-// acquireVsCodeApi() at module load time. Instead, we test the handler factory
-// which contains the core queuing & dispatch logic.
+// rpc-webview.ts cannot be imported directly in tests because it calls
+// acquireVsCodeApi() at module load time - test the handler factory instead
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
@@ -21,7 +20,7 @@ import {
   SET_STALE_CONFIG,
 } from '../../packages/webview-app/src/rpc/handler-configs';
 
-// create a mock tagged logger matching the interface
+// create mock tagged logger matching the interface
 function createMockLogger() {
   return {
     debug: vi.fn(),
@@ -31,7 +30,7 @@ function createMockLogger() {
   };
 }
 
-// create mock state handlers for testing
+// create mock state handlers
 function createMockHandlers(): WebviewStateHandlers {
   return {
     setTrustState: vi.fn(),
@@ -116,7 +115,7 @@ describe('handler-factory', () => {
 
       const setStale = createQueuedHandler(SET_STALE_CONFIG, log);
 
-      // send two stale messages - second should replace first
+      // send two stale messages (second replaces first)
       setStale(true);
       setStale(false);
 
@@ -254,13 +253,11 @@ describe('handler-factory', () => {
 });
 
 describe('message queue architecture (P0-3)', () => {
-  // These tests document the message queue behavior from rpc-webview.ts
-  // The queue uses a Map keyed by message type for coalescing
+  // document message queue behavior from rpc-webview.ts (Map keyed by type for coalescing)
 
   describe('coalescing behavior', () => {
     it('Map-based queue replaces older messages of same type', () => {
-      // Implementation: pendingMessages.set(message.type, message)
-      // This ensures only the latest message of each type is processed
+      // pendingMessages.set(message.type, message) ensures only latest message per type
       const queue = new Map<QueuedMessageType, PendingMessage>();
 
       queue.set('trust', { type: 'trust', payload: { canExecute: false } });
@@ -282,38 +279,30 @@ describe('message queue architecture (P0-3)', () => {
   });
 
   describe('flush ordering (P0-3)', () => {
-    // The flush function processes messages in this order:
-    // 1. trust (sets rendering mode)
-    // 2. content (safe or trusted, validated against trust)
-    // 3. overlays (error, stale)
+    // flush processes: 1. trust (sets mode), 2. content (validated), 3. overlays (error, stale)
 
     it('phase 1: trust state processed first', () => {
-      // Trust must be processed before content to determine rendering mode
-      // Code: const trustMessage = messages.get('trust');
-      //       if (trustMessage) { currentTrustState = trustMessage.payload; ... }
+      // trust processed before content to determine rendering mode
       expect(true).toBe(true);
     });
 
     it('phase 2: content validated against trust state', () => {
-      // validateContentMode checks if content type matches trust state
-      // - trusted content requires canExecute
-      // - safe content always allowed
+      // validateContentMode checks content type vs trust state (trusted requires canExecute)
       expect(true).toBe(true);
     });
 
     it('phase 3: overlays processed last', () => {
-      // Error & stale messages processed after content
-      // so they can properly overlay the rendered content
+      // error & stale messages processed after content to overlay properly
       expect(true).toBe(true);
     });
   });
 });
 
 describe('trust/content validation (P0-3)', () => {
-  // Tests for validateContentMode logic in rpc-webview.ts
+  // test validateContentMode logic in rpc-webview.ts
 
   describe('validateContentMode', () => {
-    // Simulating the validateContentMode function behavior
+    // simulate validateContentMode function behavior
     function validateContentMode(
       trustState: TrustState | null,
       contentMode: 'safe' | 'trusted'
@@ -363,15 +352,14 @@ describe('trust/content validation (P0-3)', () => {
   });
 
   describe('content selection when both queued', () => {
-    // When both safe & trusted content are queued (edge case),
-    // selection is based on trust state
+    // when both safe & trusted content are queued, selection is based on trust state
 
     it('should prefer trusted content when canExecute is true', () => {
       const canExecute = true;
       const hasSafe = true;
       const hasTrusted = true;
 
-      // Logic: if (canExecute) use trusted, else use safe
+      // if canExecute use trusted, else use safe
       const usesTrusted = canExecute && hasTrusted;
       const usesSafe = !canExecute && hasSafe;
 

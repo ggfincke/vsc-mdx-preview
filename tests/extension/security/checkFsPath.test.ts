@@ -1,5 +1,5 @@
 // tests/extension/security/checkFsPath.test.ts
-// Regression tests for checkFsPath - critical path security validation
+// regression tests for checkFsPath critical path security validation
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as path from 'path';
@@ -39,7 +39,6 @@ describe('checkFsPathAsync', () => {
     index: 0,
   });
 
-  // * Basic Path Validation
   describe('basic path validation', () => {
     it('should return true for path inside workspace', async () => {
       mockWorkspaceFolders.mockReturnValue([
@@ -80,7 +79,6 @@ describe('checkFsPathAsync', () => {
     });
   });
 
-  // * Multi-Workspace Handling
   describe('multi-workspace handling', () => {
     it('should find root directory from multiple workspace folders', async () => {
       mockWorkspaceFolders.mockReturnValue([
@@ -88,7 +86,7 @@ describe('checkFsPathAsync', () => {
         createWorkspaceFolder('/workspace2'),
       ]);
 
-      // Entry dir in workspace1
+      // entry dir in workspace1
       expect(await checkFsPathAsync('/workspace1/src', '/workspace1/src/file.ts')).toBe(
         true
       );
@@ -103,14 +101,11 @@ describe('checkFsPathAsync', () => {
         createWorkspaceFolder('/workspace'),
       ]);
 
-      // Entry dir is in /workspace/project, & path is inside that workspace
+      // entry dir in /workspace/project & path inside that workspace
       expect(
         await checkFsPathAsync('/workspace/project/src', '/workspace/project/src/file.ts')
       ).toBe(true);
-      // Path in parent workspace /workspace is allowed since /workspace is also a workspace folder
-      // & the entry directory is inside /workspace (via /workspace/project)
-      // Actually, the root directory found is /workspace (shorter path wins in sort),
-      // so /workspace/other/file.ts IS inside /workspace
+      // path in parent /workspace allowed since it's a workspace folder (shorter path wins in sort)
       expect(
         await checkFsPathAsync('/workspace/project/src', '/workspace/other/file.ts')
       ).toBe(true);
@@ -121,14 +116,13 @@ describe('checkFsPathAsync', () => {
         createWorkspaceFolder('/workspace'),
       ]);
 
-      // Entry dir outside all workspace folders
+      // entry dir outside all workspace folders
       expect(
         await checkFsPathAsync('/other/project/src', '/other/project/src/file.ts')
       ).toBe(false);
     });
   });
 
-  // * Path Traversal Prevention (SECURITY)
   describe('path traversal prevention', () => {
     beforeEach(() => {
       mockWorkspaceFolders.mockReturnValue([
@@ -140,7 +134,7 @@ describe('checkFsPathAsync', () => {
       expect(
         await checkFsPathAsync('/workspace/src', '/workspace/src/../config/secret.ts')
       ).toBe(true);
-      // Traversal outside workspace should be blocked
+      // traversal outside workspace is blocked
       expect(await checkFsPathAsync('/workspace/src', '/workspace/../etc/passwd')).toBe(
         false
       );
@@ -157,24 +151,22 @@ describe('checkFsPathAsync', () => {
     });
 
     it('should allow valid paths with normalized traversal within workspace', async () => {
-      // This path stays within workspace after normalization
+      // this path stays within workspace after normalization
       const validPath = path.normalize('/workspace/src/../lib/file.ts');
       expect(await checkFsPathAsync('/workspace/src', validPath)).toBe(true);
     });
   });
 
-  // * Cache Behavior
   describe('cache behavior', () => {
     it('should cache root directory lookups', async () => {
       mockWorkspaceFolders.mockReturnValue([
         createWorkspaceFolder('/workspace'),
       ]);
 
-      // First call
+      // first call
       await checkFsPathAsync('/workspace/src', '/workspace/src/file1.ts');
 
-      // Second call w/ same entry dir should use cache
-      // (we can verify this by checking workspaceFolders is not called again for lookup)
+      // second call w/ same entry dir uses cache
       const result = await checkFsPathAsync('/workspace/src', '/workspace/src/file2.ts');
       expect(result).toBe(true);
     });
@@ -184,18 +176,18 @@ describe('checkFsPathAsync', () => {
         createWorkspaceFolder('/workspace'),
       ]);
 
-      // First call populates cache
+      // first call populates cache
       await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts');
 
-      // Change workspace folders
+      // change workspace folders
       mockWorkspaceFolders.mockReturnValue([
         createWorkspaceFolder('/new-workspace'),
       ]);
 
-      // Without clearing cache, old root would still be used
+      // without clearing cache, old root would still be used
       handleDidChangeWorkspaceFolders();
 
-      // Now should use new workspace
+      // now use new workspace
       expect(
         await checkFsPathAsync('/new-workspace/src', '/new-workspace/src/file.ts')
       ).toBe(true);
@@ -205,25 +197,21 @@ describe('checkFsPathAsync', () => {
     });
   });
 
-  // * Windows Path Handling
   describe('Windows path handling', () => {
-    // These tests verify Windows path normalization logic
-    // The actual behavior depends on path.sep
+    // verify Windows path normalization logic (behavior depends on path.sep)
 
     it('should handle paths that would need normalization', async () => {
       mockWorkspaceFolders.mockReturnValue([
         createWorkspaceFolder('/workspace'),
       ]);
 
-      // On Unix, these are just regular paths
-      // On Windows, the normalization would convert backslashes
+      // on Unix these are regular paths, on Windows normalization converts backslashes
       expect(await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')).toBe(
         true
       );
     });
   });
 
-  // * Edge Cases
   describe('edge cases', () => {
     it('should handle root as workspace folder', async () => {
       mockWorkspaceFolders.mockReturnValue([createWorkspaceFolder('/')]);
@@ -237,9 +225,7 @@ describe('checkFsPathAsync', () => {
         createWorkspaceFolder('/workspace'),
       ]);
 
-      // Entry directory AT the workspace root: isPathInside('/workspace', '/workspace') return false
-      // This means getRootDirectoryPath return undefined, so checkFsPathAsync return false
-      // This is correct behavior - entry must be strictly INSIDE a workspace folder
+      // entry at workspace root: isPathInside returns false (entry must be strictly INSIDE)
       expect(await checkFsPathAsync('/workspace', '/workspace/file.ts')).toBe(false);
     });
 
@@ -297,7 +283,6 @@ describe('checkFsPathAsync', () => {
     });
   });
 
-  // * Security Scenarios
   describe('security scenarios', () => {
     beforeEach(() => {
       mockWorkspaceFolders.mockReturnValue([
@@ -320,21 +305,20 @@ describe('checkFsPathAsync', () => {
     });
 
     it('should prevent node_modules escape attacks', async () => {
-      // Attacker tries to use node_modules path to escape
+      // attacker tries to use node_modules path to escape
       const maliciousPath = '/workspace/node_modules/../../../etc/passwd';
       expect(await checkFsPathAsync('/workspace/src', maliciousPath)).toBe(false);
     });
 
     it('should not be fooled by URL-encoded paths', async () => {
-      // URL encoding shouldn't bypass security
-      // Note: This test verifies behavior - actual URL decoding would happen elsewhere
+      // URL encoding shouldn't bypass security (actual decoding happens elsewhere)
       expect(
         await checkFsPathAsync('/workspace/src', '/workspace%2F..%2Fetc/passwd')
       ).toBe(false);
     });
 
     it('should handle similar workspace name prefixes securely', async () => {
-      // /workspace-malicious should not be inside /workspace
+      // /workspace-malicious is not inside /workspace
       expect(
         await checkFsPathAsync('/workspace/src', '/workspace-malicious/file.ts')
       ).toBe(false);
@@ -345,7 +329,7 @@ describe('checkFsPathAsync', () => {
   });
 });
 
-// * path-utils unit tests for path normalization functions
+// path-utils tests for path normalization functions
 describe('normalizePathForComparison', () => {
   const originalPlatform = process.platform;
 

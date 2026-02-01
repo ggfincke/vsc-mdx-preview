@@ -49,14 +49,14 @@ describe('FileProbeStrategy', () => {
     workspaceRoot: '/workspace',
   });
 
-  // * Basic Strategy Behavior
+  // basic strategy behavior
   describe('basic strategy behavior', () => {
     it('should have correct name', () => {
       expect(strategy.name).toBe('FileProbe');
     });
   });
 
-  // * Synchronous Resolution
+  // synchronous resolution
   describe('resolve()', () => {
     it('should resolve relative path with extension probing', () => {
       const context = createContext('/workspace/src');
@@ -146,7 +146,7 @@ describe('FileProbeStrategy', () => {
     });
   });
 
-  // * Asynchronous Resolution
+  // asynchronous resolution
   describe('resolveAsync()', () => {
     it('should resolve asynchronously', async () => {
       const context = createContext('/workspace/src');
@@ -201,7 +201,7 @@ describe('FileProbeStrategy', () => {
     });
   });
 
-  // * Result Structure
+  // result structure
   describe('result structure', () => {
     it('should return correct ResolutionResult structure', () => {
       const context = createContext('/workspace/src');
@@ -227,7 +227,7 @@ describe('FileProbeStrategy', () => {
     });
   });
 
-  // * Singleton Behavior
+  // singleton behavior
   describe('singleton behavior', () => {
     it('getFileProbeStrategy should return same instance', () => {
       const instance1 = getFileProbeStrategy();
@@ -242,7 +242,7 @@ describe('FileProbeStrategy', () => {
     });
   });
 
-  // * Edge Cases
+  // edge cases
   describe('edge cases', () => {
     it('should handle current directory specifier', () => {
       const context = createContext('/workspace/src');

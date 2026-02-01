@@ -1,9 +1,8 @@
 // tests/webview/SafePreview.test.ts
 // XSS prevention tests for Safe Mode DOMPurify configuration
 //
-// These tests verify the DOMPurify allowlist configuration used by SafePreview.
-// Since we can't easily run DOMPurify in a non-browser environment without
-// jsdom (which isn't a dependency), we test the configuration itself.
+// verify DOMPurify allowlist configuration used by SafePreview
+// (test config itself since DOMPurify requires jsdom in non-browser environment)
 
 import { describe, it, expect } from 'vitest';
 import { DOMPURIFY_CONFIG } from '../../packages/webview-app/src/security/allowlist';
@@ -385,8 +384,7 @@ describe('DOMPurify Configuration', () => {
 });
 
 describe('XSS Attack Vector Coverage', () => {
-  // These tests document the XSS vectors that the config blocks
-  // They don't actually run DOMPurify but verify config coverage
+  // document XSS vectors that the config blocks (verify config coverage)
 
   describe('Script injection vectors', () => {
     it('config blocks script tag', () => {
@@ -437,7 +435,7 @@ describe('XSS Attack Vector Coverage', () => {
     });
 
     it('config allows style attribute (limited by DOMPurify internal rules)', () => {
-      // style attr is needed for KaTeX but DOMPurify filters dangerous CSS
+      // style attr needed for KaTeX (DOMPurify filters dangerous CSS)
       expect(DOMPURIFY_CONFIG.ALLOWED_ATTR).toContain('style');
     });
   });

@@ -20,6 +20,7 @@ const { mockWorkspace, mockEnv, mockConfigManager } = vi.hoisted(() => ({
       if (key === 'preview.openMdxLinksInPreview') return true;
       return undefined;
     }),
+    onDidChangeKey: vi.fn(() => ({ dispose: vi.fn() })),
   },
 }));
 

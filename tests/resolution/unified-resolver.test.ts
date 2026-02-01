@@ -190,7 +190,7 @@ describe('UnifiedResolver', () => {
     });
   });
 
-  // * Asynchronous Resolution (resolveAsync)
+  // asynchronous resolution (resolveAsync)
   describe('resolveAsync()', () => {
     it('returns null for HTTP URLs', async () => {
       const context = { baseDir: '/workspace' };
@@ -338,7 +338,7 @@ describe('UnifiedResolver', () => {
     });
   });
 
-  // * Strategy Priority Order
+  // strategy priority order
   describe('strategy priority order', () => {
     it('resolveSync: framework alias > TypeScript > enhanced-resolve > file-probe', () => {
       // Test that strategies are called in the correct order
@@ -407,7 +407,7 @@ describe('UnifiedResolver', () => {
     });
   });
 
-  // * Edge Cases
+  // edge cases
   describe('edge cases', () => {
     it('handles empty specifier', () => {
       const context = { baseDir: '/workspace' };
@@ -487,7 +487,7 @@ describe('UnifiedResolver', () => {
     });
   });
 
-  // * Framework Alias Behavior
+  // framework alias behavior
   describe('framework alias behavior', () => {
     it('rewrites specifier when alias resolves to non-shim path', () => {
       const context = {
@@ -527,7 +527,7 @@ describe('UnifiedResolver', () => {
     });
   });
 
-  // * resolveFrameworkAliasStep() Helper
+  // resolveFrameworkAliasStep() helper
   describe('resolveFrameworkAliasStep()', () => {
     it('returns unchanged specifier when no framework', () => {
       const context = {

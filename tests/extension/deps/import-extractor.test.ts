@@ -107,12 +107,11 @@ describe('extractImportSpecifiers', () => {
     });
 
     it('should extract type re-exports', async () => {
-      // note: es-module-lexer extracts type exports as regular exports
+      // es-module-lexer extracts type exports as regular exports
       const code = `export type { SomeType } from './types';`;
       const result = await extractImportSpecifiers(code);
       // es-module-lexer may not extract type-only exports (TypeScript syntax)
-      // the pre-check passes, but actual extraction depends on lexer behavior
-      // this test documents current behavior - type-only exports may be empty
+      // documents current behavior - type-only exports may be empty
       expect(result).toBeDefined();
     });
 
@@ -178,8 +177,7 @@ describe('extractImportSpecifiers', () => {
     });
 
     it('should handle mixed imports', async () => {
-      // note: when ESM imports exist, CommonJS requires are NOT extracted
-      // (require fallback only runs when no ESM imports found)
+      // when ESM imports exist, CommonJS requires are NOT extracted (require fallback only runs when no ESM imports found)
       const code = `
         import React from 'react';
         import './styles.css';
@@ -190,8 +188,7 @@ describe('extractImportSpecifiers', () => {
       const result = await extractImportSpecifiers(code);
       expect(result).toContain('react');
       expect(result).toContain('./styles.css');
-      // lodash via require is NOT extracted when ESM imports exist
-      // this is expected behavior - ESM takes precedence
+      // lodash via require NOT extracted when ESM imports exist (ESM takes precedence)
       expect(result).toContain('./utils');
       expect(result).toContain('./lazy');
     });

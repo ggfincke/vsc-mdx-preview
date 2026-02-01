@@ -25,7 +25,6 @@ import {
 } from '../../../packages/extension/module-system/resolver/file-prober';
 
 describe('file-prober helpers', () => {
-  // * parseProbingOptions()
   describe('parseProbingOptions()', () => {
     it('returns defaults when no options provided', () => {
       const result = parseProbingOptions({});
@@ -71,7 +70,6 @@ describe('file-prober helpers', () => {
     });
   });
 
-  // * shouldSkipPath()
   describe('shouldSkipPath()', () => {
     it('returns true for node_modules path when skip enabled', () => {
       expect(shouldSkipPath('/project/node_modules/react', true)).toBe(true);
@@ -100,15 +98,13 @@ describe('file-prober helpers', () => {
     });
 
     it('returns false for path w/ node_modules in name but not as directory', () => {
-      // path contains 'node_modules' substring but not as a directory segment
-      // note: current implementation uses .includes() so this returns true
+      // path contains 'node_modules' substring but not as directory segment (current impl uses .includes())
       expect(shouldSkipPath('/project/node_modules_backup/file', true)).toBe(
         true
       );
     });
   });
 
-  // * findIndexFileInResults()
   describe('findIndexFileInResults()', () => {
     it('returns first matching index file', () => {
       const basePath = '/project/src/components';
@@ -164,7 +160,7 @@ describe('file-prober helpers', () => {
 
       const result = findIndexFileInResults(basePath, indexFiles, statResults);
 
-      // Should skip index.ts (directory) & return index.tsx
+      // skip index.ts (directory) & return index.tsx
       expect(result).toBe('/project/src/components/index.tsx');
     });
 
@@ -188,7 +184,7 @@ describe('file-prober helpers', () => {
 
       const result = findIndexFileInResults(basePath, indexFiles, statResults);
 
-      // Should return index.ts (first existing, in priority order)
+      // return index.ts (first existing, in priority order)
       expect(result).toBe('/project/src/index.ts');
     });
 
