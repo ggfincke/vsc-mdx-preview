@@ -72,6 +72,14 @@ export function invalidateModuleWithDependents(id: string): Set<string> {
   return registry.invalidateWithDependents(id);
 }
 
+// clear all caches (modules, styles, dependencies) - called by manual cache refresh command
+export function clearAllCaches(): void {
+  registry.clear();
+  clearInjectedStyles();
+  lastEntryPath = null;
+  preloadedModulesInitialized = false;
+}
+
 // load framework-specific shims on demand - called by RPC handler when extension sends framework info
 export function ensureFrameworkShimsLoaded(framework: Framework): void {
   // ensure preloaded modules are ready first

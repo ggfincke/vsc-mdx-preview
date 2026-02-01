@@ -8,13 +8,17 @@ import { evaluateModule } from '../eval/evaluateModule';
 import { injectStyles } from '../styles/injectStyles';
 import { createSyncRequire } from '../runtime/require';
 import { PRELOAD_ALIASES } from '../preload';
-import { createModuleNotFoundError } from '../errors';
+import {
+  createModuleNotFoundError,
+  createModuleDepthExceededError,
+} from '../errors';
 import type {
   Module,
   ModuleRuntime,
   ModuleFetcher,
   FetchResult,
 } from '../types';
+import { MAX_MODULE_LOAD_DEPTH, MAX_CONCURRENT_FETCHES } from '../../constants';
 
 // circular dependency helpers (see circular.ts for details)
 import {
@@ -32,13 +36,50 @@ function makeInFlightKey(parentId: string, dep: string): string {
   return `${parentId}\0${dep}`;
 }
 
+// simple semaphore for concurrency limiting
+// prevents resource exhaustion from unbounded parallel fetches
+class Semaphore {
+  private permits: number;
+  private waitQueue: (() => void)[] = [];
+
+  constructor(permits: number) {
+    this.permits = permits;
+  }
+
+  async acquire(): Promise<void> {
+    if (this.permits > 0) {
+      this.permits--;
+      return;
+    }
+    return new Promise((resolve) => this.waitQueue.push(resolve));
+  }
+
+  release(): void {
+    const next = this.waitQueue.shift();
+    if (next) {
+      next();
+    } else {
+      this.permits++;
+    }
+  }
+}
+
+const fetchSemaphore = new Semaphore(MAX_CONCURRENT_FETCHES);
+
 // recursively load a module & all its dependencies
+// depth tracks recursion to prevent stack overflow from deep dependency chains
 export async function loadModule(
   id: string,
   code: string,
   dependencies: string[],
-  fetcher: ModuleFetcher
+  fetcher: ModuleFetcher,
+  depth: number = 0
 ): Promise<Module> {
+  // check depth limit (prevents stack overflow)
+  if (depth > MAX_MODULE_LOAD_DEPTH) {
+    throw createModuleDepthExceededError(id, depth);
+  }
+
   // Check cache
   const cached = registry.get(id);
   if (cached) {
@@ -53,7 +94,7 @@ export async function loadModule(
   }
 
   // Create promise for this module
-  const modulePromise = loadModuleAsync(id, code, dependencies, fetcher);
+  const modulePromise = loadModuleAsync(id, code, dependencies, fetcher, depth);
 
   // Register as pending for circular dependency detection
   registerPendingModule(id, modulePromise);
@@ -71,7 +112,8 @@ async function loadModuleAsync(
   id: string,
   code: string,
   dependencies: string[],
-  fetcher: ModuleFetcher
+  fetcher: ModuleFetcher,
+  depth: number
 ): Promise<Module> {
   // phase 1: categorize dependencies (cached vs needs fetching)
   interface ToFetch {
@@ -118,10 +160,20 @@ async function loadModuleAsync(
       // check for in-flight fetch w/ same (parent, dep) pair
       let fetchPromise = inFlightFetches.get(inFlightKey);
       if (!fetchPromise) {
-        fetchPromise = fetcher(dep, isBare, id);
-        inFlightFetches.set(inFlightKey, fetchPromise);
-        // Clean up on completion (success or failure)
-        fetchPromise.finally(() => inFlightFetches.delete(inFlightKey));
+        // acquire semaphore permit (limits concurrent fetches)
+        await fetchSemaphore.acquire();
+        try {
+          fetchPromise = fetcher(dep, isBare, id);
+          inFlightFetches.set(inFlightKey, fetchPromise);
+          // clean up on completion (success or failure)
+          fetchPromise.finally(() => {
+            inFlightFetches.delete(inFlightKey);
+            fetchSemaphore.release();
+          });
+        } catch (e) {
+          fetchSemaphore.release();
+          throw e;
+        }
       }
 
       const result = await fetchPromise;
@@ -175,12 +227,17 @@ async function loadModuleAsync(
     }
 
     // Queue recursive load (will run in parallel)
+    // pass depth + 1 to track recursion depth
     loadPromises.push(
-      loadModule(result.fsPath, result.code, result.dependencies, fetcher).then(
-        () => {
-          registry.addDependency(id, result.fsPath);
-        }
-      )
+      loadModule(
+        result.fsPath,
+        result.code,
+        result.dependencies,
+        fetcher,
+        depth + 1
+      ).then(() => {
+        registry.addDependency(id, result.fsPath);
+      })
     );
   }
 

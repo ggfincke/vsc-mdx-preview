@@ -90,3 +90,16 @@ export function createCircularDependencyError(
     moduleId,
   });
 }
+
+// factory: module depth exceeded error (stack overflow prevention)
+export function createModuleDepthExceededError(
+  moduleId: string,
+  depth: number
+): Error {
+  const error = new Error(
+    `Module load depth exceeded: "${moduleId}" at depth ${depth}. ` +
+      `This may indicate circular dependencies or an extremely deep dependency tree.`
+  );
+  error.name = 'ModuleDepthExceededError';
+  return error;
+}

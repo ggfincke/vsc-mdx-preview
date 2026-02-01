@@ -34,3 +34,13 @@ export {
   SHIM_LOAD_MAX_RETRIES,
   SHIM_LOAD_RETRY_DELAY_MS,
 } from '@mdx-preview/shared';
+
+// module loading limits (security & DoS prevention)
+
+// maximum recursion depth for module loading
+// prevents stack overflow from deep dependency chains
+export const MAX_MODULE_LOAD_DEPTH = 100;
+
+// maximum concurrent fetch requests
+// prevents resource exhaustion from unbounded parallelism
+export const MAX_CONCURRENT_FETCHES = 10;
