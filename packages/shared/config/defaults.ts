@@ -42,6 +42,7 @@ export const DEFAULT_COMPONENTS_UNKNOWN_BEHAVIOR = 'placeholder' as const;
 
 // advanced defaults
 export const DEFAULT_WATCHER_DEBOUNCE_MS = STANDARD_WATCHER_DEBOUNCE_MS;
+export const DEFAULT_DEBUG_OUTPUT = false;
 
 // default map for all settings (keys match ConfigManager SettingKey)
 export const SETTINGS_DEFAULTS = {
@@ -70,4 +71,5 @@ export const SETTINGS_DEFAULTS = {
   'components.builtins': DEFAULT_COMPONENTS_BUILTINS,
   'components.unknownBehavior': DEFAULT_COMPONENTS_UNKNOWN_BEHAVIOR,
   'advanced.watcherDebounceMs': DEFAULT_WATCHER_DEBOUNCE_MS,
+  'advanced.debugOutput': DEFAULT_DEBUG_OUTPUT,
 } as const;

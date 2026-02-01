@@ -10,7 +10,14 @@ import { TrustManager } from './security/TrustManager';
 import { initWebviewAppHTMLResourcesAsync } from './preview/webview-manager';
 import { initPrewarm } from './prewarm';
 import { initWorkspaceHandlers } from './workspace-manager';
-import { info, debug, showOutput, getOutputChannel } from './logging';
+import {
+  info,
+  debug,
+  showOutput,
+  getOutputChannel,
+  initLogging,
+  isDebugEnabled,
+} from './logging';
 import { LogTags } from '@mdx-preview/shared';
 import { StatusBarManager } from './preview/StatusBarManager';
 import { ThemeManager } from './themes';
@@ -21,6 +28,7 @@ import {
   getPreviewManager,
   getStatusBarManager,
   getConfigManager,
+  getTrustManager,
 } from './services';
 import { TailwindProcessor } from './tailwind/TailwindProcessor';
 import { ErrorReporter } from './errors';
@@ -121,10 +129,13 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
     );
   }
 
-  // when enableScripts setting changes, refresh previews
+  // subscribe to TrustManager for enableScripts changes
+  // track to avoid double-refresh (trust change handler already refreshes)
+  let lastCanExecute = getTrustManager().canExecute();
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('mdx-preview.preview.enableScripts')) {
+    getTrustManager().subscribe((state) => {
+      if (state.canExecute !== lastCanExecute) {
+        lastCanExecute = state.canExecute;
         getPreviewManager().refreshAllPreviews();
       }
     })
@@ -144,6 +155,9 @@ export async function activate(
     ConfigManager.getInstance()
   );
   registry.register(ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance());
+
+  // initialize logging w/ reactive debug setting (after ConfigManager)
+  context.subscriptions.push(initLogging());
   registry.register(ServiceNames.TRUST_MANAGER, () =>
     TrustManager.getInstance()
   );
@@ -208,8 +222,10 @@ export async function activate(
 
   info('Extension activated');
 
-  // show output channel automatically for debugging
-  showOutput();
+  // show output channel if debug output is enabled
+  if (isDebugEnabled()) {
+    showOutput();
+  }
 
   // show safe mode notification if in untrusted workspace
   showSafeModeNotificationIfNeeded(context);
@@ -223,7 +239,7 @@ export async function activate(
   // register all commands (extracted to commands/ directory)
   context.subscriptions.push(...registerAllCommands());
 
-  // initialize status bar manager (handles trust state & framework display)
+  // initialize status bar manager (manage trust state & framework display)
   const statusBarManager = getStatusBarManager();
   context.subscriptions.push(...statusBarManager.getDisposables());
   statusBarManager.updateVisibility();
@@ -254,7 +270,7 @@ export async function activate(
 
 // deactivate extension
 export function deactivate(): void {
-  // single disposal call handles everything
+  // single disposal call - handle everything
   // 1. subsystems (resolver, meta) disposed first (reverse registration order)
   // 2. services disposed second (reverse registration order)
   ServiceRegistry.getInstance().dispose();

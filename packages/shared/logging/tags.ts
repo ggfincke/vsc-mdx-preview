@@ -81,10 +81,12 @@ export const LogTags = {
 
   // file utils
   FILE: 'FILE',
+  LOGGING: 'LOGGING',
 
   // webview package
   APP: 'APP',
   WEBVIEW: 'WEBVIEW',
+  RESOURCE_LOADER: 'RESOURCE-LOADER',
   WEBVIEW_STATE: 'WEBVIEW-STATE',
   PRELOAD: 'PRELOAD',
   SHIM_LOADER: 'SHIM-LOADER',

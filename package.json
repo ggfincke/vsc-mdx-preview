@@ -11,7 +11,14 @@
       "url": "https://github.com/xyc"
     }
   ],
-  "repository": "https://github.com/ggfincke/vscode-mdx-preview",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ggfincke/vscode-mdx-preview"
+  },
+  "bugs": {
+    "url": "https://github.com/ggfincke/vscode-mdx-preview/issues"
+  },
+  "homepage": "https://github.com/ggfincke/vscode-mdx-preview#readme",
   "license": "GPL-3.0-or-later",
   "workspaces": [
     "packages/*"
@@ -27,9 +34,22 @@
     "mdx",
     "markdown",
     "JavaScript",
-    "React"
+    "React",
+    "mdx-js",
+    "live-preview",
+    "jsx",
+    "tsx",
+    "documentation",
+    "docusaurus",
+    "starlight",
+    "nextra",
+    "tailwind"
   ],
   "icon": "assets/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "activationEvents": [
     "onLanguage:markdown",
     "onLanguage:mdx",
@@ -120,21 +140,6 @@
         "category": "MDX"
       },
       {
-        "command": "mdx-preview.commands.zoomIn",
-        "title": "Zoom In",
-        "category": "MDX"
-      },
-      {
-        "command": "mdx-preview.commands.zoomOut",
-        "title": "Zoom Out",
-        "category": "MDX"
-      },
-      {
-        "command": "mdx-preview.commands.resetZoom",
-        "title": "Reset Zoom",
-        "category": "MDX"
-      },
-      {
         "command": "mdx-preview.commands.selectFramework",
         "title": "Select Framework",
         "category": "MDX"
@@ -147,6 +152,11 @@
       {
         "command": "mdx-preview.commands.showEffectiveConfig",
         "title": "Show Effective Configuration",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.toggleDebugOutput",
+        "title": "Toggle Debug Output",
         "category": "MDX"
       }
     ],
@@ -206,24 +216,6 @@
         "command": "mdx-preview.commands.openPreview",
         "key": "ctrl+k x",
         "mac": "cmd+k x"
-      },
-      {
-        "command": "mdx-preview.commands.zoomIn",
-        "key": "ctrl+=",
-        "mac": "cmd+=",
-        "when": "mdxPreviewFocus"
-      },
-      {
-        "command": "mdx-preview.commands.zoomOut",
-        "key": "ctrl+-",
-        "mac": "cmd+-",
-        "when": "mdxPreviewFocus"
-      },
-      {
-        "command": "mdx-preview.commands.resetZoom",
-        "key": "ctrl+0",
-        "mac": "cmd+0",
-        "when": "mdxPreviewFocus"
       }
     ],
     "configuration": {
@@ -535,6 +527,12 @@
           "minimum": 0,
           "maximum": 2000,
           "description": "Debounce time for file watcher events (ms). Set to 0 for CI environments.",
+          "scope": "window"
+        },
+        "mdx-preview.advanced.debugOutput": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable debug output in the MDX Preview output channel. Useful for troubleshooting issues.",
           "scope": "window"
         }
       }
