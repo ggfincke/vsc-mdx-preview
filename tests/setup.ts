@@ -24,6 +24,10 @@ vi.mock('../packages/extension/services', () => ({
       return defaults[key];
     }),
   })),
+  getTrustManager: vi.fn(() => ({
+    getState: vi.fn(() => ({ canExecute: false })),
+    subscribe: vi.fn(() => ({ dispose: () => {} })),
+  })),
   getFrameworkDetector: vi.fn(() => ({
     getFramework: vi.fn(() => ({ framework: 'generic', confidence: 1 })),
     areShimsEnabled: vi.fn(() => true),
