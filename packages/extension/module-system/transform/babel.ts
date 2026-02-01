@@ -8,11 +8,17 @@
 // not at module initialization time. This reduces extension activation time
 // for Safe Mode users who never need Babel
 
-import { createLazyImport } from '../../utils/lazy-import';
 import type * as BabelCore from '@babel/core';
+import { LogTags } from '@mdx-preview/shared';
+import { debug } from '../../logging';
+import { createLazyImport } from '../../utils/lazy-import';
 
 // Lazy load @babel/core - only imported when first transform is requested
 const getBabel = createLazyImport(() => import('@babel/core'));
+
+// track prewarm state to prevent duplicate attempts
+let prewarmStarted = false;
+let prewarmComplete = false;
 
 // Module-level cache for lazily-initialized config items (G.4 optimization)
 // Config items are only created on first transformAsync() call
@@ -57,6 +63,41 @@ async function getBabelOptions(
   };
 
   return cachedBabelOptions;
+}
+
+// prewarm Babel by loading @babel/core in background
+// safe to call multiple times (no-op if already warming/warmed)
+export async function prewarmBabel(): Promise<void> {
+  if (prewarmComplete || prewarmStarted) {
+    return;
+  }
+  prewarmStarted = true;
+
+  debug(`[${LogTags.BABEL}] Starting Babel prewarm`);
+  const startTime = Date.now();
+
+  try {
+    const babel = await getBabel();
+    await getBabelOptions(babel);
+    prewarmComplete = true;
+    debug(
+      `[${LogTags.BABEL}] Babel prewarm complete (${Date.now() - startTime}ms)`
+    );
+  } catch (err) {
+    prewarmStarted = false;
+    debug(`[${LogTags.BABEL}] Babel prewarm failed`, err);
+  }
+}
+
+// check if Babel is prewarmed
+export function isBabelPrewarmed(): boolean {
+  return prewarmComplete;
+}
+
+// reset prewarm state for tests
+export function resetPrewarmState(): void {
+  prewarmStarted = false;
+  prewarmComplete = false;
 }
 
 export const transformAsync = async (

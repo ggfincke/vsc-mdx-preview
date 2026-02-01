@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import { PreviewManager } from './preview/preview-manager';
 import { TrustManager } from './security/TrustManager';
 import { initWebviewAppHTMLResourcesAsync } from './preview/webview-manager';
+import { initPrewarm } from './prewarm';
 import { initWorkspaceHandlers } from './workspace-manager';
 import { info, debug, showOutput, getOutputChannel } from './logging';
 import { LogTags } from '@mdx-preview/shared';
@@ -25,6 +26,7 @@ import { TailwindProcessor } from './tailwind/TailwindProcessor';
 import { ErrorReporter } from './errors';
 import { PackageJsonWatcher } from './module-system/resolver/PackageJsonWatcher';
 import { clearResolverCache } from './module-system/resolver/resolver-factory';
+import { clearSassCache } from './module-system/handlers';
 import { registerResolverSubsystem } from './module-system/resolver/resolver-subsystem';
 import { ConfigManager, ConfigCache } from './config';
 import {
@@ -195,6 +197,10 @@ export async function activate(
   initWebviewAppHTMLResourcesAsync(context);
   debug(`[${LogTags.ACTIVATE}] Webview HTML resource initialization started`);
 
+  // G.5 optimization: Initialize prewarm coordinator for improved first-render UX
+  debug(`[${LogTags.ACTIVATE}] Initializing prewarm coordinator`);
+  context.subscriptions.push(initPrewarm());
+
   initWorkspaceHandlers(context);
   debug(`[${LogTags.ACTIVATE}] Workspace handlers initialized`);
 
@@ -230,11 +236,12 @@ export async function activate(
     })
   );
 
-  // start package.json watcher to auto-invalidate resolver cache
+  // start package.json watcher to auto-invalidate resolver & sass caches
   const packageJsonWatcher = new PackageJsonWatcher(() => {
     clearResolverCache();
+    clearSassCache();
     debug(
-      `[${LogTags.WATCHER}] Resolver cache cleared due to package file change`
+      `[${LogTags.WATCHER}] Resolver & Sass caches cleared due to package file change`
     );
   });
   void packageJsonWatcher.start();

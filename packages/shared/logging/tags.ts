@@ -28,6 +28,7 @@ export const LogTags = {
 
   // compilation
   COMPILE: 'COMPILE',
+  BABEL: 'BABEL',
   COMPONENT_MAPPER: 'COMPONENT-MAPPER',
 
   // file handlers
@@ -70,6 +71,7 @@ export const LogTags = {
 
   // commands & activation
   ACTIVATE: 'ACTIVATE',
+  PREWARM: 'PREWARM',
   CMD: 'CMD',
   COMMANDS: 'COMMANDS',
   THEME: 'THEME',
