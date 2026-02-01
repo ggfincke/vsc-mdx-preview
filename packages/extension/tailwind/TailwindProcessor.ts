@@ -12,16 +12,18 @@ import type { ResolutionContext } from '../types';
 import { ErrorContext, ErrorSeverity } from '../errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
-import { TailwindCache } from './TailwindCache';
 import { TailwindScanCache } from './TailwindScanCache';
 import { TailwindCompiler, type TailwindVersion } from './TailwindCompiler';
 import {
   MIN_SUPPORTED_TAILWIND_VERSION,
   MAX_KNOWN_TAILWIND_VERSION,
   TAILWIND_CACHE_SCHEMA_VERSION,
+  CACHE_DEFAULT_MAX_ENTRIES,
+  CACHE_DEFAULT_TTL_MS,
 } from './constants';
+import { LRUCache, LogTags } from '@mdx-preview/shared';
 import type { Preview } from '../preview/preview-manager';
-import { normalizeError, LogTags, type TrustState } from '@mdx-preview/shared';
+import { normalizeError, type TrustState } from '@mdx-preview/shared';
 import type { TailwindConfig } from '../types';
 
 export interface TailwindProcessOptions {
@@ -45,12 +47,16 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
 
   private detector = new TailwindDetector();
   private scanner = new TailwindScanner();
-  private cache = new TailwindCache();
+  private cache: LRUCache<string, string>;
   private scanCache = new TailwindScanCache();
   private compiler = new TailwindCompiler();
 
   protected constructor() {
     super();
+    this.cache = new LRUCache<string, string>({
+      maxEntries: CACHE_DEFAULT_MAX_ENTRIES,
+      ttlMs: CACHE_DEFAULT_TTL_MS,
+    });
   }
 
   async process(
@@ -171,7 +177,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       entryCssPath
     );
 
-    // TailwindCache.get() returns string | null (null = expired or missing)
+    // LRUCache.get() returns string | null (null = expired or missing)
     const cached = this.cache.get(cacheKey);
     if (cached !== null) {
       return {
@@ -227,6 +233,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   // custom cleanup - clear caches
   protected override onDispose(): void {
     this.cache.clear();
+    debug(`[${LogTags.TAILWIND}] Cache cleared`);
     this.scanCache.clear();
     this.detector.invalidateVersionCache();
   }

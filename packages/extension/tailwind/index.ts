@@ -25,10 +25,6 @@ export type {
   TailwindScanResult,
 } from './TailwindScanner';
 
-// caching - LRU cache w/ TTL
-export { TailwindCache } from './TailwindCache';
-export type { TailwindCacheOptions } from './TailwindCache';
-
 // scan caching - per-file class extraction cache
 export { TailwindScanCache, computeContentHash } from './TailwindScanCache';
 export type { TailwindScanCacheOptions } from './TailwindScanCache';
