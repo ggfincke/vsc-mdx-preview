@@ -1,6 +1,5 @@
 // packages/webview-app/src/App.tsx
 // MDX Preview App - single React root managing preview rendering (Safe & Trusted mode)
-// State is now managed via granular React contexts for reduced re-renders
 
 import { useCallback, useEffect, useMemo, useState, type ComponentType, type MouseEvent } from 'react';
 import LoadingBar from './components/LoadingBar/LoadingBar';
@@ -25,10 +24,9 @@ import {
 } from './context';
 import './App.css';
 import './styles/admonitions.css';
-// Base styles (shared via data-attribute selectors) - always needed
+// base styles (shared via data-attribute selectors) - always needed
 import './components/shims/base/styles/index.css';
-// Framework-specific styles are now lazy-loaded via frameworkCssLoader.ts
-// when the corresponding framework shims are loaded in preload/index.ts
+// framework-specific styles are lazy-loaded via frameworkCssLoader.ts
 
 debug(`[${LogTags.APP}] App.tsx module loaded`);
 
@@ -41,7 +39,6 @@ function App() {
   const { isLoading, isStale } = useLoading();
 
   // evaluatedComponent kept in local state (not context) to avoid React #130 issue
-  // The context's useMemo was causing the component function to become an object
   const [evaluatedComponent, setEvaluatedComponent] = useState<ComponentType | null>(null);
 
   // clear evaluated component when content changes (new file or file modified)
@@ -117,7 +114,7 @@ function App() {
   // render error state w/ unified ErrorDisplay component
   if (error) {
     debug(`[${LogTags.APP}] Rendering error state`);
-    // Convert PreviewError to Error for ErrorDisplay, preserving moduleError data
+    // convert PreviewError to Error for ErrorDisplay, preserving moduleError data
     const errorObj = new Error(error.message) as Error & {
       moduleError?: typeof error.moduleError;
     };

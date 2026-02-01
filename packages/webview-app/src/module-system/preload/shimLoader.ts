@@ -67,7 +67,7 @@ async function retryLoad<T>(
   return { result: null, attempts: maxRetries + 1, lastError };
 }
 
-// load framework shims w/ retry & fallback to generic
+// load framework shims w/ retry & fallback to generic shims
 export async function loadFrameworkShimsWithRetry(
   registry: ModuleRegistry,
   framework: Framework,

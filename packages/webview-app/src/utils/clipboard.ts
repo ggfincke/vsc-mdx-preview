@@ -1,5 +1,5 @@
 // packages/webview-app/src/utils/clipboard.ts
-// Unified clipboard utility for both React & DOM contexts
+// unified clipboard utility for both React & DOM contexts
 
 import { CODE_COPY_FEEDBACK_DURATION_MS } from '../constants';
 
@@ -45,7 +45,7 @@ export async function copyWithFeedback(
     return false;
   }
 
-  // Apply visual feedback
+  // apply visual feedback
   element.classList.add(copiedClassName);
 
   if (copiedContent !== undefined) {

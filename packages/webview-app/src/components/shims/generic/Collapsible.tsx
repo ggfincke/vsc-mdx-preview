@@ -14,12 +14,12 @@ const BaseCollapsible = createCollapsible({
   applyOpenClassToWrapper: true,
 });
 
-// Generic Collapsible component
+// generic Collapsible component
 export function Collapsible(props: CollapsibleProps) {
   return <BaseCollapsible {...props} />;
 }
 
-// Accordion component (alias for Collapsible)
+// accordion component (alias for Collapsible)
 export function Accordion(props: CollapsibleProps) {
   return <Collapsible {...props} />;
 }

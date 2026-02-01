@@ -42,7 +42,7 @@ function extractLabelFromCodeBlock(child: ReactElement): string {
   return 'Code';
 }
 
-// CodeGroup component
+// codeGroup component
 export function CodeGroup({ children, labels }: CodeGroupProps): ReactElement {
   const childArray = Children.toArray(children).filter(isValidElement);
   const [activeIndex, setActiveIndex] = useState(0);

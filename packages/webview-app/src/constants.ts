@@ -1,8 +1,5 @@
 // packages/webview-app/src/constants.ts
-// centralized constants for the webview app
-//
-// this file consolidates magic numbers from across the webview
-// to improve maintainability & documentation
+// centralized constants for the webview app (consolidates magic numbers)
 
 // zoom
 

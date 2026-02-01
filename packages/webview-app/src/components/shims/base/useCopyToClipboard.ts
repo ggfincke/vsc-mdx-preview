@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/shims/base/useCopyToClipboard.ts
-// Shared hook for copy-to-clipboard functionality
+// shared hook for copy-to-clipboard functionality
 
 import { useState, useCallback } from 'react';
 import { copyToClipboard } from '../../../utils/clipboard';

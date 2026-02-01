@@ -12,7 +12,7 @@ export type { VSCodeTheme as Theme } from '../theme/detection';
 
 export { LightboxProvider, useLightbox } from './LightboxContext';
 
-// Phase J: Granular state contexts for reduced re-renders
+// phase J: granular state contexts for reduced re-renders
 export { TrustProvider, useTrust } from './TrustContext';
 export { PreviewProvider, usePreview } from './PreviewContext';
 export { LoadingProvider, useLoading } from './LoadingContext';

@@ -1,23 +1,7 @@
 // packages/webview-app/src/rpc-webview.ts
 // RPC webview side - bidirectional communication between webview & extension via Comlink
-//
-// message queue architecture
-//
-// The webview receives Comlink RPC messages immediately on load, but React
-// may not have mounted yet. This creates a timing race:
-//
-// Timeline:
-// 1. Webview HTML loads
-// 2. initRPCWebviewSide() - Comlink endpoint ready
-// 3. Extension sends initial messages (trust state, preview content)
-// 4. React begins mounting (async)
-// 5. App calls registerWebviewHandlers()
-// 6. Pending messages flushed to React state
-//
-// pendingMessages queue buffers messages between steps 3-5
-//
-// Queued message types: trust, safe, trusted, error, stale
-// Direct (not queued): theme, zoom, CSS, Tailwind (update DOM directly)
+// message queue buffers messages until React mounts (queued: trust, safe, trusted, error, stale)
+// direct handlers (theme, zoom, CSS, Tailwind) update DOM immediately w/o queueing
 
 import * as comlink from 'comlink';
 import type { Endpoint } from 'comlink';
@@ -55,7 +39,7 @@ import {
   RESET_ZOOM_CONFIG,
 } from './rpc/handler-configs';
 
-// Create tagged logger for this module
+// create tagged logger for this module
 const log = createTaggedLogger(LogTags.RPC_WEBVIEW);
 
 declare const acquireVsCodeApi: () => {
@@ -66,7 +50,7 @@ declare const acquireVsCodeApi: () => {
 
 const vscodeApi = acquireVsCodeApi();
 
-// Comlink endpoint adapter for VS Code webview messaging
+// comlink endpoint adapter for VS Code webview messaging
 class WebviewProxy implements Endpoint {
   postMessage(message: unknown): void {
     log.debug('postMessage to extension');
@@ -84,19 +68,18 @@ export type ExtensionHandle = ExtensionRPC;
 let extensionHandle: ExtensionHandle;
 let webviewEndpoint: WebviewProxy;
 
-// Module-level state for handlers & pending messages
+// module-level state for handlers & pending messages
 let stateHandlers: WebviewStateHandlers | null = null;
 
-// K.1: Cache for ./module-system dynamic import
-// Avoids repeated promise creation on each RPC call
-// Uses error recovery pattern to reset cache on failure
+// K.1: cache for ./module-system dynamic import (avoids repeated promise creation)
+// uses error recovery pattern to reset cache on failure
 let moduleSystemPromise: Promise<typeof import('./module-system')> | null =
   null;
 
 function getModuleSystem(): Promise<typeof import('./module-system')> {
   if (!moduleSystemPromise) {
     moduleSystemPromise = import('./module-system').catch((err) => {
-      // Reset cache on failure so subsequent calls can retry
+      // reset cache on failure so subsequent calls can retry
       moduleSystemPromise = null;
       throw err;
     });
@@ -104,8 +87,8 @@ function getModuleSystem(): Promise<typeof import('./module-system')> {
   return moduleSystemPromise;
 }
 
-// Use Map to coalesce by message type - last message of each type wins
-// This prevents stale messages from replaying out of order when React mounts slowly
+// use Map to coalesce by message type - last message of each type wins
+// this prevents stale messages from replaying out of order when React mounts slowly
 const pendingMessages = new Map<QueuedMessageType, PendingMessage>();
 
 // track current trust state for content validation
@@ -116,12 +99,11 @@ function enqueueMessage(message: PendingMessage): void {
   log.debug(
     `Enqueueing message: ${message.type}${hadPrevious ? ' (replacing previous)' : ''}`
   );
-  // Coalesce: newer message of same type replaces older
+  // coalesce: newer message of same type replaces older
   pendingMessages.set(message.type, message);
 }
 
-// validate content mode matches trust state
-// returns true if content should be processed, false if it should be discarded
+// validate content mode matches trust state (return true if content should be processed)
 function validateContentMode(
   trustState: TrustState | null,
   contentMode: 'safe' | 'trusted'
@@ -148,11 +130,11 @@ function flushPendingMessages(): void {
     return;
   }
 
-  // Copy & clear atomically
+  // copy & clear atomically
   const messages = new Map(pendingMessages);
   pendingMessages.clear();
 
-  // Phase 1: process trust state first (sets rendering mode)
+  // phase 1: process trust state first (sets rendering mode)
   const trustMessage = messages.get('trust');
   if (trustMessage) {
     log.debug('Flushing trust state first');
@@ -160,7 +142,7 @@ function flushPendingMessages(): void {
     stateHandlers.setTrustState(currentTrustState);
   }
 
-  // Phase 2: process content w/ validation
+  // phase 2: process content w/ validation
   // only one of safe/trusted should be present, but handle both defensively
   const safeMsg = messages.get('safe');
   const trustedMsg = messages.get('trusted');
@@ -207,7 +189,7 @@ function flushPendingMessages(): void {
     stateHandlers.setSafeContent((safeMsg.payload as { html: string }).html);
   }
 
-  // Phase 3: process overlays (error, stale)
+  // phase 3: process overlays (error, stale)
   const errorMsg = messages.get('error');
   if (errorMsg) {
     log.debug('Flushing error');
@@ -221,29 +203,29 @@ function flushPendingMessages(): void {
   }
 }
 
-// Create handler factories bound to module state
+// create handler factories bound to module state
 const { createQueuedHandler, createOptionalHandler } = createHandlerFactories(
   () => stateHandlers,
   enqueueMessage
 );
 
-// RPC handle exposed to extension (routes calls to React state handlers)
+// RPC handle exposed to extension (route calls to React state handlers)
 class RPCWebviewHandle implements WebviewRPC {
-  // QUEUED handlers - buffer messages until React mounts
+  // queued handlers - buffer messages until React mounts
   setTrustState = createQueuedHandler(SET_TRUST_STATE_CONFIG, log);
   updatePreview = createQueuedHandler(UPDATE_PREVIEW_CONFIG, log);
   updatePreviewSafe = createQueuedHandler(UPDATE_PREVIEW_SAFE_CONFIG, log);
   showPreviewError = createQueuedHandler(SHOW_PREVIEW_ERROR_CONFIG, log);
   setStale = createQueuedHandler(SET_STALE_CONFIG, log);
 
-  // OPTIONAL handlers - call if handler present, no queuing
+  // optional handlers - call if handler present, no queuing
   setTheme = createOptionalHandler(SET_THEME_CONFIG, log);
   setNextraMeta = createOptionalHandler(SET_NEXTRA_META_CONFIG, log);
   zoomIn = createOptionalHandler(ZOOM_IN_CONFIG, log);
   zoomOut = createOptionalHandler(ZOOM_OUT_CONFIG, log);
   resetZoom = createOptionalHandler(RESET_ZOOM_CONFIG, log);
 
-  // DIRECT handlers - immediate DOM/style injection (kept manual for simplicity)
+  // direct handlers - immediate DOM/style injection (kept manual for simplicity)
   setCustomCss(css: string): void {
     log.debug(`setCustomCss called, length: ${css.length}`);
     StyleInjector.inject(STYLE_IDS.CUSTOM_CSS, css);
@@ -256,25 +238,33 @@ class RPCWebviewHandle implements WebviewRPC {
     });
   }
 
-  // DIRECT handler - load framework-specific shims on demand
+  // direct handler - load framework-specific shims on demand
   setFramework(framework: Framework): void {
     log.debug(`setFramework called: ${framework}`);
     // K.1: use cached module import to avoid repeated promise creation
-    void getModuleSystem().then(({ ensureFrameworkShimsLoaded }) => {
-      ensureFrameworkShimsLoaded(framework);
-    });
+    void getModuleSystem()
+      .then(({ ensureFrameworkShimsLoaded }) => {
+        ensureFrameworkShimsLoaded(framework);
+      })
+      .catch((err) => {
+        log.error(`Failed to load framework shims for ${framework}:`, err);
+      });
   }
 
-  // DIRECT handler - load specific generic shims on demand (conditional preloading)
+  // direct handler - load specific generic shims on demand (conditional preloading)
   setUsedComponents(components: string[]): void {
     log.debug(`setUsedComponents called: ${components.join(', ')}`);
     // K.1: use cached module import to avoid repeated promise creation
-    void getModuleSystem().then(({ ensureGenericShimsLoaded }) => {
-      ensureGenericShimsLoaded(components);
-    });
+    void getModuleSystem()
+      .then(({ ensureGenericShimsLoaded }) => {
+        ensureGenericShimsLoaded(components);
+      })
+      .catch((err) => {
+        log.error('Failed to load generic shims:', err);
+      });
   }
 
-  // EXCEPTION handler - async w/ dynamic import (kept manual)
+  // exception handler - async w/ dynamic import (kept manual)
   async invalidate(fsPath: string): Promise<void> {
     log.debug(`invalidate called: ${fsPath}`);
     // K.1: use cached module import to avoid repeated promise creation
@@ -294,7 +284,7 @@ class RPCWebviewHandle implements WebviewRPC {
   }
 }
 
-// initialize RPC on webview side (sets up bidirectional communication w/ extension)
+// initialize RPC on webview side (set up bidirectional communication w/ extension)
 export function initRPCWebviewSide(): void {
   log.debug('initRPCWebviewSide called');
   webviewEndpoint = new WebviewProxy();
@@ -315,10 +305,10 @@ export function initRPCWebviewSide(): void {
   log.debug('handshake() called');
 }
 
-// K.3: Prevent double-registration during retry
+// K.3: prevent double-registration during retry
 let registrationInProgress = false;
 
-// K.3: Helper for exponential backoff retry
+// K.3: helper for exponential backoff retry
 function attemptRegistration(
   handlers: WebviewStateHandlers,
   attempt: number
@@ -328,8 +318,8 @@ function attemptRegistration(
   try {
     stateHandlers = handlers;
 
-    // Warn if many messages accumulated (potential timing issue)
-    // Note: w/ coalescing, this is less likely but still possible w/ many message types
+    // warn if many messages accumulated (potential timing issue)
+    // note: w/ coalescing, this is less likely but still possible w/ many message types
     if (pendingMessages.size > RPC_PENDING_MESSAGES_WARNING_THRESHOLD) {
       log.error(
         `Warning: ${pendingMessages.size} pending messages accumulated`
@@ -341,7 +331,7 @@ function attemptRegistration(
     log.debug('registerWebviewHandlers complete');
   } catch (e) {
     if (attempt < RPC_HANDLER_MAX_RETRIES) {
-      // Exponential backoff: 100ms, 200ms, 400ms, 800ms delays
+      // exponential backoff: 100ms, 200ms, 400ms, 800ms delays
       const delay = RPC_HANDLER_RETRY_DELAY_MS * Math.pow(2, attempt);
       log.debug(
         `Handler registration failed (attempt ${attempt + 1}), retrying in ${delay}ms...`
@@ -358,7 +348,7 @@ function attemptRegistration(
 export function registerWebviewHandlers(handlers: WebviewStateHandlers): void {
   log.debug('registerWebviewHandlers called');
 
-  // K.3: Prevent duplicate registration during retry
+  // K.3: prevent duplicate registration during retry
   if (registrationInProgress) {
     log.debug('Registration already in progress, ignoring duplicate call');
     return;

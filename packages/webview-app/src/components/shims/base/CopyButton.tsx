@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/shims/base/CopyButton.tsx
-// Shared copy-to-clipboard button component
+// shared copy-to-clipboard button component
 
 import React, { ReactElement } from 'react';
 import { useCopyToClipboard } from './useCopyToClipboard';

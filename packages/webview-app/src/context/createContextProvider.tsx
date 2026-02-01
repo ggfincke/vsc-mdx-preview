@@ -1,4 +1,4 @@
-// packages/webview-app/src/context/createContextProvider.ts
+// packages/webview-app/src/context/createContextProvider.tsx
 // factory for creating React context w/ provider & hook (eliminates repeated boilerplate)
 
 import { createContext, useContext, type ReactNode } from 'react';
@@ -9,8 +9,6 @@ interface ContextProviderResult<T> {
 }
 
 // create a context provider & hook pair from a value hook
-// param name - context name for error messages (e.g., 'Trust', 'Loading')
-// param useProviderValue - hook that returns the context value (called inside Provider)
 export function createContextProvider<T>(
   name: string,
   useProviderValue: () => T

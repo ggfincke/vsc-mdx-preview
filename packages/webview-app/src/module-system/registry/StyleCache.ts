@@ -1,12 +1,13 @@
 // packages/webview-app/src/module-system/registry/StyleCache.ts
-// style tracking w/ reference counting & dual-map LRU eviction
+// style tracking w/ reference counting using shared LRUCache
+
+import { LRUCache } from '@mdx-preview/shared';
 
 const DEFAULT_MAX_STYLES = 100;
 
-// Style tracking w/ reference counting
+// style entry w/ reference count for protection
 interface StyleEntry {
   refCount: number;
-  lastAccessed: number;
 }
 
 // style cache configuration options
@@ -14,103 +15,103 @@ export interface StyleCacheConfig {
   maxStyles?: number;
 }
 
-// tracks injected CSS styles w/ reference counting for proper cleanup
-// uses dual-map architecture for O(1) LRU eviction:
-// - referencedStyles: styles w/ refCount > 0 (not evictable)
-// - unreferencedStyles: styles w/ refCount === 0 (eviction candidates, LRU order)
+// track injected CSS styles w/ reference counting for proper cleanup
+// use LRUCache w/ isProtected predicate
+// - styles w/ refCount > 0 are protected from eviction
+// - styles w/ refCount === 0 are eviction candidates (lru order)
 export class StyleCache {
-  private referencedStyles: Map<string, StyleEntry> = new Map();
-  private unreferencedStyles: Map<string, StyleEntry> = new Map();
+  private cache: LRUCache<string, StyleEntry>;
   private maxStyles = DEFAULT_MAX_STYLES;
+
+  constructor() {
+    this.cache = this.createCache();
+  }
+
+  // create lru cache w/ protection predicate
+  private createCache(): LRUCache<string, StyleEntry> {
+    return new LRUCache<string, StyleEntry>({
+      maxEntries: this.maxStyles,
+      // protect styles w/ active references from eviction
+      isProtected: (_key, entry) => entry.refCount > 0,
+    });
+  }
 
   // configure maximum number of styles to track
   configure(options: StyleCacheConfig): void {
     if (options.maxStyles !== undefined) {
       this.maxStyles = options.maxStyles;
+      this.cache.updateSettings({ maxEntries: options.maxStyles });
     }
   }
 
   // check if CSS has been injected for module
   hasInjectedStyle(id: string): boolean {
-    return this.referencedStyles.has(id) || this.unreferencedStyles.has(id);
+    return this.cache.has(id);
   }
 
   // get total number of tracked styles
   get size(): number {
-    return this.referencedStyles.size + this.unreferencedStyles.size;
+    return this.cache.size;
   }
 
   // mark CSS as injected for module (w/ reference counting)
-  // use dual-map architecture for O(1) LRU eviction
+  // protected styles (refCount > 0) won't be evicted
   markStyleInjected(id: string): void {
-    // Check both maps for existing entry
-    const existingReferenced = this.referencedStyles.get(id);
-    const existingUnreferenced = this.unreferencedStyles.get(id);
-    const existing = existingReferenced ?? existingUnreferenced;
+    const existing = this.cache.get(id);
 
     if (existing) {
       existing.refCount++;
-      existing.lastAccessed = Date.now();
-      // If was in unreferenced, move to referenced
-      if (existingUnreferenced) {
-        this.unreferencedStyles.delete(id);
-        this.referencedStyles.set(id, existing);
-      }
+      // re-set to update lru position (get already did this, but explicit for clarity)
+      this.cache.set(id, existing);
     } else {
-      // Evict if at capacity (only unreferenced can be evicted)
-      while (
-        this.referencedStyles.size + this.unreferencedStyles.size >=
-          this.maxStyles &&
-        this.unreferencedStyles.size > 0
-      ) {
-        if (!this.evictLRU()) {
+      // proactively evict unreferenced styles to make room for new entry
+      // maintain compatibility w/ original dual-map behavior where
+      // eviction happened BEFORE adding (not after like standard LRUCache)
+      this.evictUnreferencedToCapacity();
+      // new style starts w/ refCount = 1 (protected)
+      this.cache.set(id, { refCount: 1 });
+    }
+  }
+
+  // evict unreferenced styles until total size is under maxStyles
+  // called before adding new entries to maintain capacity
+  private evictUnreferencedToCapacity(): void {
+    while (this.cache.size >= this.maxStyles) {
+      let evicted = false;
+      // find oldest unreferenced entry (refCount === 0)
+      for (const [key] of this.cache.entries()) {
+        const entry = this.cache.peek(key);
+        if (entry && entry.refCount === 0) {
+          this.cache.delete(key);
+          evicted = true;
           break;
         }
       }
-      // New style starts in referenced map
-      this.referencedStyles.set(id, { refCount: 1, lastAccessed: Date.now() });
+      // if no unreferenced entries to evict, stop
+      if (!evicted) {
+        break;
+      }
     }
   }
 
   // decrement style reference count
-  // move style to unreferenced map when refCount hits 0 (for O(1) LRU eviction)
+  // when refCount hits 0, style becomes eviction candidate
   decrementStyleRef(id: string): void {
-    const entry = this.referencedStyles.get(id);
+    const entry = this.cache.get(id);
     if (entry) {
       entry.refCount = Math.max(0, entry.refCount - 1);
-      if (entry.refCount === 0) {
-        // Move to unreferenced (at end = newest for LRU)
-        this.referencedStyles.delete(id);
-        this.unreferencedStyles.set(id, entry);
-      }
+      // re-set to ensure cache sees updated refCount for isProtected check
+      this.cache.set(id, entry);
     }
-    // If already in unreferencedStyles, just update (already unreferenced)
-    const unreferenced = this.unreferencedStyles.get(id);
-    if (unreferenced && !entry) {
-      unreferenced.refCount = Math.max(0, unreferenced.refCount - 1);
-    }
-  }
-
-  // evict oldest unreferenced style - O(1) via Map insertion order
-  // first entry in unreferencedStyles is the LRU candidate
-  private evictLRU(): boolean {
-    const firstKey = this.unreferencedStyles.keys().next();
-    if (!firstKey.done) {
-      this.unreferencedStyles.delete(firstKey.value);
-      return true;
-    }
-    return false;
   }
 
   // remove style tracking for a single module (for incremental updates)
   unmarkStyleInjected(id: string): void {
-    this.referencedStyles.delete(id);
-    this.unreferencedStyles.delete(id);
+    this.cache.delete(id);
   }
 
   // clear all style tracking
   clear(): void {
-    this.referencedStyles.clear();
-    this.unreferencedStyles.clear();
+    this.cache.clear();
   }
 }

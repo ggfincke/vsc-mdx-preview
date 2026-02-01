@@ -1,5 +1,5 @@
 // packages/webview-app/src/rpc/handler-factory.ts
-// Factory functions for creating RPC handler methods w/ consistent patterns
+// factory functions for creating RPC handler methods w/ consistent patterns
 
 import type { TaggedLogger } from '../utils/debug';
 import type {
@@ -95,7 +95,7 @@ export function createHandlerFactories(
     } = config;
 
     return (...args: unknown[]): void => {
-      // Debug logging
+      // debug logging
       const msg = debugFormat ? debugFormat(...args) : `${methodName} called`;
       log.debug(
         msg,
@@ -104,7 +104,7 @@ export function createHandlerFactories(
 
       const handlers = getHandlers();
       if (handlers) {
-        // Direct call - handlers are registered
+        // direct call - handlers are registered
         const payload = toPayload(...args);
         const handlerArgs = toHandlerArgs(payload);
         // Cast through unknown to avoid TypeScript's strict function signature checks
@@ -115,7 +115,7 @@ export function createHandlerFactories(
         return;
       }
 
-      // Enqueue - handlers not yet registered
+      // enqueue - handlers not yet registered
       enqueueFn({ type: messageType, payload: toPayload(...args) });
     };
   }
@@ -128,7 +128,7 @@ export function createHandlerFactories(
     const { methodName, handlerKey } = config;
 
     return (...args: TArgs): void => {
-      // Debug logging
+      // debug logging
       log.debug(
         `${methodName} called`,
         args.length === 1 ? args[0] : args.length > 1 ? args : undefined

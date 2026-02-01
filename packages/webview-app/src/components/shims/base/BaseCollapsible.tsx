@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/base/BaseCollapsible.tsx
-// Shared base component for collapsible/details implementations
-// Used by generic/Collapsible & docusaurus/Details
+// shared base component for collapsible/details implementations
+// used by generic/Collapsible & docusaurus/Details
 
 /* eslint-disable react-refresh/only-export-components -- Class name presets are co-located with component */
 
@@ -56,14 +56,14 @@ export function BaseCollapsible({
 }: BaseCollapsibleProps): ReactElement {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  // Native toggle handler (Docusaurus pattern)
+  // native toggle handler (Docusaurus pattern)
   const handleNativeToggle = useNativeToggle
     ? (e: SyntheticEvent<HTMLDetailsElement>) => {
         setIsOpen((e.target as HTMLDetailsElement).open);
       }
     : undefined;
 
-  // Custom click handler (Generic Collapsible pattern)
+  // custom click handler (Generic Collapsible pattern)
   const handleSummaryClick = !useNativeToggle
     ? (e: MouseEvent) => {
         e.preventDefault();
@@ -71,7 +71,7 @@ export function BaseCollapsible({
       }
     : undefined;
 
-  // Prevent native toggle when using custom click handling
+  // prevent native toggle when using custom click handling
   const handleDetailsClick = !useNativeToggle
     ? (e: MouseEvent<HTMLDetailsElement>) => {
         if ((e.target as HTMLElement).tagName === 'SUMMARY') {
@@ -80,7 +80,7 @@ export function BaseCollapsible({
       }
     : undefined;
 
-  // Determine icon class based on applyOpenClassToWrapper
+  // determine icon class based on applyOpenClassToWrapper
   const iconWrapperClass = applyOpenClassToWrapper
     ? cn(classNames.icon, isOpen && classNames.iconOpen)
     : classNames.icon;

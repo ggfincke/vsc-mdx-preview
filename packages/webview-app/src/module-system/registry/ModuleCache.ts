@@ -1,29 +1,29 @@
 // packages/webview-app/src/module-system/registry/ModuleCache.ts
 // module cache w/ LRU eviction (count + memory based) & pending fetch tracking
-// uses shared LRUCache w/ isProtected for preloaded module protection
+// use shared LRUCache w/ isProtected for preloaded module protection
 
 import { LRUCache } from '@mdx-preview/shared';
 import type { Module } from '../types';
 
-// LRU configuration defaults
+// lru configuration defaults
 const DEFAULT_MAX_MODULES = 500;
 // 50MB
 const DEFAULT_MAX_MEMORY_BYTES = 50 * 1024 * 1024;
 
-// internal cache entry combining module w/ size estimate
+// cache entry combining module w/ size estimate
 interface CacheEntry {
   module: Module;
   estimatedSize: number;
 }
 
-// LRU configuration options
+// lru configuration options
 export interface ModuleCacheConfig {
   maxModules?: number;
   maxMemoryBytes?: number;
 }
 
-// LRU cache for evaluated modules w/ memory-aware eviction
-// uses shared LRUCache w/ isProtected predicate for preloaded module protection
+// lru cache for evaluated modules w/ memory-aware eviction
+// use shared LRUCache w/ isProtected predicate for preloaded module protection
 // preloaded modules are protected from eviction & don't count against limits
 export class ModuleCache {
   private cache: LRUCache<string, CacheEntry>;
@@ -43,7 +43,7 @@ export class ModuleCache {
     });
   }
 
-  // configure LRU limits
+  // configure lru limits
   configure(options: ModuleCacheConfig): void {
     this.cache.updateSettings({
       maxEntries: options.maxModules,
@@ -82,7 +82,7 @@ export class ModuleCache {
     });
   }
 
-  // get cached module (updates LRU position)
+  // get cached module (update lru position)
   get(id: string): Module | undefined {
     const entry = this.cache.get(id);
     return entry?.module;
@@ -98,7 +98,7 @@ export class ModuleCache {
     return this.preloadedIds.has(id);
   }
 
-  // set module in cache w/ automatic LRU eviction
+  // set module in cache w/ automatic lru eviction
   set(id: string, module: Module): void {
     const estimatedSize = this.estimateExportsSize(module.exports);
     this.cache.set(id, { module, estimatedSize });
@@ -129,13 +129,13 @@ export class ModuleCache {
     }
 
     if (typeof exports === 'function') {
-      // Rough estimate for function size (source code length if available)
+      // rough estimate for function size (source code length if available)
       const funcString = exports.toString();
       return funcString.length * 2 + 100;
     }
 
     if (typeof exports === 'object') {
-      // Rough estimate: traverse one level deep
+      // rough estimate: traverse one level deep
       // object overhead
       let size = 40;
       const obj = exports as Record<string, unknown>;

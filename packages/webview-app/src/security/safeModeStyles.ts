@@ -1,5 +1,5 @@
 // packages/webview-app/src/security/safeModeStyles.ts
-// Safe mode placeholder styles
+// safe mode placeholder styles
 
 const STYLE_ID = 'mdx-safe-mode-styles';
 

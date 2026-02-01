@@ -1,5 +1,5 @@
 // packages/webview-app/src/security/processors.ts
-// Post-processing functions for sanitized HTML
+// post-processing functions for sanitized HTML
 
 // process links to ensure external links open safely
 // internal anchor links (#...) are left unchanged

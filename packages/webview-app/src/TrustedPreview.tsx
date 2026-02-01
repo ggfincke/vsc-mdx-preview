@@ -24,16 +24,15 @@ import { extractErrorInfo } from '@mdx-preview/shared';
 import { shallowArrayEquals, createFieldComparator } from './utils/memoCompare';
 
 // resolve MDX export to renderable React node
-// handles both function components & pre-rendered React elements
-// defensive approach fixes React #130 errors when MDX module
-// returns element object instead of component function
+// handle both function components & pre-rendered React elements
+// defensive approach fixes React #130 errors when MDX module returns element object
 function resolveMdxNode(
   exp: unknown,
   props: Record<string, unknown> = {}
 ): ReactNode {
   let v = exp;
 
-  // Unwrap nested default exports, but don't unwrap React elements
+  // unwrap nested default exports, but don't unwrap React elements
   for (let i = 0; i < 5; i++) {
     if (v && typeof v === 'object' && 'default' in v && !isValidElement(v)) {
       v = (v as { default: unknown }).default;
@@ -47,12 +46,12 @@ function resolveMdxNode(
     return cloneElement(v, props);
   }
 
-  // Function component or string - create element
+  // function component or string - create element
   if (typeof v === 'function' || typeof v === 'string') {
     return createElement(v, props);
   }
 
-  // Invalid export
+  // invalid export
   const keys = v && typeof v === 'object' ? Object.keys(v).join(', ') : '';
   throw new Error(
     `Invalid MDX export. Expected function or React element, got: ${typeof v}` +
@@ -144,7 +143,7 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   }
 
   // render evaluated component using defensive resolver
-  // handles both function components & pre-rendered React elements
+  // handle both function components & pre-rendered React elements
   const mdxNode = resolveMdxNode(evaluatedComponent);
   return (
     <PreviewContainer

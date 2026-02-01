@@ -17,6 +17,7 @@ interface StackFrame {
 }
 
 // patterns for parsing different stack trace formats
+
 // Chrome/V8: "    at functionName (file:line:column)" or "    at file:line:column"
 const CHROME_PATTERN = /^\s*at\s+(?:(.+?)\s+\()?([^()]+):(\d+):(\d+)\)?$/;
 
@@ -26,7 +27,7 @@ const FIREFOX_PATTERN = /^(.+?)@(.+):(\d+):(\d+)$/;
 // Safari: similar to Firefox
 const SAFARI_PATTERN = /^(.+?)@(.+):(\d+):(\d+)$/;
 
-// simple "file:line:column" pattern (for error messages)
+// simple "file:line:column" pattern for error messages
 const SIMPLE_LOCATION_PATTERN = /^(.+):(\d+):(\d+)$/;
 
 // parse a single stack trace line

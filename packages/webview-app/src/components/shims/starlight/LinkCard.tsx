@@ -6,7 +6,7 @@ import React, { ReactElement } from 'react';
 import { BaseCard } from '../base';
 import { ArrowIcon } from '../base/icons';
 
-// LinkCard props (compatible w/ Starlight)
+// linkCard props (compatible w/ Starlight)
 export interface LinkCardProps {
   title: string;
   description?: string;

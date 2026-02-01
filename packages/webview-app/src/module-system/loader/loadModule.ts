@@ -27,8 +27,8 @@ import {
   clearPendingModule,
 } from './circular';
 
-// Track in-flight fetches to deduplicate parallel requests
-// Key: "parentId\0dep" to correctly handle relative specifiers
+// track in-flight fetches to deduplicate parallel requests
+// key: "parentId\0dep" to correctly handle relative specifiers
 // (same relative specifier from different parents can resolve to different files)
 const inFlightFetches = new Map<string, Promise<FetchResult | undefined>>();
 
@@ -37,7 +37,7 @@ function makeInFlightKey(parentId: string, dep: string): string {
 }
 
 // simple semaphore for concurrency limiting
-// prevents resource exhaustion from unbounded parallel fetches
+// prevent resource exhaustion from unbounded parallel fetches
 class Semaphore {
   private permits: number;
   private waitQueue: (() => void)[] = [];
@@ -67,7 +67,7 @@ class Semaphore {
 const fetchSemaphore = new Semaphore(MAX_CONCURRENT_FETCHES);
 
 // recursively load a module & all its dependencies
-// depth tracks recursion to prevent stack overflow from deep dependency chains
+// depth track recursion to prevent stack overflow from deep dependency chains
 export async function loadModule(
   id: string,
   code: string,
@@ -80,29 +80,29 @@ export async function loadModule(
     throw createModuleDepthExceededError(id, depth);
   }
 
-  // Check cache
+  // check cache
   const cached = registry.get(id);
   if (cached) {
     return cached;
   }
 
-  // Check for circular dependency (pending fetch)
-  // If this module is already being loaded, return the in-flight promise
+  // check for circular dependency (pending fetch)
+  // if this module is already being loaded, return the in-flight promise
   const pending = getPendingModule(id);
   if (pending) {
     return pending;
   }
 
-  // Create promise for this module
+  // create promise for this module
   const modulePromise = loadModuleAsync(id, code, dependencies, fetcher, depth);
 
-  // Register as pending for circular dependency detection
+  // register as pending for circular dependency detection
   registerPendingModule(id, modulePromise);
 
   try {
     return await modulePromise;
   } finally {
-    // Always clear pending state when done (success or failure)
+    // always clear pending state when done (success or failure)
     clearPendingModule(id);
   }
 }
@@ -128,20 +128,20 @@ async function loadModuleAsync(
       continue;
     }
 
-    // Skip if already loaded (but still record dependency)
+    // skip if already loaded (but still record dependency)
     if (registry.has(dep)) {
       registry.addDependency(id, dep);
       continue;
     }
 
-    // Check aliases (but still record dependency)
+    // check aliases (but still record dependency)
     const aliasId = PRELOAD_ALIASES[dep];
     if (aliasId && registry.has(aliasId)) {
       registry.addDependency(id, aliasId);
       continue;
     }
 
-    // Determine if this is bare import (uses shared utility)
+    // determine if this is bare import (use shared utility)
     const isBare = isBareImport(dep);
 
     toFetch.push({ dep, isBare });
@@ -181,7 +181,7 @@ async function loadModuleAsync(
     }
   );
 
-  // Wait for all fetches in parallel (main performance win)
+  // wait for all fetches in parallel (main performance win)
   const fetchResults = await Promise.all(fetchPromises);
 
   // phase 3: handle fetch errors
@@ -196,17 +196,17 @@ async function loadModuleAsync(
   const loadPromises: Promise<void>[] = [];
 
   for (const { dep, result } of fetchResults) {
-    // Type guard: result is guaranteed non-null after Phase 3
+    // type guard: result is guaranteed non-null after phase 3
     if (!result) {
       continue;
     }
 
-    // Register resolution mapping: (parentId, request) -> fsPath
+    // register resolution mapping: (parentId, request) -> fsPath
     if (result.fsPath !== dep) {
       registry.setResolution(id, dep, result.fsPath);
     }
 
-    // Check if the resolved path is an alias to a preloaded module
+    // check if the resolved path is an alias to a preloaded module
     const preloadId = PRELOAD_ALIASES[result.fsPath];
     if (preloadId && registry.has(preloadId)) {
       registry.setResolution(id, dep, preloadId);
@@ -214,7 +214,7 @@ async function loadModuleAsync(
       continue;
     }
 
-    // Handle CSS - inject synchronously to preserve cascade order
+    // handle CSS - inject synchronously to preserve cascade order
     if (result.css) {
       injectStyles(result.fsPath, result.css);
       registry.set(result.fsPath, {
@@ -226,7 +226,7 @@ async function loadModuleAsync(
       continue;
     }
 
-    // Queue recursive load (will run in parallel)
+    // queue recursive load (will run in parallel)
     // pass depth + 1 to track recursion depth
     loadPromises.push(
       loadModule(

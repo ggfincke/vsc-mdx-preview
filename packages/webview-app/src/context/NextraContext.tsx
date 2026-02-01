@@ -1,5 +1,5 @@
 // packages/webview-app/src/context/NextraContext.tsx
-// React context for Nextra page metadata - manages page-level settings from _meta.json
+// React context for Nextra page metadata - manage page-level settings from _meta.json
 
 import { useState, useCallback, useMemo } from 'react';
 import type { NextraPageMeta } from '@mdx-preview/shared';

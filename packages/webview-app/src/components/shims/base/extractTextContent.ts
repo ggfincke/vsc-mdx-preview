@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/shims/base/extractTextContent.ts
-// Shared utility for extracting plain text from React children
+// shared utility for extracting plain text from React children
 
 import { ReactNode, isValidElement } from 'react';
 

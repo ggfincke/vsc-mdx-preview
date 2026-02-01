@@ -1,5 +1,5 @@
 // packages/webview-app/src/context/TrustContext.tsx
-// React context for trust state - manages workspace trust & script execution permissions
+// React context for trust state - manage workspace trust & script execution permissions
 
 import { useState, useCallback, useMemo } from 'react';
 import type { TrustState } from '../types';

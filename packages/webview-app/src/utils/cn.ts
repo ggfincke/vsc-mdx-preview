@@ -1,5 +1,5 @@
 // packages/webview-app/src/utils/cn.ts
-// Class name concatenation utility
+// class name concatenation utility
 
 // concatenates class names, filtering out falsy values
 export function cn(...classes: (string | false | null | undefined)[]): string {

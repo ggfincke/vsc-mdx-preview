@@ -1,5 +1,5 @@
 // packages/webview-app/src/context/WebviewStateProvider.tsx
-// composite provider that wraps all state contexts & handles RPC handler registration
+// composite provider that wrap all state contexts & handle RPC handler registration
 
 import { useEffect, useRef, type ReactNode } from 'react';
 import { TrustProvider, useTrust } from './TrustContext';
@@ -27,7 +27,7 @@ function wrapWithLoadingClear<Args extends unknown[]>(
   };
 }
 
-// internal component that registers RPC handlers after all contexts are mounted
+// internal component that register RPC handlers after all contexts are mounted
 function HandlerRegistrar({ children }: HandlerRegistrarProps) {
   const { setTrustState } = useTrust();
   const { setSafeContent, setTrustedContent, setError } = usePreview();
@@ -83,10 +83,8 @@ interface WebviewStateProviderProps {
   children: ReactNode;
 }
 
-// composite provider that wraps all state contexts
-// context order matters for re-render isolation:
-// - outer contexts re-render less frequently
-// - inner contexts can access outer context values
+// composite provider that wrap all state contexts
+// context order matters for re-render isolation
 export function WebviewStateProvider({ children }: WebviewStateProviderProps) {
   return (
     <TrustProvider>

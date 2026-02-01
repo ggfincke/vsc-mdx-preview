@@ -14,7 +14,7 @@ interface TrustBannerProps {
 
 // trust banner component - display warning banner in Safe Mode w/ actions to enable Trusted Mode
 //
-// states:
+// states
 // - Safe Mode (untrusted workspace): show warning w/ "Manage Trust" button
 // - Safe Mode (scripts disabled): show info w/ "Enable Scripts" button
 // - Trusted Mode: hidden (no banner needed)

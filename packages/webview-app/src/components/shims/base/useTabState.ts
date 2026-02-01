@@ -9,14 +9,14 @@ import {
   Children,
 } from 'react';
 
-// Tab item extracted from children
+// tab item extracted from children
 export interface TabItem {
   value: string;
   label: string;
   content: ReactNode;
 }
 
-// Tab definition (value & label only)
+// tab definition (value & label only)
 export interface TabDefinition {
   value: string;
   label: string;
@@ -31,14 +31,14 @@ export interface TabItemProps {
   default?: boolean;
 }
 
-// Options for useTabState hook
+// options for useTabState hook
 export interface UseTabStateOptions {
   children: ReactNode;
   defaultValue?: string;
   values?: TabDefinition[];
 }
 
-// Result from useTabState hook
+// result from useTabState hook
 export interface UseTabStateResult {
   activeValue: string;
   setActiveValue: (value: string) => void;
@@ -56,7 +56,7 @@ export function extractTabItems(children: ReactNode): TabItem[] {
     }
 
     const props = child.props as TabItemProps;
-    // Accept either 'value' (Docusaurus) or 'label' (Starlight) as identifier
+    // accept either 'value' (Docusaurus) or 'label' (Starlight) as identifier
     const value = props.value ?? props.label;
     if (value !== undefined) {
       items.push({
@@ -99,10 +99,10 @@ function findDefaultFromChildren(
 export function useTabState(options: UseTabStateOptions): UseTabStateResult {
   const { children, defaultValue, values } = options;
 
-  // Extract tab items from children
+  // extract tab items from children
   const tabItems = extractTabItems(children);
 
-  // Use provided values or extracted ones
+  // use provided values or extracted ones
   const tabs: TabDefinition[] =
     values ||
     tabItems.map((item) => ({
@@ -110,7 +110,7 @@ export function useTabState(options: UseTabStateOptions): UseTabStateResult {
       label: item.label,
     }));
 
-  // Determine initial active value
+  // determine initial active value
   const initialValue =
     defaultValue ||
     findDefaultFromChildren(children, tabItems) ||
@@ -119,7 +119,7 @@ export function useTabState(options: UseTabStateOptions): UseTabStateResult {
 
   const [activeValue, setActiveValue] = useState(initialValue);
 
-  // Ensure activeValue is valid (in case tabs change)
+  // ensure activeValue is valid (in case tabs change)
   const validActiveValue = tabs.find((t) => t.value === activeValue)
     ? activeValue
     : tabs[0]?.value || '';
@@ -181,7 +181,7 @@ export function useIndexTabs<T>({
           }
         }
       } catch {
-        // Ignore localStorage errors
+        // ignore localStorage errors
       }
     }
     return defaultIndex;
@@ -193,26 +193,26 @@ export function useIndexTabs<T>({
   // Handle tab selection
   const setActiveIndex = useCallback(
     (index: number) => {
-      // Check if tab is disabled
+      // check if tab is disabled
       if (items[index] !== undefined && isDisabled(items[index], index)) {
         return;
       }
 
-      // Update internal state if not controlled
+      // update internal state if not controlled
       if (controlledIndex === undefined) {
         setInternalIndex(index);
       }
 
-      // Save to localStorage if storageKey is provided
+      // save to localStorage if storageKey is provided
       if (storageKey && typeof window !== 'undefined') {
         try {
           localStorage.setItem(`nextra-tabs-${storageKey}`, String(index));
         } catch {
-          // Ignore localStorage errors
+          // ignore localStorage errors
         }
       }
 
-      // Call onChange callback
+      // call onChange callback
       onChange?.(index);
     },
     [controlledIndex, items, isDisabled, onChange, storageKey]

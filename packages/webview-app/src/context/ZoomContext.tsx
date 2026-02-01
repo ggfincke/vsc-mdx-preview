@@ -1,5 +1,5 @@
 // packages/webview-app/src/context/ZoomContext.tsx
-// React context for zoom state - manages preview zoom level
+// React context for zoom state - manage preview zoom level
 
 import { useState, useCallback, useMemo } from 'react';
 import {

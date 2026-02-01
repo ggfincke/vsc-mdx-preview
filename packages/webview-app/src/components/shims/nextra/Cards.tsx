@@ -1,20 +1,20 @@
 // packages/webview-app/src/components/shims/nextra/Cards.tsx
 // Nextra Cards component shim for MDX Preview
-// Provides preview-compatible version of nextra/components Cards
-// Uses compound component pattern: Cards & Cards.Card
+// provides preview-compatible version of nextra/components Cards
+// uses compound component pattern: Cards & Cards.Card
 
 import React, { ReactNode, ReactElement, HTMLAttributes, CSSProperties } from 'react';
 import { cn } from '../../../utils/cn';
 import { ArrowIcon } from '../base/icons';
 
-// Cards props (compatible w/ Nextra)
+// cards props (compatible w/ Nextra)
 export interface CardsProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   // number of columns (default: 3)
   num?: number;
 }
 
-// Card props (for Cards.Card subcomponent)
+// card props (for Cards.Card subcomponent)
 export interface CardProps extends HTMLAttributes<HTMLAnchorElement | HTMLDivElement> {
   children?: ReactNode;
   icon?: ReactNode;
@@ -23,7 +23,7 @@ export interface CardProps extends HTMLAttributes<HTMLAnchorElement | HTMLDivEle
   arrow?: boolean;
 }
 
-// Main Cards component (grid container)
+// main Cards component (grid container)
 function CardsComponent({
   children,
   num = 3,
@@ -31,7 +31,7 @@ function CardsComponent({
   style,
   ...props
 }: CardsProps): ReactElement {
-  // Use CSS custom property for column count
+  // use CSS custom property for column count
   const gridStyle: CSSProperties = {
     ...style,
     '--nextra-cards-num': num,
@@ -44,7 +44,7 @@ function CardsComponent({
   );
 }
 
-// Card subcomponent (Cards.Card)
+// card subcomponent (Cards.Card)
 function Card({
   children,
   icon,
@@ -73,7 +73,7 @@ function Card({
     </>
   );
 
-  // Render as anchor if href is provided, otherwise as div
+  // render as anchor if href is provided, otherwise as div
   if (href) {
     const isExternal = href.startsWith('http://') || href.startsWith('https://');
     return (
@@ -96,7 +96,7 @@ function Card({
   );
 }
 
-// Attach Card as static property on Cards (compound component pattern)
+// attach Card as static property on Cards (compound component pattern)
 export const Cards = Object.assign(CardsComponent, { Card });
 
 export default Cards;

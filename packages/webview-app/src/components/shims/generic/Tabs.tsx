@@ -1,17 +1,17 @@
 // packages/webview-app/src/components/shims/generic/Tabs.tsx
-// Generic Tabs component shim for MDX Preview
-// Provides preview-compatible tabs without framework dependency
+// generic Tabs component shim for MDX Preview
+// provides preview-compatible tabs without framework dependency
 
 /* eslint-disable react-refresh/only-export-components -- Context & hooks are co-located with component */
 
 import { createTabs, type BaseTabsProps, type TabDefinition } from '../base';
 
-// Re-export types for compatibility
+// re-export types for compatibility
 export type TabsProps = BaseTabsProps;
 export type { TabDefinition };
 
-// Create generic tabs using the factory
-// Uses 'mdx-preview-generic-tabs' class prefix for styling
+// create generic tabs using the factory
+// uses 'mdx-preview-generic-tabs' class prefix for styling
 const {
   Tabs,
   TabItem,

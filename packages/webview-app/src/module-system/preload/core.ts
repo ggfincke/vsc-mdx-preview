@@ -56,8 +56,8 @@ export function createBarrelModule(
   for (const name of exportNames) {
     let exported = moduleExports[name];
 
-    // Unwrap if it's a nested module wrapper w/ a default export
-    // This can happen w/ certain bundler configurations where dynamic imports
+    // unwrap if it's a nested module wrapper w/ a default export
+    // this can happen w/ certain bundler configurations where dynamic imports
     // return nested module objects instead of direct function references
     if (exported && typeof exported === 'object' && !Array.isArray(exported)) {
       const obj = exported as Record<string, unknown>;

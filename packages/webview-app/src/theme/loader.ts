@@ -9,7 +9,7 @@ import type { PreviewTheme, CodeBlockTheme } from './types';
 export function injectPreviewTheme(theme: PreviewTheme): void {
   const css = previewThemes[theme];
   // always inject to create the style element & set data attribute
-  // Only set CSS content if truthy (matches original behavior)
+  // only set CSS content if truthy (matches original behavior)
   StyleInjector.inject(STYLE_IDS.PREVIEW_THEME, css || '', {
     dataAttribute: { name: 'data-mpe-preview-theme', value: theme },
   });

@@ -1,6 +1,6 @@
 // packages/webview-app/src/theme/index.ts
 // barrel exports for theme module (context, hooks, utilities)
-// NOTE: For raw CSS theme data, see themes/ (sibling directory)
+// NOTE: for raw CSS theme data, see themes/ (sibling directory)
 
 // context & hooks
 export { ThemeProvider, useTheme } from './context';

@@ -5,7 +5,7 @@
 import React, { ReactNode, ReactElement } from 'react';
 import { BaseCard } from '../base';
 
-// Map Starlight icon names to emoji equivalents
+// map Starlight icon names to emoji equivalents
 const ICON_MAP: Record<string, string> = {
   star: '⭐',
   rocket: '🚀',
@@ -26,7 +26,7 @@ const ICON_MAP: Record<string, string> = {
   seti: '📁',
 };
 
-// Card props (compatible w/ Starlight)
+// card props (compatible w/ Starlight)
 export interface CardProps {
   children: ReactNode;
   title: string;

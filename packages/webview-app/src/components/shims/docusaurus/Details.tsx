@@ -14,7 +14,7 @@ const BaseDetails = createCollapsible({
   defaultSummary: 'Details',
 });
 
-// Details props (compatible w/ Docusaurus)
+// details props (compatible w/ Docusaurus)
 export type DetailsProps = BaseCollapsibleProps;
 
 // Docusaurus Details component

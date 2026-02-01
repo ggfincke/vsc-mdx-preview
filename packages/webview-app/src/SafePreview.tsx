@@ -51,8 +51,7 @@ export const SafePreviewRenderer = memo(
       />
     );
   },
-  // Custom comparison: fast-path length check before full string comparison
-  // For large HTML (100KB+), length mismatch returns false in O(1) vs O(n) string compare
+  // custom comparison: fast-path length check before full string comparison
   (prevProps, nextProps) => fastStringEquals(prevProps.html, nextProps.html)
 );
 

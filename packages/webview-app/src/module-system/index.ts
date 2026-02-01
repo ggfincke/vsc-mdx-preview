@@ -16,13 +16,13 @@ import type { Framework } from '@mdx-preview/shared';
 import type { FetchResult } from './types';
 import { ExtensionHandle } from '../rpc-webview';
 
-// Re-exports for external use
+// re-exports for external use
 export { registry } from './registry/ModuleRegistry';
 export { clearInjectedStyles } from './styles/injectStyles';
 export { loadModule } from './loader/loadModule';
 export type { FetchResult, Module, ModuleRuntime } from './types';
 
-// State
+// state
 let preloadedModulesInitialized = false;
 let vscodeMarkdownLayoutModule: unknown = null;
 let pendingFrameworkShimLoad: Promise<void> | null = null;
@@ -48,7 +48,7 @@ function ensurePreloadedModules(): void {
   preloadedModulesInitialized = true;
 }
 
-// Track last entry path for incremental invalidation
+// track last entry path for incremental invalidation
 let lastEntryPath: string | null = null;
 
 // clear all modules except preloaded ones - called when entry file changes to ensure fresh state
@@ -67,7 +67,7 @@ export function invalidateModule(id: string): void {
   registry.invalidate(id);
 }
 
-// invalidate a module & all modules that depend on it - returns the set of invalidated module IDs
+// invalidate a module & all modules that depend on it - return the set of invalidated module IDs
 export function invalidateModuleWithDependents(id: string): Set<string> {
   return registry.invalidateWithDependents(id);
 }
@@ -97,7 +97,7 @@ export function ensureGenericShimsLoaded(components: string[]): void {
   pendingGenericShimLoad = ensureGenericShims(registry, components);
 }
 
-// RPC fetcher that delegates to extension via Comlink
+// rpc fetcher that delegates to extension via Comlink
 async function rpcFetcher(
   request: string,
   isBare: boolean,
@@ -107,7 +107,7 @@ async function rpcFetcher(
 }
 
 // evaluate MDX code & return a React component - main entry point for Trusted Mode rendering
-// uses incremental invalidation: only clears modules when entry file changes
+// use incremental invalidation: only clear modules when entry file changes
 // on subsequent evaluations of the same entry, only the entry module & its
 // dependents are invalidated, preserving cached dependencies for better perf
 export async function evaluateModuleToComponent(
@@ -115,12 +115,12 @@ export async function evaluateModuleToComponent(
   entryFilePath: string,
   dependencies: string[]
 ): Promise<ComponentType> {
-  // Ensure preloaded modules are ready
+  // ensure preloaded modules are ready
   ensurePreloadedModules();
 
-  // K.2: Wait for any pending shim loading to complete in parallel
-  // These operations are independent (different state vars, different registry keys)
-  // This fixes the race condition where setUsedComponents/setFramework is called right before updatePreview
+  // K.2: wait for any pending shim loading to complete in parallel
+  // these operations are independent (different state vars, different registry keys)
+  // this fixes the race condition where setUsedComponents/setFramework is called right before updatePreview
   const pendingLoads: Promise<void>[] = [];
   if (pendingGenericShimLoad) {
     pendingLoads.push(pendingGenericShimLoad);
@@ -133,25 +133,25 @@ export async function evaluateModuleToComponent(
     await Promise.all(pendingLoads);
   }
 
-  // Reset after awaiting (important: do this after Promise.all to avoid race)
-  // Note: if a new setFramework/setUsedComponents call happens during await,
+  // reset after awaiting (important: do this after Promise.all to avoid race)
+  // note: if a new setFramework/setUsedComponents call happens during await,
   // the new promise is set before this nullification, which is fine -
   // the new caller will await its own promise
   pendingGenericShimLoad = null;
   pendingFrameworkShimLoad = null;
 
-  // Determine if we need full reset or incremental invalidation
+  // determine if we need full reset or incremental invalidation
   if (lastEntryPath !== entryFilePath) {
-    // Entry file changed - full reset required
+    // entry file changed - full reset required
     resetModules();
     lastEntryPath = entryFilePath;
   } else {
-    // Same entry file - incremental invalidation
+    // same entry file - incremental invalidation
     // invalidate entry & all modules that depend on it
     registry.invalidateWithDependents(entryFilePath);
-    // Clear dependency graph (will be rebuilt during load)
+    // clear dependency graph (will be rebuilt during load)
     resetDependencies();
-    // Clear injected styles (will be re-injected)
+    // clear injected styles (will be re-injected)
     clearInjectedStyles();
   }
 
@@ -163,7 +163,7 @@ export async function evaluateModuleToComponent(
     rpcFetcher
   );
 
-  // Get the default export (MDX component)
+  // get the default export (MDX component)
   const component = module.exports?.default || module.exports;
 
   if (typeof component !== 'function') {

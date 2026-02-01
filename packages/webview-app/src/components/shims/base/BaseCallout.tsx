@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/shims/base/BaseCallout.tsx
-// Factory for creating framework-specific Callout/Aside components
+// factory for creating framework-specific Callout/Aside components
 
 /* eslint-disable react-refresh/only-export-components -- Factory module exports both helper components and factory function */
 

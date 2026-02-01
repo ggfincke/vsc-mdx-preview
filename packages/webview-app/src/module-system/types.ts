@@ -17,7 +17,7 @@ export interface Module {
 }
 
 // MDX function-body runtime
-// MDX 3 compiled w/ outputFormat: 'function-body' expects these in arguments[0]
+// MDX 3 compiled w/ outputFormat: 'function-body' expect these in arguments[0]
 export interface MDXRuntime {
   Fragment: unknown;
   jsx: unknown;

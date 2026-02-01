@@ -7,10 +7,10 @@ import { ReactElement } from 'react';
 import { createCallout, type BaseCalloutProps } from '../base/BaseCallout';
 import { CALLOUT_ICONS } from '../base/icons';
 
-// Aside types (same as admonitions)
+// aside types (same as admonitions)
 export type AsideType = 'note' | 'tip' | 'caution' | 'danger';
 
-// Aside component props
+// aside component props
 export type AsideProps = BaseCalloutProps<AsideType>;
 
 // default titles for each aside type
@@ -31,7 +31,7 @@ const BaseAside = createCallout<AsideType>({
   layout: 'header',
 });
 
-// Aside component
+// aside component
 export function Aside(props: AsideProps): ReactElement {
   return <BaseAside {...props} />;
 }

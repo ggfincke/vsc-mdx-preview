@@ -59,9 +59,9 @@ export function initPreloadedModules(
   vscodeMarkdownLayout: unknown
 ): void {
   preloadCoreModules(registry, vscodeMarkdownLayout);
-  // Note: generic shims are now loaded on-demand via ensureGenericShims
+  // note: generic shims are now loaded on-demand via ensureGenericShims
   // for conditional preloading optimization
-  // Load generic CSS (always needed for fallback styling)
+  // load generic CSS (always needed for fallback styling)
   loadFrameworkCss('generic');
   debug(
     `[${LogTags.PRELOAD}] Core modules initialized (generic shims deferred)`
@@ -70,7 +70,7 @@ export function initPreloadedModules(
 
 // load framework-specific shims on demand
 // return immediately if framework already loaded
-// O.3: uses resilient loading w/ retry & fallback to generic shims
+// O.3: use resilient loading w/ retry & fallback to generic shims
 export async function ensureFrameworkShims(
   registry: ModuleRegistry,
   framework: FrameworkId
@@ -83,7 +83,7 @@ export async function ensureFrameworkShims(
 
   // wait for in-progress load if same framework
   if (frameworkLoadPromise && loadedFramework === null) {
-    debug(`[${LogTags.PRELOAD}] Waiting for in-progress framework load`);
+    debug(`[${LogTags.PRELOAD}] waiting for in-progress framework load`);
     await frameworkLoadPromise;
     if (loadedFramework === framework) {
       return;
@@ -93,7 +93,7 @@ export async function ensureFrameworkShims(
   const loader = FRAMEWORK_LOADERS[framework];
   if (!loader) {
     debug(`[${LogTags.PRELOAD}] No loader found for framework: ${framework}`);
-    // Still load CSS even if no shim loader exists
+    // still load CSS even if no shim loader exists
     await loadFrameworkCss(framework);
     return;
   }
@@ -130,7 +130,7 @@ export async function ensureFrameworkShims(
 
 // load specific generic shims on demand (for conditional preloading)
 // called when extension detects which generic components are used in the MDX
-// O.3: uses resilient loading w/ retry for individual shims
+// O.3: use resilient loading w/ retry for individual shims
 export async function ensureGenericShims(
   registry: ModuleRegistry,
   componentNames: string[]
