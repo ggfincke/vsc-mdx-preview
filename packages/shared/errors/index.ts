@@ -11,3 +11,16 @@ export {
 
 export { MODULE_ERROR_SUGGESTIONS, getSuggestionsForCode } from './suggestions';
 export { ModuleError, type ModuleErrorOptions } from './module-error';
+
+export {
+  type ExtensionModuleErrorCode,
+  type WebviewModuleErrorCode,
+  createModuleNotFoundError,
+  createOutsideWorkspaceError,
+  createParseError,
+  createTransformError,
+  createCircularDependencyError,
+  createFetchFailedError,
+  createEvaluationFailedError,
+  createModuleDepthExceededError,
+} from './module-error-factories';

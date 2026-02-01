@@ -4,6 +4,7 @@
 import {
   type ModuleErrorCode,
   type ModuleErrorData,
+  type ExtensionModuleErrorCode,
   ModuleError,
 } from '@mdx-preview/shared';
 
@@ -19,6 +20,15 @@ export { ErrorCode } from './error-codes';
 
 // re-export shared module error types for convenience
 export { ModuleError, type ModuleErrorCode, type ModuleErrorData };
+
+// re-export error factories from shared package
+export {
+  createModuleNotFoundError,
+  createOutsideWorkspaceError,
+  createParseError,
+  createTransformError,
+  type ExtensionModuleErrorCode,
+} from '@mdx-preview/shared';
 
 // base error class w/ error code for programmatic handling
 export class ExtensionError extends Error {
@@ -38,10 +48,7 @@ export class ExtensionError extends Error {
 
 // module resolution & fetch errors (E100-E199)
 // extension-side subset of ModuleErrorCode
-export type ModuleFetchErrorCode = Extract<
-  ModuleErrorCode,
-  'E100' | 'E101' | 'E110' | 'E120'
->;
+export type ModuleFetchErrorCode = ExtensionModuleErrorCode;
 export type ModuleFetchError = ModuleError<ModuleFetchErrorCode>;
 
 // transpilation errors w/ source location
