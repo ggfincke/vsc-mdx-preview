@@ -4,12 +4,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Preview } from '../../preview/preview-manager';
-import { checkFsPath } from '../security/checkFsPath';
+import { checkFsPathAsync } from '../security/checkFsPath';
 import { PathAccessDeniedError, ErrorContext } from '../../errors';
 import { createModuleNotFoundError } from '../../errors/module-error-factories';
 import { getErrorReporter, getFrameworkDetector } from '../../services';
-import { debug } from '../../logging';
+import { debug, warn } from '../../logging';
 import { LogTags, type FetchResult } from '@mdx-preview/shared';
+import {
+  MAX_MODULE_FILE_SIZE_BYTES,
+  MAX_DEPENDENCIES_PER_MODULE,
+} from '../../constants';
 
 // import from extracted modules
 import { getUnifiedResolver } from '../resolver/UnifiedResolver';
@@ -85,7 +89,7 @@ export async function fetchLocal(
 
     let fsPath = resolution.fsPath;
 
-    if (!checkFsPath(entryFsDirectory, fsPath)) {
+    if (!(await checkFsPathAsync(entryFsDirectory, fsPath))) {
       // fallback check for core modules that resolved to paths outside allowed directories
       if (isCoreModule(request)) {
         return buildNoopResult(normalizedRequest);
@@ -94,6 +98,16 @@ export async function fetchLocal(
     }
 
     preview.dependentFsPaths.add(fsPath);
+
+    // check file size before reading (prevents memory exhaustion)
+    const stats = await fs.promises.stat(fsPath);
+    if (stats.size > MAX_MODULE_FILE_SIZE_BYTES) {
+      const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
+      const limitMB = (MAX_MODULE_FILE_SIZE_BYTES / 1024 / 1024).toFixed(0);
+      throw new Error(
+        `Module "${path.basename(fsPath)}" is ${sizeMB}MB, exceeds ${limitMB}MB limit`
+      );
+    }
 
     let code: string;
     // in onType mode, use in-memory document if available
@@ -115,15 +129,28 @@ export async function fetchLocal(
     }
 
     // dispatch to appropriate file type handler
-    const result = await handleByExtension(code, fsPath, extname, preview);
-    if (result) {
-      return result;
+    let result = await handleByExtension(code, fsPath, extname, preview);
+    if (!result) {
+      // fallback for unknown file types - treat as script
+      const { ScriptHandler } = await import('../handlers/ScriptHandler');
+      const scriptHandler = new ScriptHandler();
+      result = await scriptHandler.handle(code, fsPath, preview);
     }
 
-    // fallback for unknown file types - treat as script
-    const { ScriptHandler } = await import('../handlers/ScriptHandler');
-    const scriptHandler = new ScriptHandler();
-    return scriptHandler.handle(code, fsPath, preview);
+    // check dependency count (prevents combinatorial explosion)
+    if (result && result.dependencies.length > MAX_DEPENDENCIES_PER_MODULE) {
+      warn(
+        `[${LogTags.MODULE_SYSTEM}] Module ${path.basename(fsPath)} has ` +
+          `${result.dependencies.length} dependencies, exceeding limit of ` +
+          `${MAX_DEPENDENCIES_PER_MODULE}. Truncating.`
+      );
+      result.dependencies = result.dependencies.slice(
+        0,
+        MAX_DEPENDENCIES_PER_MODULE
+      );
+    }
+
+    return result;
   } catch (error) {
     // report error via centralized ErrorReporter w/ helpful context
     getErrorReporter().report(error, {

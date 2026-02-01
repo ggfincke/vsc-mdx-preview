@@ -39,6 +39,15 @@ export const MAX_FETCH_REQUEST_LENGTH = 2048;
 // maximum entries in error deduplication map before FIFO eviction
 export const ERROR_DEDUPE_MAX_ENTRIES = 1000;
 
+// module fetching limits (security & DoS prevention)
+
+// maximum module file size in bytes (5MB)
+// prevents memory exhaustion from loading giant files
+export const MAX_MODULE_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+
+// maximum dependencies per module (prevents combinatorial explosion)
+export const MAX_DEPENDENCIES_PER_MODULE = 200;
+
 // caching
 
 // enhanced-resolve cached file system TTL (ms) - 30s is safe since
