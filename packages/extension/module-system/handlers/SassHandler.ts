@@ -10,6 +10,7 @@ import type { FileTypeHandler } from './index';
 import { getBrowserResolver } from '../resolver/resolver-factory';
 import { buildCssResult } from './result-builders';
 import { debug, warn } from '../../logging';
+import { SASS_EXTENSIONS } from '../../constants';
 
 // type-only import for sass module (doesn't bundle the implementation)
 type SassModule = typeof import('sass');
@@ -126,7 +127,7 @@ function buildSassNotInstalledResult(fsPath: string): FetchResult {
 
 // handler for .scss & .sass files - compiles SASS/SCSS to CSS using workspace's sass
 export class SassHandler implements FileTypeHandler {
-  extensions = ['.scss', '.sass'];
+  extensions = [...SASS_EXTENSIONS];
 
   async handle(
     _code: string,

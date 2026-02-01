@@ -4,12 +4,13 @@
 import type { FetchResult } from '@mdx-preview/shared';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
-import { createTransformError } from '../../errors/module-error-factories';
+import { createTransformError } from '../../errors';
 import { buildModuleExportResult } from './result-builders';
+import { IMAGE_EXTENSIONS } from '../../constants';
 
-// handler for image files (.gif, .png, .jpg, .jpeg, .svg) - converts file path to webview-accessible URI & wraps as module export
+// handler for image files - converts file path to webview-accessible URI & wraps as module export
 export class ImageHandler implements FileTypeHandler {
-  extensions = ['.gif', '.png', '.jpg', '.jpeg', '.svg'];
+  extensions = [...IMAGE_EXTENSIONS];
 
   async handle(
     _code: string,

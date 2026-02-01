@@ -7,11 +7,12 @@ import type { FileTypeHandler } from './index';
 import { transform } from '../transform/transform';
 import { extractImportSpecifiers } from '../deps/import-extractor';
 import { buildScriptResult } from './result-builders';
+import { SCRIPTABLE_EXTENSIONS } from '../../constants';
 
 // handler for JavaScript/TypeScript files - delegates transpilation to transform.ts & extracts dependencies
 export class ScriptHandler implements FileTypeHandler {
   // handle JS, JSX, TS, TSX, MJS, CJS, & MDX files
-  extensions = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mdx', '.md'];
+  extensions = [...SCRIPTABLE_EXTENSIONS];
 
   async handle(
     code: string,
