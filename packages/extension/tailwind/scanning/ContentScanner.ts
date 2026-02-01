@@ -17,7 +17,7 @@ const ARRAY_JOIN_RE = /\[\s*([^\]]*)\]\s*\.\s*join\s*\(\s*['"][\s]*['"]\s*\)/g;
 // pattern to find cva() (class-variance-authority) function calls
 const CVA_START_RE = /\bcva\s*\(/g;
 
-// extracts Tailwind classes from dynamic expressions (className={...}, clsx(), cva(), array.join())
+// extract Tailwind classes from dynamic expressions (className={...}, clsx(), cva(), array.join())
 export class ContentScanner {
   // extract classes from className={...} expressions
   extractDynamicExpressions(text: string, classSet: Set<string>): void {
@@ -79,7 +79,7 @@ export class ContentScanner {
   }
 
   // extract balanced expressions using brace/paren matching
-  // handles nested braces properly, e.g., className={condition ? "a" : "b"}
+  // handle nested braces properly, e.g., className={condition ? "a" : "b"}
   extractBracedExpressions(
     text: string,
     startPattern: RegExp,

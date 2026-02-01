@@ -81,7 +81,7 @@ class ExtensionHandle implements ExtensionRPC {
     performance.measure('preview duration', 'preview/start', 'preview/end');
   }
 
-  // fetch module for webview (primary attack surface - validates input & checks trust)
+  // fetch module for webview (primary attack surface - validate input & check trust)
   async fetch(
     request: string,
     isBare: boolean,
@@ -260,7 +260,7 @@ class ExtensionHandle implements ExtensionRPC {
       return;
     }
 
-    // require Trusted Mode for target file - ensures preview can execute safely
+    // require Trusted Mode for target file - ensure preview can execute safely
     const targetUri = vscode.Uri.file(securePathResult.resolvedPath);
     if (
       !tryRequireTrustedModeForDocument(targetUri, 'open preview', (error) =>

@@ -15,7 +15,7 @@ import { readJsonSync } from '../utils/file-utils';
 // config file name
 const CONFIG_FILE_NAME = '.mdx-previewrc.json';
 
-// code action provider for component diagnostics
+// * code action provider for component diagnostics
 export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
   static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix];
 

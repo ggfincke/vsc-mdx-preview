@@ -1,11 +1,12 @@
 // packages/extension/themes/ThemeManager.ts
-// * ThemeManager - singleton for managing MPE-style themes
+// * ThemeManager - manage MPE-style preview & code block themes
 
 import * as vscode from 'vscode';
 import { SingletonService } from '../services/SingletonService';
 import { getConfigManager } from '../services';
 import { SubscriberManager } from '../utils/SubscriberManager';
 import { LogTags } from '@mdx-preview/shared';
+import { THEME_KEYS } from '../config';
 import type {
   PreviewTheme,
   CodeBlockTheme,
@@ -25,24 +26,22 @@ export class ThemeManager extends SingletonService<ThemeManager> {
 
   protected constructor() {
     super();
-    // listen for VS Code theme changes
+    // listen to VS Code theme changes
     this.addDisposable(
       vscode.window.onDidChangeActiveColorTheme(() => {
         this.notifySubscribers();
       })
     );
 
-    // listen for configuration changes
+    // listen to configuration changes via centralized dispatcher
     this.addDisposable(
-      vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration('mdx-preview.preview')) {
-          this.notifySubscribers();
-        }
+      getConfigManager().onDidChangeKey([...THEME_KEYS], () => {
+        this.notifySubscribers();
       })
     );
   }
 
-  // custom cleanup - clear subscribers (disposables handled by base class)
+  // clear subscribers on dispose (disposables handled by base class)
   protected override onDispose(): void {
     this.subscriberManager.clear();
   }
@@ -103,7 +102,7 @@ export class ThemeManager extends SingletonService<ThemeManager> {
       return this.isLightTheme() ? 'vs' : 'default';
     }
 
-    // auto mode: select code block theme based on preview theme
+    // select code block theme based on preview theme in auto mode
     const themeMap: Record<string, CodeBlockTheme> = {
       'github-light': 'github',
       'github-dark': 'github-dark',

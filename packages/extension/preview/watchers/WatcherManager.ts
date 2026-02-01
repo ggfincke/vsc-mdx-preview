@@ -6,8 +6,7 @@ import { debug } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import type { IWatcher } from '../../types';
 
-// coordinate all watchers w/ unified lifecycle management
-// provides a central place to register, start, stop, & dispose watchers
+// * coordinate all watchers w/ unified lifecycle management
 export class WatcherManager implements Disposable {
   private watchers = new Map<string, IWatcher>();
   private readyGate: Promise<void> | null = null;
@@ -47,8 +46,7 @@ export class WatcherManager implements Disposable {
     return false;
   }
 
-  // start all registered watchers
-  // returns a promise that resolves when all watchers have started
+  // start all registered watchers (resolves when all started)
   async startAll(): Promise<void> {
     const startPromises = Array.from(this.watchers.entries())
       .filter(([, watcher]) => !watcher.isActive())
@@ -80,14 +78,12 @@ export class WatcherManager implements Disposable {
     );
   }
 
-  // set a ready gate that watcher callbacks should wait for
-  // used to prevent callbacks from firing before webview is ready
+  // set ready gate to prevent callbacks from firing before webview is ready
   setReadyGate(gate: Promise<void>): void {
     this.readyGate = gate;
   }
 
-  // wait for the ready gate to resolve
-  // watcher callbacks should call this before processing events
+  // wait for ready gate (watcher callbacks call before processing events)
   async waitForGate(): Promise<void> {
     if (this.readyGate) {
       await this.readyGate;

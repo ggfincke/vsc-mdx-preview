@@ -1,6 +1,5 @@
 // packages/extension/config/ConfigCache.ts
 // encapsulate config cache state for proper lifecycle management
-//
 // use LRUCache for automatic eviction while preserving the distinction
 // between "not cached" (undefined) & "cached as no config" (null)
 
@@ -37,12 +36,12 @@ interface CacheWrapper {
   config: ResolvedConfig | null;
 }
 
-// manage cache & file watchers for MDX preview config files
-// encapsulates the global state from ConfigResolver
-// - configCache: Map of directory -> resolved config (w/ LRU eviction)
-// - configWatchers: track config path -> watcher instance
-// - configChangeSubscribers: Set of callbacks for config changes
-// registered w/ ServiceRegistry for proper disposal
+// * manage cache & file watchers for MDX preview config files
+// encapsulate the global state from ConfigResolver
+// configCache: Map of directory -> resolved config (w/ LRU eviction)
+// configWatchers: track config path -> watcher instance
+// configChangeSubscribers: Set of callbacks for config changes
+// register w/ ServiceRegistry for proper disposal
 export class ConfigCache extends SingletonService<ConfigCache> {
   protected static override instance: ConfigCache | undefined;
   protected readonly logTag = LogTags.CONFIG_CACHE;

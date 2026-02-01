@@ -40,7 +40,7 @@ const FRAMEWORK_RULES: FrameworkRule[] = [
     framework: 'starlight',
     dependencies: ['@astrojs/starlight'],
   },
-  // nextra detection must come before Next.js since Nextra projects also have 'next' dependency
+  // nextra detection must come before nextjs since nextra projects have 'next' dependency
   {
     framework: 'nextra',
     dependencies: ['nextra'],
@@ -60,7 +60,7 @@ const FRAMEWORK_RULES: FrameworkRule[] = [
   },
 ];
 
-// singleton framework detector
+// * singleton framework detector w/ auto-detection & caching
 export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   protected static override instance: FrameworkDetector | undefined;
   protected readonly logTag = LogTags.FRAMEWORK;
@@ -83,21 +83,17 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   protected constructor() {
     super();
 
-    // G.2 optimization: FileSystemWatcher creation moved to ensureFileWatcher()
-    // This defers the expensive watcher creation until first framework detection
+    // G.2 optimization: defer FileSystemWatcher creation to ensureFileWatcher()
 
-    // watch for framework setting changes (lightweight, keep in constructor)
+    // watch for framework setting changes via centralized dispatcher
     this.addDisposable(
-      vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration('mdx-preview.framework')) {
-          this.invalidateAllCaches();
-        }
+      getConfigManager().onDidChangeKey('framework', () => {
+        this.invalidateAllCaches();
       })
     );
   }
 
-  // lazily initialize FileSystemWatcher on first framework detection
-  // G.2 optimization: defer expensive watcher creation until needed, reducing activation time
+  // G.2 optimization: lazily initialize FileSystemWatcher on first detection
   private ensureFileWatcher(): void {
     if (!this.watcherReady) {
       debug(
@@ -171,8 +167,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     return { framework: 'generic', detected: true };
   }
 
-  // find the closest package.json starting from documentDir up to workspaceRoot
-  // uses shared find-up utility
+  // find closest package.json from documentDir up to workspaceRoot
   private findClosestPackageJsonDir(
     documentDir: string,
     workspaceRoot: string
@@ -198,7 +193,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
 
   // get framework for document (respects manual override)
   getFramework(documentUri: vscode.Uri): FrameworkInfo {
-    // G.2 optimization: Lazy init file watcher on first use
+    // G.2 optimization: lazy init file watcher on first use
     this.ensureFileWatcher();
 
     // check manual override setting first
@@ -227,7 +222,6 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     );
 
     // check cache using the package.json directory as key
-    // (use undefined check for consistency w/ other cache access patterns)
     const cached = this.cache.get(packageJsonDir);
     if (cached !== undefined) {
       return cached;
@@ -340,7 +334,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
   }
 
-  // clear file watcher, cache, & subscriptions on dispose
+  // clear file watcher, cache & subscriptions on dispose
   protected override onDispose(): void {
     this.cache.dispose();
     this.subscriberManager.clear();

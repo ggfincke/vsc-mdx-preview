@@ -88,6 +88,5 @@ export interface TailwindProcessParams {
   tailwindConfig: TailwindConfig;
 }
 
-// webview handle type (imported from rpc-extension)
-// this is defined here for convenience; the actual type is WebviewHandleType
+// webview handle type re-exported for convenience
 export type { WebviewHandleType as WebviewHandle } from '../../rpc-extension';

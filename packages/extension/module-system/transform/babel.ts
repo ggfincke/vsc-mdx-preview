@@ -13,15 +13,15 @@ import { LogTags } from '@mdx-preview/shared';
 import { debug } from '../../logging';
 import { createLazyImport } from '../../utils/lazy-import';
 
-// Lazy load @babel/core - only imported when first transform is requested
+// lazy load @babel/core - only imported when first transform is requested
 const getBabel = createLazyImport(() => import('@babel/core'));
 
 // track prewarm state to prevent duplicate attempts
 let prewarmStarted = false;
 let prewarmComplete = false;
 
-// Module-level cache for lazily-initialized config items (G.4 optimization)
-// Config items are only created on first transformAsync() call
+// module-level cache for lazily-initialized config items (G.4 optimization)
+// config items are only created on first transformAsync() call
 let cachedBabelOptions: BabelCore.TransformOptions | null = null;
 
 // lazily initialize Babel options on first use
@@ -55,7 +55,7 @@ async function getBabelOptions(
         require('@babel/plugin-proposal-export-default-from')
       ),
     ],
-    // Explicit options for performance
+    // explicit options for performance
     ast: false,
     sourceMaps: false,
     configFile: false,

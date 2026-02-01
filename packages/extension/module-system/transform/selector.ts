@@ -5,7 +5,7 @@ import { transform as sucraseTransform } from './sucrase';
 import { debug } from '../../logging';
 import { createLazyImport } from '../../utils/lazy-import';
 
-// Lazy-load Babel (~2MB) - only loaded when Sucrase fails or is disabled
+// lazy load Babel (~2MB) - only loaded when Sucrase fails or is disabled
 const getBabelTransform = createLazyImport(() =>
   import('./babel').then((m) => m.transformAsync)
 );

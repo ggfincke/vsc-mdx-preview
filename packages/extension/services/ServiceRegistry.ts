@@ -18,7 +18,7 @@ interface SubsystemRegistration {
 }
 
 // * central registry for managing service lifecycle
-// key features:
+// key features
 // - lazy initialization: services are created on first access
 // - dependency ordering: services disposed in reverse registration order
 // - singleton pattern: each service type has one instance

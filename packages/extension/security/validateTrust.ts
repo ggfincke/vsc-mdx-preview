@@ -3,12 +3,12 @@
 //
 // WHEN TO USE THIS MODULE vs TrustManager DIRECTLY
 //
-// Use validateTrust utilities when:
+// Use validateTrust utilities when
 // - You want to THROW on trust failure (fail-fast pattern)
 // - The operation cannot proceed at all w/o trust (e.g., loading plugins)
 // - You want the error to propagate up w/ a descriptive message
 //
-// Use TrustManager.getState() directly when:
+// Use TrustManager.getState() directly when
 // - You want to BRANCH based on trust state (conditional pattern)
 // - You have a fallback behavior for untrusted mode
 // - You need to access the full TrustState object for UI display
@@ -16,7 +16,7 @@
 //
 // EXAMPLES
 //
-// Throwing pattern (use validateTrust):
+// Throwing pattern (use validateTrust)
 // ```typescript
 // async function loadPluginsFromConfig(configPath: string) {
 //   requireTrustedMode('load custom MDX plugins');  // throws if not trusted
@@ -25,7 +25,7 @@
 // }
 // ```
 //
-// Conditional pattern (use TrustManager directly):
+// Conditional pattern (use TrustManager directly)
 // ```typescript
 // function compileDocument(doc: vscode.TextDocument) {
 //   const { canExecute } = getTrustManager().getState();
@@ -37,7 +37,7 @@
 // }
 // ```
 //
-// Document-specific check (use requireTrustedModeForDocument):
+// Document-specific check (use requireTrustedModeForDocument)
 // ```typescript
 // async function fetchModule(specifier: string, docUri: vscode.Uri) {
 //   requireTrustedModeForDocument(docUri, 'fetch & evaluate modules');
@@ -87,13 +87,13 @@ export function isSecurityModeTrusted(): boolean {
   return getTrustManager().getMode() === SecurityMode.Trusted;
 }
 
-// require Trusted Mode for an operation - throws TrustError if not in Trusted Mode
+// require Trusted Mode for an operation - throw TrustError if not in Trusted Mode
 // use this for trust-gated operations that should fail loudly
 // the operation description is included in the error message for debugging
-// param operation - Description of the operation being attempted (e.g., "load custom plugins")
+// param operation - description of the operation being attempted (e.g., "load custom plugins")
 // return current TrustState if trusted (for convenience chaining)
-// throws TrustError if not in Trusted Mode
-// example:
+// throw TrustError if not in Trusted Mode
+// example
 // ```typescript
 // function loadCustomConfig() {
 //   requireTrustedMode('load custom MDX configuration');
@@ -112,17 +112,17 @@ export function requireTrustedMode(operation: string): TrustState {
 }
 
 // require Trusted Mode for a document-specific operation
-// this includes additional checks beyond basic trust state:
+// include additional checks beyond basic trust state
 // - Workspace trust must be granted
 // - Document must be from a local file scheme (not remote)
 // - Remote extension environments are blocked
 // use this for operations that access the file system relative to a document,
 // such as module fetching or dependency resolution
 // param docUri - URI of the document being operated on
-// param operation - Description of the operation being attempted
+// param operation - description of the operation being attempted
 // return current TrustState if trusted
 // throw TrustError if not in Trusted Mode or document is from untrusted source
-// example:
+// example
 // ```typescript
 // async function fetchLocalModule(specifier: string, docUri: vscode.Uri) {
 //   requireTrustedModeForDocument(docUri, 'fetch local module');
@@ -145,9 +145,9 @@ export function requireTrustedModeForDocument(
 }
 
 // non-throwing trust check for document-specific operations
-// returns TrustState on success, undefined on TrustError
-// calls optional callback w/ error before returning undefined
-// re-throws non-TrustError exceptions
+// return TrustState on success, undefined on TrustError
+// call optional callback w/ error before returning undefined
+// re-throw non-TrustError exceptions
 export function tryRequireTrustedModeForDocument(
   docUri: vscode.Uri,
   operation: string,
@@ -165,9 +165,9 @@ export function tryRequireTrustedModeForDocument(
 }
 
 // non-throwing trust check for general operations
-// returns TrustState on success, undefined on TrustError
-// calls optional callback w/ error before returning undefined
-// re-throws non-TrustError exceptions
+// return TrustState on success, undefined on TrustError
+// call optional callback w/ error before returning undefined
+// re-throw non-TrustError exceptions
 export function tryRequireTrustedMode(
   operation: string,
   onTrustError?: (error: TrustError) => void

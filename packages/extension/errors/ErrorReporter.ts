@@ -75,31 +75,26 @@ export interface ReportOptions {
 }
 
 // * centralized error reporting service
-// provides consistent error handling across the extension
-// - automatic severity inference based on error type & context
-// - unified logging w/ context
-// - configurable user notifications
-// - webview error display integration
-// - duplicate error suppression
+// provide consistent error handling across the extension w/ automatic severity
+// inference, unified logging, configurable notifications, & dedupe
 export class ErrorReporter extends SingletonService<ErrorReporter> {
   protected static override instance: ErrorReporter | undefined;
   protected readonly logTag = LogTags.ERROR_REPORTER;
 
-  // LRU cache for duplicate error tracking (errorKey -> lastSeenTimestamp)
-  // capacity-based eviction prevents unbounded growth
+  // LRU cache for duplicate error tracking w/ capacity-based eviction
   private recentErrors: LRUCache<string, number>;
   private readonly DEFAULT_DEDUPE_WINDOW = ERROR_DEDUPE_WINDOW_DEFAULT_MS;
 
   protected constructor() {
     super();
+    // no TTL - check timestamps manually to support custom dedupeWindow
     this.recentErrors = new LRUCache({
       maxEntries: ERROR_DEDUPE_MAX_ENTRIES,
-      // no TTL - we check timestamps manually to support custom dedupeWindow
     });
   }
 
   // main error reporting method
-  // logs the error & optionally shows it to the user
+  // log the error & optionally show it to the user
   report(
     error: Error | ExtensionError | ModuleError | unknown,
     options: ReportOptions
@@ -131,7 +126,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     }
   }
 
-  // convenience method for webview errors - logs & displays the error in the webview
+  // convenience method for webview errors - log & display in webview
   reportWebviewError(
     error: Error | ExtensionError | ModuleError | unknown,
     webviewHandle: WebviewErrorHandle,
@@ -144,7 +139,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     });
   }
 
-  // convenience method for background/silent errors - only logs, never shows to user
+  // convenience method for background/silent errors - log only, never show to user
   reportSilent(
     error: Error | ExtensionError | ModuleError | unknown,
     context: ErrorContext,
@@ -159,7 +154,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     });
   }
 
-  // convenience method for user-facing errors - logs & shows a notification
+  // convenience method for user-facing errors - log & show notification
   reportToUser(
     error: Error | ExtensionError | ModuleError | unknown,
     context: ErrorContext
@@ -171,7 +166,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     });
   }
 
-  // convenience method for config errors - logs & shows warning notification
+  // convenience method for config errors - log & show warning notification
   reportConfigError(
     error: Error | ExtensionError | ModuleError | unknown,
     configPath?: string,
@@ -185,8 +180,8 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     });
   }
 
-  // convenience method for plugin errors - logs but does NOT show notification
-  // plugin errors are expected in Safe Mode & should not interrupt user
+  // convenience method for plugin errors - log but do NOT show notification
+  // plugin errors are expected in Safe Mode & should not interrupt the user
   reportPluginError(
     error: Error | ExtensionError | ModuleError | unknown,
     pluginName: string
@@ -200,7 +195,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   }
 
   // convenience method for interactive errors w/ action buttons
-  // logs the error & shows a warning w/ clickable actions
+  // log the error & show a warning w/ clickable actions
   async reportWithActions(
     error: Error | ExtensionError | ModuleError | unknown,
     context: ErrorContext,
@@ -231,7 +226,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     }
   }
 
-  // normalize any error type to ExtensionError or Error
+  // normalize any error type to ExtensionError, ModuleError, or Error
   private normalizeError(error: unknown): ExtensionError | ModuleError | Error {
     if (error instanceof ExtensionError) {
       return error;
@@ -264,15 +259,15 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     switch (context) {
       case ErrorContext.Security:
         return ErrorSeverity.Critical;
+      // show in webview
       case ErrorContext.ModuleFetch:
       case ErrorContext.Transpile:
-        // show in webview
         return ErrorSeverity.Error;
       case ErrorContext.Config:
       case ErrorContext.Plugin:
         return ErrorSeverity.Warning;
+      // non-blocking
       case ErrorContext.Tailwind:
-        // non-blocking
         return ErrorSeverity.Warning;
       case ErrorContext.Webview:
       case ErrorContext.Extension:
@@ -322,11 +317,11 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     if (options.showNotification !== undefined) {
       return options.showNotification;
     }
-    // webview errors don't also show notifications
+    // webview errors do not also show notifications
     if (options.showInWebview) {
       return false;
     }
-    // default: notify for Warning & above
+    // default - notify for Warning & above
     return (
       severity === ErrorSeverity.Warning ||
       severity === ErrorSeverity.Error ||
@@ -440,8 +435,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     return prefixes[context];
   }
 
-  // check for duplicate errors using LRU cache
-  // LRUCache handles capacity-based eviction automatically
+  // check for duplicate errors using LRU cache w/ auto-eviction
   private isDuplicate(error: Error, dedupeWindow?: number): boolean {
     const key = `${error.constructor.name}:${error.message}`;
     const now = Date.now();
@@ -452,8 +446,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
       return true;
     }
 
-    // not a duplicate - record timestamp
-    // LRUCache auto-evicts oldest entries when capacity exceeded
+    // not a duplicate - record timestamp (LRU auto-evicts when full)
     this.recentErrors.set(key, now);
     return false;
   }

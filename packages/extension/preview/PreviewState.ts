@@ -8,8 +8,7 @@ import {
 } from 'perf_hooks';
 import * as vscode from 'vscode';
 
-// preview state - holds evaluation state & tracks Tailwind requests
-// extracted from Preview class to simplify state management
+// preview state - hold evaluation state & track Tailwind requests
 export class PreviewState {
   // Tailwind request ID counter (ensures stale Tailwind responses are ignored)
   private tailwindRequestId = 0;
@@ -47,8 +46,7 @@ export class PreviewState {
     return this._previewDuration;
   }
 
-  // setup performance observer (development only)
-  // displays timing info after preview updates
+  // setup performance observer (development only, display timing after updates)
   setupPerformanceObserver(): void {
     if (process.env.NODE_ENV !== 'development') {
       return;

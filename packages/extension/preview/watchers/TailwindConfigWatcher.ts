@@ -29,7 +29,7 @@ export class TailwindConfigWatcher extends BaseWatcher {
     }, CONFIG_WATCHER_DEBOUNCE_MS);
   }
 
-  // Use updateAndRestartSync pattern from base class
+  // use updateAndRestartSync pattern from base class
   setWatchFiles(files: string[]): void {
     this.updateAndRestartSync(() => {
       this.watchFiles = files;

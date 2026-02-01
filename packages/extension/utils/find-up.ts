@@ -96,6 +96,14 @@ export function findUp(options: FindUpOptions): string | undefined {
   return undefined;
 }
 
+// normalize path for comparison (handles Windows case-insensitivity)
+function normalizePath(p: string): string {
+  if (process.platform === 'win32') {
+    return p.toLowerCase();
+  }
+  return p;
+}
+
 // build a stop condition predicate from various input types
 function buildStopPredicate(
   stopAt: FindUpOptions['stopAt']
@@ -109,13 +117,14 @@ function buildStopPredicate(
     return stopAt;
   }
 
-  // normalize to array for both string & string[] cases
+  // normalize to array & normalize paths for comparison
   const stops = Array.isArray(stopAt) ? stopAt : [stopAt];
-  return (dir: string) => stops.includes(dir);
+  const normalizedStops = stops.map(normalizePath);
+  return (dir: string) => normalizedStops.includes(normalizePath(dir));
 }
 
 // create a stop predicate that stops at any VS Code workspace root
-// example:
+// example
 // findUp({
 //   filename: 'config.json',
 //   startDir: docDir,
@@ -126,13 +135,14 @@ export function createWorkspaceStopPredicate(): (dir: string) => boolean {
   const vscode = require('vscode') as typeof import('vscode');
   const workspaceFolders = vscode.workspace.workspaceFolders;
   const workspaceRoots = workspaceFolders?.map((f) => f.uri.fsPath) ?? [];
+  const normalizedRoots = workspaceRoots.map(normalizePath);
 
-  return (dir: string) => workspaceRoots.includes(dir);
+  return (dir: string) => normalizedRoots.includes(normalizePath(dir));
 }
 
 // create a stop predicate that stops when leaving a parent directory
-// (uses startsWith to check containment)
-// example:
+// (uses startsWith to check containment w/ Windows case normalization)
+// example
 // // Stop when outside workspace root
 // findUp({
 //   filename: '_meta.json',
@@ -142,5 +152,6 @@ export function createWorkspaceStopPredicate(): (dir: string) => boolean {
 export function createContainmentStopPredicate(
   parentDir: string
 ): (dir: string) => boolean {
-  return (dir: string) => !dir.startsWith(parentDir);
+  const normalizedParent = normalizePath(parentDir);
+  return (dir: string) => !normalizePath(dir).startsWith(normalizedParent);
 }

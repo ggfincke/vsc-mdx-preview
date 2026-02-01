@@ -7,10 +7,10 @@ import { LogTags } from '@mdx-preview/shared';
 import { SingletonService } from '../services/SingletonService';
 import { SubscriberManager } from '../utils/SubscriberManager';
 
-// Import Preview class for type usage
+// import Preview class for type usage
 import type { Preview } from './Preview';
 
-// Re-export types & classes
+// re-export types & classes
 export {
   Preview,
   type StyleConfiguration,

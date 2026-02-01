@@ -76,8 +76,7 @@ export class PreviewInitializer {
     };
   }
 
-  // create all watchers via WatcherManager w/out starting them
-  // call startWatchers() after document directory is set
+  // create watchers via WatcherManager w/out starting (call startWatchers() after doc dir set)
   createWatchers(
     customCssPath: string,
     onDependencyChange: (fsPath: string) => Promise<void>,
@@ -133,10 +132,7 @@ export class PreviewInitializer {
     await watcherManager.startAll();
   }
 
-  // setup or teardown config change subscription based on document scheme
-  // subscribes to ConfigCache change events broadcasted by ConfigResolver
-  // note: actual file watching is done by ConfigResolver.setupConfigWatcher(),
-  // this method subscribes to those change notifications
+  // setup config change subscription (subscribes to ConfigCache events from ConfigResolver)
   setupConfigWatcher(
     watcherManager: WatcherManager,
     docScheme: string,
@@ -153,8 +149,7 @@ export class PreviewInitializer {
 
     const configPath = mdxPreviewConfig.configPath;
 
-    // create minimal IWatcher adapter for config subscription
-    // this subscribes directly to ConfigCache events w/out a separate class
+    // create IWatcher adapter for config subscription (subscribes to ConfigCache events)
     let subscription: vscode.Disposable | null = null;
     let active = false;
 

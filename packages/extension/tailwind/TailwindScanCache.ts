@@ -1,8 +1,5 @@
 // packages/extension/tailwind/TailwindScanCache.ts
-// LRU cache for per-file Tailwind class scan results
-//
-// Uses ContentHashCache for automatic hash validation & TTL-based expiration
-// Caches extracted Tailwind classes per file to avoid re-scanning unchanged files
+// LRU cache for per-file Tailwind class scan results w/ hash validation & TTL expiration
 
 import * as crypto from 'crypto';
 import { debug } from '../logging';
@@ -24,7 +21,7 @@ export function computeContentHash(content: string): string {
   return crypto.createHash('sha1').update(content, 'utf8').digest('hex');
 }
 
-// LRU cache for per-file Tailwind class scan results w/:
+// LRU cache for per-file Tailwind class scan results
 // - Content hash validation (returns null if file changed)
 // - TTL-based expiration
 // - LRU eviction when max entries exceeded

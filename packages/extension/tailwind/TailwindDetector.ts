@@ -1,11 +1,5 @@
 // packages/extension/tailwind/TailwindDetector.ts
-// detect Tailwind config, entry CSS, & workspace version
-//
-// error handling strategy:
-// - discovery module - silent failures are expected & intentional
-// - file not found = Tailwind not configured (returns null, no error)
-// - all file I/O wrapped in try-catch, returns null/undefined on failure
-// - debug logging added for troubleshooting detection issues
+// detect Tailwind config, entry CSS, & workspace version w/ silent failures on missing files
 
 import * as path from 'path';
 import * as vscode from 'vscode';

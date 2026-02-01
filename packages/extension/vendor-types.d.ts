@@ -1,5 +1,5 @@
-// packages/extension/types.d.ts
-// type declarations for modules without @types packages
+// packages/extension/vendor-types.d.ts
+// type declarations for modules w/o @types packages
 
 declare module 'is-module' {
   function isModule(code: string): boolean;

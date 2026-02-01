@@ -30,7 +30,7 @@ async function ensureLexerInitialized(): Promise<void> {
 }
 
 // commonJS require() extraction patterns
-// LIMITATIONS: dynamic requires, computed paths, & template interpolation unsupported
+// limitations: dynamic requires, computed paths, & template interpolation unsupported
 
 // pattern 1: standard string quotes (single, double) w/ escaped char support
 // matches: require('lodash'), require("express"), require('path\'s/file')
@@ -44,10 +44,10 @@ const REQUIRE_TEMPLATE = /require\s*\(\s*`([^`\\]*(?:\\.[^`\\]*)*)`\s*\)/g;
 // extract import specifiers from JavaScript/TypeScript code
 // uses es-module-lexer for ESM imports, falls back to require() pattern for CJS
 export async function extractImportSpecifiers(code: string): Promise<string[]> {
-  // I.4: Fast path - skip parsing if no import-like patterns detected
+  // I.4: fast path - skip parsing if no import-like patterns detected
   if (!mightHaveImports(code)) {
     debug(
-      `[${LogTags.IMPORT_EXTRACTOR}] Fast path: no import patterns detected`
+      `[${LogTags.IMPORT_EXTRACTOR}] fast path: no import patterns detected`
     );
     return [];
   }

@@ -14,9 +14,7 @@ import {
 import type { IWatcher } from '../../types';
 import type { LogTag } from '@mdx-preview/shared';
 
-// options for creating a file watcher in BaseWatcher subclasses
-// uses the shared FileWatcherConfig but omits pattern (passed separately)
-// & logTag (derived from the class's logTag property)
+// file watcher options for subclasses (omits pattern & logTag, derived from class)
 type FileWatcherOptions = Omit<FileWatcherConfig, 'pattern' | 'logTag'>;
 
 // abstract base class for all watchers w/ common lifecycle management
@@ -26,7 +24,7 @@ export abstract class BaseWatcher implements IWatcher {
   // use log tag for debug logging (e.g., LogTags.DEP_WATCHER)
   protected abstract readonly logTag: LogTag;
 
-  // Promise-based readiness tracking (replaces polling)
+  // promise-based readiness tracking (replaces polling)
   private _readyPromise: Promise<void> | null = null;
   private _readyResolve: (() => void) | null = null;
 
@@ -42,7 +40,7 @@ export abstract class BaseWatcher implements IWatcher {
       return;
     }
 
-    // Create fresh ready promise before starting
+    // create fresh ready promise before starting
     this._readyPromise = new Promise((resolve) => {
       this._readyResolve = resolve;
     });
@@ -51,7 +49,7 @@ export abstract class BaseWatcher implements IWatcher {
     await this.onStart();
     debug(`[${this.logTag}] Started`);
 
-    // Check if already ready after onStart completes
+    // check if already ready after onStart completes
     this._checkAndResolveReady();
   }
 
@@ -63,7 +61,7 @@ export abstract class BaseWatcher implements IWatcher {
     this._isActive = false;
     this.onStop();
 
-    // Reset ready promise state for potential restart
+    // reset ready promise state for potential restart
     this._readyPromise = null;
     this._readyResolve = null;
 
@@ -107,17 +105,17 @@ export abstract class BaseWatcher implements IWatcher {
     return this._isActive && this.checkReadiness();
   }
 
-  // Promise-based waiting for readiness (no polling)
+  // promise-based waiting for readiness (no polling)
   async waitForReady(timeoutMs?: number): Promise<void> {
-    // If already ready, resolve immediately
+    // if already ready, resolve immediately
     if (this.isReady()) {
       return Promise.resolve();
     }
 
-    // Get or create ready promise
+    // get or create ready promise
     const readyPromise = this._getOrCreateReadyPromise();
 
-    // No timeout - just wait for ready
+    // no timeout - just wait for ready
     if (!timeoutMs) {
       return readyPromise;
     }

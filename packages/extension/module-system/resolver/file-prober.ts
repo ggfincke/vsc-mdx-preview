@@ -21,11 +21,11 @@ export interface StatResult {
   isDirectory: boolean;
 }
 
-// 5 seconds
+// stat cache TTL (5 seconds)
 const STAT_CACHE_TTL_MS = 5000;
 const STAT_CACHE_MAX_ENTRIES = 1000;
 
-// Internal stat cache using LRUCache
+// internal stat cache using LRUCache
 const statCache = new LRUCache<string, StatResult>({
   maxEntries: STAT_CACHE_MAX_ENTRIES,
   ttlMs: STAT_CACHE_TTL_MS,
@@ -84,7 +84,7 @@ export async function batchStatAsync(
   const results = new Map<string, StatResult>();
   const uncachedPaths: string[] = [];
 
-  // Separate cached from uncached
+  // separate cached from uncached
   for (const p of paths) {
     const cached = getCachedStat(p);
     if (cached) {
@@ -94,7 +94,7 @@ export async function batchStatAsync(
     }
   }
 
-  // Parallel stat for uncached paths
+  // parallel stat for uncached paths
   if (uncachedPaths.length > 0) {
     const statResults = await Promise.all(
       uncachedPaths.map(async (p) => {
@@ -238,13 +238,13 @@ export async function probeFileAsync(
     return null;
   }
 
-  // Generate all candidate paths for extensions
+  // generate all candidate paths for extensions
   const extensionPaths = extensions.map((ext) => basePath + ext);
 
-  // Batch stat all extension candidates in parallel
+  // batch stat all extension candidates in parallel
   const extensionResults = await batchStatAsync(extensionPaths);
 
-  // Check in priority order
+  // check in priority order
   for (const ext of extensions) {
     const fullPath = basePath + ext;
     const result = extensionResults.get(fullPath);
@@ -253,11 +253,11 @@ export async function probeFileAsync(
     }
   }
 
-  // Check if base is a directory (from extension results if '' was included)
+  // check if base is a directory (from extension results if '' was included)
   const baseResult = extensionResults.get(basePath);
   const isDirectory = baseResult?.exists && baseResult.isDirectory;
 
-  // If basePath without extension wasn't checked, check it now
+  // if basePath without extension wasn't checked, check it now
   if (!baseResult) {
     const stat = await batchStatAsync([basePath]);
     const baseStat = stat.get(basePath);

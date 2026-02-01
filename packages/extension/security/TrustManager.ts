@@ -63,12 +63,10 @@ export class TrustManager extends SingletonService<TrustManager> {
       );
     }
 
-    // listen for configuration changes
+    // listen for configuration changes via centralized dispatcher
     this.addDisposable(
-      vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration('mdx-preview.preview.enableScripts')) {
-          this.notifyListeners();
-        }
+      getConfigManager().onDidChangeKey('preview.enableScripts', () => {
+        this.notifyListeners();
       })
     );
   }

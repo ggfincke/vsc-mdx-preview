@@ -1,9 +1,10 @@
 // packages/extension/utils/cache/WatchableCache.ts
 // manage LRU cache entries w/ optional path watchers
 
+import type * as vscode from 'vscode';
 import type { LogTag } from '@mdx-preview/shared';
 import { LRUCache } from '@mdx-preview/shared';
-import { FilePathWatcher } from '../../preview/watchers';
+import { createFileWatcher } from '../createFileWatcher';
 
 export type WatchEventType = 'change' | 'create' | 'delete';
 
@@ -28,7 +29,7 @@ export interface WatchHandlers<K, V> {
 // cache wrapper w/ path watcher registry
 export class WatchableCache<K, V> {
   private cache: LRUCache<K, V>;
-  private watchers = new Map<string, FilePathWatcher>();
+  private watchers = new Map<string, vscode.FileSystemWatcher>();
   private handlers = new Map<string, WatchHandlers<K, V>>();
   private logTag: LogTag;
 
@@ -97,7 +98,7 @@ export class WatchableCache<K, V> {
       return;
     }
 
-    const watcher = new FilePathWatcher({
+    const watcher = createFileWatcher({
       pattern,
       logTag: this.logTag,
       onChange: (uri) => this.handleEvent(pattern, uri.fsPath, 'change'),
@@ -107,7 +108,6 @@ export class WatchableCache<K, V> {
 
     this.watchers.set(pattern, watcher);
     this.handlers.set(pattern, handlers);
-    void watcher.start();
   }
 
   unwatchPath(pattern: string): void {

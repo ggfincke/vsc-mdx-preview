@@ -21,7 +21,7 @@ export interface TailwindScanResult {
   scannedFiles: string[];
 }
 
-// extracts Tailwind class candidates from MDX/JSX/TSX content using pattern & content scanners
+// extract Tailwind class candidates from MDX/JSX/TSX content using pattern & content scanners
 export class TailwindScanner {
   private readonly patternScanner = new PatternScanner();
   private readonly contentScanner = new ContentScanner();

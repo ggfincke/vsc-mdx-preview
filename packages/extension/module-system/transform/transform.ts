@@ -64,7 +64,7 @@ async function transformEntry(
     code = transpileTypeScript(code, fsPath, preview);
   }
 
-  // I.1: Capture ESM code before CommonJS transformation
+  // I.1: capture ESM code before CommonJS transformation
   const esmCode = code;
 
   code = await transpileWithFallback(code, {
@@ -96,7 +96,7 @@ async function transform(
     code = transpileTypeScript(code, fsPath, preview);
   }
 
-  // I.1: Capture ESM code before CommonJS transformation
+  // I.1: capture ESM code before CommonJS transformation
   const esmCode = code;
 
   const isInNodeModules = fsPath.split(path.sep).includes('node_modules');

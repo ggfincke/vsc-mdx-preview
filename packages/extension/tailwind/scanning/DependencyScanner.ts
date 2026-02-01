@@ -11,13 +11,13 @@ import { TAILWIND_DEPENDENCY_RESOLUTION_LIMIT } from '../constants';
 
 const resolveSemaphore = new Semaphore(TAILWIND_DEPENDENCY_RESOLUTION_LIMIT);
 
-// resolves & scans imported dependency files for Tailwind classes
+// resolve & scan imported dependency files for Tailwind classes
 export class DependencyScanner {
   private readonly validator = new FileScanValidator();
   private readonly resolver = getUnifiedResolver();
 
   // scan dependency files for Tailwind classes
-  // optionally uses scanCache to avoid re-scanning unchanged files
+  // optionally use scanCache to avoid re-scanning unchanged files
   async scanDependencies(
     entryFilePath: string,
     imports: string[],

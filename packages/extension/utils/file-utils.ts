@@ -1,7 +1,7 @@
 // packages/extension/utils/file-utils.ts
 // centralized file I/O utilities w/ consistent error handling
 //
-// error handling strategy:
+// error handling strategy
 // - all functions return null/undefined on failure (never throw)
 // - optional debug logging via options parameter
 // - consistent error message format for troubleshooting

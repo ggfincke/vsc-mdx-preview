@@ -15,7 +15,7 @@ const LAYER_RE = /@layer\s+(?:utilities|components)\s*\{/g;
 // CSS class selector pattern (matches .class-name in CSS)
 const CSS_CLASS_SELECTOR_RE = /\.([A-Za-z_-][A-Za-z0-9_-]*)/g;
 
-// extracts Tailwind classes from static patterns (className="...", @apply, @layer)
+// extract Tailwind classes from static patterns (className="...", @apply, @layer)
 export class PatternScanner {
   // extract classes from static className/class attributes
   extractStaticAttributes(text: string, classSet: Set<string>): void {

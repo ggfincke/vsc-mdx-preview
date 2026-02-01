@@ -7,9 +7,7 @@ import { BaseWatcher } from './BaseWatcher';
 // webview handle w/ setStale method
 type StaleNotifier = Pick<WebviewRPC, 'setStale'>;
 
-// track document version & stale state
-// extends BaseWatcher for consistency, though start/stop are no-ops
-// since this is a state tracker rather than a file watcher
+// track document version & stale state (extends BaseWatcher for consistency)
 export class DocumentTracker extends BaseWatcher {
   protected readonly logTag = LogTags.DOC_TRACKER;
 
@@ -60,7 +58,7 @@ export class DocumentTracker extends BaseWatcher {
     this.lastRenderedVersion = -1;
   }
 
-  // BaseWatcher abstract methods (no-ops for state tracker)
+  // baseWatcher abstract methods (no-ops for state tracker)
   protected onStart(): void {}
   protected onStop(): void {}
 

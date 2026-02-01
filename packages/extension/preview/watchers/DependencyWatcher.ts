@@ -9,9 +9,7 @@ import { getUnifiedResolver } from '../../module-system/resolver/UnifiedResolver
 import type { ResolutionContext } from '../../types';
 import { BaseWatcher } from './BaseWatcher';
 
-// watch local file dependencies (imports from MDX files) for changes
-// only watches relative imports, skips node_modules & external URLs
-// uses LRUCache for automatic eviction to prevent unbounded watcher growth
+// watch local file dependencies for changes (LRU eviction prevents unbounded growth)
 export class DependencyWatcher extends BaseWatcher {
   protected readonly logTag = LogTags.DEP_WATCHER;
   private watchers: LRUCache<string, vscode.FileSystemWatcher>;
@@ -46,8 +44,7 @@ export class DependencyWatcher extends BaseWatcher {
     this.markReady();
   }
 
-  // update watched dependencies from import list (adds watchers for new dependencies & removes watchers for old ones)
-  // LRUCache handles automatic eviction when watcher count exceeds DEP_WATCHER_MAX_ENTRIES
+  // update watched dependencies from import list (LRU eviction when exceeds max)
   updateDependencies(imports: string[]): void {
     const newPaths = new Set<string>();
 
@@ -74,8 +71,7 @@ export class DependencyWatcher extends BaseWatcher {
       }
     }
 
-    // Step 1: remove watchers for paths no longer imported
-    // collect paths to remove first to avoid iteration issues
+    // step 1: remove watchers for paths no longer imported
     const pathsToRemove: string[] = [];
     for (const fsPath of this.watchers.keys()) {
       if (!newPaths.has(fsPath)) {
@@ -90,7 +86,7 @@ export class DependencyWatcher extends BaseWatcher {
       this.watchers.delete(fsPath);
     }
 
-    // Step 2: touch existing watchers (get() updates LRU position)
+    // step 2: touch existing watchers (get() updates LRU position)
     for (const fsPath of newPaths) {
       if (this.watchers.has(fsPath)) {
         // touch to update LRU position
@@ -98,8 +94,7 @@ export class DependencyWatcher extends BaseWatcher {
       }
     }
 
-    // Step 3: add watchers for new paths
-    // LRUCache auto-evicts oldest when capacity exceeded
+    // step 3: add watchers for new paths (LRU auto-evicts oldest when exceeded)
     for (const fsPath of newPaths) {
       if (!this.watchers.has(fsPath)) {
         debug(`[${LogTags.DEP_WATCHER}] Adding watcher: ${fsPath}`);
@@ -140,8 +135,8 @@ export class DependencyWatcher extends BaseWatcher {
     this.clear();
   }
 
+  // ready when have explicit context or documentDir fallback
   protected checkReadiness(): boolean {
-    // Either have explicit context or documentDir fallback
     return this.resolutionContext !== null || this.documentDir !== '';
   }
 }

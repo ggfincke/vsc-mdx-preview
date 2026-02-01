@@ -26,13 +26,10 @@ import {
 import { PreviewDocumentHandler } from './PreviewDocumentHandler';
 import { PreviewInitializer } from './PreviewInitializer';
 
-// import PreviewManager type for refreshWebview - this creates a controlled dependency
-// PreviewManager -> Preview (creates instances)
-// Preview -> PreviewManager (singleton lookup in refreshWebview only)
+// import PreviewManager type for refreshWebview (controlled dependency via singleton lookup)
 import type { PreviewManager } from './preview-manager';
 
-// lazy import to avoid circular dependency at module load time
-// uses service-locator for consistent singleton access
+// lazy import to avoid circular dependency at module load time (uses service-locator)
 function getPreviewManager(): PreviewManager {
   const { getPreviewManager: getManager } = require('../services') as {
     getPreviewManager: () => PreviewManager;
@@ -43,8 +40,7 @@ function getPreviewManager(): PreviewManager {
 // re-export types for consumers
 export type { StyleConfiguration, WebviewHandle };
 
-// individual preview instance for a document
-// manage webview state, evaluation, & watchers
+// * individual preview instance for a document (manage webview, evaluation, & watchers)
 export class Preview {
   active = false;
   private _webview?: vscode.Webview;
@@ -82,8 +78,7 @@ export class Preview {
     this.resolveWebviewHandshakePromise();
   }
 
-  // cancel any pending handshake timeout
-  // call this when reusing a panel to prevent stale timeouts from firing
+  // cancel pending handshake timeout (call when reusing panel to prevent stale timeouts)
   cancelHandshakeTimeout(): void {
     this.initializer.cancelHandshakeTimeout();
   }
@@ -177,9 +172,7 @@ export class Preview {
     this.webviewHandshakePromise = handshake.promise;
     this.resolveWebviewHandshakePromise = handshake.resolve;
 
-    // create watchers w/ ready gate (callbacks wait for webview handshake)
-    // NOTE: watchers are created but NOT started yet
-    // ready gate - callbacks wait for handshake promise
+    // create watchers w/ ready gate (callbacks wait for webview handshake, not started yet)
     this.watcherManager = this.initializer.createWatchers(
       this.configManager.configuration.customCss,
       async (fsPath) => {

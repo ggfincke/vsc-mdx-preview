@@ -55,11 +55,9 @@ export interface TailwindProcessParams {
   tailwindConfig: TailwindConfig;
 }
 
-// EvaluationEngine handles the core evaluation logic for MDX content
-// extracted from evaluate-in-webview.ts for better testability
+// * EvaluationEngine handles core evaluation logic for MDX content
 export class EvaluationEngine {
-  // evaluate MDX content in Trusted Mode
-  // transpiles MDX to executable JavaScript w/ full React component support
+  // evaluate MDX in Trusted Mode (transpile to executable JS w/ React components)
   async evaluateTrusted(
     text: string,
     fsPath: string,
@@ -68,8 +66,7 @@ export class EvaluationEngine {
     debug(`[${LogTags.ENGINE}] evaluateTrusted called`);
 
     debug(`[${LogTags.ENGINE}] Transforming entry...`);
-    // I.1: transformEntry now returns esmCode for import extraction
-    // wrap w/ timeout to prevent hang on malicious/large MDX
+    // transformEntry returns esmCode for import extraction (timeout prevents hang)
     const transformResult = await this.withTimeout(
       transformEntry(text, fsPath, preview),
       MDX_COMPILATION_TIMEOUT_MS
@@ -89,8 +86,7 @@ export class EvaluationEngine {
     // use async fs.promises.realpath instead of sync version
     const entryFilePath = await fs.promises.realpath(fsPath);
 
-    // I.1: extract dependencies from ESM code (BEFORE CommonJS conversion)
-    // es-module-lexer works much better on ESM than on CommonJS output
+    // extract dependencies from ESM code (before CommonJS conversion for better parsing)
     const dependencies = await extractImportSpecifiers(esmCode);
     debug(`[${LogTags.ENGINE}] Dependencies: ${dependencies.join(', ')}`);
 
@@ -119,8 +115,7 @@ export class EvaluationEngine {
     return { html, frontmatter };
   }
 
-  // process Tailwind CSS asynchronously (non-blocking)
-  // called after the initial preview update to avoid blocking render
+  // process Tailwind CSS asynchronously (called after preview update to avoid blocking)
   async processTailwindAsync(
     preview: Preview,
     params: TailwindProcessParams,

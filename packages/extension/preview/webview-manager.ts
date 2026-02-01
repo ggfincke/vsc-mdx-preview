@@ -14,22 +14,24 @@ import { initRPCExtensionSide } from '../rpc-extension';
 import { getPreviewManager, getTrustManager } from '../services';
 import { debug } from '../logging';
 import { WebviewError } from '../errors';
-import { CSP_DEBUG_PREVIEW_LENGTH } from '../constants';
+import {
+  CSP_DEBUG_PREVIEW_LENGTH,
+  VITE_MANIFEST_DIR,
+  VITE_MANIFEST_FILE,
+  WEBVIEW_BUILD_DIR,
+} from '../constants';
 import { formatTrustStateForDebug, LogTags } from '@mdx-preview/shared';
 
 const VIEW_TYPE = 'mdx.preview';
 const MDX_PREVIEW_FOCUS_CONTEXT_KEY = 'mdxPreviewFocus';
 
-// NOTE: panel, panelDoc, disposables, & URI state have been moved to PreviewManager
-// for better testability & lifecycle management
+// panel, panelDoc, disposables, & URI state moved to PreviewManager for testability
 
-// G.3 optimization: Module-level promise for background resource loading
+// module-level promise for background resource loading
 let webviewResourcesPromise: Promise<void> | null = null;
 let webviewResourcesError: Error | null = null;
 
-// initialize webview HTML resources in the background (non-blocking)
-// call this during activation without awaiting
-// G.3 optimization: allows extension activation to proceed without blocking on file I/O
+// initialize webview HTML resources in background (call during activation w/out awaiting)
 export function initWebviewAppHTMLResourcesAsync(
   context: vscode.ExtensionContext
 ): void {
@@ -51,9 +53,7 @@ export function initWebviewAppHTMLResourcesAsync(
     });
 }
 
-// ensure webview resources are ready before creating a panel
-// awaits the background initialization if it hasn't completed yet
-// G.3 optimization: only blocks when actually creating a panel, not during activation
+// ensure webview resources are ready (only blocks when creating panel)
 export async function ensureWebviewResourcesReady(): Promise<void> {
   if (webviewResourcesPromise) {
     await webviewResourcesPromise;
@@ -70,13 +70,12 @@ export async function initWebviewAppHTMLResources(
   const manager = getPreviewManager();
   manager.setExtensionUri(context.extensionUri);
 
-  // Vite manifest format - use Uri.joinPath & workspace.fs for extension resources
+  // vite manifest format - use Uri.joinPath & workspace.fs for extension resources
   const manifestUri = vscode.Uri.joinPath(
     context.extensionUri,
-    'build',
-    'webview-app',
-    '.vite',
-    'manifest.json'
+    ...WEBVIEW_BUILD_DIR.split('/'),
+    VITE_MANIFEST_DIR,
+    VITE_MANIFEST_FILE
   );
 
   debug(
@@ -99,8 +98,7 @@ export async function initWebviewAppHTMLResources(
 
   const webviewAppBaseUri = vscode.Uri.joinPath(
     context.extensionUri,
-    'build',
-    'webview-app'
+    ...WEBVIEW_BUILD_DIR.split('/')
   );
 
   const webviewAppUris: WebviewAppUris = {
@@ -237,14 +235,12 @@ export async function createOrShowPanel(
 ): Promise<vscode.WebviewPanel> {
   debug(`[${LogTags.WEBVIEW_MGR}] createOrShowPanel called`);
 
-  // G.3 optimization: Ensure webview resources are ready before proceeding
-  // This only blocks if background init hasn't completed yet (rare case)
+  // ensure webview resources are ready (only blocks if background init incomplete)
   await ensureWebviewResourcesReady();
 
   const manager = getPreviewManager();
 
   // use ViewColumn.Beside to open preview next to the active editor
-  // this is the modern VS Code approach that handles edge cases better
   const previewColumn = vscode.ViewColumn.Beside;
   const previewTitle = `Preview ${path.basename(preview.doc.fileName)}`;
 
@@ -259,7 +255,7 @@ export async function createOrShowPanel(
     const extensionUri = manager.getExtensionUri();
     if (extensionUri) {
       localResourceRoots.push(
-        vscode.Uri.joinPath(extensionUri, 'build', 'webview-app')
+        vscode.Uri.joinPath(extensionUri, ...WEBVIEW_BUILD_DIR.split('/'))
       );
     }
     const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -331,15 +327,14 @@ export async function createOrShowPanel(
     );
     if (panelDoc !== preview.doc) {
       debug(`[${LogTags.WEBVIEW_MGR}] Different doc, reinitializing handshake`);
-      // re-initialize handshake since we're resetting the webview HTML
+      // reinitialize handshake since we're resetting the webview HTML
       preview.initWebviewHandshakePromise();
       panel.title = previewTitle;
       setPanelHTMLFromPreview(preview);
       manager.setPanelDoc(preview.doc);
     } else {
       debug(`[${LogTags.WEBVIEW_MGR}] Same doc, just revealing panel`);
-      // cancel any stale handshake timeout from previous operations
-      // this prevents timeout errors when the preview was already rendered
+      // cancel stale handshake timeout to prevent errors on reuse
       preview.cancelHandshakeTimeout();
     }
     panel.reveal(previewColumn);
@@ -363,7 +358,7 @@ export function refreshPanel(preview: Preview): void {
     debug(`[${LogTags.WEBVIEW_MGR}] refreshPanel: no panel`);
     return;
   }
-  // re-initialize handshake since we're resetting the webview HTML
+  // reinitialize handshake since we're resetting the webview HTML
   debug(`[${LogTags.WEBVIEW_MGR}] Reinitializing handshake for refresh`);
   preview.initWebviewHandshakePromise();
   // reveal in current column & preserve focus

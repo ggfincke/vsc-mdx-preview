@@ -14,8 +14,7 @@ import type { TypeScriptConfiguration } from '../../types';
 // max 50 tsconfig caches (typical monorepo has fewer)
 const TSCONFIG_CACHE_MAX_ENTRIES = 50;
 
-// cache parsed configs by directory to avoid repeated FS reads
-// use LRUCache to prevent unbounded growth in large workspaces
+// cache parsed configs by directory (LRU prevents unbounded growth)
 const configCache = new PathCache<TypeScriptConfiguration | null>({
   logTag: LogTags.TS_CONFIG,
   maxEntries: TSCONFIG_CACHE_MAX_ENTRIES,
@@ -53,8 +52,7 @@ function setupConfigWatcher(configFile: string): void {
   debug(`[${LogTags.TS_CONFIG}] Watching: ${configFile}`);
 }
 
-// resolve TypeScript configuration from a tsconfig.json file (async)
-// handle extends, paths, baseUrl using tsconfck
+// resolve TypeScript configuration from tsconfig.json (handles extends, paths, baseUrl)
 export async function resolveTypescriptConfigAsync(
   configFile: string | null
 ): Promise<TypeScriptConfiguration | null> {
@@ -96,9 +94,7 @@ export async function resolveTypescriptConfigAsync(
   }
 }
 
-// synchronous wrapper for cached access
-// return cached result if available, otherwise trigger async load & return null
-// use async version for guaranteed fresh data
+// sync wrapper for cached access (triggers async load if not cached, returns null)
 export function resolveTypescriptConfig(
   configFile: string | null
 ): TypeScriptConfiguration | null {
@@ -111,8 +107,7 @@ export function resolveTypescriptConfig(
     return configCache.get(cacheKey) ?? null;
   }
 
-  // if not cached, trigger async parse & return null for now
-  // the async version will populate the cache
+  // not cached - trigger async parse & return null (async version populates cache)
   resolveTypescriptConfigAsync(configFile).catch(() => {
     // ignore - error already logged
   });

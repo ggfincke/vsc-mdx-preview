@@ -27,7 +27,7 @@ export class ScriptHandler implements FileTypeHandler {
       preview
     );
 
-    // I.1: extract import dependencies from ESM code (BEFORE CommonJS conversion)
+    // I.1: extract import dependencies from ESM code (before CommonJS conversion)
     // es-module-lexer works much better on ESM than on CommonJS output
     const importNames = await extractImportSpecifiers(esmCode);
     const dependencies = importNames.filter(

@@ -4,7 +4,7 @@
 // Extracted from BaseWatcher for reuse in standalone watchers that don't
 // need full BaseWatcher lifecycle management
 //
-// USAGE:
+// USAGE
 // ```typescript
 // import { createFileWatcher } from '../utils/createFileWatcher';
 //
@@ -42,7 +42,7 @@ export interface FileWatcherConfig {
 }
 
 // create a VS Code file system watcher w/ standard error handling
-// features:
+// features
 // - optional error wrapping for handlers (prevents uncaught exceptions)
 // - debug logging for errors w/ configurable tag
 // - consistent event handling pattern
