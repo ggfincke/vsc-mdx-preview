@@ -1,5 +1,5 @@
-// packages/extension/constants.ts
-// centralized constants for the extension package
+// packages/extension/constants/runtime.ts
+// runtime constants for the extension package (timeouts, limits, cache settings)
 
 import {
   DEFAULT_PREVIEW_DEBOUNCE_DELAY_MS,
@@ -47,6 +47,12 @@ export const MAX_MODULE_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 // maximum dependencies per module (prevents combinatorial explosion)
 export const MAX_DEPENDENCIES_PER_MODULE = 200;
+
+// MDX compilation timeout (ms) - prevents hang on malicious/large MDX
+export const MDX_COMPILATION_TIMEOUT_MS = 30000;
+
+// module fetch file read timeout (ms) - prevents hang on slow filesystem
+export const MODULE_FETCH_TIMEOUT_MS = 5000;
 
 // caching
 
