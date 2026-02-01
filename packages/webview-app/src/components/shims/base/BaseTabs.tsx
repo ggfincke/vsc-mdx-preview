@@ -4,12 +4,15 @@
 import React, {
   createContext,
   useContext,
+  useRef,
+  useCallback,
   ReactNode,
   ReactElement,
   Context,
   Children,
   isValidElement,
   HTMLAttributes,
+  KeyboardEvent,
 } from 'react';
 import { cn } from '../../../utils/cn';
 import {
@@ -86,6 +89,41 @@ export function createTabs(config: BaseTabsConfig): CreateTabsResult {
       values,
     });
 
+    // refs for tab buttons to enable focus management
+    const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+    // handle keyboard navigation for tabs
+    const handleKeyDown = useCallback(
+      (e: KeyboardEvent<HTMLButtonElement>, currentIndex: number) => {
+        const tabCount = tabs.length;
+        let newIndex = currentIndex;
+
+        switch (e.key) {
+          case 'ArrowLeft':
+          case 'ArrowUp':
+            newIndex = (currentIndex - 1 + tabCount) % tabCount;
+            break;
+          case 'ArrowRight':
+          case 'ArrowDown':
+            newIndex = (currentIndex + 1) % tabCount;
+            break;
+          case 'Home':
+            newIndex = 0;
+            break;
+          case 'End':
+            newIndex = tabCount - 1;
+            break;
+          default:
+            return;
+        }
+
+        e.preventDefault();
+        setActiveValue(tabs[newIndex].value);
+        tabRefs.current[newIndex]?.focus();
+      },
+      [tabs, setActiveValue]
+    );
+
     // Build wrapper class
     const wrapperClassName = wrapperClass
       ? `${wrapperClass}${className ? ` ${className}` : ''}`
@@ -100,13 +138,17 @@ export function createTabs(config: BaseTabsConfig): CreateTabsResult {
         >
           {/* Tab headers */}
           <div className={`${classPrefix}-header`} role="tablist">
-            {tabs.map((tab) => (
+            {tabs.map((tab, index) => (
               <button
                 key={tab.value}
+                ref={(el) => {
+                  tabRefs.current[index] = el;
+                }}
                 role="tab"
                 className={`${classPrefix}-button${tab.value === activeValue ? ' active' : ''}`}
                 aria-selected={tab.value === activeValue}
                 onClick={() => setActiveValue(tab.value)}
+                onKeyDown={(e) => handleKeyDown(e, index)}
                 tabIndex={tab.value === activeValue ? 0 : -1}
               >
                 {tab.label}
@@ -228,6 +270,67 @@ export function createIndexTabs<T>(
       isDisabled,
     });
 
+    // refs for tab buttons to enable focus management
+    const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+    // handle keyboard navigation for tabs
+    const handleKeyDown = useCallback(
+      (e: KeyboardEvent<HTMLButtonElement>, currentIndex: number) => {
+        const tabCount = items.length;
+        let newIndex = currentIndex;
+
+        switch (e.key) {
+          case 'ArrowLeft':
+          case 'ArrowUp':
+            // find previous non-disabled tab
+            for (let i = 1; i <= tabCount; i++) {
+              const idx = (currentIndex - i + tabCount) % tabCount;
+              if (!isDisabled(items[idx])) {
+                newIndex = idx;
+                break;
+              }
+            }
+            break;
+          case 'ArrowRight':
+          case 'ArrowDown':
+            // find next non-disabled tab
+            for (let i = 1; i <= tabCount; i++) {
+              const idx = (currentIndex + i) % tabCount;
+              if (!isDisabled(items[idx])) {
+                newIndex = idx;
+                break;
+              }
+            }
+            break;
+          case 'Home':
+            // find first non-disabled tab
+            for (let i = 0; i < tabCount; i++) {
+              if (!isDisabled(items[i])) {
+                newIndex = i;
+                break;
+              }
+            }
+            break;
+          case 'End':
+            // find last non-disabled tab
+            for (let i = tabCount - 1; i >= 0; i--) {
+              if (!isDisabled(items[i])) {
+                newIndex = i;
+                break;
+              }
+            }
+            break;
+          default:
+            return;
+        }
+
+        e.preventDefault();
+        setActiveIndex(newIndex);
+        tabRefs.current[newIndex]?.focus();
+      },
+      [items, setActiveIndex]
+    );
+
     // Get Tab children for content panels
     const tabChildren = Children.toArray(children).filter(
       (child) => isValidElement(child) && child.type === Tab
@@ -251,6 +354,9 @@ export function createIndexTabs<T>(
               return (
                 <button
                   key={index}
+                  ref={(el) => {
+                    tabRefs.current[index] = el;
+                  }}
                   role="tab"
                   aria-selected={selected}
                   aria-disabled={disabled}
@@ -262,6 +368,7 @@ export function createIndexTabs<T>(
                     customClass
                   )}
                   onClick={() => setActiveIndex(index)}
+                  onKeyDown={(e) => handleKeyDown(e, index)}
                   disabled={disabled}
                 >
                   {label}

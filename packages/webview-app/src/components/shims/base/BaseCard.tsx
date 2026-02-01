@@ -51,8 +51,4 @@ export function BaseCard({
   );
 }
 
-// Re-export ArrowIcon from centralized icons for backwards compatibility
-// Starlight LinkCard imports this
-export { ArrowIcon } from './icons';
-
 export default BaseCard;

@@ -1,30 +1,17 @@
 // packages/webview-app/src/components/shims/nextra/FileTree.tsx
 // Nextra FileTree component shim for MDX Preview
-// Re-exports Starlight's FileTree w/ Nextra-specific styling wrapper
 
-import React, { ReactNode, ReactElement, HTMLAttributes } from 'react';
 import { FileTree as StarlightFileTree } from '../starlight/FileTree';
+import { createNextraWrapper, type NextraWrapperProps } from './createNextraWrapper';
 
 // FileTree props (compatible w/ Nextra)
-export interface FileTreeProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
-}
+export type FileTreeProps = NextraWrapperProps;
 
 // FileTree component - wraps Starlight's implementation w/ Nextra styling
-export function FileTree({
-  children,
-  className,
-  ...props
-}: FileTreeProps): ReactElement {
-  const classes = ['mdx-preview-nextra-file-tree', className]
-    .filter(Boolean)
-    .join(' ');
-
-  return (
-    <div className={classes} {...props}>
-      <StarlightFileTree>{children}</StarlightFileTree>
-    </div>
-  );
-}
+export const FileTree = createNextraWrapper({
+  StarlightComponent: StarlightFileTree,
+  wrapperClassName: 'mdx-preview-nextra-file-tree',
+  displayName: 'NextraFileTree',
+});
 
 export default FileTree;

@@ -3,7 +3,8 @@
 // provides preview-compatible version of @astrojs/starlight/components LinkCard
 
 import React, { ReactElement } from 'react';
-import { BaseCard, ArrowIcon } from '../base';
+import { BaseCard } from '../base';
+import { ArrowIcon } from '../base/icons';
 
 // LinkCard props (compatible w/ Starlight)
 export interface LinkCardProps {
