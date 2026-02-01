@@ -3,7 +3,12 @@
 // components/shims/generic/index.ts
 
 export { normalizeCalloutType, CALLOUT_TITLES } from './types';
-export type { CalloutType, CalloutProps, CollapsibleProps, CodeGroupProps } from './types';
+export type {
+  CalloutType,
+  CalloutProps,
+  CollapsibleProps,
+  CodeGroupProps,
+} from './types';
 
 export { Callout, Alert, Admonition } from './Callout';
 

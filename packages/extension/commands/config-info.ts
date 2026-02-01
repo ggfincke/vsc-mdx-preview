@@ -9,14 +9,9 @@ import {
   getTrustManager,
   getFrameworkDetector,
 } from '../services';
-import {
-  resolveConfig,
-  type ResolvedConfig,
-} from '../preview/config/ConfigResolver';
-import {
-  buildEffectivePreviewConfig,
-  type EffectivePreviewConfig,
-} from '../config/EffectivePreviewConfig';
+import { resolveConfig } from '../preview/config/ConfigResolver';
+import { buildEffectivePreviewConfig } from '../config/EffectivePreviewConfig';
+import type { ResolvedConfig, EffectivePreviewConfig } from '../types';
 import { extractFrontmatter } from '../compiler/shared/mdx-common';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';

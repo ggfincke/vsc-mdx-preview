@@ -1,8 +1,8 @@
 {
   "name": "vscode-mdx-preview",
   "displayName": "MDX Preview",
-  "description": "MDX Preview",
-  "version": "1.0.0-alpha.12",
+  "description": "Live MDX preview with React component rendering, syntax highlighting, and Safe/Trusted workspace security modes",
+  "version": "1.0.0-alpha.13",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [
@@ -12,6 +12,7 @@
     }
   ],
   "repository": "https://github.com/ggfincke/vscode-mdx-preview",
+  "license": "GPL-3.0-or-later",
   "workspaces": [
     "packages/*"
   ],
@@ -84,12 +85,12 @@
       },
       {
         "command": "mdx-preview.commands.toggleUseVscodeMarkdownStyles",
-        "title": "Toggle Using VSCode Markdown Styles",
+        "title": "Toggle VSCode Markdown Styles",
         "category": "MDX"
       },
       {
         "command": "mdx-preview.commands.toggleUseWhiteBackground",
-        "title": "Toggle Using White Background",
+        "title": "Toggle White Background",
         "category": "MDX"
       },
       {
@@ -136,11 +137,6 @@
       {
         "command": "mdx-preview.commands.selectFramework",
         "title": "Select Framework",
-        "category": "MDX"
-      },
-      {
-        "command": "mdx-preview.commands.refreshModuleCache",
-        "title": "Refresh Module Cache",
         "category": "MDX"
       },
       {

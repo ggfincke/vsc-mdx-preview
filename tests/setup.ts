@@ -9,6 +9,12 @@ vi.mock('../packages/extension/logging', () => ({
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
+  createTaggedLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
 }));
 
 // mock services w/ sensible defaults (tests can override as needed)

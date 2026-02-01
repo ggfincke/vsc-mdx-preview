@@ -104,11 +104,6 @@ function getModuleSystem(): Promise<typeof import('./module-system')> {
   return moduleSystemPromise;
 }
 
-// Compile-time exhaustiveness check for message types
-function assertNever(x: never): never {
-  throw new Error(`Unexpected message type: ${JSON.stringify(x)}`);
-}
-
 // Use Map to coalesce by message type - last message of each type wins
 // This prevents stale messages from replaying out of order when React mounts slowly
 const pendingMessages = new Map<QueuedMessageType, PendingMessage>();
