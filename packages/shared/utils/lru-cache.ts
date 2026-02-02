@@ -1,36 +1,35 @@
 // packages/shared/utils/lru-cache.ts
 // generic LRU cache w/ optional TTL, memory-based eviction, & entry protection
-//
-// Uses Map insertion order for O(1) LRU tracking
-// - oldest entries are at the start of the Map
-// - accessing an entry moves it to the end (delete + re-insert)
-// - eviction removes from the start (skipping protected entries)
+// uses Map insertion order for O(1) LRU tracking - oldest entries are at the
+// start of the Map, accessing an entry moves it to the end (delete + re-insert),
+// eviction removes from the start (skipping protected entries)
+
+// sentinel value to represent "not found" (null) in cache
+// allows distinguishing between "not in cache" and "cached as null"
+const NULL_SENTINEL = Symbol('LRUCache.NULL');
 
 // configuration options for LRUCache
 export interface LRUCacheOptions<K, V> {
-  // maximum number of entries before eviction (required)
-  // note: protected entries don't count against this limit
+  // max entries
   maxEntries: number;
-  // time-to-live in milliseconds (optional, no expiration if not set)
+  // ttl ms
   ttlMs?: number;
-  // callback when entry is evicted (optional)
+  // eviction callback
   onEvict?: (key: K, value: V) => void;
-  // function to estimate size of a value in bytes (optional)
+  // size estimator
   estimateSize?: (value: V) => number;
-  // maximum memory in bytes before eviction (optional, requires estimateSize)
-  // note: protected entries don't count against this limit
+  // max memory bytes
   maxMemoryBytes?: number;
-  // predicate to protect entries from eviction (optional)
-  // protected entries don't count against maxEntries or maxMemoryBytes
+  // protection predicate
   isProtected?: (key: K, value: V) => boolean;
 }
 
 // internal cache entry w/ metadata
 interface CacheEntry<V> {
   value: V;
-  // null = no expiration
+  // expiration time
   expiresAt: number | null;
-  // 0 if no size estimation
+  // entry size
   size: number;
 }
 
@@ -60,9 +59,7 @@ export class LRUCache<K, V> {
     this._isProtected = options.isProtected;
   }
 
-  // get a value from the cache
-  // returns null if not found or expired
-  // updates LRU position on access
+  // get value, return null if missing/expired
   get(key: K): V | null {
     const entry = this.cache.get(key);
     if (!entry) {
@@ -122,8 +119,7 @@ export class LRUCache<K, V> {
     this.evictOverflow();
   }
 
-  // check if a key exists in the cache (does not update LRU position)
-  // returns false if expired
+  // check if key exists
   has(key: K): boolean {
     const entry = this.cache.get(key);
     if (!entry) {
@@ -139,8 +135,7 @@ export class LRUCache<K, V> {
     return true;
   }
 
-  // delete a key from the cache
-  // returns true if the key existed
+  // delete key
   delete(key: K): boolean {
     const entry = this.cache.get(key);
     if (!entry) {
@@ -168,7 +163,7 @@ export class LRUCache<K, V> {
     this._currentMemoryBytes = 0;
   }
 
-  // number of entries in the cache
+  // entry count
   get size(): number {
     return this.cache.size;
   }
@@ -308,5 +303,83 @@ export class LRUCache<K, V> {
         if (!this.evictOldestEvictable()) break;
       }
     }
+  }
+}
+
+// options for NullableLRUCache
+export interface NullableLRUCacheOptions {
+  // max entries
+  maxEntries: number;
+  // ttl ms
+  ttlMs?: number;
+}
+
+// cache result: value exists (found), value is null (not found), or not in cache
+export type NullableCacheResult<V> =
+  | { status: 'hit'; value: V }
+  | { status: 'null' }
+  | { status: 'miss' };
+
+// LRU cache wrapper that distinguishes between "not in cache" & "cached as null"
+// useful for caching lookup results where null means "not found"
+// example
+// ```typescript
+// const cache = new NullableLRUCache<string, Module>({ maxEntries: 100 });
+// cache.set('key', module);     // cache a found module
+// cache.setNull('missing');     // cache "not found" result
+// cache.get('key');            // { status: 'hit', value: module }
+// cache.get('missing');        // { status: 'null' }
+// cache.get('uncached');       // { status: 'miss' }
+// ```
+export class NullableLRUCache<K, V> {
+  private cache: LRUCache<K, V | typeof NULL_SENTINEL>;
+
+  constructor(options: NullableLRUCacheOptions) {
+    this.cache = new LRUCache<K, V | typeof NULL_SENTINEL>({
+      maxEntries: options.maxEntries,
+      ttlMs: options.ttlMs,
+    });
+  }
+
+  // get a value from cache w/ explicit null handling
+  get(key: K): NullableCacheResult<V> {
+    const value = this.cache.get(key);
+    if (value === null) {
+      return { status: 'miss' };
+    }
+    if (value === NULL_SENTINEL) {
+      return { status: 'null' };
+    }
+    return { status: 'hit', value };
+  }
+
+  // check if key is in cache (including null entries)
+  has(key: K): boolean {
+    return this.cache.has(key);
+  }
+
+  // set a value in cache
+  set(key: K, value: V): void {
+    this.cache.set(key, value);
+  }
+
+  // cache a "not found" (null) result
+  setNull(key: K): void {
+    this.cache.set(key, NULL_SENTINEL);
+  }
+
+  // delete from cache
+  delete(key: K): boolean {
+    return this.cache.delete(key);
+  }
+
+  // clear all entries
+  clear(): void {
+    this.cache.clear();
+  }
+
+  // entry count
+  get size(): number {
+    return this.cache.size;
   }
 }
