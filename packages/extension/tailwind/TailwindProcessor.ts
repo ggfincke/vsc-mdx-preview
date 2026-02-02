@@ -220,7 +220,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   }
 
   // invalidate the Tailwind version cache
-  // called when config files change to ensure version is re-detected
+  // handle config change, re-detect version
   invalidateVersionCache(workspaceRoot?: string | null): void {
     this.detector.invalidateVersionCache(workspaceRoot);
   }

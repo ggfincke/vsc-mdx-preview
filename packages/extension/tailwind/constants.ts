@@ -30,7 +30,7 @@ export const TAILWIND_CACHE_SCHEMA_VERSION = 1;
 
 // processing limits
 
-// maximum characters per @source inline() directive for Tailwind v4
+// max characters per @source inline() directive for Tailwind v4
 // Tailwind v4 uses CSS-based `@source inline("...")` directives instead of the
 // v3 `content` configuration option - this limit prevents potential issues w/
 // PostCSS or CSS parsers when processing very long inline source strings
@@ -38,22 +38,22 @@ export const TAILWIND_CACHE_SCHEMA_VERSION = 1;
 // is split into multiple @source directives
 export const MAX_INLINE_SOURCE_CHUNK_SIZE = 2000;
 
-// maximum recursion depth for nested template literal extraction
+// max recursion depth for nested template literal extraction
 // prevents stack overflow from pathological input like deeply nested templates
 export const SCANNER_MAX_RECURSION_DEPTH = 10;
 
 // concurrency limits
 
-// maximum concurrent dependency resolution operations
+// max concurrent dependency resolution operations
 export const TAILWIND_DEPENDENCY_RESOLUTION_LIMIT = 10;
 
-// maximum concurrent file read operations
+// max concurrent file read operations
 export const TAILWIND_FILE_READ_LIMIT = 8;
 
-// default maximum file size in bytes to process (10 MB)
+// default max file size in bytes to process (10 MB)
 export const DEFAULT_MAX_FILE_SIZE_BYTES = DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES;
 
-// default maximum CSS files to search when detecting entry CSS
+// default max CSS files to search when detecting entry CSS
 export const DEFAULT_MAX_CSS_FILES_TO_SEARCH =
   DEFAULT_TAILWIND_MAX_CSS_FILES_TO_SEARCH;
 
@@ -69,10 +69,10 @@ export const PROCESSOR_CACHE_DEFAULT_TTL_SECONDS =
 
 // version boundaries
 
-// minimum supported Tailwind CSS major version
+// min supported Tailwind CSS major version
 export const MIN_SUPPORTED_TAILWIND_VERSION = 4;
 
-// maximum known Tailwind CSS major version (for future-proofing warnings)
+// max known Tailwind CSS major version (for future-proofing warnings)
 export const MAX_KNOWN_TAILWIND_VERSION = 5;
 
 // watcher configuration
