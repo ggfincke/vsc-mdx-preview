@@ -6,10 +6,10 @@ import type { FetchResult } from '@mdx-preview/shared';
 // re-export FetchResult from shared
 export type { FetchResult } from '@mdx-preview/shared';
 
-// module export type - can be any value (default export, named exports, etc.)
+// module export value
 type ModuleExports = Record<string, unknown> | unknown;
 
-// a cached module
+// cached module
 export interface Module {
   id: string;
   exports: ModuleExports;

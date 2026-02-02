@@ -21,10 +21,7 @@ export function computeContentHash(content: string): string {
   return crypto.createHash('sha1').update(content, 'utf8').digest('hex');
 }
 
-// LRU cache for per-file Tailwind class scan results
-// - Content hash validation (returns null if file changed)
-// - TTL-based expiration
-// - LRU eviction when max entries exceeded
+// LRU cache for per-file Tailwind class scan results w/ content hash validation, TTL expiration & LRU eviction
 export class TailwindScanCache {
   private cache: ContentHashCache<string[]>;
 
@@ -36,7 +33,7 @@ export class TailwindScanCache {
   }
 
   // get cached scan result if content hash matches & not expired
-  // returns null if cache miss, expired, or hash mismatch
+  // return null if miss/expired/mismatch
   get(fsPath: string, contentHash: string): string[] | null {
     const result = this.cache.getIfHashMatches(fsPath, contentHash);
     if (result !== null) {

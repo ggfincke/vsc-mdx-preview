@@ -3,14 +3,14 @@
 //
 // STYLE INJECTION ARCHITECTURE
 // - ModuleRegistry: authoritative source of truth for style tracking
-//   - has reference counting & lru eviction for style entries
+//   - have reference counting & lru eviction for style entries
 //   - use hasInjectedStyle() to check before injection
 //   - use markStyleInjected() to track after injection
 //
 // - StyleInjector: pure DOM manipulation layer
 //   - handle <style> element creation & removal
 //   - cache DOM references for O(1) removal
-//   - does NOT track which styles have been injected (defer to registry)
+//   - do NOT track which styles have been injected (defer to registry)
 
 import { registry } from '../registry/ModuleRegistry';
 import { StyleInjector } from '../../utils/StyleInjector';

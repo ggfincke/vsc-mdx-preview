@@ -9,20 +9,20 @@ import {
 import { useImageLightbox } from './useImageLightbox';
 
 interface PreviewSetupOptions {
-  // mermaid rendering mode: 'after-paint' for Safe Mode, 'before-paint' for Trusted
+  // mermaid scan timing mode
   mermaidMode: MermaidScanMode;
-  // filter stale mermaid elements (Trusted Mode only)
+  // filter stale mermaid elements
   filterStale?: boolean;
 }
 
 interface PreviewSetupResult {
-  // ref to attach to the preview container div
+  // preview container ref
   containerRef: RefObject<HTMLDivElement>;
-  // handler for image click events (opens lightbox)
+  // image click handler for lightbox
   handleImageClick: (e: MouseEvent | React.MouseEvent) => void;
-  // render mermaid portals (returns ReactNode)
+  // render mermaid portals
   renderPortals: () => ReactNode;
-  // manually trigger mermaid scan (for post-render scanning)
+  // manually trigger mermaid scan
   scan: () => void;
 }
 

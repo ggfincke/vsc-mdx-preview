@@ -22,13 +22,13 @@ export interface ComponentImportsResult {
   imports: string;
   // component object literal for MDX provider
   componentsObject: string;
-  // whether any components were generated
+  // has components
   hasComponents: boolean;
 }
 
 // options for component import generation
 export interface ComponentImportsOptions {
-  // whether built-in generic shims should be auto-injected (default: true)
+  // auto-inject shims
   builtinsEnabled?: boolean;
 }
 

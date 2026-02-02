@@ -3,10 +3,10 @@
 
 // zoom
 
-// minimum zoom level percentage
+// min zoom %
 export const ZOOM_MIN_PERCENT = 50;
 
-// maximum zoom level percentage
+// max zoom %
 export const ZOOM_MAX_PERCENT = 300;
 
 // zoom increment/decrement step
@@ -34,10 +34,10 @@ export {
 
 // module loading limits (security & DoS prevention)
 
-// maximum recursion depth for module loading
+// max module loading depth
 // prevents stack overflow from deep dependency chains
 export const MAX_MODULE_LOAD_DEPTH = 100;
 
-// maximum concurrent fetch requests
+// max concurrent fetches
 // prevents resource exhaustion from unbounded parallelism
 export const MAX_CONCURRENT_FETCHES = 10;

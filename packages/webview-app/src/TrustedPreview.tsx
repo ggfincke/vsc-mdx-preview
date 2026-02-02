@@ -88,7 +88,7 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   // local loading state tracks webview-side module evaluation (distinct from global
   // isLoading which tracks extension-side compilation). This separation is intentional -
   // the global loading state controls the LoadingBar overlay, while isEvaluating controls
-  // the TrustedPreview spinner for the evaluation phase
+  // evaluation phase spinner
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   // shared preview setup (container ref, mermaid rendering, image lightbox)

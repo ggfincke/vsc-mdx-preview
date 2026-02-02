@@ -24,9 +24,9 @@ import {
 
 // result of framework alias resolution step
 export interface FrameworkAliasResult {
-  // possibly-rewritten specifier
+  // rewritten specifier
   specifier: string;
-  // early return result (for built-in shims)
+  // early result for shims
   earlyResult?: ResolutionResult;
 }
 
@@ -80,7 +80,7 @@ export function resolveFrameworkAliasStep(
   return { specifier: aliasedPath };
 }
 
-// UnifiedResolver orchestrates 4 resolution strategies in priority order
+// UnifiedResolver - orchestrate 4 resolution strategies in priority order
 export class UnifiedResolver {
   // check if specifier is a relative import
   isRelativeImport(specifier: string): boolean {

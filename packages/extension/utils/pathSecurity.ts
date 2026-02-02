@@ -10,9 +10,9 @@ import type { Preview } from '../preview/preview-manager';
 
 // result of validating a secure path
 export interface SecurePathResult {
-  // the resolved absolute path
+  // resolved path
   resolvedPath: string;
-  // the entry directory used for resolution
+  // entry directory
   entryDir: string;
 }
 

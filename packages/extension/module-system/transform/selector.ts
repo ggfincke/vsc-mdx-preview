@@ -11,17 +11,17 @@ const getBabelTransform = createLazyImport(() =>
 );
 
 export interface TranspileOptions {
-  // whether to prefer Sucrase over Babel
+  // prefer Sucrase
   useSucrase: boolean;
-  // context for debug logging (e.g., 'entry' or 'dependency')
+  // debug context
   context?: string;
-  // file path for debug logging
+  // file path
   filePath?: string;
 }
 
 // transpile code w/ automatic fallback from Sucrase to Babel
-// when useSucrase is true, attempts Sucrase first & falls back to Babel on failure
-// when useSucrase is false, uses Babel directly
+// when useSucrase is true, attempt Sucrase first & fall back to Babel on failure
+// when useSucrase is false, use Babel directly
 export async function transpileWithFallback(
   code: string,
   options: TranspileOptions

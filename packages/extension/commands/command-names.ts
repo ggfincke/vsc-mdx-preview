@@ -1,7 +1,7 @@
 // packages/extension/commands/command-names.ts
 // command ID constants for type-safe registration
 
-// command IDs as constants to prevent typos & enable refactoring
+// define command IDs as constants to prevent typos & enable refactoring
 // mirrors the pattern from services/service-names.ts
 export const CommandNames = {
   // preview commands

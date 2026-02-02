@@ -5,7 +5,7 @@
 
 import * as comlink from 'comlink';
 import type { Endpoint } from 'comlink';
-import { createTaggedLogger } from './utils/debug';
+import { createTaggedLogger } from './utils/createTaggedLogger';
 import { StyleInjector, STYLE_IDS } from './utils/StyleInjector';
 import {
   RPC_HANDLER_RETRY_DELAY_MS,

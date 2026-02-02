@@ -16,13 +16,13 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 
 // options for DOM-based copy w/ visual feedback
 export interface CopyWithFeedbackOptions {
-  // class to add when copied (default: 'copied')
+  // copied state class
   copiedClassName?: string;
-  // HTML content to show when copied
+  // feedback content
   copiedContent?: string;
-  // HTML content to restore after feedback (default: original innerHTML)
+  // restore content
   originalContent?: string;
-  // feedback duration in ms (default: CODE_COPY_FEEDBACK_DURATION_MS)
+  // duration ms
   duration?: number;
 }
 

@@ -2,9 +2,8 @@
 // file validation utilities for Tailwind scanning - handle file size, token, & parallel read validation
 
 import * as fs from 'fs';
-import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
+import { extractErrorMessage, LogTags, Semaphore } from '@mdx-preview/shared';
 import { debug } from '../logging';
-import { Semaphore } from '../utils/Semaphore';
 import { CLASS_TOKEN_RE, TAILWIND_FILE_READ_LIMIT } from './constants';
 
 const readSemaphore = new Semaphore(TAILWIND_FILE_READ_LIMIT);

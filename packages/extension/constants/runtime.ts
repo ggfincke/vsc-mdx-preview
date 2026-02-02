@@ -30,22 +30,22 @@ export const ERROR_DEDUPE_WINDOW_DEFAULT_MS = 5000;
 
 // limits
 
-// maximum file watchers for dependency tracking (LRU eviction)
+// max file watchers for dependency tracking (LRU eviction)
 export const DEP_WATCHER_MAX_ENTRIES = 50;
 
-// maximum character length for fetch requests (security limit)
+// max character length for fetch requests (security limit)
 export const MAX_FETCH_REQUEST_LENGTH = 2048;
 
-// maximum entries in error deduplication map before FIFO eviction
+// max entries in error deduplication map before FIFO eviction
 export const ERROR_DEDUPE_MAX_ENTRIES = 1000;
 
 // module fetching limits (security & DoS prevention)
 
-// maximum module file size in bytes (5MB)
+// max module file size in bytes (5MB)
 // prevent memory exhaustion from loading giant files
 export const MAX_MODULE_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
-// maximum dependencies per module (prevent combinatorial explosion)
+// max dependencies per module (prevent combinatorial explosion)
 export const MAX_DEPENDENCIES_PER_MODULE = 200;
 
 // MDX compilation timeout (ms) - prevent hang on malicious/large MDX

@@ -7,7 +7,7 @@ import type { FileTypeHandler } from './index';
 import { buildCssResult } from './result-builders';
 import { CSS_EXTENSIONS } from '../../constants';
 
-// handler for .css files - returns CSS content for injection into the webview
+// handler for .css files - return CSS content for injection into the webview
 export class CssHandler implements FileTypeHandler {
   extensions = [...CSS_EXTENSIONS];
 

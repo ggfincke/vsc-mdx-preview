@@ -7,7 +7,7 @@ import type { FileTypeHandler } from './index';
 import { buildModuleExportResult } from './result-builders';
 import { JSON_EXTENSIONS } from '../../constants';
 
-// handler for .json files - wraps JSON content as a CommonJS module export
+// handler for .json files - wrap JSON content as a CommonJS module export
 export class JsonHandler implements FileTypeHandler {
   extensions = [...JSON_EXTENSIONS];
 

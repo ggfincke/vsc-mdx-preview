@@ -9,11 +9,11 @@
 // injectModuleCss() to avoid duplicate injection
 
 export interface StyleInjectorOptions {
-  // enable deduplication check (skip if already injected) - for non-module styles
+  // deduplication flag
   deduplicate?: boolean;
-  // insert before element w/ this ID (for ordering)
+  // insertion anchor ID
   insertBefore?: string;
-  // set data attribute on document element
+  // document data attribute
   dataAttribute?: { name: string; value: string };
 }
 

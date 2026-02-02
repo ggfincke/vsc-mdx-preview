@@ -12,7 +12,7 @@ export type CalloutType =
   | 'caution'
   | 'important';
 
-// array of all valid callout types for iteration & validation
+// valid callout types
 export const VALID_CALLOUT_TYPES: readonly CalloutType[] = [
   'note',
   'tip',
@@ -23,7 +23,7 @@ export const VALID_CALLOUT_TYPES: readonly CalloutType[] = [
   'important',
 ] as const;
 
-// set of valid callout types for O(1) lookup
+// callout types set
 export const VALID_CALLOUT_TYPE_SET: ReadonlySet<string> = new Set(
   VALID_CALLOUT_TYPES
 );

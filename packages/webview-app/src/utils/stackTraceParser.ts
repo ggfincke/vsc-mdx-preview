@@ -2,17 +2,17 @@
 // parse error stack traces to extract file locations for navigation
 
 interface StackFrame {
-  // raw line from stack trace
+  // original line
   raw: string;
-  // function or method name (may be undefined for anonymous)
+  // function name
   functionName?: string;
-  // file path (may be absolute or relative)
+  // file path
   filePath?: string;
-  // line number (1-based)
+  // line number
   line?: number;
-  // column number (1-based)
+  // column
   column?: number;
-  // whether this frame looks navigable (has file, line)
+  // navigable flag
   isNavigable: boolean;
 }
 

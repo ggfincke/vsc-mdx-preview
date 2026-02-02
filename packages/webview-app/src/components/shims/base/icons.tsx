@@ -224,7 +224,7 @@ export function ImportantIconGitHub({ size = 16, className }: IconProps): ReactE
   );
 }
 
-// map of Nextra callout types to their icon components
+// Nextra callout type icons
 export const NEXTRA_CALLOUT_ICONS: Record<NextraCalloutType, React.FC<IconProps>> = {
   default: LightbulbIcon,
   info: InfoIconGitHub,

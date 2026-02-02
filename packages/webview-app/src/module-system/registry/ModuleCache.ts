@@ -30,7 +30,7 @@ export class ModuleCache {
   private pendingFetches: Map<string, Promise<Module>> = new Map();
   private preloadedIds: Set<string> = new Set();
 
-  // callback for cleanup when evicting (set by ModuleRegistry)
+  // eviction cleanup callback
   onEvict?: (id: string) => void;
 
   constructor() {
@@ -141,7 +141,7 @@ export class ModuleCache {
       const obj = exports as Record<string, unknown>;
       for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          // key + pointer
+          // key & pointer
           size += key.length * 2 + 8;
           const value = obj[key];
           if (typeof value === 'string') {

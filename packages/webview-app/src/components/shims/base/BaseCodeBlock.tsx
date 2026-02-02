@@ -10,37 +10,29 @@ type FrameType = 'code' | 'terminal' | 'none' | 'auto';
 
 // configuration for the code block factory
 interface CodeBlockConfig {
-  // CSS class prefix for all elements
   classPrefix: string;
-  // when true, accepts `code` string prop; when false, extracts from children
+  // use `code` prop vs extracting from children
   codeAsString?: boolean;
-  // enable frame type support (terminal/code/none)
+  // terminal/code/none frame support
   supportsFrames?: boolean;
-  // languages that auto-detect as terminal
+  // auto-terminal detection languages
   terminalLanguages?: Set<string>;
-  // show language badge when title bar is present (default: false for Starlight, true for Docusaurus)
+  // show lang badge w/ title bar
   showLangBadgeWithTitle?: boolean;
 }
 
 // props for the generated code block component
 interface BaseCodeBlockProps {
-  // code as string (when codeAsString is true)
   code?: string;
-  // children to extract code from (when codeAsString is false)
   children?: ReactNode;
-  // language for syntax highlighting
   language?: string;
-  // alternative language prop name
+  // alias for language
   lang?: string;
-  // title bar text
   title?: string;
-  // frame type (only when supportsFrames is true)
   frame?: FrameType;
-  // additional class name
   className?: string;
-  // show line numbers
   showLineNumbers?: boolean;
-  // metadata string (unused, for compatibility)
+  // compatibility props
   metastring?: string;
   meta?: string;
 }

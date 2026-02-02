@@ -5,16 +5,13 @@ import { registry } from '../registry/ModuleRegistry';
 import { PRELOAD_ALIASES } from '../preload';
 
 // create a synchronous require function bound to a parent module
-// used during module evaluation to resolve already-loaded dependencies
+// use during module evaluation to resolve already-loaded dependencies
 //
 // resolution order
 // 1. direct cache hit on the request string
 // 2. resolution map lookup (for relative imports resolved from parent)
 // 3. PRELOAD_ALIASES lookup
 // 4. throw error if not found
-//
-// parentId: the ID of the module doing the require
-// return sync require function for use in module evaluation
 export function createSyncRequire(
   parentId: string
 ): (request: string) => unknown {

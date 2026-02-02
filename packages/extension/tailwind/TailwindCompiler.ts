@@ -174,8 +174,7 @@ export class TailwindCompiler {
     return this.validatePluginModule(plugin, id);
   }
 
-  // validate that a loaded module is a valid PostCSS plugin factory
-  // throw TailwindError if the module is not a function
+  // validate loaded module is a valid PostCSS plugin factory & throw TailwindError if not a function
   private validatePluginModule(mod: unknown, id: string): PostCSSPluginFactory {
     if (typeof mod !== 'function') {
       throw new TailwindError(

@@ -25,20 +25,20 @@ interface CompiledPathPattern {
   originalPattern: string;
   targets: string[];
   isWildcard: boolean;
-  // pattern without '/*' suffix
+  // pattern w/o '/*' suffix
   prefix: string;
-  // prefix + '/' for startsWith check
+  // prefix w/ slash
   prefixWithSlash: string;
 }
 
 interface CompiledPathsIndex {
-  // O(1) lookup for exact matches (e.g., "@utils" -> ["/project/src/utils"])
+  // O(1) exact match lookup
   exactMatches: Map<string, string[]>;
-  // wildcard patterns sorted by prefix length (longest first for specificity)
+  // wildcards sorted by prefix length
   wildcardPatterns: CompiledPathPattern[];
-  // absolute base URL for path resolution
+  // absolute base URL
   absoluteBaseUrl: string;
-  // cache key for invalidation (stringified paths)
+  // cache key
   cacheKey: string;
 }
 
@@ -205,8 +205,8 @@ export function getResolutionCandidates(
 }
 
 // TypeScript path resolution strategy (tsconfig.json paths)
-// uses custom pattern matching instead of TypeScript compiler for performance
-// patterns are compiled once per tsconfig & cached
+// use custom pattern matching instead of TypeScript compiler for performance
+// patterns compiled once per tsconfig & cached
 export class TypeScriptPathStrategy implements IResolutionStrategy {
   readonly name = 'TypeScript';
 

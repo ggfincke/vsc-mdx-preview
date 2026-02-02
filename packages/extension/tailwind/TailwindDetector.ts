@@ -352,7 +352,7 @@ export class TailwindDetector {
   }
 
   // invalidate version cache for a specific workspace or all workspaces
-  // called when TailwindConfigWatcher detects changes
+  // handle config changes
   invalidateVersionCache(workspaceRoot?: string | null): void {
     if (workspaceRoot !== undefined) {
       const cacheKey = workspaceRoot ?? 'default';

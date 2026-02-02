@@ -5,11 +5,11 @@ import type { ReactNode } from 'react';
 import './styles.css';
 
 export interface UnknownComponentPlaceholderProps {
-  // original component name that was not found
+  // component name
   name: string;
-  // children passed to the original component
+  // children
   children?: ReactNode;
-  // additional message or hint
+  // hint message
   hint?: string;
 }
 

@@ -46,7 +46,7 @@ async function getCachedRealPath(filePath: string): Promise<string | null> {
 }
 
 // get root directory path for entry file (async w/ symlink resolution)
-// falls back to sync behavior if paths don't exist (for tests & new files)
+// fall back to sync behavior if paths don't exist (for tests & new files)
 async function getRootDirectoryPathAsync(
   entryFsDirectory: string
 ): Promise<string | undefined> {

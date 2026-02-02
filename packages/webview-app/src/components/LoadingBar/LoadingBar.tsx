@@ -6,7 +6,7 @@ import './LoadingBar.css';
 import { LOADING_BAR_SHOW_DELAY_MS } from '../../constants';
 
 interface LoadingBarProps {
-  // whether to show the loading bar immediately
+  // show immediately
   immediate?: boolean;
 }
 

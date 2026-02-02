@@ -24,7 +24,7 @@ const toggleScripts = async (): Promise<void> => {
   const trustState = getTrustManager().getState();
 
   if (!trustState.workspaceTrusted) {
-    // workspace not trusted - offer to manage trust
+    // handle untrusted workspace - offer to manage trust
     await getErrorReporter().reportWithActions(
       new Error('To enable scripts, you must first trust this workspace.'),
       ErrorContext.Security,
@@ -40,7 +40,7 @@ const toggleScripts = async (): Promise<void> => {
     return;
   }
 
-  // workspace is trusted - toggle scripts setting
+  // toggle scripts setting for trusted workspace
   const configManager = getConfigManager();
   const scriptsEnabled = configManager.get('preview.enableScripts');
 

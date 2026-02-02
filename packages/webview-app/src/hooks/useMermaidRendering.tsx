@@ -21,18 +21,18 @@ import {
 export type MermaidScanMode = 'after-paint' | 'before-paint';
 
 interface UseMermaidRenderingOptions {
-  // 'after-paint' (useEffect) for Safe Mode, 'before-paint' (useLayoutEffect) for Trusted Mode
+  // scan timing mode (Safe: after-paint, Trusted: before-paint)
   mode?: MermaidScanMode;
-  // filter out stale elements no longer in DOM (needed for Trusted Mode dynamic rendering)
+  // filter stale elements removed from DOM
   filterStale?: boolean;
 }
 
 interface UseMermaidRenderingResult {
-  // array of found mermaid diagrams
+  // found mermaid diagrams
   diagrams: MermaidDiagramInfo[];
-  // render mermaid portals (call in JSX)
+  // render mermaid portals
   renderPortals: () => ReactNode[];
-  // manually trigger a scan (optional)
+  // manually trigger scan
   scan: () => void;
 }
 

@@ -12,28 +12,22 @@ export type IconSource<T extends string> =
 
 // configuration for creating a callout component
 export interface BaseCalloutConfig<T extends string> {
-  // CSS class prefix (e.g., 'mdx-preview-generic-callout')
   classPrefix: string;
-  // supported callout types
   types: readonly T[];
-  // default type when none specified
   defaultType: T;
-  // icon source (SVG strings or React components)
   icons: IconSource<T>;
-  // default titles for each type
   defaultTitles: Record<T, string>;
-  // render mode - 'header' wraps icon+title in header div, 'inline' renders icon directly
+  // 'header' wraps icon+title, 'inline' renders icon directly
   layout: 'header' | 'inline';
 }
 
-// common callout props (framework-specific components can extend this)
+// common callout props
 export interface BaseCalloutProps<T extends string> {
   children: ReactNode;
   type?: T;
   title?: string;
-  // custom icon (overrides default)
+  // overrides default icon
   icon?: ReactNode;
-  // custom class
   className?: string;
 }
 

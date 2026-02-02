@@ -136,27 +136,23 @@ export default useTabState;
 
 // index-based tab state management (for Nextra-style tabs)
 
-// options for useIndexTabs hook (used by components w/ index-based tab selection)
+// options for useIndexTabs hook
 export interface UseIndexTabsOptions<T> {
-  // array of tab items
   items: T[];
-  // default selected index (default: 0)
   defaultIndex?: number;
-  // controlled selected index (overrides internal state)
+  // overrides internal state
   controlledIndex?: number;
-  // localStorage key for persisting selected tab
+  // localStorage persistence key
   storageKey?: string;
-  // callback when tab selection changes
+  // selection change handler
   onChange?: (index: number) => void;
-  // function to check if a tab item is disabled
+  // disabled check
   isDisabled?: (item: T, index: number) => boolean;
 }
 
 // result from useIndexTabs hook
 export interface UseIndexTabsResult {
-  // currently active tab index
   activeIndex: number;
-  // function to set active tab index (handles disabled check, localStorage, onChange)
   setActiveIndex: (index: number) => void;
 }
 
@@ -190,7 +186,7 @@ export function useIndexTabs<T>({
   const [internalIndex, setInternalIndex] = useState(getInitialIndex);
   const activeIndex = controlledIndex ?? internalIndex;
 
-  // Handle tab selection
+  // handle tab selection
   const setActiveIndex = useCallback(
     (index: number) => {
       // check if tab is disabled

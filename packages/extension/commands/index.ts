@@ -20,7 +20,7 @@ import { commands as debugCommands } from './debug';
 
 import type { CommandDefinition } from '../types';
 
-// all command definitions aggregated from modules
+// aggregate all command definitions from modules
 const allCommands: CommandDefinition[] = [
   ...previewCommands,
   ...configToggleCommands,

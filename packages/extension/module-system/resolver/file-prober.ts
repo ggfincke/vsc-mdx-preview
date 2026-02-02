@@ -119,11 +119,11 @@ export async function batchStatAsync(
 
 // options for file probing
 export interface FileProbingOptions {
-  // extensions to try (in priority order)
+  // extensions to try
   extensions: readonly string[];
-  // index files to try when path is a directory
+  // index files
   indexFiles: readonly string[];
-  // skip paths containing node_modules (default: true)
+  // skip node_modules
   skipNodeModules?: boolean;
 }
 
@@ -193,8 +193,8 @@ export function findIndexFileSync(
 }
 
 // probe for a file w/ various extensions (sync)
-// tries the base path w/ each extension in priority order
-// then tries index files if the base path is a directory
+// try the base path w/ each extension in priority order
+// then try index files if the base path is a directory
 export function probeFile(
   basePath: string,
   options: Partial<FileProbingOptions> = {}
@@ -278,7 +278,7 @@ export async function probeFileAsync(
 // convenience functions (pre-configured probing for common use cases)
 
 // probe for TypeScript/JavaScript files (sync)
-// uses TYPESCRIPT_RESOLUTION_EXTENSIONS & TS_INDEX_FILES
+// use TYPESCRIPT_RESOLUTION_EXTENSIONS & TS_INDEX_FILES
 export function probeTypeScriptFile(basePath: string): string | null {
   return probeFile(basePath, {
     extensions: TYPESCRIPT_RESOLUTION_EXTENSIONS,
@@ -289,7 +289,7 @@ export function probeTypeScriptFile(basePath: string): string | null {
 }
 
 // probe for TypeScript/JavaScript files (async)
-// uses TYPESCRIPT_RESOLUTION_EXTENSIONS & TS_INDEX_FILES
+// use TYPESCRIPT_RESOLUTION_EXTENSIONS & TS_INDEX_FILES
 export async function probeTypeScriptFileAsync(
   basePath: string
 ): Promise<string | null> {
@@ -302,7 +302,7 @@ export async function probeTypeScriptFileAsync(
 }
 
 // probe for general module files including MDX (sync)
-// uses FILE_PROBE_EXTENSIONS & FILE_PROBE_INDEX_FILES
+// use FILE_PROBE_EXTENSIONS & FILE_PROBE_INDEX_FILES
 export function probeModuleFile(basePath: string): string | null {
   return probeFile(basePath, {
     extensions: FILE_PROBE_EXTENSIONS,
@@ -312,7 +312,7 @@ export function probeModuleFile(basePath: string): string | null {
 }
 
 // probe for general module files including MDX (async)
-// uses FILE_PROBE_EXTENSIONS & FILE_PROBE_INDEX_FILES
+// use FILE_PROBE_EXTENSIONS & FILE_PROBE_INDEX_FILES
 export async function probeModuleFileAsync(
   basePath: string
 ): Promise<string | null> {

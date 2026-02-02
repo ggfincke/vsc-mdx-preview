@@ -28,21 +28,21 @@ import type { ResolvedConfig, TailwindConfig } from '../types';
 
 // result of evaluating MDX in Trusted Mode
 export interface TrustedEvaluationResult {
-  // transpiled JavaScript code
+  // transpiled JS code
   code: string;
   // resolved file path
   entryFilePath: string;
   // extracted dependencies
   dependencies: string[];
-  // parsed frontmatter from MDX
+  // parsed frontmatter
   frontmatter: Record<string, unknown> | undefined;
 }
 
 // result of evaluating MDX in Safe Mode
 export interface SafeEvaluationResult {
-  // sanitized HTML content
+  // sanitized HTML
   html: string;
-  // parsed frontmatter from MDX
+  // parsed frontmatter
   frontmatter: Record<string, unknown> | undefined;
 }
 
@@ -55,7 +55,7 @@ export interface TailwindProcessParams {
   tailwindConfig: TailwindConfig;
 }
 
-// * EvaluationEngine handles core evaluation logic for MDX content
+// evaluation engine handles core evaluation logic for MDX content
 export class EvaluationEngine {
   // evaluate MDX in Trusted Mode (transpile to executable JS w/ React components)
   async evaluateTrusted(

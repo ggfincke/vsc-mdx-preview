@@ -8,7 +8,7 @@ import { createTransformError } from '../../errors';
 import { buildModuleExportResult } from './result-builders';
 import { IMAGE_EXTENSIONS } from '../../constants';
 
-// handler for image files - converts file path to webview-accessible URI & wraps as module export
+// handler for image files - convert file path to webview-accessible URI & wrap as module export
 export class ImageHandler implements FileTypeHandler {
   extensions = [...IMAGE_EXTENSIONS];
 

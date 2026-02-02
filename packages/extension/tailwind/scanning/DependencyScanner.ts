@@ -2,9 +2,9 @@
 // scan imported dependencies for Tailwind classes
 
 import * as path from 'path';
+import { Semaphore } from '@mdx-preview/shared';
 import { getUnifiedResolver } from '../../module-system/resolver/UnifiedResolver';
 import type { ResolutionContext, TextExtractor } from '../../types';
-import { Semaphore } from '../../utils/Semaphore';
 import { FileScanValidator } from '../FileScanValidator';
 import { TailwindScanCache, computeContentHash } from '../TailwindScanCache';
 import { TAILWIND_DEPENDENCY_RESOLUTION_LIMIT } from '../constants';
@@ -81,8 +81,7 @@ export class DependencyScanner {
   ): Promise<string[]> {
     const entryDir = path.dirname(entryFilePath);
 
-    // use provided context if available, otherwise fall back to minimal context
-    // always ensure baseDir is set to the entry directory for relative resolution
+    // use provided context if available & always ensure baseDir is set to entry directory
     const context: ResolutionContext = providedContext
       ? { ...providedContext, baseDir: entryDir }
       : { baseDir: entryDir };

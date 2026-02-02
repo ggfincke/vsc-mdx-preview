@@ -1,12 +1,7 @@
 // packages/shared/utils/module-id.ts
 // utilities for working w/ npm:// module IDs used by the webview module system
-//
 // module ID format: npm://<package>@<version> or npm://<package>/<subpath>@<version>
-// examples
-//   - npm://react@18
-//   - npm://react/jsx-runtime@18
-//   - npm://@mdx-js/react@3
-//   - npm://@mdx-preview/shims-generic/Callout
+// examples: npm://react@18, npm://react/jsx-runtime@18, npm://@mdx-js/react@3
 
 // module ID prefix for npm packages
 export const NPM_MODULE_PREFIX = 'npm://';
@@ -29,11 +24,11 @@ export function isBareImport(specifier: string): boolean {
 
 // parsed npm module ID components
 export interface ParsedNpmModuleId {
-  // package name (e.g., 'react', '@mdx-js/react')
+  // package name
   package: string;
-  // subpath within package (e.g., '/jsx-runtime', '/client')
+  // subpath
   subpath?: string;
-  // version string (e.g., '18', '3')
+  // version
   version?: string;
 }
 

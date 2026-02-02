@@ -10,8 +10,8 @@ import type { ModuleRuntime } from '../types';
 import { normalizeError } from '@mdx-preview/shared';
 
 // evaluate a module string
-// for MDX function-body output (outputFormat: 'function-body')
-//   - runtime is passed as arguments[0]
+// MDX function-body format
+//   - pass runtime as arguments[0]
 //   - return { default: MDXContent }
 // for CJS-style modules
 //   - use require/exports/module.exports

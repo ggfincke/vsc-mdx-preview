@@ -16,9 +16,9 @@ import { buildResolutionResult } from '../result-builders';
 import { probeModuleFile, probeModuleFileAsync } from '../file-prober';
 
 // file probing strategy for relative imports
-// probes for files w/ common extensions (.ts, .tsx, .js, .jsx, .mdx, .md)
+// probe for files w/ common extensions (.ts, .tsx, .js, .jsx, .mdx, .md)
 // & index files when the specifier points to a directory
-// skips node_modules paths (use EnhancedResolveStrategy for those)
+// skip node_modules paths (use EnhancedResolveStrategy for those)
 export class FileProbeStrategy implements IResolutionStrategy {
   readonly name = 'FileProbe';
 

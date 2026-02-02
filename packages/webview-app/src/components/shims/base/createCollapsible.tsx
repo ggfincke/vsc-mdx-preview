@@ -7,47 +7,33 @@ import { ChevronIcon } from './icons';
 
 // class names configuration for collapsible components
 export interface CollapsibleClassNames {
-  // container element class
   container: string;
-  // summary/header element class
   summary: string;
-  // icon wrapper class
   icon: string;
-  // icon open state class (appended when open)
+  // appended when open
   iconOpen: string;
-  // title/text element class
   title: string;
-  // content container class
   content: string;
 }
 
 // configuration for creating a collapsible component
 export interface CollapsibleConfig {
-  // class names for each element
   classNames: CollapsibleClassNames;
-  // icon size in pixels (default: 16)
   iconSize?: number;
-  // whether to use native toggle event (default: true)
   useNativeToggle?: boolean;
-  // whether to apply the open class to the icon wrapper (default: true)
   applyOpenClassToWrapper?: boolean;
-  // default summary text when none provided (default: 'Details')
   defaultSummary?: string;
 }
 
-// common collapsible props (framework-specific components can extend this)
+// common collapsible props
 export interface BaseCollapsibleProps {
-  // content to show when expanded
   children: ReactNode;
-  // summary/title displayed in the header
   summary?: ReactNode;
   // alias for summary
   title?: ReactNode;
-  // whether to start expanded (default: false)
   defaultOpen?: boolean;
   // alias for defaultOpen
   open?: boolean;
-  // additional CSS class for the container
   className?: string;
 }
 

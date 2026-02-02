@@ -1,6 +1,12 @@
 // packages/extension/config/EffectivePreviewConfig.ts
 // unified config object merging VS Code settings + config file + frontmatter
 // precedence: frontmatter > config file > VS Code settings
+//
+// Config Architecture
+// 1. ConfigManager: low-level VS Code settings access (no caching, VS Code caches internally)
+// 2. PreviewConfiguration: per-preview state snapshot for change detection
+// 3. EffectivePreviewConfig: stateless builder merging settings + config file + frontmatter
+// 4. ConfigCache: file-based .mdx-previewrc.json caching w/ file watchers
 
 import { getConfigManager, getThemeManager } from '../services';
 import { resolveConfig } from '../preview/config/ConfigResolver';

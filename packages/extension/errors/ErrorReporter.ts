@@ -15,7 +15,12 @@ import {
   ERROR_DEDUPE_MAX_ENTRIES,
 } from '../constants';
 import { SingletonService } from '../services/SingletonService';
-import { LRUCache, LogTags, ModuleError } from '@mdx-preview/shared';
+import {
+  LRUCache,
+  LogTags,
+  ModuleError,
+  normalizeError as sharedNormalizeError,
+} from '@mdx-preview/shared';
 
 // error severity determines handling behavior
 export enum ErrorSeverity {
@@ -227,17 +232,17 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   }
 
   // normalize any error type to ExtensionError, ModuleError, or Error
+  // preserves extension-specific error types, falls back to shared normalizeError
   private normalizeError(error: unknown): ExtensionError | ModuleError | Error {
+    // preserve extension-specific error types
     if (error instanceof ExtensionError) {
       return error;
     }
     if (error instanceof ModuleError) {
       return error;
     }
-    if (error instanceof Error) {
-      return error;
-    }
-    return new Error(String(error));
+    // use shared normalizeError for generic errors
+    return sharedNormalizeError(error);
   }
 
   // infer severity from error type & context

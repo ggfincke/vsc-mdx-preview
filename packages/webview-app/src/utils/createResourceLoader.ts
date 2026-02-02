@@ -8,27 +8,27 @@
 // - false: failed (allows retry if allowRetry is true)
 
 import { LogTags } from '@mdx-preview/shared';
-import { createTaggedLogger } from './debug';
+import { createTaggedLogger } from './createTaggedLogger';
 
 const log = createTaggedLogger(LogTags.RESOURCE_LOADER);
 
 // options for creating a resource loader
 export interface ResourceLoaderOptions {
-  // name for debug logging
+  // debug name
   name: string;
-  // allow retry on failure (default: true)
+  // retry enabled
   allowRetry?: boolean;
 }
 
 // interface returned by createResourceLoader
 export interface ResourceLoader {
-  // load the resource (idempotent)
+  // load resource
   load(): Promise<void>;
-  // check if resource is loaded successfully
+  // loaded check
   isLoaded(): boolean;
-  // check if resource is currently loading
+  // loading check
   isLoading(): boolean;
-  // reset state (for testing)
+  // reset state
   reset(): void;
 }
 

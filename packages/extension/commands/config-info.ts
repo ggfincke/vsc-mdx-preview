@@ -17,7 +17,7 @@ import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 import type { SettingKey } from '../config/ConfigManager';
 
-// source type for each configuration value
+// define source type for each configuration value
 type ConfigSourceType =
   | 'frontmatter'
   | 'config-file'
@@ -25,13 +25,13 @@ type ConfigSourceType =
   | 'user-settings'
   | 'default';
 
-// source info for a configuration value
+// define source info for a configuration value
 interface ConfigSource {
   source: ConfigSourceType;
   file?: string;
 }
 
-// effective config w/ source info & metadata
+// define effective config w/ source info & metadata
 interface EffectiveConfigWithSources {
   metadata: {
     documentPath: string;
@@ -58,13 +58,13 @@ function getSettingSource(
   frontmatter: Record<string, unknown> | undefined,
   configFile: ResolvedConfig | null
 ): ConfigSource {
-  // frontmatter keys that can override settings
+  // define frontmatter keys that can override settings
   const frontmatterKeys: Record<string, string> = {
     'preview.previewTheme': 'previewTheme',
     'preview.codeBlockTheme': 'codeBlockTheme',
   };
 
-  // config file keys that can override settings
+  // define config file keys that can override settings
   const configFileKeys: Record<string, string> = {
     framework: 'framework',
     'tailwind.enabled': 'tailwind',

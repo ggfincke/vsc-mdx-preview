@@ -78,8 +78,7 @@ export class ContentScanner {
     }
   }
 
-  // extract balanced expressions using brace/paren matching
-  // handle nested braces properly, e.g., className={condition ? "a" : "b"}
+  // extract balanced expressions using brace/paren matching & handle nested braces properly
   extractBracedExpressions(
     text: string,
     startPattern: RegExp,

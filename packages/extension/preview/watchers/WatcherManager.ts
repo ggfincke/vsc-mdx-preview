@@ -6,7 +6,7 @@ import { debug } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import type { IWatcher } from '../../types';
 
-// * coordinate all watchers w/ unified lifecycle management
+// coordinate all watchers w/ unified lifecycle management
 export class WatcherManager implements Disposable {
   private watchers = new Map<string, IWatcher>();
   private readyGate: Promise<void> | null = null;

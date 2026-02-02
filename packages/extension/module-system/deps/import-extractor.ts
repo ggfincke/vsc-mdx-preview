@@ -42,7 +42,7 @@ const REQUIRE_QUOTED =
 const REQUIRE_TEMPLATE = /require\s*\(\s*`([^`\\]*(?:\\.[^`\\]*)*)`\s*\)/g;
 
 // extract import specifiers from JavaScript/TypeScript code
-// uses es-module-lexer for ESM imports, falls back to require() pattern for CJS
+// use es-module-lexer for ESM imports, fall back to require() pattern for CJS
 export async function extractImportSpecifiers(code: string): Promise<string[]> {
   // I.4: fast path - skip parsing if no import-like patterns detected
   if (!mightHaveImports(code)) {

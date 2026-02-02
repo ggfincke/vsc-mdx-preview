@@ -24,15 +24,13 @@ import {
 
 // configuration for creating a Tabs component
 export interface BaseTabsConfig {
-  // CSS class prefix for all tab elements (e.g. 'mdx-preview-generic-tabs', 'mdx-preview-tabs')
   classPrefix: string;
-  // optional wrapper class (e.g. 'docusaurus-tabs')
   wrapperClass?: string;
-  // whether to support groupId attribute for tab synchronization
+  // tab synchronization support
   supportsGroupId?: boolean;
-  // optional class for TabItem rendered outside Tabs context
+  // standalone TabItem class
   tabItemClassName?: string;
-  // context name for debugging
+  // debug name
   contextName: string;
 }
 
@@ -42,7 +40,7 @@ export interface BaseTabsProps {
   defaultValue?: string;
   values?: TabDefinition[];
   className?: string;
-  // framework-specific props (passed through if supported)
+  // framework-specific pass-through
   groupId?: string;
   queryString?: string | boolean;
   lazy?: boolean;
@@ -50,13 +48,9 @@ export interface BaseTabsProps {
 
 // result from createTabs factory
 export interface CreateTabsResult {
-  // the Tabs component
   Tabs: React.FC<BaseTabsProps>;
-  // expose TabItem for framework shims
   TabItem: React.FC<TabItemProps>;
-  // hook to check if inside Tabs context
   useTabsContext: () => boolean;
-  // the context itself (for advanced use cases)
   TabsContext: Context<boolean>;
 }
 
@@ -203,9 +197,8 @@ export function createTabs(config: BaseTabsConfig): CreateTabsResult {
 
 // configuration for index-based tabs
 export interface IndexTabsConfig {
-  // CSS class prefix for all tab elements
   classPrefix: string;
-  // context name for debugging
+  // debug name
   contextName: string;
 }
 
@@ -221,7 +214,7 @@ export interface IndexTabsProps<T>
   tabClassName?: string | ((index: number, selected: boolean) => string);
 }
 
-// item accessors for extracting label/disabled from tab items
+// item accessors for index-based tabs
 export interface IndexTabsItemAccessors<T> {
   getLabel: (item: T) => string;
   isDisabled?: (item: T) => boolean;

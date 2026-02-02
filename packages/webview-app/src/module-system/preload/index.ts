@@ -34,7 +34,7 @@ let loadedGenericShims = new Set<string>();
 let allGenericsLoaded = false;
 let genericShimsLoadPromise: Promise<void> | null = null;
 
-// O.3: track shim load results for diagnostics
+// track shim load results for diagnostics
 let lastShimLoadResult: ShimLoadResult | null = null;
 let lastGenericLoadResult: { loaded: string[]; failed: string[] } | null = null;
 
@@ -70,7 +70,7 @@ export function initPreloadedModules(
 
 // load framework-specific shims on demand
 // return immediately if framework already loaded
-// O.3: use resilient loading w/ retry & fallback to generic shims
+// use resilient loading w/ retry & fallback to generic shims
 export async function ensureFrameworkShims(
   registry: ModuleRegistry,
   framework: FrameworkId
@@ -100,7 +100,7 @@ export async function ensureFrameworkShims(
 
   debug(`[${LogTags.PRELOAD}] Loading ${framework} shims w/ retry...`);
 
-  // O.3: load CSS in parallel w/ resilient shim loading
+  // load CSS in parallel w/ resilient shim loading
   frameworkLoadPromise = (async () => {
     const [shimResult] = await Promise.all([
       loadFrameworkShimsWithRetry(
@@ -129,8 +129,8 @@ export async function ensureFrameworkShims(
 }
 
 // load specific generic shims on demand (for conditional preloading)
-// called when extension detects which generic components are used in the MDX
-// O.3: use resilient loading w/ retry for individual shims
+// handle generic component detection
+// use resilient loading w/ retry for individual shims
 export async function ensureGenericShims(
   registry: ModuleRegistry,
   componentNames: string[]
@@ -157,7 +157,7 @@ export async function ensureGenericShims(
     `[${LogTags.PRELOAD}] Loading generic shims w/ retry: ${toLoad.join(', ')}`
   );
 
-  // O.3: use resilient loading w/ retry for each shim
+  // use resilient loading w/ retry for each shim
   genericShimsLoadPromise = (async () => {
     const result = await loadGenericShimsWithRetry(
       registry,

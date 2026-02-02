@@ -16,7 +16,7 @@ let hasWarnedAboutCoreModules = false;
 const usedCoreModules = new Set<string>();
 
 // node.js core modules that cannot be shimmed in a browser environment
-// these return noop module when requested
+// return noop module when requested
 // https://github.com/calvinmetcalf/rollup-plugin-node-builtins
 // license: MIT except ES6 ports of browserify modules
 const UNSHIMMABLE_CORE_MODULES = new Set([
@@ -33,7 +33,7 @@ const UNSHIMMABLE_CORE_MODULES = new Set([
 ]);
 
 // node.js core modules that could theoretically be shimmed
-// but return noop for security/simplicity in webview context
+// return noop for security/simplicity in webview context
 const SHIMMABLE_CORE_MODULES = new Set([
   'process',
   'events',

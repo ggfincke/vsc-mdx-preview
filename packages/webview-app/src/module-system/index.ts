@@ -118,7 +118,7 @@ export async function evaluateModuleToComponent(
   // ensure preloaded modules are ready
   ensurePreloadedModules();
 
-  // K.2: wait for any pending shim loading to complete in parallel
+  // wait for any pending shim loading to complete in parallel
   // these operations are independent (different state vars, different registry keys)
   // this fixes the race condition where setUsedComponents/setFramework is called right before updatePreview
   const pendingLoads: Promise<void>[] = [];

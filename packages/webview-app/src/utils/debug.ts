@@ -41,8 +41,5 @@ export const logger: LoggerVariadic = {
   error,
 };
 
-// re-export tagged logger factory
-export { createTaggedLogger } from './createTaggedLogger';
-
 // re-export TaggedLogger type for convenience
 export type { TaggedLogger } from '@mdx-preview/shared';

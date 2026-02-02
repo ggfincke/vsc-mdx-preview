@@ -40,13 +40,13 @@ export function toRelativeImportPath(
 
 // options for path resolution w/ fallbacks
 export interface ResolvePathOptions {
-  // the path to resolve (can be relative or absolute)
+  // path to resolve
   inputPath: string;
   // primary base directory to try first
   primaryDir?: string | null;
   // fallback directories to try in order
   fallbackDirs?: (string | null | undefined)[];
-  // if true, verify the resolved path exists before returning
+  // verify exists
   checkExists?: boolean;
 }
 
@@ -115,7 +115,7 @@ export function isPathInside(childPath: string, parentPath: string): boolean {
 }
 
 // resolve real path w/ symlink resolution (async)
-// returns null if path doesn't exist or can't be resolved
+// return null if missing
 export async function resolveRealPath(
   targetPath: string
 ): Promise<string | null> {

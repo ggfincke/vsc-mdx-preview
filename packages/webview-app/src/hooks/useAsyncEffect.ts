@@ -9,13 +9,13 @@ export interface CancellationSignal {
   isCancelled(): boolean;
 }
 
-// options for configuring the async effect behavior
+// async effect behavior options
 export interface UseAsyncEffectOptions<T> {
-  // called when the async operation completes successfully w/ a non-void result
+  // success callback w/ result
   onSuccess?: (result: T) => void;
-  // called when the async operation throws an error
+  // error callback
   onError?: (error: unknown) => void;
-  // called when loading state changes (true before work, false after)
+  // loading state callback
   onLoadingChange?: (isLoading: boolean) => void;
 }
 

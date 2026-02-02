@@ -3,19 +3,15 @@
 
 import React, { ReactNode, ReactElement } from 'react';
 
-// Props for BaseCard component
+// props for BaseCard component
 export interface BaseCardProps {
-  // card content
   children: ReactNode;
-  // main CSS class for the card container
   className: string;
-  // render as anchor tag instead of div
+  // render as anchor or div
   as?: 'div' | 'a';
-  // link href (required when as="a")
+  // required when as="a"
   href?: string;
-  // open link in new tab
   openInNewTab?: boolean;
-  // additional props to spread on the container
   containerProps?: Record<string, unknown>;
 }
 
