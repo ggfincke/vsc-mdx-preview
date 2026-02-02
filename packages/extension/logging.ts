@@ -2,8 +2,12 @@
 // centralized logging using VS Code's OutputChannel for user-visible logs
 
 import * as vscode from 'vscode';
-import type { Logger, TaggedLogger, LogTag } from '@mdx-preview/shared';
-import { LogLevel, LogTags } from '@mdx-preview/shared';
+import type { Logger } from '@mdx-preview/shared';
+import {
+  LogLevel,
+  LogTags,
+  createTaggedLoggerFactory,
+} from '@mdx-preview/shared';
 
 // debug logging state (mutable for reactive updates)
 let debugEnabled = false;
@@ -167,30 +171,47 @@ export function disposeOutputChannel(): void {
   }
 }
 
-// create a tagged logger w/ a fixed prefix for consistent debug output
-// all methods write to the OutputChannel w/ the tag prefix
-export function createTaggedLogger(tag: LogTag): TaggedLogger {
-  const prefix = `[${tag}]`;
-
-  return {
-    debug: (...args: unknown[]) => {
-      const [message, data] = args;
-      debug(`${prefix} ${String(message ?? '')}`, data);
-    },
-    info: (...args: unknown[]) => {
-      const [message, data] = args;
-      info(`${prefix} ${String(message ?? '')}`, data);
-    },
-    warn: (...args: unknown[]) => {
-      const [message, data] = args;
-      warn(`${prefix} ${String(message ?? '')}`, data);
-    },
-    error: (...args: unknown[]) => {
-      const [message, data] = args;
-      error(`${prefix} ${String(message ?? '')}`, data);
-    },
-  };
+// variadic logger wrapper for compatibility w/ shared factory
+// converts variadic calls to extension's (message, data) format
+function variadicDebug(...args: unknown[]): void {
+  const [first, ...rest] = args;
+  const message = String(first ?? '');
+  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
+  debug(message, data);
 }
+
+function variadicInfo(...args: unknown[]): void {
+  const [first, ...rest] = args;
+  const message = String(first ?? '');
+  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
+  info(message, data);
+}
+
+function variadicWarn(...args: unknown[]): void {
+  const [first, ...rest] = args;
+  const message = String(first ?? '');
+  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
+  warn(message, data);
+}
+
+function variadicError(...args: unknown[]): void {
+  const [first, ...rest] = args;
+  const message = String(first ?? '');
+  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
+  error(message, data);
+}
+
+// variadic logger for use w/ shared factory
+const variadicLogger = {
+  debug: variadicDebug,
+  info: variadicInfo,
+  warn: variadicWarn,
+  error: variadicError,
+};
+
+// create tagged logger using shared factory w/ extension's variadic wrapper
+// prefix is prepended to first argument (becomes part of message)
+export const createTaggedLogger = createTaggedLoggerFactory(variadicLogger);
 
 // default logger instance (module-level functions as object)
 export const logger: Logger = {
