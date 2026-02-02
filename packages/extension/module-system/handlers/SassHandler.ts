@@ -2,7 +2,6 @@
 // handler for SASS/SCSS files - compiles to CSS using workspace's sass package
 
 import * as path from 'path';
-import { pathToFileURL } from 'url';
 import type { FetchResult } from '@mdx-preview/shared';
 import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
 import type { Preview } from '../../preview/preview-manager';
@@ -11,91 +10,46 @@ import { getBrowserResolver } from '../resolver/resolver-factory';
 import { buildCssResult } from './result-builders';
 import { debug, warn } from '../../logging';
 import { SASS_EXTENSIONS } from '../../constants';
+import {
+  createKeyedLazyImport,
+  loadModuleWithEsmFallback,
+} from '../../utils/lazy-import';
 
 // type-only import for sass module (doesn't bundle the implementation)
 type SassModule = typeof import('sass');
 type CompileResult = import('sass').CompileResult;
 
-// module-level cache for loaded sass instance
-// keyed by workspace root to support multi-root workspaces
-const sassCache = new Map<string, SassModule | null>();
+// keyed lazy import for sass module (per workspace root)
+const sassLoader = createKeyedLazyImport<SassModule>({
+  async loadFn(workspaceRoot: string) {
+    const sassPath = path.join(workspaceRoot, 'node_modules', 'sass');
+    return loadModuleWithEsmFallback<SassModule>(sassPath);
+  },
 
-// load sass from workspace's node_modules
-// return null if sass not installed (w/ caching to avoid repeated lookups)
-async function loadSassFromWorkspace(
-  workspaceRoot: string
-): Promise<SassModule | null> {
-  // check cache first
-  if (sassCache.has(workspaceRoot)) {
-    return sassCache.get(workspaceRoot)!;
-  }
+  validate(mod) {
+    return typeof mod.compileAsync === 'function';
+  },
 
-  const sassPath = path.join(workspaceRoot, 'node_modules', 'sass');
+  onValidationFailed(key) {
+    const sassPath = path.join(key, 'node_modules', 'sass');
+    warn(`[${LogTags.SASS_HANDLER}] sass at ${sassPath} missing compileAsync`);
+  },
 
-  try {
-    // try CommonJS require first (most common case)
-
-    const mod = require(sassPath);
-    const sassModule = (mod.default ?? mod) as SassModule;
-
-    // validate it has the expected API
-    if (typeof sassModule.compileAsync !== 'function') {
-      warn(
-        `[${LogTags.SASS_HANDLER}] sass at ${sassPath} missing compileAsync method`
-      );
-      sassCache.set(workspaceRoot, null);
-      return null;
-    }
-
+  onLoaded(key) {
+    const sassPath = path.join(key, 'node_modules', 'sass');
     debug(`[${LogTags.SASS_HANDLER}] Loaded sass from workspace: ${sassPath}`);
-    sassCache.set(workspaceRoot, sassModule);
-    return sassModule;
-  } catch (error) {
-    // handle ESM-only sass package
-    const isEsm =
-      error instanceof Error &&
-      'code' in error &&
-      (error as NodeJS.ErrnoException).code === 'ERR_REQUIRE_ESM';
+  },
 
-    if (isEsm) {
-      try {
-        const specifier = pathToFileURL(sassPath).href;
-        const mod = await import(specifier);
-        const sassModule = ((mod as { default?: unknown }).default ??
-          mod) as SassModule;
-
-        if (typeof sassModule.compileAsync !== 'function') {
-          warn(
-            `[${LogTags.SASS_HANDLER}] ESM sass at ${sassPath} missing compileAsync`
-          );
-          sassCache.set(workspaceRoot, null);
-          return null;
-        }
-
-        debug(
-          `[${LogTags.SASS_HANDLER}] Loaded ESM sass from workspace: ${sassPath}`
-        );
-        sassCache.set(workspaceRoot, sassModule);
-        return sassModule;
-      } catch (esmError) {
-        debug(
-          `[${LogTags.SASS_HANDLER}] Failed to load ESM sass: ${extractErrorMessage(esmError)}`
-        );
-      }
-    }
-
-    // sass not found or load error
+  onLoadFailed(key, error) {
     debug(
-      `[${LogTags.SASS_HANDLER}] sass not found in workspace: ${extractErrorMessage(error)}`
+      `[${LogTags.SASS_HANDLER}] sass not found in workspace ${key}: ${extractErrorMessage(error)}`
     );
-    sassCache.set(workspaceRoot, null);
-    return null;
-  }
-}
+  },
+});
 
 // clear cached sass modules (call when workspace changes or on refresh)
 export function clearSassCache(): void {
-  sassCache.clear();
+  sassLoader.clear();
   debug(`[${LogTags.SASS_HANDLER}] Sass cache cleared`);
 }
 
@@ -125,7 +79,7 @@ function buildSassNotInstalledResult(fsPath: string): FetchResult {
   return buildCssResult(fsPath, helpfulCss);
 }
 
-// handler for .scss & .sass files - compiles SASS/SCSS to CSS using workspace's sass
+// handler for .scss & .sass files - compile SASS/SCSS to CSS using workspace's sass
 export class SassHandler implements FileTypeHandler {
   extensions = [...SASS_EXTENSIONS];
 
@@ -143,7 +97,7 @@ export class SassHandler implements FileTypeHandler {
     }
 
     // try to load sass from workspace
-    const sass = await loadSassFromWorkspace(workspaceRoot);
+    const sass = await sassLoader.get(workspaceRoot);
 
     if (!sass) {
       // return CSS comment explaining how to enable SCSS support
