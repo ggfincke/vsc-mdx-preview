@@ -1,8 +1,8 @@
-// packages/extension/utils/Semaphore.ts
-// simple semaphore for concurrency limiting
+// packages/shared/utils/concurrency.ts
+// concurrency control primitives shared across packages
 
 // concurrency limiting semaphore for async operations
-// prevent resource exhaustion from unbounded parallelism
+// prevents resource exhaustion from unbounded parallelism
 export class Semaphore {
   private permits: number;
   private waitQueue: (() => void)[] = [];

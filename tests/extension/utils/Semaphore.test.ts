@@ -2,7 +2,7 @@
 // unit tests for Semaphore concurrency limiter
 
 import { describe, it, expect } from 'vitest';
-import { Semaphore } from '../../../packages/extension/utils/Semaphore';
+import { Semaphore } from '@mdx-preview/shared';
 
 function nextTick(): Promise<void> {
   return new Promise((resolve) => setImmediate(resolve));

@@ -2,7 +2,7 @@
 // core recursive module loading logic w/ parallel dependency fetching
 
 import * as jsxRuntime from 'react/jsx-runtime';
-import { isBareImport } from '@mdx-preview/shared';
+import { isBareImport, Semaphore } from '@mdx-preview/shared';
 import { registry } from '../registry/ModuleRegistry';
 import { evaluateModule } from '../eval/evaluateModule';
 import { injectStyles } from '../styles/injectStyles';
@@ -36,38 +36,10 @@ function makeInFlightKey(parentId: string, dep: string): string {
   return `${parentId}\0${dep}`;
 }
 
-// simple semaphore for concurrency limiting
-// prevent resource exhaustion from unbounded parallel fetches
-class Semaphore {
-  private permits: number;
-  private waitQueue: (() => void)[] = [];
-
-  constructor(permits: number) {
-    this.permits = permits;
-  }
-
-  async acquire(): Promise<void> {
-    if (this.permits > 0) {
-      this.permits--;
-      return;
-    }
-    return new Promise((resolve) => this.waitQueue.push(resolve));
-  }
-
-  release(): void {
-    const next = this.waitQueue.shift();
-    if (next) {
-      next();
-    } else {
-      this.permits++;
-    }
-  }
-}
-
 const fetchSemaphore = new Semaphore(MAX_CONCURRENT_FETCHES);
 
 // recursively load a module & all its dependencies
-// depth track recursion to prevent stack overflow from deep dependency chains
+// track depth to prevent stack overflow from deep dependency chains
 export async function loadModule(
   id: string,
   code: string,
