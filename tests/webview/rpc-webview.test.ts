@@ -40,9 +40,6 @@ function createMockHandlers(): WebviewStateHandlers {
     setStale: vi.fn(),
     setTheme: vi.fn(),
     setNextraMeta: vi.fn(),
-    zoomIn: vi.fn(),
-    zoomOut: vi.fn(),
-    resetZoom: vi.fn(),
   };
 }
 
@@ -206,19 +203,19 @@ describe('handler-factory', () => {
       );
       const log = createMockLogger();
 
-      const zoomIn = createOptionalHandler(
-        { methodName: 'zoomIn', handlerKey: 'zoomIn' },
+      const setTheme = createOptionalHandler(
+        { methodName: 'setTheme', handlerKey: 'setTheme' },
         log
       );
 
-      zoomIn();
+      setTheme({ previewTheme: 'github-light', codeBlockTheme: 'auto', mermaidTheme: 'default', isLight: true });
 
-      expect(handlers!.zoomIn).toHaveBeenCalled();
+      expect(handlers!.setTheme).toHaveBeenCalled();
     });
 
     it('should not throw when handler missing', () => {
       handlers = createMockHandlers();
-      delete handlers.zoomIn;
+      delete handlers.setTheme;
       const getHandlers = () => handlers;
       const { createOptionalHandler } = createHandlerFactories(
         getHandlers,
@@ -226,12 +223,12 @@ describe('handler-factory', () => {
       );
       const log = createMockLogger();
 
-      const zoomIn = createOptionalHandler(
-        { methodName: 'zoomIn', handlerKey: 'zoomIn' },
+      const setTheme = createOptionalHandler(
+        { methodName: 'setTheme', handlerKey: 'setTheme' },
         log
       );
 
-      expect(() => zoomIn()).not.toThrow();
+      expect(() => setTheme({ previewTheme: 'github-light', codeBlockTheme: 'auto', mermaidTheme: 'default', isLight: true })).not.toThrow();
     });
 
     it('should not throw when handlers not registered', () => {
@@ -242,12 +239,12 @@ describe('handler-factory', () => {
       );
       const log = createMockLogger();
 
-      const zoomIn = createOptionalHandler(
-        { methodName: 'zoomIn', handlerKey: 'zoomIn' },
+      const setTheme = createOptionalHandler(
+        { methodName: 'setTheme', handlerKey: 'setTheme' },
         log
       );
 
-      expect(() => zoomIn()).not.toThrow();
+      expect(() => setTheme({ previewTheme: 'github-light', codeBlockTheme: 'auto', mermaidTheme: 'default', isLight: true })).not.toThrow();
     });
   });
 });
