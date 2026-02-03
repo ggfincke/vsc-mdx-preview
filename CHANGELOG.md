@@ -1,3 +1,4 @@
+
 # Changelog
 
 All notable changes to the MDX Preview extension will be documented in this file.
@@ -6,6 +7,56 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.0.0-alpha.13] - 2026-02-03
+
+### Added
+
+- **Cache Subsystem**: Unified cache lifecycle management w/ coordinated invalidation
+- **Security Enhancements**: Binary file detection, async path validation w/ symlink resolution, module fetching resource limits
+- **Concurrency Controls**: Semaphore utility, module loading depth & concurrency limits, Tailwind cache concurrency limits
+- **Commands**: `showEffectiveConfig` debugging command, `clearAllCaches` command
+- **Module Prewarming**: Background module prewarming for faster first render
+- **Utilities**: Async utilities (timeout, retry, fallback), debounce support for file watchers, keyed lazy import w/ ESM fallback
+- **Shared Package**: NullableLRUCache, pure validation type guards, Semaphore utility
+- **Webview**: Keyboard navigation for shim components
+- **Marketplace**: Added badges (version, installs, license), `engines.node` requirement (>=18.0.0)
+
+### Changed
+
+- **Zoom Commands Removed**: Removed zoom feature for simplification (zoomIn, zoomOut, resetZoom)
+- **Architecture**: Extracted TailwindCache to separate module, centralized SVG icons in shared package, split monolithic constants into modular folder
+- **Config System**: Added key groups & onDidChangeKey convenience method, simplified config resolution
+- **Logging**: Reactive debug output, extracted createTaggedLoggerFactory to shared
+- **Module System**: Improved import extractor regex coverage, extracted shared resolver logic
+- **Error Handling**: Moved module error factories to shared package, added non-throwing tryRequireTrustedMode helpers
+
+### Fixed
+
+- Fixed `.mdx` file extension declaration in manifest
+- Fixed `test:webview` script to run actual webview tests
+- Added missing `onCommand:` activation events for all commands
+- Fixed README command wording inconsistencies
+- Fixed license consistency (GPL-3.0-or-later)
+- Consolidated validation exports & removed dead code
+
+### Documentation
+
+- Added services ARCHITECTURE.md w/ validation type exports
+- Added known vulnerabilities section to security docs
+- Updated architecture & caching documentation
+- Added security review date
+
+### Style
+
+- Standardized comments across all packages to imperative lowercase style guide
+
+### Build
+
+- Added `@vscode/vsce` to devDependencies
+- Excluded `*.vsix` files from packaging
+- Updated CI workflow configuration
+- Updated test infrastructure w/ integration tests
 
 ## [1.0.0-alpha.12] - 2026-01-30
 

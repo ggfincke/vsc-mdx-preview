@@ -20,14 +20,13 @@ Preview [MDX](https://mdxjs.com) files with live refresh and React component sup
 - **Math Expressions**: KaTeX integration for inline and block math expressions
 - **Table of Contents**: Automatic TOC generation with collapsible sections
 - **Frontmatter Display**: Visual display of YAML frontmatter metadata
-- **Zoom Controls**: Zoom in/out with keyboard shortcuts
 - **Custom Plugins**: Load custom remark/rehype plugins from your project
 
 ## Quick Start
 
 1. Open an `.mdx` or `.md` file in your workspace
 2. Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
-3. Run **"MDX: Open Preview"** or use the keyboard shortcut `Cmd+K X` / `Ctrl+K X`
+3. Run **"MDX: Open MDX Preview"** or use the keyboard shortcut `Cmd+K X` / `Ctrl+K X`
 
 Alternatively, click the preview icon in the editor toolbar when viewing `.mdx`, `.md`, `.tsx`, or `.js` files.
 
@@ -160,20 +159,17 @@ These components are available without imports when `mdx-preview.components.buil
 
 | Command                                | Shortcut       | Description                               |
 | -------------------------------------- | -------------- | ----------------------------------------- |
-| **MDX: Open Preview**                  | `Cmd/Ctrl+K X` | Open preview for current file             |
+| **MDX: Open MDX Preview**              | `Cmd/Ctrl+K X` | Open preview for current file             |
 | **MDX: Refresh Preview**               | -              | Manually refresh the preview              |
 | **MDX: Toggle Script Execution**       | -              | Toggle between Safe Mode and Trusted Mode |
 | **MDX: Select Preview Theme**          | -              | Choose a preview theme                    |
 | **MDX: Select Code Block Theme**       | -              | Choose a syntax highlighting theme        |
 | **MDX: Select Mermaid Theme**          | -              | Choose a Mermaid diagram theme            |
 | **MDX: Select Framework**              | -              | Manually select MDX framework             |
-| **MDX: Zoom In**                       | `Cmd/Ctrl+=`   | Zoom in the preview                       |
-| **MDX: Zoom Out**                      | `Cmd/Ctrl+-`   | Zoom out the preview                      |
-| **MDX: Reset Zoom**                    | `Cmd/Ctrl+0`   | Reset preview zoom to default             |
 | **MDX: Toggle VSCode Markdown Styles** | -              | Toggle VS Code markdown styling           |
 | **MDX: Toggle White Background**       | -              | Toggle white background override          |
 | **MDX: Change Security Settings**      | -              | Modify Content Security Policy            |
-| **MDX: Refresh Module Cache**          | -              | Clear cached modules                      |
+| **MDX: Clear All Caches**              | -              | Clear cached modules                      |
 
 ## Configuration
 
@@ -494,7 +490,7 @@ Comprehensive documentation is available in the `docs/` folder:
 
 ## Project Status
 
-This extension is currently in **alpha** (version 1.0.0-alpha.12). While it is functional and includes many powerful features, you may encounter bugs or limitations. Please report issues on [GitHub](https://github.com/ggfincke/vscode-mdx-preview/issues).
+This extension is currently in **alpha** (version 1.0.0-alpha.13). While it is functional and includes many powerful features, you may encounter bugs or limitations. Please report issues on [GitHub](https://github.com/ggfincke/vscode-mdx-preview/issues).
 
 ## Requirements
 
@@ -513,4 +509,4 @@ This project is based on the original [vscode-mdx-preview](https://github.com/xy
 
 ## License
 
-GPL-3.0
+GPL-3.0-or-later

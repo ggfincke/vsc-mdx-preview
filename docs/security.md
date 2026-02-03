@@ -1,5 +1,7 @@
 # Security Model
 
+> Last security review: 2026-02-02
+
 MDX Preview implements a defense-in-depth security model with two rendering modes to balance functionality with protection. This document covers the trust model, Content Security Policy, Safe Mode, Trusted Mode, and security best practices.
 
 ---
