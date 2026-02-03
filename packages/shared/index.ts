@@ -398,9 +398,6 @@ export interface WebviewRPC {
   setTailwindCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
   setNextraMeta(meta: NextraPageMeta): void;
-  zoomIn(): void;
-  zoomOut(): void;
-  resetZoom(): void;
 }
 
 // logging types & tags (shared between extension & webview)
