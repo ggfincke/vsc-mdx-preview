@@ -15,7 +15,7 @@ interface SafePreviewRendererProps {
 }
 
 // render sanitized HTML content in Safe Mode (use ref to set innerHTML after sanitization)
-// wrapped w/ React.memo to prevent re-renders when only zoom changes (html unchanged)
+// wrapped w/ React.memo to prevent unnecessary re-renders
 export const SafePreviewRenderer = memo(
   function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
     // shared preview setup (container ref, mermaid rendering, image lightbox)

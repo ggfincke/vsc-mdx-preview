@@ -1,20 +1,6 @@
 // packages/webview-app/src/constants.ts
 // centralized constants for the webview app (consolidates magic numbers)
 
-// zoom
-
-// min zoom %
-export const ZOOM_MIN_PERCENT = 50;
-
-// max zoom %
-export const ZOOM_MAX_PERCENT = 300;
-
-// zoom increment/decrement step
-export const ZOOM_STEP_PERCENT = 10;
-
-// default zoom level (100% = no zoom)
-export const ZOOM_DEFAULT_PERCENT = 100;
-
 // ui feedback
 
 // duration to show "copied" feedback after code copy (ms)

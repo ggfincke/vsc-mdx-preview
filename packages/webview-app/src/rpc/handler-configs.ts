@@ -119,15 +119,6 @@ export const SET_THEME_CONFIG = createOptionalConfig('setTheme');
 // configuration for setNextraMeta handler
 export const SET_NEXTRA_META_CONFIG = createOptionalConfig('setNextraMeta');
 
-// configuration for zoomIn handler
-export const ZOOM_IN_CONFIG = createOptionalConfig('zoomIn');
-
-// configuration for zoomOut handler
-export const ZOOM_OUT_CONFIG = createOptionalConfig('zoomOut');
-
-// configuration for resetZoom handler
-export const RESET_ZOOM_CONFIG = createOptionalConfig('resetZoom');
-
 // config collections (for iteration/documentation)
 
 // all QUEUED handler configurations
@@ -143,9 +134,6 @@ export const QUEUED_CONFIGS = {
 export const OPTIONAL_CONFIGS = {
   setTheme: SET_THEME_CONFIG,
   setNextraMeta: SET_NEXTRA_META_CONFIG,
-  zoomIn: ZOOM_IN_CONFIG,
-  zoomOut: ZOOM_OUT_CONFIG,
-  resetZoom: RESET_ZOOM_CONFIG,
 } as const;
 
 // compile-time type safety

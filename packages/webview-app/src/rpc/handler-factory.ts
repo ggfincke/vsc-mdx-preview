@@ -34,9 +34,6 @@ export interface RequiredStateHandlers {
 export interface OptionalStateHandlers {
   setTheme?: (state: WebviewThemeState) => void;
   setNextraMeta?: (meta: NextraPageMeta) => void;
-  zoomIn?: () => void;
-  zoomOut?: () => void;
-  resetZoom?: () => void;
 }
 
 // combined state handlers interface (required + optional)

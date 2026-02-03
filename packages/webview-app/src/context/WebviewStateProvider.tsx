@@ -5,7 +5,6 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { TrustProvider, useTrust } from './TrustContext';
 import { PreviewProvider, usePreview } from './PreviewContext';
 import { LoadingProvider, useLoading } from './LoadingContext';
-import { ZoomProvider, useZoom } from './ZoomContext';
 import { NextraProvider, useNextra } from './NextraContext';
 import { useTheme } from '../theme';
 import { registerWebviewHandlers } from '../rpc-webview';
@@ -32,7 +31,6 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
   const { setTrustState } = useTrust();
   const { setSafeContent, setTrustedContent, setError } = usePreview();
   const { setStale, setIsLoading } = useLoading();
-  const { zoomIn, zoomOut, resetZoom } = useZoom();
   const { setNextraMeta } = useNextra();
   const { setPreviewThemeState } = useTheme();
 
@@ -57,9 +55,6 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
       setStale,
       setTheme: setPreviewThemeState,
       setNextraMeta,
-      zoomIn,
-      zoomOut,
-      resetZoom,
     });
     debug(`[${LogTags.WEBVIEW_STATE}] Handlers registered`);
   }, [
@@ -71,9 +66,6 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
     setIsLoading,
     setPreviewThemeState,
     setNextraMeta,
-    zoomIn,
-    zoomOut,
-    resetZoom,
   ]);
 
   return <>{children}</>;
@@ -90,11 +82,9 @@ export function WebviewStateProvider({ children }: WebviewStateProviderProps) {
     <TrustProvider>
       <PreviewProvider>
         <LoadingProvider>
-          <ZoomProvider>
-            <NextraProvider>
-              <HandlerRegistrar>{children}</HandlerRegistrar>
-            </NextraProvider>
-          </ZoomProvider>
+          <NextraProvider>
+            <HandlerRegistrar>{children}</HandlerRegistrar>
+          </NextraProvider>
         </LoadingProvider>
       </PreviewProvider>
     </TrustProvider>

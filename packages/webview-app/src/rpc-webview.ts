@@ -1,7 +1,7 @@
 // packages/webview-app/src/rpc-webview.ts
 // RPC webview side - bidirectional communication between webview & extension via Comlink
 // message queue buffers messages until React mounts (queued: trust, safe, trusted, error, stale)
-// direct handlers (theme, zoom, CSS, Tailwind) update DOM immediately w/o queueing
+// direct handlers (theme, CSS, Tailwind) update DOM immediately w/o queueing
 
 import * as comlink from 'comlink';
 import type { Endpoint } from 'comlink';
@@ -34,9 +34,6 @@ import {
   SET_STALE_CONFIG,
   SET_THEME_CONFIG,
   SET_NEXTRA_META_CONFIG,
-  ZOOM_IN_CONFIG,
-  ZOOM_OUT_CONFIG,
-  RESET_ZOOM_CONFIG,
 } from './rpc/handler-configs';
 
 // create tagged logger for this module
@@ -221,9 +218,6 @@ class RPCWebviewHandle implements WebviewRPC {
   // optional handlers - call if handler present, no queuing
   setTheme = createOptionalHandler(SET_THEME_CONFIG, log);
   setNextraMeta = createOptionalHandler(SET_NEXTRA_META_CONFIG, log);
-  zoomIn = createOptionalHandler(ZOOM_IN_CONFIG, log);
-  zoomOut = createOptionalHandler(ZOOM_OUT_CONFIG, log);
-  resetZoom = createOptionalHandler(RESET_ZOOM_CONFIG, log);
 
   // direct handlers - immediate DOM/style injection (kept manual for simplicity)
   setCustomCss(css: string): void {

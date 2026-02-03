@@ -1,7 +1,7 @@
 // packages/webview-app/src/App.tsx
 // MDX Preview App - single React root managing preview rendering (Safe & Trusted mode)
 
-import { useCallback, useEffect, useMemo, useState, type ComponentType, type MouseEvent } from 'react';
+import { useCallback, useEffect, useState, type ComponentType, type MouseEvent } from 'react';
 import LoadingBar from './components/LoadingBar/LoadingBar';
 import { MDXErrorBoundary, ErrorDisplay } from './components/ErrorBoundary/ErrorBoundary';
 import { TrustBanner } from './components/TrustBanner/TrustBanner';
@@ -14,12 +14,10 @@ import { LogTags } from '@mdx-preview/shared';
 import { classifyLink } from './utils/linkHandler';
 import type { TrustedPreviewContent } from './types';
 import { useTheme } from './theme';
-import { ZOOM_DEFAULT_PERCENT } from './constants';
 import {
   useTrust,
   usePreview,
   useLoading,
-  useZoom,
   useNextra,
 } from './context';
 import './App.css';
@@ -45,7 +43,6 @@ function App() {
   useEffect(() => {
     setEvaluatedComponent(null);
   }, [content]);
-  const { zoomLevel } = useZoom();
   const { nextraMeta } = useNextra();
 
   // get theme context for MPE preview themes
@@ -83,27 +80,13 @@ function App() {
     }
   }, []);
 
-  // compute Nextra layout class from metadata (memoized to avoid string recreation)
-  const nextraLayoutClass = useMemo(() => {
-    if (nextraMeta?.layout === 'full') {
-      return 'nextra-layout-full';
-    }
-    if (nextraMeta?.layout === 'raw') {
-      return 'nextra-layout-raw';
-    }
-    return '';
-  }, [nextraMeta?.layout]);
-
-  // memoize zoom style object to avoid new object creation on every render
-  const zoomStyle = useMemo(() => {
-    if (zoomLevel === ZOOM_DEFAULT_PERCENT) {
-      return undefined;
-    }
-    return {
-      transform: `scale(${zoomLevel / ZOOM_DEFAULT_PERCENT})`,
-      transformOrigin: 'top center',
-    };
-  }, [zoomLevel]);
+  // compute Nextra layout class from metadata
+  const nextraLayoutClass =
+    nextraMeta?.layout === 'full'
+      ? 'nextra-layout-full'
+      : nextraMeta?.layout === 'raw'
+        ? 'nextra-layout-raw'
+        : '';
 
   // render loading state during initial load
   if (isLoading && !content && !error) {
@@ -155,7 +138,7 @@ function App() {
       <MDXErrorBoundary
         onError={(err) => setError({ message: err.message, stack: err.stack })}
       >
-        <div className="mdx-preview-content" style={zoomStyle}>
+        <div className="mdx-preview-content">
           {nextraMeta?.title && (
             <h1 className="nextra-page-title">{nextraMeta.title}</h1>
           )}

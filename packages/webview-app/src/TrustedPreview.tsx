@@ -78,7 +78,7 @@ const arePropsEqual = createFieldComparator<TrustedPreviewRendererProps>({
 });
 
 // evaluate transpiled MDX code & render resulting component (evaluation via module loader using new Function())
-// wrapped w/ React.memo to prevent re-renders when only zoom changes (content unchanged)
+// wrapped w/ React.memo to prevent unnecessary re-renders
 export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   content,
   evaluatedComponent,
