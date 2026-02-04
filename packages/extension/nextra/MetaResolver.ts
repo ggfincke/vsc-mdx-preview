@@ -10,7 +10,7 @@ import { findUp, createContainmentStopPredicate } from '../utils/find-up';
 import { SingletonService } from '../services/SingletonService';
 import { PathCache } from '../utils/cache';
 
-// raw _meta.json entry structure (simplified for preview-relevant fields)
+// raw _meta.json entry structure (simplified to preview-relevant fields)
 type MetaEntry =
   | string
   | {
@@ -25,13 +25,12 @@ type MetaEntry =
       };
     };
 
-// Nextra _meta.json resolver service
-// resolves page-level settings from _meta.json files for Nextra-based docs
+// * Nextra _meta.json resolver - resolve page-level settings from _meta.json files
 export class MetaResolver extends SingletonService<MetaResolver> {
   protected static override instance: MetaResolver | undefined;
   protected readonly logTag = LogTags.NEXTRA_META;
 
-  // cache for resolved meta (cache key -> resolved meta or null)
+  // cache resolved meta (cache key -> resolved meta or null)
   private metaCache = new PathCache<NextraPageMeta | null>({
     logTag: LogTags.NEXTRA_META,
   });
@@ -40,7 +39,7 @@ export class MetaResolver extends SingletonService<MetaResolver> {
     super();
   }
 
-  // resolve _meta.json settings for a specific MDX file
+  // resolve _meta.json settings from a specific MDX file
   resolveNextraMeta(
     mdxFilePath: string,
     workspaceRoot: string
@@ -48,7 +47,7 @@ export class MetaResolver extends SingletonService<MetaResolver> {
     const documentDir = path.dirname(mdxFilePath);
     const pageBaseName = path.basename(mdxFilePath, path.extname(mdxFilePath));
 
-    // check cache (use get + undefined check instead of has + get for efficiency)
+    // check cache (use get + undefined check instead of has + get)
     const cacheKey = `${documentDir}:${pageBaseName}`;
     const cached = this.metaCache.get(cacheKey);
     if (cached !== undefined) {
@@ -56,7 +55,7 @@ export class MetaResolver extends SingletonService<MetaResolver> {
       return cached;
     }
 
-    // search for _meta.json upward
+    // search upward to find _meta.json
     const metaPath = this.findMetaFile(documentDir, workspaceRoot);
     if (!metaPath) {
       debug(`[${this.logTag}] No _meta.json found for ${mdxFilePath}`);
@@ -75,10 +74,10 @@ export class MetaResolver extends SingletonService<MetaResolver> {
       return null;
     }
 
-    // extract settings for this page
+    // extract settings from this page
     const pageSettings = this.extractPageSettings(meta, pageBaseName);
 
-    // setup watcher for this _meta.json file
+    // setup watcher on this _meta.json file
     this.setupMetaWatcher(metaPath, documentDir);
 
     this.metaCache.set(cacheKey, pageSettings);
@@ -123,10 +122,10 @@ export class MetaResolver extends SingletonService<MetaResolver> {
     const result: NextraPageMeta = {};
 
     if (typeof entry === 'string') {
-      // simple string entry is just a title
+      // treat simple string entry as title
       result.title = entry;
     } else if (typeof entry === 'object') {
-      // object entry w/ full settings
+      // handle object entry w/ full settings
       if (entry.title) {
         result.title = entry.title;
       }
@@ -141,7 +140,7 @@ export class MetaResolver extends SingletonService<MetaResolver> {
     return Object.keys(result).length > 0 ? result : null;
   }
 
-  // setup file watcher for _meta.json changes
+  // setup file watcher to detect _meta.json changes
   private setupMetaWatcher(metaPath: string, documentDir: string): void {
     if (this.metaCache.hasWatcher(metaPath)) {
       return;
@@ -170,10 +169,9 @@ export class MetaResolver extends SingletonService<MetaResolver> {
   }
 }
 
-// backward-compatible function exports
-// these delegate to the singleton service instance
+// backward-compatible function exports (delegate to singleton service instance)
 
-// resolve _meta.json settings for a specific MDX file
+// resolve _meta.json settings from a specific MDX file
 export function resolveNextraMeta(
   mdxFilePath: string,
   workspaceRoot: string

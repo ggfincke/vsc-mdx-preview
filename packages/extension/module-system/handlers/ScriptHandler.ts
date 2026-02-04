@@ -7,11 +7,12 @@ import type { FileTypeHandler } from './index';
 import { transform } from '../transform/transform';
 import { extractImportSpecifiers } from '../deps/import-extractor';
 import { buildScriptResult } from './result-builders';
+import { SCRIPTABLE_EXTENSIONS } from '../../constants';
 
-// handler for JavaScript/TypeScript files - delegates transpilation to transform.ts & extracts dependencies
+// handler for JavaScript/TypeScript files - delegate transpilation to transform.ts & extract dependencies
 export class ScriptHandler implements FileTypeHandler {
   // handle JS, JSX, TS, TSX, MJS, CJS, & MDX files
-  extensions = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mdx', '.md'];
+  extensions = [...SCRIPTABLE_EXTENSIONS];
 
   async handle(
     code: string,
@@ -26,7 +27,7 @@ export class ScriptHandler implements FileTypeHandler {
       preview
     );
 
-    // I.1: extract import dependencies from ESM code (BEFORE CommonJS conversion)
+    // I.1: extract import dependencies from ESM code (before CommonJS conversion)
     // es-module-lexer works much better on ESM than on CommonJS output
     const importNames = await extractImportSpecifiers(esmCode);
     const dependencies = importNames.filter(

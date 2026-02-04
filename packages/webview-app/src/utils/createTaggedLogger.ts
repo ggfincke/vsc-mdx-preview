@@ -1,21 +1,12 @@
 // packages/webview-app/src/utils/createTaggedLogger.ts
 // factory for creating tagged debug loggers w/ consistent prefix
 
-import type { TaggedLogger, LogTag } from '@mdx-preview/shared';
-import { debug, info, warn, error } from './debug';
+import { createTaggedLoggerFactory } from '@mdx-preview/shared';
+import { logger } from './debug';
 
 // re-export TaggedLogger type for convenience
 export type { TaggedLogger, LogTag } from '@mdx-preview/shared';
 
-// create tagged logger w/ fixed prefix for consistent debug output
-// all methods are no-ops in production builds
-export function createTaggedLogger(tag: LogTag): TaggedLogger {
-  const prefix = `[${tag}]`;
-
-  return {
-    debug: (...args: unknown[]) => debug(prefix, ...args),
-    info: (...args: unknown[]) => info(prefix, ...args),
-    warn: (...args: unknown[]) => warn(prefix, ...args),
-    error: (...args: unknown[]) => error(prefix, ...args),
-  };
-}
+// create tagged logger using shared factory w/ webview's base logger
+// all methods are no-ops in production builds (via debug.ts logger)
+export const createTaggedLogger = createTaggedLoggerFactory(logger);

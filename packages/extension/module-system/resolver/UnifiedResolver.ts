@@ -22,7 +22,65 @@ import {
   type ResolutionMode,
 } from '../../types';
 
-// UnifiedResolver orchestrates 4 resolution strategies in priority order
+// result of framework alias resolution step
+export interface FrameworkAliasResult {
+  // rewritten specifier
+  specifier: string;
+  // early result for shims
+  earlyResult?: ResolutionResult;
+}
+
+// check if specifier is a relative import
+function isRelativeImport(specifier: string): boolean {
+  return specifier.startsWith('./') || specifier.startsWith('../');
+}
+
+// resolve framework alias for bare imports
+// extracted to share between sync & async methods
+export function resolveFrameworkAliasStep(
+  specifier: string,
+  context: ResolutionContext
+): FrameworkAliasResult {
+  if (
+    !context.framework ||
+    !context.shimsEnabled ||
+    isRelativeImport(specifier)
+  ) {
+    return { specifier };
+  }
+
+  const aliasedPath = resolveAlias(
+    specifier,
+    context.framework,
+    context.workspaceRoot ?? context.baseDir
+  );
+
+  if (aliasedPath === null) {
+    return { specifier };
+  }
+
+  if (isBuiltInShim(aliasedPath)) {
+    debug(
+      `[${LogTags.UNIFIED_RESOLVER}] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
+    );
+    return {
+      specifier,
+      earlyResult: buildShimResolutionResult(
+        aliasedPath,
+        specifier,
+        ResolutionStrategy.FrameworkShim
+      ),
+    };
+  }
+
+  // alias resolved to a path - continue w/ that path
+  debug(
+    `[${LogTags.UNIFIED_RESOLVER}] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
+  );
+  return { specifier: aliasedPath };
+}
+
+// UnifiedResolver - orchestrate 4 resolution strategies in priority order
 export class UnifiedResolver {
   // check if specifier is a relative import
   isRelativeImport(specifier: string): boolean {
@@ -54,35 +112,11 @@ export class UnifiedResolver {
     }
 
     // step 1: framework alias resolution (for bare imports only)
-    if (
-      context.framework &&
-      context.shimsEnabled &&
-      !this.isRelativeImport(specifier)
-    ) {
-      const aliasedPath = resolveAlias(
-        specifier,
-        context.framework,
-        context.workspaceRoot ?? context.baseDir
-      );
-
-      if (aliasedPath !== null) {
-        if (isBuiltInShim(aliasedPath)) {
-          debug(
-            `[${LogTags.UNIFIED_RESOLVER}] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
-          );
-          return buildShimResolutionResult(
-            aliasedPath,
-            specifier,
-            ResolutionStrategy.FrameworkShim
-          );
-        }
-        // alias resolved to a path - continue w/ that path (will use subsequent strategy)
-        debug(
-          `[${LogTags.UNIFIED_RESOLVER}] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
-        );
-        specifier = aliasedPath;
-      }
+    const aliasResult = resolveFrameworkAliasStep(specifier, context);
+    if (aliasResult.earlyResult) {
+      return aliasResult.earlyResult;
     }
+    specifier = aliasResult.specifier;
 
     // step 2: TypeScript path resolution (for non-relative imports)
     if (context.tsConfig && !this.isRelativeImport(specifier)) {
@@ -133,34 +167,11 @@ export class UnifiedResolver {
     }
 
     // step 1: framework alias resolution (for bare imports only) - sync, no I/O
-    if (
-      context.framework &&
-      context.shimsEnabled &&
-      !this.isRelativeImport(specifier)
-    ) {
-      const aliasedPath = resolveAlias(
-        specifier,
-        context.framework,
-        context.workspaceRoot ?? context.baseDir
-      );
-
-      if (aliasedPath !== null) {
-        if (isBuiltInShim(aliasedPath)) {
-          debug(
-            `[${LogTags.UNIFIED_RESOLVER}] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
-          );
-          return buildShimResolutionResult(
-            aliasedPath,
-            specifier,
-            ResolutionStrategy.FrameworkShim
-          );
-        }
-        debug(
-          `[${LogTags.UNIFIED_RESOLVER}] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
-        );
-        specifier = aliasedPath;
-      }
+    const aliasResult = resolveFrameworkAliasStep(specifier, context);
+    if (aliasResult.earlyResult) {
+      return aliasResult.earlyResult;
     }
+    specifier = aliasResult.specifier;
 
     // step 2: TypeScript path resolution (for non-relative imports)
     // I.3: use async resolution for parallel file probing

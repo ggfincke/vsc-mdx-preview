@@ -2,21 +2,22 @@
 // parse error stack traces to extract file locations for navigation
 
 interface StackFrame {
-  // raw line from stack trace
+  // original line
   raw: string;
-  // function or method name (may be undefined for anonymous)
+  // function name
   functionName?: string;
-  // file path (may be absolute or relative)
+  // file path
   filePath?: string;
-  // line number (1-based)
+  // line number
   line?: number;
-  // column number (1-based)
+  // column
   column?: number;
-  // whether this frame looks navigable (has file, line)
+  // navigable flag
   isNavigable: boolean;
 }
 
 // patterns for parsing different stack trace formats
+
 // Chrome/V8: "    at functionName (file:line:column)" or "    at file:line:column"
 const CHROME_PATTERN = /^\s*at\s+(?:(.+?)\s+\()?([^()]+):(\d+):(\d+)\)?$/;
 
@@ -26,7 +27,7 @@ const FIREFOX_PATTERN = /^(.+?)@(.+):(\d+):(\d+)$/;
 // Safari: similar to Firefox
 const SAFARI_PATTERN = /^(.+?)@(.+):(\d+):(\d+)$/;
 
-// simple "file:line:column" pattern (for error messages)
+// simple "file:line:column" pattern for error messages
 const SIMPLE_LOCATION_PATTERN = /^(.+):(\d+):(\d+)$/;
 
 // parse a single stack trace line

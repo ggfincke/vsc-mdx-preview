@@ -2,16 +2,16 @@
 // canonical IDs for core preloaded modules (React, MDX, layout)
 
 export const PRELOADED_MODULE_IDS = {
-  // React core
+  // react core
   react: 'npm://react@18',
   reactDom: 'npm://react-dom@18',
   reactDomClient: 'npm://react-dom/client@18',
   jsxRuntime: 'npm://react/jsx-runtime@18',
 
-  // MDX
+  // mdx
   mdxReact: 'npm://@mdx-js/react@3',
 
-  // Layout
+  // layout
   vscodeLayout: 'npm://vscode-markdown-layout@0.1.0',
 } as const;
 

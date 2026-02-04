@@ -5,7 +5,7 @@ import { transform as sucraseTransform } from 'sucrase';
 import type { Preview } from '../../preview/preview-manager';
 
 // transpile TypeScript/TSX code using Sucrase
-// Sucrase is already bundled & provides fast transpilation
+// sucrase is already bundled & provides fast transpilation
 export function transpileTypeScript(
   code: string,
   fsPath: string,
@@ -27,12 +27,12 @@ export function transpileTypeScript(
   return result.code;
 }
 
-// check if file extension indicates TypeScript (.ts or .tsx, case-insensitive)
-export function isTypeScriptExtension(extname: string): boolean {
-  return /\.tsx?$/i.test(extname);
-}
-
 // check if VS Code language ID indicates TypeScript
 export function isTypeScriptLanguage(languageId: string): boolean {
   return languageId === 'typescript' || languageId === 'typescriptreact';
+}
+
+// check if file extension indicates TypeScript
+export function isTypeScriptExtension(ext: string): boolean {
+  return ext === '.ts' || ext === '.tsx';
 }

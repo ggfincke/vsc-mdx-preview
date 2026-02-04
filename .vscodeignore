@@ -56,3 +56,6 @@ scripts/**
 .npmrc
 .yarnrc*
 yarn.lock
+
+# Old package files
+*.vsix

@@ -8,8 +8,6 @@ export {
   validateFunction,
 } from './primitives';
 
-export { validateOptionalNumber } from './optional';
-
 export { validateArray, validateObject, validateRecord } from './collections';
 
 export { validateUrl } from './url';
@@ -18,10 +16,21 @@ export {
   validateEnumValue,
   validatePluginSpec,
   validateConfigSchema,
+  type PluginSpecValue,
+  type ConfigValidationResult,
 } from './schema';
 
-export type {
-  ValidationOptions,
-  PluginSpecValue,
-  ConfigValidationResult,
-} from './types';
+export {
+  type ValidationOptions,
+  type LogFn,
+  createOptionalValidator,
+  createPrimitiveValidator,
+  formatContext,
+  getLogger,
+} from '../validation-factory';
+
+import { createOptionalValidator } from '../validation-factory';
+import { validateNumber } from './primitives';
+
+// validate optional number parameter (used for line/column in openDocument)
+export const validateOptionalNumber = createOptionalValidator(validateNumber);

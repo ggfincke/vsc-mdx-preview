@@ -15,7 +15,7 @@ interface SafePreviewRendererProps {
 }
 
 // render sanitized HTML content in Safe Mode (use ref to set innerHTML after sanitization)
-// wrapped w/ React.memo to prevent re-renders when only zoom changes (html unchanged)
+// wrapped w/ React.memo to prevent unnecessary re-renders
 export const SafePreviewRenderer = memo(
   function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
     // shared preview setup (container ref, mermaid rendering, image lightbox)
@@ -51,8 +51,7 @@ export const SafePreviewRenderer = memo(
       />
     );
   },
-  // Custom comparison: fast-path length check before full string comparison
-  // For large HTML (100KB+), length mismatch returns false in O(1) vs O(n) string compare
+  // custom comparison: fast-path length check before full string comparison
   (prevProps, nextProps) => fastStringEquals(prevProps.html, nextProps.html)
 );
 

@@ -6,10 +6,7 @@ import * as vscode from 'vscode';
 import { Preview } from './preview/preview-manager';
 import { fetchLocal } from './module-system/fetcher/fetchLocal';
 import { getTrustManager, getErrorReporter } from './services';
-import {
-  TrustError,
-  requireTrustedModeForDocument,
-} from './security/validateTrust';
+import { tryRequireTrustedModeForDocument } from './security/validateTrust';
 import { error as logError, warn as logWarn, debug } from './logging';
 import { LogTags } from '@mdx-preview/shared';
 import { ErrorContext } from './errors';
@@ -84,7 +81,7 @@ class ExtensionHandle implements ExtensionRPC {
     performance.measure('preview duration', 'preview/start', 'preview/end');
   }
 
-  // fetch module for webview (primary attack surface - validates input & checks trust)
+  // fetch module for webview (primary attack surface - validate input & check trust)
   async fetch(
     request: string,
     isBare: boolean,
@@ -123,14 +120,12 @@ class ExtensionHandle implements ExtensionRPC {
 
     // require Trusted Mode for module fetch
     const docUri = this.preview.doc.uri;
-    try {
-      requireTrustedModeForDocument(docUri, 'fetch module');
-    } catch (error) {
-      if (error instanceof TrustError) {
-        logWarn(`fetch: blocked - ${error.message}`);
-        return undefined;
-      }
-      throw error;
+    if (
+      !tryRequireTrustedModeForDocument(docUri, 'fetch module', (error) =>
+        logWarn(`fetch: blocked - ${error.message}`)
+      )
+    ) {
+      return undefined;
     }
 
     return fetchLocal(validRequest, validIsBare, validParentId, this.preview);
@@ -211,7 +206,7 @@ class ExtensionHandle implements ExtensionRPC {
     });
 
     // validate & resolve path securely (entry dir check + path traversal check)
-    const securePathResult = validateAndResolveSecurePath(
+    const securePathResult = await validateAndResolveSecurePath(
       this.preview,
       validPath,
       'openDocument'
@@ -256,7 +251,7 @@ class ExtensionHandle implements ExtensionRPC {
     }
 
     // validate & resolve path securely (entry dir check + path traversal check)
-    const securePathResult = validateAndResolveSecurePath(
+    const securePathResult = await validateAndResolveSecurePath(
       this.preview,
       validPath,
       'openPreview'
@@ -265,20 +260,18 @@ class ExtensionHandle implements ExtensionRPC {
       return;
     }
 
-    // require Trusted Mode for target file - ensures preview can execute safely
+    // require Trusted Mode for target file - ensure preview can execute safely
     const targetUri = vscode.Uri.file(securePathResult.resolvedPath);
-    try {
-      requireTrustedModeForDocument(targetUri, 'open preview');
-    } catch (error) {
-      if (error instanceof TrustError) {
+    if (
+      !tryRequireTrustedModeForDocument(targetUri, 'open preview', (error) =>
         reportTrustViolationError(
           securePathResult.resolvedPath,
           error.message,
           'openPreview'
-        );
-        return;
-      }
-      throw error;
+        )
+      )
+    ) {
+      return;
     }
 
     try {

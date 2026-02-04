@@ -1,24 +1,24 @@
 // packages/webview-app/src/components/shims/nextra/Bleed.tsx
 // Nextra Bleed component shim for MDX Preview
-// Provides preview-compatible version of nextra/components Bleed
-// Allows content to overflow beyond the container width
+// provides preview-compatible version of nextra/components Bleed
+// allows content to overflow beyond the container width
 
 import { ReactNode, ReactElement, HTMLAttributes } from 'react';
 
-// Text size options
+// text size options
 type TextSize = 'sm' | 'base' | 'lg' | 'xl';
 
-// Font weight options
+// font weight options
 type FontWeight = 'normal' | 'medium' | 'semibold' | 'bold';
 
-// Alignment options
+// alignment options
 type HAlign = 'left' | 'center' | 'right';
 type VAlign = 'top' | 'middle' | 'bottom';
 
-// Height presets
+// height presets
 type HeightPreset = 'sm' | 'md' | 'lg' | 'xl' | 'screen' | 'half';
 
-// Bleed props (compatible w/ Nextra)
+// bleed props (compatible w/ Nextra)
 export interface BleedProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   size?: TextSize;
@@ -29,7 +29,7 @@ export interface BleedProps extends HTMLAttributes<HTMLDivElement> {
   height?: HeightPreset;
 }
 
-// Bleed component
+// bleed component
 export function Bleed({
   children,
   size,

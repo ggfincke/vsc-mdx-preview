@@ -20,10 +20,10 @@ export interface TransformResult {
 
 // options for transpilation
 export interface TranspileOptions {
-  // whether to prefer Sucrase over Babel
+  // prefer Sucrase
   useSucrase: boolean;
-  // context for debug logging (e.g., 'entry' or 'dependency')
+  // logging context
   context?: string;
-  // file path for debug logging
+  // file path
   filePath?: string;
 }

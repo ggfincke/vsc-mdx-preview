@@ -83,8 +83,7 @@ export default function remarkGithubAlerts() {
         node.children.shift();
       }
 
-      // build the alert HTML structure
-      // use raw HTML nodes since simpler than building MDAST for div structure
+      // build the alert HTML structure (raw HTML is simpler than MDAST manipulation)
       const alertHtml: Html = {
         type: 'html',
         value: buildAlertHtml(config, node),
@@ -101,7 +100,6 @@ function buildAlertHtml(
   config: (typeof ALERT_CONFIG)[AlertType],
   node: Blockquote
 ): string {
-  // convert blockquote children to simple text content
   // extract text from remaining children (simplified approach)
   const contentParts: string[] = [];
 

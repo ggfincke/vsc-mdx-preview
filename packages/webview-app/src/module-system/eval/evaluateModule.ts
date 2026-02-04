@@ -1,33 +1,33 @@
 // packages/webview-app/src/module-system/eval/evaluateModule.ts
-// module evaluator - evaluates module code using new Function()
+// module evaluator - evaluate module code using new Function()
 // ONLY used in Trusted Mode when canExecute is true
 //
-// supports two module formats:
-// 1. MDX function-body: expects runtime in arguments[0], returns { default: Component }
-// 2. CJS-style: uses require/exports/module.exports pattern
+// support two module formats
+// 1. MDX function-body: expect runtime in arguments[0], return { default: Component }
+// 2. CJS-style: use require/exports/module.exports pattern
 
 import type { ModuleRuntime } from '../types';
 import { normalizeError } from '@mdx-preview/shared';
 
 // evaluate a module string
-// for MDX function-body output (outputFormat: 'function-body'):
-//   - runtime is passed as arguments[0]
-//   - returns { default: MDXContent }
-// for CJS-style modules:
-//   - uses require/exports/module.exports
-//   - returns module.exports
+// MDX function-body format
+//   - pass runtime as arguments[0]
+//   - return { default: MDXContent }
+// for CJS-style modules
+//   - use require/exports/module.exports
+//   - return module.exports
 export function evaluateModule(
   code: string,
   moduleId: string,
   runtime: ModuleRuntime
 ): Record<string, unknown> {
-  // CJS-style module context
+  // cjs-style module context
   const module = { exports: {} as Record<string, unknown> };
   const exports = module.exports;
 
   try {
     // create the function
-    // MDX function-body reads from arguments[0]
+    // MDX function-body read from arguments[0]
     // we pass runtime as first arg & also inject require as local variable for CJS compat
     const fn = new Function(
       'runtime',
@@ -41,7 +41,7 @@ export function evaluateModule(
     // execute the function
     const result = fn(runtime, exports, module, moduleId);
 
-    // MDX function-body returns { default: MDXContent }
+    // MDX function-body return { default: MDXContent }
     // CJS modules populate module.exports
     // return whichever is populated
     if (result !== undefined) {
@@ -56,7 +56,7 @@ export function evaluateModule(
       `Error evaluating module "${moduleId}": ${originalError.message}`
     );
 
-    // ES2022 cause for tooling that supports it
+    // es2022 cause for tooling that support it
     (contextualError as { cause?: Error }).cause = originalError;
 
     // also include original stack in the stack property for display

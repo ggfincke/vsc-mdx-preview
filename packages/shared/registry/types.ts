@@ -1,5 +1,5 @@
 // packages/shared/registry/types.ts
-// interface definitions for component registry (NOT derived from COMPONENT_REGISTRY)
+// interface definitions for component registry (not derived from COMPONENT_REGISTRY)
 
 export const SHIM_PREFIX = '@mdx-preview/shims' as const;
 
@@ -16,45 +16,45 @@ export type FrameworkSetting = 'auto' | FrameworkId;
 export type ComponentKind = 'component' | 'barrel';
 
 export interface ComponentDefinitionBase {
-  // canonical name for this shim entry (component name or barrel identifier)
+  // canonical name
   name: string;
 
-  // framework this shim belongs to
+  // framework
   framework: FrameworkId;
 
-  // import specifiers users write in MDX
+  // import aliases
   importSpecifiers: readonly string[];
 
-  // internal shim path used by the extension
+  // shim path
   shimPath: string;
 
-  // canonical preloaded module ID used by the webview
+  // preload ID
   preloadId: string;
 
-  // webview import path (relative to webview src/)
+  // webview import
   webviewImport: string;
 
-  // whether to map bare names/aliases to this preload ID
+  // expose bare
   exposeAsBareImport?: boolean;
 }
 
 export interface ComponentDefinition extends ComponentDefinitionBase {
   kind: 'component';
 
-  // aliases that should map to the same component
+  // aliases
   aliases: readonly string[];
 
-  // default import unless specified
+  // import kind
   importKind?: 'default' | 'named';
 
-  // named import to use when importKind is 'named'
+  // import name
   importName?: string;
 }
 
 export interface ComponentBarrelDefinition extends ComponentDefinitionBase {
   kind: 'barrel';
 
-  // named exports to expose from the barrel module
+  // export names
   exportNames: readonly string[];
 }
 

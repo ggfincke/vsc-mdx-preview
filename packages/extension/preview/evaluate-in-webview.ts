@@ -86,8 +86,7 @@ export default async function evaluateInWebview(
 
       // detect used generic components for conditional shim preloading
       try {
-        // no config components needed here
-        // pass URI for caching
+        // pass URI for caching (no config components needed)
         const detectionResult = await detectComponents(
           text,
           { detectImports: true },
@@ -123,8 +122,7 @@ export default async function evaluateInWebview(
         frontmatter: result.frontmatter,
       });
 
-      // compile Tailwind CSS after preview update (non-blocking)
-      // skip processing entirely when explicitly disabled to avoid overhead
+      // compile Tailwind CSS after preview update (skip if explicitly disabled)
       if (effectiveConfig.tailwind.enabled !== 'disabled') {
         const tailwindRequestId = preview.nextTailwindRequestId();
         void engine.processTailwindAsync(

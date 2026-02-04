@@ -4,7 +4,7 @@
 
 import React, { ReactNode, ReactElement } from 'react';
 
-// CardGrid props (compatible w/ Starlight)
+// cardGrid props (compatible w/ Starlight)
 export interface CardGridProps {
   children: ReactNode;
   stagger?: boolean;

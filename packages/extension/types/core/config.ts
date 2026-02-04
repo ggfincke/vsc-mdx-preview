@@ -78,11 +78,11 @@ export interface MdxPreviewConfig {
 
 // resolved configuration w/ metadata
 export interface ResolvedConfig {
-  // the parsed configuration
+  // parsed config
   config: MdxPreviewConfig;
-  // absolute path to the config file
+  // config file path
   configPath: string;
-  // directory containing the config file (for resolving relative paths)
+  // config directory
   configDir: string;
 }
 

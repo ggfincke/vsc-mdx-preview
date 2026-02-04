@@ -11,6 +11,7 @@ import { Uri } from 'vscode';
 const { mockConfigManager } = vi.hoisted(() => ({
   mockConfigManager: {
     get: vi.fn(() => 'auto'),
+    onDidChangeKey: vi.fn(() => ({ dispose: vi.fn() })),
   },
 }));
 
@@ -21,6 +22,12 @@ vi.mock('../../../packages/extension/services', () => ({
 
 vi.mock('../../../packages/extension/logging', () => ({
   debug: vi.fn(),
+  createTaggedLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
 }));
 
 const tempDirs: string[] = [];

@@ -6,25 +6,22 @@ import { cn } from '../../utils/cn';
 import './PreviewContainer.css';
 
 export interface PreviewContainerProps {
-  // ref to the container div for DOM manipulation (mermaid rendering, etc.)
+  // container ref
   containerRef: RefObject<HTMLDivElement>;
-  // mode attribute for styling hooks ('safe' or 'trusted')
+  // mode attribute
   mode: 'safe' | 'trusted';
-  // React onClick handler for image lightbox (TrustedPreview)
-  // SafePreview uses imperative addEventListener instead
+  // image click handler
   onImageClick?: (event: MouseEvent<HTMLDivElement>) => void;
-  // mermaid portals rendered via useMermaidRendering hook
+  // mermaid portals
   mermaidPortals: ReactNode;
-  // content to render inside the container
-  // SafePreview: empty (HTML injected via innerHTML)
-  // TrustedPreview: MDXComponent
+  // children
   children?: ReactNode;
-  // additional CSS classes to apply
+  // className
   className?: string;
 }
 
 // shared container component for both Safe & Trusted preview modes
-// provides a unified structure for:
+// provides a unified structure for
 // - container ref attachment for DOM manipulation
 // - mode attribute for styling hooks
 // - optional onClick handler for image lightbox

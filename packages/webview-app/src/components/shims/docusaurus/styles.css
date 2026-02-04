@@ -47,9 +47,9 @@
   border-bottom-color: var(--vscode-textLink-foreground, var(--mdx-link-color));
 }
 
-.mdx-preview-tabs-button:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--vscode-focusBorder, rgba(0, 102, 204, 0.3));
+.mdx-preview-tabs-button:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder, rgba(0, 102, 204, 0.3));
+  outline-offset: -2px;
 }
 
 .mdx-preview-tabs-content {

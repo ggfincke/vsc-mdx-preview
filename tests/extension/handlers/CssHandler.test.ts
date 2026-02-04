@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { CssHandler } from '../../../packages/extension/module-system/handlers/CssHandler';
 import type { Preview } from '../../../packages/extension/preview/preview-manager';
 
-// mock Preview (minimal interface for handler)
+// minimal Preview mock for handler
 const mockPreview = {} as Preview;
 
 describe('CssHandler', () => {

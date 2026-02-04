@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/FileTree.tsx
 // Starlight FileTree component shim for MDX Preview
-// provide preview-compatible version of @astrojs/starlight/components FileTree
+// provides preview-compatible version of @astrojs/starlight/components FileTree
 
 import React, {
   ReactNode,
@@ -16,7 +16,7 @@ export interface FileTreeProps {
   children: ReactNode;
 }
 
-// Internal representation of a file tree entry
+// internal representation of a file tree entry
 interface FileTreeEntry {
   name: string;
   isDirectory: boolean;
@@ -48,17 +48,17 @@ function parseLiContent(children: ReactNode): {
   let nestedList: ReactNode | undefined;
 
   for (const child of childArray) {
-    // Check for nested ul (subdirectory)
+    // check for nested ul (subdirectory)
     if (isValidElement(child) && child.type === 'ul') {
       nestedList = child;
       continue;
     }
 
-    // Check for bold (highlighted)
+    // check for bold (highlighted)
     if (isBoldElement(child)) {
       isHighlighted = true;
       const boldText = extractTextContent(child);
-      // Bold text is the name, any text after is comment
+      // bold text is the name, any text after is comment
       const parts = boldText.split(/\s+/);
       name = parts[0] || '';
       if (parts.length > 1) {
@@ -67,7 +67,7 @@ function parseLiContent(children: ReactNode): {
       continue;
     }
 
-    // Handle plain text
+    // handle plain text
     if (typeof child === 'string') {
       const text = child.trim();
       if (!text) {
@@ -75,7 +75,7 @@ function parseLiContent(children: ReactNode): {
       }
 
       if (!name) {
-        // First text segment is the name
+        // first text segment is the name
         const parts = text.split(/\s+/);
         name = parts[0] || '';
         if (parts.length > 1) {
@@ -83,7 +83,7 @@ function parseLiContent(children: ReactNode): {
           comment = comment ? `${comment} ${restText}` : restText;
         }
       } else {
-        // Additional text is comment
+        // additional text is comment
         comment = comment ? `${comment} ${text}` : text;
       }
     }
@@ -102,7 +102,7 @@ function parseLiElement(li: ReactElement): FileTreeEntry | null {
     return null;
   }
 
-  // Check for placeholder
+  // check for placeholder
   if (name === '...' || name === '…') {
     return {
       name: '...',
@@ -112,11 +112,11 @@ function parseLiElement(li: ReactElement): FileTreeEntry | null {
     };
   }
 
-  // Determine if directory (trailing / or has nested children)
+  // determine if directory (trailing / or has nested children)
   const isDirectory = name.endsWith('/') || nestedList !== undefined;
   const cleanName = name.endsWith('/') ? name.slice(0, -1) : name;
 
-  // Parse nested children if present
+  // parse nested children if present
   let entryChildren: FileTreeEntry[] | undefined;
   if (nestedList && isValidElement(nestedList)) {
     entryChildren = parseFileTreeChildren(nestedList.props.children);
@@ -146,21 +146,21 @@ function parseFileTreeChildren(children: ReactNode): FileTreeEntry[] {
       continue;
     }
 
-    // Handle <ul> wrapper - recursively process its children
+    // handle <ul> wrapper - recursively process its children
     if (child.type === 'ul') {
       entries.push(...parseFileTreeChildren(child.props.children));
       continue;
     }
 
-    // Handle <li> items
+    // handle <li> items
     if (child.type === 'li') {
       const entry = parseLiElement(child);
       if (!entry) {
         continue;
       }
 
-      // Check if next sibling is a <ul> that should be this directory's children
-      // This handles the sibling pattern: <li>folder/</li><ul>...</ul>
+      // check if next sibling is a <ul> that should be this directory's children
+      // this handles the sibling pattern: <li>folder/</li><ul>...</ul>
       const nextChild = childArray[i + 1];
       if (
         entry.isDirectory &&

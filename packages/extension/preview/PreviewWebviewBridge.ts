@@ -11,7 +11,6 @@ import type { WebviewHandleType } from '../rpc-extension';
 export type WebviewHandle = WebviewHandleType;
 
 // manage webview communication & theme state for a preview instance
-// handle bridge between extension & webview for theme updates & handle setup
 export class PreviewWebviewBridge {
   private webviewHandle?: WebviewHandle;
   private webview?: vscode.Webview;
@@ -92,6 +91,13 @@ export class PreviewWebviewBridge {
   async invalidate(fsPath: string): Promise<void> {
     if (this.webviewHandle) {
       await this.webviewHandle.invalidate(fsPath);
+    }
+  }
+
+  // clear all caches in the webview (for manual cache refresh command)
+  async clearAllCaches(): Promise<void> {
+    if (this.webviewHandle) {
+      await this.webviewHandle.clearAllCaches();
     }
   }
 }

@@ -1,14 +1,14 @@
 // packages/extension/services/service-locator.ts
 // type-safe service access helpers for ServiceRegistry
 //
-// PREFERRED ACCESS PATTERN FOR SERVICES:
+// PREFERRED ACCESS PATTERN FOR SERVICES
 //
-// This module provides the RECOMMENDED way to access services throughout
-// the extension. Use these typed getter functions instead of:
+// provide the RECOMMENDED way to access services throughout
+// the extension. Use these typed getter functions instead of
 // - Direct getInstance() calls (use only within the service class itself)
 // - ServiceRegistry.get() (use only for dynamic/advanced access patterns)
 //
-// USAGE:
+// USAGE
 // ```typescript
 // import { getConfigManager, getTrustManager } from './services';
 //
@@ -21,7 +21,7 @@
 // }
 // ```
 //
-// WHY USE SERVICE LOCATOR FUNCTIONS:
+// WHY USE SERVICE LOCATOR FUNCTIONS
 // 1. Type safety - each getter returns the correct service type
 // 2. Lazy initialization - services created on first access
 // 3. Decoupling - consuming code doesn't depend on service implementation
@@ -72,14 +72,14 @@ export function isServiceInitialized(name: ServiceName): boolean {
 // create typed getter functions for registered services
 
 // factory for creating service getter functions
-// reduces boilerplate for standard getter pattern
+// reduce boilerplate for standard getter pattern
 function createServiceGetter<T extends IService>(name: ServiceName): () => T {
   return () => ServiceRegistry.getInstance().get<T>(name);
 }
 
 // typed service getters (preferred)
 // these provide better IntelliSense & type checking than generic getService()
-// import & use these in your code:
+// import & use these in your code
 // import { getConfigManager, getTrustManager } from './services';
 
 // get the ConfigManager service - manages VS Code configuration settings for the extension

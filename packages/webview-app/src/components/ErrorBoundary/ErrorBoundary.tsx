@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/ErrorBoundary/ErrorBoundary.tsx
-// catch React errors & display VS Code-themed error UI (handles global errors too)
+// catch React errors & display VS Code-themed error UI (handle global errors too)
 
 import React, { useEffect, useState, useCallback } from 'react';
 import {
@@ -90,7 +90,7 @@ export function ErrorDisplay({
   }, [error]);
 
   return (
-    <div className="mdx-preview-error-overlay">
+    <div className="mdx-preview-error-overlay" role="alert" aria-live="assertive">
       <div className="mdx-preview-error-container">
         <div className="mdx-preview-error-header">
           <span className="mdx-preview-error-icon">!</span>

@@ -9,6 +9,12 @@ vi.mock('../packages/extension/logging', () => ({
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
+  createTaggedLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
 }));
 
 // mock services w/ sensible defaults (tests can override as needed)
@@ -23,6 +29,12 @@ vi.mock('../packages/extension/services', () => ({
       };
       return defaults[key];
     }),
+    onDidChangeConfiguration: vi.fn(() => ({ dispose: vi.fn() })),
+    onDidChangeKey: vi.fn(() => ({ dispose: vi.fn() })),
+  })),
+  getTrustManager: vi.fn(() => ({
+    getState: vi.fn(() => ({ canExecute: false })),
+    subscribe: vi.fn(() => ({ dispose: () => {} })),
   })),
   getFrameworkDetector: vi.fn(() => ({
     getFramework: vi.fn(() => ({ framework: 'generic', confidence: 1 })),

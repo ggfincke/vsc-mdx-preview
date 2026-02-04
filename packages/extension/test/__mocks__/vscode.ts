@@ -272,11 +272,21 @@ export const workspace = {
   },
 };
 
+const activeEditorEmitter = new EventEmitter<any>();
+
 export const window = {
   activeTextEditor: undefined as any,
   showTextDocument: async (_doc: any, _options?: any): Promise<any> =>
     undefined,
+  onDidChangeActiveTextEditor: (handler: EventHandler<any>): Disposable =>
+    activeEditorEmitter.event(handler),
 };
+
+// trigger active editor change events for tests
+export function __fireActiveTextEditorChange(editor: any): void {
+  window.activeTextEditor = editor;
+  activeEditorEmitter.fire(editor);
+}
 
 export const commands = {
   executeCommand: async (

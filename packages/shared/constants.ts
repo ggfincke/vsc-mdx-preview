@@ -14,11 +14,10 @@ export const STANDARD_WATCHER_DEBOUNCE_MS = 500;
 // exponential backoff: 100, 200, 400, 800ms
 export const RPC_HANDLER_RETRY_DELAY_MS = 100;
 
-// maximum retry attempts for handler registration
-// 4 retries = 5 total attempts, ~1.5s total max wait before giving up
+// max retry attempts
 export const RPC_HANDLER_MAX_RETRIES = 4;
 
-// maximum pending messages before logging a warning
+// max pending messages
 export const RPC_PENDING_MESSAGES_WARNING_THRESHOLD = 50;
 
 // shim loading retry configuration

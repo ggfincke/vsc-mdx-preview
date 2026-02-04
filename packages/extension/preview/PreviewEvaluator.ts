@@ -42,9 +42,7 @@ export class PreviewEvaluator {
     return this.configManager.configuration;
   }
 
-  // update webview w/ current document content
-  // - force: bypass version tracking (always re-render)
-  // - handles different URI schemes: untitled, file, vscode-remote, etc.
+  // update webview w/ current document content (force bypasses version tracking)
   async updateWebview(force = false): Promise<void> {
     debug(`[${LogTags.PREVIEW_EVALUATOR}] updateWebview called`);
     const { uri } = this.doc;
@@ -84,7 +82,7 @@ export class PreviewEvaluator {
         break;
       }
       default: {
-        // vscode-remote, vscode-vfs, etc.
+        // vscode-remote, vscode-vfs, etc
         debug(
           `[${LogTags.PREVIEW_EVALUATOR}] updateWebview: default scheme (${scheme})`
         );

@@ -1,8 +1,5 @@
 // packages/extension/tailwind/TailwindCache.ts
-// LRU cache for compiled Tailwind CSS
-//
-// Uses the shared LRUCache utility for consistent caching behavior
-// w/ TTL-based expiration
+// LRU cache for compiled Tailwind CSS using shared LRUCache utility w/ TTL expiration
 
 import { debug } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
@@ -53,7 +50,7 @@ export class TailwindCache {
     }
   }
 
-  // number of entries in the cache
+  // entry count
   get size(): number {
     return this.cache.size;
   }

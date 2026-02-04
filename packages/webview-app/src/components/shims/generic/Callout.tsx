@@ -10,7 +10,7 @@ import {
 import { CalloutType, CALLOUT_TITLES, normalizeCalloutType } from './types';
 import { CALLOUT_ICONS } from '../base/icons';
 
-// Callout props - extends base props for generic callout
+// callout props - extends base props for generic callout
 export type CalloutProps = BaseCalloutProps<CalloutType>;
 
 // create the base Callout using factory
@@ -23,19 +23,19 @@ const BaseCallout = createCallout<CalloutType>({
   layout: 'header',
 });
 
-// Callout component w/ type normalization
+// callout component w/ type normalization
 export function Callout(props: CalloutProps): ReactElement {
   // normalize type aliases (success -> tip, error -> danger, etc.)
   const normalizedType = normalizeCalloutType(props.type);
   return <BaseCallout {...props} type={normalizedType} />;
 }
 
-// Alert component (alias for Callout)
+// alert component (alias for Callout)
 export function Alert(props: CalloutProps): ReactElement {
   return <Callout {...props} />;
 }
 
-// Admonition component (alias for Callout, Docusaurus style)
+// admonition component (alias for Callout, Docusaurus style)
 export function Admonition(props: CalloutProps): ReactElement {
   return <Callout {...props} />;
 }

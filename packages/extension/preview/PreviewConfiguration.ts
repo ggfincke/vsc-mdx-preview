@@ -91,8 +91,7 @@ export class PreviewConfiguration {
     return this._debouncedUpdateWebview;
   }
 
-  // update configuration from VS Code settings
-  // returns information about what changed to allow caller to react appropriately
+  // update configuration from VS Code settings (returns change info for caller)
   updateConfiguration(
     docUri: vscode.Uri,
     updateWebviewFn: () => void

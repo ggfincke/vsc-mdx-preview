@@ -9,8 +9,7 @@ import { getPreviewManager } from '../services';
 import { createOrShowPanel, refreshPanel } from './webview-manager';
 import { Preview } from './Preview';
 
-// open MDX preview for the active editor document
-// create new Preview instance or reuse existing one
+// open MDX preview for active editor document (create or reuse Preview instance)
 export async function openPreview(): Promise<void> {
   debug(`[${LogTags.PREVIEW}] openPreview called`);
   if (!vscode.window.activeTextEditor) {
@@ -37,8 +36,7 @@ export async function openPreview(): Promise<void> {
   debug(`[${LogTags.PREVIEW}] openPreview complete`);
 }
 
-// refresh the current MDX preview
-// forces a full re-render of the preview content
+// refresh current MDX preview (force full re-render)
 export async function refreshPreview(): Promise<void> {
   debug(`[${LogTags.PREVIEW}] refreshPreview called`);
   const currentPreview = getPreviewManager().getCurrentPreview();

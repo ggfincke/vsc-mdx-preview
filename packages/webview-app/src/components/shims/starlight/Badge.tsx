@@ -13,7 +13,7 @@ export type BadgeVariant =
   | 'success'
   | 'default';
 
-// Badge props (compatible w/ Starlight)
+// badge props (compatible w/ Starlight)
 export interface BadgeProps {
   text: ReactNode;
   variant?: BadgeVariant;

@@ -6,10 +6,10 @@ import type { FetchResult } from '@mdx-preview/shared';
 // re-export FetchResult from shared
 export type { FetchResult } from '@mdx-preview/shared';
 
-// module export type - can be any value (default export, named exports, etc.)
+// module export value
 type ModuleExports = Record<string, unknown> | unknown;
 
-// a cached module
+// cached module
 export interface Module {
   id: string;
   exports: ModuleExports;
@@ -17,7 +17,7 @@ export interface Module {
 }
 
 // MDX function-body runtime
-// MDX 3 compiled w/ outputFormat: 'function-body' expects these in arguments[0]
+// MDX 3 compiled w/ outputFormat: 'function-body' expect these in arguments[0]
 export interface MDXRuntime {
   Fragment: unknown;
   jsx: unknown;

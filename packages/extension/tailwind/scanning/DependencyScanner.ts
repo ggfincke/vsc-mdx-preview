@@ -2,18 +2,22 @@
 // scan imported dependencies for Tailwind classes
 
 import * as path from 'path';
+import { Semaphore } from '@mdx-preview/shared';
 import { getUnifiedResolver } from '../../module-system/resolver/UnifiedResolver';
 import type { ResolutionContext, TextExtractor } from '../../types';
 import { FileScanValidator } from '../FileScanValidator';
 import { TailwindScanCache, computeContentHash } from '../TailwindScanCache';
+import { TAILWIND_DEPENDENCY_RESOLUTION_LIMIT } from '../constants';
 
-// resolves & scans imported dependency files for Tailwind classes
+const resolveSemaphore = new Semaphore(TAILWIND_DEPENDENCY_RESOLUTION_LIMIT);
+
+// resolve & scan imported dependency files for Tailwind classes
 export class DependencyScanner {
   private readonly validator = new FileScanValidator();
   private readonly resolver = getUnifiedResolver();
 
   // scan dependency files for Tailwind classes
-  // optionally uses scanCache to avoid re-scanning unchanged files
+  // optionally use scanCache to avoid re-scanning unchanged files
   async scanDependencies(
     entryFilePath: string,
     imports: string[],
@@ -77,29 +81,33 @@ export class DependencyScanner {
   ): Promise<string[]> {
     const entryDir = path.dirname(entryFilePath);
 
-    // use provided context if available, otherwise fall back to minimal context
-    // always ensure baseDir is set to the entry directory for relative resolution
+    // use provided context if available & always ensure baseDir is set to entry directory
     const context: ResolutionContext = providedContext
       ? { ...providedContext, baseDir: entryDir }
       : { baseDir: entryDir };
 
-    // filter to resolvable relative imports & resolve in parallel
-    const resolutionPromises = imports
-      .filter((specifier) => {
-        // must be resolvable & relative
-        return (
-          this.resolver.shouldResolve(specifier) &&
-          this.resolver.isRelativeImport(specifier)
-        );
-      })
-      .map(async (specifier) => {
+    // filter to resolvable relative imports
+    const toResolve = imports.filter((specifier) => {
+      return (
+        this.resolver.shouldResolve(specifier) &&
+        this.resolver.isRelativeImport(specifier)
+      );
+    });
+
+    // resolve w/ concurrency limit to prevent resource exhaustion
+    const resolutionPromises = toResolve.map(async (specifier) => {
+      await resolveSemaphore.acquire();
+      try {
         const result = await this.resolver.resolveAsync(
           specifier,
           context,
           'dependency'
         );
         return result && !result.isBuiltInShim ? result.fsPath : null;
-      });
+      } finally {
+        resolveSemaphore.release();
+      }
+    });
 
     const results = await Promise.all(resolutionPromises);
     return results.filter((target): target is string => target !== null);

@@ -7,10 +7,10 @@ import { LogTags } from '@mdx-preview/shared';
 import { SingletonService } from '../services/SingletonService';
 import { SubscriberManager } from '../utils/SubscriberManager';
 
-// Import Preview class for type usage
+// import Preview class for type usage
 import type { Preview } from './Preview';
 
-// Re-export types & classes
+// re-export types & classes
 export {
   Preview,
   type StyleConfiguration,
@@ -60,9 +60,9 @@ export class PreviewManager extends SingletonService<PreviewManager> {
   }
 
   // refresh all active previews (e.g., when trust state changes)
-  refreshAllPreviews(): void {
+  async refreshAllPreviews(): Promise<void> {
     if (this.currentPreview?.active) {
-      this.currentPreview.refreshWebview();
+      await this.currentPreview.refreshWebview();
     }
   }
 
@@ -70,6 +70,19 @@ export class PreviewManager extends SingletonService<PreviewManager> {
   pushThemeToAllPreviews(): void {
     if (this.currentPreview?.active) {
       this.currentPreview.pushThemeState();
+    }
+  }
+
+  // clear webview caches for all active previews (via RPC)
+  async clearAllWebviewCaches(): Promise<void> {
+    if (this.currentPreview?.active) {
+      try {
+        await this.currentPreview.clearAllCaches();
+      } catch (error) {
+        debug(
+          `[${LogTags.PREVIEW_MANAGER}] Failed to clear webview cache: ${error}`
+        );
+      }
     }
   }
 

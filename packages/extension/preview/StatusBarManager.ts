@@ -15,7 +15,7 @@ import {
 import { SingletonService } from '../services/SingletonService';
 import { LogTags } from '@mdx-preview/shared';
 
-// status bar manager singleton for MDX preview status display
+// * status bar manager singleton for MDX preview status display
 export class StatusBarManager extends SingletonService<StatusBarManager> {
   protected static override instance: StatusBarManager | undefined;
   protected readonly logTag = LogTags.STATUS_BAR;

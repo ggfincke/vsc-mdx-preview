@@ -1,13 +1,13 @@
 // packages/webview-app/src/module-system/registry/DependencyTracker.ts
 // dependency graph & resolution map w/ O(k) cleanup via reverse indexes
 
-// tracks module dependencies & import resolution
-// uses dual-index system for O(k) cleanup instead of O(n) full scan
+// track module dependencies & import resolution
+// use dual-index system for O(k) cleanup instead of O(n) full scan
 export class DependencyTracker {
   // map (parentId, request) -> resolved fsPath for relative imports
   private resolutionMap: Map<string, string> = new Map();
 
-  // Reverse indexes for O(k) cleanup:
+  // reverse indexes for O(k) cleanup
   // - parentToResolutionKeys: moduleId -> Set of resolution keys where moduleId is parent
   // - targetToResolutionKeys: moduleId -> Set of resolution keys where moduleId is target (value)
   private parentToResolutionKeys: Map<string, Set<string>> = new Map();
@@ -22,26 +22,26 @@ export class DependencyTracker {
   }
 
   // register a resolved path for a (parent, request) pair
-  // maintains reverse indexes for O(k) cleanup
+  // maintain reverse indexes for O(k) cleanup
   setResolution(parentId: string, request: string, fsPath: string): void {
     const key = this.makeResolutionKey(parentId, request);
 
-    // Clean up old target mapping if this key existed
+    // clean up old target mapping if this key existed
     const oldTarget = this.resolutionMap.get(key);
     if (oldTarget) {
       this.targetToResolutionKeys.get(oldTarget)?.delete(key);
     }
 
-    // Set the resolution
+    // set the resolution
     this.resolutionMap.set(key, fsPath);
 
-    // Update parent index
+    // update parent index
     if (!this.parentToResolutionKeys.has(parentId)) {
       this.parentToResolutionKeys.set(parentId, new Set());
     }
     this.parentToResolutionKeys.get(parentId)!.add(key);
 
-    // Update target index
+    // update target index
     if (!this.targetToResolutionKeys.has(fsPath)) {
       this.targetToResolutionKeys.set(fsPath, new Set());
     }
@@ -80,7 +80,7 @@ export class DependencyTracker {
   // remove all resolutionMap entries for moduleId (as parent or target)
   // O(k) via reverse indexes instead of O(n) full scan
   cleanResolutionMapFor(moduleId: string): void {
-    // Clean entries where moduleId is parent
+    // clean entries where moduleId is parent
     const parentKeys = this.parentToResolutionKeys.get(moduleId);
     if (parentKeys) {
       for (const key of parentKeys) {
@@ -93,7 +93,7 @@ export class DependencyTracker {
       this.parentToResolutionKeys.delete(moduleId);
     }
 
-    // Clean entries where moduleId is target
+    // clean entries where moduleId is target
     const targetKeys = this.targetToResolutionKeys.get(moduleId);
     if (targetKeys) {
       for (const key of targetKeys) {
@@ -107,23 +107,23 @@ export class DependencyTracker {
 
   // remove module from all dependents sets & delete its own entry
   cleanDependentsFor(moduleId: string): void {
-    // Remove this module's entry as a dependency target
+    // remove this module's entry as a dependency target
     this.dependents.delete(moduleId);
 
-    // Remove this module from all other modules' dependent sets
+    // remove this module from all other modules' dependent sets
     for (const [, deps] of this.dependents) {
       deps.delete(moduleId);
     }
   }
 
   // collect all modules that transitively depend on the given module
-  // AND clean up all tracking metadata for those modules
-  // returns a Set of all module IDs that were invalidated
+  // & clean up all tracking metadata for those modules
+  // return a Set of all module IDs that were invalidated
   invalidateWithDependents(moduleId: string): Set<string> {
     const invalidated = new Set<string>();
     const queue = [moduleId];
 
-    // First pass: collect all modules to invalidate
+    // first pass: collect all modules to invalidate
     while (queue.length > 0) {
       const current = queue.shift()!;
       if (invalidated.has(current)) {
@@ -132,7 +132,7 @@ export class DependencyTracker {
 
       invalidated.add(current);
 
-      // Queue all modules that depend on this one
+      // queue all modules that depend on this one
       const deps = this.dependents.get(current);
       if (deps) {
         for (const dep of deps) {
@@ -143,7 +143,7 @@ export class DependencyTracker {
       }
     }
 
-    // Second pass: clean up all metadata for ALL invalidated modules (batch cleanup)
+    // second pass: clean up all metadata for ALL invalidated modules (batch cleanup)
     for (const id of invalidated) {
       this.cleanDependentsFor(id);
       this.cleanResolutionMapFor(id);

@@ -1,6 +1,6 @@
 // packages/shared/registry/registry-data.ts
 // COMPONENT_REGISTRY data + derived types + builder functions
-// NOTE: derived types (line 328+) use `typeof COMPONENT_REGISTRY` & MUST stay in this file
+// note: derived types (line 328+) use `typeof COMPONENT_REGISTRY` & must stay in this file
 
 import {
   SHIM_PREFIX,
@@ -337,7 +337,7 @@ export const COMPONENT_REGISTRY = [
 ] as const satisfies readonly ComponentRegistryEntry[];
 
 // derive types from the registry for stronger typing across the repo
-// NOTE: derived types (line 328+) use `typeof COMPONENT_REGISTRY` & MUST stay in this file
+// note: derived types (line 328+) use `typeof COMPONENT_REGISTRY` & must stay in this file
 export type ComponentRegistryEntryType = (typeof COMPONENT_REGISTRY)[number];
 
 type GenericComponentEntry = Extract<

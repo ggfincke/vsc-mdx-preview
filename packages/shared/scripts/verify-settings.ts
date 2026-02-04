@@ -91,7 +91,7 @@ function main(): void {
   const properties = packageJson.contributes?.configuration?.properties ?? {};
   const errors: string[] = [];
 
-  // Verify preview theme enum
+  // verify preview theme enum
   verifyEnum(
     'mdx-preview.preview.previewTheme',
     properties['mdx-preview.preview.previewTheme']?.enum,
@@ -99,7 +99,7 @@ function main(): void {
     errors
   );
 
-  // Verify code block theme enum
+  // verify code block theme enum
   verifyEnum(
     'mdx-preview.preview.codeBlockTheme',
     properties['mdx-preview.preview.codeBlockTheme']?.enum,
@@ -107,7 +107,7 @@ function main(): void {
     errors
   );
 
-  // Verify mermaid theme enum
+  // verify mermaid theme enum
   verifyEnum(
     'mdx-preview.preview.mermaidTheme',
     properties['mdx-preview.preview.mermaidTheme']?.enum,
@@ -115,7 +115,7 @@ function main(): void {
     errors
   );
 
-  // Verify framework setting enum
+  // verify framework setting enum
   verifyEnum(
     'mdx-preview.framework',
     properties['mdx-preview.framework']?.enum,
@@ -123,7 +123,7 @@ function main(): void {
     errors
   );
 
-  // Verify tailwind.enabled enum
+  // verify tailwind.enabled enum
   verifyEnum(
     'mdx-preview.tailwind.enabled',
     properties['mdx-preview.tailwind.enabled']?.enum,
@@ -131,7 +131,7 @@ function main(): void {
     errors
   );
 
-  // Verify unknownBehavior enum
+  // verify unknownBehavior enum
   verifyEnum(
     'mdx-preview.components.unknownBehavior',
     properties['mdx-preview.components.unknownBehavior']?.enum,
@@ -139,7 +139,7 @@ function main(): void {
     errors
   );
 
-  // Verify updateMode enum
+  // verify updateMode enum
   verifyEnum(
     'mdx-preview.preview.updateMode',
     properties['mdx-preview.preview.updateMode']?.enum,
@@ -147,7 +147,7 @@ function main(): void {
     errors
   );
 
-  // Verify security policy enum
+  // verify security policy enum
   verifyEnum(
     'mdx-preview.preview.security',
     properties['mdx-preview.preview.security']?.enum,
@@ -155,7 +155,7 @@ function main(): void {
     errors
   );
 
-  // Verify defaults for all settings
+  // verify defaults for all settings
   for (const [key, value] of Object.entries(SETTINGS_DEFAULTS)) {
     const propertyKey = `mdx-preview.${key}`;
     const property = properties[propertyKey];

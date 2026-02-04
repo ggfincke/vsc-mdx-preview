@@ -10,10 +10,10 @@ export interface StatResult {
 
 // options for file probing operations
 export interface FileProbingOptions {
-  // extensions to try when probing (e.g., ['.ts', '.tsx', '.js'])
+  // extensions to probe
   extensions?: string[];
-  // index files to check for directory imports
+  // index files
   indexFiles?: string[];
-  // whether to use cached stat results
+  // use stat cache
   useCache?: boolean;
 }

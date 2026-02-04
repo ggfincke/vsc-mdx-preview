@@ -1,5 +1,5 @@
 // packages/webview-app/src/rpc/handler-configs.ts
-// Declarative configurations for RPC handler methods
+// declarative configurations for RPC handler methods
 
 import type { TrustState, PreviewError } from '@mdx-preview/shared';
 import type {
@@ -119,18 +119,9 @@ export const SET_THEME_CONFIG = createOptionalConfig('setTheme');
 // configuration for setNextraMeta handler
 export const SET_NEXTRA_META_CONFIG = createOptionalConfig('setNextraMeta');
 
-// configuration for zoomIn handler
-export const ZOOM_IN_CONFIG = createOptionalConfig('zoomIn');
-
-// configuration for zoomOut handler
-export const ZOOM_OUT_CONFIG = createOptionalConfig('zoomOut');
-
-// configuration for resetZoom handler
-export const RESET_ZOOM_CONFIG = createOptionalConfig('resetZoom');
-
 // config collections (for iteration/documentation)
 
-// All QUEUED handler configurations
+// all QUEUED handler configurations
 export const QUEUED_CONFIGS = {
   setTrustState: SET_TRUST_STATE_CONFIG,
   updatePreview: UPDATE_PREVIEW_CONFIG,
@@ -139,13 +130,10 @@ export const QUEUED_CONFIGS = {
   setStale: SET_STALE_CONFIG,
 } as const;
 
-// All OPTIONAL handler configurations
+// all OPTIONAL handler configurations
 export const OPTIONAL_CONFIGS = {
   setTheme: SET_THEME_CONFIG,
   setNextraMeta: SET_NEXTRA_META_CONFIG,
-  zoomIn: ZOOM_IN_CONFIG,
-  zoomOut: ZOOM_OUT_CONFIG,
-  resetZoom: RESET_ZOOM_CONFIG,
 } as const;
 
 // compile-time type safety
@@ -170,12 +158,12 @@ export type ConfiguredMethodNames = QueuedMethodNames | OptionalMethodNames;
 // doesn't exist in the WebviewRPC interface
 import type { WebviewRPC } from '@mdx-preview/shared';
 
-// This type will error at compile time if any configured method doesn't exist in WebviewRPC
+// this type will error at compile time if any configured method doesn't exist in WebviewRPC
 type ValidateMethodExists<T extends string> = T extends keyof WebviewRPC
   ? true
   : never;
 
-// Force TypeScript to evaluate the validation - these will error if methods don't exist
+// force TypeScript to evaluate the validation - these will error if methods don't exist
 type _ValidateQueued = {
   [K in QueuedMethodNames]: ValidateMethodExists<K>;
 };
@@ -183,5 +171,5 @@ type _ValidateOptional = {
   [K in OptionalMethodNames]: ValidateMethodExists<K>;
 };
 
-// Use the validation types to ensure they're not dead code
+// use the validation types to ensure they're not dead code
 export type { _ValidateQueued, _ValidateOptional };

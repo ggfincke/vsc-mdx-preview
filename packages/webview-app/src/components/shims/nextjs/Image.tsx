@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/shims/nextjs/Image.tsx
-// Shim for next/image - provides basic image rendering without Next.js optimization
+// shim for next/image - provides basic image rendering without Next.js optimization
 
 import { ImgHTMLAttributes } from 'react';
 

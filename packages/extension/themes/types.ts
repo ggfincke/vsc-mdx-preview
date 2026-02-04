@@ -1,5 +1,5 @@
 // packages/extension/themes/types.ts
-// theme type definitions for MPE-style theming
+// MPE-style theme type definitions
 
 // re-export shared types & utilities from @mdx-preview/shared
 export type {
@@ -32,7 +32,7 @@ export interface ThemeConfiguration {
   autoTheme: boolean;
 }
 
-// theme display names for UI (extension-only, for settings UI)
+// theme display names (extension-only, used in settings UI)
 export const PREVIEW_THEME_LABELS: Record<PreviewTheme, string> = {
   'github-light': 'GitHub Light',
   'github-dark': 'GitHub Dark',
@@ -88,4 +88,4 @@ export const MERMAID_THEME_LABELS: Record<MermaidTheme, string> = {
   null: 'None (Raw)',
 };
 
-// Note: MERMAID_THEMES is now re-exported from @mdx-preview/shared (canonical source)
+// MERMAID_THEMES is re-exported from @mdx-preview/shared (canonical source)

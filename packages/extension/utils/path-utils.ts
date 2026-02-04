@@ -1,7 +1,7 @@
 // packages/extension/utils/path-utils.ts
 // centralized path manipulation utilities for cross-platform compatibility
 //
-// key conventions:
+// key conventions
 // - all import paths use forward slashes (even on Windows)
 // - relative import paths start w/ './' or '../'
 // - absolute paths are platform-native (use path.sep)
@@ -40,13 +40,13 @@ export function toRelativeImportPath(
 
 // options for path resolution w/ fallbacks
 export interface ResolvePathOptions {
-  // the path to resolve (can be relative or absolute)
+  // path to resolve
   inputPath: string;
   // primary base directory to try first
   primaryDir?: string | null;
   // fallback directories to try in order
   fallbackDirs?: (string | null | undefined)[];
-  // if true, verify the resolved path exists before returning
+  // verify exists
   checkExists?: boolean;
 }
 
@@ -111,6 +111,47 @@ export function resolvePathWithFallbacks(
 // check if a child path is inside a parent path (security utility)
 export function isPathInside(childPath: string, parentPath: string): boolean {
   const relative = path.relative(parentPath, childPath);
+  return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
+// resolve real path w/ symlink resolution (async)
+// return null if missing
+export async function resolveRealPath(
+  targetPath: string
+): Promise<string | null> {
+  try {
+    return await fs.promises.realpath(targetPath);
+  } catch {
+    return null;
+  }
+}
+
+// normalize path for case-insensitive comparison on Windows
+// Windows NTFS is case-insensitive, so we lowercase for comparisons
+export function normalizePathForComparison(filePath: string): string {
+  const normalized = path.normalize(filePath);
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
+// async version of isPathInside w/ symlink resolution & case normalization
+// ! use this for security-critical path checks
+export async function isPathInsideAsync(
+  childPath: string,
+  parentPath: string
+): Promise<boolean> {
+  // resolve symlinks for both paths
+  const realChild = await resolveRealPath(childPath);
+  const realParent = await resolveRealPath(parentPath);
+
+  if (!realChild || !realParent) {
+    return false;
+  }
+
+  // normalize for case-insensitive filesystems (Windows)
+  const normChild = normalizePathForComparison(realChild);
+  const normParent = normalizePathForComparison(realParent);
+
+  const relative = path.relative(normParent, normChild);
   return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 

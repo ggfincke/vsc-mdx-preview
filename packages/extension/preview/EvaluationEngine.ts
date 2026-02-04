@@ -18,29 +18,31 @@ import {
   getErrorReporter,
   getConfigManager,
 } from '../services';
-import { TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS } from '../constants';
+import {
+  TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
+  MDX_COMPILATION_TIMEOUT_MS,
+} from '../constants';
 import type { Preview, WebviewHandle } from './preview-manager';
 import type { TrustState } from '@mdx-preview/shared';
-import type { ResolvedConfig } from '../types';
-import type { TailwindConfig } from '../config/EffectivePreviewConfig';
+import type { ResolvedConfig, TailwindConfig } from '../types';
 
 // result of evaluating MDX in Trusted Mode
 export interface TrustedEvaluationResult {
-  // transpiled JavaScript code
+  // transpiled JS code
   code: string;
   // resolved file path
   entryFilePath: string;
   // extracted dependencies
   dependencies: string[];
-  // parsed frontmatter from MDX
+  // parsed frontmatter
   frontmatter: Record<string, unknown> | undefined;
 }
 
 // result of evaluating MDX in Safe Mode
 export interface SafeEvaluationResult {
-  // sanitized HTML content
+  // sanitized HTML
   html: string;
-  // parsed frontmatter from MDX
+  // parsed frontmatter
   frontmatter: Record<string, unknown> | undefined;
 }
 
@@ -53,11 +55,9 @@ export interface TailwindProcessParams {
   tailwindConfig: TailwindConfig;
 }
 
-// EvaluationEngine handles the core evaluation logic for MDX content
-// extracted from evaluate-in-webview.ts for better testability
+// evaluation engine handles core evaluation logic for MDX content
 export class EvaluationEngine {
-  // evaluate MDX content in Trusted Mode
-  // transpiles MDX to executable JavaScript w/ full React component support
+  // evaluate MDX in Trusted Mode (transpile to executable JS w/ React components)
   async evaluateTrusted(
     text: string,
     fsPath: string,
@@ -66,12 +66,19 @@ export class EvaluationEngine {
     debug(`[${LogTags.ENGINE}] evaluateTrusted called`);
 
     debug(`[${LogTags.ENGINE}] Transforming entry...`);
-    // I.1: transformEntry now returns esmCode for import extraction
-    const { code, esmCode, frontmatter } = await transformEntry(
-      text,
-      fsPath,
-      preview
+    // transformEntry returns esmCode for import extraction (timeout prevents hang)
+    const transformResult = await this.withTimeout(
+      transformEntry(text, fsPath, preview),
+      MDX_COMPILATION_TIMEOUT_MS
     );
+
+    if (transformResult === null) {
+      throw new Error(
+        `MDX compilation timed out after ${MDX_COMPILATION_TIMEOUT_MS / 1000}s`
+      );
+    }
+
+    const { code, esmCode, frontmatter } = transformResult;
     debug(
       `[${LogTags.ENGINE}] Transform complete, code length: ${code.length}`
     );
@@ -79,8 +86,7 @@ export class EvaluationEngine {
     // use async fs.promises.realpath instead of sync version
     const entryFilePath = await fs.promises.realpath(fsPath);
 
-    // I.1: extract dependencies from ESM code (BEFORE CommonJS conversion)
-    // es-module-lexer works much better on ESM than on CommonJS output
+    // extract dependencies from ESM code (before CommonJS conversion for better parsing)
     const dependencies = await extractImportSpecifiers(esmCode);
     debug(`[${LogTags.ENGINE}] Dependencies: ${dependencies.join(', ')}`);
 
@@ -109,8 +115,7 @@ export class EvaluationEngine {
     return { html, frontmatter };
   }
 
-  // process Tailwind CSS asynchronously (non-blocking)
-  // called after the initial preview update to avoid blocking render
+  // process Tailwind CSS asynchronously (called after preview update to avoid blocking)
   async processTailwindAsync(
     preview: Preview,
     params: TailwindProcessParams,

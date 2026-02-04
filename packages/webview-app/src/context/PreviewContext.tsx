@@ -1,5 +1,5 @@
 // packages/webview-app/src/context/PreviewContext.tsx
-// React context for preview content state - manages MDX content, errors & evaluated components
+// React context for preview content state - manage MDX content, errors & evaluated components
 
 import { useState, useCallback, useMemo } from 'react';
 import type { PreviewContent, PreviewError } from '../types';

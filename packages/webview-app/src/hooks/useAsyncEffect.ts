@@ -9,13 +9,13 @@ export interface CancellationSignal {
   isCancelled(): boolean;
 }
 
-// options for configuring the async effect behavior
+// async effect behavior options
 export interface UseAsyncEffectOptions<T> {
-  // called when the async operation completes successfully w/ a non-void result
+  // success callback w/ result
   onSuccess?: (result: T) => void;
-  // called when the async operation throws an error
+  // error callback
   onError?: (error: unknown) => void;
-  // called when loading state changes (true before work, false after)
+  // loading state callback
   onLoadingChange?: (isLoading: boolean) => void;
 }
 
@@ -27,9 +27,8 @@ export function useAsyncEffect<T>(
 ): void {
   const { onSuccess, onError, onLoadingChange } = options;
 
-  // Store latest callbacks in ref to avoid requiring them in deps
-  // This ensures we always call the most recent callback without
-  // needing the caller to memoize them
+  // store latest callbacks in ref to avoid requiring them in deps
+  // ensures we always call the most recent callback w/o needing the caller to memoize them
   const callbacksRef = useRef({ onSuccess, onError, onLoadingChange });
   callbacksRef.current = { onSuccess, onError, onLoadingChange };
 
@@ -40,25 +39,23 @@ export function useAsyncEffect<T>(
     };
 
     async function run() {
-      // Set loading state before starting async work
+      // set loading state before starting async work
       callbacksRef.current.onLoadingChange?.(true);
 
       try {
         const result = await asyncFn(signal);
 
-        // Only call onSuccess if:
-        // 1. Not cancelled (effect still active)
-        // 2. Result is not undefined (asyncFn didn't return early)
+        // only call onSuccess if not cancelled & result is not undefined
         if (!cancelled && result !== undefined) {
           callbacksRef.current.onSuccess?.(result as T);
         }
       } catch (error) {
-        // Only call onError if not cancelled
+        // only call onError if not cancelled
         if (!cancelled) {
           callbacksRef.current.onError?.(error);
         }
       } finally {
-        // Only update loading state if not cancelled
+        // only update loading state if not cancelled
         if (!cancelled) {
           callbacksRef.current.onLoadingChange?.(false);
         }
@@ -67,8 +64,7 @@ export function useAsyncEffect<T>(
 
     run();
 
-    // Cleanup function - mark as cancelled so pending async work
-    // won't update state after unmount or deps change
+    // cleanup function - mark as cancelled so pending async work won't update state
     return () => {
       cancelled = true;
     };

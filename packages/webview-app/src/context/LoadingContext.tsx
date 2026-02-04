@@ -1,5 +1,5 @@
 // packages/webview-app/src/context/LoadingContext.tsx
-// React context for loading state - manages loading indicators & stale content state
+// React context for loading state - manage loading indicators & stale content state
 
 import { useState, useCallback, useMemo } from 'react';
 import { debug } from '../utils/debug';

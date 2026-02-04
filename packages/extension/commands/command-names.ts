@@ -1,7 +1,7 @@
 // packages/extension/commands/command-names.ts
 // command ID constants for type-safe registration
 
-// command IDs as constants to prevent typos & enable refactoring
+// define command IDs as constants to prevent typos & enable refactoring
 // mirrors the pattern from services/service-names.ts
 export const CommandNames = {
   // preview commands
@@ -22,16 +22,17 @@ export const CommandNames = {
   SELECT_CODE_BLOCK_THEME: 'mdx-preview.commands.selectCodeBlockTheme',
   SELECT_MERMAID_THEME: 'mdx-preview.commands.selectMermaidTheme',
 
-  // zoom commands
-  ZOOM_IN: 'mdx-preview.commands.zoomIn',
-  ZOOM_OUT: 'mdx-preview.commands.zoomOut',
-  RESET_ZOOM: 'mdx-preview.commands.resetZoom',
-
   // framework commands
   SELECT_FRAMEWORK: 'mdx-preview.commands.selectFramework',
 
   // cache commands
-  REFRESH_MODULE_CACHE: 'mdx-preview.commands.refreshModuleCache',
+  CLEAR_ALL_CACHES: 'mdx-preview.commands.clearAllCaches',
+
+  // config info commands
+  SHOW_EFFECTIVE_CONFIG: 'mdx-preview.commands.showEffectiveConfig',
+
+  // debug commands
+  TOGGLE_DEBUG_OUTPUT: 'mdx-preview.commands.toggleDebugOutput',
 } as const;
 
 export type CommandName = (typeof CommandNames)[keyof typeof CommandNames];

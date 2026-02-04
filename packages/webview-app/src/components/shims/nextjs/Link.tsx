@@ -1,5 +1,5 @@
 // packages/webview-app/src/components/shims/nextjs/Link.tsx
-// Shim for next/link - provides basic anchor rendering without Next.js routing
+// shim for next/link - provides basic anchor rendering without Next.js routing
 
 import { AnchorHTMLAttributes, ReactNode } from 'react';
 

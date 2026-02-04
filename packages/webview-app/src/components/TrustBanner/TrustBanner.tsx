@@ -8,13 +8,13 @@ import './TrustBanner.css';
 
 interface TrustBannerProps {
   trustState: TrustState;
-  // whether the banner can be dismissed
+  // dismissible
   dismissible?: boolean;
 }
 
 // trust banner component - display warning banner in Safe Mode w/ actions to enable Trusted Mode
 //
-// states:
+// states
 // - Safe Mode (untrusted workspace): show warning w/ "Manage Trust" button
 // - Safe Mode (scripts disabled): show info w/ "Enable Scripts" button
 // - Trusted Mode: hidden (no banner needed)
@@ -92,14 +92,19 @@ export const TrustBanner = memo(function TrustBanner({
     </div>
   );
 },
-// Custom comparison: only re-render if relevant trust state fields change
-(prevProps, nextProps) =>
-  prevProps.trustState.workspaceTrusted === nextProps.trustState.workspaceTrusted &&
-  prevProps.trustState.scriptsEnabled === nextProps.trustState.scriptsEnabled &&
-  prevProps.trustState.canExecute === nextProps.trustState.canExecute &&
-  prevProps.trustState.reason === nextProps.trustState.reason &&
-  prevProps.dismissible === nextProps.dismissible
-);
+// only re-render if relevant trust state fields change
+arePropsEqual);
+
+// custom memo comparison for TrustBanner
+function arePropsEqual(prevProps: TrustBannerProps, nextProps: TrustBannerProps): boolean {
+  return (
+    prevProps.trustState.workspaceTrusted === nextProps.trustState.workspaceTrusted &&
+    prevProps.trustState.scriptsEnabled === nextProps.trustState.scriptsEnabled &&
+    prevProps.trustState.canExecute === nextProps.trustState.canExecute &&
+    prevProps.trustState.reason === nextProps.trustState.reason &&
+    prevProps.dismissible === nextProps.dismissible
+  );
+}
 
 interface BannerConfig {
   type: 'warning' | 'info';

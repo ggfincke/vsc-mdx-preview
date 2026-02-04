@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/base/BaseCollapsible.tsx
-// Shared base component for collapsible/details implementations
-// Used by generic/Collapsible & docusaurus/Details
+// shared base component for collapsible/details implementations
+// used by generic/Collapsible & docusaurus/Details
 
 /* eslint-disable react-refresh/only-export-components -- Class name presets are co-located with component */
 
@@ -10,36 +10,23 @@ import { ChevronIcon } from './icons';
 
 // class names configuration for BaseCollapsible
 export interface CollapsibleClassNames {
-  // container element class
   container: string;
-  // summary/header element class
   summary: string;
-  // icon wrapper class
   icon: string;
-  // icon open state class (appended when open)
+  // appended when open
   iconOpen: string;
-  // title/text element class
   title: string;
-  // content container class
   content: string;
 }
 
 export interface BaseCollapsibleProps {
-  // content to show when expanded
   children: ReactNode;
-  // summary/title displayed in the header
   summary: ReactNode;
-  // whether to start expanded (default: false)
   defaultOpen?: boolean;
-  // additional CSS class for the container
   className?: string;
-  // class names for each element
   classNames: CollapsibleClassNames;
-  // icon size in pixels (default: 16)
   iconSize?: number;
-  // whether to use native toggle event (default: true)
   useNativeToggle?: boolean;
-  // whether to apply the open class to the icon wrapper (default: true)
   applyOpenClassToWrapper?: boolean;
 }
 
@@ -56,14 +43,14 @@ export function BaseCollapsible({
 }: BaseCollapsibleProps): ReactElement {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  // Native toggle handler (Docusaurus pattern)
+  // native toggle handler (Docusaurus pattern)
   const handleNativeToggle = useNativeToggle
     ? (e: SyntheticEvent<HTMLDetailsElement>) => {
         setIsOpen((e.target as HTMLDetailsElement).open);
       }
     : undefined;
 
-  // Custom click handler (Generic Collapsible pattern)
+  // custom click handler (Generic Collapsible pattern)
   const handleSummaryClick = !useNativeToggle
     ? (e: MouseEvent) => {
         e.preventDefault();
@@ -71,7 +58,7 @@ export function BaseCollapsible({
       }
     : undefined;
 
-  // Prevent native toggle when using custom click handling
+  // prevent native toggle when using custom click handling
   const handleDetailsClick = !useNativeToggle
     ? (e: MouseEvent<HTMLDetailsElement>) => {
         if ((e.target as HTMLElement).tagName === 'SUMMARY') {
@@ -80,7 +67,7 @@ export function BaseCollapsible({
       }
     : undefined;
 
-  // Determine icon class based on applyOpenClassToWrapper
+  // determine icon class based on applyOpenClassToWrapper
   const iconWrapperClass = applyOpenClassToWrapper
     ? cn(classNames.icon, isOpen && classNames.iconOpen)
     : classNames.icon;

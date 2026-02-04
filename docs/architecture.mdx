@@ -266,6 +266,31 @@ const trustState = getTrustManager().getState();
 > [!TIP]
 > Always use service-locator functions from `service-locator.ts` rather than direct `getInstance()` calls. This provides type safety and decoupling.
 
+### Services vs Subsystems
+
+The extension distinguishes between **Services** and **Subsystems** for lifecycle management:
+
+> [!TIP]
+> For detailed implementation guidelines, see [packages/extension/services/ARCHITECTURE.md](/packages/extension/services/ARCHITECTURE.md).
+
+| Aspect | Services | Subsystems |
+|--------|----------|------------|
+| **Pattern** | `SingletonService` class-based | Factory functions + module state |
+| **Use Case** | Lifecycle management, VS Code disposables, subscriptions | Stateless utilities, caches, watchers |
+| **Registration** | `ServiceRegistry.register()` | `ServiceRegistry.registerSubsystem()` |
+| **Disposal Order** | Second (after subsystems) | First (before services) |
+| **Examples** | TrustManager, ConfigManager, PreviewManager | ResolverSubsystem, MetaSubsystem |
+
+**Why this distinction?**
+
+- **Services** own VS Code resources (event handlers, file watchers, status bar items) and depend on the extension host being active.
+- **Subsystems** group related factory singletons and module-level caches that may depend on services but not vice versa.
+- **Disposal order**: Subsystems are disposed first because they may hold references to services. Services are disposed second, in reverse registration order to respect dependencies.
+
+**Current Subsystems:**
+- `ResolverSubsystem` - Module resolution strategies, cached file system, stat/compiled caches
+- `MetaSubsystem` - Nextra `_meta.json` file watchers and cache
+
 ### Preview Management
 
 The `PreviewManager` singleton manages all preview instances and webview panels.
@@ -552,6 +577,11 @@ async function extractImportSpecifiers(code: string): Promise<string[]> {
   return imports.map(imp => imp.n).filter(Boolean);
 }
 ```
+
+> [!NOTE]
+> The pre-check regex is an optimization that may have false negatives for minified code
+> (e.g., `export{foo}from'bar'` without spaces). This is acceptable since minified code
+> in user source files is rare, and the optimization significantly improves performance.
 
 ---
 
@@ -937,6 +967,11 @@ buildCacheKey(
 ) // returns SHA1 hash
 ```
 
+> [!NOTE]
+> The cache key includes `TAILWIND_CACHE_SCHEMA_VERSION` which must be manually bumped
+> when making breaking changes to compilation logic. The 5-minute TTL provides additional
+> safety against stale cache issues during extension upgrades.
+
 ### Version Support
 
 | Version | Status | Plugin |
@@ -1078,6 +1113,56 @@ sequenceDiagram
 
 ---
 
+## Commands
+
+The extension provides VS Code commands organized by category.
+
+### Preview Commands
+
+| Command ID | Description |
+|------------|-------------|
+| `mdx-preview.commands.openPreview` | Open MDX preview for active document |
+| `mdx-preview.commands.refreshPreview` | Refresh current preview |
+| `mdx-preview.commands.toggleScrollSync` | Toggle scroll synchronization |
+
+### Cache Commands
+
+| Command ID | Description |
+|------------|-------------|
+| `mdx-preview.commands.clearAllCaches` | Clear all caches (resolver, Sass, webview modules) |
+
+The `clearAllCaches` command clears:
+1. **Extension-side caches**: Resolver cache, Sass module cache
+2. **Webview-side caches**: Module cache, style cache (via RPC)
+
+### Debugging Commands
+
+| Command ID | Description |
+|------------|-------------|
+| `mdx-preview.commands.showEffectiveConfig` | Show effective configuration with sources |
+
+The `showEffectiveConfig` command opens a JSON document showing:
+- **Metadata**: Document path, framework, trust state
+- **Effective Config**: Merged configuration values
+- **Sources**: Origin of each setting (frontmatter, config file, workspace settings, user settings, default)
+
+### Zoom Commands
+
+| Command ID | Description |
+|------------|-------------|
+| `mdx-preview.commands.zoomIn` | Increase preview zoom |
+| `mdx-preview.commands.zoomOut` | Decrease preview zoom |
+| `mdx-preview.commands.resetZoom` | Reset preview zoom to 100% |
+
+### Theme Commands
+
+| Command ID | Description |
+|------------|-------------|
+| `mdx-preview.commands.selectPreviewTheme` | Select preview theme from list |
+| `mdx-preview.commands.selectCodeBlockTheme` | Select code block theme from list |
+
+---
+
 ## Testing Infrastructure
 
 The extension uses Vitest for all testing with different configurations.
@@ -1150,6 +1235,135 @@ test('returns false when workspace untrusted', () => {
 
 ---
 
+## Error Handling & Recovery
+
+The extension implements a two-layer error handling architecture spanning the extension host and webview.
+
+### Error Flow
+
+```mermaid
+flowchart TD
+    A[Error Occurs] --> B{Location?}
+    B -->|Extension| C[try-catch in evaluate-in-webview.ts]
+    C --> D[ErrorReporter.report]
+    D --> E{showInWebview?}
+    E -->|Yes| F[webviewHandle.showPreviewError]
+    E -->|No| G[VS Code notification]
+
+    B -->|Webview| H{Error Type?}
+    H -->|React render| I[ReactErrorBoundary]
+    H -->|Global/Promise| J[MDXErrorBoundary global handlers]
+    I --> K[ErrorDisplay component]
+    J --> K
+
+    F --> L[App.tsx error state]
+    L --> K
+```
+
+### Extension-Side Error Handling
+
+Errors during compilation, transpilation, or module fetching are caught in `evaluate-in-webview.ts`:
+
+```typescript title="packages/extension/preview/evaluate-in-webview.ts"
+try {
+  // Compilation and evaluation logic
+} catch (error) {
+  getErrorReporter().report(error, {
+    context: ErrorContext.Transpile,
+    showInWebview: true,
+    webviewHandle,
+    metadata: { fsPath },
+  });
+}
+```
+
+The `ErrorReporter` service provides:
+- Automatic severity inference based on error type and context
+- Duplicate error suppression (LRU-based, configurable window)
+- Unified logging with context
+- Webview error display via RPC
+- VS Code notification fallback
+
+### Webview-Side Error Handling
+
+The webview uses a **two-layer error boundary**:
+
+1. **Global error handlers** (`MDXErrorBoundary`) - Catches unhandled errors and promise rejections via `window.addEventListener`
+2. **React error boundary** (`ReactErrorBoundary`) - Catches errors during React rendering
+
+```typescript title="packages/webview-app/src/components/ErrorBoundary/ErrorBoundary.tsx"
+// Global handlers for non-React errors
+useEffect(() => {
+  const handleError = (event: ErrorEvent) => {
+    event.preventDefault();
+    setGlobalError(normalizeError(event.error));
+  };
+  window.addEventListener('error', handleError);
+  // ...
+}, []);
+```
+
+### Error Display
+
+The `ErrorDisplay` component shows:
+- Error message with VS Code-themed styling
+- **Suggestions** extracted from `ModuleError` (actionable fixes)
+- **Stack trace** with parsed frames (user code highlighted)
+- Copy and Retry buttons
+
+### No "Last Good Render" Pattern
+
+> [!WARNING]
+> The extension does **not** retain the last successful render on error. When an error occurs, the error display **replaces** the preview content entirely.
+
+This design choice:
+- Prevents showing stale/misleading content
+- Makes errors immediately visible to users
+- Simplifies state management (no need to track "last good" state)
+
+### RPC Message Queue & Flush Order
+
+Messages received before React mounts are buffered and flushed in a specific order:
+
+```typescript title="packages/webview-app/src/rpc-webview.ts"
+// Flush order with content validation:
+// 1. Trust state (sets rendering mode - MUST be first)
+// 2. Content (safe OR trusted, validated against trust state)
+// 3. Error/stale overlays
+```
+
+**Content validation** ensures that trusted content is only applied when `canExecute` is true:
+
+```typescript
+function validateContentMode(trustState, contentMode) {
+  if (contentMode === 'trusted' && !trustState.canExecute) {
+    // Discard - prevents rendering trusted code in safe mode
+    return false;
+  }
+  return true;
+}
+```
+
+### Performance Reporting
+
+The `reportPerformance(evaluationDuration)` RPC method is **development-only** for debugging render performance. It is **not** telemetry and does not send data externally.
+
+Current behavior:
+- Logs evaluation duration to console in development
+- No-op in production builds
+
+### Stale Indicator
+
+When the preview content becomes stale (dependency changed, document modified before re-evaluation):
+
+1. Extension calls `webviewHandle.setStale(true)`
+2. Webview shows a visual "Stale" indicator overlay
+3. On successful re-evaluation, `setStale(false)` clears the indicator
+
+The stale indicator does **not** block interaction - users can still scroll and interact with stale content.
+
+---
+
 ## Security Considerations
 
 ### Trust Validation
@@ -1183,6 +1397,22 @@ function checkFsPath(baseDir: string, fsPath: string): void {
 }
 ```
 
+> [!NOTE]
+> The example above is simplified. Security-critical code uses `checkFsPathAsync()` which:
+> - Resolves symlinks via `fs.promises.realpath()` to prevent symlink traversal
+> - Normalizes paths for case-insensitive comparison on Windows
+> - Caches resolved paths for performance
+
+### Module Fetching Limits
+
+DoS prevention via size and dependency limits:
+
+| Limit | Value | Purpose |
+|-------|-------|---------|
+| Max file size | 5 MB | Prevent memory exhaustion |
+| Max dependencies per module | 200 | Prevent combinatorial explosion |
+| Max fetch request length | 2048 chars | Prevent oversized specifiers |
+
 ### HTML Sanitization
 
 All HTML in Safe Mode is sanitized:
@@ -1211,31 +1441,90 @@ const sanitized = DOMPurify.sanitize(html, {
 
 ## Performance Optimizations
 
+MDX Preview uses multiple caching layers to minimize redundant work. For a comprehensive
+guide to all caches, invalidation triggers, and troubleshooting, see the
+[Caching Architecture](/docs/caching) documentation.
+
 ### Caching Strategy
 
 | Cache | Location | Size | TTL | Purpose |
 |-------|----------|------|-----|---------|
 | File Stat | file-prober.ts | 1000 | 5s | Avoid repeated stat calls |
 | TS Pattern Index | TypeScriptPathStrategy | Per-config | Validated | O(1) path matching |
-| Resolver FS | resolver-factory.ts | Shared | 5s | Node resolution caching |
+| Resolver FS | resolver-factory.ts | Shared | 30s | Node resolution caching |
 | Babel Config | babel.ts | 1 | Forever | Avoid preset recreation |
 | Sass Module | SassHandler.ts | Per-workspace | Forever | Lazy workspace sass |
 | Module Cache | ModuleCache.ts | 500/50MB | Forever | Webview module caching |
 | Tailwind CSS | TailwindCache.ts | 20 | 5min | Avoid recompilation |
 
+**Automatic Cache Invalidation:**
+
+| Trigger | Caches Cleared |
+|---------|----------------|
+| `package.json` change | Resolver cache, Sass module cache |
+| Config file change | Preview refresh (dependencies re-evaluated) |
+| Dependency file change | Module cache entry invalidated |
+
+**Manual Cache Commands:**
+
+| Command | Effect |
+|---------|--------|
+| `clearAllCaches` | Clears resolver, Sass, and webview module caches |
+
+### Prewarm System
+
+The extension includes a prewarm coordinator to reduce first-render latency by loading heavy modules in the background before they're needed.
+
+```mermaid
+sequenceDiagram
+    participant Ext as Extension Activation
+    participant Prewarm as Prewarm Coordinator
+    participant Trust as TrustManager
+    participant Babel as Babel Module
+
+    Ext->>Prewarm: initPrewarm()
+    Prewarm->>Trust: Check initial trust state
+    alt Already trusted
+        Trust-->>Prewarm: canExecute = true
+        Prewarm->>Babel: triggerBabelPrewarm() [background]
+    end
+
+    Note over Prewarm: Also listens for events
+
+    Trust->>Prewarm: Trust state changed (canExecute)
+    Prewarm->>Babel: triggerBabelPrewarm()
+
+    Note over Babel: Loads @babel/core (~2MB)
+    Note over Babel: Initializes Babel options
+```
+
+**Prewarm Triggers:**
+- Extension activation (if already trusted)
+- Trust state change to `canExecute`
+- User opens an MDX file (anticipatory)
+
+**Prewarmed Modules:**
+- `@babel/core` - Heavy module (~2MB), loaded in background
+- Babel options cache - Initialized after core loads
+
+> [!NOTE]
+> Prewarm is safe to call multiple times - it tracks state internally and becomes a no-op after first successful warm.
+
 ### Lazy Loading
 
-- **Babel** (~2MB) - Loaded on first transform, not activation
+- **Babel** (~2MB) - Loaded on first transform, not activation (or prewarmed in background)
 - **Sass** - Loaded from workspace `node_modules` on first .scss
 - **KaTeX CSS** - Loaded in webview only when math detected
 - **Framework Shims** - Loaded on-demand per framework
 
 ### Parallel Operations
 
-- File probing uses `Promise.all` for extension checks
-- Dependency scanning reads files in parallel
-- Module loading fetches dependencies in parallel with deduplication
-- Tailwind scans dependencies in parallel
+All parallel operations use a custom `Semaphore` utility to prevent resource exhaustion:
+
+- File probing uses `Promise.all` for extension checks (bounded by probe extensions)
+- Dependency scanning reads files in parallel (max 10 concurrent via Semaphore)
+- Module loading fetches dependencies in parallel (max 10 concurrent, deduplicated)
+- Tailwind scans dependencies in parallel (max 8 concurrent for file reads)
 
 ---
 
@@ -1258,6 +1547,8 @@ const sanitized = DOMPurify.sanitize(html, {
 | `nextra/` | Nextra _meta.json support |
 | `diagnostics/` | Component detection, code actions |
 | `commands/` | VS Code command handlers |
+| `prewarm/` | Background module prewarming |
+| `utils/` | Shared utilities (Semaphore, cache, file helpers) |
 
 ### Webview Package
 

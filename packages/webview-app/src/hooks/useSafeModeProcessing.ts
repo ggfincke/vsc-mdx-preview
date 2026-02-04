@@ -39,7 +39,7 @@ function processImagesInFragment(
 // this is necessarily imperative because Safe Mode renders pre-compiled HTML
 // (not React components), requiring DOM manipulation after innerHTML injection
 //
-// Performance optimization: uses DocumentFragment for off-DOM manipulation
+// performance optimization: use DocumentFragment for off-DOM manipulation
 // to reduce layout recalculations from 4+ to 1
 export function useSafeModeProcessing(
   containerRef: RefObject<HTMLDivElement>,

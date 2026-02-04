@@ -3,8 +3,9 @@
 
 import { workspace, ExtensionContext } from 'vscode';
 
-import { getPreviewManager } from './services';
+import { getPreviewManager, getConfigManager } from './services';
 import { handleDidChangeWorkspaceFolders } from './module-system/security/checkFsPath';
+import { PREVIEW_CONFIG_KEYS } from './config';
 
 // initialize workspace event handlers & register w/ extension context
 // disposables added to context.subscriptions for automatic cleanup
@@ -32,9 +33,9 @@ export function initWorkspaceHandlers(context: ExtensionContext): void {
     })
   );
 
-  // handle configuration changes - update preview settings
+  // handle configuration changes - update preview settings via centralized dispatcher
   context.subscriptions.push(
-    workspace.onDidChangeConfiguration(() => {
+    getConfigManager().onDidChangeKey([...PREVIEW_CONFIG_KEYS], () => {
       const currentPreview = getPreviewManager().getCurrentPreview();
       if (currentPreview) {
         currentPreview.updateConfiguration();

@@ -1,19 +1,19 @@
 // packages/webview-app/src/utils/StyleInjector.ts
-// Unified CSS injection utility for webview
+// unified CSS injection utility for webview
 //
-// ARCHITECTURE NOTE:
-// StyleInjector is a pure DOM manipulation layer. The authoritative source
+// ARCHITECTURE NOTE
+// StyleInjector is a pure DOM manipulation layer - the authoritative source
 // of truth for which styles have been injected is ModuleRegistry (in
 // module-system/registry/ModuleRegistry.ts), which has reference counting
-// & LRU eviction. Callers should check ModuleRegistry before calling
+// & LRU eviction - callers should check ModuleRegistry before calling
 // injectModuleCss() to avoid duplicate injection
 
 export interface StyleInjectorOptions {
-  // enable deduplication check (skip if already injected) - for non-module styles
+  // deduplication flag
   deduplicate?: boolean;
-  // insert before element w/ this ID (for ordering)
+  // insertion anchor ID
   insertBefore?: string;
-  // set data attribute on document element
+  // document data attribute
   dataAttribute?: { name: string; value: string };
 }
 
@@ -51,7 +51,7 @@ class StyleInjectorImpl {
       styleEl = document.createElement('style');
       styleEl.id = id;
 
-      // Handle insertion order (e.g., Tailwind before Custom CSS)
+      // handle insertion order (e.g., Tailwind before Custom CSS)
       if (insertBefore) {
         const beforeEl = document.getElementById(insertBefore);
         if (beforeEl?.parentNode) {
@@ -70,7 +70,7 @@ class StyleInjectorImpl {
       this.injectedIds.add(id);
     }
 
-    // Set data attribute on document element if specified (for theme detection)
+    // set data attribute on document element if specified (for theme detection)
     if (dataAttribute) {
       document.documentElement.setAttribute(
         dataAttribute.name,
@@ -89,7 +89,7 @@ class StyleInjectorImpl {
     style.textContent = css;
     document.head.appendChild(style);
 
-    // Cache DOM reference for O(1) removal
+    // cache DOM reference for O(1) removal
     this.moduleStyleElements.set(moduleId, style);
   }
 
@@ -122,7 +122,7 @@ class StyleInjectorImpl {
   // - CSS selector string: clears matching elements via querySelectorAll
   clear(selector?: 'modules' | string): void {
     if (selector === 'modules') {
-      // Clear all module-injected styles using cached references
+      // clear all module-injected styles using cached references
       for (const [, style] of this.moduleStyleElements) {
         if (style.parentNode) {
           style.remove();
@@ -130,7 +130,7 @@ class StyleInjectorImpl {
       }
       this.moduleStyleElements.clear();
     } else if (selector) {
-      // Clear by custom selector (rare case, still uses querySelectorAll)
+      // clear by custom selector (rare case, still uses querySelectorAll)
       const styles = document.querySelectorAll(selector);
       styles.forEach((style) => {
         if (style.id) {
@@ -159,5 +159,5 @@ class StyleInjectorImpl {
   }
 }
 
-// Singleton instance
+// singleton instance
 export const StyleInjector = new StyleInjectorImpl();

@@ -4,7 +4,7 @@
 
 import React, { ReactNode, ReactElement } from 'react';
 
-// Steps props (compatible w/ Starlight)
+// steps props (compatible w/ Starlight)
 export interface StepsProps {
   children: ReactNode;
 }

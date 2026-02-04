@@ -1,14 +1,5 @@
 // packages/extension/tailwind/TailwindCompiler.ts
-// compile Tailwind CSS via PostCSS
-//
-// error handling strategy:
-// - this module propagates errors to its caller (TailwindProcessor)
-// - the ESM/CJS module loading uses intelligent fallback: try CommonJS first,
-//   then ESM if ERR_REQUIRE_ESM is detected
-// - file I/O errors (readFile) propagate up - expected to be caught by orchestrator
-//
-// optimization: PostCSS is lazy-loaded to improve extension startup time
-// for workspaces that don't use Tailwind
+// compile Tailwind CSS via PostCSS w/ lazy-loading for startup performance
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -183,8 +174,7 @@ export class TailwindCompiler {
     return this.validatePluginModule(plugin, id);
   }
 
-  // validates that a loaded module is a valid PostCSS plugin factory
-  // throws TailwindError if the module is not a function
+  // validate loaded module is a valid PostCSS plugin factory & throw TailwindError if not a function
   private validatePluginModule(mod: unknown, id: string): PostCSSPluginFactory {
     if (typeof mod !== 'function') {
       throw new TailwindError(

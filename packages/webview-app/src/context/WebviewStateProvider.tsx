@@ -1,11 +1,10 @@
 // packages/webview-app/src/context/WebviewStateProvider.tsx
-// composite provider that wraps all state contexts & handles RPC handler registration
+// composite provider that wrap all state contexts & handle RPC handler registration
 
 import { useEffect, useRef, type ReactNode } from 'react';
 import { TrustProvider, useTrust } from './TrustContext';
 import { PreviewProvider, usePreview } from './PreviewContext';
 import { LoadingProvider, useLoading } from './LoadingContext';
-import { ZoomProvider, useZoom } from './ZoomContext';
 import { NextraProvider, useNextra } from './NextraContext';
 import { useTheme } from '../theme';
 import { registerWebviewHandlers } from '../rpc-webview';
@@ -27,12 +26,11 @@ function wrapWithLoadingClear<Args extends unknown[]>(
   };
 }
 
-// internal component that registers RPC handlers after all contexts are mounted
+// internal component that register RPC handlers after all contexts are mounted
 function HandlerRegistrar({ children }: HandlerRegistrarProps) {
   const { setTrustState } = useTrust();
   const { setSafeContent, setTrustedContent, setError } = usePreview();
   const { setStale, setIsLoading } = useLoading();
-  const { zoomIn, zoomOut, resetZoom } = useZoom();
   const { setNextraMeta } = useNextra();
   const { setPreviewThemeState } = useTheme();
 
@@ -57,9 +55,6 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
       setStale,
       setTheme: setPreviewThemeState,
       setNextraMeta,
-      zoomIn,
-      zoomOut,
-      resetZoom,
     });
     debug(`[${LogTags.WEBVIEW_STATE}] Handlers registered`);
   }, [
@@ -71,9 +66,6 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
     setIsLoading,
     setPreviewThemeState,
     setNextraMeta,
-    zoomIn,
-    zoomOut,
-    resetZoom,
   ]);
 
   return <>{children}</>;
@@ -83,20 +75,16 @@ interface WebviewStateProviderProps {
   children: ReactNode;
 }
 
-// composite provider that wraps all state contexts
-// context order matters for re-render isolation:
-// - outer contexts re-render less frequently
-// - inner contexts can access outer context values
+// composite provider that wrap all state contexts
+// context order matters for re-render isolation
 export function WebviewStateProvider({ children }: WebviewStateProviderProps) {
   return (
     <TrustProvider>
       <PreviewProvider>
         <LoadingProvider>
-          <ZoomProvider>
-            <NextraProvider>
-              <HandlerRegistrar>{children}</HandlerRegistrar>
-            </NextraProvider>
-          </ZoomProvider>
+          <NextraProvider>
+            <HandlerRegistrar>{children}</HandlerRegistrar>
+          </NextraProvider>
         </LoadingProvider>
       </PreviewProvider>
     </TrustProvider>

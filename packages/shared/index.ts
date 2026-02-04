@@ -51,7 +51,7 @@ export {
   getFrameworkShimPath,
 } from './registry';
 
-// core preloaded module IDs (React, MDX, layout)
+// core preloaded module IDs (react, mdx, layout)
 export { PRELOADED_MODULE_IDS, type PreloadedModuleId } from './core-modules';
 
 // fetch result w/ module code & dependencies
@@ -76,11 +76,11 @@ export interface PreviewError {
   message: string;
   stack?: string;
   code?: string;
-  // error context category (module-fetch, transpile, etc)
+  // error context
   context?: string;
-  // hint for webview to show retry button
+  // recoverable
   recoverable?: boolean;
-  // module-specific error data (when error is module-related)
+  // module error data
   moduleError?: ModuleErrorData;
 }
 
@@ -129,6 +129,17 @@ export {
   getSuggestionsForCode,
   ModuleError,
   type ModuleErrorOptions,
+  // error factory functions
+  type ExtensionModuleErrorCode,
+  type WebviewModuleErrorCode,
+  createModuleNotFoundError,
+  createOutsideWorkspaceError,
+  createParseError,
+  createTransformError,
+  createCircularDependencyError,
+  createFetchFailedError,
+  createEvaluationFailedError,
+  createModuleDepthExceededError,
 } from './errors';
 
 // module ID utilities (npm:// format handling)
@@ -148,8 +159,33 @@ export {
 export {
   LRUCache,
   type LRUCacheOptions,
+  NullableLRUCache,
+  type NullableLRUCacheOptions,
+  type NullableCacheResult,
   ContentHashCache,
   type ContentHashCacheOptions,
+} from './utils';
+
+// concurrency utilities
+export { Semaphore } from './utils';
+
+// validation utilities (pure type guards & coercers)
+export {
+  isString,
+  isNonEmptyString,
+  isBoolean,
+  isNumber,
+  isFiniteNumber,
+  isFunction,
+  isObject,
+  isArray,
+  isArrayOf,
+  isOneOf,
+  isOptional,
+  asString,
+  asNonEmptyString,
+  asBoolean,
+  asNumber,
 } from './utils';
 
 // available preview themes (markdown content styling)
@@ -331,13 +367,13 @@ export interface ExtensionRPC {
 
 // Nextra _meta.json page-level settings (preview-relevant only)
 export interface NextraPageMeta {
-  // title from _meta.json or frontmatter (sidebarTitle takes precedence)
+  // title
   title?: string;
-  // layout type: 'default' (max-width container), 'full' (full-width), 'raw' (no styling)
+  // layout
   layout?: 'default' | 'full' | 'raw';
-  // page description (from frontmatter)
+  // description
   description?: string;
-  // whether TOC should be visible (informational for preview)
+  // toc visibility
   toc?: boolean;
 }
 
@@ -345,7 +381,7 @@ export interface NextraPageMeta {
 export interface WebviewRPC {
   setTrustState(state: TrustState): void;
   setFramework(framework: FrameworkType): void;
-  // inform webview which generic components are used (for conditional shim preloading)
+  // used components
   setUsedComponents(components: string[]): void;
   updatePreview(
     code: string,
@@ -355,14 +391,13 @@ export interface WebviewRPC {
   updatePreviewSafe(html: string): void;
   showPreviewError(error: PreviewError): void;
   invalidate(fsPath: string): Promise<void>;
+  // clear caches
+  clearAllCaches(): Promise<void>;
   setStale(isStale: boolean): void;
   setCustomCss(css: string): void;
   setTailwindCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
   setNextraMeta(meta: NextraPageMeta): void;
-  zoomIn(): void;
-  zoomOut(): void;
-  resetZoom(): void;
 }
 
 // logging types & tags (shared between extension & webview)
@@ -376,6 +411,8 @@ export {
   type TaggedLoggerFactory,
   LogTags,
   type LogTag,
+  createTaggedLoggerFactory,
+  type BaseLoggerVariadic,
 } from './logging';
 
 // config enums (canonical source for validation & settings)
@@ -429,3 +466,15 @@ export {
   normalizeCalloutType,
   isValidCalloutType,
 } from './callout';
+
+// centralized icon definitions (shared between extension & webview)
+export {
+  CALLOUT_ICONS,
+  GITHUB_ICONS,
+  GITHUB_ALERT_ICONS,
+  FILE_TREE_ICONS,
+  type CalloutIconType,
+  type GitHubIconType,
+  type GitHubAlertIconType,
+  type FileTreeIconType,
+} from './icons';

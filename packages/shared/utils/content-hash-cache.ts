@@ -1,9 +1,7 @@
 // packages/shared/utils/content-hash-cache.ts
-// LRU cache w/ content hash validation
-//
-// extend LRUCache to validate entries by content hash before returning
-// useful for caching computed results based on file content where the
-// file may have changed since caching
+// LRU cache w/ content hash validation - extends LRUCache to validate entries
+// by content hash before returning; useful for caching computed results based
+// on file content where the file may have changed since caching
 
 import { LRUCache, type LRUCacheOptions } from './lru-cache';
 
@@ -18,12 +16,12 @@ export interface ContentHashCacheOptions<V> extends Omit<
   LRUCacheOptions<string, HashValidatedEntry<V>>,
   'estimateSize' | 'isProtected'
 > {
-  // function to estimate size of a value in bytes (optional)
+  // size estimator
   estimateSize?: (value: V) => number;
 }
 
 // LRU cache that validates entries by content hash before returning
-// example:
+// example
 // ```typescript
 // const cache = new ContentHashCache<string[]>({ maxEntries: 50, ttlMs: 300000 });
 //
@@ -51,18 +49,17 @@ export class ContentHashCache<V> {
     });
   }
 
-  // get a value only if the content hash matches
-  // returns null if not found, expired, or hash mismatch
+  // get value if hash matches
   getIfHashMatches(key: string, contentHash: string): V | null {
     const entry = this.cache.get(key);
     if (!entry) {
       return null;
     }
 
-    // Hash mismatch - content has changed
+    // hash mismatch means content has changed
     if (entry.hash !== contentHash) {
-      // Don't delete - let LRU eviction handle it
-      // The entry might still be valid for other purposes
+      // don't delete - let LRU eviction handle it
+      // the entry might still be valid for other purposes
       return null;
     }
 
@@ -95,7 +92,7 @@ export class ContentHashCache<V> {
     this.cache.clearWithEviction();
   }
 
-  // number of entries in the cache
+  // entry count
   get size(): number {
     return this.cache.size;
   }
@@ -107,7 +104,7 @@ export class ContentHashCache<V> {
 
   // update cache settings dynamically
   updateSettings(options: Partial<ContentHashCacheOptions<V>>): void {
-    // Note: estimateSize updates not supported after construction
+    // note: estimateSize updates not supported after construction
     // due to wrapper complexity
     this.cache.updateSettings({
       maxEntries: options.maxEntries,

@@ -25,24 +25,24 @@ interface CompiledPathPattern {
   originalPattern: string;
   targets: string[];
   isWildcard: boolean;
-  // pattern without '/*' suffix
+  // pattern w/o '/*' suffix
   prefix: string;
-  // prefix + '/' for startsWith check
+  // prefix w/ slash
   prefixWithSlash: string;
 }
 
 interface CompiledPathsIndex {
-  // O(1) lookup for exact matches (e.g., "@utils" -> ["/project/src/utils"])
+  // O(1) exact match lookup
   exactMatches: Map<string, string[]>;
-  // Wildcard patterns sorted by prefix length (longest first for specificity)
+  // wildcards sorted by prefix length
   wildcardPatterns: CompiledPathPattern[];
-  // The absolute base URL for path resolution
+  // absolute base URL
   absoluteBaseUrl: string;
-  // Cache key for invalidation (stringified paths)
+  // cache key
   cacheKey: string;
 }
 
-// Per-tsconfig compiled index cache
+// per-tsconfig compiled index cache
 const compiledIndexCache = new Map<string, CompiledPathsIndex>();
 
 // clear all caches (stat cache & compiled pattern index)
@@ -58,7 +58,7 @@ export function clearCompiledIndexCache(): void {
   compiledIndexCache.clear();
 }
 
-// Compile tsconfig paths into an indexed data structure
+// compile tsconfig paths into an indexed data structure
 function compilePathsIndex(
   paths: Record<string, string[]>,
   absoluteBaseUrl: string
@@ -68,7 +68,7 @@ function compilePathsIndex(
 
   for (const [pattern, targets] of Object.entries(paths)) {
     if (pattern.endsWith('/*')) {
-      // Wildcard pattern: pre-compute prefix for matching
+      // wildcard pattern: pre-compute prefix for matching
       const prefix = pattern.slice(0, -2);
       wildcardPatterns.push({
         originalPattern: pattern,
@@ -78,7 +78,7 @@ function compilePathsIndex(
         prefixWithSlash: prefix + '/',
       });
     } else {
-      // Exact pattern: pre-resolve target paths
+      // exact pattern: pre-resolve target paths
       exactMatches.set(
         pattern,
         targets.map((t) => path.join(absoluteBaseUrl, t))
@@ -86,8 +86,8 @@ function compilePathsIndex(
     }
   }
 
-  // Sort wildcard patterns by prefix length descending (most specific first)
-  // This ensures @components/icons/* matches before @components/*
+  // sort wildcard patterns by prefix length descending (most specific first)
+  // ensures @components/icons/* matches before @components/*
   wildcardPatterns.sort((a, b) => b.prefix.length - a.prefix.length);
 
   return {
@@ -98,18 +98,18 @@ function compilePathsIndex(
   };
 }
 
-// Get or create compiled index for a tsconfig
+// get or create compiled index for a tsconfig
 function getCompiledIndex(
   paths: Record<string, string[]>,
   absoluteBaseUrl: string,
   configPath: string | undefined
 ): CompiledPathsIndex {
-  // Use configPath as primary cache key (stable across calls)
+  // use configPath as primary cache key (stable across calls)
   const cacheKey = configPath ?? absoluteBaseUrl;
 
   const cached = compiledIndexCache.get(cacheKey);
   if (cached) {
-    // Validate cache is still valid (paths haven't changed)
+    // validate cache is still valid (paths haven't changed)
     const currentHash = JSON.stringify(paths);
     if (cached.cacheKey === currentHash) {
       return cached;
@@ -134,7 +134,7 @@ function computeAbsoluteBaseUrl(
   return path.isAbsolute(baseUrl) ? baseUrl : path.join(configDir, baseUrl);
 }
 
-// Optimized pattern matching using compiled index
+// optimized pattern matching using compiled index
 // O(1) for exact matches, O(m) for wildcard matches (m = number of wildcards)
 function matchTsPathsOptimized(
   specifier: string,
@@ -167,9 +167,46 @@ function matchTsPathsOptimized(
   return null;
 }
 
+// result of candidate resolution setup
+export interface CandidateResolutionSetup {
+  candidates: string[];
+  absoluteBaseUrl: string;
+}
+
+// get resolution candidates from tsconfig paths
+// extracted to share between sync & async methods
+export function getResolutionCandidates(
+  specifier: string,
+  context: ResolutionContext
+): CandidateResolutionSetup | null {
+  const tsConfig = context.tsConfig;
+  if (!tsConfig?.paths) {
+    return null;
+  }
+
+  const absoluteBaseUrl = computeAbsoluteBaseUrl(
+    tsConfig.configPath,
+    tsConfig.baseUrl,
+    context.baseDir
+  );
+
+  const compiledIndex = getCompiledIndex(
+    tsConfig.paths,
+    absoluteBaseUrl,
+    tsConfig.configPath
+  );
+
+  const candidates = matchTsPathsOptimized(specifier, compiledIndex);
+  if (!candidates) {
+    return null;
+  }
+
+  return { candidates, absoluteBaseUrl };
+}
+
 // TypeScript path resolution strategy (tsconfig.json paths)
-// uses custom pattern matching instead of TypeScript compiler for performance
-// patterns are compiled once per tsconfig & cached
+// use custom pattern matching instead of TypeScript compiler for performance
+// patterns compiled once per tsconfig & cached
 export class TypeScriptPathStrategy implements IResolutionStrategy {
   readonly name = 'TypeScript';
 
@@ -178,36 +215,16 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
     context: ResolutionContext,
     _mode: ResolutionMode
   ): ResolutionResult | null {
-    const tsConfig = context.tsConfig;
-    if (!tsConfig?.paths) {
+    const setup = getResolutionCandidates(specifier, context);
+    if (!setup) {
       return null;
     }
 
-    // Compute absolute baseUrl using shared helper
-    const absoluteBaseUrl = computeAbsoluteBaseUrl(
-      tsConfig.configPath,
-      tsConfig.baseUrl,
-      context.baseDir
-    );
-
-    // Get compiled pattern index (cached per tsconfig)
-    const compiledIndex = getCompiledIndex(
-      tsConfig.paths,
-      absoluteBaseUrl,
-      tsConfig.configPath
-    );
-
-    // Use optimized pattern matching (O(1) exact, O(m) wildcard)
-    const candidates = matchTsPathsOptimized(specifier, compiledIndex);
-    if (!candidates) {
-      return null;
-    }
-
-    // Try each candidate path using shared file prober
-    for (const candidate of candidates) {
+    // try each candidate path using shared file prober
+    for (const candidate of setup.candidates) {
       const resolved = probeTypeScriptFile(candidate);
       if (resolved) {
-        // Skip .d.ts files
+        // skip .d.ts files
         if (resolved.endsWith('.d.ts')) {
           continue;
         }
@@ -228,36 +245,16 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
     context: ResolutionContext,
     _mode: ResolutionMode
   ): Promise<ResolutionResult | null> {
-    const tsConfig = context.tsConfig;
-    if (!tsConfig?.paths) {
-      return null;
-    }
-
-    // Compute absolute baseUrl using shared helper
-    const absoluteBaseUrl = computeAbsoluteBaseUrl(
-      tsConfig.configPath,
-      tsConfig.baseUrl,
-      context.baseDir
-    );
-
-    // Get compiled pattern index (cached per tsconfig)
-    const compiledIndex = getCompiledIndex(
-      tsConfig.paths,
-      absoluteBaseUrl,
-      tsConfig.configPath
-    );
-
-    // Use optimized pattern matching
-    const candidates = matchTsPathsOptimized(specifier, compiledIndex);
-    if (!candidates) {
+    const setup = getResolutionCandidates(specifier, context);
+    if (!setup) {
       return null;
     }
 
     // try each candidate path w/ async probing
-    for (const candidate of candidates) {
+    for (const candidate of setup.candidates) {
       const resolved = await probeTypeScriptFileAsync(candidate);
       if (resolved) {
-        // Skip .d.ts files
+        // skip .d.ts files
         if (resolved.endsWith('.d.ts')) {
           continue;
         }
@@ -274,7 +271,7 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
   }
 }
 
-// Singleton instance
+// singleton instance
 const { get: getTypeScriptPathStrategy } = createSingleton(
   () => new TypeScriptPathStrategy()
 );

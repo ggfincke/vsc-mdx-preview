@@ -5,24 +5,21 @@ import { useLayoutEffect, type RefObject } from 'react';
 import { loadKatexCss } from '../utils/katexLoader';
 
 interface UseKatexDetectionOptions {
-  // for Safe Mode: HTML string to check for KaTeX classes
-  // detection is done via string search (faster, before DOM exists)
+  // html string for KaTeX class detection (Safe Mode)
   html?: string;
 
-  // for Trusted Mode: container ref to check for KaTeX elements
-  // detection is done via DOM query (after component renders)
+  // container ref for KaTeX element detection (Trusted Mode)
   containerRef?: RefObject<HTMLElement | null>;
 
-  // trigger dependency for Trusted Mode (e.g., evaluatedComponent)
-  // DOM query only runs when this value is truthy
+  // trigger value for DOM query (Trusted Mode)
   trigger?: unknown;
 }
 
 // detect KaTeX/math content & lazy-load KaTeX CSS
-// supports two detection modes:
-// - Safe Mode: string-based detection via html prop (runs before DOM exists)
-// - Trusted Mode: DOM-based detection via containerRef + trigger (runs after render)
-// uses useLayoutEffect for synchronous loading to avoid FOUC
+// support two detection modes
+// - Safe Mode: string-based detection via html prop (run before DOM exists)
+// - Trusted Mode: DOM-based detection via containerRef + trigger (run after render)
+// use useLayoutEffect for synchronous loading to avoid FOUC
 export function useKatexDetection(options: UseKatexDetectionOptions): void {
   const { html, containerRef, trigger } = options;
 

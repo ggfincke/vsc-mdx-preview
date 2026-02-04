@@ -87,18 +87,18 @@ export interface PipelineWarning {
 
 // result of loading plugins from config
 export interface LoadedPlugins {
-  // custom remark plugins to add after built-in plugins
+  // custom remark plugins
   remarkPlugins: Pluggable[];
-  // custom rehype plugins to add after built-in plugins
+  // custom rehype plugins
   rehypePlugins: Pluggable[];
-  // count of plugins that failed to load (errors logged via ErrorReporter)
+  // failed plugin count
   errorCount: number;
 }
 
 // parsed plugin specification w/ separated name & options
 export interface ParsedPluginSpec {
-  // plugin name (npm package or relative path)
+  // plugin name
   name: string;
-  // plugin options object, undefined if none specified
+  // plugin options
   options: Record<string, unknown> | undefined;
 }

@@ -1,8 +1,5 @@
 // packages/extension/compiler/trusted/compile.ts
-// MDX transpilation w/ layout injection & React root wrapping (compiles MDX to executable JS)
-//
-// this is the Trusted Mode compiler - for Safe Mode, see compiler/safe/compile.ts
-// both modes use shared plugins from compiler/plugins to ensure parity
+// MDX transpilation w/ layout injection & React root wrapping for Trusted Mode
 
 import { compile } from '@mdx-js/mdx';
 import hasDefaultExport from './hasDefaultExport';
@@ -36,7 +33,10 @@ const injectMDXStyles = (mdxText: string, preview: Preview): string => {
 export default Layout;
 
 ${mdxText}`;
-    } catch {
+    } catch (err) {
+      warn(
+        `[${LogTags.COMPILE}] Failed to load custom layout from ${customLayoutFilePath}: ${err}`
+      );
       return mdxText;
     }
   } else if (useVscodeMarkdownStyles) {
@@ -59,8 +59,7 @@ const wrapCompiledMdx = (
   componentsObject?: string
 ): string => {
   if (componentsObject && componentsObject !== '{}') {
-    // remove the original "export default" to avoid duplicate exports
-    // MDX 3 outputs: "export default function MDXContent" or "export default MDXContent"
+    // remove original "export default" to avoid duplicate exports (MDX 3 output)
     const strippedMDX = compiledMDX
       .replace(/export default function MDXContent/g, 'function MDXContent')
       .replace(/export default MDXContent/g, '');

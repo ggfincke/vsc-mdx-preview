@@ -6,7 +6,7 @@ import React, { ReactElement } from 'react';
 import { type TabItemProps } from '../base';
 import { TabItem } from './Tabs';
 
-// Tab component (alias for TabItem)
+// tab component (alias for TabItem)
 export function Tab(props: TabItemProps): ReactElement {
   return <TabItem {...props} />;
 }

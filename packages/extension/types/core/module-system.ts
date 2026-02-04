@@ -9,39 +9,39 @@ export type { FetchResult, FrameworkId };
 // typescript configuration for module resolution (extracted from tsconfig.json)
 // uses lightweight tsconfck parsing instead of full TypeScript compiler
 export interface TypeScriptConfiguration {
-  // base URL for non-relative imports (from compilerOptions.baseUrl)
+  // base URL
   baseUrl?: string;
-  // path alias mappings (from compilerOptions.paths)
+  // path aliases
   paths?: Record<string, string[]>;
-  // root directory (from compilerOptions.rootDir)
+  // root directory
   rootDir?: string;
-  // absolute path to the tsconfig.json file
+  // tsconfig path
   configPath?: string;
 }
 
 // context for resolving imports
 export interface ResolutionContext {
-  // base directory for relative imports
+  // base directory
   baseDir: string;
-  // typescript configuration (optional)
+  // typescript config
   tsConfig?: TypeScriptConfiguration;
-  // detected framework (optional)
+  // detected framework
   framework?: FrameworkId;
-  // workspace root (optional, for alias resolution)
+  // workspace root
   workspaceRoot?: string;
-  // whether framework shims are enabled
+  // shims enabled
   shimsEnabled?: boolean;
 }
 
 // result of a successful resolution
 export interface ResolutionResult {
-  // absolute filesystem path
+  // filesystem path
   fsPath: string;
-  // true if this resolved to a built-in shim (webview has it preloaded)
+  // built-in shim flag
   isBuiltInShim: boolean;
-  // original import specifier
+  // import specifier
   specifier: string;
-  // resolution strategy that succeeded
+  // resolution strategy
   strategy?: ResolutionStrategy;
 }
 

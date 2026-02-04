@@ -1,13 +1,12 @@
 // packages/extension/tailwind/FileScanValidator.ts
-// file validation utilities for Tailwind scanning
-//
-// extracted from TailwindScanner to improve testability & reusability
-// handle file size validation, token validation, & parallel file reading
+// file validation utilities for Tailwind scanning - handle file size, token, & parallel read validation
 
 import * as fs from 'fs';
-import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
+import { extractErrorMessage, LogTags, Semaphore } from '@mdx-preview/shared';
 import { debug } from '../logging';
-import { CLASS_TOKEN_RE } from './constants';
+import { CLASS_TOKEN_RE, TAILWIND_FILE_READ_LIMIT } from './constants';
+
+const readSemaphore = new Semaphore(TAILWIND_FILE_READ_LIMIT);
 
 export interface FileValidationResult {
   valid: boolean;
@@ -84,17 +83,24 @@ export class FileScanValidator {
     }
   }
 
-  // read multiple files in parallel w/ validation - skips files that are too large or unreadable
+  // read multiple files in parallel w/ validation
+  // skip files that are too large or unreadable
   async readValidFiles(
     fsPaths: string[],
     maxBytes: number
   ): Promise<Map<string, string>> {
     const results = new Map<string, string>();
 
+    // read files w/ concurrency limit to prevent I/O exhaustion
     const readPromises = fsPaths.map(
       async (fsPath): Promise<FileReadResult> => {
-        const content = await this.readFileIfValid(fsPath, maxBytes);
-        return { fsPath, content };
+        await readSemaphore.acquire();
+        try {
+          const content = await this.readFileIfValid(fsPath, maxBytes);
+          return { fsPath, content };
+        } finally {
+          readSemaphore.release();
+        }
       }
     );
 

@@ -1,49 +1,50 @@
 // packages/webview-app/src/utils/createResourceLoader.ts
 // factory for creating idempotent async resource loaders w/ state machine
 //
-// Implements the loader state machine pattern:
+// implements the loader state machine pattern
 // - null: not started
 // - Promise<void>: loading in progress (deduplicates concurrent calls)
 // - true: loaded successfully
 // - false: failed (allows retry if allowRetry is true)
 
+import { LogTags } from '@mdx-preview/shared';
+import { createTaggedLogger } from './createTaggedLogger';
+
+const log = createTaggedLogger(LogTags.RESOURCE_LOADER);
+
 // options for creating a resource loader
 export interface ResourceLoaderOptions {
-  // name for debug logging
+  // debug name
   name: string;
-  // allow retry on failure (default: true)
+  // retry enabled
   allowRetry?: boolean;
 }
 
 // interface returned by createResourceLoader
 export interface ResourceLoader {
-  // load the resource (idempotent)
+  // load resource
   load(): Promise<void>;
-  // check if resource is loaded successfully
+  // loaded check
   isLoaded(): boolean;
-  // check if resource is currently loading
+  // loading check
   isLoading(): boolean;
-  // reset state (for testing)
+  // reset state
   reset(): void;
 }
 
-// State type: null | Promise | true | false
+// state type: null | Promise | true | false
 type LoaderState = null | Promise<void> | boolean;
 
 // create an idempotent resource loader w/ state machine
-// example:
-// ```typescript
-// const katexLoader = createResourceLoader(
-//   async () => { await import('katex/dist/katex.min.css'); },
-//   { name: 'KaTeX CSS' }
-// );
-//
-// // Multiple calls deduplicate
-// await Promise.all([katexLoader.load(), katexLoader.load()]);
-//
-// // Already loaded, returns immediately
-// await katexLoader.load();
-// ```
+// example
+//   const katexLoader = createResourceLoader(
+//     async () => { await import('katex/dist/katex.min.css'); },
+//     { name: 'KaTeX CSS' }
+//   );
+//   // multiple calls deduplicate
+//   await Promise.all([katexLoader.load(), katexLoader.load()]);
+//   // already loaded, returns immediately
+//   await katexLoader.load();
 export function createResourceLoader(
   loadFn: () => Promise<void>,
   options: ResourceLoaderOptions
@@ -53,34 +54,34 @@ export function createResourceLoader(
   let state: LoaderState = null;
 
   function load(): Promise<void> {
-    // Already loaded successfully
+    // already loaded successfully
     if (state === true) {
       return Promise.resolve();
     }
 
-    // Loading in progress - return existing promise (deduplicates concurrent calls)
+    // loading in progress - return existing promise to deduplicate concurrent calls
     if (state instanceof Promise) {
       return state;
     }
 
-    // Failed previously & retry not allowed
+    // failed previously & retry not allowed
     if (state === false && !allowRetry) {
       return Promise.reject(
         new Error(`[${name}] Loading failed & retry is disabled`)
       );
     }
 
-    // Not started (null) or failed previously (false w/ allowRetry) - start loading
+    // not started (null) or failed previously (false w/ allowRetry) - start loading
     const loadPromise = loadFn()
       .then(() => {
         state = true;
       })
       .catch((error) => {
-        console.error(`${name}: Failed to load:`, error);
-        // Allow retry on next call (if allowRetry is true, state becomes false)
-        // If allowRetry is false, state also becomes false but load() will reject
+        log.error(`${name}: Failed to load:`, error);
+        // allow retry on next call (if allowRetry is true, state becomes false)
+        // if allowRetry is false, state also becomes false but load() will reject
         state = false;
-        // Re-throw for callers who await
+        // re-throw for callers who await
         throw error;
       });
 

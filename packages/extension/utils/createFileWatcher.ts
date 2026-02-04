@@ -1,10 +1,10 @@
 // packages/extension/utils/createFileWatcher.ts
-// Standalone file watcher factory w/ error wrapping
+// standalone file watcher factory w/ error wrapping & optional debouncing
 //
-// Extracted from BaseWatcher for reuse in standalone watchers that don't
+// extracted from BaseWatcher for reuse in standalone watchers that don't
 // need full BaseWatcher lifecycle management
 //
-// USAGE:
+// USAGE
 // ```typescript
 // import { createFileWatcher } from '../utils/createFileWatcher';
 //
@@ -12,9 +12,11 @@
 //   pattern: '**/tsconfig.json',
 //   onChange: (uri) => { console.log('Changed:', uri.fsPath); },
 //   logTag: LogTags.TS_CONFIG,
+//   debounceMs: 100,  // optional: debounce change events
 // });
 // ```
 
+import debounce from 'lodash.debounce';
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../logging';
 import { LogTags, type LogTag } from '@mdx-preview/shared';
@@ -39,16 +41,25 @@ export interface FileWatcherConfig {
   wrapErrors?: boolean;
   // use log tag for debug logging (e.g., LogTags.TS_CONFIG, LogTags.CSS) required if wrapErrors is true
   logTag?: LogTag;
+  // debounce ms
+  debounceMs?: number;
+}
+
+// debounced watcher handle (extends FileSystemWatcher w/ cancel method)
+export interface DebouncedFileSystemWatcher extends vscode.FileSystemWatcher {
+  // cancel any pending debounced calls (call on dispose if using debounce)
+  cancelPending?: () => void;
 }
 
 // create a VS Code file system watcher w/ standard error handling
-// features:
+// features
 // - optional error wrapping for handlers (prevents uncaught exceptions)
+// - optional debouncing for change events
 // - debug logging for errors w/ configurable tag
 // - consistent event handling pattern
 export function createFileWatcher(
   config: FileWatcherConfig
-): vscode.FileSystemWatcher {
+): DebouncedFileSystemWatcher {
   const {
     pattern,
     wrapErrors = true,
@@ -56,6 +67,7 @@ export function createFileWatcher(
     ignoreCreateEvents = false,
     ignoreChangeEvents = false,
     ignoreDeleteEvents = false,
+    debounceMs,
   } = config;
 
   const watcher = vscode.workspace.createFileSystemWatcher(
@@ -63,34 +75,52 @@ export function createFileWatcher(
     ignoreCreateEvents,
     ignoreChangeEvents,
     ignoreDeleteEvents
-  );
+  ) as DebouncedFileSystemWatcher;
 
   // create tagged logger for error messages
   const logger = createTaggedLogger(logTag ?? LogTags.WATCHER);
 
-  // helper to wrap handler w/ error handling
+  // track debounced functions for cleanup
+  const debouncedFns: ReturnType<typeof debounce>[] = [];
+
+  // helper to wrap handler w/ error handling & optional debounce
   const wrapHandler = (
     handler: ((uri: vscode.Uri) => void) | undefined,
-    eventType: string
+    eventType: string,
+    shouldDebounce: boolean
   ): ((uri: vscode.Uri) => void) | undefined => {
     if (!handler) {
       return undefined;
     }
-    if (!wrapErrors) {
-      return handler;
+
+    // wrap w/ error handling
+    let wrappedHandler: (uri: vscode.Uri) => void;
+    if (wrapErrors) {
+      wrappedHandler = (uri: vscode.Uri) => {
+        try {
+          handler(uri);
+        } catch (error) {
+          logger.debug(`Error in ${eventType} handler: ${error}`);
+        }
+      };
+    } else {
+      wrappedHandler = handler;
     }
-    return (uri: vscode.Uri) => {
-      try {
-        handler(uri);
-      } catch (error) {
-        logger.debug(`Error in ${eventType} handler: ${error}`);
-      }
-    };
+
+    // wrap w/ debounce if requested
+    if (shouldDebounce && debounceMs !== undefined && debounceMs > 0) {
+      const debouncedHandler = debounce(wrappedHandler, debounceMs);
+      debouncedFns.push(debouncedHandler);
+      return debouncedHandler;
+    }
+
+    return wrappedHandler;
   };
 
-  const onChange = wrapHandler(config.onChange, 'change');
-  const onCreate = wrapHandler(config.onCreate, 'create');
-  const onDelete = wrapHandler(config.onDelete, 'delete');
+  // only debounce change events (create/delete are typically one-time events)
+  const onChange = wrapHandler(config.onChange, 'change', true);
+  const onCreate = wrapHandler(config.onCreate, 'create', false);
+  const onDelete = wrapHandler(config.onDelete, 'delete', false);
 
   if (onChange) {
     watcher.onDidChange(onChange);
@@ -100,6 +130,15 @@ export function createFileWatcher(
   }
   if (onDelete) {
     watcher.onDidDelete(onDelete);
+  }
+
+  // add cancel method for debounced calls
+  if (debouncedFns.length > 0) {
+    watcher.cancelPending = () => {
+      for (const fn of debouncedFns) {
+        fn.cancel();
+      }
+    };
   }
 
   return watcher;

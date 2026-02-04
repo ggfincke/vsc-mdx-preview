@@ -12,3 +12,5 @@ export {
 } from './types';
 
 export { LogTags, type LogTag } from './tags';
+
+export { createTaggedLoggerFactory, type BaseLoggerVariadic } from './factory';

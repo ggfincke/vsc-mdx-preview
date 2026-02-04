@@ -1,92 +1,29 @@
 // packages/webview-app/src/module-system/errors.ts
 // provide webview-specific module error helpers w/ user-friendly messages
 
-import {
-  type ModuleErrorCode,
-  type ModuleErrorData,
-  type ModuleErrorOptions,
-  getSuggestionsForCode,
-  isModuleErrorData,
-  ModuleError,
+import type {
+  ModuleErrorOptions,
+  WebviewModuleErrorCode,
 } from '@mdx-preview/shared';
 
-// re-export for convenience
+// re-export core types from shared
 export {
   ModuleError,
   type ModuleErrorCode,
   type ModuleErrorData,
   isModuleErrorData,
-};
+} from '@mdx-preview/shared';
 
-// webview-only error codes (subset of ModuleErrorCode)
-export type WebviewModuleErrorCode = 'E100' | 'E102' | 'E140' | 'E150';
+// re-export webview error factories from shared
+export {
+  type WebviewModuleErrorCode,
+  createModuleNotFoundError,
+  createCircularDependencyError,
+  createFetchFailedError,
+  createEvaluationFailedError,
+  createModuleDepthExceededError,
+} from '@mdx-preview/shared';
+
+// local type alias for convenience
 export type WebviewModuleErrorOptions =
   ModuleErrorOptions<WebviewModuleErrorCode>;
-
-// factory: module not found error
-export function createModuleNotFoundError(
-  moduleId: string,
-  parentModuleId: string
-): ModuleError<WebviewModuleErrorCode> {
-  return new ModuleError(
-    `Cannot find module "${moduleId}"\nImported from: ${parentModuleId}`,
-    {
-      code: 'E100',
-      moduleId,
-      parentModuleId,
-    }
-  );
-}
-
-// factory: fetch failed error
-export function createFetchFailedError(
-  moduleId: string,
-  parentModuleId: string,
-  cause?: Error
-): ModuleError<WebviewModuleErrorCode> {
-  const baseSuggestions = getSuggestionsForCode('E140');
-  const suggestions = [...baseSuggestions];
-
-  // add specific error detail if available
-  if (cause?.message) {
-    suggestions.push(`Error details: ${cause.message}`);
-  }
-
-  return new ModuleError(
-    `Failed to fetch module "${moduleId}"\nRequired by: ${parentModuleId}`,
-    {
-      code: 'E140',
-      moduleId,
-      parentModuleId,
-      cause,
-      suggestions,
-    }
-  );
-}
-
-// factory: evaluation failed error
-export function createEvaluationFailedError(
-  moduleId: string,
-  cause: Error
-): ModuleError<WebviewModuleErrorCode> {
-  return new ModuleError(
-    `Error executing module "${moduleId}": ${cause.message}`,
-    {
-      code: 'E150',
-      moduleId,
-      cause,
-    }
-  );
-}
-
-// factory: circular dependency error
-export function createCircularDependencyError(
-  moduleId: string,
-  dependencyChain: string[]
-): ModuleError<WebviewModuleErrorCode> {
-  const chainStr = dependencyChain.join(' -> ');
-  return new ModuleError(`Circular dependency detected: ${chainStr}`, {
-    code: 'E102',
-    moduleId,
-  });
-}

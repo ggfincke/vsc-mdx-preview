@@ -21,17 +21,17 @@ const getCompileTrustedModule = createLazyImport(
 // result type for entry transformation (includes frontmatter)
 export interface TransformEntryResult {
   code: string;
-  // I.1: ESM code before CommonJS conversion (for import extraction)
+  // ESM code for import extraction
   esmCode: string;
   frontmatter: Record<string, unknown>;
 }
 
-// I.1: result type for dependency transformation
+// result type for dependency transformation
 // return both ESM (for import extraction) & CJS (for webview evaluation)
 export interface TransformResult {
-  // final CommonJS for webview evaluation
+  // CJS for webview evaluation
   code: string;
-  // ESM code before CommonJS conversion
+  // ESM for import extraction
   esmCode: string;
 }
 
@@ -64,7 +64,7 @@ async function transformEntry(
     code = transpileTypeScript(code, fsPath, preview);
   }
 
-  // I.1: Capture ESM code before CommonJS transformation
+  // I.1: capture ESM code before CommonJS transformation
   const esmCode = code;
 
   code = await transpileWithFallback(code, {
@@ -96,7 +96,7 @@ async function transform(
     code = transpileTypeScript(code, fsPath, preview);
   }
 
-  // I.1: Capture ESM code before CommonJS transformation
+  // I.1: capture ESM code before CommonJS transformation
   const esmCode = code;
 
   const isInNodeModules = fsPath.split(path.sep).includes('node_modules');

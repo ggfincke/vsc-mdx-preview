@@ -1,5 +1,5 @@
 // packages/webview-app/src/hooks/useStateUpdaters.ts
-// Factory hooks for creating memoized state field setters w/ debug logging
+// factory hooks for creating memoized state field setters w/ debug logging
 
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { debug } from '../utils/debug';

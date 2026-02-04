@@ -61,21 +61,21 @@ export interface HandshakeResult {
 
 // result of evaluating MDX in Trusted Mode
 export interface TrustedEvaluationResult {
-  // transpiled JavaScript code
+  // transpiled code
   code: string;
-  // resolved file path
+  // entry file path
   entryFilePath: string;
-  // extracted dependencies
+  // dependencies
   dependencies: string[];
-  // parsed frontmatter from MDX
+  // frontmatter
   frontmatter: Record<string, unknown> | undefined;
 }
 
 // result of evaluating MDX in Safe Mode
 export interface SafeEvaluationResult {
-  // sanitized HTML content
+  // sanitized HTML
   html: string;
-  // parsed frontmatter from MDX
+  // frontmatter
   frontmatter: Record<string, unknown> | undefined;
 }
 
@@ -88,6 +88,5 @@ export interface TailwindProcessParams {
   tailwindConfig: TailwindConfig;
 }
 
-// webview handle type (imported from rpc-extension)
-// this is defined here for convenience; the actual type is WebviewHandleType
+// webview handle type re-exported for convenience
 export type { WebviewHandleType as WebviewHandle } from '../../rpc-extension';

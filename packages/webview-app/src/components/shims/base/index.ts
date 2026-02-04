@@ -40,5 +40,12 @@ export {
 
 export { createCodeBlock, type BaseCodeBlockProps } from './BaseCodeBlock';
 
+export {
+  createCollapsible,
+  type CollapsibleConfig,
+  type CollapsibleClassNames,
+  type BaseCollapsibleProps,
+} from './createCollapsible';
+
 // re-export generic callout normalization for discoverability
 export { normalizeCalloutType, type CalloutType } from '../generic/types';

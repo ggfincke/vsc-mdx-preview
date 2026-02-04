@@ -21,7 +21,7 @@ export const DIAGNOSTIC_CODES = {
 // diagnostic source name
 const DIAGNOSTIC_SOURCE = 'MDX Preview';
 
-// ComponentDiagnostics service
+// * ComponentDiagnostics service
 // manage DiagnosticCollection for MDX component issues
 export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics> {
   protected static override instance: ComponentDiagnostics | undefined;

@@ -1,5 +1,5 @@
 // packages/webview-app/src/module-system/loader/circular.ts
-// Circular dependency detection & handling
+// circular dependency detection & handling
 
 import { registry } from '../registry/ModuleRegistry';
 import type { Module } from '../types';

@@ -13,8 +13,8 @@ function getWatcherDebounce(): number {
   return getConfigManager().get('advanced.watcherDebounceMs');
 }
 
-// watches for package.json & lock file changes to trigger resolver cache invalidation
-// ensures module resolution stays up-to-date when dependencies change
+// watch for package.json & lock file changes to trigger resolver cache invalidation
+// ensure module resolution stays up-to-date when dependencies change
 export class PackageJsonWatcher extends BaseWatcher {
   protected readonly logTag = LogTags.PKG_JSON;
 

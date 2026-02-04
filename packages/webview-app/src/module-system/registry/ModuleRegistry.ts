@@ -1,34 +1,34 @@
 // packages/webview-app/src/module-system/registry/ModuleRegistry.ts
-// facade over ModuleCache, StyleCache, & DependencyTracker subsystems
+// facade over ModuleCache, StyleCache & DependencyTracker subsystems
 
 import type { Module } from '../types';
 import { ModuleCache, type ModuleCacheConfig } from './ModuleCache';
 import { StyleCache, type StyleCacheConfig } from './StyleCache';
 import { DependencyTracker } from './DependencyTracker';
 
-// LRU configuration options
+// lru configuration options
 export interface LRUConfig extends ModuleCacheConfig, StyleCacheConfig {}
 
-// module registry that coordinates:
-// - ModuleCache: LRU cache w/ memory tracking & pending fetches
-// - StyleCache: Reference-counted style tracking w/ dual-map LRU
-// - DependencyTracker: Dependency graph & resolution map
+// coordinate module cache, style cache & dependency tracker subsystems
+// - ModuleCache: lru cache w/ memory tracking & pending fetches
+// - StyleCache: reference-counted style tracking w/ dual-map lru
+// - DependencyTracker: dependency graph & resolution map
 export class ModuleRegistry {
   private moduleCache = new ModuleCache();
   private styleCache = new StyleCache();
   private dependencyTracker = new DependencyTracker();
 
   constructor() {
-    // Wire up eviction callback for coordinated cleanup
+    // wire up eviction callback for coordinated cleanup
     this.moduleCache.onEvict = (id: string) => {
       this.dependencyTracker.cleanDependentsFor(id);
       this.dependencyTracker.cleanResolutionMapFor(id);
     };
   }
 
-  // LRU configuration
+  // lru configuration
 
-  // configure LRU limits for modules & styles
+  // configure lru limits for modules & styles
   configureLRU(options: LRUConfig): void {
     this.moduleCache.configure(options);
     this.styleCache.configure(options);
@@ -42,7 +42,7 @@ export class ModuleRegistry {
     this.moduleCache.preload(id, exports);
   }
 
-  // get cached module (update access time for LRU)
+  // get cached module (update access time for lru)
   get(id: string): Module | undefined {
     return this.moduleCache.get(id);
   }
@@ -57,7 +57,7 @@ export class ModuleRegistry {
     return this.moduleCache.isPreloaded(id);
   }
 
-  // set module in cache w/ LRU eviction (memory-based + count-based)
+  // set module in cache w/ lru eviction (memory-based + count-based)
   set(id: string, module: Module): void {
     this.moduleCache.set(id, module);
   }
@@ -84,12 +84,12 @@ export class ModuleRegistry {
   // invalidate cached module (for hot reload)
   // clean up all related metadata to prevent memory leaks
   invalidate(id: string): void {
-    // Delete from cache (returns freed bytes for non-preloaded)
+    // delete from cache (return freed bytes for non-preloaded)
     this.moduleCache.delete(id);
-    // Clean up dependency tracking
+    // clean up dependency tracking
     this.dependencyTracker.cleanDependentsFor(id);
     this.dependencyTracker.cleanResolutionMapFor(id);
-    // Clean up pending fetch
+    // clean up pending fetch
     this.moduleCache.clearPending(id);
   }
 
@@ -98,7 +98,7 @@ export class ModuleRegistry {
   invalidateWithDependents(id: string): Set<string> {
     const invalidated = this.dependencyTracker.invalidateWithDependents(id);
 
-    // Delete all invalidated modules from cache
+    // delete all invalidated modules from cache
     for (const moduleId of invalidated) {
       this.moduleCache.delete(moduleId);
       this.moduleCache.clearPending(moduleId);

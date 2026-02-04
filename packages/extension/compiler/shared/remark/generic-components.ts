@@ -1,9 +1,5 @@
 // packages/extension/compiler/shared/remark/generic-components.ts
 // remark plugin to transform known generic JSX components to semantic HTML in Safe Mode
-//
-// component detection uses the shared registry from @mdx-preview/shared
-// for unified component classification across the codebase, see:
-// - packages/extension/compiler/deps/classifier.ts
 
 import { visit } from 'unist-util-visit';
 import type { Root, Parent, RootContent } from 'mdast';

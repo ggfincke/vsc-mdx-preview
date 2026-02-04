@@ -2,12 +2,18 @@
 // centralized logging using VS Code's OutputChannel for user-visible logs
 
 import * as vscode from 'vscode';
-import type { Logger, TaggedLogger, LogTag } from '@mdx-preview/shared';
-import { LogLevel } from '@mdx-preview/shared';
+import type { Logger } from '@mdx-preview/shared';
+import {
+  LogLevel,
+  LogTags,
+  createTaggedLoggerFactory,
+} from '@mdx-preview/shared';
 
-// debug logging is disabled by default for performance
-// set MDX_PREVIEW_DEBUG=true to enable debug output
-const DEBUG_ENABLED = process.env.MDX_PREVIEW_DEBUG === 'true';
+// debug logging state (mutable for reactive updates)
+let debugEnabled = false;
+
+// track activation time for elapsed timing in debug messages
+let activationTime: number | undefined;
 
 let outputChannel: vscode.OutputChannel | undefined;
 
@@ -19,24 +25,110 @@ export function getOutputChannel(): vscode.OutputChannel {
   return outputChannel;
 }
 
+// check if debug logging is enabled
+export function isDebugEnabled(): boolean {
+  return debugEnabled;
+}
+
+// initialize logging w/ ConfigManager subscription
+// call after ConfigManager is registered in ServiceRegistry
+export function initLogging(): vscode.Disposable {
+  // set activation time for elapsed tracking
+  activationTime = Date.now();
+
+  // avoid circular import by using dynamic require
+  // ConfigManager is already registered by this point
+
+  const { getConfigManager } =
+    require('./services') as typeof import('./services');
+
+  const configManager = getConfigManager();
+
+  // read initial value from setting
+  debugEnabled = configManager.get('advanced.debugOutput');
+
+  // subscribe to setting changes
+  const subscription = configManager.onDidChangeKey(
+    'advanced.debugOutput',
+    () => {
+      debugEnabled = configManager.get('advanced.debugOutput');
+
+      if (debugEnabled) {
+        info(`[${LogTags.LOGGING}] Debug output enabled via settings`);
+        showOutput();
+      }
+    }
+  );
+
+  return {
+    dispose: () => {
+      subscription.dispose();
+    },
+  };
+}
+
+// format elapsed time since activation
+function formatElapsed(): string {
+  if (!activationTime) {
+    return '';
+  }
+  const elapsed = Date.now() - activationTime;
+  return `(+${elapsed}ms)`;
+}
+
+// format data for logging w/ improved readability
+function formatData(data: unknown): string {
+  if (data === undefined) {
+    return '';
+  }
+
+  try {
+    // handle Error objects specially
+    if (data instanceof Error) {
+      const stack = data.stack ? `\n  Stack: ${data.stack}` : '';
+      return `\n  Error: ${data.message}${stack}`;
+    }
+
+    if (typeof data === 'object' && data !== null) {
+      // truncate long arrays for readability
+      const serialized = JSON.stringify(
+        data,
+        (_key, value) => {
+          if (Array.isArray(value) && value.length > 10) {
+            return [...value.slice(0, 10), `... (${value.length - 10} more)`];
+          }
+          return value;
+        },
+        2
+      );
+      return '\n' + serialized;
+    }
+
+    return '\n  ' + String(data);
+  } catch {
+    return '\n  [unserializable data]';
+  }
+}
+
 // log message to output channel
 export function log(level: LogLevel, message: string, data?: unknown): void {
   const channel = getOutputChannel();
   const timestamp = new Date().toISOString();
-  const formattedMessage = `[${timestamp}] [${level}] ${message}`;
+
+  // add elapsed time for debug messages only
+  const elapsed = level === LogLevel.Debug ? ` ${formatElapsed()}` : '';
+  const formattedMessage = `[${timestamp}] [${level}]${elapsed} ${message}`;
 
   if (data !== undefined) {
-    const dataStr =
-      typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
-    channel.appendLine(`${formattedMessage}\n${dataStr}`);
+    channel.appendLine(`${formattedMessage}${formatData(data)}`);
   } else {
     channel.appendLine(formattedMessage);
   }
 }
 
-// log debug message (skipped when DEBUG_ENABLED is false)
+// log debug message (skipped when debugEnabled is false)
 export function debug(message: string, data?: unknown): void {
-  if (!DEBUG_ENABLED) {
+  if (!debugEnabled) {
     return;
   }
   log(LogLevel.Debug, message, data);
@@ -45,7 +137,7 @@ export function debug(message: string, data?: unknown): void {
 // log debug message w/ lazy evaluation (message function only called when debug is enabled)
 // use for hot paths where string construction overhead matters
 export function debugLazy(messageFn: () => string, data?: unknown): void {
-  if (!DEBUG_ENABLED) {
+  if (!debugEnabled) {
     return;
   }
   log(LogLevel.Debug, messageFn(), data);
@@ -79,30 +171,47 @@ export function disposeOutputChannel(): void {
   }
 }
 
-// create a tagged logger w/ a fixed prefix for consistent debug output
-// all methods write to the OutputChannel w/ the tag prefix
-export function createTaggedLogger(tag: LogTag): TaggedLogger {
-  const prefix = `[${tag}]`;
-
-  return {
-    debug: (...args: unknown[]) => {
-      const [message, data] = args;
-      debug(`${prefix} ${String(message ?? '')}`, data);
-    },
-    info: (...args: unknown[]) => {
-      const [message, data] = args;
-      info(`${prefix} ${String(message ?? '')}`, data);
-    },
-    warn: (...args: unknown[]) => {
-      const [message, data] = args;
-      warn(`${prefix} ${String(message ?? '')}`, data);
-    },
-    error: (...args: unknown[]) => {
-      const [message, data] = args;
-      error(`${prefix} ${String(message ?? '')}`, data);
-    },
-  };
+// variadic logger wrapper for compatibility w/ shared factory
+// converts variadic calls to extension's (message, data) format
+function variadicDebug(...args: unknown[]): void {
+  const [first, ...rest] = args;
+  const message = String(first ?? '');
+  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
+  debug(message, data);
 }
+
+function variadicInfo(...args: unknown[]): void {
+  const [first, ...rest] = args;
+  const message = String(first ?? '');
+  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
+  info(message, data);
+}
+
+function variadicWarn(...args: unknown[]): void {
+  const [first, ...rest] = args;
+  const message = String(first ?? '');
+  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
+  warn(message, data);
+}
+
+function variadicError(...args: unknown[]): void {
+  const [first, ...rest] = args;
+  const message = String(first ?? '');
+  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
+  error(message, data);
+}
+
+// variadic logger for use w/ shared factory
+const variadicLogger = {
+  debug: variadicDebug,
+  info: variadicInfo,
+  warn: variadicWarn,
+  error: variadicError,
+};
+
+// create tagged logger using shared factory w/ extension's variadic wrapper
+// prefix is prepended to first argument (becomes part of message)
+export const createTaggedLogger = createTaggedLoggerFactory(variadicLogger);
 
 // default logger instance (module-level functions as object)
 export const logger: Logger = {

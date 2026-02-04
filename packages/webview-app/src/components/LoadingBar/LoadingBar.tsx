@@ -6,7 +6,7 @@ import './LoadingBar.css';
 import { LOADING_BAR_SHOW_DELAY_MS } from '../../constants';
 
 interface LoadingBarProps {
-  // whether to show the loading bar immediately
+  // show immediately
   immediate?: boolean;
 }
 
@@ -34,7 +34,12 @@ const LoadingBar: React.FC<LoadingBarProps> = memo(function LoadingBar({
   }
 
   return (
-    <div className="mdx-preview-loading-container">
+    <div
+      className="mdx-preview-loading-container"
+      role="progressbar"
+      aria-label="Loading preview"
+      aria-busy="true"
+    >
       <div className="monaco-progress-container active infinite">
         <div
           className="progress-bit"

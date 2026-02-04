@@ -1,5 +1,5 @@
 // packages/webview-app/src/module-system/preload/shimLoader.ts
-// resilient shim loading w/ retry & fallback to generic shims (O.3)
+// resilient shim loading w/ retry & fallback to generic shims
 
 import { debug } from '../../utils/debug';
 import {
@@ -22,10 +22,13 @@ export interface ShimLoadResult {
   usedFallback: boolean;
 }
 
-// result of retry operation
+// retry operation result
 interface RetryResult<T> {
+  // resolved value or null on failure
   result: T | null;
+  // total attempts made
   attempts: number;
+  // last error if failed
   lastError?: Error;
 }
 
@@ -67,7 +70,7 @@ async function retryLoad<T>(
   return { result: null, attempts: maxRetries + 1, lastError };
 }
 
-// load framework shims w/ retry & fallback to generic
+// load framework shims w/ retry & fallback to generic shims
 export async function loadFrameworkShimsWithRetry(
   registry: ModuleRegistry,
   framework: Framework,
@@ -152,5 +155,5 @@ export async function loadGenericShimsWithRetry(
   return { loaded, failed };
 }
 
-// for testing: expose retry function
+// test helper for retry
 export { retryLoad as _retryLoadForTesting };

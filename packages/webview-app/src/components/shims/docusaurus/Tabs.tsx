@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/docusaurus/Tabs.tsx
 // Docusaurus Tabs/TabItem component shim for MDX Preview
-// Provides preview-compatible versions of @theme/Tabs & @theme/TabItem
+// provides preview-compatible versions of @theme/Tabs & @theme/TabItem
 
 /* eslint-disable react-refresh/only-export-components -- Context & hooks are co-located with component */
 
@@ -11,14 +11,14 @@ import {
   type TabItemProps as BaseTabItemProps,
 } from '../base';
 
-// Re-export types for compatibility
+// re-export types for compatibility
 export type TabsProps = BaseTabsProps;
 export type TabItemProps = BaseTabItemProps;
 export type { TabDefinition };
 
-// Create Docusaurus-compatible tabs using the factory
-// Uses 'mdx-preview-tabs' class prefix w/ 'docusaurus-tabs' wrapper
-// Supports groupId for tab synchronization
+// create Docusaurus-compatible tabs using the factory
+// uses 'mdx-preview-tabs' class prefix w/ 'docusaurus-tabs' wrapper
+// supports groupId for tab synchronization
 const {
   Tabs,
   TabItem,

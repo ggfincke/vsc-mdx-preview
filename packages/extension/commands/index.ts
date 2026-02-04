@@ -13,21 +13,23 @@ import { commands as previewCommands } from './preview';
 import { commands as configToggleCommands } from './config-toggles';
 import { commands as securityCommands } from './security';
 import { commands as themeSelectionCommands } from './theme-selection';
-import { commands as zoomCommands } from './zoom';
 import { commands as frameworkSelectionCommands } from './framework-selection';
 import { commands as cacheCommands } from './cache';
+import { commands as configInfoCommands } from './config-info';
+import { commands as debugCommands } from './debug';
 
 import type { CommandDefinition } from '../types';
 
-// all command definitions aggregated from modules
+// aggregate all command definitions from modules
 const allCommands: CommandDefinition[] = [
   ...previewCommands,
   ...configToggleCommands,
   ...securityCommands,
   ...themeSelectionCommands,
-  ...zoomCommands,
   ...frameworkSelectionCommands,
   ...cacheCommands,
+  ...configInfoCommands,
+  ...debugCommands,
 ];
 
 // register all MDX Preview commands w/ VS Code
