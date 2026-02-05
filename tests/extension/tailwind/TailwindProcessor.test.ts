@@ -27,7 +27,15 @@ vi.mock('../../../packages/extension/services', () => ({
 
 vi.mock('../../../packages/extension/logging', () => ({
   debug: vi.fn(),
+  info: vi.fn(),
   warn: vi.fn(),
+  error: vi.fn(),
+  createTaggedLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
 }));
 
 function createTailwindConfig(overrides: Partial<TailwindConfig> = {}): TailwindConfig {

@@ -2,9 +2,12 @@
 // XSS prevention tests for Safe Mode DOMPurify configuration
 //
 // verify DOMPurify allowlist configuration used by SafePreview
-// (test config itself since DOMPurify requires jsdom in non-browser environment)
+// includes both config validation & actual payload injection tests
+//
+// @vitest-environment jsdom
 
 import { describe, it, expect } from 'vitest';
+import DOMPurify from 'dompurify';
 import { DOMPURIFY_CONFIG } from '../../packages/webview-app/src/security/allowlist';
 
 describe('DOMPurify Configuration', () => {
@@ -473,6 +476,214 @@ describe('XSS Attack Vector Coverage', () => {
   describe('Link preload vectors', () => {
     it('config blocks link tag', () => {
       expect(DOMPURIFY_CONFIG.ALLOWED_TAGS).not.toContain('link');
+    });
+  });
+});
+
+// actual payload injection tests - verify DOMPurify sanitization behavior
+describe('XSS Payload Injection Tests', () => {
+  describe('Script injection payloads', () => {
+    it('strips script tags', () => {
+      const malicious = '<div><script>alert("xss")</script>safe</div>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('<script');
+      expect(result).toContain('safe');
+    });
+
+    it('strips event handlers from img tags', () => {
+      const malicious = '<img src=x onerror="alert(1)">';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('onerror');
+    });
+
+    it('strips event handlers from div tags', () => {
+      const malicious = '<div onclick="malicious()">click me</div>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('onclick');
+      expect(result).toContain('click me');
+    });
+
+    it('strips onmouseover handlers', () => {
+      const malicious = '<span onmouseover="steal()">hover</span>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('onmouseover');
+      expect(result).toContain('hover');
+    });
+  });
+
+  describe('SVG XSS payloads', () => {
+    it('strips script inside SVG', () => {
+      const malicious = '<svg><script>alert(1)</script></svg>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('<script');
+    });
+
+    it('strips foreignObject from SVG', () => {
+      const malicious =
+        '<svg><foreignObject><div onclick="xss()">test</div></foreignObject></svg>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('foreignObject');
+      expect(result).not.toContain('onclick');
+    });
+
+    it('strips onload from SVG', () => {
+      const malicious = '<svg onload="alert(1)"><rect/></svg>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('onload');
+    });
+  });
+
+  describe('Protocol injection payloads', () => {
+    it('strips javascript: protocol from href', () => {
+      const malicious = '<a href="javascript:alert(1)">click</a>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('javascript:');
+    });
+
+    it('strips data: protocol with HTML', () => {
+      const malicious =
+        '<a href="data:text/html,<script>alert(1)</script>">click</a>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('data:');
+    });
+
+    it('strips vbscript: protocol', () => {
+      const malicious = '<a href="vbscript:msgbox(1)">click</a>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('vbscript:');
+    });
+
+    it('preserves safe https links', () => {
+      const safe = '<a href="https://example.com">link</a>';
+      const result = DOMPurify.sanitize(safe, DOMPURIFY_CONFIG);
+      expect(result).toContain('https://example.com');
+    });
+
+    it('preserves safe mailto links', () => {
+      const safe = '<a href="mailto:test@example.com">email</a>';
+      const result = DOMPurify.sanitize(safe, DOMPURIFY_CONFIG);
+      expect(result).toContain('mailto:test@example.com');
+    });
+  });
+
+  describe('Style/CSS injection payloads', () => {
+    it('strips style tags', () => {
+      const malicious =
+        '<style>body{background:url("javascript:alert(1)")}</style>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('<style');
+    });
+
+    it('allows safe inline styles', () => {
+      const safe = '<span style="color: red;">text</span>';
+      const result = DOMPurify.sanitize(safe, DOMPURIFY_CONFIG);
+      expect(result).toContain('color');
+    });
+  });
+
+  describe('Form hijacking payloads', () => {
+    it('strips form elements', () => {
+      const malicious =
+        '<form action="https://evil.com"><input name="password"></form>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('<form');
+      expect(result).not.toContain('<input');
+    });
+
+    it('strips button elements', () => {
+      const malicious = '<button onclick="submit()">Click</button>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('<button');
+    });
+  });
+
+  describe('Iframe/embed payloads', () => {
+    it('strips iframe elements', () => {
+      const malicious = '<iframe src="https://evil.com"></iframe>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('<iframe');
+    });
+
+    it('strips object elements', () => {
+      const malicious = '<object data="malicious.swf"></object>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('<object');
+    });
+
+    it('strips embed elements', () => {
+      const malicious = '<embed src="evil.swf">';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('<embed');
+    });
+  });
+
+  describe('Encoded/obfuscated payloads', () => {
+    it('handles HTML entity encoded event handlers', () => {
+      // &#111;&#110;&#101;&#114;&#114;&#111;&#114; = onerror
+      const malicious = '<img src=x &#111;&#110;&#101;&#114;&#114;&#111;&#114;="alert(1)">';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result).not.toContain('onerror');
+    });
+
+    it('handles mixed case bypass attempts', () => {
+      const malicious = '<ScRiPt>alert(1)</sCrIpT>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result.toLowerCase()).not.toContain('<script');
+    });
+
+    it('handles null byte injection', () => {
+      const malicious = '<scr\x00ipt>alert(1)</script>';
+      const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
+      expect(result.toLowerCase()).not.toContain('<script');
+    });
+  });
+
+  describe('Safe content preservation', () => {
+    it('preserves safe markdown-rendered HTML', () => {
+      const safe =
+        '<h1>Title</h1><p>Paragraph with <strong>bold</strong> and <em>italic</em>.</p>';
+      const result = DOMPurify.sanitize(safe, DOMPURIFY_CONFIG);
+      expect(result).toContain('<h1>');
+      expect(result).toContain('<strong>');
+      expect(result).toContain('<em>');
+    });
+
+    it('preserves code blocks', () => {
+      const safe = '<pre><code class="language-js">const x = 1;</code></pre>';
+      const result = DOMPurify.sanitize(safe, DOMPURIFY_CONFIG);
+      expect(result).toContain('<pre>');
+      expect(result).toContain('<code');
+      expect(result).toContain('const x = 1;');
+    });
+
+    it('preserves safe SVG for Mermaid', () => {
+      const safe =
+        '<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" fill="blue"/></svg>';
+      const result = DOMPurify.sanitize(safe, DOMPURIFY_CONFIG);
+      expect(result).toContain('<svg');
+      expect(result).toContain('<rect');
+    });
+
+    it('preserves tables', () => {
+      const safe =
+        '<table><thead><tr><th>Header</th></tr></thead><tbody><tr><td>Cell</td></tr></tbody></table>';
+      const result = DOMPurify.sanitize(safe, DOMPURIFY_CONFIG);
+      expect(result).toContain('<table>');
+      expect(result).toContain('<th>');
+      expect(result).toContain('<td>');
+    });
+
+    it('preserves blockquotes', () => {
+      const safe = '<blockquote><p>Quoted text</p></blockquote>';
+      const result = DOMPurify.sanitize(safe, DOMPURIFY_CONFIG);
+      expect(result).toContain('<blockquote>');
+    });
+
+    it('preserves KaTeX math elements', () => {
+      const safe = '<math><mrow><mi>x</mi><mo>=</mo><mn>1</mn></mrow></math>';
+      const result = DOMPurify.sanitize(safe, DOMPURIFY_CONFIG);
+      expect(result).toContain('<math>');
+      expect(result).toContain('<mrow>');
     });
   });
 });

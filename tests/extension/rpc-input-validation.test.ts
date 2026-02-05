@@ -82,6 +82,12 @@ vi.mock('../../packages/extension/logging', () => ({
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
+  createTaggedLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
 }));
 
 // mock fetchLocal to avoid complex dependencies

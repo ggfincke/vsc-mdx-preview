@@ -48,6 +48,12 @@ vi.mock('../../packages/extension/logging', () => ({
   warn: vi.fn(),
   debug: vi.fn(),
   info: vi.fn(),
+  createTaggedLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
 }));
 
 // Import after mocks are set up

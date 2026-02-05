@@ -23,6 +23,14 @@ vi.mock('../../../packages/extension/preview/config/ConfigResolver', () => ({
 vi.mock('../../../packages/extension/logging', () => ({
   debug: vi.fn(),
   info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  createTaggedLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
 }));
 
 describe('ComponentDiagnostics', () => {
