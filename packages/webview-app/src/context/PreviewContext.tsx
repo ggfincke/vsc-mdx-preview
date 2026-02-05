@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import type { PreviewContent, PreviewError } from '../types';
-import { debug } from '../utils/debug';
+import { createTaggedLogger } from '../utils/createTaggedLogger';
 import { LogTags } from '@mdx-preview/shared';
 import { createContextProvider } from './createContextProvider';
 
@@ -16,21 +16,24 @@ interface PreviewContextValue {
   clearError: () => void;
 }
 
+// module-level tagged logger (avoids per-render allocation)
+const log = createTaggedLogger(LogTags.PREVIEW_CONTEXT);
+
 // hook that provides the Preview context value
 function usePreviewProviderValue(): PreviewContextValue {
   const [content, setContent] = useState<PreviewContent | null>(null);
   const [error, setErrorState] = useState<PreviewError | null>(null);
 
   const setSafeContent = useCallback((html: string) => {
-    debug(`[${LogTags.PREVIEW_CONTEXT}] setSafeContent called, html length: ${html.length}`);
+    log.debug(`setSafeContent called, html length: ${html.length}`);
     setContent({ mode: 'safe', html });
     setErrorState(null);
   }, []);
 
   const setTrustedContent = useCallback(
     (code: string, entryFilePath: string, dependencies: string[]) => {
-      debug(
-        `[${LogTags.PREVIEW_CONTEXT}] setTrustedContent called, code length: ${code.length}, path: ${entryFilePath}`
+      log.debug(
+        `setTrustedContent called, code length: ${code.length}, path: ${entryFilePath}`
       );
       setContent({ mode: 'trusted', code, entryFilePath, dependencies });
       setErrorState(null);
@@ -39,12 +42,12 @@ function usePreviewProviderValue(): PreviewContextValue {
   );
 
   const setError = useCallback((error: PreviewError) => {
-    debug(`[${LogTags.PREVIEW_CONTEXT}] setError called`, error);
+    log.debug('setError called', error);
     setErrorState(error);
   }, []);
 
   const clearError = useCallback(() => {
-    debug(`[${LogTags.PREVIEW_CONTEXT}] clearError called`);
+    log.debug('clearError called');
     setErrorState(null);
   }, []);
 

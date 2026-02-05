@@ -1,7 +1,7 @@
 // packages/webview-app/src/module-system/preload/shimLoader.ts
 // resilient shim loading w/ retry & fallback to generic shims
 
-import { debug } from '../../utils/debug';
+import { createTaggedLogger } from '../../utils/createTaggedLogger';
 import {
   normalizeError,
   extractErrorMessage,
@@ -13,6 +13,9 @@ import {
 } from '../../constants';
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
 import type { Framework } from '@mdx-preview/shared';
+
+// module-level tagged logger (avoids per-call allocation)
+const log = createTaggedLogger(LogTags.SHIM_LOADER);
 
 // result of shim loading attempt
 export interface ShimLoadResult {
@@ -50,15 +53,15 @@ async function retryLoad<T>(
     try {
       const result = await loader();
       if (attempt > 0) {
-        debug(
-          `[${LogTags.SHIM_LOADER}] ${name} succeeded on attempt ${attempt + 1}`
+        log.debug(
+          `${name} succeeded on attempt ${attempt + 1}`
         );
       }
       return { result, attempts: attempt + 1 };
-    } catch (error) {
+    } catch (error: unknown) {
       lastError = normalizeError(error);
-      debug(
-        `[${LogTags.SHIM_LOADER}] ${name} failed (attempt ${attempt + 1}/${maxRetries + 1}): ${lastError.message}`
+      log.debug(
+        `${name} failed (attempt ${attempt + 1}/${maxRetries + 1}): ${lastError.message}`
       );
 
       if (attempt < maxRetries) {
@@ -97,24 +100,24 @@ export async function loadFrameworkShimsWithRetry(
 
   if (loadResult.result !== null) {
     result.success = true;
-    debug(`[${LogTags.SHIM_LOADER}] ${framework} shims loaded successfully`);
+    log.debug(`${framework} shims loaded successfully`);
     return result;
   }
 
   // framework shims failed - fall back to generic shims
-  debug(
-    `[${LogTags.SHIM_LOADER}] ${framework} shims failed after ${loadResult.attempts} attempts, using generic fallback`
+  log.debug(
+    `${framework} shims failed after ${loadResult.attempts} attempts, using generic fallback`
   );
 
   try {
     genericFallbackLoader(registry);
     result.usedFallback = true;
     result.success = true;
-    debug(`[${LogTags.SHIM_LOADER}] Generic fallback loaded for ${framework}`);
+    log.debug(`Generic fallback loaded for ${framework}`);
   } catch (fallbackError) {
     const errorMessage = extractErrorMessage(fallbackError);
-    debug(
-      `[${LogTags.SHIM_LOADER}] Generic fallback also failed: ${errorMessage}`
+    log.debug(
+      `Generic fallback also failed: ${errorMessage}`
     );
     result.failedShims.push('generic-fallback');
   }
@@ -135,7 +138,7 @@ export async function loadGenericShimsWithRetry(
   const loadPromises = componentNames.map(async (name) => {
     const loader = shimLoaders[name];
     if (!loader) {
-      debug(`[${LogTags.SHIM_LOADER}] No loader for generic shim: ${name}`);
+      log.debug(`No loader for generic shim: ${name}`);
       return;
     }
 
@@ -144,8 +147,8 @@ export async function loadGenericShimsWithRetry(
       loaded.push(name);
     } else {
       failed.push(name);
-      debug(
-        `[${LogTags.SHIM_LOADER}] Generic shim ${name} failed permanently: ${result.lastError?.message}`
+      log.debug(
+        `Generic shim ${name} failed permanently: ${result.lastError?.message}`
       );
     }
   });

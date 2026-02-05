@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import type { NextraPageMeta } from '@mdx-preview/shared';
-import { debug } from '../utils/debug';
+import { createTaggedLogger } from '../utils/createTaggedLogger';
 import { LogTags } from '@mdx-preview/shared';
 import { createContextProvider } from './createContextProvider';
 
@@ -12,12 +12,15 @@ interface NextraContextValue {
   setNextraMeta: (meta: NextraPageMeta | null) => void;
 }
 
+// module-level tagged logger (avoids per-render allocation)
+const log = createTaggedLogger(LogTags.NEXTRA_CONTEXT);
+
 // hook that provides the Nextra context value
 function useNextraProviderValue(): NextraContextValue {
   const [nextraMeta, setNextraMetaState] = useState<NextraPageMeta | null>(null);
 
   const setNextraMeta = useCallback((meta: NextraPageMeta | null) => {
-    debug(`[${LogTags.NEXTRA_CONTEXT}] setNextraMeta called`, meta);
+    log.debug('setNextraMeta called', meta);
     setNextraMetaState(meta);
   }, []);
 

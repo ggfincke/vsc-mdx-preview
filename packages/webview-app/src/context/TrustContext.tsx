@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import type { TrustState } from '../types';
-import { debug } from '../utils/debug';
+import { createTaggedLogger } from '../utils/createTaggedLogger';
 import { LogTags } from '@mdx-preview/shared';
 import { createContextProvider } from './createContextProvider';
 
@@ -20,12 +20,15 @@ const INITIAL_TRUST_STATE: TrustState = {
   openMdxLinksInPreview: true,
 };
 
+// module-level tagged logger (avoids per-render allocation)
+const log = createTaggedLogger(LogTags.TRUST_CONTEXT);
+
 // hook that provides the Trust context value
 function useTrustProviderValue(): TrustContextValue {
   const [trustState, setTrustStateInternal] = useState<TrustState>(INITIAL_TRUST_STATE);
 
   const setTrustState = useCallback((state: TrustState) => {
-    debug(`[${LogTags.TRUST_CONTEXT}] setTrustState called`, state);
+    log.debug('setTrustState called', state);
     setTrustStateInternal(state);
   }, []);
 

@@ -3,20 +3,13 @@
 
 import { useRef, useState, useCallback } from 'react';
 import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
+import { createTaggedLogger } from '../../utils/createTaggedLogger';
 import { useAsyncEffect } from '../../hooks';
 import { useTheme } from '../../theme';
 import './MermaidRenderer.css';
 
-// gated debug logging (enable via localStorage.setItem('mdxPreviewDebug', '1'))
-const DEBUG =
-  typeof localStorage !== 'undefined' &&
-  localStorage.getItem('mdxPreviewDebug') === '1';
-
-function debugLog(...args: unknown[]) {
-  if (DEBUG) {
-    console.debug(`[${LogTags.MERMAID_RENDERER}]`, ...args);
-  }
-}
+// module-level tagged logger (avoids per-render allocation)
+const log = createTaggedLogger(LogTags.MERMAID_RENDERER);
 
 interface Props {
   code: string;
@@ -57,17 +50,17 @@ export function MermaidRenderer({ code, id }: Props) {
 
   useAsyncEffect(
     async (signal) => {
-      debugLog('render effect triggered', { id, codePreview: code.slice(0, 50) });
+      log.debug('render effect triggered', { id, codePreview: code.slice(0, 50) });
 
       const mermaid = await getMermaid();
-      debugLog('mermaid library loaded');
+      log.debug('mermaid library loaded');
 
       // Only re-initialize if theme or dark state changed (perf optimization)
       const needsReinit =
         lastInitializedTheme !== mermaidTheme || lastInitializedDark !== isDark;
 
       if (needsReinit) {
-        debugLog('initializing mermaid with theme', { mermaidTheme, isDark });
+        log.debug('initializing mermaid with theme', { mermaidTheme, isDark });
         // initialize mermaid w/ strict config (no foreignObject)
         // theme is controlled by user setting (mdx-preview.preview.mermaidTheme)
         mermaid.default.initialize({
@@ -114,14 +107,14 @@ export function MermaidRenderer({ code, id }: Props) {
       if (containerRef.current) {
         containerRef.current.innerHTML = svg;
         setError(null);
-        debugLog('render complete', { id });
+        log.debug('render complete', { id });
       }
     },
     [code, id, mermaidTheme],
     {
       onError: (err) => {
         const message = extractErrorMessage(err) || 'Failed to render diagram';
-        debugLog('render error', { id, error: message });
+        log.debug('render error', { id, error: message });
         setError(message);
       },
       onLoadingChange: setIsLoading,

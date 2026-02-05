@@ -49,7 +49,7 @@ export function evaluateModule(
     }
 
     return module.exports;
-  } catch (error) {
+  } catch (error: unknown) {
     // preserve original error chain using Error.cause (ES2022)
     const originalError = normalizeError(error);
     const contextualError = new Error(

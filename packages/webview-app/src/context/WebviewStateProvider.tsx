@@ -8,8 +8,11 @@ import { LoadingProvider, useLoading } from './LoadingContext';
 import { NextraProvider, useNextra } from './NextraContext';
 import { useTheme } from '../theme';
 import { registerWebviewHandlers } from '../rpc-webview';
-import { debug } from '../utils/debug';
+import { createTaggedLogger } from '../utils/createTaggedLogger';
 import { LogTags } from '@mdx-preview/shared';
+
+// module-level tagged logger (avoids per-render allocation)
+const log = createTaggedLogger(LogTags.WEBVIEW_STATE);
 
 interface HandlerRegistrarProps {
   children: ReactNode;
@@ -38,7 +41,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
 
   useEffect(() => {
     if (initializedRef.current) {
-      debug(`[${LogTags.WEBVIEW_STATE}] Already initialized, skipping`);
+      log.debug('Already initialized, skipping');
       return;
     }
     initializedRef.current = true;
@@ -46,7 +49,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
     // helper to clear loading state after content updates
     const clearLoading = () => setIsLoading(false);
 
-    debug(`[${LogTags.WEBVIEW_STATE}] Registering handlers...`);
+    log.debug('Registering handlers...');
     registerWebviewHandlers({
       setTrustState,
       setSafeContent: wrapWithLoadingClear(setSafeContent, clearLoading),
@@ -56,7 +59,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
       setTheme: setPreviewThemeState,
       setNextraMeta,
     });
-    debug(`[${LogTags.WEBVIEW_STATE}] Handlers registered`);
+    log.debug('Handlers registered');
   }, [
     setTrustState,
     setSafeContent,
