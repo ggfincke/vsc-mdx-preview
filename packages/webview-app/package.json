@@ -1,6 +1,6 @@
 {
   "name": "webview",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@mdx-js/react": "^3.0.0",
-    "@mdx-preview/shared": "1.0.0-alpha.5",
+    "@mdx-preview/shared": "1.0.0",
     "comlink": "^4.4.1",
     "dompurify": "^3.0.0",
     "katex": "^0.16.27",
