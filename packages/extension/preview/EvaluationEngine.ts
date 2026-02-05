@@ -5,8 +5,12 @@ import * as fs from 'fs';
 import { transformEntry } from '../module-system/transform/transform';
 import { extractImportSpecifiers } from '../module-system/deps/import-extractor';
 import { createLazyImport } from '../utils/lazy-import';
-import { debug } from '../logging';
+import { createSingleton } from '../utils/singleton-factory';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.ENGINE);
 
 // lazy load Safe Mode compiler - only loaded when Safe Mode is actually used
 const getCompileSafeModule = createLazyImport(
@@ -63,9 +67,9 @@ export class EvaluationEngine {
     fsPath: string,
     preview: Preview
   ): Promise<TrustedEvaluationResult> {
-    debug(`[${LogTags.ENGINE}] evaluateTrusted called`);
+    log.debug('evaluateTrusted called');
 
-    debug(`[${LogTags.ENGINE}] Transforming entry...`);
+    log.debug('Transforming entry...');
     // transformEntry returns esmCode for import extraction (timeout prevents hang)
     const transformResult = await this.withTimeout(
       transformEntry(text, fsPath, preview),
@@ -79,8 +83,8 @@ export class EvaluationEngine {
     }
 
     const { code, esmCode, frontmatter } = transformResult;
-    debug(
-      `[${LogTags.ENGINE}] Transform complete, code length: ${code.length}`
+    log.debug(
+      `Transform complete, code length: ${code.length}`
     );
 
     // use async fs.promises.realpath instead of sync version
@@ -88,7 +92,7 @@ export class EvaluationEngine {
 
     // extract dependencies from ESM code (before CommonJS conversion for better parsing)
     const dependencies = await extractImportSpecifiers(esmCode);
-    debug(`[${LogTags.ENGINE}] Dependencies: ${dependencies.join(', ')}`);
+    log.debug(`Dependencies: ${dependencies.join(', ')}`);
 
     return {
       code,
@@ -103,14 +107,14 @@ export class EvaluationEngine {
     text: string,
     mdxPreviewConfig: ResolvedConfig | undefined
   ): Promise<SafeEvaluationResult> {
-    debug(`[${LogTags.ENGINE}] evaluateSafe called`);
+    log.debug('evaluateSafe called');
 
-    debug(`[${LogTags.ENGINE}] Loading Safe Mode compiler...`);
+    log.debug('Loading Safe Mode compiler...');
     const { compileSafe } = await getCompileSafeModule();
 
-    debug(`[${LogTags.ENGINE}] Compiling to safe HTML...`);
+    log.debug('Compiling to safe HTML...');
     const { html, frontmatter } = await compileSafe(text, mdxPreviewConfig);
-    debug(`[${LogTags.ENGINE}] Safe HTML compiled, length: ${html.length}`);
+    log.debug(`Safe HTML compiled, length: ${html.length}`);
 
     return { html, frontmatter };
   }
@@ -123,7 +127,7 @@ export class EvaluationEngine {
     webviewHandle: WebviewHandle
   ): Promise<void> {
     try {
-      debug(`[${LogTags.ENGINE}/TAILWIND] Starting background compilation`);
+      log.debug('TAILWIND: Starting background compilation');
 
       const compilationTimeout =
         getConfigManager().get(
@@ -144,7 +148,7 @@ export class EvaluationEngine {
       );
 
       if (result === null) {
-        debug(`[${LogTags.ENGINE}/TAILWIND] Compilation timed out`);
+        log.debug('TAILWIND: Compilation timed out');
         getErrorReporter().report(new Error('Tailwind compilation timed out'), {
           context: ErrorContext.Tailwind,
           showNotification: true,
@@ -159,7 +163,7 @@ export class EvaluationEngine {
 
       preview.updateTailwindWatchFiles(result.watchFiles);
       webviewHandle.setTailwindCss(result.css);
-    } catch (error) {
+    } catch (error: unknown) {
       getErrorReporter().report(error, {
         context: ErrorContext.Tailwind,
         showNotification: true,
@@ -184,13 +188,11 @@ export class EvaluationEngine {
   }
 }
 
-// singleton instance
-let engineInstance: EvaluationEngine | null = null;
+const evaluationEngineSingleton = createSingleton(
+  () => new EvaluationEngine()
+);
 
 // get the EvaluationEngine singleton instance
 export function getEvaluationEngine(): EvaluationEngine {
-  if (!engineInstance) {
-    engineInstance = new EvaluationEngine();
-  }
-  return engineInstance;
+  return evaluationEngineSingleton.get();
 }

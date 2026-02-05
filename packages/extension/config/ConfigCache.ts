@@ -4,13 +4,13 @@
 // between "not cached" (undefined) & "cached as no config" (null)
 
 import * as path from 'path';
-import * as vscode from 'vscode';
-import { warn } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
-import { SingletonService } from '../services/SingletonService';
-import { SubscriberManager } from '../utils/SubscriberManager';
+import { WithSubscribers } from '../services/SingletonService';
 import type { ResolvedConfig } from '../types';
 import { PathCache } from '../utils/cache';
+
+const log = createTaggedLogger(LogTags.CONFIG_CACHE);
 
 // typed config change event types
 export enum ConfigChangeType {
@@ -42,7 +42,7 @@ interface CacheWrapper {
 // configWatchers: track config path -> watcher instance
 // configChangeSubscribers: Set of callbacks for config changes
 // register w/ ServiceRegistry for proper disposal
-export class ConfigCache extends SingletonService<ConfigCache> {
+export class ConfigCache extends WithSubscribers<ConfigCache, ConfigChangeEvent> {
   protected static override instance: ConfigCache | undefined;
   protected readonly logTag = LogTags.CONFIG_CACHE;
 
@@ -51,14 +51,12 @@ export class ConfigCache extends SingletonService<ConfigCache> {
     logTag: LogTags.CONFIG_CACHE,
     maxEntries: CONFIG_CACHE_MAX_ENTRIES,
   });
-  private subscriberManager = new SubscriberManager<ConfigChangeEvent>(
-    LogTags.CONFIG_CACHE,
-    (err) =>
-      warn(`[${LogTags.CONFIG_CACHE}] Error in config change callback:`, err)
-  );
 
   protected constructor() {
-    super();
+    super(
+      LogTags.CONFIG_CACHE,
+      (err) => log.warn('Error in config change callback:', err)
+    );
   }
 
   // retrieve cached config for a directory (update LRU position)
@@ -128,17 +126,12 @@ export class ConfigCache extends SingletonService<ConfigCache> {
     this.cache.unwatchPath(configPath);
   }
 
-  // register callback for config file changes
-  subscribe(callback: ConfigChangeCallback): vscode.Disposable {
-    return this.subscriberManager.subscribe(callback);
-  }
-
   // dispatch config change notifications to subscribers
   notifyChange(
     configPath: string,
     type: ConfigChangeType = ConfigChangeType.FileChanged
   ): void {
-    this.subscriberManager.notify({
+    this.notifySubscribers({
       type,
       configPath,
       timestamp: Date.now(),
@@ -148,6 +141,5 @@ export class ConfigCache extends SingletonService<ConfigCache> {
   // clean up all caches & watchers
   protected override onDispose(): void {
     this.cache.dispose();
-    this.subscriberManager.clear();
   }
 }

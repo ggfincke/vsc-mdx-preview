@@ -2,10 +2,12 @@
 // preview manager singleton for managing all preview instances
 
 import * as vscode from 'vscode';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
-import { SingletonService } from '../services/SingletonService';
-import { SubscriberManager } from '../utils/SubscriberManager';
+import { WithSubscribers } from '../services/SingletonService';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.PREVIEW_MANAGER);
 
 // import Preview class for type usage
 import type { Preview } from './Preview';
@@ -26,14 +28,11 @@ export interface WebviewAppUris {
 
 // * singleton manager for all preview instances
 // manage preview lifecycle, panel state, & subscriber notifications
-export class PreviewManager extends SingletonService<PreviewManager> {
+export class PreviewManager extends WithSubscribers<PreviewManager, void> {
   protected static override instance: PreviewManager | undefined;
   protected readonly logTag = LogTags.PREVIEW_MANAGER;
 
   private currentPreview: Preview | undefined;
-  private subscriberManager = new SubscriberManager<void>(
-    LogTags.PREVIEW_MANAGER
-  );
 
   // panel state (moved from webview-manager.ts module-level for better testability)
   private _panel: vscode.WebviewPanel | undefined;
@@ -45,7 +44,7 @@ export class PreviewManager extends SingletonService<PreviewManager> {
   private _extensionUri: vscode.Uri | undefined;
 
   protected constructor() {
-    super();
+    super(LogTags.PREVIEW_MANAGER);
   }
 
   // get current preview
@@ -56,7 +55,7 @@ export class PreviewManager extends SingletonService<PreviewManager> {
   // set current preview & notify subscribers
   setCurrentPreview(preview: Preview | undefined): void {
     this.currentPreview = preview;
-    this.notifySubscribers();
+    this.notifyPreviewSubscribers();
   }
 
   // refresh all active previews (e.g., when trust state changes)
@@ -78,9 +77,9 @@ export class PreviewManager extends SingletonService<PreviewManager> {
     if (this.currentPreview?.active) {
       try {
         await this.currentPreview.clearAllCaches();
-      } catch (error) {
-        debug(
-          `[${LogTags.PREVIEW_MANAGER}] Failed to clear webview cache: ${error}`
+      } catch (error: unknown) {
+        log.debug(
+          `Failed to clear webview cache: ${error}`
         );
       }
     }
@@ -89,11 +88,6 @@ export class PreviewManager extends SingletonService<PreviewManager> {
   // check if there are any active previews
   hasActivePreviews(): boolean {
     return this.currentPreview?.active ?? false;
-  }
-
-  // subscribe to preview state changes (open/close)
-  subscribe(callback: () => void): vscode.Disposable {
-    return this.subscriberManager.subscribe(callback);
   }
 
   // panel state accessors
@@ -148,8 +142,8 @@ export class PreviewManager extends SingletonService<PreviewManager> {
   }
 
   // notify subscribers when preview state changes
-  private notifySubscribers(): void {
-    this.subscriberManager.notify(undefined);
+  private notifyPreviewSubscribers(): void {
+    this.notifySubscribers(undefined);
   }
 
   // custom cleanup - clear panel, preview, & subscribers
@@ -157,12 +151,11 @@ export class PreviewManager extends SingletonService<PreviewManager> {
     this.clearPanel();
     this.currentPreview?.dispose();
     this.currentPreview = undefined;
-    this.subscriberManager.clear();
   }
 }
 
 // get current preview through manager
 export function getCurrentPreview(): Preview | undefined {
-  debug(`[${LogTags.PREVIEW_MANAGER}] getCurrentPreview called`);
+  log.debug('getCurrentPreview called');
   return PreviewManager.getInstance().getCurrentPreview();
 }
