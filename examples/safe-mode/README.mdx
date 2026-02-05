@@ -8,9 +8,10 @@ description: Understanding how MDX Preview renders content in Safe Mode
 This example demonstrates how MDX Preview renders content in **Safe Mode**. Safe Mode is automatically activated when:
 
 - The workspace is **not trusted**, OR
-- The setting `mdx-preview.preview.enableScripts` is set to `false`
+- The setting `mdx-preview.preview.enableScripts` is set to `false`, OR
+- The per-project config `.mdx-previewrc.json` sets `enableScripts` to `false`
 
-> **Note:** This example includes a `.vscode/settings.json` file that sets `enableScripts` to `false`, ensuring Safe Mode is always used regardless of your global settings.
+> **Note:** This example includes a `.mdx-previewrc.json` file with `enableScripts: false`, forcing Safe Mode regardless of your VS Code settings.
 
 Safe Mode provides a secure preview by compiling MDX to static HTML without executing any JavaScript.
 
@@ -177,13 +178,16 @@ When MDX Preview encounters a component it doesn't recognize, it uses the `unkno
 
 ### This Example's Configuration
 
-The `.mdx-previewrc.json` file in this directory sets:
+The `.mdx-previewrc.json` file in this directory forces Safe Mode and configures placeholder rendering:
 
 ```json
 {
+  "enableScripts": false,
   "unknownBehavior": "placeholder"
 }
 ```
+
+The `enableScripts: false` setting forces Safe Mode regardless of your VS Code settings. This is useful for documentation projects that should always preview safely.
 
 ### Unknown Component Example
 
@@ -356,13 +360,22 @@ This makes Safe Mode ideal for:
 
 ### To Force Safe Mode
 
-Even in a trusted workspace, you can force Safe Mode by:
+Even in a trusted workspace, you can force Safe Mode by either:
 
+**Option 1: VS Code Settings (global)**
 1. Open VS Code Settings
 2. Search for `mdx-preview.preview.enableScripts`
 3. Uncheck the box (set to `false`)
 
-This is useful for testing how your content renders in Safe Mode.
+**Option 2: Per-Project Configuration (recommended)**
+Create or edit `.mdx-previewrc.json` in your project:
+```json
+{
+  "enableScripts": false
+}
+```
+
+The per-project approach is recommended because it travels with your project and works regardless of workspace settings.
 
 ---
 
@@ -384,11 +397,16 @@ Create `.mdx-previewrc.json`:
 
 ```json
 {
+  "enableScripts": false,
   "unknownBehavior": "placeholder"
 }
 ```
 
-Options:
+**`enableScripts` options:**
+- `true` (default) - Allow Trusted Mode if workspace is trusted
+- `false` - Force Safe Mode regardless of workspace trust
+
+**`unknownBehavior` options:**
 - `"placeholder"` - Show warning box with component name
 - `"strip"` - Remove component entirely
 - `"raw"` - Show children only, no wrapper

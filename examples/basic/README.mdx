@@ -1,9 +1,7 @@
 ---
 title: MDX Preview Feature Showcase
 author: MDX Preview Extension
-version: 1.0.0-alpha.5
 tags: [mdx, react, preview, vscode]
-date: 2025-01-08
 ---
 
 import Calculator from './src/calculator'
@@ -288,47 +286,25 @@ MDX Preview renders mathematical expressions using KaTeX:
 
 ### Inline Math
 
-The quadratic formula $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$ solves equations of the form $ax^2 + bx + c = 0$.
-
 Einstein's mass-energy equivalence: $E = mc^2$
+
+The Pythagorean theorem: $a^2 + b^2 = c^2$
+
+Euler's identity: $e^{'{'}i\pi{'}'} + 1 = 0$
 
 ### Block Math
 
-The Gaussian integral:
-
-$$
+```math
 \int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
-$$
+```
 
-Matrix multiplication:
-
-$$
-\begin{bmatrix}
-a & b \\
-c & d
-\end{bmatrix}
-\begin{bmatrix}
-x \\
-y
-\end{bmatrix}
-=
-\begin{bmatrix}
-ax + by \\
-cx + dy
-\end{bmatrix}
-$$
-
-Summation notation:
-
-$$
+```math
 \sum_{i=1}^{n} i = \frac{n(n+1)}{2}
-$$
+```
 
-The limit definition of e:
-
-$$
+```math
 e = \lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n
-$$
+```
 
 ---
 

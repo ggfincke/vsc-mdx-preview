@@ -130,7 +130,7 @@ import Link from 'next/link';
 
 </details>
 
-For complete framework documentation, see [docs/frameworks.md](docs/frameworks.md).
+For complete framework documentation, see [docs/frameworks.md](https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/frameworks.md).
 
 ## Built-in Components
 
@@ -170,10 +170,12 @@ These components are available without imports when `mdx-preview.components.buil
 | **MDX: Toggle White Background**       | -              | Toggle white background override          |
 | **MDX: Change Security Settings**      | -              | Modify Content Security Policy            |
 | **MDX: Clear All Caches**              | -              | Clear cached modules                      |
+| **MDX: Show Effective Configuration**  | -              | Show resolved config for current file     |
+| **MDX: Toggle Debug Output**           | -              | Toggle debug logging in output channel    |
 
 ## Configuration
 
-For complete configuration documentation, see [docs/configuration.md](docs/configuration.md).
+For complete configuration documentation, see [docs/configuration.md](https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/configuration.md).
 
 ### Key Settings
 
@@ -274,7 +276,7 @@ MDX Preview supports per-project customization through `.mdx-previewrc.json` fil
 }
 ```
 
-Plugins must be installed in your project's `node_modules`. For complete configuration options, see [docs/configuration.md](docs/configuration.md).
+Plugins must be installed in your project's `node_modules`. For complete configuration options, see [docs/configuration.md](https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/configuration.md).
 
 ## Advanced Features
 
@@ -429,7 +431,7 @@ In Trusted Mode:
 
 > **Note**: Trusted Mode is only available for local workspaces. Remote environments (SSH, WSL, Dev Containers, Codespaces) always use Safe Mode.
 
-For complete security documentation, see [docs/security.md](docs/security.md).
+For complete security documentation, see [docs/security.md](https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/security.md).
 
 ## Webview Limitations
 
@@ -459,7 +461,7 @@ VS Code webviews have some inherent limitations:
 1. Verify the framework package is in your `package.json`
 2. Manually set the framework: `mdx-preview.framework`
 
-For comprehensive troubleshooting, see [docs/troubleshooting.md](docs/troubleshooting.md).
+For comprehensive troubleshooting, see [docs/troubleshooting.md](https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/troubleshooting.md).
 
 ## Example Projects
 
@@ -467,35 +469,35 @@ The `examples/` directory contains working examples for various use cases:
 
 | Example                                       | Description                                 |
 | --------------------------------------------- | ------------------------------------------- |
-| [`basic/`](examples/basic/)                   | Fundamental MDX features and Tailwind CSS   |
-| [`docusaurus/`](examples/docusaurus/)         | Docusaurus framework with @theme components |
-| [`starlight/`](examples/starlight/)           | Astro Starlight components                  |
-| [`nextra/`](examples/nextra/)                 | Nextra framework with \_meta.json           |
-| [`nextjs/`](examples/nextjs/)                 | Next.js MDX with next/image and next/link   |
-| [`admonitions/`](examples/admonitions/)       | Docusaurus-style admonition callouts        |
-| [`generic-shims/`](examples/generic-shims/)   | Built-in component library                  |
-| [`custom-plugins/`](examples/custom-plugins/) | Custom remark/rehype plugins                |
-| [`safe-mode/`](examples/safe-mode/)           | Safe Mode rendering examples                |
+| [`basic/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/basic/)                   | Fundamental MDX features and Tailwind CSS   |
+| [`docusaurus/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/docusaurus/)         | Docusaurus framework with @theme components |
+| [`starlight/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/starlight/)           | Astro Starlight components                  |
+| [`nextra/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/nextra/)                 | Nextra framework with \_meta.json           |
+| [`nextjs/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/nextjs/)                 | Next.js MDX with next/image and next/link   |
+| [`admonitions/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/admonitions/)       | Docusaurus-style admonition callouts        |
+| [`generic-shims/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/generic-shims/)   | Built-in component library                  |
+| [`custom-plugins/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/custom-plugins/) | Custom remark/rehype plugins                |
+| [`safe-mode/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/safe-mode/)           | Safe Mode rendering examples                |
 
 ## Documentation
 
 Comprehensive documentation is available in the `docs/` folder:
 
-- [Configuration](docs/configuration.md) - Full configuration reference
-- [Frameworks](docs/frameworks.md) - Framework support and component shims
-- [Security](docs/security.md) - Security model deep dive
-- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
-- [Contributing](docs/contributing.md) - Development setup and guidelines
-- [Architecture](docs/architecture.mdx) - Technical architecture overview
+- [Configuration](https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/configuration.md) - Full configuration reference
+- [Frameworks](https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/frameworks.md) - Framework support and component shims
+- [Security](https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/security.md) - Security model deep dive
+- [Troubleshooting](https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/troubleshooting.md) - Common issues and solutions
+- [Contributing](https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/contributing.md) - Development setup and guidelines
+- [Architecture](https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/architecture.mdx) - Technical architecture overview
 
 ## Project Status
 
-This extension is currently in **alpha** (version 1.0.0-alpha.13). While it is functional and includes many powerful features, you may encounter bugs or limitations. Please report issues on [GitHub](https://github.com/ggfincke/vscode-mdx-preview/issues).
+This extension is now **stable** (version 1.0.0). Please report issues on [GitHub](https://github.com/ggfincke/vscode-mdx-preview/issues).
 
 ## Requirements
 
 - VS Code 1.90.0 or higher
-- Node.js 18+ for workspaces with dependencies (when using custom components or plugins)
+- Node.js 20+ for workspaces with dependencies (when using custom components or plugins)
 
 ## Extension Pack
 
