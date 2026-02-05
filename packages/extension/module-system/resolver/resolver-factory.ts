@@ -4,7 +4,7 @@
 import * as fs from 'fs';
 import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve';
 import type { Resolver } from 'enhanced-resolve';
-import { debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import {
   RESOLVER_CACHE_TTL_MS,
@@ -12,6 +12,9 @@ import {
   NODE_RESOLVE_EXTENSIONS,
 } from '../../constants';
 import { createResettableSingleton } from '../../utils/singleton-factory';
+
+// module-level tagged logger for resolver factory
+const log = createTaggedLogger(LogTags.RESOLVER);
 
 // shared cached file system for all resolvers
 // exported for subsystem disposal (resolver-subsystem.ts)
@@ -96,5 +99,5 @@ export function clearResolverCache(): void {
   browserResolverSingleton.reset();
   nodeResolverSingleton.reset();
 
-  debug(`[${LogTags.RESOLVER}] Cache cleared`);
+  log.debug('Cache cleared');
 }

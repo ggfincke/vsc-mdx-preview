@@ -3,7 +3,7 @@
 
 import type { Resolver } from 'enhanced-resolve';
 import { getBrowserResolver, getNodeResolver } from '../resolver-factory';
-import { debug } from '../../../logging';
+import { createTaggedLogger } from '../../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { createSingleton } from '../../../utils/singleton-factory';
 import {
@@ -14,6 +14,9 @@ import {
   type IResolutionStrategy,
 } from '../../../types';
 import { buildResolutionResult } from '../result-builders';
+
+// module-level tagged logger for enhanced-resolve strategy
+const log = createTaggedLogger(LogTags.ENHANCED_RESOLVE);
 
 // enhanced-resolve strategy for node_modules resolution
 export class EnhancedResolveStrategy implements IResolutionStrategy {
@@ -37,7 +40,7 @@ export class EnhancedResolveStrategy implements IResolutionStrategy {
     try {
       const resolved = resolver.resolveSync({}, context.baseDir, specifier);
       if (resolved) {
-        debug(`[${LogTags.ENHANCED_RESOLVE}] ${specifier} -> ${resolved}`);
+        log.debug(`${specifier} -> ${resolved}`);
         return buildResolutionResult(
           resolved,
           specifier,

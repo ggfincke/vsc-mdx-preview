@@ -11,7 +11,7 @@ import {
   createModuleNotFoundError,
 } from '../../errors';
 import { getErrorReporter, getFrameworkDetector } from '../../services';
-import { debug, warn } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { LogTags, type FetchResult } from '@mdx-preview/shared';
 import {
   MAX_MODULE_FILE_SIZE_BYTES,
@@ -29,6 +29,9 @@ import {
   NOOP_MODULE,
 } from './utils';
 import { handleByExtension } from '../handlers';
+
+// module-level tagged logger for module fetcher
+const log = createTaggedLogger(LogTags.MODULE_SYSTEM);
 
 export type { FetchResult } from '@mdx-preview/shared';
 
@@ -138,8 +141,8 @@ export async function fetchLocal(
 
     // if it's a built-in shim, return empty result (webview has this preloaded)
     if (resolution.isBuiltInShim) {
-      debug(
-        `[${LogTags.MODULE_SYSTEM}] Built-in shim: ${request} -> ${resolution.fsPath}`
+      log.debug(
+        `Built-in shim: ${request} -> ${resolution.fsPath}`
       );
       return {
         fsPath: resolution.fsPath,
@@ -213,8 +216,8 @@ export async function fetchLocal(
 
     // check dependency count (prevents combinatorial explosion)
     if (result && result.dependencies.length > MAX_DEPENDENCIES_PER_MODULE) {
-      warn(
-        `[${LogTags.MODULE_SYSTEM}] Module ${path.basename(fsPath)} has ` +
+      log.warn(
+        `Module ${path.basename(fsPath)} has ` +
           `${result.dependencies.length} dependencies, exceeding limit of ` +
           `${MAX_DEPENDENCIES_PER_MODULE}. Truncating.`
       );
@@ -225,7 +228,7 @@ export async function fetchLocal(
     }
 
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     // report error via centralized ErrorReporter w/ helpful context
     getErrorReporter().report(error, {
       context: ErrorContext.ModuleFetch,

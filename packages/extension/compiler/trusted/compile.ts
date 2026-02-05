@@ -10,9 +10,11 @@ import { extractFrontmatter } from '../shared/mdx-common';
 import { buildTrustedPluginPipeline } from '../plugins/builder';
 import { loadPluginsFromConfig } from '../plugins/loader';
 import { generateComponentImports } from './component-mapper';
-import { debug, warn } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { getConfigManager } from '../../services';
 import { LogTags } from '@mdx-preview/shared';
+
+const log = createTaggedLogger(LogTags.COMPILE);
 
 import type { MdxTranspileResult } from '../../types';
 
@@ -34,8 +36,8 @@ export default Layout;
 
 ${mdxText}`;
     } catch (err) {
-      warn(
-        `[${LogTags.COMPILE}] Failed to load custom layout from ${customLayoutFilePath}: ${err}`
+      log.warn(
+        `Failed to load custom layout from ${customLayoutFilePath}: ${err}`
       );
       return mdxText;
     }
@@ -111,7 +113,7 @@ export async function compileTrusted(
 
   // log aggregated plugin loading errors (individual errors logged via ErrorReporter)
   if (customPlugins.errorCount > 0) {
-    warn(
+    log.warn(
       `Failed to load ${customPlugins.errorCount} custom plugin(s). Check console for details.`
     );
   }
@@ -120,11 +122,11 @@ export async function compileTrusted(
   const documentDir = path.dirname(preview.fsPath);
   const builtinsEnabled = getConfigManager().get('components.builtins');
 
-  debug(
-    `[${LogTags.COMPILE}] mdxPreviewConfig: ${preview.mdxPreviewConfig ? JSON.stringify(preview.mdxPreviewConfig.config) : 'undefined'}`
+  log.debug(
+    `mdxPreviewConfig: ${preview.mdxPreviewConfig ? JSON.stringify(preview.mdxPreviewConfig.config) : 'undefined'}`
   );
-  debug(`[${LogTags.COMPILE}] documentDir: ${documentDir}`);
-  debug(`[${LogTags.COMPILE}] builtinsEnabled: ${builtinsEnabled}`);
+  log.debug(`documentDir: ${documentDir}`);
+  log.debug(`builtinsEnabled: ${builtinsEnabled}`);
 
   const componentImports = generateComponentImports(
     preview.mdxPreviewConfig,
@@ -133,13 +135,13 @@ export async function compileTrusted(
     { builtinsEnabled }
   );
 
-  debug(
-    `[${LogTags.COMPILE}] componentImports.hasComponents: ${componentImports.hasComponents}`
+  log.debug(
+    `componentImports.hasComponents: ${componentImports.hasComponents}`
   );
 
   // prepend component imports to MDX source (before compilation)
   if (componentImports.hasComponents) {
-    debug(`[${LogTags.COMPILE}] Prepending component imports to MDX source`);
+    log.debug('Prepending component imports to MDX source');
     mdxTextToCompile = componentImports.imports + '\n\n' + mdxTextToCompile;
   }
 

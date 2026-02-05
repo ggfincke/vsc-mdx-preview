@@ -1,7 +1,7 @@
 // packages/extension/commands/preview.ts
 // preview lifecycle commands
 
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import {
   openPreview as doOpenPreview,
@@ -10,13 +10,15 @@ import {
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 
+const log = createTaggedLogger(LogTags.CMD);
+
 const openPreview = (): void => {
-  debug(`[${LogTags.CMD}] openPreview command triggered`);
+  log.debug('openPreview command triggered');
   doOpenPreview();
 };
 
 const refreshPreview = (): void => {
-  debug(`[${LogTags.CMD}] refreshPreview command triggered`);
+  log.debug('refreshPreview command triggered');
   doRefreshPreview();
 };
 

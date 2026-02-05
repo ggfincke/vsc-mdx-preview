@@ -3,10 +3,13 @@
 
 import * as vscode from 'vscode';
 import debounce from 'lodash.debounce';
-import { debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { BaseWatcher } from '../../preview/watchers/BaseWatcher';
 import { getConfigManager } from '../../services';
+
+// module-level tagged logger for package.json watcher
+const log = createTaggedLogger(LogTags.PKG_JSON);
 
 // get configurable debounce value from ConfigManager
 function getWatcherDebounce(): number {
@@ -26,7 +29,7 @@ export class PackageJsonWatcher extends BaseWatcher {
     super();
     // create debounced invalidation handler
     this._debouncedInvalidate = debounce(() => {
-      debug(`[${LogTags.PKG_JSON}] Triggering cache invalidation`);
+      log.debug('Triggering cache invalidation');
       onInvalidate?.();
     }, getWatcherDebounce());
   }
@@ -51,7 +54,7 @@ export class PackageJsonWatcher extends BaseWatcher {
       }
     );
 
-    debug(`[${LogTags.PKG_JSON}] Started watching package files`);
+    log.debug('Started watching package files');
     this.markReady();
   }
 
@@ -65,7 +68,7 @@ export class PackageJsonWatcher extends BaseWatcher {
 
   // handle file change event w/ debouncing
   private handleChange(uri: vscode.Uri, fileType: string): void {
-    debug(`[${LogTags.PKG_JSON}] ${fileType} changed: ${uri.fsPath}`);
+    log.debug(`${fileType} changed: ${uri.fsPath}`);
     this._debouncedInvalidate();
   }
 }

@@ -2,8 +2,11 @@
 // webview communication & theme management for preview instances
 
 import * as vscode from 'vscode';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.PREVIEW);
 import { getThemeManager } from '../services';
 import { DocumentTracker, CustomCssWatcher, WatcherManager } from './watchers';
 import type { WebviewHandleType } from '../rpc-extension';
@@ -47,7 +50,7 @@ export class PreviewWebviewBridge {
 
   // called after webview handshake completes to push initial configuration
   onWebviewReady(docUri: vscode.Uri): void {
-    debug(`[${LogTags.PREVIEW}] onWebviewReady - pushing initial config`);
+    log.debug('onWebviewReady - pushing initial config');
     this.pushThemeState(docUri);
   }
 
@@ -80,8 +83,8 @@ export class PreviewWebviewBridge {
       }
     }
 
-    debug(
-      `[${LogTags.PREVIEW}] pushThemeState - pushing theme state`,
+    log.debug(
+      'pushThemeState - pushing theme state',
       themeState
     );
     this.webviewHandle.setTheme(themeState);

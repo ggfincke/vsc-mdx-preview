@@ -2,12 +2,15 @@
 // watch custom CSS file for changes & notify webview
 
 import * as vscode from 'vscode';
-import { debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import type { WebviewRPC } from '@mdx-preview/shared';
 import { BaseWatcher } from './BaseWatcher';
 import { readFileAsync } from '../../utils/file-utils';
 import { resolvePathWithFallbacks } from '../../utils/path-utils';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.CSS);
 
 // webview handle w/ setCustomCss method
 type CssNotifier = Pick<WebviewRPC, 'setCustomCss'>;
@@ -55,25 +58,25 @@ export class CustomCssWatcher extends BaseWatcher {
     // use createFileWatcher from base class w/ error wrapping
     this.watcher = this.createFileWatcher(this.resolvedPath, {
       onChange: () => {
-        debug(`[${LogTags.CSS}] Custom CSS file changed`);
+        log.debug('Custom CSS file changed');
         if (this.resolvedPath) {
           this.loadAndSendCss(this.resolvedPath);
         }
       },
       onCreate: () => {
-        debug(`[${LogTags.CSS}] Custom CSS file created`);
+        log.debug('Custom CSS file created');
         if (this.resolvedPath) {
           this.loadAndSendCss(this.resolvedPath);
         }
       },
       onDelete: () => {
-        debug(`[${LogTags.CSS}] Custom CSS file deleted`);
+        log.debug('Custom CSS file deleted');
         this.notifier?.setCustomCss?.('');
       },
       wrapErrors: true,
     });
 
-    debug(`[${LogTags.CSS}] Watching custom CSS file`);
+    log.debug('Watching custom CSS file');
     // signal ready after setup complete
     this.markReady();
   }
@@ -100,13 +103,13 @@ export class CustomCssWatcher extends BaseWatcher {
   // load CSS file & send to webview
   private async loadAndSendCss(cssPath: string): Promise<void> {
     const cssContent = await readFileAsync(cssPath, 'utf-8', {
-      logTag: LogTags.CSS,
+      logger: log,
       logOnError: true,
     });
     if (cssContent) {
       this.notifier?.setCustomCss?.(cssContent);
-      debug(
-        `[${LogTags.CSS}] Loaded custom CSS: ${cssPath} (${cssContent.length} chars)`
+      log.debug(
+        `Loaded custom CSS: ${cssPath} (${cssContent.length} chars)`
       );
     }
     // silently fail if null - file might not exist yet

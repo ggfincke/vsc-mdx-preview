@@ -2,7 +2,7 @@
 // resolver subsystem registration for unified lifecycle management
 
 import { ServiceRegistry } from '../../services';
-import { debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import {
   browserResolverSingleton,
@@ -17,13 +17,16 @@ import {
   disposeConfigWatchers,
 } from '../../preview/config/TypeScriptConfigResolver';
 
+// module-level tagged logger for resolver subsystem
+const log = createTaggedLogger(LogTags.RESOLVER_SUBSYSTEM);
+
 export const RESOLVER_SUBSYSTEM = 'ResolverSubsystem';
 
 // register the resolver subsystem w/ ServiceRegistry
 // call in extension activate() AFTER service registrations
 export function registerResolverSubsystem(): void {
   ServiceRegistry.getInstance().registerSubsystem(RESOLVER_SUBSYSTEM, () => {
-    debug(`[${LogTags.RESOLVER_SUBSYSTEM}] Disposing resolver system...`);
+    log.debug('Disposing resolver system...');
 
     // purge cached file system (clears all file content & stat caches)
     cachedFs.purge();
@@ -41,6 +44,6 @@ export function registerResolverSubsystem(): void {
     disposeConfigWatchers();
     clearTsConfigCache();
 
-    debug(`[${LogTags.RESOLVER_SUBSYSTEM}] Disposed`);
+    log.debug('Disposed');
   });
 }

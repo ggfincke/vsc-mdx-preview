@@ -7,8 +7,10 @@ import { Preview } from './preview/preview-manager';
 import { fetchLocal } from './module-system/fetcher/fetchLocal';
 import { getTrustManager, getErrorReporter } from './services';
 import { tryRequireTrustedModeForDocument } from './security/validateTrust';
-import { error as logError, warn as logWarn, debug } from './logging';
+import { createTaggedLogger } from './logging';
 import { LogTags } from '@mdx-preview/shared';
+
+const log = createTaggedLogger(LogTags.EXT_HANDLE);
 import { ErrorContext } from './errors';
 import {
   validateString,
@@ -32,13 +34,13 @@ const ALLOWED_EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
 function validateFetchRequest(request: string): boolean {
   // use shared module ID validation (null bytes, URL scheme check)
   if (!isValidModuleRequest(request)) {
-    logWarn('Fetch request failed security validation', request);
+    log.warn('Fetch request failed security validation', request);
     return false;
   }
 
   // reasonable length limit
   if (request.length > MAX_FETCH_REQUEST_LENGTH) {
-    logWarn('Fetch request too long', request.length);
+    log.warn('Fetch request too long', request.length);
     return false;
   }
 
@@ -50,20 +52,20 @@ class ExtensionHandle implements ExtensionRPC {
   preview: Preview;
 
   constructor(preview: Preview) {
-    debug(`[${LogTags.EXT_HANDLE}] ExtensionHandle created`);
+    log.debug('ExtensionHandle created');
     this.preview = preview;
   }
 
   // handshake to resolve when webview is ready
   handshake(): void {
-    debug(`[${LogTags.EXT_HANDLE}] handshake() called from webview!`);
+    log.debug('handshake() called from webview!');
     this.preview.completeHandshake();
-    debug(`[${LogTags.EXT_HANDLE}] completeHandshake called`);
+    log.debug('completeHandshake called');
   }
 
   // report performance metrics from webview
   reportPerformance(evaluationDuration: number): void {
-    debug(`[${LogTags.EXT_HANDLE}] reportPerformance: ${evaluationDuration}`);
+    log.debug(`reportPerformance: ${evaluationDuration}`);
     const validDuration = validateNumber(
       evaluationDuration,
       'evaluationDuration',
@@ -87,12 +89,10 @@ class ExtensionHandle implements ExtensionRPC {
     isBare: boolean,
     parentId: string
   ): Promise<FetchResult | undefined> {
-    debug(
-      `[${LogTags.EXT_HANDLE}] fetch: request=${request}, isBare=${isBare}`
-    );
+    log.debug(`fetch: request=${request}, isBare=${isBare}`);
 
     // type validation using utilities
-    const opts = { context: 'fetch', log: logError };
+    const opts = { context: 'fetch', log: log.error };
     // allow empty string, validateFetchRequest handles length
     const validRequest = validateString(request, 'request', {
       ...opts,
@@ -114,7 +114,7 @@ class ExtensionHandle implements ExtensionRPC {
 
     // request validation (security checks)
     if (!validateFetchRequest(validRequest)) {
-      logError('fetch: invalid request', validRequest);
+      log.error('fetch: invalid request', validRequest);
       return undefined;
     }
 
@@ -122,7 +122,7 @@ class ExtensionHandle implements ExtensionRPC {
     const docUri = this.preview.doc.uri;
     if (
       !tryRequireTrustedModeForDocument(docUri, 'fetch module', (error) =>
-        logWarn(`fetch: blocked - ${error.message}`)
+        log.warn(`fetch: blocked - ${error.message}`)
       )
     ) {
       return undefined;
@@ -133,7 +133,7 @@ class ExtensionHandle implements ExtensionRPC {
 
   // open VS Code settings (optionally to specific setting)
   openSettings(settingId?: string): void {
-    debug(`[${LogTags.EXT_HANDLE}] openSettings: ${settingId}`);
+    log.debug(`openSettings: ${settingId}`);
     if (settingId && typeof settingId === 'string') {
       vscode.commands.executeCommand(
         'workbench.action.openSettings',
@@ -149,13 +149,13 @@ class ExtensionHandle implements ExtensionRPC {
 
   // open workspace trust management
   manageTrust(): void {
-    debug(`[${LogTags.EXT_HANDLE}] manageTrust called`);
+    log.debug('manageTrust called');
     vscode.commands.executeCommand('workbench.trust.manage');
   }
 
   // open external URL in default browser
   openExternal(url: string): void {
-    debug(`[${LogTags.EXT_HANDLE}] openExternal: ${url}`);
+    log.debug(`openExternal: ${url}`);
 
     // validate URL w/ allowed schemes
     const parsed = validateUrl(url, 'URL', {
@@ -176,8 +176,8 @@ class ExtensionHandle implements ExtensionRPC {
     line?: number,
     column?: number
   ): Promise<void> {
-    debug(
-      `[${LogTags.EXT_HANDLE}] openDocument: ${relativePath}${line ? `:${line}` : ''}${column ? `:${column}` : ''}`
+    log.debug(
+      `openDocument: ${relativePath}${line ? `:${line}` : ''}${column ? `:${column}` : ''}`
     );
 
     const opts = { context: 'openDocument' };
@@ -191,7 +191,7 @@ class ExtensionHandle implements ExtensionRPC {
     // workspace trust check via TrustManager (not direct vscode.workspace.isTrusted)
     const trustState = getTrustManager().getState();
     if (!trustState.workspaceTrusted) {
-      logWarn('openDocument: blocked - workspace not trusted');
+      log.warn('openDocument: blocked - workspace not trusted');
       return;
     }
 
@@ -240,7 +240,7 @@ class ExtensionHandle implements ExtensionRPC {
 
   // open preview for an MDX file (used for internal link navigation)
   async openPreview(relativePath: string): Promise<void> {
-    debug(`[${LogTags.EXT_HANDLE}] openPreview: ${relativePath}`);
+    log.debug(`openPreview: ${relativePath}`);
 
     const opts = { context: 'openPreview' };
 

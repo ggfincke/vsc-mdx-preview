@@ -4,10 +4,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { TailwindError } from '../errors';
 import { MAX_INLINE_SOURCE_CHUNK_SIZE } from './constants';
+
+const log = createTaggedLogger(LogTags.TAILWIND);
 
 // type-only import for PostCSS default export (actual module loaded lazily)
 // postcss default export is a function that creates a Processor
@@ -23,15 +25,15 @@ async function getPostCSS(): Promise<PostCSSFn> {
     return postcssInstance;
   }
 
-  debug(`[${LogTags.TAILWIND}] Lazy-loading postcss...`);
+  log.debug('Lazy-loading postcss...');
 
   try {
     // try CommonJS require first (most common case)
     const mod = require('postcss');
     postcssInstance = (mod.default ?? mod) as PostCSSFn;
-    debug(`[${LogTags.TAILWIND}] PostCSS loaded via require`);
+    log.debug('PostCSS loaded via require');
     return postcssInstance;
-  } catch (error) {
+  } catch (error: unknown) {
     // handle ESM-only postcss package
     const isEsm =
       error instanceof Error &&
@@ -44,7 +46,7 @@ async function getPostCSS(): Promise<PostCSSFn> {
 
     const mod = await import('postcss');
     postcssInstance = (mod.default ?? mod) as PostCSSFn;
-    debug(`[${LogTags.TAILWIND}] PostCSS loaded via dynamic import (ESM)`);
+    log.debug('PostCSS loaded via dynamic import (ESM)');
     return postcssInstance;
   }
 }
@@ -52,7 +54,7 @@ async function getPostCSS(): Promise<PostCSSFn> {
 // clear postcss cache (for testing or cache refresh scenarios)
 export function clearPostCSSCache(): void {
   postcssInstance = null;
-  debug(`[${LogTags.TAILWIND}] PostCSS cache cleared`);
+  log.debug('PostCSS cache cleared');
 }
 
 // PostCSS plugin factory type
@@ -93,8 +95,8 @@ export class TailwindCompiler {
       from: options.entryCssPath ?? undefined,
     });
 
-    debug(
-      `[${LogTags.TAILWIND}] CSS compiled (${result.css.length} chars, version=${options.tailwindVersion})`
+    log.debug(
+      `CSS compiled (${result.css.length} chars, version=${options.tailwindVersion})`
     );
     return result.css;
   }
@@ -158,7 +160,7 @@ export class TailwindCompiler {
     try {
       const mod = require(id);
       plugin = mod.default ?? mod;
-    } catch (error) {
+    } catch (error: unknown) {
       const isEsm =
         error instanceof Error &&
         'code' in error &&

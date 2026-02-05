@@ -2,7 +2,7 @@
 // framework selection QuickPick command
 
 import * as vscode from 'vscode';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import {
   getConfigManager,
@@ -13,8 +13,10 @@ import type { FrameworkId, FrameworkSetting } from '@mdx-preview/shared';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 
+const log = createTaggedLogger(LogTags.FRAMEWORK);
+
 const selectFramework = async (): Promise<void> => {
-  debug(`[${LogTags.CMD}] selectFramework command triggered`);
+  log.debug('selectFramework command triggered');
 
   const configManager = getConfigManager();
   const currentSetting = configManager.get('framework');

@@ -6,9 +6,11 @@ import * as path from 'path';
 import { writeFileSync } from 'fs';
 import { DIAGNOSTIC_CODES } from './ComponentDiagnostics';
 import { KNOWN_GENERIC_COMPONENTS } from '../compiler/shared/remark/generic-components';
-import { debug, info } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { ConfigError, ErrorContext } from '../errors';
 import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
+
+const log = createTaggedLogger(LogTags.COMPONENT_CODE_ACTIONS);
 import { getErrorReporter } from '../services';
 import { readJsonSync } from '../utils/file-utils';
 
@@ -197,9 +199,7 @@ export async function addComponentToConfig(
   componentName: string,
   configPath: string
 ): Promise<void> {
-  debug(
-    `[${LogTags.COMPONENT_CODE_ACTIONS}] Adding ${componentName} to ${configPath}`
-  );
+  log.debug(`Adding ${componentName} to ${configPath}`);
 
   try {
     // read existing config or start w/ empty object
@@ -230,9 +230,7 @@ export async function addComponentToConfig(
       `Added "${componentName}" to ${CONFIG_FILE_NAME}. Update the path to your component file.`
     );
 
-    info(
-      `[${LogTags.COMPONENT_CODE_ACTIONS}] Added ${componentName} to config`
-    );
+    log.info(`Added ${componentName} to config`);
   } catch (err) {
     const message = extractErrorMessage(err);
     getErrorReporter().reportToUser(
@@ -270,5 +268,5 @@ export function registerComponentCodeActions(
     )
   );
 
-  info(`[${LogTags.COMPONENT_CODE_ACTIONS}] Code actions registered`);
+  log.info('Code actions registered');
 }

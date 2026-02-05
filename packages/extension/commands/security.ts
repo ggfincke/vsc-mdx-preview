@@ -2,7 +2,7 @@
 // security-related commands w/ trust checks
 
 import * as vscode from 'vscode';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { selectSecurityPolicy } from '../security/security';
 import {
@@ -14,12 +14,14 @@ import { ErrorContext } from '../errors';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 
+const log = createTaggedLogger(LogTags.CMD);
+
 const changeSecuritySettings = (): void => {
   selectSecurityPolicy();
 };
 
 const toggleScripts = async (): Promise<void> => {
-  debug(`[${LogTags.CMD}] toggleScripts command triggered`);
+  log.debug('toggleScripts command triggered');
 
   const trustState = getTrustManager().getState();
 

@@ -3,7 +3,7 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { info, debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { getConfigCache, getErrorReporter } from '../../services';
 import { ConfigError } from '../../errors';
 import { ConfigChangeType } from '../../config/ConfigCache';
@@ -14,6 +14,9 @@ import { findUp, createWorkspaceStopPredicate } from '../../utils/find-up';
 // import consolidated types from centralized types
 import type { MdxPreviewConfig, ResolvedConfig } from '../../types';
 import { LogTags } from '@mdx-preview/shared';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.CONFIG);
 
 // config file names to search for (in order of priority)
 const CONFIG_FILE_NAMES = ['.mdx-previewrc.json', '.mdx-previewrc'];
@@ -80,15 +83,15 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
   cache.set(documentDir, resolved);
   setupConfigWatcher(configPath);
 
-  info(`Loaded MDX config from ${configPath}`);
-  debug('Config contents:', config);
+  log.info(`Loaded MDX config from ${configPath}`);
+  log.debug('Config contents:', config);
 
   return resolved;
 }
 
 // find config file by walking up directory tree (uses shared find-up utility)
 function findConfigFile(startDir: string): string | undefined {
-  debug(`[${LogTags.CONFIG}] Searching for config starting at: ${startDir}`);
+  log.debug(`Searching for config starting at: ${startDir}`);
 
   const result = findUp({
     filename: CONFIG_FILE_NAMES,
@@ -97,9 +100,9 @@ function findConfigFile(startDir: string): string | undefined {
   });
 
   if (result) {
-    debug(`[${LogTags.CONFIG}] Found config file at: ${result}`);
+    log.debug(`Found config file at: ${result}`);
   } else {
-    debug(`[${LogTags.CONFIG}] No config file found`);
+    log.debug('No config file found');
   }
 
   return result;
@@ -122,17 +125,17 @@ function setupConfigWatcher(configPath: string): void {
 
   cache.watchConfigPath(configPath, {
     onChange: () => {
-      debug(`[${LogTags.CONFIG}] File changed: ${configPath}`);
+      log.debug(`File changed: ${configPath}`);
       cache.invalidate(configPath);
       cache.notifyChange(configPath, ConfigChangeType.FileChanged);
     },
     onCreate: () => {
-      debug(`[${LogTags.CONFIG}] File created: ${configPath}`);
+      log.debug(`File created: ${configPath}`);
       cache.invalidate(configPath);
       cache.notifyChange(configPath, ConfigChangeType.FileCreated);
     },
     onDelete: () => {
-      debug(`[${LogTags.CONFIG}] File deleted: ${configPath}`);
+      log.debug(`File deleted: ${configPath}`);
       cache.invalidate(configPath);
       cache.notifyChange(configPath, ConfigChangeType.FileDeleted);
       cache.unwatchConfigPath(configPath);

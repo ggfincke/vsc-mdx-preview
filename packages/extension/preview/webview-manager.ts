@@ -12,7 +12,7 @@ import {
 import { getCSP, generateNonce } from '../security/CSP';
 import { initRPCExtensionSide } from '../rpc-extension';
 import { getPreviewManager, getTrustManager } from '../services';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { WebviewError } from '../errors';
 import {
   CSP_DEBUG_PREVIEW_LENGTH,
@@ -21,6 +21,9 @@ import {
   WEBVIEW_BUILD_DIR,
 } from '../constants';
 import { formatTrustStateForDebug, LogTags } from '@mdx-preview/shared';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.WEBVIEW_MGR);
 
 const VIEW_TYPE = 'mdx.preview';
 const MDX_PREVIEW_FOCUS_CONTEXT_KEY = 'mdxPreviewFocus';
@@ -35,19 +38,19 @@ let webviewResourcesError: Error | null = null;
 export function initWebviewAppHTMLResourcesAsync(
   context: vscode.ExtensionContext
 ): void {
-  debug(
-    `[${LogTags.WEBVIEW_MGR}] Starting background webview resource initialization`
+  log.debug(
+    'Starting background webview resource initialization'
   );
   webviewResourcesPromise = initWebviewAppHTMLResources(context)
     .then(() => {
-      debug(
-        `[${LogTags.WEBVIEW_MGR}] Background resource initialization complete`
+      log.debug(
+        'Background resource initialization complete'
       );
     })
     .catch((err) => {
       webviewResourcesError = err;
-      debug(
-        `[${LogTags.WEBVIEW_MGR}] Background resource initialization failed:`,
+      log.debug(
+        'Background resource initialization failed:',
         err
       );
     });
@@ -66,7 +69,7 @@ export async function ensureWebviewResourcesReady(): Promise<void> {
 export async function initWebviewAppHTMLResources(
   context: vscode.ExtensionContext
 ): Promise<void> {
-  debug(`[${LogTags.WEBVIEW_MGR}] initWebviewAppHTMLResources called`);
+  log.debug('initWebviewAppHTMLResources called');
   const manager = getPreviewManager();
   manager.setExtensionUri(context.extensionUri);
 
@@ -78,8 +81,8 @@ export async function initWebviewAppHTMLResources(
     VITE_MANIFEST_FILE
   );
 
-  debug(
-    `[${LogTags.WEBVIEW_MGR}] Reading manifest from: ${manifestUri.fsPath}`
+  log.debug(
+    `Reading manifest from: ${manifestUri.fsPath}`
   );
   // use workspace.fs.readFile for extension resources (works in remote/virtual scenarios)
   const manifestBytes = await vscode.workspace.fs.readFile(manifestUri);
@@ -108,11 +111,11 @@ export async function initWebviewAppHTMLResources(
       : undefined,
   };
   manager.setWebviewAppUris(webviewAppUris);
-  debug(
-    `[${LogTags.WEBVIEW_MGR}] Loaded mainScript: ${webviewAppUris.mainScript.fsPath}`
+  log.debug(
+    `Loaded mainScript: ${webviewAppUris.mainScript.fsPath}`
   );
-  debug(
-    `[${LogTags.WEBVIEW_MGR}] Loaded mainStyle: ${webviewAppUris.mainStyle?.fsPath ?? 'none'}`
+  log.debug(
+    `Loaded mainStyle: ${webviewAppUris.mainStyle?.fsPath ?? 'none'}`
   );
 }
 
@@ -125,8 +128,8 @@ function getWebviewAppHTML(
 ): string | undefined {
   const webviewAppUris = getPreviewManager().getWebviewAppUris();
   if (!webviewAppUris) {
-    debug(
-      `[${LogTags.WEBVIEW_MGR}] getWebviewAppHTML: webviewAppUris is undefined!`
+    log.debug(
+      'getWebviewAppHTML: webviewAppUris is undefined!'
     );
     return undefined;
   }
@@ -139,8 +142,8 @@ function getWebviewAppHTML(
     ? webview.asWebviewUri(webviewAppUris.mainStyle)
     : undefined;
 
-  debug(
-    `[${LogTags.WEBVIEW_MGR}] getWebviewAppHTML: scriptUri=${scriptUri.toString()}`
+  log.debug(
+    `getWebviewAppHTML: scriptUri=${scriptUri.toString()}`
   );
 
   let styleNodeHTML = '';
@@ -179,15 +182,15 @@ function getWebviewAppHTML(
 }
 
 function dispose(): void {
-  debug(`[${LogTags.WEBVIEW_MGR}] dispose called`);
+  log.debug('dispose called');
   getPreviewManager().clearPanel();
 }
 
 function setPanelHTMLFromPreview(preview: Preview): void {
-  debug(`[${LogTags.WEBVIEW_MGR}] setPanelHTMLFromPreview called`);
+  log.debug('setPanelHTMLFromPreview called');
   const panel = getPreviewManager().getPanel();
   if (!panel) {
-    debug(`[${LogTags.WEBVIEW_MGR}] setPanelHTMLFromPreview: no panel!`);
+    log.debug('setPanelHTMLFromPreview: no panel!');
     return;
   }
 
@@ -196,7 +199,7 @@ function setPanelHTMLFromPreview(preview: Preview): void {
 
   // get current trust state (document-specific, includes remote/scheme checks)
   const trustState = getTrustManager().getStateForDocument(doc.uri);
-  debug(formatTrustStateForDebug(LogTags.WEBVIEW_MGR, trustState));
+  log.debug(formatTrustStateForDebug(trustState));
 
   // generate nonce for script tags
   const nonce = generateNonce();
@@ -208,8 +211,8 @@ function setPanelHTMLFromPreview(preview: Preview): void {
     trustState,
     preview.securityConfiguration.securityPolicy
   );
-  debug(
-    `[${LogTags.WEBVIEW_MGR}] CSP: ${csp.substring(0, CSP_DEBUG_PREVIEW_LENGTH)}...`
+  log.debug(
+    `CSP: ${csp.substring(0, CSP_DEBUG_PREVIEW_LENGTH)}...`
   );
 
   const webviewAppHTML = getWebviewAppHTML(
@@ -221,19 +224,19 @@ function setPanelHTMLFromPreview(preview: Preview): void {
   );
 
   if (webviewAppHTML) {
-    debug(
-      `[${LogTags.WEBVIEW_MGR}] Setting webview HTML (${webviewAppHTML.length} chars)`
+    log.debug(
+      `Setting webview HTML (${webviewAppHTML.length} chars)`
     );
     panel.webview.html = webviewAppHTML;
   } else {
-    debug(`[${LogTags.WEBVIEW_MGR}] webviewAppHTML is undefined!`);
+    log.debug('webviewAppHTML is undefined!');
   }
 }
 
 export async function createOrShowPanel(
   preview: Preview
 ): Promise<vscode.WebviewPanel> {
-  debug(`[${LogTags.WEBVIEW_MGR}] createOrShowPanel called`);
+  log.debug('createOrShowPanel called');
 
   // ensure webview resources are ready (only blocks if background init incomplete)
   await ensureWebviewResourcesReady();
@@ -249,7 +252,7 @@ export async function createOrShowPanel(
   const disposables = manager.getPanelDisposables();
 
   if (!panel) {
-    debug(`[${LogTags.WEBVIEW_MGR}] Creating new webview panel`);
+    log.debug('Creating new webview panel');
     // set up local resource roots for security
     const localResourceRoots: vscode.Uri[] = [];
     const extensionUri = manager.getExtensionUri();
@@ -277,7 +280,7 @@ export async function createOrShowPanel(
     );
     manager.setPanel(panel);
     manager.setPanelDoc(preview.doc);
-    debug(`[${LogTags.WEBVIEW_MGR}] Panel created, setting HTML`);
+    log.debug('Panel created, setting HTML');
     setPanelHTMLFromPreview(preview);
 
     vscode.commands.executeCommand(
@@ -288,7 +291,7 @@ export async function createOrShowPanel(
 
     panel.onDidDispose(
       () => {
-        debug(`[${LogTags.WEBVIEW_MGR}] Panel disposed`);
+        log.debug('Panel disposed');
         preview.active = false;
         // reset rendered version to force re-render on reopen
         preview.resetRenderedVersion();
@@ -310,30 +313,30 @@ export async function createOrShowPanel(
       disposables
     );
 
-    debug(`[${LogTags.WEBVIEW_MGR}] Initializing handshake promise`);
+    log.debug('Initializing handshake promise');
     preview.initWebviewHandshakePromise();
     preview.webview = panel.webview;
-    debug(`[${LogTags.WEBVIEW_MGR}] Initializing RPC extension side`);
+    log.debug('Initializing RPC extension side');
     const webviewHandle = initRPCExtensionSide(
       preview,
       panel.webview,
       disposables
     );
     preview.setWebviewHandle(webviewHandle);
-    debug(`[${LogTags.WEBVIEW_MGR}] RPC initialized`);
+    log.debug('RPC initialized');
   } else {
-    debug(
-      `[${LogTags.WEBVIEW_MGR}] Panel exists, panelDoc=${panelDoc?.uri.fsPath}, preview.doc=${preview.doc.uri.fsPath}`
+    log.debug(
+      `Panel exists, panelDoc=${panelDoc?.uri.fsPath}, preview.doc=${preview.doc.uri.fsPath}`
     );
     if (panelDoc !== preview.doc) {
-      debug(`[${LogTags.WEBVIEW_MGR}] Different doc, reinitializing handshake`);
+      log.debug('Different doc, reinitializing handshake');
       // reinitialize handshake since we're resetting the webview HTML
       preview.initWebviewHandshakePromise();
       panel.title = previewTitle;
       setPanelHTMLFromPreview(preview);
       manager.setPanelDoc(preview.doc);
     } else {
-      debug(`[${LogTags.WEBVIEW_MGR}] Same doc, just revealing panel`);
+      log.debug('Same doc, just revealing panel');
       // cancel stale handshake timeout to prevent errors on reuse
       preview.cancelHandshakeTimeout();
     }
@@ -347,24 +350,24 @@ export async function createOrShowPanel(
   }
 
   preview.active = true;
-  debug(`[${LogTags.WEBVIEW_MGR}] createOrShowPanel complete`);
+  log.debug('createOrShowPanel complete');
   return panel;
 }
 
 export function refreshPanel(preview: Preview): void {
-  debug(`[${LogTags.WEBVIEW_MGR}] refreshPanel called`);
+  log.debug('refreshPanel called');
   const panel = getPreviewManager().getPanel();
   if (!panel) {
-    debug(`[${LogTags.WEBVIEW_MGR}] refreshPanel: no panel`);
+    log.debug('refreshPanel: no panel');
     return;
   }
   // reinitialize handshake since we're resetting the webview HTML
-  debug(`[${LogTags.WEBVIEW_MGR}] Reinitializing handshake for refresh`);
+  log.debug('Reinitializing handshake for refresh');
   preview.initWebviewHandshakePromise();
   // reveal in current column & preserve focus
   panel.reveal(undefined, true);
   panel.webview.html = '';
-  debug(`[${LogTags.WEBVIEW_MGR}] Setting new HTML`);
+  log.debug('Setting new HTML');
   setPanelHTMLFromPreview(preview);
-  debug(`[${LogTags.WEBVIEW_MGR}] refreshPanel complete`);
+  log.debug('refreshPanel complete');
 }

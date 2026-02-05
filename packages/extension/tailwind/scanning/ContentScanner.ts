@@ -1,9 +1,11 @@
 // packages/extension/tailwind/scanning/ContentScanner.ts
 // extract Tailwind classes from dynamic expressions (className={...}, clsx(), cva())
 
-import { debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { CLASS_TOKEN_RE, SCANNER_MAX_RECURSION_DEPTH } from '../constants';
+
+const log = createTaggedLogger(LogTags.TAILWIND_SCAN);
 
 // pattern to find the start of a className/class expression: className={
 const CLASS_EXPR_START_RE = /\bclass(Name)?\s*=\s*\{/g;
@@ -187,8 +189,8 @@ export class ContentScanner {
   extractStringLiterals(expression: string, depth = 0): string[] {
     // guard against stack overflow from pathological nested template literals
     if (depth > SCANNER_MAX_RECURSION_DEPTH) {
-      debug(
-        `[${LogTags.TAILWIND_SCAN}] Max recursion depth (${SCANNER_MAX_RECURSION_DEPTH}) reached, skipping nested extraction`
+      log.debug(
+        `Max recursion depth (${SCANNER_MAX_RECURSION_DEPTH}) reached, skipping nested extraction`
       );
       return [];
     }

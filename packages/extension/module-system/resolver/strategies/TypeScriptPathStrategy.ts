@@ -2,7 +2,7 @@
 // TypeScript path alias resolution using compiled pattern index for O(1) exact matches
 
 import * as path from 'path';
-import { debug } from '../../../logging';
+import { createTaggedLogger } from '../../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { createSingleton } from '../../../utils/singleton-factory';
 import {
@@ -18,6 +18,9 @@ import {
   probeTypeScriptFile,
   probeTypeScriptFileAsync,
 } from '../file-prober';
+
+// module-level tagged logger for TypeScript path resolution
+const log = createTaggedLogger(LogTags.TYPESCRIPT);
 
 // compiled pattern index (compile once per tsconfig, O(1) exact matches, O(m) wildcards)
 
@@ -228,7 +231,7 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
         if (resolved.endsWith('.d.ts')) {
           continue;
         }
-        debug(`[${LogTags.TYPESCRIPT}] ${specifier} -> ${resolved}`);
+        log.debug(`${specifier} -> ${resolved}`);
         return buildResolutionResult(
           resolved,
           specifier,
@@ -258,7 +261,7 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
         if (resolved.endsWith('.d.ts')) {
           continue;
         }
-        debug(`[${LogTags.TYPESCRIPT}] ${specifier} -> ${resolved}`);
+        log.debug(`${specifier} -> ${resolved}`);
         return buildResolutionResult(
           resolved,
           specifier,

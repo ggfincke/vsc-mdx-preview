@@ -2,7 +2,7 @@
 // file probing strategy for relative imports w/o extensions
 
 import * as path from 'path';
-import { debug } from '../../../logging';
+import { createTaggedLogger } from '../../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { createSingleton } from '../../../utils/singleton-factory';
 import {
@@ -14,6 +14,9 @@ import {
 } from '../../../types';
 import { buildResolutionResult } from '../result-builders';
 import { probeModuleFile, probeModuleFileAsync } from '../file-prober';
+
+// module-level tagged logger for file probe strategy
+const log = createTaggedLogger(LogTags.FILE_PROBE);
 
 // file probing strategy for relative imports
 // probe for files w/ common extensions (.ts, .tsx, .js, .jsx, .mdx, .md)
@@ -31,7 +34,7 @@ export class FileProbeStrategy implements IResolutionStrategy {
     const probed = probeModuleFile(resolved);
 
     if (probed) {
-      debug(`[${LogTags.FILE_PROBE}] ${specifier} -> ${probed}`);
+      log.debug(`${specifier} -> ${probed}`);
       return buildResolutionResult(
         probed,
         specifier,
@@ -50,7 +53,7 @@ export class FileProbeStrategy implements IResolutionStrategy {
     const probed = await probeModuleFileAsync(resolved);
 
     if (probed) {
-      debug(`[${LogTags.FILE_PROBE}] ${specifier} -> ${probed}`);
+      log.debug(`${specifier} -> ${probed}`);
       return buildResolutionResult(
         probed,
         specifier,

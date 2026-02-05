@@ -9,6 +9,7 @@ import {
   error as logError,
   warn as logWarn,
   debug as logDebug,
+  createTaggedLogger,
 } from '../logging';
 import {
   ERROR_DEDUPE_WINDOW_DEFAULT_MS,
@@ -21,6 +22,9 @@ import {
   ModuleError,
   normalizeError as sharedNormalizeError,
 } from '@mdx-preview/shared';
+
+// module-level tagged logger for error reporter
+const log = createTaggedLogger(LogTags.ERROR_REPORTER);
 
 // error severity determines handling behavior
 export enum ErrorSeverity {
@@ -110,9 +114,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
     // check for duplicate suppression
     if (this.isDuplicate(normalizedError, options.dedupeWindow)) {
-      logDebug(
-        `[${LogTags.ERROR_REPORTER}] Suppressed duplicate: ${normalizedError.message}`
-      );
+      log.debug(`Suppressed duplicate: ${normalizedError.message}`);
       return;
     }
 

@@ -1,10 +1,11 @@
 // packages/extension/tailwind/TailwindCache.ts
 // LRU cache for compiled Tailwind CSS using shared LRUCache utility w/ TTL expiration
 
-import { debug } from '../logging';
-import { LogTags } from '@mdx-preview/shared';
-import { LRUCache } from '@mdx-preview/shared';
+import { createTaggedLogger } from '../logging';
+import { LogTags, LRUCache } from '@mdx-preview/shared';
 import { CACHE_DEFAULT_MAX_ENTRIES, CACHE_DEFAULT_TTL_MS } from './constants';
+
+const log = createTaggedLogger(LogTags.TAILWIND);
 
 export interface TailwindCacheOptions {
   maxEntries?: number;
@@ -32,7 +33,7 @@ export class TailwindCache {
 
   clear(): void {
     this.cache.clear();
-    debug(`[${LogTags.TAILWIND}] Cache cleared`);
+    log.debug('Cache cleared');
   }
 
   updateSettings(options: TailwindCacheOptions): void {
@@ -44,8 +45,8 @@ export class TailwindCache {
         maxEntries: options.maxEntries,
         ttlMs: options.ttlMs,
       });
-      debug(
-        `[${LogTags.TAILWIND}] Cache settings updated: maxEntries=${options.maxEntries}, ttlMs=${options.ttlMs}`
+      log.debug(
+        `Cache settings updated: maxEntries=${options.maxEntries}, ttlMs=${options.ttlMs}`
       );
     }
   }

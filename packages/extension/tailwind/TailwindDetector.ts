@@ -4,13 +4,15 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { extractErrorMessage, LRUCache, LogTags } from '@mdx-preview/shared';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { getNodeResolver } from '../module-system/resolver/resolver-factory';
 import { VERSION_CACHE_TTL_MS } from './constants';
 import { pathExists, readFileAsync, readJsonSync } from '../utils/file-utils';
 import { toAbsolutePath } from '../utils/path-utils';
 import { findUp } from '../utils/find-up';
 import { PathCache } from '../utils/cache';
+
+const log = createTaggedLogger(LogTags.TAILWIND);
 
 // cache limits for Tailwind detection (prevent unbounded memory growth)
 const CONFIG_CACHE_MAX_ENTRIES = 20;
@@ -198,15 +200,15 @@ export class TailwindDetector {
     );
     if (commonResult) {
       this.entryCssCache.set(cacheKey, commonResult);
-      debug(
-        `[${LogTags.TAILWIND}] Found entry CSS in common location: ${commonResult}`
+      log.debug(
+        `Found entry CSS in common location: ${commonResult}`
       );
       return commonResult;
     }
 
     // fall back to full workspace scan if not found in common locations
-    debug(
-      `[${LogTags.TAILWIND}] Entry CSS not in common locations, scanning workspace...`
+    log.debug(
+      'Entry CSS not in common locations, scanning workspace...'
     );
     const include = new vscode.RelativePattern(workspaceRoot, '**/*.css');
     const exclude = '**/node_modules/**';
@@ -311,15 +313,15 @@ export class TailwindDetector {
         );
       }
     } catch (err) {
-      debug(
-        `[${LogTags.TAILWIND}] Failed to resolve tailwindcss in ${workspaceRoot}: ${extractErrorMessage(err)}`
+      log.debug(
+        `Failed to resolve tailwindcss in ${workspaceRoot}: ${extractErrorMessage(err)}`
       );
       resolved = undefined;
     }
 
     if (!resolved) {
-      debug(
-        `[${LogTags.TAILWIND}] Tailwind CSS not found in workspace: ${workspaceRoot}`
+      log.debug(
+        `Tailwind CSS not found in workspace: ${workspaceRoot}`
       );
       const info: TailwindVersionInfo = { version: null, major: null };
       this.versionCache.set(cacheKey, info);
@@ -327,7 +329,7 @@ export class TailwindDetector {
     }
 
     const pkg = readJsonSync<{ version?: string }>(resolved, {
-      logTag: LogTags.TAILWIND,
+      logger: log,
       logOnError: true,
     });
 
@@ -345,8 +347,8 @@ export class TailwindDetector {
       modulePath: path.dirname(resolved),
     };
     this.versionCache.set(cacheKey, info);
-    debug(
-      `[${LogTags.TAILWIND}] Workspace Tailwind version: ${version ?? 'unknown'}`
+    log.debug(
+      `Workspace Tailwind version: ${version ?? 'unknown'}`
     );
     return info;
   }
@@ -357,10 +359,10 @@ export class TailwindDetector {
     if (workspaceRoot !== undefined) {
       const cacheKey = workspaceRoot ?? 'default';
       this.versionCache.delete(cacheKey);
-      debug(`[${LogTags.TAILWIND}] Version cache invalidated for: ${cacheKey}`);
+      log.debug(`Version cache invalidated for: ${cacheKey}`);
     } else {
       this.versionCache.clear();
-      debug(`[${LogTags.TAILWIND}] All version caches invalidated`);
+      log.debug('All version caches invalidated');
     }
   }
 }

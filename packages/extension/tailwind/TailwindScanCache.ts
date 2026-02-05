@@ -2,13 +2,14 @@
 // LRU cache for per-file Tailwind class scan results w/ hash validation & TTL expiration
 
 import * as crypto from 'crypto';
-import { debug } from '../logging';
-import { LogTags } from '@mdx-preview/shared';
-import { ContentHashCache } from '@mdx-preview/shared';
+import { createTaggedLogger } from '../logging';
+import { LogTags, ContentHashCache } from '@mdx-preview/shared';
 import {
   SCAN_CACHE_DEFAULT_MAX_ENTRIES,
   CACHE_DEFAULT_TTL_MS,
 } from './constants';
+
+const log = createTaggedLogger(LogTags.TAILWIND_SCAN);
 
 export interface TailwindScanCacheOptions {
   maxEntries?: number;
@@ -37,7 +38,7 @@ export class TailwindScanCache {
   get(fsPath: string, contentHash: string): string[] | null {
     const result = this.cache.getIfHashMatches(fsPath, contentHash);
     if (result !== null) {
-      debug(`[${LogTags.TAILWIND_SCAN}] Cache hit for ${fsPath}`);
+      log.debug(`Cache hit for ${fsPath}`);
     }
     return result;
   }
@@ -51,14 +52,14 @@ export class TailwindScanCache {
   // call when file is known to have changed (e.g., from DependencyWatcher)
   invalidate(fsPath: string): void {
     if (this.cache.delete(fsPath)) {
-      debug(`[${LogTags.TAILWIND_SCAN}] Invalidated cache for ${fsPath}`);
+      log.debug(`Invalidated cache for ${fsPath}`);
     }
   }
 
   // clear all cached scan results
   clear(): void {
     this.cache.clear();
-    debug(`[${LogTags.TAILWIND_SCAN}] Cache cleared`);
+    log.debug('Cache cleared');
   }
 
   // get current cache size (for debugging/testing)

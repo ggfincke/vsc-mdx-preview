@@ -155,7 +155,7 @@ export function tryRequireTrustedModeForDocument(
 ): TrustState | undefined {
   try {
     return requireTrustedModeForDocument(docUri, operation);
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof TrustError) {
       onTrustError?.(error);
       return undefined;
@@ -174,7 +174,7 @@ export function tryRequireTrustedMode(
 ): TrustState | undefined {
   try {
     return requireTrustedMode(operation);
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof TrustError) {
       onTrustError?.(error);
       return undefined;

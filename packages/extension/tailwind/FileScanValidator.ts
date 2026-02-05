@@ -3,9 +3,10 @@
 
 import * as fs from 'fs';
 import { extractErrorMessage, LogTags, Semaphore } from '@mdx-preview/shared';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { CLASS_TOKEN_RE, TAILWIND_FILE_READ_LIMIT } from './constants';
 
+const log = createTaggedLogger(LogTags.TAILWIND);
 const readSemaphore = new Semaphore(TAILWIND_FILE_READ_LIMIT);
 
 export interface FileValidationResult {
@@ -71,13 +72,13 @@ export class FileScanValidator {
     try {
       const stat = await fs.promises.stat(fsPath);
       if (stat.size > maxBytes) {
-        debug(`[${LogTags.TAILWIND}] Skipping large file: ${fsPath}`);
+        log.debug(`Skipping large file: ${fsPath}`);
         return null;
       }
       return await fs.promises.readFile(fsPath, 'utf-8');
     } catch (err) {
-      debug(
-        `[${LogTags.TAILWIND}] Skipping unreadable file: ${fsPath} (${extractErrorMessage(err)})`
+      log.debug(
+        `Skipping unreadable file: ${fsPath} (${extractErrorMessage(err)})`
       );
       return null;
     }

@@ -11,14 +11,17 @@ import { initWebviewAppHTMLResourcesAsync } from './preview/webview-manager';
 import { initPrewarm } from './prewarm';
 import { initWorkspaceHandlers } from './workspace-manager';
 import {
-  info,
-  debug,
+  createTaggedLogger,
   showOutput,
   getOutputChannel,
   initLogging,
   isDebugEnabled,
 } from './logging';
 import { LogTags } from '@mdx-preview/shared';
+
+const log = createTaggedLogger(LogTags.ACTIVATE);
+const themeLog = createTaggedLogger(LogTags.THEME);
+const watcherLog = createTaggedLogger(LogTags.WATCHER);
 import { StatusBarManager } from './preview/StatusBarManager';
 import { ThemeManager } from './themes';
 import { FrameworkDetector } from './framework/FrameworkDetector';
@@ -73,7 +76,7 @@ async function showSafeModeNotificationIfNeeded(
   } else if (selection === 'Learn More') {
     await vscode.commands.executeCommand(
       'workbench.action.openWalkthrough',
-      'xyc.vscode-mdx-preview#mdx-preview.gettingStarted'
+      'ggfincke.vscode-mdx-preview#mdx-preview.gettingStarted'
     );
   }
 
@@ -146,7 +149,16 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
 export async function activate(
   context: vscode.ExtensionContext
 ): Promise<void> {
-  debug(`[${LogTags.ACTIVATE}] Starting extension activation...`);
+  log.debug('Starting extension activation...');
+
+  // handle unhandled promise rejections
+  process.on('unhandledRejection', (reason: unknown) => {
+    const { getErrorReporter } = require('./services');
+    getErrorReporter().report(
+      new Error(`Unhandled promise rejection: ${reason}`),
+      { context: 'extension', severity: 'error' }
+    );
+  });
 
   // register services w/ centralized registry before using service locators
   // order matters: register services w/ no dependencies first, then dependent services
@@ -198,29 +210,27 @@ export async function activate(
   registry.register(ServiceNames.META_RESOLVER, () =>
     MetaResolver.getInstance()
   );
-  debug(`[${LogTags.ACTIVATE}] Services registered`);
+  log.debug('Services registered');
 
   // register subsystems (AFTER services, so they dispose BEFORE services)
   registerResolverSubsystem();
   registerCacheSubsystem();
-  debug(`[${LogTags.ACTIVATE}] Subsystems registered`);
+  log.debug('Subsystems registered');
 
   // G.3 optimization: Initialize resources in background (non-blocking)
   // Resources will be awaited when first preview panel is created
-  debug(
-    `[${LogTags.ACTIVATE}] Starting webview HTML resource initialization (background)...`
-  );
+  log.debug('Starting webview HTML resource initialization (background)...');
   initWebviewAppHTMLResourcesAsync(context);
-  debug(`[${LogTags.ACTIVATE}] Webview HTML resource initialization started`);
+  log.debug('Webview HTML resource initialization started');
 
   // G.5 optimization: Initialize prewarm coordinator for improved first-render UX
-  debug(`[${LogTags.ACTIVATE}] Initializing prewarm coordinator`);
+  log.debug('Initializing prewarm coordinator');
   context.subscriptions.push(initPrewarm());
 
   initWorkspaceHandlers(context);
-  debug(`[${LogTags.ACTIVATE}] Workspace handlers initialized`);
+  log.debug('Workspace handlers initialized');
 
-  info('Extension activated');
+  log.info('Extension activated');
 
   // show output channel if debug output is enabled
   if (isDebugEnabled()) {
@@ -247,9 +257,7 @@ export async function activate(
   // listen for VS Code color theme changes to auto-switch preview theme
   context.subscriptions.push(
     vscode.window.onDidChangeActiveColorTheme(() => {
-      debug(
-        `[${LogTags.THEME}] VS Code color theme changed, refreshing previews`
-      );
+      themeLog.debug('VS Code color theme changed, refreshing previews');
       getPreviewManager().refreshAllPreviews();
     })
   );
@@ -258,14 +266,14 @@ export async function activate(
   const packageJsonWatcher = new PackageJsonWatcher(() => {
     clearResolverCache();
     clearSassCache();
-    debug(
-      `[${LogTags.WATCHER}] Resolver & Sass caches cleared due to package file change`
+    watcherLog.debug(
+      'Resolver & Sass caches cleared due to package file change'
     );
   });
   void packageJsonWatcher.start();
   context.subscriptions.push(packageJsonWatcher);
 
-  debug(`[${LogTags.ACTIVATE}] Extension activation complete`);
+  log.debug('Extension activation complete');
 }
 
 // deactivate extension

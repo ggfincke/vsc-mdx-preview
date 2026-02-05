@@ -124,7 +124,7 @@ export async function loadModuleWithEsmFallback<T>(
 
     const mod = require(modulePath);
     return (mod.default ?? mod) as T;
-  } catch (error) {
+  } catch (error: unknown) {
     // check if it's an ESM-only module
     const isEsm =
       error instanceof Error &&

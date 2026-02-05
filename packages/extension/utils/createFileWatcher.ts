@@ -99,7 +99,7 @@ export function createFileWatcher(
       wrappedHandler = (uri: vscode.Uri) => {
         try {
           handler(uri);
-        } catch (error) {
+        } catch (error: unknown) {
           logger.debug(`Error in ${eventType} handler: ${error}`);
         }
       };
