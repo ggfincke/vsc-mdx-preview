@@ -4,7 +4,6 @@
 // import types used locally in this file
 import type { Framework as FrameworkType } from './registry';
 import type { ModuleErrorData } from './errors';
-import type { LogTag } from './logging';
 
 // shared timing & limit constants
 export {
@@ -95,12 +94,9 @@ export function isPreviewError(value: unknown): value is PreviewError {
 }
 
 // format trust state for debug logging
-export function formatTrustStateForDebug(
-  tag: LogTag,
-  state: TrustState
-): string {
+export function formatTrustStateForDebug(state: TrustState): string {
   return (
-    `[${tag}] Trust state: canExecute=${state.canExecute}, ` +
+    `Trust state: canExecute=${state.canExecute}, ` +
     `workspaceTrusted=${state.workspaceTrusted}, ` +
     `scriptsEnabled=${state.scriptsEnabled}`
   );
