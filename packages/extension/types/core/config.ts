@@ -74,6 +74,8 @@ export interface MdxPreviewConfig {
   tailwind?: TailwindOptions;
   // how to handle unknown JSX components in Safe Mode
   unknownBehavior?: UnknownBehavior;
+  // force Safe Mode for this project (cannot enable in untrusted workspace)
+  enableScripts?: boolean;
 }
 
 // resolved configuration w/ metadata

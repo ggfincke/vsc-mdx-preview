@@ -40,10 +40,14 @@ export function buildEffectivePreviewConfig(
 
   // merge w/ precedence: frontmatter > config file > VS Code settings
   return {
-    // VS Code settings (no override from config file or frontmatter)
+    // VS Code settings (config file can only disable, not enable)
     updateMode: settings['preview.updateMode'],
     debounceDelay: settings['preview.debounceDelay'],
-    enableScripts: settings['preview.enableScripts'],
+    // config file can force Safe Mode (false), but cannot force Trusted Mode
+    enableScripts:
+      fileConfig?.enableScripts === false
+        ? false
+        : settings['preview.enableScripts'],
     openMdxLinksInPreview: settings['preview.openMdxLinksInPreview'],
     securityPolicy: settings['preview.security'],
     useVscodeMarkdownStyles: settings['preview.useVscodeMarkdownStyles'],

@@ -183,6 +183,11 @@
         "strip",
         "raw"
       ]
+    },
+    "enableScripts": {
+      "type": "boolean",
+      "default": true,
+      "description": "Force Safe Mode for this project. Set to false to disable script execution regardless of VS Code settings. Cannot enable scripts in untrusted workspaces."
     }
   },
   "additionalProperties": false
