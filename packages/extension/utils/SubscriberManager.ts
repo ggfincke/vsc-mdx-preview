@@ -2,8 +2,8 @@
 // generic subscriber/listener pattern utility to eliminate duplication across services
 
 import * as vscode from 'vscode';
-import { debug } from '../logging';
-import type { LogTag } from '@mdx-preview/shared';
+import { createTaggedLogger } from '../logging';
+import type { LogTag, TaggedLogger } from '@mdx-preview/shared';
 
 // error handler for subscriber notifications (default logs to debug channel)
 export type SubscriberErrorHandler = (
@@ -20,12 +20,12 @@ export interface ISubscribable<T> {
 // generic subscriber manager that implements the pub/sub pattern
 export class SubscriberManager<T> {
   private subscribers = new Set<(data: T) => void>();
-  private readonly logTag: LogTag;
+  private readonly log: TaggedLogger;
   private readonly errorHandler?: SubscriberErrorHandler;
 
   // create a new SubscriberManager w/ log tag & optional error handler
   constructor(logTag: LogTag, errorHandler?: SubscriberErrorHandler) {
-    this.logTag = logTag;
+    this.log = createTaggedLogger(logTag);
     this.errorHandler = errorHandler;
   }
 
@@ -45,11 +45,11 @@ export class SubscriberManager<T> {
     for (const callback of this.subscribers) {
       try {
         callback(data);
-      } catch (error) {
+      } catch (error: unknown) {
         if (this.errorHandler) {
           this.errorHandler(error, index);
         } else {
-          debug(`[${this.logTag}] Error in subscriber ${index}: ${error}`);
+          this.log.debug(`Error in subscriber ${index}: ${error}`);
         }
       }
       index++;
