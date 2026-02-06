@@ -42,7 +42,10 @@ interface CacheWrapper {
 // configWatchers: track config path -> watcher instance
 // configChangeSubscribers: Set of callbacks for config changes
 // register w/ ServiceRegistry for proper disposal
-export class ConfigCache extends WithSubscribers<ConfigCache, ConfigChangeEvent> {
+export class ConfigCache extends WithSubscribers<
+  ConfigCache,
+  ConfigChangeEvent
+> {
   protected static override instance: ConfigCache | undefined;
   protected readonly logTag = LogTags.CONFIG_CACHE;
 
@@ -53,9 +56,8 @@ export class ConfigCache extends WithSubscribers<ConfigCache, ConfigChangeEvent>
   });
 
   protected constructor() {
-    super(
-      LogTags.CONFIG_CACHE,
-      (err) => log.warn('Error in config change callback:', err)
+    super(LogTags.CONFIG_CACHE, (err) =>
+      log.warn('Error in config change callback:', err)
     );
   }
 

@@ -146,7 +146,10 @@ export const PREVIEW_CONFIG_KEYS: readonly SettingKey[] = [
 type ConfigChangeCallback = (affectedKeys: SettingKey[]) => void;
 
 // * centralized configuration manager for MDX Preview w/ type safety & change notifications
-export class ConfigManager extends WithSubscribers<ConfigManager, SettingKey[]> {
+export class ConfigManager extends WithSubscribers<
+  ConfigManager,
+  SettingKey[]
+> {
   protected static override instance: ConfigManager | undefined;
   protected readonly logTag = LogTags.CONFIG_MANAGER;
 
