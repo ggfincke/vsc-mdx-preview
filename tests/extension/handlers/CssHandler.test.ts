@@ -2,13 +2,14 @@
 // focused tests for CSS handler critical behavior
 
 import { describe, it, expect } from 'vitest';
-import { CssHandler } from '../../../packages/extension/module-system/handlers/CssHandler';
+import { createSimpleHandler, buildCssResult } from '../../../packages/extension/module-system/handlers/result-builders';
+import { CSS_EXTENSIONS } from '../../../packages/extension/constants';
 import type { Preview } from '../../../packages/extension/preview/preview-manager';
 
 const mockPreview = {} as Preview;
 
-describe('CssHandler', () => {
-  const handler = new CssHandler();
+describe('CSS handler', () => {
+  const handler = createSimpleHandler(CSS_EXTENSIONS, buildCssResult);
 
   it('handles .css files', () => {
     expect(handler.extensions).toContain('.css');

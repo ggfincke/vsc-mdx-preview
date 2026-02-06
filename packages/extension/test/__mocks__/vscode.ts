@@ -280,6 +280,19 @@ export const window = {
     undefined,
   onDidChangeActiveTextEditor: (handler: EventHandler<any>): Disposable =>
     activeEditorEmitter.event(handler),
+  showQuickPick: async (_items: any, _options?: any): Promise<any> => undefined,
+  showInformationMessage: async (
+    _msg: string,
+    ..._items: any[]
+  ): Promise<any> => undefined,
+  showWarningMessage: async (
+    _msg: string,
+    ..._items: any[]
+  ): Promise<any> => undefined,
+  showErrorMessage: async (
+    _msg: string,
+    ..._items: any[]
+  ): Promise<any> => undefined,
 };
 
 // trigger active editor change events for tests
@@ -323,3 +336,16 @@ export type CodeActionContext = {
 export type CancellationToken = unknown;
 
 export type GlobPattern = string;
+
+export enum ConfigurationTarget {
+  Global = 1,
+  Workspace = 2,
+  WorkspaceFolder = 3,
+}
+
+export enum ViewColumn {
+  Active = -1,
+  Beside = -2,
+  One = 1,
+  Two = 2,
+}

@@ -48,27 +48,33 @@ npm run test:watch
 
 ```
 tests/
-├── helpers/          # Test utilities & fixtures
-├── security/         # TrustManager, CSP, path validation
-├── compilation/      # MDX compilation (trusted/safe modes)
-├── transpilation/    # Babel transforms
-├── resolution/       # Module resolution strategies
-├── extension/        # Extension-specific critical paths
-│   ├── compiler/     # Plugin loading
-│   ├── config/       # Effective/compiler config projection
-│   ├── diagnostics/  # Component detection & code actions
-│   ├── framework/    # Framework detection
-│   ├── handlers/     # File type handlers (CSS, Sass, JSON, images)
-│   ├── module-system # Module fetch flow
-│   ├── nextra/       # Nextra meta resolution
-│   ├── preview/      # Preview lifecycle
-│   ├── security/     # Path security (checkFsPath)
-│   └── tailwind/     # Tailwind detection & processing
-├── webview/          # Webview critical paths
-│   ├── ModuleRegistry # Module caching & dependencies
-│   ├── StyleInjector  # CSS injection
-│   └── shimLoader     # Framework shim loading
-└── services/         # Service registry lifecycle
+├── helpers/            # Test utilities & fixtures
+├── security/           # TrustManager, CSP, path validation
+├── compilation/        # MDX compilation (trusted/safe modes)
+├── transpilation/      # Babel transforms
+├── resolution/         # Module resolution strategies
+├── integration/        # End-to-end compilation & preview flow
+├── shared/             # Shared utility tests (LRU cache, registry queries)
+├── extension/          # Extension-specific critical paths
+│   ├── commands/       # Security & config-info commands
+│   ├── compiler/       # Plugin loading
+│   ├── config/         # Effective/compiler config projection
+│   ├── deps/           # Import extraction
+│   ├── diagnostics/    # Component detection & code actions
+│   ├── errors/         # Error reporter lifecycle
+│   ├── framework/      # Framework detection
+│   ├── handlers/       # File type handlers (CSS, Sass, JSON, images)
+│   ├── module-system/  # Module fetch flow
+│   ├── nextra/         # Nextra meta resolution
+│   ├── prewarm/        # Babel prewarm coordination
+│   ├── preview/        # Preview lifecycle & watchers
+│   ├── security/       # Path security (checkFsPath)
+│   └── tailwind/       # Tailwind detection & processing
+├── webview/            # Webview critical paths
+│   ├── ModuleRegistry  # Module caching & dependencies
+│   ├── StyleInjector   # CSS injection
+│   └── shimLoader      # Framework shim loading
+└── services/           # Service registry lifecycle & circular detection
 ```
 
 ## Adding Tests
