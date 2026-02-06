@@ -34,9 +34,8 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
   protected readonly logTag = LogTags.TRUST_MANAGER;
 
   protected constructor() {
-    super(
-      LogTags.TRUST_MANAGER,
-      (error) => log.error('Error in TrustManager listener', error)
+    super(LogTags.TRUST_MANAGER, (error) =>
+      log.error('Error in TrustManager listener', error)
     );
     const workspaceWithTrust = vscode.workspace as typeof vscode.workspace & {
       onDidChangeWorkspaceTrust?: vscode.Event<boolean>;

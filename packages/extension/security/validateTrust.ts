@@ -144,6 +144,22 @@ export function requireTrustedModeForDocument(
   return trustState;
 }
 
+// run trust guard w/ optional TrustError callback
+function tryRequire<T>(
+  guard: () => T,
+  onTrustError?: (error: TrustError) => void
+): T | undefined {
+  try {
+    return guard();
+  } catch (error: unknown) {
+    if (error instanceof TrustError) {
+      onTrustError?.(error);
+      return undefined;
+    }
+    throw error;
+  }
+}
+
 // non-throwing trust check for document-specific operations
 // returns TrustState on success, undefined on TrustError
 // invokes optional callback w/ error before returning undefined
@@ -153,15 +169,10 @@ export function tryRequireTrustedModeForDocument(
   operation: string,
   onTrustError?: (error: TrustError) => void
 ): TrustState | undefined {
-  try {
-    return requireTrustedModeForDocument(docUri, operation);
-  } catch (error: unknown) {
-    if (error instanceof TrustError) {
-      onTrustError?.(error);
-      return undefined;
-    }
-    throw error;
-  }
+  return tryRequire(
+    () => requireTrustedModeForDocument(docUri, operation),
+    onTrustError
+  );
 }
 
 // non-throwing trust check for general operations
@@ -172,13 +183,5 @@ export function tryRequireTrustedMode(
   operation: string,
   onTrustError?: (error: TrustError) => void
 ): TrustState | undefined {
-  try {
-    return requireTrustedMode(operation);
-  } catch (error: unknown) {
-    if (error instanceof TrustError) {
-      onTrustError?.(error);
-      return undefined;
-    }
-    throw error;
-  }
+  return tryRequire(() => requireTrustedMode(operation), onTrustError);
 }
