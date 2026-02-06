@@ -23,15 +23,6 @@ export type {
   SecurityPolicyValue,
 } from '@mdx-preview/shared';
 
-// controls when the preview updates: on typing, on save, or manually
-export type UpdateMode = UpdateModeValue;
-
-// controls Tailwind CSS processing: auto-detect, always enabled, or disabled
-export type TailwindEnabledSetting = TailwindEnabledValue;
-
-// controls how unknown components are rendered
-export type UnknownBehaviorSetting = UnknownBehaviorValue;
-
 // Tailwind configuration subset
 export interface TailwindConfig {
   enabled: TailwindEnabledValue;
@@ -127,6 +118,22 @@ export interface EffectivePreviewConfig {
 
   // metadata
   configFile: ResolvedConfig | null;
+}
+
+// compiler-specific config projection from EffectivePreviewConfig
+export interface CompilerConfig extends Pick<
+  EffectivePreviewConfig,
+  | 'customLayoutFilePath'
+  | 'useVscodeMarkdownStyles'
+  | 'useWhiteBackground'
+  | 'componentsBuiltins'
+  | 'componentsUnknownBehavior'
+  | 'configFile'
+> {
+  // URI for trust checks & plugin/component loading
+  docUri: vscode.Uri;
+  // fs path for relative import generation
+  docFsPath: string;
 }
 
 // options for building effective config
