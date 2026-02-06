@@ -2,7 +2,6 @@
 // watches package.json & lock files to invalidate resolver cache
 
 import * as vscode from 'vscode';
-import debounce from 'lodash.debounce';
 import { createTaggedLogger } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { BaseWatcher } from '../../preview/watchers/BaseWatcher';
@@ -23,12 +22,15 @@ export class PackageJsonWatcher extends BaseWatcher {
 
   private packageJsonWatcher?: vscode.FileSystemWatcher;
   private lockFileWatcher?: vscode.FileSystemWatcher;
-  private _debouncedInvalidate: ReturnType<typeof debounce>;
+  private _debouncedInvalidate: (() => void) & {
+    cancel(): void;
+    flush(): void;
+  };
 
   constructor(onInvalidate?: () => void) {
     super();
     // create debounced invalidation handler
-    this._debouncedInvalidate = debounce(() => {
+    this._debouncedInvalidate = this.createDebouncedHandler(() => {
       log.debug('Triggering cache invalidation');
       onInvalidate?.();
     }, getWatcherDebounce());
@@ -59,7 +61,6 @@ export class PackageJsonWatcher extends BaseWatcher {
   }
 
   protected onStop(): void {
-    this._debouncedInvalidate.cancel();
     this.disposeWatcher(this.packageJsonWatcher);
     this.disposeWatcher(this.lockFileWatcher);
     this.packageJsonWatcher = undefined;
