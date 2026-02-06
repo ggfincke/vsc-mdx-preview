@@ -6,12 +6,14 @@ import * as path from 'path';
 import isModule from 'is-module';
 import { createLazyImport } from '../../utils/lazy-import';
 import { transpileWithFallback } from './selector';
+import { buildCompilerConfig } from '../../config/EffectivePreviewConfig';
 import { debug } from '../../logging';
 import {
   transpileTypeScript,
   isTypeScriptExtension,
   isTypeScriptLanguage,
 } from './typescript-transpile';
+import type { CompilerConfig } from '../../types';
 
 // lazy load Trusted Mode compiler - only loaded when Trusted Mode is actually used
 const getCompileTrustedModule = createLazyImport(
@@ -40,7 +42,8 @@ export interface TransformResult {
 async function transformEntry(
   code: string,
   fsPath: string,
-  preview: Preview
+  preview: Preview,
+  compilerConfig: CompilerConfig
 ): Promise<TransformEntryResult> {
   const { languageId, uri } = preview.doc;
   // track frontmatter from MDX compilation
@@ -52,7 +55,7 @@ async function transformEntry(
     uri.scheme === 'untitled'
   ) {
     const { compileTrusted } = await getCompileTrustedModule();
-    const mdxResult = await compileTrusted(code, true, preview);
+    const mdxResult = await compileTrusted(code, true, compilerConfig);
     code = mdxResult.code;
     frontmatter = mdxResult.frontmatter;
   }
@@ -86,8 +89,12 @@ async function transform(
   const extname = path.extname(fsPath);
   if (/\.mdx?$/i.test(extname)) {
     // for dependencies, we only need the code (frontmatter is ignored)
+    const compilerConfig = buildCompilerConfig({
+      docUri: preview.doc.uri,
+      docFsPath: fsPath,
+    });
     const { compileTrusted } = await getCompileTrustedModule();
-    const mdxResult = await compileTrusted(code, false, preview);
+    const mdxResult = await compileTrusted(code, false, compilerConfig);
     code = mdxResult.code;
   }
 

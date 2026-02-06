@@ -29,6 +29,7 @@ import {
   NOOP_MODULE,
 } from './utils';
 import { handleByExtension } from '../handlers';
+import { readFileAsync } from '../../utils/file-utils';
 
 // module-level tagged logger for module fetcher
 const log = createTaggedLogger(LogTags.MODULE_SYSTEM);
@@ -68,27 +69,6 @@ async function isBinaryFile(filePath: string): Promise<boolean> {
     return false;
   } finally {
     await fd?.close();
-  }
-}
-
-// wrap a promise w/ a timeout
-async function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  errorMessage: string
-): Promise<T> {
-  let timeoutHandle: NodeJS.Timeout;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutHandle = setTimeout(
-      () => reject(new Error(errorMessage)),
-      timeoutMs
-    );
-  });
-
-  try {
-    return await Promise.race([promise, timeoutPromise]);
-  } finally {
-    clearTimeout(timeoutHandle!);
   }
 }
 
@@ -141,9 +121,7 @@ export async function fetchLocal(
 
     // if it's a built-in shim, return empty result (webview has this preloaded)
     if (resolution.isBuiltInShim) {
-      log.debug(
-        `Built-in shim: ${request} -> ${resolution.fsPath}`
-      );
+      log.debug(`Built-in shim: ${request} -> ${resolution.fsPath}`);
       return {
         fsPath: resolution.fsPath,
         code: '',
@@ -191,12 +169,24 @@ export async function fetchLocal(
     ) {
       code = preview.editingDoc.getText();
     } else {
-      // use async fs.promises.readFile w/ timeout
-      code = await withTimeout(
-        fs.promises.readFile(fsPath, 'utf-8'),
-        MODULE_FETCH_TIMEOUT_MS,
-        `Module fetch timed out after ${MODULE_FETCH_TIMEOUT_MS / 1000}s: ${path.basename(fsPath)}`
-      );
+      // read module from disk w/ timeout guard
+      let readError: unknown;
+      const readCode = await readFileAsync(fsPath, 'utf-8', {
+        timeoutMs: MODULE_FETCH_TIMEOUT_MS,
+        timeoutMessage:
+          `Module fetch timed out after ${MODULE_FETCH_TIMEOUT_MS / 1000}s: ` +
+          `${path.basename(fsPath)}`,
+        onError: (error) => {
+          readError = error;
+        },
+      });
+
+      if (readCode === null) {
+        throw readError instanceof Error
+          ? readError
+          : new Error(`Failed to read module: ${path.basename(fsPath)}`);
+      }
+      code = readCode;
     }
 
     const extname = path.extname(fsPath);

@@ -73,9 +73,7 @@ export function resolveFrameworkAliasStep(
   }
 
   // alias resolved to a path - continue w/ that path
-  log.debug(
-    `Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
-  );
+  log.debug(`Framework alias (non-shim): ${specifier} -> ${aliasedPath}`);
   return { specifier: aliasedPath };
 }
 
@@ -149,9 +147,7 @@ export class UnifiedResolver {
       }
     }
 
-    log.debug(
-      `Could not resolve: ${specifier} from ${context.baseDir}`
-    );
+    log.debug(`Could not resolve: ${specifier} from ${context.baseDir}`);
     return null;
   }
 
@@ -208,9 +204,7 @@ export class UnifiedResolver {
       }
     }
 
-    log.debug(
-      `Could not resolve: ${specifier} from ${context.baseDir}`
-    );
+    log.debug(`Could not resolve: ${specifier} from ${context.baseDir}`);
     return null;
   }
 }

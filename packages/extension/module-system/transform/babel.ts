@@ -83,9 +83,7 @@ export async function prewarmBabel(): Promise<void> {
     const babel = await getBabel();
     await getBabelOptions(babel);
     prewarmComplete = true;
-    log.debug(
-      `Babel prewarm complete (${Date.now() - startTime}ms)`
-    );
+    log.debug(`Babel prewarm complete (${Date.now() - startTime}ms)`);
   } catch (err) {
     prewarmStarted = false;
     log.debug('Babel prewarm failed', err);

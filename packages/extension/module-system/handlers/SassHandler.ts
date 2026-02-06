@@ -150,9 +150,7 @@ ${errorMessage
 
    ════════════════════════════════════════════════════════════════════════════ */
 `;
-      log.warn(
-        `Compilation error for ${fsPath}: ${errorMessage}`
-      );
+      log.warn(`Compilation error for ${fsPath}: ${errorMessage}`);
       return buildCssResult(fsPath, errorCss);
     }
   }
