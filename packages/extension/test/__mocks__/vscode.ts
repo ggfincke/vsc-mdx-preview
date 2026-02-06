@@ -298,6 +298,10 @@ export const commands = {
 export const env = {
   remoteName: undefined as string | undefined,
   openExternal: async (_uri: Uri): Promise<boolean> => true,
+  clipboard: {
+    writeText: async (_text: string): Promise<void> => {},
+    readText: async (): Promise<string> => '',
+  },
 };
 
 export type TextDocumentShowOptions = {

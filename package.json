@@ -171,6 +171,11 @@
         "command": "mdx-preview.commands.toggleDebugOutput",
         "title": "Toggle Debug Output",
         "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.copyAuthoringGuide",
+        "title": "Copy Authoring Guide to Clipboard",
+        "category": "MDX"
       }
     ],
     "menus": {
