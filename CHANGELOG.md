@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-02-06
+
+### Changed
+
+- **react-error-boundary**: Upgraded from v4 to v6 with error type normalization fix
+- **remark-directive**: Upgraded from v3 to v4
+
+### Refactored
+
+- Extracted factory patterns for config toggle & theme selection commands, reducing duplication
+- Replaced `CssHandler` & `JsonHandler` classes with `createSimpleHandler` factory
+- Centralized debounce handling in `BaseWatcher` with auto-cancel on stop
+- Simplified `DocumentTracker` to implement `IWatcher` directly instead of extending `BaseWatcher`
+- Renamed `result-builders.ts` to `resolution-builders.ts` in resolver strategies
+
+### Tests
+
+- Added test suites for `ErrorReporter`, `Preview`, `PreviewManager`, `BaseWatcher`, `CustomCssWatcher`, `DependencyWatcher`, `App`, `TrustedPreview`, config-info & security commands
+- Added shared package tests for `LRUCache`, `ContentHashCache`, and registry queries
+- Trimmed low-value circular dependency tests & removed `WithSubscribers` test suite
+
+### Infrastructure
+
+- Bumped CI actions: `actions/setup-node` v6, `actions/upload-artifact` v6, `softprops/action-gh-release` v2
+- Updated dev dependencies: `@types/dompurify` 3.2.0, `eslint-plugin-react-refresh` 0.5.0, `@vitejs/plugin-react` 5.1.3
+- Release workflow now uses changelog for GitHub Release notes instead of auto-generated commits
+
 ## [1.0.1] - 2026-02-06
 
 ### Added
