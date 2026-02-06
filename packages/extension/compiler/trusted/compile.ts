@@ -5,27 +5,25 @@ import { compile } from '@mdx-js/mdx';
 import hasDefaultExport from './hasDefaultExport';
 import * as path from 'path';
 
-import { Preview } from '../../preview/preview-manager';
 import { extractFrontmatter } from '../shared/mdx-common';
 import { buildTrustedPluginPipeline } from '../plugins/builder';
 import { loadPluginsFromConfig } from '../plugins/loader';
 import { generateComponentImports } from './component-mapper';
 import { createTaggedLogger } from '../../logging';
-import { getConfigManager } from '../../services';
 import { LogTags } from '@mdx-preview/shared';
 
 const log = createTaggedLogger(LogTags.COMPILE);
 
-import type { MdxTranspileResult } from '../../types';
+import type { CompilerConfig, MdxTranspileResult } from '../../types';
 
 // inject MDX layout styles based on configuration
-const injectMDXStyles = (mdxText: string, preview: Preview): string => {
+const injectMDXStyles = (mdxText: string, config: CompilerConfig): string => {
   const { customLayoutFilePath, useVscodeMarkdownStyles, useWhiteBackground } =
-    preview.configuration;
+    config;
 
   if (customLayoutFilePath) {
     try {
-      const currentPreviewDirname = path.dirname(preview.doc.uri.fsPath);
+      const currentPreviewDirname = path.dirname(config.docFsPath);
       const relativeCustomLayoutPath = path.relative(
         currentPreviewDirname,
         customLayoutFilePath
@@ -93,22 +91,22 @@ ${compiledMDX}
 export async function compileTrusted(
   mdxText: string,
   _isEntry: boolean,
-  preview: Preview
+  config: CompilerConfig
 ): Promise<MdxTranspileResult> {
   // extract frontmatter before compilation
   const { content, frontmatter } = extractFrontmatter(mdxText);
 
   let mdxTextToCompile: string;
   if (!hasDefaultExport(content)) {
-    mdxTextToCompile = injectMDXStyles(content, preview);
+    mdxTextToCompile = injectMDXStyles(content, config);
   } else {
     mdxTextToCompile = content;
   }
 
   // load custom plugins from config
   const customPlugins = await loadPluginsFromConfig(
-    preview.mdxPreviewConfig,
-    preview.doc.uri
+    config.configFile ?? undefined,
+    config.docUri
   );
 
   // log aggregated plugin loading errors (individual errors logged via ErrorReporter)
@@ -119,19 +117,19 @@ export async function compileTrusted(
   }
 
   // generate component imports from config & built-in shims
-  const documentDir = path.dirname(preview.fsPath);
-  const builtinsEnabled = getConfigManager().get('components.builtins');
+  const documentDir = path.dirname(config.docFsPath);
+  const builtinsEnabled = config.componentsBuiltins;
 
   log.debug(
-    `mdxPreviewConfig: ${preview.mdxPreviewConfig ? JSON.stringify(preview.mdxPreviewConfig.config) : 'undefined'}`
+    `mdxPreviewConfig: ${config.configFile ? JSON.stringify(config.configFile.config) : 'undefined'}`
   );
   log.debug(`documentDir: ${documentDir}`);
   log.debug(`builtinsEnabled: ${builtinsEnabled}`);
 
   const componentImports = generateComponentImports(
-    preview.mdxPreviewConfig,
+    config.configFile ?? undefined,
     documentDir,
-    preview.doc.uri,
+    config.docUri,
     { builtinsEnabled }
   );
 

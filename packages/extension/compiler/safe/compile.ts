@@ -15,13 +15,15 @@ import {
   getSafeRehypePluginSets,
 } from '../plugins/builder';
 import { warnIgnoredSafeModeConfig } from '../shared/pipeline-warnings';
-import type { ResolvedConfig } from '../../types';
 import remarkGenericComponents, {
   KNOWN_GENERIC_COMPONENTS,
 } from '../shared/remark/generic-components';
-import { getConfigManager } from '../../services';
 
-import type { UnknownBehavior, SafeHTMLResult } from '../../types';
+import type {
+  CompilerConfig,
+  UnknownBehavior,
+  SafeHTMLResult,
+} from '../../types';
 
 // options for remarkStripMdx plugin
 interface RemarkStripMdxOptions {
@@ -265,23 +267,18 @@ function applyPlugins<T extends PluginPipeline>(
 // compile MDX to safe static HTML (strip frontmatter, parse AST, remove dangerous nodes, & convert to HTML)
 export async function compileSafe(
   mdxText: string,
-  config?: ResolvedConfig
+  config: CompilerConfig
 ): Promise<SafeHTMLResult> {
   // warn if custom plugins are configured but will be ignored in Safe Mode
-  if (config) {
-    warnIgnoredSafeModeConfig(config.config);
+  if (config.configFile) {
+    warnIgnoredSafeModeConfig(config.configFile.config);
   }
   // extract frontmatter before compilation
   const { content, frontmatter } = extractFrontmatter(mdxText);
 
   // get configuration for builtins & unknown behavior settings
-  const configManager = getConfigManager();
-  const builtinsEnabled = configManager.get('components.builtins');
-
-  // get unknownBehavior from config file first, then fall back to vscode setting
-  const unknownBehavior: UnknownBehavior =
-    (config?.config.unknownBehavior as UnknownBehavior) ||
-    configManager.get('components.unknownBehavior');
+  const builtinsEnabled = config.componentsBuiltins;
+  const unknownBehavior: UnknownBehavior = config.componentsUnknownBehavior;
 
   // get rehype plugin sets from plugin-builder
   const { preMath, math, postMath } = getSafeRehypePluginSets();
