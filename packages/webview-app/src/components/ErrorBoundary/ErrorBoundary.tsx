@@ -134,7 +134,7 @@ export function ErrorDisplay({
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
     <ErrorDisplay
-      error={error}
+      error={normalizeError(error)}
       onReset={resetErrorBoundary}
       title="Render Error"
     />
@@ -191,7 +191,7 @@ export function MDXErrorBoundary({ children, onError }: MDXErrorBoundaryProps) {
       FallbackComponent={ErrorFallback}
       onError={(error, info) => {
         console.error('MDX Preview Error:', error, info);
-        onError?.(error);
+        onError?.(normalizeError(error));
       }}
     >
       {children}
