@@ -83,10 +83,7 @@ export class PreviewWebviewBridge {
       }
     }
 
-    log.debug(
-      'pushThemeState - pushing theme state',
-      themeState
-    );
+    log.debug('pushThemeState - pushing theme state', themeState);
     this.webviewHandle.setTheme(themeState);
   }
 

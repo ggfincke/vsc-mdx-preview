@@ -82,9 +82,7 @@ export class DependencyWatcher extends BaseWatcher {
       }
     }
     for (const fsPath of pathsToRemove) {
-      log.debug(
-        `Removing watcher (no longer imported): ${fsPath}`
-      );
+      log.debug(`Removing watcher (no longer imported): ${fsPath}`);
       // onEvict disposes watcher
       this.watchers.delete(fsPath);
     }
@@ -119,9 +117,7 @@ export class DependencyWatcher extends BaseWatcher {
       }
     }
 
-    log.debug(
-      `Watching ${this.watchers.size} local dependencies`
-    );
+    log.debug(`Watching ${this.watchers.size} local dependencies`);
   }
 
   // clear all dependencies & dispose watchers

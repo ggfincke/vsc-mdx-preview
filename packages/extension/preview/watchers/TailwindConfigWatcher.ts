@@ -64,9 +64,7 @@ export class TailwindConfigWatcher extends BaseWatcher {
       });
       this.watchers.push(watcher);
     }
-    log.debug(
-      `Watching ${this.watchFiles.length} file(s)`
-    );
+    log.debug(`Watching ${this.watchFiles.length} file(s)`);
   }
 
   protected onStop(): void {

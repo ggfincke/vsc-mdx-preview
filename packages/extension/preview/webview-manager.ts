@@ -38,21 +38,14 @@ let webviewResourcesError: Error | null = null;
 export function initWebviewAppHTMLResourcesAsync(
   context: vscode.ExtensionContext
 ): void {
-  log.debug(
-    'Starting background webview resource initialization'
-  );
+  log.debug('Starting background webview resource initialization');
   webviewResourcesPromise = initWebviewAppHTMLResources(context)
     .then(() => {
-      log.debug(
-        'Background resource initialization complete'
-      );
+      log.debug('Background resource initialization complete');
     })
     .catch((err) => {
       webviewResourcesError = err;
-      log.debug(
-        'Background resource initialization failed:',
-        err
-      );
+      log.debug('Background resource initialization failed:', err);
     });
 }
 
@@ -81,9 +74,7 @@ export async function initWebviewAppHTMLResources(
     VITE_MANIFEST_FILE
   );
 
-  log.debug(
-    `Reading manifest from: ${manifestUri.fsPath}`
-  );
+  log.debug(`Reading manifest from: ${manifestUri.fsPath}`);
   // use workspace.fs.readFile for extension resources (works in remote/virtual scenarios)
   const manifestBytes = await vscode.workspace.fs.readFile(manifestUri);
   const manifestContent = new TextDecoder().decode(manifestBytes);
@@ -111,12 +102,8 @@ export async function initWebviewAppHTMLResources(
       : undefined,
   };
   manager.setWebviewAppUris(webviewAppUris);
-  log.debug(
-    `Loaded mainScript: ${webviewAppUris.mainScript.fsPath}`
-  );
-  log.debug(
-    `Loaded mainStyle: ${webviewAppUris.mainStyle?.fsPath ?? 'none'}`
-  );
+  log.debug(`Loaded mainScript: ${webviewAppUris.mainScript.fsPath}`);
+  log.debug(`Loaded mainStyle: ${webviewAppUris.mainStyle?.fsPath ?? 'none'}`);
 }
 
 function getWebviewAppHTML(
@@ -128,9 +115,7 @@ function getWebviewAppHTML(
 ): string | undefined {
   const webviewAppUris = getPreviewManager().getWebviewAppUris();
   if (!webviewAppUris) {
-    log.debug(
-      'getWebviewAppHTML: webviewAppUris is undefined!'
-    );
+    log.debug('getWebviewAppHTML: webviewAppUris is undefined!');
     return undefined;
   }
 
@@ -142,9 +127,7 @@ function getWebviewAppHTML(
     ? webview.asWebviewUri(webviewAppUris.mainStyle)
     : undefined;
 
-  log.debug(
-    `getWebviewAppHTML: scriptUri=${scriptUri.toString()}`
-  );
+  log.debug(`getWebviewAppHTML: scriptUri=${scriptUri.toString()}`);
 
   let styleNodeHTML = '';
   const overrideBodyStyles = useWhiteBackground
@@ -211,9 +194,7 @@ function setPanelHTMLFromPreview(preview: Preview): void {
     trustState,
     preview.securityConfiguration.securityPolicy
   );
-  log.debug(
-    `CSP: ${csp.substring(0, CSP_DEBUG_PREVIEW_LENGTH)}...`
-  );
+  log.debug(`CSP: ${csp.substring(0, CSP_DEBUG_PREVIEW_LENGTH)}...`);
 
   const webviewAppHTML = getWebviewAppHTML(
     panel.webview,
@@ -224,9 +205,7 @@ function setPanelHTMLFromPreview(preview: Preview): void {
   );
 
   if (webviewAppHTML) {
-    log.debug(
-      `Setting webview HTML (${webviewAppHTML.length} chars)`
-    );
+    log.debug(`Setting webview HTML (${webviewAppHTML.length} chars)`);
     panel.webview.html = webviewAppHTML;
   } else {
     log.debug('webviewAppHTML is undefined!');

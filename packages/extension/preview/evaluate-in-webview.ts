@@ -22,7 +22,10 @@ import {
 import { getEvaluationEngine } from './EvaluationEngine';
 import { resolveNextraMeta, mergeNextraMeta } from '../nextra/MetaResolver';
 import { extractNextraFrontmatter } from '../compiler/shared/mdx-common';
-import { buildEffectivePreviewConfig } from '../config/EffectivePreviewConfig';
+import {
+  buildEffectivePreviewConfig,
+  toCompilerConfig,
+} from '../config/EffectivePreviewConfig';
 import {
   detectComponents,
   getUsedGenericComponents,
@@ -44,6 +47,10 @@ export default async function evaluateInWebview(
 
   // build effective config early to check for per-project enableScripts override
   const effectiveConfig = buildEffectivePreviewConfig({
+    docUri: preview.doc.uri,
+    docFsPath: fsPath,
+  });
+  const compilerConfig = toCompilerConfig(effectiveConfig, {
     docUri: preview.doc.uri,
     docFsPath: fsPath,
   });
@@ -71,9 +78,7 @@ export default async function evaluateInWebview(
     // send framework info so webview can lazy-load the right shims
     const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
     if (frameworkInfo.framework !== 'generic') {
-      log.debug(
-        `Sending framework to webview: ${frameworkInfo.framework}`
-      );
+      log.debug(`Sending framework to webview: ${frameworkInfo.framework}`);
       webviewHandle.setFramework(frameworkInfo.framework);
     }
 
@@ -81,7 +86,12 @@ export default async function evaluateInWebview(
       // trusted mode: full code evaluation
       log.debug('Using Trusted Mode');
 
-      const result = await engine.evaluateTrusted(text, fsPath, preview);
+      const result = await engine.evaluateTrusted(
+        text,
+        fsPath,
+        preview,
+        compilerConfig
+      );
 
       // update dependency watcher w/ local imports
       preview.updateDependencies(result.dependencies);
@@ -117,9 +127,7 @@ export default async function evaluateInWebview(
         }
       } catch (err) {
         // detection failure is non-fatal - webview will load all generic shims as fallback
-        log.debug(
-          `Component detection failed: ${extractErrorMessage(err)}`
-        );
+        log.debug(`Component detection failed: ${extractErrorMessage(err)}`);
       }
 
       log.debug('Calling webviewHandle.updatePreview');
@@ -130,15 +138,8 @@ export default async function evaluateInWebview(
       );
       log.debug('updatePreview called');
 
-      // rebuild effective config w/ frontmatter for Tailwind check
-      const tailwindEffectiveConfig = buildEffectivePreviewConfig({
-        docUri: preview.doc.uri,
-        docFsPath: fsPath,
-        frontmatter: result.frontmatter,
-      });
-
       // compile Tailwind CSS after preview update (skip if explicitly disabled)
-      if (tailwindEffectiveConfig.tailwind.enabled !== 'disabled') {
+      if (effectiveConfig.tailwind.enabled !== 'disabled') {
         const tailwindRequestId = preview.nextTailwindRequestId();
         void engine.processTailwindAsync(
           preview,
@@ -147,7 +148,7 @@ export default async function evaluateInWebview(
             entryFilePath: result.entryFilePath,
             entryFileDependencies: result.dependencies,
             trustState,
-            tailwindConfig: tailwindEffectiveConfig.tailwind,
+            tailwindConfig: effectiveConfig.tailwind,
           },
           tailwindRequestId,
           webviewHandle
@@ -171,7 +172,7 @@ export default async function evaluateInWebview(
         webviewHandle.setTailwindCss('');
       }
 
-      const result = await engine.evaluateSafe(text, preview.mdxPreviewConfig);
+      const result = await engine.evaluateSafe(text, compilerConfig);
 
       // push theme state w/ frontmatter overrides
       if (result.frontmatter) {
@@ -234,16 +235,11 @@ function sendNextraMetaIfNeeded(
 
     // only send if we have meaningful metadata
     if (Object.keys(mergedMeta).length > 0) {
-      log.debug(
-        'Sending Nextra meta to webview:',
-        mergedMeta
-      );
+      log.debug('Sending Nextra meta to webview:', mergedMeta);
       webviewHandle.setNextraMeta(mergedMeta);
     }
   } catch (err) {
     // non-fatal error, log & continue
-    log.debug(
-      `Error resolving Nextra meta: ${extractErrorMessage(err)}`
-    );
+    log.debug(`Error resolving Nextra meta: ${extractErrorMessage(err)}`);
   }
 }

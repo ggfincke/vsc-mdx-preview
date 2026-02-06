@@ -78,9 +78,7 @@ export class PreviewManager extends WithSubscribers<PreviewManager, void> {
       try {
         await this.currentPreview.clearAllCaches();
       } catch (error: unknown) {
-        log.debug(
-          `Failed to clear webview cache: ${error}`
-        );
+        log.debug(`Failed to clear webview cache: ${error}`);
       }
     }
   }

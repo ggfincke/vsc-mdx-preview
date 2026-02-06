@@ -2,7 +2,6 @@
 // orchestrates preview evaluation pipeline (document reading, MDX compilation, webview updates)
 
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import { TextDecoder } from 'util';
 import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
@@ -17,6 +16,7 @@ import type {
   ConfigurationState,
 } from './PreviewConfiguration';
 import type { Preview } from './preview-manager';
+import { readFileAsync } from '../utils/file-utils';
 
 // preview evaluator - orchestrate evaluation pipeline
 // handle document reading, version tracking, & calling evaluateInWebview
@@ -50,9 +50,7 @@ export class PreviewEvaluator {
     log.debug('updateWebview called');
     const { uri } = this.doc;
     const { scheme, fsPath } = uri;
-    log.debug(
-      `updateWebview scheme=${scheme}, fsPath=${fsPath}`
-    );
+    log.debug(`updateWebview scheme=${scheme}, fsPath=${fsPath}`);
 
     const currentVersion = this.doc.version;
     const docTracker = this.watcherManager.get<DocumentTracker>('document');
@@ -79,16 +77,25 @@ export class PreviewEvaluator {
           await evaluateInWebview(this.preview, this.text, fsPath);
         } else {
           // onSave or manual mode: read from disk
-          const text = await fs.promises.readFile(fsPath, { encoding: 'utf8' });
-          await evaluateInWebview(this.preview, text, fsPath);
+          let readError: unknown;
+          const savedText = await readFileAsync(fsPath, 'utf8', {
+            onError: (error) => {
+              readError = error;
+            },
+          });
+
+          if (savedText === null) {
+            throw readError instanceof Error
+              ? readError
+              : new Error(`Failed to read file: ${fsPath}`);
+          }
+          await evaluateInWebview(this.preview, savedText, fsPath);
         }
         break;
       }
       default: {
         // vscode-remote, vscode-vfs, etc
-        log.debug(
-          `updateWebview: default scheme (${scheme})`
-        );
+        log.debug(`updateWebview: default scheme (${scheme})`);
         let text = this.text;
         if (this.configuration.updateMode !== 'onType') {
           try {

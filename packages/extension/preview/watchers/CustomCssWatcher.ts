@@ -108,9 +108,7 @@ export class CustomCssWatcher extends BaseWatcher {
     });
     if (cssContent) {
       this.notifier?.setCustomCss?.(cssContent);
-      log.debug(
-        `Loaded custom CSS: ${cssPath} (${cssContent.length} chars)`
-      );
+      log.debug(`Loaded custom CSS: ${cssPath} (${cssContent.length} chars)`);
     }
     // silently fail if null - file might not exist yet
   }

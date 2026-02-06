@@ -3,10 +3,10 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
+import type { UpdateModeValue } from '@mdx-preview/shared';
 import { resolveTypescriptConfig, findTsConfig, resolveConfig } from './config';
 import type { TypeScriptConfiguration, ResolvedConfig } from '../types';
 import { DocumentTracker, DependencyWatcher, WatcherManager } from './watchers';
-import type { UpdateMode } from '../config';
 
 export interface DocumentState {
   doc: vscode.TextDocument;
@@ -127,7 +127,7 @@ export class PreviewDocumentHandler {
     fsPath: string,
     doc: vscode.TextDocument,
     active: boolean,
-    updateMode: UpdateMode,
+    updateMode: UpdateModeValue,
     markStaleFn: () => void,
     invalidateFn: (fsPath: string) => Promise<void>,
     debouncedUpdateFn: () => void
@@ -163,7 +163,7 @@ export class PreviewDocumentHandler {
   async handleDidSaveTextDocument(
     fsPath: string,
     active: boolean,
-    updateMode: UpdateMode,
+    updateMode: UpdateModeValue,
     markStaleFn: () => void,
     invalidateFn: (fsPath: string) => Promise<void>,
     updateWebviewFn: () => Promise<void>
