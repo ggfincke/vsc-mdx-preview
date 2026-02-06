@@ -161,7 +161,7 @@ These components are available without imports when `mdx-preview.components.buil
 | -------------------------------------- | -------------- | ----------------------------------------- |
 | **MDX: Open MDX Preview**              | `Cmd/Ctrl+K X` | Open preview for current file             |
 | **MDX: Refresh Preview**               | -              | Manually refresh the preview              |
-| **MDX: Toggle Script Execution**       | -              | Toggle between Safe Mode and Trusted Mode |
+| **MDX: Toggle Safe Mode**              | -              | Toggle between Safe Mode and Trusted Mode |
 | **MDX: Select Preview Theme**          | -              | Choose a preview theme                    |
 | **MDX: Select Code Block Theme**       | -              | Choose a syntax highlighting theme        |
 | **MDX: Select Mermaid Theme**          | -              | Choose a Mermaid diagram theme            |

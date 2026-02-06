@@ -118,6 +118,12 @@ class ExtensionHandle implements ExtensionRPC {
       return undefined;
     }
 
+    // guard against disposed preview (panel closed during in-flight RPC)
+    if (!this.preview.active) {
+      log.debug('fetch: preview is not active');
+      return undefined;
+    }
+
     // require Trusted Mode for module fetch
     const docUri = this.preview.doc.uri;
     if (

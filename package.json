@@ -1,6 +1,6 @@
 {
-  "name": "vscode-mdx-preview",
-  "displayName": "MDX Preview",
+  "name": "vsc-mdx-preview",
+  "displayName": "MDX Live Preview",
   "description": "Live MDX preview with React component rendering, syntax highlighting, and Safe/Trusted workspace security modes",
   "version": "1.0.0",
   "publisher": "ggfincke",
@@ -25,18 +25,18 @@
   ],
   "engines": {
     "vscode": "^1.90.0",
-    "node": ">=20.0.0"
+    "node": ">=18.0.0"
   },
   "categories": [
     "Programming Languages",
     "Visualization"
   ],
   "keywords": [
-    "Preview",
+    "preview",
     "mdx",
     "markdown",
-    "JavaScript",
-    "React",
+    "javascript",
+    "react",
     "mdx-js",
     "live-preview",
     "jsx",
@@ -54,13 +54,13 @@
   },
   "badges": [
     {
-      "url": "https://img.shields.io/visual-studio-marketplace/v/ggfincke.vscode-mdx-preview",
-      "href": "https://marketplace.visualstudio.com/items?itemName=ggfincke.vscode-mdx-preview",
+      "url": "https://img.shields.io/visual-studio-marketplace/v/ggfincke.vsc-mdx-preview",
+      "href": "https://marketplace.visualstudio.com/items?itemName=ggfincke.vsc-mdx-preview",
       "description": "VS Marketplace Version"
     },
     {
-      "url": "https://img.shields.io/visual-studio-marketplace/i/ggfincke.vscode-mdx-preview",
-      "href": "https://marketplace.visualstudio.com/items?itemName=ggfincke.vscode-mdx-preview",
+      "url": "https://img.shields.io/visual-studio-marketplace/i/ggfincke.vsc-mdx-preview",
+      "href": "https://marketplace.visualstudio.com/items?itemName=ggfincke.vsc-mdx-preview",
       "description": "VS Marketplace Installs"
     },
     {
@@ -237,7 +237,7 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "MDX Preview",
+      "title": "MDX Live Preview",
       "properties": {
         "mdx-preview.preview.enableScripts": {
           "type": "boolean",
@@ -693,7 +693,7 @@
   "overrides": {
     "@types/node": "^20.0.0",
     "comlink": "^4.4.1",
-    "lodash-es": "^4.17.23"
+    "lodash-es": "4.17.21"
   },
   "sideEffects": false
 }

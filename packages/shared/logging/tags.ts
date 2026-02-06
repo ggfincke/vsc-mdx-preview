@@ -71,6 +71,7 @@ export const LogTags = {
   TRUST_MANAGER: 'TRUST-MANAGER',
 
   // commands & activation
+  WORKSPACE: 'WORKSPACE',
   ACTIVATE: 'ACTIVATE',
   PREWARM: 'PREWARM',
   CMD: 'CMD',

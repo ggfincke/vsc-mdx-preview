@@ -7,7 +7,8 @@ import { LogTags } from '@mdx-preview/shared';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.PREVIEW);
-import { getPreviewManager } from '../services';
+import { getPreviewManager, getErrorReporter } from '../services';
+import { ErrorContext } from '../errors/ErrorReporter';
 
 import { createOrShowPanel, refreshPanel } from './webview-manager';
 import { Preview } from './Preview';
@@ -35,7 +36,12 @@ export async function openPreview(): Promise<void> {
   log.debug('Calling createOrShowPanel');
   await createOrShowPanel(currentPreview);
   log.debug('Calling updateWebview');
-  await currentPreview.updateWebview();
+  try {
+    await currentPreview.updateWebview();
+  } catch (error: unknown) {
+    log.error('Failed to update preview', error);
+    getErrorReporter().reportToUser(error, ErrorContext.Extension);
+  }
   log.debug('openPreview complete');
 }
 
@@ -48,6 +54,11 @@ export async function refreshPreview(): Promise<void> {
     return;
   }
   refreshPanel(currentPreview);
-  await currentPreview.updateWebview(true);
+  try {
+    await currentPreview.updateWebview(true);
+  } catch (error: unknown) {
+    log.error('Failed to refresh preview', error);
+    getErrorReporter().reportToUser(error, ErrorContext.Extension);
+  }
   log.debug('refreshPreview complete');
 }

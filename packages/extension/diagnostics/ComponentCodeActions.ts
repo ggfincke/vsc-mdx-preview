@@ -185,7 +185,7 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
       command: 'vscode.open',
       arguments: [
         vscode.Uri.parse(
-          'https://github.com/example/mdx-preview#component-mapping'
+          'https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/configuration.md#components'
         ),
       ],
     };

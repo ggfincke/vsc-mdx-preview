@@ -179,6 +179,9 @@ export class Preview {
     this.watcherManager = this.initializer.createWatchers(
       this.configManager.configuration.customCss,
       async (fsPath) => {
+        if (!this.active) {
+          return;
+        }
         await this.webviewBridge.invalidate(fsPath);
         await this.updateWebview(true);
       },

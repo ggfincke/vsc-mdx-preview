@@ -3,9 +3,14 @@
 
 import { workspace, ExtensionContext } from 'vscode';
 
+import { createTaggedLogger } from './logging';
+import { LogTags } from '@mdx-preview/shared';
 import { getPreviewManager, getConfigManager } from './services';
 import { handleDidChangeWorkspaceFolders } from './module-system/security/checkFsPath';
 import { PREVIEW_CONFIG_KEYS } from './config';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.WORKSPACE);
 
 // initialize workspace event handlers & register w/ extension context
 // disposables added to context.subscriptions for automatic cleanup
@@ -13,9 +18,13 @@ export function initWorkspaceHandlers(context: ExtensionContext): void {
   // handle document saves - refresh preview if saved file is relevant
   context.subscriptions.push(
     workspace.onDidSaveTextDocument((event) => {
-      const currentPreview = getPreviewManager().getCurrentPreview();
-      if (currentPreview) {
-        currentPreview.handleDidSaveTextDocument(event.uri.fsPath);
+      try {
+        const currentPreview = getPreviewManager().getCurrentPreview();
+        if (currentPreview) {
+          currentPreview.handleDidSaveTextDocument(event.uri.fsPath);
+        }
+      } catch (error: unknown) {
+        log.error('Error handling document save', error);
       }
     })
   );
@@ -23,12 +32,16 @@ export function initWorkspaceHandlers(context: ExtensionContext): void {
   // handle document changes - refresh preview on edit (if configured)
   context.subscriptions.push(
     workspace.onDidChangeTextDocument((event) => {
-      const currentPreview = getPreviewManager().getCurrentPreview();
-      if (currentPreview) {
-        currentPreview.handleDidChangeTextDocument(
-          event.document.uri.fsPath,
-          event.document
-        );
+      try {
+        const currentPreview = getPreviewManager().getCurrentPreview();
+        if (currentPreview) {
+          currentPreview.handleDidChangeTextDocument(
+            event.document.uri.fsPath,
+            event.document
+          );
+        }
+      } catch (error: unknown) {
+        log.error('Error handling document change', error);
       }
     })
   );

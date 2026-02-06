@@ -171,7 +171,7 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       new vscode.DiagnosticRelatedInformation(
         new vscode.Location(
           vscode.Uri.parse(
-            'https://github.com/example/mdx-preview#component-mapping'
+            'https://github.com/ggfincke/vscode-mdx-preview/blob/main/docs/configuration.md#components'
           ),
           new vscode.Range(0, 0, 0, 0)
         ),

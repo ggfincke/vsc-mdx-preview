@@ -10,6 +10,7 @@ build/extension/shared/**
 build/extension/shared-types/**
 build/extension/meta.json
 build/webview-app/.vite/**
+!build/webview-app/.vite/manifest.json
 
 # Stale assets
 assets/old_icon.png
