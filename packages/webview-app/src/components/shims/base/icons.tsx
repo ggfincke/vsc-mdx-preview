@@ -1,8 +1,6 @@
 // packages/webview-app/src/components/shims/base/icons.tsx
 // shared icon registry for all shim components
 
-/* eslint-disable react-refresh/only-export-components -- Icon registry is co-located with icon components */
-
 import React, { ReactElement } from 'react';
 import {
   CALLOUT_ICONS as SHARED_CALLOUT_ICONS,

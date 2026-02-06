@@ -2,8 +2,6 @@
 // shared base component for collapsible/details implementations
 // used by generic/Collapsible & docusaurus/Details
 
-/* eslint-disable react-refresh/only-export-components -- Class name presets are co-located with component */
-
 import React, { useState, ReactNode, ReactElement, SyntheticEvent, MouseEvent } from 'react';
 import { cn } from '../../../utils/cn';
 import { ChevronIcon } from './icons';

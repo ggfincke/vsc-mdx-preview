@@ -1,6 +1,7 @@
 // packages/extension/preview/watchers/BaseWatcher.ts
 // abstract base class for all watchers w/ common lifecycle management
 
+import debounce from 'lodash.debounce';
 import * as vscode from 'vscode';
 import { debug } from '../../logging';
 import {
@@ -20,6 +21,7 @@ type FileWatcherOptions = Omit<FileWatcherConfig, 'pattern' | 'logTag'>;
 // abstract base class for all watchers w/ common lifecycle management
 export abstract class BaseWatcher implements IWatcher {
   protected _isActive = false;
+  private _debouncedHandlers: ReturnType<typeof debounce>[] = [];
 
   // use log tag for debug logging (e.g., LogTags.DEP_WATCHER)
   protected abstract readonly logTag: LogTag;
@@ -59,6 +61,12 @@ export abstract class BaseWatcher implements IWatcher {
     }
 
     this._isActive = false;
+
+    // cancel all tracked debounced handlers before subclass cleanup
+    for (const handler of this._debouncedHandlers) {
+      handler.cancel();
+    }
+
     this.onStop();
 
     // reset ready promise state for potential restart
@@ -136,6 +144,7 @@ export abstract class BaseWatcher implements IWatcher {
 
   dispose(): void {
     this.stop();
+    this._debouncedHandlers = [];
     this.onDispose();
   }
 
@@ -190,6 +199,16 @@ export abstract class BaseWatcher implements IWatcher {
   }
 
   // helper methods for subclasses
+
+  // create a debounced wrapper that auto-cancels on stop()
+  protected createDebouncedHandler<T extends (...args: never[]) => void>(
+    fn: T,
+    delayMs: number
+  ): T & { cancel(): void; flush(): void } {
+    const handler = debounce(fn, delayMs);
+    this._debouncedHandlers.push(handler);
+    return handler as T & { cancel(): void; flush(): void };
+  }
 
   // dispose a single watcher safely
   protected disposeWatcher(

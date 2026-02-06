@@ -66,6 +66,14 @@ export default tseslint.config(
       'react-refresh/only-export-components': 'off',
     },
   },
+  // Shim files use factory patterns (createCodeBlock, createNextraWrapper, Object.assign)
+  // that react-refresh can't statically analyze as components
+  {
+    files: ['**/shims/**/*.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
   {
     ignores: ['dist/**', 'node_modules/**', 'vite.config.ts'],
   }

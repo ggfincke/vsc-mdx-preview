@@ -157,4 +157,4 @@ Based on the original [vscode-mdx-preview](https://github.com/xyc/vscode-mdx-pre
 
 ## License
 
-GPL-3.0-or-later
+[GPL-3.0-or-later](LICENSE) (in accordance with the original project)

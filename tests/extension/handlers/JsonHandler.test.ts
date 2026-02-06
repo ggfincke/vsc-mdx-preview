@@ -2,13 +2,14 @@
 // unit tests for JSON file handler
 
 import { describe, it, expect } from 'vitest';
-import { JsonHandler } from '../../../packages/extension/module-system/handlers/JsonHandler';
+import { createSimpleHandler, buildModuleExportResult } from '../../../packages/extension/module-system/handlers/result-builders';
+import { JSON_EXTENSIONS } from '../../../packages/extension/constants';
 import type { Preview } from '../../../packages/extension/preview/preview-manager';
 
 const mockPreview = {} as Preview;
 
-describe('JsonHandler', () => {
-  const handler = new JsonHandler();
+describe('JSON handler', () => {
+  const handler = createSimpleHandler(JSON_EXTENSIONS, buildModuleExportResult);
 
   it('should handle .json extension', () => {
     expect(handler.extensions).toContain('.json');

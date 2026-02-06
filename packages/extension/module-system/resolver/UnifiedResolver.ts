@@ -5,7 +5,7 @@ import { resolveAlias, isBuiltInShim } from './alias-resolver';
 import { createTaggedLogger } from '../../logging';
 import { isNpmModuleId, LogTags } from '@mdx-preview/shared';
 import { createResettableSingleton } from '../../utils/singleton-factory';
-import { buildShimResolutionResult } from './result-builders';
+import { buildShimResolutionResult } from './resolution-builders';
 import {
   getTypeScriptPathStrategy,
   getEnhancedResolveStrategy,

@@ -5,25 +5,27 @@ import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 import { getConfigManager } from '../services';
 
-const toggleUseVscodeMarkdownStyles = async (): Promise<void> => {
-  const configManager = getConfigManager();
-  const currentValue = configManager.get('preview.useVscodeMarkdownStyles');
-  await configManager.set('preview.useVscodeMarkdownStyles', !currentValue);
-};
+// boolean config keys used by toggle commands
+type BooleanToggleKey =
+  | 'preview.useVscodeMarkdownStyles'
+  | 'preview.useWhiteBackground';
 
-const toggleUseWhiteBackground = async (): Promise<void> => {
-  const configManager = getConfigManager();
-  const currentValue = configManager.get('preview.useWhiteBackground');
-  await configManager.set('preview.useWhiteBackground', !currentValue);
-};
+// create toggle handler for a boolean config key
+function createBooleanToggle(key: BooleanToggleKey): () => Promise<void> {
+  return async (): Promise<void> => {
+    const configManager = getConfigManager();
+    const currentValue = configManager.get(key);
+    await configManager.set(key, !currentValue);
+  };
+}
 
 export const commands: CommandDefinition[] = [
   {
     id: CommandNames.TOGGLE_VSCODE_MARKDOWN_STYLES,
-    handler: toggleUseVscodeMarkdownStyles,
+    handler: createBooleanToggle('preview.useVscodeMarkdownStyles'),
   },
   {
     id: CommandNames.TOGGLE_WHITE_BACKGROUND,
-    handler: toggleUseWhiteBackground,
+    handler: createBooleanToggle('preview.useWhiteBackground'),
   },
 ];

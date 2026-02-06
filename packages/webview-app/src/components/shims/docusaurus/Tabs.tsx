@@ -2,8 +2,6 @@
 // Docusaurus Tabs/TabItem component shim for MDX Preview
 // provides preview-compatible versions of @theme/Tabs & @theme/TabItem
 
-/* eslint-disable react-refresh/only-export-components -- Context & hooks are co-located with component */
-
 import {
   createTabs,
   type BaseTabsProps,

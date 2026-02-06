@@ -12,7 +12,7 @@ import {
   type ResolutionMode,
   type IResolutionStrategy,
 } from '../../../types';
-import { buildResolutionResult } from '../result-builders';
+import { buildResolutionResult } from '../resolution-builders';
 import { probeModuleFile, probeModuleFileAsync } from '../file-prober';
 
 // module-level tagged logger for file probe strategy

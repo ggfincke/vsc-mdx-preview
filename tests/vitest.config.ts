@@ -1,5 +1,5 @@
 // tests/vitest.config.ts
-// Vitest config for integration tests
+// Vitest config for all tests
 
 import { defineConfig } from 'vitest/config';
 import path from 'path';

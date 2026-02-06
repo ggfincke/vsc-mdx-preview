@@ -14,16 +14,20 @@ export interface FileTypeHandler {
 }
 
 // import individual handlers
-import { JsonHandler } from './JsonHandler';
-import { CssHandler } from './CssHandler';
+import {
+  createSimpleHandler,
+  buildCssResult,
+  buildModuleExportResult,
+} from './result-builders';
+import { CSS_EXTENSIONS, JSON_EXTENSIONS } from '../../constants';
 import { SassHandler } from './SassHandler';
 import { ImageHandler } from './ImageHandler';
 import { ScriptHandler } from './ScriptHandler';
 
 // handler instances
 const handlers: FileTypeHandler[] = [
-  new JsonHandler(),
-  new CssHandler(),
+  createSimpleHandler(JSON_EXTENSIONS, buildModuleExportResult),
+  createSimpleHandler(CSS_EXTENSIONS, buildCssResult),
   new SassHandler(),
   new ImageHandler(),
   new ScriptHandler(),

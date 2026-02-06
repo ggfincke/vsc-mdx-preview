@@ -1,7 +1,6 @@
 // packages/extension/preview/watchers/TailwindConfigWatcher.ts
 // watch Tailwind config & entry CSS files for changes
 
-import debounce from 'lodash.debounce';
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../logging';
 import { CONFIG_WATCHER_DEBOUNCE_MS } from '../../tailwind/constants';
@@ -14,7 +13,10 @@ const log = createTaggedLogger(LogTags.TAILWIND_WATCHER);
 export class TailwindConfigWatcher extends BaseWatcher {
   protected readonly logTag = LogTags.TAILWIND_WATCHER;
   private watchers: vscode.FileSystemWatcher[] = [];
-  private _debouncedOnChange: ReturnType<typeof debounce>;
+  private _debouncedOnChange: (() => void) & {
+    cancel(): void;
+    flush(): void;
+  };
   private pendingChanges = new Set<string>();
 
   constructor(
@@ -22,7 +24,7 @@ export class TailwindConfigWatcher extends BaseWatcher {
     private onChange: (changedPaths: string[]) => void
   ) {
     super();
-    this._debouncedOnChange = debounce(() => {
+    this._debouncedOnChange = this.createDebouncedHandler(() => {
       const changedPaths = Array.from(this.pendingChanges);
       this.pendingChanges.clear();
       if (changedPaths.length === 0) {
@@ -68,7 +70,6 @@ export class TailwindConfigWatcher extends BaseWatcher {
   }
 
   protected onStop(): void {
-    this._debouncedOnChange.cancel();
     this.pendingChanges.clear();
     this.disposeCollection(this.watchers);
   }

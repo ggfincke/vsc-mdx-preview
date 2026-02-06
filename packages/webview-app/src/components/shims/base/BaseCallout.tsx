@@ -1,8 +1,6 @@
 // packages/webview-app/src/components/shims/base/BaseCallout.tsx
 // factory for creating framework-specific Callout/Aside components
 
-/* eslint-disable react-refresh/only-export-components -- Factory module exports both helper components and factory function */
-
 import React, { ReactNode, ReactElement } from 'react';
 
 // icon source configuration - SVG string or React component
