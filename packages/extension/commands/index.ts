@@ -19,6 +19,7 @@ import { commands as frameworkSelectionCommands } from './framework-selection';
 import { commands as cacheCommands } from './cache';
 import { commands as configInfoCommands } from './config-info';
 import { commands as debugCommands } from './debug';
+import { commands as authoringGuideCommands } from './authoring-guide';
 
 import type { CommandDefinition } from '../types';
 
@@ -32,6 +33,7 @@ const allCommands: CommandDefinition[] = [
   ...cacheCommands,
   ...configInfoCommands,
   ...debugCommands,
+  ...authoringGuideCommands,
 ];
 
 // register all MDX Preview commands w/ VS Code

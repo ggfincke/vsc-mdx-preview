@@ -33,6 +33,9 @@ export const CommandNames = {
 
   // debug commands
   TOGGLE_DEBUG_OUTPUT: 'mdx-preview.commands.toggleDebugOutput',
+
+  // authoring guide commands
+  COPY_AUTHORING_GUIDE: 'mdx-preview.commands.copyAuthoringGuide',
 } as const;
 
 export type CommandName = (typeof CommandNames)[keyof typeof CommandNames];
