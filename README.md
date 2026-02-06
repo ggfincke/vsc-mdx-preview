@@ -467,8 +467,8 @@ For comprehensive troubleshooting, see [docs/troubleshooting.md](https://github.
 
 The `examples/` directory contains working examples for various use cases:
 
-| Example                                       | Description                                 |
-| --------------------------------------------- | ------------------------------------------- |
+| Example                                                                                                | Description                                 |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
 | [`basic/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/basic/)                   | Fundamental MDX features and Tailwind CSS   |
 | [`docusaurus/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/docusaurus/)         | Docusaurus framework with @theme components |
 | [`starlight/`](https://github.com/ggfincke/vscode-mdx-preview/tree/main/examples/starlight/)           | Astro Starlight components                  |
