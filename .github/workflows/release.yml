@@ -8,6 +8,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -44,12 +46,36 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Check if version exists on VS Code Marketplace
+        id: check-vsce
+        run: |
+          if npx vsce show ggfincke.vsc-mdx-preview --json 2>/dev/null | grep -q "\"${{ steps.version.outputs.VERSION }}\""; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Version ${{ steps.version.outputs.VERSION }} already published to VS Code Marketplace, skipping"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
       - name: Publish to VS Code Marketplace
+        if: steps.check-vsce.outputs.exists != 'true'
         run: npx vsce publish --no-yarn
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
+      - name: Check if version exists on Open VSX
+        id: check-ovsx
+        run: |
+          if curl -s "https://open-vsx.org/api/ggfincke/vsc-mdx-preview/${{ steps.version.outputs.VERSION }}" 2>/dev/null | grep -q "\"version\""; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Version ${{ steps.version.outputs.VERSION }} already published to Open VSX, skipping"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
       - name: Publish to Open VSX
+        if: steps.check-ovsx.outputs.exists != 'true'
         run: npx ovsx publish *.vsix --pat $OVSX_PAT
         continue-on-error: true
         env:
