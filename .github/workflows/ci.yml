@@ -29,6 +29,9 @@ jobs:
       - name: Run linting
         run: npm run lint
 
+      - name: Check formatting
+        run: npm run format:check
+
       - name: Run type checking
         run: npm run typecheck
 
@@ -54,6 +57,9 @@ jobs:
 
       - name: Build extension
         run: npm run build
+
+      - name: Bundle size check
+        run: npm run size:report
 
       - name: Package extension
         run: npm run vscode:package -- --no-yarn

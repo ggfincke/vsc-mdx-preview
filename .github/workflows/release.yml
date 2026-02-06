@@ -25,6 +25,9 @@ jobs:
       - name: Run linting
         run: npm run lint
 
+      - name: Check formatting
+        run: npm run format:check
+
       - name: Run type checking
         run: npm run typecheck
 
@@ -45,6 +48,12 @@ jobs:
         run: npx vsce publish --no-yarn
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Publish to Open VSX
+        run: npx ovsx publish *.vsix --pat $OVSX_PAT
+        continue-on-error: true
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
