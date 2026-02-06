@@ -6,21 +6,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock vscode
 vi.mock('vscode', () => ({}));
 
-// Mock services w/ hoisted mocks
-const { mockConfigManager } = vi.hoisted(() => ({
-  mockConfigManager: {
-    get: vi.fn((key: string): unknown => {
-      if (key === 'components.builtins') return true;
-      if (key === 'components.unknownBehavior') return 'placeholder';
-      return undefined;
-    }),
-  },
-}));
-
-vi.mock('../../packages/extension/services', () => ({
-  getConfigManager: () => mockConfigManager,
-}));
-
 // Mock logging
 vi.mock('../../packages/extension/logging', () => ({
   error: vi.fn(),
@@ -37,20 +22,18 @@ vi.mock('../../packages/extension/logging', () => ({
 
 // Import after mocks
 import { compileSafe } from '../../packages/extension/compiler/safe/compile';
-import { FIXTURES } from '../helpers';
+import { FIXTURES, createMockCompilerConfig } from '../helpers';
 
 describe('compileSafe()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockConfigManager.get.mockImplementation((key: string) => {
-      if (key === 'components.builtins') return true;
-      if (key === 'components.unknownBehavior') return 'placeholder';
-      return undefined;
-    });
   });
 
   it('compiles basic MDX to HTML', async () => {
-    const result = await compileSafe(FIXTURES.basicMdx);
+    const result = await compileSafe(
+      FIXTURES.basicMdx,
+      createMockCompilerConfig()
+    );
 
     expect(result.html).toContain('<h1');
     expect(result.html).toContain('Hello');
@@ -59,7 +42,10 @@ describe('compileSafe()', () => {
   });
 
   it('extracts frontmatter and returns it separately', async () => {
-    const result = await compileSafe(FIXTURES.mdxWithFrontmatter);
+    const result = await compileSafe(
+      FIXTURES.mdxWithFrontmatter,
+      createMockCompilerConfig()
+    );
 
     expect(result.frontmatter).toBeDefined();
     expect(result.frontmatter.title).toBe('Test Document');
@@ -70,27 +56,30 @@ describe('compileSafe()', () => {
   });
 
   it('creates placeholder for unknown JSX components (default behavior)', async () => {
-    const result = await compileSafe(FIXTURES.mdxWithJsx);
+    const result = await compileSafe(
+      FIXTURES.mdxWithJsx,
+      createMockCompilerConfig()
+    );
 
     expect(result.html).toContain('mdx-unknown-component-placeholder');
     expect(result.html).toContain('CustomComponent');
   });
 
   it('strips unknown components when unknownBehavior is "strip"', async () => {
-    mockConfigManager.get.mockImplementation((key: string) => {
-      if (key === 'components.builtins') return true;
-      if (key === 'components.unknownBehavior') return 'strip';
-      return undefined;
-    });
-
-    const result = await compileSafe(FIXTURES.mdxWithJsx);
+    const result = await compileSafe(
+      FIXTURES.mdxWithJsx,
+      createMockCompilerConfig({ componentsUnknownBehavior: 'strip' })
+    );
 
     expect(result.html).not.toContain('CustomComponent');
     expect(result.html).not.toContain('mdx-unknown-component');
   });
 
   it('replaces JSX expressions with placeholder', async () => {
-    const result = await compileSafe(FIXTURES.mdxWithExpression);
+    const result = await compileSafe(
+      FIXTURES.mdxWithExpression,
+      createMockCompilerConfig()
+    );
 
     expect(result.html).toContain('mdx-expression-placeholder');
     expect(result.html).toContain('{...}');
@@ -99,7 +88,10 @@ describe('compileSafe()', () => {
   });
 
   it('handles code blocks correctly', async () => {
-    const result = await compileSafe(FIXTURES.mdxWithCodeBlock);
+    const result = await compileSafe(
+      FIXTURES.mdxWithCodeBlock,
+      createMockCompilerConfig()
+    );
 
     expect(result.html).toContain('<pre');
     expect(result.html).toContain('<code');
@@ -107,7 +99,10 @@ describe('compileSafe()', () => {
   });
 
   it('returns empty frontmatter when none present', async () => {
-    const result = await compileSafe(FIXTURES.basicMdx);
+    const result = await compileSafe(
+      FIXTURES.basicMdx,
+      createMockCompilerConfig()
+    );
 
     expect(result.frontmatter).toEqual({});
   });

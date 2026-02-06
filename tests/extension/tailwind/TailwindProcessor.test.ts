@@ -38,7 +38,9 @@ vi.mock('../../../packages/extension/logging', () => ({
   })),
 }));
 
-function createTailwindConfig(overrides: Partial<TailwindConfig> = {}): TailwindConfig {
+function createTailwindConfig(
+  overrides: Partial<TailwindConfig> = {}
+): TailwindConfig {
   return {
     enabled: 'enabled',
     maxFileSizeBytes: 1024 * 1024,
@@ -144,7 +146,9 @@ describe('TailwindProcessor', () => {
 
   it('returns compiled CSS and watch files when config is present', async () => {
     const processor = TailwindProcessor.getInstance();
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-tailwind-'));
+    const tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-tailwind-')
+    );
     tempDirs.push(tempDir);
 
     const configPath = path.join(tempDir, 'tailwind.config.js');
@@ -152,7 +156,9 @@ describe('TailwindProcessor', () => {
     fs.writeFileSync(configPath, 'module.exports = {}', 'utf-8');
     fs.writeFileSync(cssPath, '@tailwind base;', 'utf-8');
 
-    const preview = createMockPreview({ fsPath: path.join(tempDir, 'doc.mdx') }) as any;
+    const preview = createMockPreview({
+      fsPath: path.join(tempDir, 'doc.mdx'),
+    }) as any;
 
     const detector = (processor as any).detector;
     const scanner = (processor as any).scanner;
@@ -187,5 +193,27 @@ describe('TailwindProcessor', () => {
     expect(result.enabled).toBe(true);
     expect(result.css).toBe('/* compiled */');
     expect(result.watchFiles).toEqual([configPath, cssPath].sort());
+  });
+
+  it('invalidates specific scan cache entry when fsPath is provided', () => {
+    const processor = TailwindProcessor.getInstance();
+    const scanCache = (processor as any).scanCache;
+    const deleteSpy = vi.spyOn(scanCache, 'delete').mockReturnValue(true);
+
+    processor.invalidateScanCache('/workspace/components/Card.tsx');
+
+    expect(deleteSpy).toHaveBeenCalledWith('/workspace/components/Card.tsx');
+  });
+
+  it('clears scan cache when fsPath is not provided', () => {
+    const processor = TailwindProcessor.getInstance();
+    const scanCache = (processor as any).scanCache;
+    const clearSpy = vi
+      .spyOn(scanCache, 'clear')
+      .mockImplementation(() => undefined);
+
+    processor.invalidateScanCache();
+
+    expect(clearSpy).toHaveBeenCalledTimes(1);
   });
 });
