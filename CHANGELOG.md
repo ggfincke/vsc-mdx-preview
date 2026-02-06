@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-02-06
+
+### Added
+
+- **Copy Authoring Guide**: New "Copy Authoring Guide to Clipboard" command for quick access to MDX authoring reference
+
+### Infrastructure
+
+- Dependabot for automated npm & GitHub Actions dependency updates
+- Prettier format check & bundle size gate in CI pipeline
+- Open VSX publishing in release workflow
+- GitHub issue templates (bug report & feature request) and PR template
+- `.nvmrc` for Node 20 version pinning
+
 ## [1.0.0] - 2026-02-04
 
 This release represents a complete rewrite of the MDX Preview extension, introducing a two-mode security model, modern framework support, and extensive new features while maintaining backward compatibility with existing MDX workflows.

@@ -637,7 +637,8 @@
     "format": "prettier --write \"packages/**/*.{ts,js,json}\" \"*.{md,json}\"",
     "format:check": "prettier --check \"packages/**/*.{ts,js,json}\" \"*.{md,json}\"",
     "size:report": "node scripts/size-report.mjs",
-    "generate:shims": "tsx packages/shared/scripts/generate-shims.ts"
+    "generate:shims": "tsx packages/shared/scripts/generate-shims.ts",
+    "version": "node scripts/check-changelog.mjs && git add CHANGELOG.md"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
