@@ -83,10 +83,10 @@ export abstract class SingletonService<
 }
 
 // abstract singleton base that adds subscribe/notify helpers for service events
-export abstract class WithSubscribers<
-  T extends SingletonService<T>,
-  EventData,
-> extends SingletonService<T> implements ISubscribable<EventData> {
+export abstract class WithSubscribers<T extends SingletonService<T>, EventData>
+  extends SingletonService<T>
+  implements ISubscribable<EventData>
+{
   private readonly subscriberManager: SubscriberManager<EventData>;
 
   protected constructor(

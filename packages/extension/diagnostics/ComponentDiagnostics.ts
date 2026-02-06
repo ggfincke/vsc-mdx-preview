@@ -144,9 +144,7 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       // update collection
       this.diagnosticCollection.set(document.uri, diagnostics);
 
-      log.debug(
-        `Set ${diagnostics.length} diagnostics for ${document.uri}`
-      );
+      log.debug(`Set ${diagnostics.length} diagnostics for ${document.uri}`);
     } catch (err) {
       getErrorReporter().reportSilent(err, ErrorContext.Extension, {
         phase: 'diagnostics',

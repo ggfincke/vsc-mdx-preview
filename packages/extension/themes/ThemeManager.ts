@@ -15,7 +15,10 @@ import type {
 } from './types';
 import { getOppositeTheme, isLightPreviewTheme } from './types';
 
-export class ThemeManager extends WithSubscribers<ThemeManager, WebviewThemeState> {
+export class ThemeManager extends WithSubscribers<
+  ThemeManager,
+  WebviewThemeState
+> {
   protected static override instance: ThemeManager | undefined;
   protected readonly logTag = LogTags.THEME_MANAGER;
 
