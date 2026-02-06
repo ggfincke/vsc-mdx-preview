@@ -1,6 +1,7 @@
 // packages/extension/utils/lazy-import.ts
 // utility for lazy-loading modules w/ caching & race condition handling
 
+import * as path from 'path';
 import { pathToFileURL } from 'url';
 
 // create lazy import function that caches the module after first load
@@ -117,12 +118,11 @@ export function createKeyedLazyImport<T>(options: KeyedLazyImportOptions<T>): {
 // load a module from path, trying CommonJS first then ESM fallback
 // return default export or module
 export async function loadModuleWithEsmFallback<T>(
-  modulePath: string
+  moduleId: string
 ): Promise<T> {
   try {
     // try CommonJS require first (most common case)
-
-    const mod = require(modulePath);
+    const mod = require(moduleId);
     return (mod.default ?? mod) as T;
   } catch (error: unknown) {
     // check if it's an ESM-only module
@@ -133,7 +133,9 @@ export async function loadModuleWithEsmFallback<T>(
 
     if (isEsm) {
       // try ESM import
-      const specifier = pathToFileURL(modulePath).href;
+      const specifier = path.isAbsolute(moduleId)
+        ? pathToFileURL(moduleId).href
+        : moduleId;
       const mod = await import(specifier);
       return ((mod as { default?: unknown }).default ?? mod) as T;
     }

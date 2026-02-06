@@ -8,7 +8,12 @@
 
 import * as fs from 'fs';
 import { createTaggedLogger } from '../logging';
-import { extractErrorMessage, LogTags, type TaggedLogger } from '@mdx-preview/shared';
+import {
+  extractErrorMessage,
+  LogTags,
+  type TaggedLogger,
+} from '@mdx-preview/shared';
+import { raceTimeout } from './async-utils';
 
 // default logger for file operations
 const defaultLog = createTaggedLogger(LogTags.FILE);
@@ -19,6 +24,12 @@ export interface FileOptions {
   logOnError?: boolean;
   // tagged logger for debug messages (defaults to FILE tag)
   logger?: TaggedLogger;
+  // timeout for async reads in milliseconds (default: no timeout)
+  timeoutMs?: number;
+  // custom timeout error message for async reads
+  timeoutMessage?: string;
+  // invoke callback when a read/parse operation fails
+  onError?: (error: unknown) => void;
 }
 
 // synchronous file operations
@@ -32,6 +43,7 @@ export function readFileSync(
   try {
     return fs.readFileSync(filePath, encoding);
   } catch (err) {
+    options?.onError?.(err);
     if (options?.logOnError) {
       const log = options.logger ?? defaultLog;
       log.debug(`Failed to read ${filePath}: ${extractErrorMessage(err)}`);
@@ -53,6 +65,7 @@ export function readJsonSync<T = unknown>(
   try {
     return JSON.parse(content) as T;
   } catch (err) {
+    options?.onError?.(err);
     if (options?.logOnError) {
       const log = options.logger ?? defaultLog;
       log.debug(
@@ -97,8 +110,22 @@ export async function readFileAsync(
   options?: FileOptions
 ): Promise<string | null> {
   try {
-    return await fs.promises.readFile(filePath, encoding);
+    const readPromise = fs.promises.readFile(filePath, encoding);
+    const timeoutMs = options?.timeoutMs;
+
+    if (timeoutMs === undefined) {
+      return await readPromise;
+    }
+
+    const timeoutMessage =
+      options?.timeoutMessage ??
+      `Read timed out after ${timeoutMs}ms: ${filePath}`;
+    return await raceTimeout(readPromise, {
+      timeoutMs,
+      errorMessage: timeoutMessage,
+    });
   } catch (err) {
+    options?.onError?.(err);
     if (options?.logOnError) {
       const log = options.logger ?? defaultLog;
       log.debug(`Failed to read ${filePath}: ${extractErrorMessage(err)}`);
@@ -120,6 +147,7 @@ export async function readJsonAsync<T = unknown>(
   try {
     return JSON.parse(content) as T;
   } catch (err) {
+    options?.onError?.(err);
     if (options?.logOnError) {
       const log = options.logger ?? defaultLog;
       log.debug(
@@ -169,6 +197,7 @@ export async function readFileIfUnderSize(
     }
     return await fs.promises.readFile(filePath, 'utf-8');
   } catch (err) {
+    options?.onError?.(err);
     if (options?.logOnError) {
       const log = options.logger ?? defaultLog;
       log.debug(`Failed to read ${filePath}: ${extractErrorMessage(err)}`);
