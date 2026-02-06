@@ -1,4 +1,4 @@
-// packages/extension/module-system/resolver/result-builders.ts
+// packages/extension/module-system/resolver/resolution-builders.ts
 // builder functions for constructing ResolutionResult objects consistently
 
 import type { ResolutionResult } from '../../types';

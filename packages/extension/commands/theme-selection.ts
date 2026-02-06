@@ -16,100 +16,82 @@ import {
   type CodeBlockTheme,
   type MermaidTheme,
 } from '../themes';
+import type { SettingKey } from '../config/ConfigManager';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 
 const log = createTaggedLogger(LogTags.THEME);
 
-const selectPreviewTheme = async (): Promise<void> => {
-  log.debug('selectPreviewTheme command triggered');
+// theme selector factory options
+interface ThemeSelectorOptions<T extends string> {
+  configKey: SettingKey;
+  themes: readonly T[];
+  labels: Record<T, string>;
+  placeHolder: string;
+  logMessage: string;
+}
 
-  const configManager = getConfigManager();
-  const currentTheme = configManager.get(
-    'preview.previewTheme'
-  ) as PreviewTheme;
+// create QuickPick handler for a theme setting
+function createThemeSelector<T extends string>(
+  options: ThemeSelectorOptions<T>
+): () => Promise<void> {
+  return async (): Promise<void> => {
+    log.debug(options.logMessage);
 
-  const items = PREVIEW_THEMES.map((theme) => ({
-    label: PREVIEW_THEME_LABELS[theme],
-    description: theme === currentTheme ? '(current)' : undefined,
-    theme,
-  }));
+    const configManager = getConfigManager();
+    const currentTheme = configManager.get(options.configKey) as T;
 
-  const selected = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Select preview theme',
-    matchOnDescription: true,
-  });
+    const items = options.themes.map((theme) => ({
+      label: options.labels[theme],
+      description: theme === currentTheme ? '(current)' : undefined,
+      theme,
+    }));
 
-  if (selected) {
-    await configManager.set(
-      'preview.previewTheme',
-      selected.theme,
-      vscode.ConfigurationTarget.Global
-    );
-    getPreviewManager().refreshAllPreviews();
-  }
-};
+    const selected = await vscode.window.showQuickPick(items, {
+      placeHolder: options.placeHolder,
+      matchOnDescription: true,
+    });
 
-const selectCodeBlockTheme = async (): Promise<void> => {
-  log.debug('selectCodeBlockTheme command triggered');
-
-  const configManager = getConfigManager();
-  const currentTheme = configManager.get(
-    'preview.codeBlockTheme'
-  ) as CodeBlockTheme;
-
-  const items = CODE_BLOCK_THEMES.map((theme) => ({
-    label: CODE_BLOCK_THEME_LABELS[theme],
-    description: theme === currentTheme ? '(current)' : undefined,
-    theme,
-  }));
-
-  const selected = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Select code block theme',
-    matchOnDescription: true,
-  });
-
-  if (selected) {
-    await configManager.set(
-      'preview.codeBlockTheme',
-      selected.theme,
-      vscode.ConfigurationTarget.Global
-    );
-    getPreviewManager().refreshAllPreviews();
-  }
-};
-
-const selectMermaidTheme = async (): Promise<void> => {
-  log.debug('selectMermaidTheme command triggered');
-
-  const configManager = getConfigManager();
-  const currentTheme = configManager.get(
-    'preview.mermaidTheme'
-  ) as MermaidTheme;
-
-  const items = MERMAID_THEMES.map((theme) => ({
-    label: MERMAID_THEME_LABELS[theme],
-    description: theme === currentTheme ? '(current)' : undefined,
-    theme,
-  }));
-
-  const selected = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Select Mermaid diagram theme',
-    matchOnDescription: true,
-  });
-
-  if (selected) {
-    await configManager.set(
-      'preview.mermaidTheme',
-      selected.theme,
-      vscode.ConfigurationTarget.Global
-    );
-    getPreviewManager().refreshAllPreviews();
-  }
-};
+    if (selected) {
+      await configManager.set(
+        options.configKey,
+        selected.theme,
+        vscode.ConfigurationTarget.Global
+      );
+      getPreviewManager().refreshAllPreviews();
+    }
+  };
+}
 
 export const commands: CommandDefinition[] = [
-  { id: CommandNames.SELECT_PREVIEW_THEME, handler: selectPreviewTheme },
-  { id: CommandNames.SELECT_CODE_BLOCK_THEME, handler: selectCodeBlockTheme },
-  { id: CommandNames.SELECT_MERMAID_THEME, handler: selectMermaidTheme },
+  {
+    id: CommandNames.SELECT_PREVIEW_THEME,
+    handler: createThemeSelector<PreviewTheme>({
+      configKey: 'preview.previewTheme',
+      themes: PREVIEW_THEMES,
+      labels: PREVIEW_THEME_LABELS,
+      placeHolder: 'Select preview theme',
+      logMessage: 'selectPreviewTheme command triggered',
+    }),
+  },
+  {
+    id: CommandNames.SELECT_CODE_BLOCK_THEME,
+    handler: createThemeSelector<CodeBlockTheme>({
+      configKey: 'preview.codeBlockTheme',
+      themes: CODE_BLOCK_THEMES,
+      labels: CODE_BLOCK_THEME_LABELS,
+      placeHolder: 'Select code block theme',
+      logMessage: 'selectCodeBlockTheme command triggered',
+    }),
+  },
+  {
+    id: CommandNames.SELECT_MERMAID_THEME,
+    handler: createThemeSelector<MermaidTheme>({
+      configKey: 'preview.mermaidTheme',
+      themes: MERMAID_THEMES,
+      labels: MERMAID_THEME_LABELS,
+      placeHolder: 'Select Mermaid diagram theme',
+      logMessage: 'selectMermaidTheme command triggered',
+    }),
+  },
 ];

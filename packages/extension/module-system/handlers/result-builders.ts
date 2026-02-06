@@ -2,6 +2,8 @@
 // builder functions for constructing FetchResult objects consistently
 
 import type { FetchResult } from '@mdx-preview/shared';
+import type { Preview } from '../../preview/preview-manager';
+import type { FileTypeHandler } from './index';
 
 // build a FetchResult for CSS content (no JavaScript code)
 export function buildCssResult(fsPath: string, css: string): FetchResult {
@@ -35,5 +37,22 @@ export function buildScriptResult(
     fsPath,
     code,
     dependencies,
+  };
+}
+
+// create a simple handler that delegates directly to a builder function
+export function createSimpleHandler(
+  extensions: readonly string[],
+  builderFn: (fsPath: string, code: string) => FetchResult
+): FileTypeHandler {
+  return {
+    extensions: [...extensions],
+    async handle(
+      code: string,
+      fsPath: string,
+      _preview: Preview
+    ): Promise<FetchResult> {
+      return builderFn(fsPath, code);
+    },
   };
 }

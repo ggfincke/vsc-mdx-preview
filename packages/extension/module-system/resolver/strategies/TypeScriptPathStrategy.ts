@@ -12,7 +12,7 @@ import {
   type ResolutionMode,
   type IResolutionStrategy,
 } from '../../../types';
-import { buildResolutionResult } from '../result-builders';
+import { buildResolutionResult } from '../resolution-builders';
 import {
   clearStatCache as clearSharedStatCache,
   probeTypeScriptFile,

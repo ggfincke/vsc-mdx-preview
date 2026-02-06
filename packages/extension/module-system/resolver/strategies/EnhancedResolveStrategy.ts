@@ -13,7 +13,7 @@ import {
   type ResolutionMode,
   type IResolutionStrategy,
 } from '../../../types';
-import { buildResolutionResult } from '../result-builders';
+import { buildResolutionResult } from '../resolution-builders';
 
 // module-level tagged logger for enhanced-resolve strategy
 const log = createTaggedLogger(LogTags.ENHANCED_RESOLVE);
