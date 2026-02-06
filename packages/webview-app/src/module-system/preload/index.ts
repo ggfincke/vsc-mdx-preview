@@ -66,9 +66,7 @@ export function initPreloadedModules(
   // for conditional preloading optimization
   // load generic CSS (always needed for fallback styling)
   loadFrameworkCss('generic');
-  log.debug(
-    'Core modules initialized (generic shims deferred)'
-  );
+  log.debug('Core modules initialized (generic shims deferred)');
 }
 
 // load framework-specific shims on demand
@@ -156,9 +154,7 @@ export async function ensureGenericShims(
     return;
   }
 
-  log.debug(
-    `Loading generic shims w/ retry: ${toLoad.join(', ')}`
-  );
+  log.debug(`Loading generic shims w/ retry: ${toLoad.join(', ')}`);
 
   // use resilient loading w/ retry for each shim
   genericShimsLoadPromise = (async () => {
@@ -176,14 +172,10 @@ export async function ensureGenericShims(
     }
 
     if (result.failed.length > 0) {
-      log.debug(
-        `Failed to load generic shims: ${result.failed.join(', ')}`
-      );
+      log.debug(`Failed to load generic shims: ${result.failed.join(', ')}`);
     }
 
-    log.debug(
-      `Generic shims loaded: ${result.loaded.join(', ')}`
-    );
+    log.debug(`Generic shims loaded: ${result.loaded.join(', ')}`);
   })();
 
   await genericShimsLoadPromise;

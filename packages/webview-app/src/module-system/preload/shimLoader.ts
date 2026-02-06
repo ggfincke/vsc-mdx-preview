@@ -53,9 +53,7 @@ async function retryLoad<T>(
     try {
       const result = await loader();
       if (attempt > 0) {
-        log.debug(
-          `${name} succeeded on attempt ${attempt + 1}`
-        );
+        log.debug(`${name} succeeded on attempt ${attempt + 1}`);
       }
       return { result, attempts: attempt + 1 };
     } catch (error: unknown) {
@@ -116,9 +114,7 @@ export async function loadFrameworkShimsWithRetry(
     log.debug(`Generic fallback loaded for ${framework}`);
   } catch (fallbackError) {
     const errorMessage = extractErrorMessage(fallbackError);
-    log.debug(
-      `Generic fallback also failed: ${errorMessage}`
-    );
+    log.debug(`Generic fallback also failed: ${errorMessage}`);
     result.failedShims.push('generic-fallback');
   }
 
