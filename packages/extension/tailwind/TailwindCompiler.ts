@@ -1,13 +1,12 @@
 // packages/extension/tailwind/TailwindCompiler.ts
 // compile Tailwind CSS via PostCSS w/ lazy-loading for startup performance
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { pathToFileURL } from 'url';
 import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { TailwindError } from '../errors';
 import { MAX_INLINE_SOURCE_CHUNK_SIZE } from './constants';
+import { loadModuleWithEsmFallback } from '../utils/lazy-import';
+import { readFileAsync } from '../utils/file-utils';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
 
@@ -26,29 +25,9 @@ async function getPostCSS(): Promise<PostCSSFn> {
   }
 
   log.debug('Lazy-loading postcss...');
-
-  try {
-    // try CommonJS require first (most common case)
-    const mod = require('postcss');
-    postcssInstance = (mod.default ?? mod) as PostCSSFn;
-    log.debug('PostCSS loaded via require');
-    return postcssInstance;
-  } catch (error: unknown) {
-    // handle ESM-only postcss package
-    const isEsm =
-      error instanceof Error &&
-      'code' in error &&
-      (error as NodeJS.ErrnoException).code === 'ERR_REQUIRE_ESM';
-
-    if (!isEsm) {
-      throw error;
-    }
-
-    const mod = await import('postcss');
-    postcssInstance = (mod.default ?? mod) as PostCSSFn;
-    log.debug('PostCSS loaded via dynamic import (ESM)');
-    return postcssInstance;
-  }
+  postcssInstance = await loadModuleWithEsmFallback<PostCSSFn>('postcss');
+  log.debug('PostCSS loaded');
+  return postcssInstance;
 }
 
 // clear postcss cache (for testing or cache refresh scenarios)
@@ -103,7 +82,23 @@ export class TailwindCompiler {
 
   private async loadInputCss(options: TailwindCompileOptions): Promise<string> {
     if (options.entryCssPath) {
-      return fs.promises.readFile(options.entryCssPath, 'utf-8');
+      let readError: unknown;
+      const entryCss = await readFileAsync(options.entryCssPath, 'utf-8', {
+        onError: (error) => {
+          readError = error;
+        },
+      });
+
+      if (entryCss === null) {
+        throw readError instanceof Error
+          ? readError
+          : new TailwindError(
+              `Failed to read Tailwind CSS entry file: ${options.entryCssPath}`,
+              'E562',
+              'config'
+            );
+      }
+      return entryCss;
     }
 
     // v4: skip preflight to avoid overriding markdown styles in previews
@@ -155,24 +150,7 @@ export class TailwindCompiler {
   }
 
   private async loadModule(id: string): Promise<PostCSSPluginFactory> {
-    let plugin: unknown;
-
-    try {
-      const mod = require(id);
-      plugin = mod.default ?? mod;
-    } catch (error: unknown) {
-      const isEsm =
-        error instanceof Error &&
-        'code' in error &&
-        (error as NodeJS.ErrnoException).code === 'ERR_REQUIRE_ESM';
-      if (!isEsm) {
-        throw error;
-      }
-      const specifier = path.isAbsolute(id) ? pathToFileURL(id).href : id;
-      const mod = await import(specifier);
-      plugin = (mod as { default?: unknown }).default ?? mod;
-    }
-
+    const plugin = await loadModuleWithEsmFallback<unknown>(id);
     return this.validatePluginModule(plugin, id);
   }
 

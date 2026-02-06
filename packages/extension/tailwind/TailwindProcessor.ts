@@ -12,18 +12,23 @@ import type { ResolutionContext } from '../types';
 import { ErrorContext, ErrorSeverity } from '../errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
-import { TailwindScanCache } from './TailwindScanCache';
 import { TailwindCompiler, type TailwindVersion } from './TailwindCompiler';
 import {
   MIN_SUPPORTED_TAILWIND_VERSION,
   MAX_KNOWN_TAILWIND_VERSION,
   TAILWIND_CACHE_SCHEMA_VERSION,
   CACHE_DEFAULT_MAX_ENTRIES,
+  SCAN_CACHE_DEFAULT_MAX_ENTRIES,
   CACHE_DEFAULT_TTL_MS,
 } from './constants';
-import { LRUCache, LogTags } from '@mdx-preview/shared';
+import {
+  ContentHashCache,
+  LRUCache,
+  LogTags,
+  normalizeError,
+  type TrustState,
+} from '@mdx-preview/shared';
 import type { Preview } from '../preview/preview-manager';
-import { normalizeError, type TrustState } from '@mdx-preview/shared';
 import type { TailwindConfig } from '../types';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
@@ -50,13 +55,17 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   private detector = new TailwindDetector();
   private scanner = new TailwindScanner();
   private cache: LRUCache<string, string>;
-  private scanCache = new TailwindScanCache();
+  private scanCache: ContentHashCache<string[]>;
   private compiler = new TailwindCompiler();
 
   protected constructor() {
     super();
     this.cache = new LRUCache<string, string>({
       maxEntries: CACHE_DEFAULT_MAX_ENTRIES,
+      ttlMs: CACHE_DEFAULT_TTL_MS,
+    });
+    this.scanCache = new ContentHashCache<string[]>({
+      maxEntries: SCAN_CACHE_DEFAULT_MAX_ENTRIES,
       ttlMs: CACHE_DEFAULT_TTL_MS,
     });
   }
@@ -244,9 +253,12 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   // useful when DependencyWatcher detects external file changes
   invalidateScanCache(fsPath?: string): void {
     if (fsPath) {
-      this.scanCache.invalidate(fsPath);
+      if (this.scanCache.delete(fsPath)) {
+        log.debug(`Invalidated scan cache for ${fsPath}`);
+      }
     } else {
       this.scanCache.clear();
+      log.debug('Scan cache cleared');
     }
   }
 

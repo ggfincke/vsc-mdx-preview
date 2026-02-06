@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import { extractErrorMessage, LogTags, Semaphore } from '@mdx-preview/shared';
 import { createTaggedLogger } from '../logging';
 import { CLASS_TOKEN_RE, TAILWIND_FILE_READ_LIMIT } from './constants';
+import { readFileAsync } from '../utils/file-utils';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
 const readSemaphore = new Semaphore(TAILWIND_FILE_READ_LIMIT);
@@ -75,7 +76,23 @@ export class FileScanValidator {
         log.debug(`Skipping large file: ${fsPath}`);
         return null;
       }
-      return await fs.promises.readFile(fsPath, 'utf-8');
+
+      let readError: unknown;
+      const content = await readFileAsync(fsPath, 'utf-8', {
+        onError: (error) => {
+          readError = error;
+        },
+      });
+
+      if (content === null) {
+        const reason =
+          readError !== undefined
+            ? extractErrorMessage(readError)
+            : 'Unknown read error';
+        log.debug(`Skipping unreadable file: ${fsPath} (${reason})`);
+      }
+
+      return content;
     } catch (err) {
       log.debug(
         `Skipping unreadable file: ${fsPath} (${extractErrorMessage(err)})`

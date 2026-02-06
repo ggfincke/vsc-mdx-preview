@@ -2,12 +2,12 @@
 // scan imported dependencies for Tailwind classes
 
 import * as path from 'path';
-import { Semaphore } from '@mdx-preview/shared';
+import { ContentHashCache, Semaphore } from '@mdx-preview/shared';
 import { getUnifiedResolver } from '../../module-system/resolver/UnifiedResolver';
 import type { ResolutionContext, TextExtractor } from '../../types';
 import { FileScanValidator } from '../FileScanValidator';
-import { TailwindScanCache, computeContentHash } from '../TailwindScanCache';
 import { TAILWIND_DEPENDENCY_RESOLUTION_LIMIT } from '../constants';
+import { computeContentHash } from './content-hash';
 
 const resolveSemaphore = new Semaphore(TAILWIND_DEPENDENCY_RESOLUTION_LIMIT);
 
@@ -24,7 +24,7 @@ export class DependencyScanner {
     maxFileSizeBytes: number,
     extractFromText: TextExtractor,
     providedContext?: ResolutionContext,
-    scanCache?: TailwindScanCache
+    scanCache?: ContentHashCache<string[]>
   ): Promise<{ classes: Set<string>; scannedFiles: string[] }> {
     const classSet = new Set<string>();
     const scannedFiles: string[] = [];
@@ -47,8 +47,10 @@ export class DependencyScanner {
       const hash = computeContentHash(content);
 
       // check cache first
-      const cached = scanCache?.get(fsPath, hash);
-      if (cached) {
+      const cached = scanCache
+        ? scanCache.getIfHashMatches(fsPath, hash)
+        : null;
+      if (cached !== null) {
         // use cached classes
         for (const cls of cached) {
           classSet.add(cls);
@@ -64,7 +66,7 @@ export class DependencyScanner {
         }
 
         // store in cache
-        scanCache?.set(fsPath, hash, Array.from(fileClassSet));
+        scanCache?.setWithHash(fsPath, hash, Array.from(fileClassSet));
       }
 
       scannedFiles.push(fsPath);

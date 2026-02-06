@@ -25,9 +25,8 @@ export type {
   TailwindScanResult,
 } from './TailwindScanner';
 
-// scan caching - per-file class extraction cache
-export { TailwindScanCache, computeContentHash } from './TailwindScanCache';
-export type { TailwindScanCacheOptions } from './TailwindScanCache';
+// scan hashing - utility for incremental scan cache keys
+export { computeContentHash } from './scanning/content-hash';
 
 // compilation - PostCSS integration for v3/v4
 export { TailwindCompiler } from './TailwindCompiler';

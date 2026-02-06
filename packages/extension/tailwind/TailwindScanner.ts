@@ -2,8 +2,8 @@
 // coordinator for extracting Tailwind class candidates from MDX/JSX content
 
 import { PatternScanner, ContentScanner, DependencyScanner } from './scanning';
-import { TailwindScanCache } from './TailwindScanCache';
 import type { ResolutionContext } from '../types';
+import type { ContentHashCache } from '@mdx-preview/shared';
 
 export interface TailwindScanOptions {
   includeDependencies: boolean;
@@ -13,7 +13,7 @@ export interface TailwindScanOptions {
   // resolution context for proper import resolution (parity w/ module-system)
   resolutionContext?: ResolutionContext;
   // optional scan cache for incremental scanning
-  scanCache?: TailwindScanCache;
+  scanCache?: ContentHashCache<string[]>;
 }
 
 export interface TailwindScanResult {

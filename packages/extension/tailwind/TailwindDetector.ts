@@ -200,16 +200,12 @@ export class TailwindDetector {
     );
     if (commonResult) {
       this.entryCssCache.set(cacheKey, commonResult);
-      log.debug(
-        `Found entry CSS in common location: ${commonResult}`
-      );
+      log.debug(`Found entry CSS in common location: ${commonResult}`);
       return commonResult;
     }
 
     // fall back to full workspace scan if not found in common locations
-    log.debug(
-      'Entry CSS not in common locations, scanning workspace...'
-    );
+    log.debug('Entry CSS not in common locations, scanning workspace...');
     const include = new vscode.RelativePattern(workspaceRoot, '**/*.css');
     const exclude = '**/node_modules/**';
     const candidates = await vscode.workspace.findFiles(
@@ -320,9 +316,7 @@ export class TailwindDetector {
     }
 
     if (!resolved) {
-      log.debug(
-        `Tailwind CSS not found in workspace: ${workspaceRoot}`
-      );
+      log.debug(`Tailwind CSS not found in workspace: ${workspaceRoot}`);
       const info: TailwindVersionInfo = { version: null, major: null };
       this.versionCache.set(cacheKey, info);
       return info;
@@ -347,9 +341,7 @@ export class TailwindDetector {
       modulePath: path.dirname(resolved),
     };
     this.versionCache.set(cacheKey, info);
-    log.debug(
-      `Workspace Tailwind version: ${version ?? 'unknown'}`
-    );
+    log.debug(`Workspace Tailwind version: ${version ?? 'unknown'}`);
     return info;
   }
 
