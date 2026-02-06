@@ -55,11 +55,19 @@ jobs:
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
 
+      - name: Extract release notes from changelog
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          awk "/^## \\[$VERSION\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" CHANGELOG.md > release-notes.md
+          echo "" >> release-notes.md
+          echo "**Full Changelog**: https://github.com/ggfincke/vsc-mdx-preview/commits/v$VERSION" >> release-notes.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
+          name: v${{ steps.version.outputs.VERSION }}
           files: '*.vsix'
-          generate_release_notes: true
+          body_path: release-notes.md
           draft: false
           prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
         env:
