@@ -96,7 +96,7 @@ registry.register('TRUST_MANAGER', () => TrustManager.getInstance());
 
 // Register subsystems AFTER services (so they dispose BEFORE services)
 registerResolverSubsystem();
-registerMetaSubsystem();
+registerCacheSubsystem();
 ```
 
 **Disposal (in extension.ts deactivate):**
@@ -137,7 +137,7 @@ export function registerMySubsystem(): void {
 
 **Current Subsystems:**
 - `ResolverSubsystem` - Resolver singletons, cached file system, stat/compiled caches
-- `MetaSubsystem` - Nextra `_meta.json` file watchers & cache
+- `CacheSubsystem` - Component detection cache, path security caches, & other unmanaged caches
 
 ## Service Access Patterns
 

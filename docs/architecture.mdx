@@ -181,7 +181,7 @@ sequenceDiagram
     participant Preview as PreviewManager
 
     VSCode->>Extension: activate()
-    Extension->>Registry: Register 12 services
+    Extension->>Registry: Register 12 services + 2 subsystems
     Extension->>Extension: initWebviewAppHTMLResourcesAsync() [background]
     Extension->>Extension: setupTrustHandlers()
     Extension->>Extension: registerAllCommands()
@@ -203,10 +203,10 @@ sequenceDiagram
 
 **Activation Flow (`extension.ts`):**
 
-1. **Service Registration** - Register 12 services in dependency order
+1. **Service Registration** - Register 12 services + 2 subsystems in dependency order
 2. **Background Resource Loading** - Load Vite manifest asynchronously (non-blocking)
 3. **Event Handlers** - Trust events, settings changes, theme changes
-4. **Commands** - Register all preview/zoom/config commands
+4. **Commands** - Register all preview/config/theme/debug commands
 5. **File Watchers** - Package.json watcher for resolver cache invalidation
 
 **Deactivation:**
@@ -235,11 +235,11 @@ graph TD
 
     subgraph "Subsystems"
         RS[ResolverSubsystem]
-        MS[MetaSubsystem]
+        CS[CacheSubsystem]
     end
 
     REG --> RS
-    REG --> MS
+    REG --> CS
 ```
 
 **Key Features:**
@@ -279,7 +279,7 @@ The extension distinguishes between **Services** and **Subsystems** for lifecycl
 | **Use Case** | Lifecycle management, VS Code disposables, subscriptions | Stateless utilities, caches, watchers |
 | **Registration** | `ServiceRegistry.register()` | `ServiceRegistry.registerSubsystem()` |
 | **Disposal Order** | Second (after subsystems) | First (before services) |
-| **Examples** | TrustManager, ConfigManager, PreviewManager | ResolverSubsystem, MetaSubsystem |
+| **Examples** | TrustManager, ConfigManager, PreviewManager | ResolverSubsystem, CacheSubsystem |
 
 **Why this distinction?**
 
@@ -289,7 +289,7 @@ The extension distinguishes between **Services** and **Subsystems** for lifecycl
 
 **Current Subsystems:**
 - `ResolverSubsystem` - Module resolution strategies, cached file system, stat/compiled caches
-- `MetaSubsystem` - Nextra `_meta.json` file watchers and cache
+- `CacheSubsystem` - Component detection cache, path security caches, and other unmanaged caches
 
 ### Preview Management
 
@@ -321,6 +321,7 @@ Each `Preview` instance is composed of specialized modules:
 | `WatcherManager` | Dependency and config file watchers |
 | `PreviewState` | Evaluation results and Tailwind tracking |
 | `PreviewEvaluator` | Document reading and evaluation orchestration |
+| `EvaluationEngine` | MDX compilation (safe/trusted) and async Tailwind processing |
 
 **Handshake Protocol:**
 
@@ -348,30 +349,28 @@ Extension and webview communicate using Comlink for type-safe RPC over VS Code's
 
 The extension calls methods on the webview via `WebviewHandle`:
 
-```typescript title="packages/extension/rpc-extension.ts"
-interface WebviewRemoteHandle {
+```typescript title="packages/shared/index.ts"
+interface WebviewRPC {
   // State management
   setTrustState(state: TrustState): void
-  updatePreview(code: string, path: string, deps: string[]): void
+  setFramework(framework: FrameworkType): void
+  setUsedComponents(components: string[]): void
+  updatePreview(code: string, entryFilePath: string, entryFileDependencies: string[]): void
   updatePreviewSafe(html: string): void
   showPreviewError(error: PreviewError): void
 
-  // Styling
-  setTheme(state: ThemeState): void
-  setCustomCss(css: string): void
-  setTailwindCss(css: string): void
-
   // Module invalidation
   invalidate(fsPath: string): Promise<void>
+  clearAllCaches(): Promise<void>
   setStale(isStale: boolean): void
+
+  // Styling
+  setCustomCss(css: string): void
+  setTailwindCss(css: string): void
+  setTheme(state: WebviewThemeState): void
 
   // Nextra support
   setNextraMeta(meta: NextraPageMeta): void
-
-  // Zoom controls
-  zoomIn(): void
-  zoomOut(): void
-  resetZoom(): void
 }
 ```
 
@@ -379,8 +378,8 @@ interface WebviewRemoteHandle {
 
 The webview calls methods on the extension via `ExtensionHandle`:
 
-```typescript title="packages/extension/rpc-extension-handle.ts"
-class ExtensionHandle {
+```typescript title="packages/shared/index.ts"
+interface ExtensionRPC {
   // Lifecycle
   handshake(): void
 
@@ -394,12 +393,14 @@ class ExtensionHandle {
     parentId: string
   ): Promise<FetchResult | undefined>
 
-  // Document access
-  getDocument(uri: string): Promise<string | undefined>
-  openTextDocument(fsPath: string): Promise<void>
+  // Settings & trust
+  openSettings(settingId?: string): void
+  manageTrust(): void
 
-  // External links
-  openExternal(url: string): Promise<void>
+  // Navigation
+  openExternal(url: string): void
+  openDocument(relativePath: string, line?: number, column?: number): Promise<void>
+  openPreview(relativePath: string): Promise<void>
 }
 ```
 
@@ -866,7 +867,7 @@ const FRAMEWORK_PRIORITY = [
 
 | Framework | Detection Package | Example Aliases |
 |-----------|-------------------|-----------------|
-| Docusaurus | `@docusaurus/core` | `@theme/Tabs`, `@theme/Admonition` |
+| Docusaurus | `@docusaurus/core` or `@docusaurus/preset-classic` | `@theme/Tabs`, `@theme/Admonition` |
 | Starlight | `@astrojs/starlight` | `@astrojs/starlight/components` |
 | Nextra | `nextra` | `nextra/components` |
 | Next.js | `next` + MDX config | `next/image`, `next/link` |
@@ -1064,7 +1065,7 @@ The extension supports configurable preview and code block themes.
 
 ### Preview Themes
 
-15+ themes from Markdown Preview Enhanced:
+16 themes from Markdown Preview Enhanced:
 
 | Light Themes | Dark Themes |
 |--------------|-------------|
@@ -1076,7 +1077,7 @@ The extension supports configurable preview and code block themes.
 
 ### Code Block Themes
 
-24 syntax highlighting themes via Shiki with CSS variables:
+24 syntax highlighting themes (plus `auto` and `default`) via Shiki with CSS variables:
 
 ```typescript title="packages/extension/themes/types.ts"
 type CodeBlockTheme =
@@ -1115,7 +1116,7 @@ sequenceDiagram
 
 ## Commands
 
-The extension provides VS Code commands organized by category.
+The extension provides 17 VS Code commands organized by category.
 
 ### Preview Commands
 
@@ -1123,7 +1124,34 @@ The extension provides VS Code commands organized by category.
 |------------|-------------|
 | `mdx-preview.commands.openPreview` | Open MDX preview for active document |
 | `mdx-preview.commands.refreshPreview` | Refresh current preview |
-| `mdx-preview.commands.toggleScrollSync` | Toggle scroll synchronization |
+
+### Config Toggle Commands
+
+| Command ID | Description |
+|------------|-------------|
+| `mdx-preview.commands.toggleUseVscodeMarkdownStyles` | Toggle VS Code markdown styles |
+| `mdx-preview.commands.toggleUseWhiteBackground` | Toggle white background |
+
+### Security Commands
+
+| Command ID | Description |
+|------------|-------------|
+| `mdx-preview.commands.changeSecuritySettings` | Change security settings |
+| `mdx-preview.commands.toggleScripts` | Toggle script execution (Trusted Mode) |
+
+### Theme Commands
+
+| Command ID | Description |
+|------------|-------------|
+| `mdx-preview.commands.selectPreviewTheme` | Select preview theme from list |
+| `mdx-preview.commands.selectCodeBlockTheme` | Select code block theme from list |
+| `mdx-preview.commands.selectMermaidTheme` | Select Mermaid diagram theme |
+
+### Framework Commands
+
+| Command ID | Description |
+|------------|-------------|
+| `mdx-preview.commands.selectFramework` | Select MDX framework |
 
 ### Cache Commands
 
@@ -1132,10 +1160,10 @@ The extension provides VS Code commands organized by category.
 | `mdx-preview.commands.clearAllCaches` | Clear all caches (resolver, Sass, webview modules) |
 
 The `clearAllCaches` command clears:
-1. **Extension-side caches**: Resolver cache, Sass module cache
-2. **Webview-side caches**: Module cache, style cache (via RPC)
+1. **Extension-side caches**: Resolver cache, Sass module cache, component detection cache, path security caches
+2. **Webview-side caches**: Module cache, style cache, dependency tracker (via RPC)
 
-### Debugging Commands
+### Config Info Commands
 
 | Command ID | Description |
 |------------|-------------|
@@ -1146,20 +1174,17 @@ The `showEffectiveConfig` command opens a JSON document showing:
 - **Effective Config**: Merged configuration values
 - **Sources**: Origin of each setting (frontmatter, config file, workspace settings, user settings, default)
 
-### Zoom Commands
+### Debug Commands
 
 | Command ID | Description |
 |------------|-------------|
-| `mdx-preview.commands.zoomIn` | Increase preview zoom |
-| `mdx-preview.commands.zoomOut` | Decrease preview zoom |
-| `mdx-preview.commands.resetZoom` | Reset preview zoom to 100% |
+| `mdx-preview.commands.toggleDebugOutput` | Toggle debug output in Output panel |
 
-### Theme Commands
+### Authoring Commands
 
 | Command ID | Description |
 |------------|-------------|
-| `mdx-preview.commands.selectPreviewTheme` | Select preview theme from list |
-| `mdx-preview.commands.selectCodeBlockTheme` | Select code block theme from list |
+| `mdx-preview.commands.copyAuthoringGuide` | Copy MDX authoring guide to clipboard |
 
 ---
 
@@ -1565,10 +1590,20 @@ All parallel operations use a custom `Semaphore` utility to prevent resource exh
 
 ### Shared Package
 
-| File | Purpose |
-|------|---------|
-| `index.ts` | Shared types (TrustState, FetchResult, etc.) |
-| `registry/` | Component registry (generic, framework shims) |
+| Directory | Purpose |
+|-----------|---------|
+| `index.ts` | Shared types (TrustState, FetchResult, ExtensionRPC, WebviewRPC, etc.) |
+| `registry/` | Component registry (generic, framework shims, query functions) |
+| `logging/` | LogLevel, LogTags, TaggedLogger types, createTaggedLoggerFactory |
+| `errors/` | ModuleError class, error codes, factory functions, suggestions |
+| `config/` | SETTINGS_DEFAULTS, enums, JSON schema for VS Code settings |
+| `utils/` | LRUCache, Semaphore, module ID utilities, validation helpers |
+| `callout/` | Callout type definitions and normalizers |
+| `icons/` | Centralized icon definitions (callout, GitHub alert, file tree) |
+| `constants.ts` | Shared timing and limit constants |
+| `core-modules.ts` | PRELOADED_MODULE_IDS list |
+| `codegen/` | Code generation utilities (shims, config schema) |
+| `shims/` | Shim configuration data |
 
 ---
 

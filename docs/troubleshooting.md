@@ -41,11 +41,7 @@ File > Open Folder > Select your project folder
 
 **3. Refresh the preview**
 
-Use the keyboard shortcut to refresh:
-- **Mac:** `Cmd+R`
-- **Windows/Linux:** `Ctrl+R`
-
-Or use the Command Palette:
+Use the Command Palette:
 ```
 MDX Preview: Refresh Preview
 ```
@@ -528,10 +524,10 @@ Large numbers of imports slow down resolution. Consider consolidating imports.
 
 **Solutions:**
 
-**1. Clear module cache**
+**1. Clear all caches**
 
 ```
-Command Palette > MDX Preview: Clear Module Cache
+Command Palette > MDX Preview: Clear All Caches
 ```
 
 **2. Reduce Tailwind cache**
@@ -614,11 +610,15 @@ External scripts/styles may be blocked. Use local resources instead.
 
 ### Check Effective Configuration
 
-View what configuration is being applied:
+Use the built-in command to view the full effective configuration:
 
-1. Open Output panel (View > Output)
-2. Select "MDX Preview"
-3. Look for "Config loaded" or "Effective config" entries
+```
+Command Palette > MDX Preview: Show Effective Configuration
+```
+
+This opens a JSON document showing metadata (document path, framework, trust state), merged configuration values, and the source of each setting (frontmatter, config file, workspace settings, user settings, or default).
+
+You can also check the Output panel (View > Output > "MDX Preview") for configuration loading logs.
 
 ### Common Log Tags
 
@@ -642,34 +642,22 @@ View what configuration is being applied:
 **1. Refresh preview**
 
 ```
-Cmd+R / Ctrl+R
+Command Palette > MDX Preview: Refresh Preview
 ```
 
-**2. Clear module cache**
+**2. Clear all caches**
 
 ```
-Command Palette > MDX Preview: Clear Module Cache
+Command Palette > MDX Preview: Clear All Caches
 ```
 
-**3. Clear resolver cache**
+This clears all extension-side caches (resolver, Sass, component detection, path security) and all webview-side caches (modules, styles, dependencies) in one command.
 
-```
-Command Palette > MDX Preview: Clear Resolver Cache
-```
-
-**4. Reload window**
+**3. Reload window**
 
 ```
 Command Palette > Developer: Reload Window
 ```
-
-### Available Cache Commands
-
-| Command | Purpose |
-|---------|---------|
-| `MDX Preview: Clear Module Cache` | Clear cached modules in webview |
-| `MDX Preview: Clear Resolver Cache` | Clear file resolution cache |
-| `MDX Preview: Clear Config Cache` | Clear configuration file cache |
 
 ---
 

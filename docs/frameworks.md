@@ -10,7 +10,7 @@ MDX Preview supports the following frameworks out of the box:
 
 | Framework | Detection | Component Shims |
 |-----------|-----------|-----------------|
-| **Docusaurus** | `@docusaurus/core` | `@theme/Tabs`, `@theme/TabItem`, `@theme/CodeBlock`, `@theme/Details` |
+| **Docusaurus** | `@docusaurus/core` or `@docusaurus/preset-classic` | `@theme/Tabs`, `@theme/TabItem`, `@theme/CodeBlock`, `@theme/Details` |
 | **Starlight** | `@astrojs/starlight` | `Card`, `CardGrid`, `LinkCard`, `Steps`, `Badge`, `Aside`, `Tabs`, `TabItem`, `FileTree`, `Code` |
 | **Nextra** | `nextra` | `Callout`, `Tabs`, `Cards`, `FileTree`, `Steps`, `Bleed` |
 | **Next.js** | `next` + MDX package | `next/image`, `next/link` |
@@ -245,7 +245,7 @@ The extension detects frameworks by reading your `package.json` and checking for
 
 ```mermaid
 flowchart TD
-    A[Read package.json] --> B{@docusaurus/core?}
+    A[Read package.json] --> B{"@docusaurus/core or preset-classic?"}
     B -->|Yes| C[Docusaurus]
     B -->|No| D{@astrojs/starlight?}
     D -->|Yes| E[Starlight]
