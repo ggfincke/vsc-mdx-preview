@@ -756,7 +756,7 @@ No. For security, only local workspace files and npm packages can be imported.
 
 ### How do I report a bug?
 
-Open an issue at: https://github.com/ggfincke/vscode-mdx-preview/issues
+Open an issue at: https://github.com/ggfincke/vsc-mdx-preview/issues
 
 Include:
 1. VS Code version
@@ -771,5 +771,5 @@ Include:
 
 1. Check the [Output panel](#viewing-logs) for detailed error messages
 2. Try the [debugging techniques](#debugging-techniques)
-3. Search existing [GitHub issues](https://github.com/ggfincke/vscode-mdx-preview/issues)
+3. Search existing [GitHub issues](https://github.com/ggfincke/vsc-mdx-preview/issues)
 4. Open a new issue with reproduction steps

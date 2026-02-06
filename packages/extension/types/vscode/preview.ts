@@ -2,14 +2,13 @@
 // type definitions for preview system
 
 import type * as vscode from 'vscode';
-import type { TrustState } from '@mdx-preview/shared';
-import type { TypeScriptConfiguration } from '../core/module-system';
 import type {
-  ResolvedConfig,
-  TailwindConfig,
-  UpdateMode,
-  TailwindEnabledSetting,
-} from '../core/config';
+  TrustState,
+  UpdateModeValue,
+  TailwindEnabledValue,
+} from '@mdx-preview/shared';
+import type { TypeScriptConfiguration } from '../core/module-system';
+import type { ResolvedConfig, TailwindConfig } from '../core/config';
 import type { SecurityPolicy } from './csp';
 
 // webview app URIs (loaded from Vite manifest)
@@ -26,7 +25,7 @@ export interface StyleConfiguration {
 
 // complete preview configuration state
 export interface ConfigurationState {
-  updateMode: UpdateMode;
+  updateMode: UpdateModeValue;
   debounceDelay: number;
   useVscodeMarkdownStyles: boolean;
   useWhiteBackground: boolean;
@@ -34,7 +33,7 @@ export interface ConfigurationState {
   customCss: string;
   useSucraseTranspiler: boolean;
   securityPolicy: SecurityPolicy;
-  tailwindEnabled: TailwindEnabledSetting;
+  tailwindEnabled: TailwindEnabledValue;
 }
 
 // result of configuration change detection

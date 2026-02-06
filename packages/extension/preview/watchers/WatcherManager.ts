@@ -2,8 +2,11 @@
 // coordinate all watchers w/ unified lifecycle management
 
 import type { Disposable } from 'vscode';
-import { debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.WATCHER_MANAGER);
 import type { IWatcher } from '../../types';
 
 // coordinate all watchers w/ unified lifecycle management
@@ -16,12 +19,12 @@ export class WatcherManager implements Disposable {
     // dispose existing watcher w/ same name if present
     const existing = this.watchers.get(name);
     if (existing) {
-      debug(`[${LogTags.WATCHER_MANAGER}] Replacing existing watcher: ${name}`);
+      log.debug(`Replacing existing watcher: ${name}`);
       existing.dispose();
     }
 
     this.watchers.set(name, watcher);
-    debug(`[${LogTags.WATCHER_MANAGER}] Registered watcher: ${name}`);
+    log.debug(`Registered watcher: ${name}`);
   }
 
   // get a registered watcher by name
@@ -40,7 +43,7 @@ export class WatcherManager implements Disposable {
     if (watcher) {
       watcher.dispose();
       this.watchers.delete(name);
-      debug(`[${LogTags.WATCHER_MANAGER}] Unregistered watcher: ${name}`);
+      log.debug(`Unregistered watcher: ${name}`);
       return true;
     }
     return false;
@@ -52,7 +55,7 @@ export class WatcherManager implements Disposable {
       .filter(([, watcher]) => !watcher.isActive())
       .map(async ([name, watcher]) => {
         await watcher.start();
-        debug(`[${LogTags.WATCHER_MANAGER}] Started: ${name}`);
+        log.debug(`Started: ${name}`);
       });
     await Promise.all(startPromises);
   }
@@ -62,7 +65,7 @@ export class WatcherManager implements Disposable {
     const waitPromises = Array.from(this.watchers.entries()).map(
       async ([name, watcher]) => {
         await watcher.waitForReady(timeoutMs);
-        debug(`[${LogTags.WATCHER_MANAGER}] Ready: ${name}`);
+        log.debug(`Ready: ${name}`);
       }
     );
     await Promise.all(waitPromises);
@@ -95,7 +98,7 @@ export class WatcherManager implements Disposable {
     for (const [name, watcher] of this.watchers) {
       if (watcher.isActive()) {
         watcher.stop();
-        debug(`[${LogTags.WATCHER_MANAGER}] Stopped: ${name}`);
+        log.debug(`Stopped: ${name}`);
       }
     }
   }
@@ -106,7 +109,7 @@ export class WatcherManager implements Disposable {
     if (watcher) {
       watcher.stop();
       await watcher.start();
-      debug(`[${LogTags.WATCHER_MANAGER}] Refreshed: ${name}`);
+      log.debug(`Refreshed: ${name}`);
     }
   }
 
@@ -116,7 +119,7 @@ export class WatcherManager implements Disposable {
       if (watcher.isActive()) {
         watcher.stop();
         await watcher.start();
-        debug(`[${LogTags.WATCHER_MANAGER}] Refreshed: ${name}`);
+        log.debug(`Refreshed: ${name}`);
       }
     }
   }
@@ -144,10 +147,10 @@ export class WatcherManager implements Disposable {
   // dispose all watchers & clear the registry
   dispose(): void {
     for (const [name, watcher] of this.watchers) {
-      debug(`[${LogTags.WATCHER_MANAGER}] Disposing: ${name}`);
+      log.debug(`Disposing: ${name}`);
       watcher.dispose();
     }
     this.watchers.clear();
-    debug(`[${LogTags.WATCHER_MANAGER}] All watchers disposed`);
+    log.debug('All watchers disposed');
   }
 }

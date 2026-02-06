@@ -2,9 +2,11 @@
 // resolve Nextra _meta.json files for page-level settings
 
 import * as path from 'path';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import type { NextraPageMeta } from '@mdx-preview/shared';
+
+const log = createTaggedLogger(LogTags.NEXTRA_META);
 import { readJsonSync } from '../utils/file-utils';
 import { findUp, createContainmentStopPredicate } from '../utils/find-up';
 import { SingletonService } from '../services/SingletonService';
@@ -51,21 +53,21 @@ export class MetaResolver extends SingletonService<MetaResolver> {
     const cacheKey = `${documentDir}:${pageBaseName}`;
     const cached = this.metaCache.get(cacheKey);
     if (cached !== undefined) {
-      debug(`[${this.logTag}] Cache hit for ${cacheKey}`);
+      log.debug(`Cache hit for ${cacheKey}`);
       return cached;
     }
 
     // search upward to find _meta.json
     const metaPath = this.findMetaFile(documentDir, workspaceRoot);
     if (!metaPath) {
-      debug(`[${this.logTag}] No _meta.json found for ${mdxFilePath}`);
+      log.debug(`No _meta.json found for ${mdxFilePath}`);
       this.metaCache.set(cacheKey, null);
       return null;
     }
 
-    debug(`[${this.logTag}] Found _meta.json at ${metaPath}`);
+    log.debug(`Found _meta.json at ${metaPath}`);
     const meta = readJsonSync<Record<string, MetaEntry>>(metaPath, {
-      logTag: this.logTag,
+      logger: log,
       logOnError: true,
     });
 
@@ -81,7 +83,7 @@ export class MetaResolver extends SingletonService<MetaResolver> {
     this.setupMetaWatcher(metaPath, documentDir);
 
     this.metaCache.set(cacheKey, pageSettings);
-    debug(`[${this.logTag}] Resolved meta for ${pageBaseName}:`, pageSettings);
+    log.debug(`Resolved meta for ${pageBaseName}:`, pageSettings);
     return pageSettings;
   }
 
@@ -147,7 +149,7 @@ export class MetaResolver extends SingletonService<MetaResolver> {
     }
 
     const handleChange = () => {
-      debug(`[${this.logTag}] _meta.json changed: ${metaPath}`);
+      log.debug(`_meta.json changed: ${metaPath}`);
       // clear cache entries for this directory
       this.metaCache.invalidateByPrefix(`${documentDir}:`);
     };
@@ -165,7 +167,7 @@ export class MetaResolver extends SingletonService<MetaResolver> {
   // clean up all file watchers & caches on dispose
   protected override onDispose(): void {
     this.metaCache.dispose();
-    debug(`[${this.logTag}] Disposed`);
+    log.debug('Disposed');
   }
 }
 

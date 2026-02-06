@@ -12,6 +12,12 @@ vi.mock('../../packages/extension/logging', () => ({
   warn: vi.fn(),
   debug: vi.fn(),
   info: vi.fn(),
+  createTaggedLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
 }));
 
 // Import after mocks
@@ -62,7 +68,7 @@ describe('ServiceRegistry circular dependency detection', () => {
       try {
         registry.get('ServiceA');
         expect.fail('Should have thrown CircularDependencyError');
-      } catch (error) {
+      } catch (error: unknown) {
         expect(error).toBeInstanceOf(CircularDependencyError);
         const cycleError = error as CircularDependencyError;
         expect(cycleError.cycle).toEqual(['ServiceA', 'ServiceB', 'ServiceA']);
@@ -111,7 +117,7 @@ describe('ServiceRegistry circular dependency detection', () => {
       try {
         registry.get('A');
         expect.fail('Should have thrown CircularDependencyError');
-      } catch (error) {
+      } catch (error: unknown) {
         expect(error).toBeInstanceOf(CircularDependencyError);
         const cycleError = error as CircularDependencyError;
         expect(cycleError.cycle).toEqual(['A', 'B', 'C', 'A']);
@@ -140,7 +146,7 @@ describe('ServiceRegistry circular dependency detection', () => {
       try {
         registry.get('Self');
         expect.fail('Should have thrown CircularDependencyError');
-      } catch (error) {
+      } catch (error: unknown) {
         expect(error).toBeInstanceOf(CircularDependencyError);
         const cycleError = error as CircularDependencyError;
         expect(cycleError.cycle).toEqual(['Self', 'Self']);
@@ -267,7 +273,7 @@ describe('ServiceRegistry circular dependency detection', () => {
 
       try {
         registry.get('A');
-      } catch (error) {
+      } catch (error: unknown) {
         expect(error).toBeInstanceOf(CircularDependencyError);
         expect((error as CircularDependencyError).code).toBe('E802');
       }
@@ -281,7 +287,7 @@ describe('ServiceRegistry circular dependency detection', () => {
 
       try {
         registry.get('MyService');
-      } catch (error) {
+      } catch (error: unknown) {
         expect(error).toBeInstanceOf(CircularDependencyError);
         expect((error as CircularDependencyError).serviceName).toBe('MyService');
       }

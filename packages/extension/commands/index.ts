@@ -2,8 +2,10 @@
 // public exports for the command registration system
 
 import * as vscode from 'vscode';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
+
+const log = createTaggedLogger(LogTags.COMMANDS);
 
 // re-export types & constants
 export { CommandNames, type CommandName } from './command-names';
@@ -34,13 +36,13 @@ const allCommands: CommandDefinition[] = [
 
 // register all MDX Preview commands w/ VS Code
 export function registerAllCommands(): vscode.Disposable[] {
-  debug(`[${LogTags.COMMANDS}] Registering all commands...`);
+  log.debug('Registering all commands...');
 
   const disposables = allCommands.map(({ id, handler }) => {
-    debug(`[${LogTags.COMMANDS}] Registering: ${id}`);
+    log.debug(`Registering: ${id}`);
     return vscode.commands.registerCommand(id, handler);
   });
 
-  debug(`[${LogTags.COMMANDS}] Registered ${disposables.length} commands`);
+  log.debug(`Registered ${disposables.length} commands`);
   return disposables;
 }

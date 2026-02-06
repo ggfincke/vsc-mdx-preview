@@ -2,7 +2,7 @@
 // theme selection QuickPick commands
 
 import * as vscode from 'vscode';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { getConfigManager, getPreviewManager } from '../services';
 import {
@@ -19,8 +19,10 @@ import {
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 
+const log = createTaggedLogger(LogTags.THEME);
+
 const selectPreviewTheme = async (): Promise<void> => {
-  debug(`[${LogTags.CMD}] selectPreviewTheme command triggered`);
+  log.debug('selectPreviewTheme command triggered');
 
   const configManager = getConfigManager();
   const currentTheme = configManager.get(
@@ -49,7 +51,7 @@ const selectPreviewTheme = async (): Promise<void> => {
 };
 
 const selectCodeBlockTheme = async (): Promise<void> => {
-  debug(`[${LogTags.CMD}] selectCodeBlockTheme command triggered`);
+  log.debug('selectCodeBlockTheme command triggered');
 
   const configManager = getConfigManager();
   const currentTheme = configManager.get(
@@ -78,7 +80,7 @@ const selectCodeBlockTheme = async (): Promise<void> => {
 };
 
 const selectMermaidTheme = async (): Promise<void> => {
-  debug(`[${LogTags.CMD}] selectMermaidTheme command triggered`);
+  log.debug('selectMermaidTheme command triggered');
 
   const configManager = getConfigManager();
   const currentTheme = configManager.get(

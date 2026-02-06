@@ -22,7 +22,7 @@ import type {
   ComponentSource,
   MdxJsxElement,
 } from '../types';
-import { debug, warn } from '../logging';
+import { createTaggedLogger } from '../logging';
 
 // use shared component registry as single source of truth
 import {
@@ -30,6 +30,8 @@ import {
   getGenericComponentSet,
   getCanonicalComponentName,
 } from '@mdx-preview/shared';
+
+const log = createTaggedLogger(LogTags.COMPONENT_DETECTOR);
 
 // caching for parse results
 
@@ -287,7 +289,7 @@ export async function detectComponents(
     const hash = contentHash(mdxText);
     const cached = parseCache.getIfHashMatches(uri, hash);
     if (cached) {
-      debug(`[${LogTags.COMPONENT_DETECTOR}] Cache hit for ${uri}`);
+      log.debug(`Cache hit for ${uri}`);
       return cached;
     }
   }
@@ -361,12 +363,10 @@ export async function detectComponents(
       });
     });
 
-    debug(
-      `[${LogTags.COMPONENT_DETECTOR}] Found ${components.length} components`
-    );
+    log.debug(`Found ${components.length} components`);
   } catch (err) {
     const message = extractErrorMessage(err);
-    warn(`[${LogTags.COMPONENT_DETECTOR}] Parse error: ${message}`);
+    log.warn(`Parse error: ${message}`);
     errors.push(message);
   }
 
@@ -375,7 +375,7 @@ export async function detectComponents(
   // store in cache if URI is provided
   if (uri) {
     parseCache.setWithHash(uri, contentHash(mdxText), result);
-    debug(`[${LogTags.COMPONENT_DETECTOR}] Cached result for ${uri}`);
+    log.debug(`Cached result for ${uri}`);
   }
 
   return result;
@@ -414,7 +414,7 @@ export function getUsedGenericComponents(
 // call this when a document is closed or externally modified
 export function invalidateComponentCache(uri: string): void {
   if (parseCache.delete(uri)) {
-    debug(`[${LogTags.COMPONENT_DETECTOR}] Invalidated cache for ${uri}`);
+    log.debug(`Invalidated cache for ${uri}`);
   }
 }
 
@@ -422,7 +422,7 @@ export function invalidateComponentCache(uri: string): void {
 // useful for testing or extension reset scenarios
 export function clearComponentCache(): void {
   parseCache.clear();
-  debug(`[${LogTags.COMPONENT_DETECTOR}] Cache cleared`);
+  log.debug('Cache cleared');
 }
 
 // isPascalCase, isHtmlElement, extractImports are internal helpers

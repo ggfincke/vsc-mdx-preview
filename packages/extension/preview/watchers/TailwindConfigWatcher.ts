@@ -3,10 +3,13 @@
 
 import debounce from 'lodash.debounce';
 import * as vscode from 'vscode';
-import { debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { CONFIG_WATCHER_DEBOUNCE_MS } from '../../tailwind/constants';
 import { BaseWatcher } from './BaseWatcher';
 import { LogTags } from '@mdx-preview/shared';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.TAILWIND_WATCHER);
 
 export class TailwindConfigWatcher extends BaseWatcher {
   protected readonly logTag = LogTags.TAILWIND_WATCHER;
@@ -42,28 +45,26 @@ export class TailwindConfigWatcher extends BaseWatcher {
 
   protected onStart(): void {
     for (const file of this.watchFiles) {
-      debug(`[${LogTags.TAILWIND_WATCHER}] Creating watcher for: ${file}`);
+      log.debug(`Creating watcher for: ${file}`);
       // use createFileWatcher from base class w/ error wrapping
       const watcher = this.createFileWatcher(file, {
         onChange: (uri) => {
-          debug(`[${LogTags.TAILWIND_WATCHER}] File changed: ${uri.fsPath}`);
+          log.debug(`File changed: ${uri.fsPath}`);
           this.queueChange(uri.fsPath);
         },
         onCreate: (uri) => {
-          debug(`[${LogTags.TAILWIND_WATCHER}] File created: ${uri.fsPath}`);
+          log.debug(`File created: ${uri.fsPath}`);
           this.queueChange(uri.fsPath);
         },
         onDelete: (uri) => {
-          debug(`[${LogTags.TAILWIND_WATCHER}] File deleted: ${uri.fsPath}`);
+          log.debug(`File deleted: ${uri.fsPath}`);
           this.queueChange(uri.fsPath);
         },
         wrapErrors: true,
       });
       this.watchers.push(watcher);
     }
-    debug(
-      `[${LogTags.TAILWIND_WATCHER}] Watching ${this.watchFiles.length} file(s)`
-    );
+    log.debug(`Watching ${this.watchFiles.length} file(s)`);
   }
 
   protected onStop(): void {

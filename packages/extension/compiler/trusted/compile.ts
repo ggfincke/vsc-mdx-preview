@@ -5,25 +5,25 @@ import { compile } from '@mdx-js/mdx';
 import hasDefaultExport from './hasDefaultExport';
 import * as path from 'path';
 
-import { Preview } from '../../preview/preview-manager';
 import { extractFrontmatter } from '../shared/mdx-common';
 import { buildTrustedPluginPipeline } from '../plugins/builder';
 import { loadPluginsFromConfig } from '../plugins/loader';
 import { generateComponentImports } from './component-mapper';
-import { debug, warn } from '../../logging';
-import { getConfigManager } from '../../services';
+import { createTaggedLogger } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
 
-import type { MdxTranspileResult } from '../../types';
+const log = createTaggedLogger(LogTags.COMPILE);
+
+import type { CompilerConfig, MdxTranspileResult } from '../../types';
 
 // inject MDX layout styles based on configuration
-const injectMDXStyles = (mdxText: string, preview: Preview): string => {
+const injectMDXStyles = (mdxText: string, config: CompilerConfig): string => {
   const { customLayoutFilePath, useVscodeMarkdownStyles, useWhiteBackground } =
-    preview.configuration;
+    config;
 
   if (customLayoutFilePath) {
     try {
-      const currentPreviewDirname = path.dirname(preview.doc.uri.fsPath);
+      const currentPreviewDirname = path.dirname(config.docFsPath);
       const relativeCustomLayoutPath = path.relative(
         currentPreviewDirname,
         customLayoutFilePath
@@ -34,8 +34,8 @@ export default Layout;
 
 ${mdxText}`;
     } catch (err) {
-      warn(
-        `[${LogTags.COMPILE}] Failed to load custom layout from ${customLayoutFilePath}: ${err}`
+      log.warn(
+        `Failed to load custom layout from ${customLayoutFilePath}: ${err}`
       );
       return mdxText;
     }
@@ -91,55 +91,55 @@ ${compiledMDX}
 export async function compileTrusted(
   mdxText: string,
   _isEntry: boolean,
-  preview: Preview
+  config: CompilerConfig
 ): Promise<MdxTranspileResult> {
   // extract frontmatter before compilation
   const { content, frontmatter } = extractFrontmatter(mdxText);
 
   let mdxTextToCompile: string;
   if (!hasDefaultExport(content)) {
-    mdxTextToCompile = injectMDXStyles(content, preview);
+    mdxTextToCompile = injectMDXStyles(content, config);
   } else {
     mdxTextToCompile = content;
   }
 
   // load custom plugins from config
   const customPlugins = await loadPluginsFromConfig(
-    preview.mdxPreviewConfig,
-    preview.doc.uri
+    config.configFile ?? undefined,
+    config.docUri
   );
 
   // log aggregated plugin loading errors (individual errors logged via ErrorReporter)
   if (customPlugins.errorCount > 0) {
-    warn(
+    log.warn(
       `Failed to load ${customPlugins.errorCount} custom plugin(s). Check console for details.`
     );
   }
 
   // generate component imports from config & built-in shims
-  const documentDir = path.dirname(preview.fsPath);
-  const builtinsEnabled = getConfigManager().get('components.builtins');
+  const documentDir = path.dirname(config.docFsPath);
+  const builtinsEnabled = config.componentsBuiltins;
 
-  debug(
-    `[${LogTags.COMPILE}] mdxPreviewConfig: ${preview.mdxPreviewConfig ? JSON.stringify(preview.mdxPreviewConfig.config) : 'undefined'}`
+  log.debug(
+    `mdxPreviewConfig: ${config.configFile ? JSON.stringify(config.configFile.config) : 'undefined'}`
   );
-  debug(`[${LogTags.COMPILE}] documentDir: ${documentDir}`);
-  debug(`[${LogTags.COMPILE}] builtinsEnabled: ${builtinsEnabled}`);
+  log.debug(`documentDir: ${documentDir}`);
+  log.debug(`builtinsEnabled: ${builtinsEnabled}`);
 
   const componentImports = generateComponentImports(
-    preview.mdxPreviewConfig,
+    config.configFile ?? undefined,
     documentDir,
-    preview.doc.uri,
+    config.docUri,
     { builtinsEnabled }
   );
 
-  debug(
-    `[${LogTags.COMPILE}] componentImports.hasComponents: ${componentImports.hasComponents}`
+  log.debug(
+    `componentImports.hasComponents: ${componentImports.hasComponents}`
   );
 
   // prepend component imports to MDX source (before compilation)
   if (componentImports.hasComponents) {
-    debug(`[${LogTags.COMPILE}] Prepending component imports to MDX source`);
+    log.debug('Prepending component imports to MDX source');
     mdxTextToCompile = componentImports.imports + '\n\n' + mdxTextToCompile;
   }
 

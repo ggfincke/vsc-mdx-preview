@@ -15,7 +15,7 @@ Thank you for your interest in contributing to MDX Preview!
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/ggfincke/vscode-mdx-preview.git
+   git clone https://github.com/ggfincke/vsc-mdx-preview.git
    cd vscode-mdx-preview
    ```
 

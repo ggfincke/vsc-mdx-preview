@@ -1,8 +1,8 @@
 {
-  "name": "vscode-mdx-preview",
-  "displayName": "MDX Preview",
+  "name": "vsc-mdx-preview",
+  "displayName": "Modern MDX Preview",
   "description": "Live MDX preview with React component rendering, syntax highlighting, and Safe/Trusted workspace security modes",
-  "version": "1.0.0-alpha.13",
+  "version": "1.0.0",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [
@@ -13,12 +13,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ggfincke/vscode-mdx-preview"
+    "url": "https://github.com/ggfincke/vsc-mdx-preview"
   },
   "bugs": {
-    "url": "https://github.com/ggfincke/vscode-mdx-preview/issues"
+    "url": "https://github.com/ggfincke/vsc-mdx-preview/issues"
   },
-  "homepage": "https://github.com/ggfincke/vscode-mdx-preview#readme",
+  "homepage": "https://github.com/ggfincke/vsc-mdx-preview#readme",
   "license": "GPL-3.0-or-later",
   "workspaces": [
     "packages/*"
@@ -28,14 +28,15 @@
     "node": ">=18.0.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Visualization"
   ],
   "keywords": [
-    "Preview",
+    "preview",
     "mdx",
     "markdown",
-    "JavaScript",
-    "React",
+    "javascript",
+    "react",
     "mdx-js",
     "live-preview",
     "jsx",
@@ -53,37 +54,24 @@
   },
   "badges": [
     {
-      "url": "https://img.shields.io/visual-studio-marketplace/v/ggfincke.vscode-mdx-preview",
-      "href": "https://marketplace.visualstudio.com/items?itemName=ggfincke.vscode-mdx-preview",
+      "url": "https://img.shields.io/visual-studio-marketplace/v/ggfincke.vsc-mdx-preview",
+      "href": "https://marketplace.visualstudio.com/items?itemName=ggfincke.vsc-mdx-preview",
       "description": "VS Marketplace Version"
     },
     {
-      "url": "https://img.shields.io/visual-studio-marketplace/i/ggfincke.vscode-mdx-preview",
-      "href": "https://marketplace.visualstudio.com/items?itemName=ggfincke.vscode-mdx-preview",
+      "url": "https://img.shields.io/visual-studio-marketplace/i/ggfincke.vsc-mdx-preview",
+      "href": "https://marketplace.visualstudio.com/items?itemName=ggfincke.vsc-mdx-preview",
       "description": "VS Marketplace Installs"
     },
     {
-      "url": "https://img.shields.io/github/license/ggfincke/vscode-mdx-preview",
-      "href": "https://github.com/ggfincke/vscode-mdx-preview/blob/main/LICENSE",
+      "url": "https://img.shields.io/github/license/ggfincke/vsc-mdx-preview",
+      "href": "https://github.com/ggfincke/vsc-mdx-preview/blob/main/LICENSE",
       "description": "License"
     }
   ],
   "activationEvents": [
     "onLanguage:markdown",
-    "onLanguage:mdx",
-    "onCommand:mdx-preview.commands.openPreview",
-    "onCommand:mdx-preview.commands.refreshPreview",
-    "onCommand:mdx-preview.commands.toggleUseVscodeMarkdownStyles",
-    "onCommand:mdx-preview.commands.toggleUseWhiteBackground",
-    "onCommand:mdx-preview.commands.changeSecuritySettings",
-    "onCommand:mdx-preview.commands.toggleScripts",
-    "onCommand:mdx-preview.commands.selectPreviewTheme",
-    "onCommand:mdx-preview.commands.selectCodeBlockTheme",
-    "onCommand:mdx-preview.commands.selectMermaidTheme",
-    "onCommand:mdx-preview.commands.selectFramework",
-    "onCommand:mdx-preview.commands.clearAllCaches",
-    "onCommand:mdx-preview.commands.showEffectiveConfig",
-    "onCommand:mdx-preview.commands.toggleDebugOutput"
+    "onLanguage:mdx"
   ],
   "main": "./build/extension/extension.js",
   "capabilities": {
@@ -145,7 +133,7 @@
       },
       {
         "command": "mdx-preview.commands.toggleScripts",
-        "title": "Toggle Script Execution",
+        "title": "Toggle Safe Mode",
         "category": "MDX",
         "icon": "$(shield)"
       },
@@ -233,6 +221,10 @@
           "command": "mdx-preview.commands.openPreview",
           "when": "editorLangId == typescriptreact",
           "group": "navigation"
+        },
+        {
+          "command": "mdx-preview.commands.toggleScripts",
+          "when": "editorLangId == mdx || editorLangId == markdown"
         }
       ]
     },
@@ -245,7 +237,7 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "MDX Preview",
+      "title": "MDX Live Preview",
       "properties": {
         "mdx-preview.preview.enableScripts": {
           "type": "boolean",
@@ -612,7 +604,7 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run build",
+    "vscode:prepublish": "npm run build:extension:prod && npm run build:webview-app",
     "vscode:package": "npm run test:all && vsce package",
     "generate:preload": "tsx packages/shared/scripts/generate-preload.ts",
     "generate:schema": "tsx packages/shared/scripts/generate-schema.ts",
@@ -620,6 +612,7 @@
     "prebuild": "npm run generate:settings && npm run generate:preload && npm run generate:shims && npm run generate:schema",
     "typecheck": "tsc --noEmit",
     "build:extension": "npm run typecheck && node esbuild.config.mjs",
+    "build:extension:prod": "npm run typecheck && node esbuild.config.mjs --production",
     "build:extension:fast": "node esbuild.config.mjs",
     "build:extension:types": "tsc -p ./ --emitDeclarationOnly --declaration --outDir build/extension",
     "build": "concurrently -n ext,web -c blue,green \"npm run build:extension\" \"npm run build:webview-app\"",
@@ -643,30 +636,31 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
-    "concurrently": "^9.1.0",
-    "sass": "^1.80.0",
-    "vitest": "^2.0.0",
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.90.0",
     "@vscode/test-electron": "^2.3.0",
+    "@vscode/vsce": "^3.0.0",
+    "concurrently": "^9.1.0",
     "esbuild": "^0.27.2",
     "eslint": "^9.0.0",
     "globals": "^15.0.0",
+    "jsdom": "^28.0.0",
     "prettier": "^3.0.0",
+    "sass": "^1.80.0",
     "tsx": "^4.19.2",
     "typescript": "^5.4.0",
     "typescript-eslint": "^8.0.0",
-    "@vscode/vsce": "^3.0.0"
+    "vitest": "^4.0.18"
   },
   "dependencies": {
-    "ajv": "^8.17.1",
     "@babel/core": "^7.24.0",
     "@babel/plugin-proposal-export-default-from": "^7.24.0",
     "@babel/preset-env": "^7.24.0",
     "@babel/preset-react": "^7.24.0",
     "@mdx-js/mdx": "^3.0.0",
     "@tailwindcss/postcss": "^4.0.0",
+    "ajv": "^8.17.1",
     "comlink": "^4.4.1",
     "enhanced-resolve": "^5.18.4",
     "es-module-lexer": "^2.0.0",
@@ -688,17 +682,18 @@
     "remark-rehype": "^11.0.0",
     "shiki": "^1.29.2",
     "sucrase": "^3.35.0",
-    "tsconfck": "^3.1.0",
     "tailwindcss": "^4.0.0",
+    "tsconfck": "^3.1.0",
     "unified": "^11.0.0",
     "unist-util-visit": "^5.0.0"
   },
-  "extensionPack": [
+  "extensionDependencies": [
     "unifiedjs.vscode-mdx"
   ],
   "overrides": {
     "@types/node": "^20.0.0",
-    "comlink": "^4.4.1"
+    "comlink": "^4.4.1",
+    "lodash-es": "4.17.21"
   },
   "sideEffects": false
 }

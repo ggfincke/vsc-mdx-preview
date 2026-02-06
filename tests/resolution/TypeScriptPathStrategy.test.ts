@@ -13,6 +13,12 @@ vi.mock('../../packages/extension/logging', () => ({
   error: vi.fn(),
   warn: vi.fn(),
   info: vi.fn(),
+  createTaggedLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
 }));
 
 // Mock file-prober
@@ -39,7 +45,7 @@ describe('TypeScriptPathStrategy', () => {
   let strategy: TypeScriptPathStrategy;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     clearStatCache();
     clearCompiledIndexCache();
     strategy = new TypeScriptPathStrategy();

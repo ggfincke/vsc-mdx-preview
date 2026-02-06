@@ -8,9 +8,25 @@ import {
 } from '../../packages/webview-app/src/module-system/preload/shimLoader';
 import type { ModuleRegistry } from '../../packages/webview-app/src/module-system/registry/ModuleRegistry';
 
-vi.mock('../../packages/webview-app/src/utils/debug', () => ({
-  debug: vi.fn(),
-}));
+vi.mock('../../packages/webview-app/src/utils/debug', () => {
+  const debug = vi.fn();
+  const info = vi.fn();
+  const warn = vi.fn();
+  const error = vi.fn();
+
+  return {
+    debug,
+    info,
+    warn,
+    error,
+    logger: {
+      debug,
+      info,
+      warn,
+      error,
+    },
+  };
+});
 
 vi.mock('../../packages/webview-app/src/constants', () => ({
   SHIM_LOAD_MAX_RETRIES: 2,

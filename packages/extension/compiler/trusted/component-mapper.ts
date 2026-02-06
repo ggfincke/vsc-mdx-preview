@@ -2,13 +2,15 @@
 // generate import statements for custom component mappings from config
 
 import * as vscode from 'vscode';
-import { debug, info } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { toAbsolutePath, toRelativeImportPath } from '../../utils/path-utils';
 import type { ResolvedConfig } from '../../types';
 import { tryRequireTrustedModeForDocument } from '../../security/validateTrust';
 
 // use shared component registry as single source of truth
 import { getAllGenericComponentNames, LogTags } from '@mdx-preview/shared';
+
+const log = createTaggedLogger(LogTags.COMPONENT_MAPPER);
 
 // use consolidated warning utilities
 import {
@@ -44,11 +46,11 @@ export function generateComponentImports(
 ): ComponentImportsResult {
   const { builtinsEnabled = true } = options;
 
-  debug(
-    `[${LogTags.COMPONENT_MAPPER}] Called with config: ${config ? JSON.stringify(config.config) : 'undefined'}`
+  log.debug(
+    `Called with config: ${config ? JSON.stringify(config.config) : 'undefined'}`
   );
-  debug(`[${LogTags.COMPONENT_MAPPER}] documentDir: ${documentDir}`);
-  debug(`[${LogTags.COMPONENT_MAPPER}] builtinsEnabled: ${builtinsEnabled}`);
+  log.debug(`documentDir: ${documentDir}`);
+  log.debug(`builtinsEnabled: ${builtinsEnabled}`);
 
   const result: ComponentImportsResult = {
     imports: '',
@@ -70,9 +72,7 @@ export function generateComponentImports(
   if (!trustState) {
     return result;
   }
-  debug(
-    `[${LogTags.COMPONENT_MAPPER}] trustState.canExecute: ${trustState.canExecute}`
-  );
+  log.debug(`trustState.canExecute: ${trustState.canExecute}`);
 
   const importStatements: string[] = [];
   const componentEntries: string[] = [];
@@ -125,24 +125,19 @@ export function generateComponentImports(
     const builtinCount = importStatements.length - userCount;
 
     if (userCount > 0 && builtinCount > 0) {
-      info(
+      log.info(
         `Generated imports for ${userCount} custom component(s) & ${builtinCount} built-in shim(s)`
       );
     } else if (userCount > 0) {
-      info(`Generated imports for ${userCount} custom component(s)`);
+      log.info(`Generated imports for ${userCount} custom component(s)`);
     } else if (builtinCount > 0) {
-      debug(`Injected ${builtinCount} built-in generic shim(s)`);
+      log.debug(`Injected ${builtinCount} built-in generic shim(s)`);
     }
 
-    debug(
-      `[${LogTags.COMPONENT_MAPPER}] Generated imports:\n` + result.imports
-    );
-    debug(
-      `[${LogTags.COMPONENT_MAPPER}] Components object: ` +
-        result.componentsObject
-    );
+    log.debug('Generated imports:\n' + result.imports);
+    log.debug('Components object: ' + result.componentsObject);
   } else {
-    debug(`[${LogTags.COMPONENT_MAPPER}] No imports generated`);
+    log.debug('No imports generated');
   }
 
   return result;

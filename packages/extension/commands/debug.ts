@@ -2,14 +2,16 @@
 // debug output toggle command
 
 import * as vscode from 'vscode';
-import { debug, showOutput } from '../logging';
+import { createTaggedLogger, showOutput } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { getConfigManager } from '../services';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 
+const log = createTaggedLogger(LogTags.CMD);
+
 const toggleDebugOutput = async (): Promise<void> => {
-  debug(`[${LogTags.CMD}] toggleDebugOutput command triggered`);
+  log.debug('toggleDebugOutput command triggered');
 
   const config = getConfigManager();
   const current = config.get('advanced.debugOutput');

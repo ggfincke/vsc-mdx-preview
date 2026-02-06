@@ -3,7 +3,9 @@
 
 import * as vscode from 'vscode';
 import { LogTags } from '@mdx-preview/shared';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
+
+const log = createTaggedLogger(LogTags.PREWARM);
 import { getTrustManager } from '../services';
 
 let prewarmInitialized = false;
@@ -20,16 +22,14 @@ export function initPrewarm(): vscode.Disposable {
   // check initial state & prewarm if already trusted
   const initialState = trustManager.getState();
   if (initialState.canExecute) {
-    debug(`[${LogTags.PREWARM}] Trusted on init, starting prewarm`);
+    log.debug('Trusted on init, starting prewarm');
     void triggerBabelPrewarm();
   }
 
   // subscribe to trust state changes
   const subscription = trustManager.subscribe((state) => {
     if (state.canExecute) {
-      debug(
-        `[${LogTags.PREWARM}] Trust state changed to canExecute, starting prewarm`
-      );
+      log.debug('Trust state changed to canExecute, starting prewarm');
       void triggerBabelPrewarm();
     }
   });
@@ -60,6 +60,6 @@ async function triggerBabelPrewarm(): Promise<void> {
     const { prewarmBabel } = await import('../module-system/transform/babel');
     await prewarmBabel();
   } catch (err) {
-    debug(`[${LogTags.PREWARM}] Babel prewarm failed`, err);
+    log.debug('Babel prewarm failed', err);
   }
 }

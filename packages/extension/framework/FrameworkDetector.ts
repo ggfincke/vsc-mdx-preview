@@ -3,13 +3,14 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { debug } from '../logging';
-import { SingletonService } from '../services/SingletonService';
+import { createTaggedLogger } from '../logging';
+import { WithSubscribers } from '../services/SingletonService';
 import { getConfigManager, getErrorReporter } from '../services';
-import { SubscriberManager } from '../utils/SubscriberManager';
 import { ErrorContext } from '../errors';
 import { normalizeError, LogTags, type FrameworkId } from '@mdx-preview/shared';
 import { readJsonSync, pathExists } from '../utils/file-utils';
+
+const log = createTaggedLogger(LogTags.FRAMEWORK);
 import { findUp } from '../utils/find-up';
 import { PathCache } from '../utils/cache';
 
@@ -61,27 +62,26 @@ const FRAMEWORK_RULES: FrameworkRule[] = [
 ];
 
 // * singleton framework detector w/ auto-detection & caching
-export class FrameworkDetector extends SingletonService<FrameworkDetector> {
+export class FrameworkDetector extends WithSubscribers<
+  FrameworkDetector,
+  FrameworkInfo
+> {
   protected static override instance: FrameworkDetector | undefined;
   protected readonly logTag = LogTags.FRAMEWORK;
 
   private cache = new PathCache<FrameworkInfo>({
     logTag: LogTags.FRAMEWORK,
   });
-  private subscriberManager = new SubscriberManager<FrameworkInfo>(
-    LogTags.FRAMEWORK,
-    (error) => {
+  private watcherReady = false;
+
+  protected constructor() {
+    super(LogTags.FRAMEWORK, (error) => {
       getErrorReporter().reportSilent(
         normalizeError(error),
         ErrorContext.Extension,
         { operation: 'framework-subscriber-notify' }
       );
-    }
-  );
-  private watcherReady = false;
-
-  protected constructor() {
-    super();
+    });
 
     // G.2 optimization: defer FileSystemWatcher creation to ensureFileWatcher()
 
@@ -96,9 +96,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   // G.2 optimization: lazily initialize FileSystemWatcher on first detection
   private ensureFileWatcher(): void {
     if (!this.watcherReady) {
-      debug(
-        `[${LogTags.FRAMEWORK}] Initializing package.json FileSystemWatcher`
-      );
+      log.debug('Initializing package.json FileSystemWatcher');
 
       this.cache.watchPath('**/package.json', {
         onChange: (eventPath) => this.onPackageJsonChange(eventPath),
@@ -120,12 +118,12 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     }
 
     const packageJson = readJsonSync<PackageJson>(packageJsonPath, {
-      logTag: LogTags.FRAMEWORK,
+      logger: log,
     });
 
     if (!packageJson) {
-      debug(
-        `[${LogTags.FRAMEWORK}] No package.json found or failed to parse at:`,
+      log.debug(
+        'No package.json found or failed to parse at:',
         packageJsonPath
       );
       return { framework: 'generic', detected: true };
@@ -152,9 +150,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
         }
 
         const version = allDeps[rule.dependencies[0]];
-        debug(
-          `[${LogTags.FRAMEWORK}] Detected ${rule.framework} (version: ${version})`
-        );
+        log.debug(`Detected ${rule.framework} (version: ${version})`);
         return {
           framework: rule.framework,
           detected: true,
@@ -163,7 +159,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
       }
     }
 
-    debug(`[${LogTags.FRAMEWORK}] No framework detected, using generic`);
+    log.debug('No framework detected, using generic');
     return { framework: 'generic', detected: true };
   }
 
@@ -180,10 +176,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     });
 
     if (found) {
-      debug(
-        `[${LogTags.FRAMEWORK}] Found package.json at:`,
-        path.join(found, 'package.json')
-      );
+      log.debug('Found package.json at:', path.join(found, 'package.json'));
       return found;
     }
 
@@ -271,7 +264,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     for (const candidate of candidates) {
       const fullPath = path.join(workspaceRoot, candidate);
       if (pathExists(fullPath)) {
-        debug(`[${LogTags.FRAMEWORK}] Found mdx-components file:`, fullPath);
+        log.debug('Found mdx-components file:', fullPath);
         return fullPath;
       }
     }
@@ -279,32 +272,27 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
     return null;
   }
 
-  // subscribe to framework changes
-  subscribe(callback: (info: FrameworkInfo) => void): vscode.Disposable {
-    return this.subscriberManager.subscribe(callback);
-  }
-
   // notify subscribers of framework change
-  private notifySubscribers(info: FrameworkInfo): void {
-    this.subscriberManager.notify(info);
+  private notifyFrameworkSubscribers(info: FrameworkInfo): void {
+    this.notifySubscribers(info);
   }
 
   // invalidate cache for workspace
   invalidateCache(workspaceRoot: string): void {
     this.cache.delete(workspaceRoot);
-    debug(`[${LogTags.FRAMEWORK}] Cache invalidated for:`, workspaceRoot);
+    log.debug('Cache invalidated for:', workspaceRoot);
   }
 
   // invalidate all caches & notify subscribers
   private invalidateAllCaches(): void {
     this.cache.clear();
-    debug(`[${LogTags.FRAMEWORK}] All caches invalidated`);
+    log.debug('All caches invalidated');
 
     // notify subscribers w/ current framework for active editor
     const editor = vscode.window.activeTextEditor;
     if (editor) {
       const info = this.getFramework(editor.document.uri);
-      this.notifySubscribers(info);
+      this.notifyFrameworkSubscribers(info);
     }
   }
 
@@ -329,7 +317,7 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
         editorFolder?.uri.fsPath === workspaceFolder.uri.fsPath
       ) {
         const info = this.getFramework(editor.document.uri);
-        this.notifySubscribers(info);
+        this.notifyFrameworkSubscribers(info);
       }
     }
   }
@@ -337,6 +325,5 @@ export class FrameworkDetector extends SingletonService<FrameworkDetector> {
   // clear file watcher, cache & subscriptions on dispose
   protected override onDispose(): void {
     this.cache.dispose();
-    this.subscriberManager.clear();
   }
 }

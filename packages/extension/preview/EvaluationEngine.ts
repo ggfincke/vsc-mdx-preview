@@ -5,26 +5,27 @@ import * as fs from 'fs';
 import { transformEntry } from '../module-system/transform/transform';
 import { extractImportSpecifiers } from '../module-system/deps/import-extractor';
 import { createLazyImport } from '../utils/lazy-import';
-import { debug } from '../logging';
+import { createSingleton } from '../utils/singleton-factory';
+import { raceTimeout } from '../utils/async-utils';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.ENGINE);
 
 // lazy load Safe Mode compiler - only loaded when Safe Mode is actually used
 const getCompileSafeModule = createLazyImport(
   () => import('../compiler/safe/compile')
 );
 import { ErrorContext } from '../errors';
-import {
-  getTailwindProcessor,
-  getErrorReporter,
-  getConfigManager,
-} from '../services';
+import { getTailwindProcessor, getErrorReporter } from '../services';
 import {
   TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
   MDX_COMPILATION_TIMEOUT_MS,
 } from '../constants';
 import type { Preview, WebviewHandle } from './preview-manager';
 import type { TrustState } from '@mdx-preview/shared';
-import type { ResolvedConfig, TailwindConfig } from '../types';
+import type { CompilerConfig, TailwindConfig } from '../types';
 
 // result of evaluating MDX in Trusted Mode
 export interface TrustedEvaluationResult {
@@ -61,15 +62,19 @@ export class EvaluationEngine {
   async evaluateTrusted(
     text: string,
     fsPath: string,
-    preview: Preview
+    preview: Preview,
+    compilerConfig: CompilerConfig
   ): Promise<TrustedEvaluationResult> {
-    debug(`[${LogTags.ENGINE}] evaluateTrusted called`);
+    log.debug('evaluateTrusted called');
 
-    debug(`[${LogTags.ENGINE}] Transforming entry...`);
+    log.debug('Transforming entry...');
     // transformEntry returns esmCode for import extraction (timeout prevents hang)
-    const transformResult = await this.withTimeout(
-      transformEntry(text, fsPath, preview),
-      MDX_COMPILATION_TIMEOUT_MS
+    const transformResult = await raceTimeout(
+      transformEntry(text, fsPath, preview, compilerConfig),
+      {
+        timeoutMs: MDX_COMPILATION_TIMEOUT_MS,
+        behavior: 'return-null',
+      }
     );
 
     if (transformResult === null) {
@@ -79,16 +84,14 @@ export class EvaluationEngine {
     }
 
     const { code, esmCode, frontmatter } = transformResult;
-    debug(
-      `[${LogTags.ENGINE}] Transform complete, code length: ${code.length}`
-    );
+    log.debug(`Transform complete, code length: ${code.length}`);
 
     // use async fs.promises.realpath instead of sync version
     const entryFilePath = await fs.promises.realpath(fsPath);
 
     // extract dependencies from ESM code (before CommonJS conversion for better parsing)
     const dependencies = await extractImportSpecifiers(esmCode);
-    debug(`[${LogTags.ENGINE}] Dependencies: ${dependencies.join(', ')}`);
+    log.debug(`Dependencies: ${dependencies.join(', ')}`);
 
     return {
       code,
@@ -101,16 +104,16 @@ export class EvaluationEngine {
   // evaluate MDX content in Safe Mode - compiles MDX to sanitized HTML w/o code execution
   async evaluateSafe(
     text: string,
-    mdxPreviewConfig: ResolvedConfig | undefined
+    compilerConfig: CompilerConfig
   ): Promise<SafeEvaluationResult> {
-    debug(`[${LogTags.ENGINE}] evaluateSafe called`);
+    log.debug('evaluateSafe called');
 
-    debug(`[${LogTags.ENGINE}] Loading Safe Mode compiler...`);
+    log.debug('Loading Safe Mode compiler...');
     const { compileSafe } = await getCompileSafeModule();
 
-    debug(`[${LogTags.ENGINE}] Compiling to safe HTML...`);
-    const { html, frontmatter } = await compileSafe(text, mdxPreviewConfig);
-    debug(`[${LogTags.ENGINE}] Safe HTML compiled, length: ${html.length}`);
+    log.debug('Compiling to safe HTML...');
+    const { html, frontmatter } = await compileSafe(text, compilerConfig);
+    log.debug(`Safe HTML compiled, length: ${html.length}`);
 
     return { html, frontmatter };
   }
@@ -123,15 +126,13 @@ export class EvaluationEngine {
     webviewHandle: WebviewHandle
   ): Promise<void> {
     try {
-      debug(`[${LogTags.ENGINE}/TAILWIND] Starting background compilation`);
+      log.debug('TAILWIND: Starting background compilation');
 
       const compilationTimeout =
-        getConfigManager().get(
-          'tailwind.compilationTimeout',
-          preview.doc.uri
-        ) ?? TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS;
+        params.tailwindConfig.compilationTimeout ??
+        TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS;
 
-      const result = await this.withTimeout(
+      const result = await raceTimeout(
         getTailwindProcessor().process({
           preview,
           mdxText: params.mdxText,
@@ -140,11 +141,14 @@ export class EvaluationEngine {
           trustState: params.trustState,
           tailwindConfig: params.tailwindConfig,
         }),
-        compilationTimeout
+        {
+          timeoutMs: compilationTimeout,
+          behavior: 'return-null',
+        }
       );
 
       if (result === null) {
-        debug(`[${LogTags.ENGINE}/TAILWIND] Compilation timed out`);
+        log.debug('TAILWIND: Compilation timed out');
         getErrorReporter().report(new Error('Tailwind compilation timed out'), {
           context: ErrorContext.Tailwind,
           showNotification: true,
@@ -159,7 +163,7 @@ export class EvaluationEngine {
 
       preview.updateTailwindWatchFiles(result.watchFiles);
       webviewHandle.setTailwindCss(result.css);
-    } catch (error) {
+    } catch (error: unknown) {
       getErrorReporter().report(error, {
         context: ErrorContext.Tailwind,
         showNotification: true,
@@ -167,30 +171,11 @@ export class EvaluationEngine {
       });
     }
   }
-
-  // execute a promise w/ a timeout - returns null if the timeout is reached
-  private async withTimeout<T>(
-    promise: Promise<T>,
-    timeoutMs: number
-  ): Promise<T | null> {
-    let timeoutHandle: NodeJS.Timeout;
-    const timeoutPromise = new Promise<null>((resolve) => {
-      timeoutHandle = setTimeout(() => resolve(null), timeoutMs);
-    });
-
-    const result = await Promise.race([promise, timeoutPromise]);
-    clearTimeout(timeoutHandle!);
-    return result as T | null;
-  }
 }
 
-// singleton instance
-let engineInstance: EvaluationEngine | null = null;
+const evaluationEngineSingleton = createSingleton(() => new EvaluationEngine());
 
 // get the EvaluationEngine singleton instance
 export function getEvaluationEngine(): EvaluationEngine {
-  if (!engineInstance) {
-    engineInstance = new EvaluationEngine();
-  }
-  return engineInstance;
+  return evaluationEngineSingleton.get();
 }

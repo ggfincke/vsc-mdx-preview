@@ -7,45 +7,35 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('vscode', () => ({}));
 
 // mock services w/ hoisted mocks
-const { mockConfigManager, mockTrustManager, mockFrameworkDetector, mockErrorReporter } = vi.hoisted(() => ({
-  mockConfigManager: {
-    get: vi.fn((key: string): unknown => {
-      const defaults: Record<string, unknown> = {
-        'components.builtins': true,
-        'components.unknownBehavior': 'placeholder',
-        'build.useSucraseTranspiler': false,
-      };
-      return defaults[key];
-    }),
-  },
-  mockTrustManager: {
-    getState: vi.fn(() => ({
-      workspaceTrusted: true,
-      scriptsEnabled: true,
-      canExecute: true,
-      openMdxLinksInPreview: true,
-    })),
-    getStateForDocument: vi.fn(() => ({
-      workspaceTrusted: true,
-      scriptsEnabled: true,
-      canExecute: true,
-      openMdxLinksInPreview: true,
-    })),
-  },
-  mockFrameworkDetector: {
-    getFramework: vi.fn(() => ({ framework: 'generic', confidence: 1 })),
-    areShimsEnabled: vi.fn(() => true),
-  },
-  mockErrorReporter: {
-    report: vi.fn(),
-    reportSilent: vi.fn(),
-    reportPluginError: vi.fn(),
-    reportConfigError: vi.fn(),
-  },
-}));
+const { mockTrustManager, mockFrameworkDetector, mockErrorReporter } =
+  vi.hoisted(() => ({
+    mockTrustManager: {
+      getState: vi.fn(() => ({
+        workspaceTrusted: true,
+        scriptsEnabled: true,
+        canExecute: true,
+        openMdxLinksInPreview: true,
+      })),
+      getStateForDocument: vi.fn(() => ({
+        workspaceTrusted: true,
+        scriptsEnabled: true,
+        canExecute: true,
+        openMdxLinksInPreview: true,
+      })),
+    },
+    mockFrameworkDetector: {
+      getFramework: vi.fn(() => ({ framework: 'generic', confidence: 1 })),
+      areShimsEnabled: vi.fn(() => true),
+    },
+    mockErrorReporter: {
+      report: vi.fn(),
+      reportSilent: vi.fn(),
+      reportPluginError: vi.fn(),
+      reportConfigError: vi.fn(),
+    },
+  }));
 
 vi.mock('../../packages/extension/services', () => ({
-  getConfigManager: () => mockConfigManager,
   getTrustManager: () => mockTrustManager,
   getFrameworkDetector: () => mockFrameworkDetector,
   getErrorReporter: () => mockErrorReporter,
@@ -57,30 +47,40 @@ vi.mock('../../packages/extension/logging', () => ({
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
+  createTaggedLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
 }));
 
 // import after mocks
 import { compileTrusted } from '../../packages/extension/compiler/trusted/compile';
 import { compileSafe } from '../../packages/extension/compiler/safe/compile';
-import { FIXTURES, createMockPreview } from '../helpers';
+import {
+  FIXTURES,
+  createMockPreview,
+  createMockCompilerConfig,
+  createMockCompilerConfigFromPreview,
+} from '../helpers';
+
+const trustedConfig = createMockCompilerConfigFromPreview;
+const safeConfig = createMockCompilerConfig;
 
 describe('MDX → Preview Flow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockConfigManager.get.mockImplementation((key: string) => {
-      const defaults: Record<string, unknown> = {
-        'components.builtins': true,
-        'components.unknownBehavior': 'placeholder',
-        'build.useSucraseTranspiler': false,
-      };
-      return defaults[key];
-    });
   });
 
   describe('Trusted Mode Compilation', () => {
     it('compiles basic MDX to executable JavaScript', async () => {
       const preview = createMockPreview({ content: FIXTURES.basicMdx });
-      const result = await compileTrusted(FIXTURES.basicMdx, true, preview);
+      const result = await compileTrusted(
+        FIXTURES.basicMdx,
+        true,
+        trustedConfig(preview)
+      );
 
       // output should be valid JavaScript module
       expect(result.code).toContain('function MDXContent');
@@ -97,7 +97,7 @@ describe('MDX → Preview Flow', () => {
 </div>`;
 
       const preview = createMockPreview({ content: mdx });
-      const result = await compileTrusted(mdx, true, preview);
+      const result = await compileTrusted(mdx, true, trustedConfig(preview));
 
       expect(result.code).toContain('function MDXContent');
       // JSX should be compiled to React.createElement calls (or jsx() calls)
@@ -105,8 +105,14 @@ describe('MDX → Preview Flow', () => {
     });
 
     it('extracts frontmatter correctly', async () => {
-      const preview = createMockPreview({ content: FIXTURES.mdxWithFrontmatter });
-      const result = await compileTrusted(FIXTURES.mdxWithFrontmatter, true, preview);
+      const preview = createMockPreview({
+        content: FIXTURES.mdxWithFrontmatter,
+      });
+      const result = await compileTrusted(
+        FIXTURES.mdxWithFrontmatter,
+        true,
+        trustedConfig(preview)
+      );
 
       expect(result.frontmatter).toBeDefined();
       expect(result.frontmatter.title).toBe('Test Document');
@@ -117,7 +123,11 @@ describe('MDX → Preview Flow', () => {
 
     it('handles code blocks w/ syntax highlighting', async () => {
       const preview = createMockPreview({ content: FIXTURES.mdxWithCodeBlock });
-      const result = await compileTrusted(FIXTURES.mdxWithCodeBlock, true, preview);
+      const result = await compileTrusted(
+        FIXTURES.mdxWithCodeBlock,
+        true,
+        trustedConfig(preview)
+      );
 
       expect(result.code).toContain('function MDXContent');
       // code content should be in the output
@@ -126,7 +136,11 @@ describe('MDX → Preview Flow', () => {
 
     it('handles MDX w/ default export (layout)', async () => {
       const preview = createMockPreview({ content: FIXTURES.mdxWithLayout });
-      const result = await compileTrusted(FIXTURES.mdxWithLayout, true, preview);
+      const result = await compileTrusted(
+        FIXTURES.mdxWithLayout,
+        true,
+        trustedConfig(preview)
+      );
 
       // should have MDXContent function
       expect(result.code).toContain('MDXContent');
@@ -145,7 +159,7 @@ describe('MDX → Preview Flow', () => {
 - [ ] Incomplete task`;
 
       const preview = createMockPreview({ content: mdx });
-      const result = await compileTrusted(mdx, true, preview);
+      const result = await compileTrusted(mdx, true, trustedConfig(preview));
 
       expect(result.code).toContain('function MDXContent');
     });
@@ -162,7 +176,7 @@ $$
 $$`;
 
       const preview = createMockPreview({ content: mdx });
-      const result = await compileTrusted(mdx, true, preview);
+      const result = await compileTrusted(mdx, true, trustedConfig(preview));
 
       expect(result.code).toContain('function MDXContent');
     });
@@ -176,7 +190,7 @@ graph TD
 \`\`\``;
 
       const preview = createMockPreview({ content: mdx });
-      const result = await compileTrusted(mdx, true, preview);
+      const result = await compileTrusted(mdx, true, trustedConfig(preview));
 
       expect(result.code).toContain('function MDXContent');
       // mermaid code block should be in output
@@ -188,7 +202,11 @@ graph TD
         content: FIXTURES.basicMdx,
         configuration: { useVscodeMarkdownStyles: true },
       });
-      const result = await compileTrusted(FIXTURES.basicMdx, true, preview);
+      const result = await compileTrusted(
+        FIXTURES.basicMdx,
+        true,
+        trustedConfig(preview)
+      );
 
       // should import vscode-markdown-layout
       expect(result.code).toContain('vscode-markdown-layout');
@@ -199,7 +217,11 @@ graph TD
         content: FIXTURES.basicMdx,
         configuration: { useVscodeMarkdownStyles: false },
       });
-      const result = await compileTrusted(FIXTURES.basicMdx, true, preview);
+      const result = await compileTrusted(
+        FIXTURES.basicMdx,
+        true,
+        trustedConfig(preview)
+      );
 
       expect(result.code).not.toContain('vscode-markdown-layout');
     });
@@ -207,7 +229,7 @@ graph TD
 
   describe('Safe Mode Compilation', () => {
     it('compiles basic MDX to sanitized HTML', async () => {
-      const result = await compileSafe(FIXTURES.basicMdx);
+      const result = await compileSafe(FIXTURES.basicMdx, safeConfig());
 
       expect(result.html).toContain('<h1');
       expect(result.html).toContain('Hello');
@@ -216,7 +238,10 @@ graph TD
     });
 
     it('extracts frontmatter correctly', async () => {
-      const result = await compileSafe(FIXTURES.mdxWithFrontmatter);
+      const result = await compileSafe(
+        FIXTURES.mdxWithFrontmatter,
+        safeConfig()
+      );
 
       expect(result.frontmatter).toBeDefined();
       expect(result.frontmatter.title).toBe('Test Document');
@@ -226,39 +251,27 @@ graph TD
     });
 
     it('creates placeholder for unknown JSX components', async () => {
-      mockConfigManager.get.mockImplementation((key: string) => {
-        if (key === 'components.builtins') return true;
-        if (key === 'components.unknownBehavior') return 'placeholder';
-        return undefined;
-      });
-
-      const result = await compileSafe(FIXTURES.mdxWithJsx);
+      const result = await compileSafe(FIXTURES.mdxWithJsx, safeConfig());
 
       expect(result.html).toContain('mdx-unknown-component-placeholder');
       expect(result.html).toContain('CustomComponent');
     });
 
     it('strips unknown components when configured', async () => {
-      mockConfigManager.get.mockImplementation((key: string) => {
-        if (key === 'components.builtins') return true;
-        if (key === 'components.unknownBehavior') return 'strip';
-        return undefined;
-      });
-
-      const result = await compileSafe(FIXTURES.mdxWithJsx);
+      const result = await compileSafe(
+        FIXTURES.mdxWithJsx,
+        safeConfig({ componentsUnknownBehavior: 'strip' })
+      );
 
       expect(result.html).not.toContain('CustomComponent');
       expect(result.html).not.toContain('mdx-unknown-component');
     });
 
     it('keeps children w/ raw behavior', async () => {
-      mockConfigManager.get.mockImplementation((key: string) => {
-        if (key === 'components.builtins') return true;
-        if (key === 'components.unknownBehavior') return 'raw';
-        return undefined;
-      });
-
-      const result = await compileSafe(FIXTURES.mdxWithJsx);
+      const result = await compileSafe(
+        FIXTURES.mdxWithJsx,
+        safeConfig({ componentsUnknownBehavior: 'raw' })
+      );
 
       // children should be preserved, wrapper removed
       expect(result.html).toContain('Child content');
@@ -266,7 +279,10 @@ graph TD
     });
 
     it('replaces JS expressions w/ placeholder', async () => {
-      const result = await compileSafe(FIXTURES.mdxWithExpression);
+      const result = await compileSafe(
+        FIXTURES.mdxWithExpression,
+        safeConfig()
+      );
 
       expect(result.html).toContain('mdx-expression-placeholder');
       expect(result.html).toContain('{...}');
@@ -275,7 +291,7 @@ graph TD
     });
 
     it('removes import/export statements', async () => {
-      const result = await compileSafe(FIXTURES.mdxWithImports);
+      const result = await compileSafe(FIXTURES.mdxWithImports, safeConfig());
 
       // imports should be removed
       expect(result.html).not.toContain('import');
@@ -284,7 +300,7 @@ graph TD
     });
 
     it('handles code blocks correctly', async () => {
-      const result = await compileSafe(FIXTURES.mdxWithCodeBlock);
+      const result = await compileSafe(FIXTURES.mdxWithCodeBlock, safeConfig());
 
       expect(result.html).toContain('<pre');
       expect(result.html).toContain('<code');
@@ -296,7 +312,7 @@ graph TD
 |---|---|
 | 1 | 2 |`;
 
-      const result = await compileSafe(mdx);
+      const result = await compileSafe(mdx, safeConfig());
 
       expect(result.html).toContain('<table');
       expect(result.html).toContain('<tr');
@@ -306,20 +322,20 @@ graph TD
     it('handles math expressions', async () => {
       const mdx = `$E = mc^2$`;
 
-      const result = await compileSafe(mdx);
+      const result = await compileSafe(mdx, safeConfig());
 
       // math should be rendered to HTML (KaTeX)
       expect(result.html).toContain('katex');
     });
 
     it('returns empty frontmatter when none present', async () => {
-      const result = await compileSafe(FIXTURES.basicMdx);
+      const result = await compileSafe(FIXTURES.basicMdx, safeConfig());
 
       expect(result.frontmatter).toEqual({});
     });
 
     it('handles inline JSX elements', async () => {
-      const result = await compileSafe(FIXTURES.mdxWithInlineJsx);
+      const result = await compileSafe(FIXTURES.mdxWithInlineJsx, safeConfig());
 
       expect(result.html).toContain('mdx-jsx-placeholder');
       expect(result.html).toContain('InlineComponent');
@@ -331,26 +347,32 @@ graph TD
       const preview = createMockPreview({ content: FIXTURES.invalidMdx });
 
       await expect(
-        compileTrusted(FIXTURES.invalidMdx, true, preview)
+        compileTrusted(FIXTURES.invalidMdx, true, trustedConfig(preview))
       ).rejects.toThrow();
     });
 
     it('throws on invalid MDX syntax in Safe Mode', async () => {
-      await expect(compileSafe(FIXTURES.invalidMdx)).rejects.toThrow();
+      await expect(
+        compileSafe(FIXTURES.invalidMdx, safeConfig())
+      ).rejects.toThrow();
     });
   });
 
   describe('Framework Component Handling', () => {
     it('compiles Docusaurus-style imports in Trusted Mode', async () => {
       const preview = createMockPreview({ content: FIXTURES.docusaurusTabs });
-      const result = await compileTrusted(FIXTURES.docusaurusTabs, true, preview);
+      const result = await compileTrusted(
+        FIXTURES.docusaurusTabs,
+        true,
+        trustedConfig(preview)
+      );
 
       // should compile successfully (imports may be transformed)
       expect(result.code).toContain('function MDXContent');
     });
 
     it('handles Docusaurus components in Safe Mode', async () => {
-      const result = await compileSafe(FIXTURES.docusaurusTabs);
+      const result = await compileSafe(FIXTURES.docusaurusTabs, safeConfig());
 
       // components should be replaced w/ placeholders
       expect(result.html).toBeDefined();
@@ -358,7 +380,11 @@ graph TD
 
     it('compiles Nextra-style imports in Trusted Mode', async () => {
       const preview = createMockPreview({ content: FIXTURES.nextraCallout });
-      const result = await compileTrusted(FIXTURES.nextraCallout, true, preview);
+      const result = await compileTrusted(
+        FIXTURES.nextraCallout,
+        true,
+        trustedConfig(preview)
+      );
 
       expect(result.code).toContain('function MDXContent');
     });
@@ -370,13 +396,7 @@ graph TD
   Important information
 </Callout>`;
 
-      mockConfigManager.get.mockImplementation((key: string) => {
-        if (key === 'components.builtins') return true;
-        if (key === 'components.unknownBehavior') return 'placeholder';
-        return undefined;
-      });
-
-      const result = await compileSafe(mdx);
+      const result = await compileSafe(mdx, safeConfig());
 
       // Callout should be transformed to semantic HTML
       expect(result.html).toContain('callout');
@@ -388,13 +408,10 @@ graph TD
   Info text
 </Callout>`;
 
-      mockConfigManager.get.mockImplementation((key: string) => {
-        if (key === 'components.builtins') return false;
-        if (key === 'components.unknownBehavior') return 'placeholder';
-        return undefined;
-      });
-
-      const result = await compileSafe(mdx);
+      const result = await compileSafe(
+        mdx,
+        safeConfig({ componentsBuiltins: false })
+      );
 
       // Callout should be treated as unknown component
       expect(result.html).toContain('mdx-unknown-component-placeholder');
@@ -411,7 +428,7 @@ This is paragraph text with **bold** and *italic*.
 - List item 2`;
 
       const preview = createMockPreview({ content: mdx });
-      const result = await compileTrusted(mdx, true, preview);
+      const result = await compileTrusted(mdx, true, trustedConfig(preview));
 
       expect(result.code).toContain('Title');
       expect(result.code).toContain('paragraph text');
@@ -427,7 +444,7 @@ This is paragraph text with **bold** and *italic*.
 - List item 1
 - List item 2`;
 
-      const result = await compileSafe(mdx);
+      const result = await compileSafe(mdx, safeConfig());
 
       expect(result.html).toContain('Title');
       expect(result.html).toContain('paragraph text');

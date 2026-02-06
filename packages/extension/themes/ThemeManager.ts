@@ -2,9 +2,8 @@
 // * ThemeManager - manage MPE-style preview & code block themes
 
 import * as vscode from 'vscode';
-import { SingletonService } from '../services/SingletonService';
+import { WithSubscribers } from '../services/SingletonService';
 import { getConfigManager } from '../services';
-import { SubscriberManager } from '../utils/SubscriberManager';
 import { LogTags } from '@mdx-preview/shared';
 import { THEME_KEYS } from '../config';
 import type {
@@ -16,34 +15,28 @@ import type {
 } from './types';
 import { getOppositeTheme, isLightPreviewTheme } from './types';
 
-export class ThemeManager extends SingletonService<ThemeManager> {
+export class ThemeManager extends WithSubscribers<
+  ThemeManager,
+  WebviewThemeState
+> {
   protected static override instance: ThemeManager | undefined;
   protected readonly logTag = LogTags.THEME_MANAGER;
 
-  private subscriberManager = new SubscriberManager<WebviewThemeState>(
-    LogTags.THEME_MANAGER
-  );
-
   protected constructor() {
-    super();
+    super(LogTags.THEME_MANAGER);
     // listen to VS Code theme changes
     this.addDisposable(
       vscode.window.onDidChangeActiveColorTheme(() => {
-        this.notifySubscribers();
+        this.notifyThemeSubscribers();
       })
     );
 
     // listen to configuration changes via centralized dispatcher
     this.addDisposable(
       getConfigManager().onDidChangeKey([...THEME_KEYS], () => {
-        this.notifySubscribers();
+        this.notifyThemeSubscribers();
       })
     );
-  }
-
-  // clear subscribers on dispose (disposables handled by base class)
-  protected override onDispose(): void {
-    this.subscriberManager.clear();
   }
 
   // get theme configuration from settings
@@ -157,14 +150,9 @@ export class ThemeManager extends SingletonService<ThemeManager> {
     return result;
   }
 
-  // subscribe to theme changes
-  subscribe(callback: (state: WebviewThemeState) => void): vscode.Disposable {
-    return this.subscriberManager.subscribe(callback);
-  }
-
   // notify all subscribers of theme change
-  private notifySubscribers(): void {
-    this.subscriberManager.notify(this.getWebviewThemeState());
+  private notifyThemeSubscribers(): void {
+    this.notifySubscribers(this.getWebviewThemeState());
   }
 
   // update theme setting

@@ -5,6 +5,11 @@ import * as vscode from 'vscode';
 import { debug } from '../logging';
 import type { IService } from '../types';
 import type { LogTag } from '@mdx-preview/shared';
+import {
+  type ISubscribable,
+  type SubscriberErrorHandler,
+  SubscriberManager,
+} from '../utils/SubscriberManager';
 
 // abstract base class for singleton services w/ automatic lifecycle management
 export abstract class SingletonService<
@@ -74,5 +79,41 @@ export abstract class SingletonService<
   // add a disposable to the managed collection (auto-disposed on service disposal)
   protected addDisposable(disposable: vscode.Disposable): void {
     this.disposables.push(disposable);
+  }
+}
+
+// abstract singleton base that adds subscribe/notify helpers for service events
+export abstract class WithSubscribers<T extends SingletonService<T>, EventData>
+  extends SingletonService<T>
+  implements ISubscribable<EventData>
+{
+  private readonly subscriberManager: SubscriberManager<EventData>;
+
+  protected constructor(
+    subscriberLogTag: LogTag,
+    errorHandler?: SubscriberErrorHandler
+  ) {
+    super();
+    this.subscriberManager = new SubscriberManager<EventData>(
+      subscriberLogTag,
+      errorHandler
+    );
+
+    // clear subscribers during disposal even if subclass overrides onDispose
+    this.addDisposable({
+      dispose: () => {
+        this.subscriberManager.clear();
+      },
+    });
+  }
+
+  // subscribe to service events
+  subscribe(callback: (data: EventData) => void): vscode.Disposable {
+    return this.subscriberManager.subscribe(callback);
+  }
+
+  // notify current subscribers
+  protected notifySubscribers(data: EventData): void {
+    this.subscriberManager.notify(data);
   }
 }

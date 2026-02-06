@@ -7,15 +7,29 @@
 // - consistent error message format for troubleshooting
 
 import * as fs from 'fs';
-import { debug as logDebug } from '../logging';
-import { extractErrorMessage, LogTags, type LogTag } from '@mdx-preview/shared';
+import { createTaggedLogger } from '../logging';
+import {
+  extractErrorMessage,
+  LogTags,
+  type TaggedLogger,
+} from '@mdx-preview/shared';
+import { raceTimeout } from './async-utils';
+
+// default logger for file operations
+const defaultLog = createTaggedLogger(LogTags.FILE);
 
 // options for file operations
 export interface FileOptions {
   // enable debug logging on failure (default: false)
   logOnError?: boolean;
-  // use log tag for debug messages (e.g., LogTags.FRAMEWORK)
-  logTag?: LogTag;
+  // tagged logger for debug messages (defaults to FILE tag)
+  logger?: TaggedLogger;
+  // timeout for async reads in milliseconds (default: no timeout)
+  timeoutMs?: number;
+  // custom timeout error message for async reads
+  timeoutMessage?: string;
+  // invoke callback when a read/parse operation fails
+  onError?: (error: unknown) => void;
 }
 
 // synchronous file operations
@@ -29,10 +43,10 @@ export function readFileSync(
   try {
     return fs.readFileSync(filePath, encoding);
   } catch (err) {
+    options?.onError?.(err);
     if (options?.logOnError) {
-      const logTag = options.logTag ?? LogTags.FILE;
-      const message = extractErrorMessage(err);
-      logDebug(`[${logTag}] Failed to read ${filePath}: ${message}`);
+      const log = options.logger ?? defaultLog;
+      log.debug(`Failed to read ${filePath}: ${extractErrorMessage(err)}`);
     }
     return null;
   }
@@ -51,10 +65,12 @@ export function readJsonSync<T = unknown>(
   try {
     return JSON.parse(content) as T;
   } catch (err) {
+    options?.onError?.(err);
     if (options?.logOnError) {
-      const logTag = options.logTag ?? LogTags.FILE;
-      const message = extractErrorMessage(err);
-      logDebug(`[${logTag}] Failed to parse JSON at ${filePath}: ${message}`);
+      const log = options.logger ?? defaultLog;
+      log.debug(
+        `Failed to parse JSON at ${filePath}: ${extractErrorMessage(err)}`
+      );
     }
     return null;
   }
@@ -94,12 +110,25 @@ export async function readFileAsync(
   options?: FileOptions
 ): Promise<string | null> {
   try {
-    return await fs.promises.readFile(filePath, encoding);
+    const readPromise = fs.promises.readFile(filePath, encoding);
+    const timeoutMs = options?.timeoutMs;
+
+    if (timeoutMs === undefined) {
+      return await readPromise;
+    }
+
+    const timeoutMessage =
+      options?.timeoutMessage ??
+      `Read timed out after ${timeoutMs}ms: ${filePath}`;
+    return await raceTimeout(readPromise, {
+      timeoutMs,
+      errorMessage: timeoutMessage,
+    });
   } catch (err) {
+    options?.onError?.(err);
     if (options?.logOnError) {
-      const logTag = options.logTag ?? LogTags.FILE;
-      const message = extractErrorMessage(err);
-      logDebug(`[${logTag}] Failed to read ${filePath}: ${message}`);
+      const log = options.logger ?? defaultLog;
+      log.debug(`Failed to read ${filePath}: ${extractErrorMessage(err)}`);
     }
     return null;
   }
@@ -118,10 +147,12 @@ export async function readJsonAsync<T = unknown>(
   try {
     return JSON.parse(content) as T;
   } catch (err) {
+    options?.onError?.(err);
     if (options?.logOnError) {
-      const logTag = options.logTag ?? LogTags.FILE;
-      const message = extractErrorMessage(err);
-      logDebug(`[${logTag}] Failed to parse JSON at ${filePath}: ${message}`);
+      const log = options.logger ?? defaultLog;
+      log.debug(
+        `Failed to parse JSON at ${filePath}: ${extractErrorMessage(err)}`
+      );
     }
     return null;
   }
@@ -157,19 +188,19 @@ export async function readFileIfUnderSize(
     const stat = await fs.promises.stat(filePath);
     if (stat.size > maxBytes) {
       if (options?.logOnError) {
-        const logTag = options.logTag ?? LogTags.FILE;
-        logDebug(
-          `[${logTag}] Skipping large file: ${filePath} (${stat.size} > ${maxBytes})`
+        const log = options.logger ?? defaultLog;
+        log.debug(
+          `Skipping large file: ${filePath} (${stat.size} > ${maxBytes})`
         );
       }
       return null;
     }
     return await fs.promises.readFile(filePath, 'utf-8');
   } catch (err) {
+    options?.onError?.(err);
     if (options?.logOnError) {
-      const logTag = options.logTag ?? LogTags.FILE;
-      const message = extractErrorMessage(err);
-      logDebug(`[${logTag}] Failed to read ${filePath}: ${message}`);
+      const log = options.logger ?? defaultLog;
+      log.debug(`Failed to read ${filePath}: ${extractErrorMessage(err)}`);
     }
     return null;
   }

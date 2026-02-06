@@ -2,7 +2,7 @@
 // React context for loading state - manage loading indicators & stale content state
 
 import { useState, useCallback, useMemo } from 'react';
-import { debug } from '../utils/debug';
+import { createTaggedLogger } from '../utils/createTaggedLogger';
 import { LogTags } from '@mdx-preview/shared';
 import { createContextProvider } from './createContextProvider';
 
@@ -13,18 +13,21 @@ interface LoadingContextValue {
   setStale: (stale: boolean) => void;
 }
 
+// module-level tagged logger (avoids per-render allocation)
+const log = createTaggedLogger(LogTags.LOADING_CONTEXT);
+
 // hook that provides the Loading context value
 function useLoadingProviderValue(): LoadingContextValue {
   const [isLoading, setIsLoadingState] = useState(true);
   const [isStale, setStaleState] = useState(false);
 
   const setIsLoading = useCallback((loading: boolean) => {
-    debug(`[${LogTags.LOADING_CONTEXT}] setIsLoading called: ${loading}`);
+    log.debug(`setIsLoading called: ${loading}`);
     setIsLoadingState(loading);
   }, []);
 
   const setStale = useCallback((stale: boolean) => {
-    debug(`[${LogTags.LOADING_CONTEXT}] setStale called: ${stale}`);
+    log.debug(`setStale called: ${stale}`);
     setStaleState(stale);
   }, []);
 

@@ -54,7 +54,9 @@ export function initLogging(): vscode.Disposable {
       debugEnabled = configManager.get('advanced.debugOutput');
 
       if (debugEnabled) {
-        info(`[${LogTags.LOGGING}] Debug output enabled via settings`);
+        createTaggedLogger(LogTags.LOGGING).info(
+          'Debug output enabled via settings'
+        );
         showOutput();
       }
     }
@@ -171,42 +173,25 @@ export function disposeOutputChannel(): void {
   }
 }
 
-// variadic logger wrapper for compatibility w/ shared factory
-// converts variadic calls to extension's (message, data) format
-function variadicDebug(...args: unknown[]): void {
-  const [first, ...rest] = args;
-  const message = String(first ?? '');
-  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
-  debug(message, data);
-}
-
-function variadicInfo(...args: unknown[]): void {
-  const [first, ...rest] = args;
-  const message = String(first ?? '');
-  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
-  info(message, data);
-}
-
-function variadicWarn(...args: unknown[]): void {
-  const [first, ...rest] = args;
-  const message = String(first ?? '');
-  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
-  warn(message, data);
-}
-
-function variadicError(...args: unknown[]): void {
-  const [first, ...rest] = args;
-  const message = String(first ?? '');
-  const data = rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
-  error(message, data);
+// create variadic wrapper that adapts variadic calls to (message, data) format
+function createVariadicWrapper(
+  logFn: (message: string, data?: unknown) => void
+): (...args: unknown[]) => void {
+  return (...args: unknown[]) => {
+    const [first, ...rest] = args;
+    const message = String(first ?? '');
+    const data =
+      rest.length === 1 ? rest[0] : rest.length > 1 ? rest : undefined;
+    logFn(message, data);
+  };
 }
 
 // variadic logger for use w/ shared factory
 const variadicLogger = {
-  debug: variadicDebug,
-  info: variadicInfo,
-  warn: variadicWarn,
-  error: variadicError,
+  debug: createVariadicWrapper(debug),
+  info: createVariadicWrapper(info),
+  warn: createVariadicWrapper(warn),
+  error: createVariadicWrapper(error),
 };
 
 // create tagged logger using shared factory w/ extension's variadic wrapper

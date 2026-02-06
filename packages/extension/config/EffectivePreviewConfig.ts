@@ -16,6 +16,7 @@ import type { PreviewTheme, CodeBlockTheme } from '../themes/types';
 import type {
   EffectivePreviewConfig,
   BuildEffectiveConfigOptions,
+  CompilerConfig,
 } from '../types';
 
 // build unified effective preview configuration
@@ -40,10 +41,14 @@ export function buildEffectivePreviewConfig(
 
   // merge w/ precedence: frontmatter > config file > VS Code settings
   return {
-    // VS Code settings (no override from config file or frontmatter)
+    // VS Code settings (config file can only disable, not enable)
     updateMode: settings['preview.updateMode'],
     debounceDelay: settings['preview.debounceDelay'],
-    enableScripts: settings['preview.enableScripts'],
+    // config file can force Safe Mode (false), but cannot force Trusted Mode
+    enableScripts:
+      fileConfig?.enableScripts === false
+        ? false
+        : settings['preview.enableScripts'],
     openMdxLinksInPreview: settings['preview.openMdxLinksInPreview'],
     securityPolicy: settings['preview.security'],
     useVscodeMarkdownStyles: settings['preview.useVscodeMarkdownStyles'],
@@ -87,4 +92,29 @@ export function buildEffectivePreviewConfig(
     // metadata for debugging & cache invalidation
     configFile,
   };
+}
+
+// project effective config to compiler-specific fields
+export function toCompilerConfig(
+  effectiveConfig: EffectivePreviewConfig,
+  options: Pick<BuildEffectiveConfigOptions, 'docUri' | 'docFsPath'>
+): CompilerConfig {
+  return {
+    docUri: options.docUri,
+    docFsPath: options.docFsPath,
+    customLayoutFilePath: effectiveConfig.customLayoutFilePath,
+    useVscodeMarkdownStyles: effectiveConfig.useVscodeMarkdownStyles,
+    useWhiteBackground: effectiveConfig.useWhiteBackground,
+    componentsBuiltins: effectiveConfig.componentsBuiltins,
+    componentsUnknownBehavior: effectiveConfig.componentsUnknownBehavior,
+    configFile: effectiveConfig.configFile,
+  };
+}
+
+// build compiler config from merged settings + file config
+export function buildCompilerConfig(
+  options: BuildEffectiveConfigOptions
+): CompilerConfig {
+  const effectiveConfig = buildEffectivePreviewConfig(options);
+  return toCompilerConfig(effectiveConfig, options);
 }

@@ -54,7 +54,7 @@ describe('evaluateModule', () => {
 
       try {
         evaluateModule(code, 'error-test.js', runtime);
-      } catch (error) {
+      } catch (error: unknown) {
         const err = error as Error & { cause?: Error };
 
         expect(err.message).toContain('Error evaluating module "error-test.js"');
@@ -70,7 +70,7 @@ describe('evaluateModule', () => {
 
       try {
         evaluateModule(code, 'stack-test.js', runtime);
-      } catch (error) {
+      } catch (error: unknown) {
         const err = error as Error;
         expect(err.stack).toContain('caused by:');
         expect(err.stack).toContain('stack test error');
@@ -83,7 +83,7 @@ describe('evaluateModule', () => {
 
       try {
         evaluateModule(code, 'string-error.js', runtime);
-      } catch (error) {
+      } catch (error: unknown) {
         const err = error as Error & { cause?: Error };
 
         expect(err.message).toContain('string error');
@@ -100,7 +100,7 @@ describe('evaluateModule', () => {
 
       try {
         evaluateModule(code, 'syntax-error.js', runtime);
-      } catch (error) {
+      } catch (error: unknown) {
         const err = error as Error & { cause?: Error };
 
         expect(err.message).toContain('Error evaluating module "syntax-error.js"');
@@ -114,7 +114,7 @@ describe('evaluateModule', () => {
 
       try {
         evaluateModule(code, 'ref-error.js', runtime);
-      } catch (error) {
+      } catch (error: unknown) {
         const err = error as Error & { cause?: Error };
 
         expect(err.message).toContain('Error evaluating module "ref-error.js"');

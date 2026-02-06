@@ -11,14 +11,7 @@ vi.mock('vscode', () => ({
 }));
 
 // Mock services w/ hoisted mocks
-const { mockConfigManager, mockTrustManager } = vi.hoisted(() => ({
-  mockConfigManager: {
-    get: vi.fn((key: string) => {
-      if (key === 'components.builtins') return true;
-      if (key === 'components.unknownBehavior') return 'placeholder';
-      return undefined;
-    }),
-  },
+const { mockTrustManager } = vi.hoisted(() => ({
   mockTrustManager: {
     getStateForDocument: vi.fn(() => ({
       workspaceTrusted: true,
@@ -31,7 +24,6 @@ const { mockConfigManager, mockTrustManager } = vi.hoisted(() => ({
 }));
 
 vi.mock('../../packages/extension/services', () => ({
-  getConfigManager: () => mockConfigManager,
   getTrustManager: () => mockTrustManager,
 }));
 
@@ -41,6 +33,12 @@ vi.mock('../../packages/extension/logging', () => ({
   warn: vi.fn(),
   debug: vi.fn(),
   info: vi.fn(),
+  createTaggedLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
 }));
 
 // Mock plugin loader (avoid loading real plugins)
@@ -54,21 +52,24 @@ vi.mock('../../packages/extension/compiler/plugins/loader', () => ({
 
 // Import after mocks
 import { compileTrusted } from '../../packages/extension/compiler/trusted/compile';
-import { createMockPreview, FIXTURES } from '../helpers';
+import {
+  createMockPreview,
+  createMockCompilerConfigFromPreview,
+  FIXTURES,
+} from '../helpers';
 
 describe('compileTrusted()', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockConfigManager.get.mockImplementation((key: string) => {
-      if (key === 'components.builtins') return true;
-      if (key === 'components.unknownBehavior') return 'placeholder';
-      return undefined;
-    });
   });
 
   it('compiles basic MDX to JavaScript with React imports', async () => {
     const preview = createMockPreview({ content: FIXTURES.basicMdx });
-    const result = await compileTrusted(FIXTURES.basicMdx, true, preview as any);
+    const result = await compileTrusted(
+      FIXTURES.basicMdx,
+      true,
+      createMockCompilerConfigFromPreview(preview)
+    );
 
     expect(result.code).toContain('import React from');
     expect(result.code).toContain('MDXContent');
@@ -77,7 +78,11 @@ describe('compileTrusted()', () => {
 
   it('extracts frontmatter and returns it separately', async () => {
     const preview = createMockPreview({ content: FIXTURES.mdxWithFrontmatter });
-    const result = await compileTrusted(FIXTURES.mdxWithFrontmatter, true, preview as any);
+    const result = await compileTrusted(
+      FIXTURES.mdxWithFrontmatter,
+      true,
+      createMockCompilerConfigFromPreview(preview)
+    );
 
     expect(result.frontmatter).toBeDefined();
     expect(result.frontmatter.title).toBe('Test Document');
@@ -89,7 +94,11 @@ describe('compileTrusted()', () => {
       content: FIXTURES.basicMdx,
       configuration: { useVscodeMarkdownStyles: true },
     });
-    const result = await compileTrusted(FIXTURES.basicMdx, true, preview as any);
+    const result = await compileTrusted(
+      FIXTURES.basicMdx,
+      true,
+      createMockCompilerConfigFromPreview(preview)
+    );
 
     expect(result.code).toContain('vscode-markdown-layout');
     expect(result.code).toContain('createLayout');
@@ -100,7 +109,11 @@ describe('compileTrusted()', () => {
       content: FIXTURES.mdxWithLayout,
       configuration: { useVscodeMarkdownStyles: true },
     });
-    const result = await compileTrusted(FIXTURES.mdxWithLayout, true, preview as any);
+    const result = await compileTrusted(
+      FIXTURES.mdxWithLayout,
+      true,
+      createMockCompilerConfigFromPreview(preview)
+    );
 
     // Should NOT inject vscode-markdown-layout when there's already a default export
     expect(result.code).not.toContain('vscode-markdown-layout');
@@ -108,7 +121,11 @@ describe('compileTrusted()', () => {
 
   it('returns empty frontmatter when none present', async () => {
     const preview = createMockPreview({ content: FIXTURES.basicMdx });
-    const result = await compileTrusted(FIXTURES.basicMdx, true, preview as any);
+    const result = await compileTrusted(
+      FIXTURES.basicMdx,
+      true,
+      createMockCompilerConfigFromPreview(preview)
+    );
 
     expect(result.frontmatter).toEqual({});
   });

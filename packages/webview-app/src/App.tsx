@@ -9,7 +9,7 @@ import { StaleIndicator } from './components/StaleIndicator/StaleIndicator';
 import { SafePreviewRenderer } from './SafePreview';
 import { TrustedPreviewRenderer } from './TrustedPreview';
 import { ExtensionHandle } from './rpc-webview';
-import { debug } from './utils/debug';
+import { createTaggedLogger } from './utils/createTaggedLogger';
 import { LogTags } from '@mdx-preview/shared';
 import { classifyLink } from './utils/linkHandler';
 import type { TrustedPreviewContent } from './types';
@@ -26,10 +26,13 @@ import './styles/admonitions.css';
 import './components/shims/base/styles/index.css';
 // framework-specific styles are lazy-loaded via frameworkCssLoader.ts
 
-debug(`[${LogTags.APP}] App.tsx module loaded`);
+// module-level tagged logger (avoids per-render allocation)
+const log = createTaggedLogger(LogTags.APP);
+
+log.debug('App.tsx module loaded');
 
 function App() {
-  debug(`[${LogTags.APP}] App component rendering`);
+  log.debug('App component rendering');
 
   // consume state from granular contexts
   const { trustState } = useTrust();
@@ -48,8 +51,8 @@ function App() {
   // get theme context for MPE preview themes
   const { previewTheme } = useTheme();
 
-  debug(
-    `[${LogTags.APP}] Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
+  log.debug(
+    `Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
   );
 
   // intercept Ctrl/Cmd+clicks on external links & route to extension
@@ -75,7 +78,7 @@ function App() {
       }
 
       event.preventDefault();
-      debug(`[${LogTags.APP}] Ctrl/Cmd+click external link: ${href}`);
+      log.debug(`Ctrl/Cmd+click external link: ${href}`);
       ExtensionHandle.openExternal(href);
     }
   }, []);
@@ -90,13 +93,13 @@ function App() {
 
   // render loading state during initial load
   if (isLoading && !content && !error) {
-    debug(`[${LogTags.APP}] Rendering LoadingBar (initial loading)`);
+    log.debug('Rendering LoadingBar (initial loading)');
     return <LoadingBar />;
   }
 
   // render error state w/ unified ErrorDisplay component
   if (error) {
-    debug(`[${LogTags.APP}] Rendering error state`);
+    log.debug('Rendering error state');
     // convert PreviewError to Error for ErrorDisplay, preserving moduleError data
     const errorObj = new Error(error.message) as Error & {
       moduleError?: typeof error.moduleError;
@@ -120,12 +123,12 @@ function App() {
 
   // render loading state when awaiting content
   if (!content) {
-    debug(`[${LogTags.APP}] Rendering LoadingBar (no content)`);
+    log.debug('Rendering LoadingBar (no content)');
     return <LoadingBar />;
   }
 
   // render preview content in Safe or Trusted Mode
-  debug(`[${LogTags.APP}] Rendering content in ${content.mode} mode`);
+  log.debug(`Rendering content in ${content.mode} mode`);
 
   return (
     <div

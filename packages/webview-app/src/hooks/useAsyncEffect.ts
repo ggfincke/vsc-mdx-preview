@@ -49,7 +49,7 @@ export function useAsyncEffect<T>(
         if (!cancelled && result !== undefined) {
           callbacksRef.current.onSuccess?.(result as T);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         // only call onError if not cancelled
         if (!cancelled) {
           callbacksRef.current.onError?.(error);

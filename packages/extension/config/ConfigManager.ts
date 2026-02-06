@@ -2,9 +2,8 @@
 // centralized configuration management for MDX Preview extension
 
 import * as vscode from 'vscode';
-import { debug } from '../logging';
-import { SingletonService } from '../services/SingletonService';
-import { SubscriberManager } from '../utils/SubscriberManager';
+import { createTaggedLogger } from '../logging';
+import { WithSubscribers } from '../services/SingletonService';
 import { SecurityPolicy } from '../security/security';
 import {
   type FrameworkSetting,
@@ -14,6 +13,8 @@ import {
   LogTags,
 } from '@mdx-preview/shared';
 import { SETTINGS_DEFAULTS } from '@mdx-preview/shared';
+
+const log = createTaggedLogger(LogTags.CONFIG_MANAGER);
 
 // VS Code setting keys (relative to 'mdx-preview' namespace)
 export type SettingKey =
@@ -145,21 +146,20 @@ export const PREVIEW_CONFIG_KEYS: readonly SettingKey[] = [
 type ConfigChangeCallback = (affectedKeys: SettingKey[]) => void;
 
 // * centralized configuration manager for MDX Preview w/ type safety & change notifications
-export class ConfigManager extends SingletonService<ConfigManager> {
+export class ConfigManager extends WithSubscribers<
+  ConfigManager,
+  SettingKey[]
+> {
   protected static override instance: ConfigManager | undefined;
   protected readonly logTag = LogTags.CONFIG_MANAGER;
 
-  private subscriberManager = new SubscriberManager<SettingKey[]>(
-    LogTags.CONFIG_MANAGER
-  );
-
   protected constructor() {
-    super();
+    super(LogTags.CONFIG_MANAGER);
     // handle VS Code configuration changes
     this.addDisposable(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('mdx-preview')) {
-          this.notifySubscribers(e);
+          this.notifyConfigurationSubscribers(e);
         }
       })
     );
@@ -211,7 +211,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
 
   // register callback for configuration changes
   onDidChangeConfiguration(callback: ConfigChangeCallback): vscode.Disposable {
-    return this.subscriberManager.subscribe(callback);
+    return this.subscribe(callback);
   }
 
   // subscribe to changes for specific keys (convenience wrapper)
@@ -236,7 +236,9 @@ export class ConfigManager extends SingletonService<ConfigManager> {
   }
 
   // dispatch configuration change notifications to subscribers
-  private notifySubscribers(event: vscode.ConfigurationChangeEvent): void {
+  private notifyConfigurationSubscribers(
+    event: vscode.ConfigurationChangeEvent
+  ): void {
     // determine which keys changed
     const affectedKeys = (Object.keys(DEFAULTS) as SettingKey[]).filter((key) =>
       event.affectsConfiguration(`mdx-preview.${key}`)
@@ -246,14 +248,7 @@ export class ConfigManager extends SingletonService<ConfigManager> {
       return;
     }
 
-    debug(
-      `[${LogTags.CONFIG_MANAGER}] Settings changed: ${affectedKeys.join(', ')}`
-    );
-    this.subscriberManager.notify(affectedKeys);
-  }
-
-  // clear subscribers on dispose
-  protected override onDispose(): void {
-    this.subscriberManager.clear();
+    log.debug(`Settings changed: ${affectedKeys.join(', ')}`);
+    this.notifySubscribers(affectedKeys);
   }
 }

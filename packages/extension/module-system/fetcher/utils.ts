@@ -1,8 +1,11 @@
 // packages/extension/module-system/fetcher/utils.ts
 // shared utilities for module fetching & resolution
 
-import { debug, warn } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
+
+// module-level tagged logger for module fetching utilities
+const log = createTaggedLogger(LogTags.MODULE_SYSTEM);
 
 // noop module for core/unshimmable modules (CommonJS export format)
 export const NOOP_MODULE = `Object.defineProperty(exports, '__esModule', { value: true });
@@ -83,15 +86,15 @@ export function buildNoopResult(normalizedRequest: string) {
   // show warning once per session when core modules are used
   if (!hasWarnedAboutCoreModules) {
     hasWarnedAboutCoreModules = true;
-    warn(
-      `[${LogTags.MODULE_SYSTEM}] Node.js core module "${normalizedRequest}" imported. ` +
+    log.warn(
+      `Node.js core module "${normalizedRequest}" imported. ` +
         `Core modules (fs, path, crypto, etc.) are not available in browser preview. ` +
         `Code using these modules will receive no-op stubs.`
     );
   }
 
-  debug(
-    `[${LogTags.MODULE_SYSTEM}] Core module "${normalizedRequest}" -> noop. ` +
+  log.debug(
+    `Core module "${normalizedRequest}" -> noop. ` +
       `Used so far: ${Array.from(usedCoreModules).join(', ')}`
   );
 

@@ -3,7 +3,7 @@
 
 import { createRoot } from 'react-dom/client';
 import { initRPCWebviewSide } from './rpc-webview';
-import { debug, error } from './utils/debug';
+import { createTaggedLogger } from './utils/createTaggedLogger';
 import { LogTags } from '@mdx-preview/shared';
 import { ThemeProvider } from './theme';
 import { LightboxProvider } from './context/LightboxContext';
@@ -18,23 +18,26 @@ import './styles/safe-components.css';
 // code block styles (Shiki syntax highlighting w/ copy button, language badge)
 import './components/CodeBlock/CodeBlock.css';
 
-debug(`[${LogTags.WEBVIEW}] index.tsx loaded`);
+// module-level tagged logger (avoids per-render allocation)
+const log = createTaggedLogger(LogTags.WEBVIEW);
+
+log.debug('index.tsx loaded');
 
 // initialize RPC communication w/ extension
-debug(`[${LogTags.WEBVIEW}] Initializing RPC...`);
+log.debug('Initializing RPC...');
 initRPCWebviewSide();
-debug(`[${LogTags.WEBVIEW}] RPC initialized`);
+log.debug('RPC initialized');
 
 // react 18 createRoot API
 const container = document.getElementById('root');
 if (!container) {
-  error(`[${LogTags.WEBVIEW}] Root element not found!`);
+  log.error('Root element not found!');
   throw new Error('Root element not found');
 }
 
-debug(`[${LogTags.WEBVIEW}] Creating React root...`);
+log.debug('Creating React root...');
 const root = createRoot(container);
-debug(`[${LogTags.WEBVIEW}] Rendering App with providers...`);
+log.debug('Rendering App with providers...');
 root.render(
   <ThemeProvider>
     <LightboxProvider>
@@ -45,4 +48,4 @@ root.render(
     </LightboxProvider>
   </ThemeProvider>
 );
-debug(`[${LogTags.WEBVIEW}] App rendered`);
+log.debug('App rendered');

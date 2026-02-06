@@ -66,6 +66,48 @@ async function loadPlugin(
   }
 }
 
+interface LoadedPluginList {
+  plugins: Pluggable[];
+  errorCount: number;
+}
+
+// load a list of plugins for a specific Unified phase
+async function loadPluginList(
+  specs: PluginSpec[] | undefined,
+  configDir: string,
+  pluginType: 'remark' | 'rehype'
+): Promise<LoadedPluginList> {
+  const loaded: Pluggable[] = [];
+  let errorCount = 0;
+
+  if (!specs || specs.length === 0) {
+    return { plugins: loaded, errorCount };
+  }
+
+  for (const spec of specs) {
+    const pluginName = getPluginName(spec);
+    try {
+      const plugin = await loadPlugin(spec, configDir);
+      loaded.push(plugin);
+      debug(`Loaded ${pluginType} plugin: ${pluginName}`);
+    } catch (err) {
+      const message = extractErrorMessage(err);
+      errorCount++;
+      getErrorReporter().reportPluginError(
+        new PluginError(
+          message,
+          'PLUGIN_LOAD_ERROR',
+          pluginName,
+          isError(err) ? err : undefined
+        ),
+        pluginName
+      );
+    }
+  }
+
+  return { plugins: loaded, errorCount };
+}
+
 // result of loading plugins from config
 export interface LoadedPlugins {
   // custom remark plugins to add after built-in plugins
@@ -128,52 +170,22 @@ export async function loadPluginsFromConfig(
   info(`Loading custom plugins from ${path.basename(config.configPath)}...`);
 
   // load remark plugins
-  if (remarkPlugins && remarkPlugins.length > 0) {
-    for (const spec of remarkPlugins) {
-      const pluginName = getPluginName(spec);
-      try {
-        const plugin = await loadPlugin(spec, configDir);
-        result.remarkPlugins.push(plugin);
-        debug(`Loaded remark plugin: ${pluginName}`);
-      } catch (err) {
-        const message = extractErrorMessage(err);
-        result.errorCount++;
-        getErrorReporter().reportPluginError(
-          new PluginError(
-            message,
-            'PLUGIN_LOAD_ERROR',
-            pluginName,
-            isError(err) ? err : undefined
-          ),
-          pluginName
-        );
-      }
-    }
-  }
+  const loadedRemarkPlugins = await loadPluginList(
+    remarkPlugins,
+    configDir,
+    'remark'
+  );
+  result.remarkPlugins.push(...loadedRemarkPlugins.plugins);
+  result.errorCount += loadedRemarkPlugins.errorCount;
 
   // load rehype plugins
-  if (rehypePlugins && rehypePlugins.length > 0) {
-    for (const spec of rehypePlugins) {
-      const pluginName = getPluginName(spec);
-      try {
-        const plugin = await loadPlugin(spec, configDir);
-        result.rehypePlugins.push(plugin);
-        debug(`Loaded rehype plugin: ${pluginName}`);
-      } catch (err) {
-        const message = extractErrorMessage(err);
-        result.errorCount++;
-        getErrorReporter().reportPluginError(
-          new PluginError(
-            message,
-            'PLUGIN_LOAD_ERROR',
-            pluginName,
-            isError(err) ? err : undefined
-          ),
-          pluginName
-        );
-      }
-    }
-  }
+  const loadedRehypePlugins = await loadPluginList(
+    rehypePlugins,
+    configDir,
+    'rehype'
+  );
+  result.rehypePlugins.push(...loadedRehypePlugins.plugins);
+  result.errorCount += loadedRehypePlugins.errorCount;
 
   const loadedCount = result.remarkPlugins.length + result.rehypePlugins.length;
   const errorCount = result.errorCount;

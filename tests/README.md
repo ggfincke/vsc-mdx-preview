@@ -17,10 +17,22 @@ We focus on testing critical paths that, if broken, would cause significant user
 We intentionally do not test:
 
 - Every edge case or configuration combination
-- UI components in isolation
+- UI components in isolation (unless they enforce a security boundary)
 - Utility functions with obvious behavior
 - Performance characteristics of utilities
 - Integration points that require full VS Code runtime
+
+## Enforcement Checklist
+
+Before adding or expanding a suite, verify:
+
+1. The test targets a production-critical boundary (security, compile, resolve, fetch/eval, or webview runtime)
+2. The behavior is externally visible or contract-level (not an internal helper detail)
+3. The case is representative, not a combinatorial variant of an already-covered behavior
+4. The assertion does not depend on timing/performance thresholds
+5. The same failure mode is not already covered at a higher level
+
+If any check fails, do not add the test.
 
 ## Running Tests
 
@@ -42,9 +54,12 @@ tests/
 ├── transpilation/    # Babel transforms
 ├── resolution/       # Module resolution strategies
 ├── extension/        # Extension-specific critical paths
+│   ├── compiler/     # Plugin loading
+│   ├── config/       # Effective/compiler config projection
 │   ├── diagnostics/  # Component detection & code actions
 │   ├── framework/    # Framework detection
 │   ├── handlers/     # File type handlers (CSS, Sass, JSON, images)
+│   ├── module-system # Module fetch flow
 │   ├── nextra/       # Nextra meta resolution
 │   ├── preview/      # Preview lifecycle
 │   ├── security/     # Path security (checkFsPath)

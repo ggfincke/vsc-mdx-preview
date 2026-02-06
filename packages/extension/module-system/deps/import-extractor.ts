@@ -3,7 +3,10 @@
 
 import { init as initLexer, parse as parseImports } from 'es-module-lexer';
 import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
-import { debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
+
+// module-level tagged logger for import extraction
+const log = createTaggedLogger(LogTags.IMPORT_EXTRACTOR);
 
 // lexer initialization state
 let lexerInitialized = false;
@@ -46,9 +49,7 @@ const REQUIRE_TEMPLATE = /require\s*\(\s*`([^`\\]*(?:\\.[^`\\]*)*)`\s*\)/g;
 export async function extractImportSpecifiers(code: string): Promise<string[]> {
   // I.4: fast path - skip parsing if no import-like patterns detected
   if (!mightHaveImports(code)) {
-    debug(
-      `[${LogTags.IMPORT_EXTRACTOR}] fast path: no import patterns detected`
-    );
+    log.debug('fast path: no import patterns detected');
     return [];
   }
 
@@ -68,9 +69,9 @@ export async function extractImportSpecifiers(code: string): Promise<string[]> {
     }
 
     return esmImports;
-  } catch (error) {
-    debug(
-      `[${LogTags.IMPORT_EXTRACTOR}] Lexer error, falling back to require: ${extractErrorMessage(error)}`
+  } catch (error: unknown) {
+    log.debug(
+      `Lexer error, falling back to require: ${extractErrorMessage(error)}`
     );
     return extractRequireSpecifiers(code);
   }

@@ -5,6 +5,15 @@
 # Build artifacts to exclude
 build/extension/test/**
 build/**/*.map
+build/extension/extension/**
+build/extension/shared/**
+build/extension/shared-types/**
+build/extension/meta.json
+build/webview-app/.vite/**
+!build/webview-app/.vite/manifest.json
+
+# Stale assets
+assets/old_icon.png
 
 # Source code (not needed - bundled into extension.js)
 packages/**
@@ -17,8 +26,9 @@ CLAUDE.md
 tests/**
 coverage/**
 
-# Examples
+# Examples & docs (README links are absolute GitHub URLs)
 examples/**
+docs/**
 
 # Private packages
 node_modules/webview/**

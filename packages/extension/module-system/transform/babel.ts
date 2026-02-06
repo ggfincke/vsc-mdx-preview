@@ -10,8 +10,11 @@
 
 import type * as BabelCore from '@babel/core';
 import { LogTags } from '@mdx-preview/shared';
-import { debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { createLazyImport } from '../../utils/lazy-import';
+
+// module-level tagged logger for Babel transpiler
+const log = createTaggedLogger(LogTags.BABEL);
 
 // lazy load @babel/core - only imported when first transform is requested
 const getBabel = createLazyImport(() => import('@babel/core'));
@@ -73,19 +76,17 @@ export async function prewarmBabel(): Promise<void> {
   }
   prewarmStarted = true;
 
-  debug(`[${LogTags.BABEL}] Starting Babel prewarm`);
+  log.debug('Starting Babel prewarm');
   const startTime = Date.now();
 
   try {
     const babel = await getBabel();
     await getBabelOptions(babel);
     prewarmComplete = true;
-    debug(
-      `[${LogTags.BABEL}] Babel prewarm complete (${Date.now() - startTime}ms)`
-    );
+    log.debug(`Babel prewarm complete (${Date.now() - startTime}ms)`);
   } catch (err) {
     prewarmStarted = false;
-    debug(`[${LogTags.BABEL}] Babel prewarm failed`, err);
+    log.debug('Babel prewarm failed', err);
   }
 }
 

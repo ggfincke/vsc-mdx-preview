@@ -8,12 +8,15 @@ import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { getBrowserResolver } from '../resolver/resolver-factory';
 import { buildCssResult } from './result-builders';
-import { debug, warn } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { SASS_EXTENSIONS } from '../../constants';
 import {
   createKeyedLazyImport,
   loadModuleWithEsmFallback,
 } from '../../utils/lazy-import';
+
+// module-level tagged logger for SASS handler
+const log = createTaggedLogger(LogTags.SASS_HANDLER);
 
 // type-only import for sass module (doesn't bundle the implementation)
 type SassModule = typeof import('sass');
@@ -32,17 +35,17 @@ const sassLoader = createKeyedLazyImport<SassModule>({
 
   onValidationFailed(key) {
     const sassPath = path.join(key, 'node_modules', 'sass');
-    warn(`[${LogTags.SASS_HANDLER}] sass at ${sassPath} missing compileAsync`);
+    log.warn(`sass at ${sassPath} missing compileAsync`);
   },
 
   onLoaded(key) {
     const sassPath = path.join(key, 'node_modules', 'sass');
-    debug(`[${LogTags.SASS_HANDLER}] Loaded sass from workspace: ${sassPath}`);
+    log.debug(`Loaded sass from workspace: ${sassPath}`);
   },
 
   onLoadFailed(key, error) {
-    debug(
-      `[${LogTags.SASS_HANDLER}] sass not found in workspace ${key}: ${extractErrorMessage(error)}`
+    log.debug(
+      `sass not found in workspace ${key}: ${extractErrorMessage(error)}`
     );
   },
 });
@@ -50,7 +53,7 @@ const sassLoader = createKeyedLazyImport<SassModule>({
 // clear cached sass modules (call when workspace changes or on refresh)
 export function clearSassCache(): void {
   sassLoader.clear();
-  debug(`[${LogTags.SASS_HANDLER}] Sass cache cleared`);
+  log.debug('Sass cache cleared');
 }
 
 // generate helpful CSS comment when sass is not available
@@ -92,7 +95,7 @@ export class SassHandler implements FileTypeHandler {
 
     // if no workspace root, return helpful message
     if (!workspaceRoot) {
-      debug(`[${LogTags.SASS_HANDLER}] No workspace root available`);
+      log.debug('No workspace root available');
       return buildSassNotInstalledResult(fsPath);
     }
 
@@ -101,8 +104,8 @@ export class SassHandler implements FileTypeHandler {
 
     if (!sass) {
       // return CSS comment explaining how to enable SCSS support
-      warn(
-        `[${LogTags.SASS_HANDLER}] sass not installed in workspace, returning help message for ${fsPath}`
+      log.warn(
+        `sass not installed in workspace, returning help message for ${fsPath}`
       );
       return buildSassNotInstalledResult(fsPath);
     }
@@ -130,7 +133,7 @@ export class SassHandler implements FileTypeHandler {
       });
 
       return buildCssResult(fsPath, result.css);
-    } catch (error) {
+    } catch (error: unknown) {
       // sass compilation error - return error as CSS comment for visibility
       const errorMessage = extractErrorMessage(error);
       const errorCss = `/* ════════════════════════════════════════════════════════════════════════════
@@ -147,9 +150,7 @@ ${errorMessage
 
    ════════════════════════════════════════════════════════════════════════════ */
 `;
-      warn(
-        `[${LogTags.SASS_HANDLER}] Compilation error for ${fsPath}: ${errorMessage}`
-      );
+      log.warn(`Compilation error for ${fsPath}: ${errorMessage}`);
       return buildCssResult(fsPath, errorCss);
     }
   }

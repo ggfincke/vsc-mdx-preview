@@ -8,8 +8,10 @@ import * as vscode from 'vscode';
 import ExtensionHandle from './rpc-extension-handle';
 import { Preview } from './preview/preview-manager';
 import type { WebviewRPC } from '@mdx-preview/shared';
-import { debug } from './logging';
+import { createTaggedLogger } from './logging';
 import { LogTags } from '@mdx-preview/shared';
+
+const log = createTaggedLogger(LogTags.RPC_EXT);
 
 type AllowedTypeForComlink = 'message';
 
@@ -38,13 +40,13 @@ class ExtensionEndpoint implements Endpoint {
   currentListener?: EventListenerOrEventListenerObject;
 
   constructor(webview: vscode.Webview, disposables: vscode.Disposable[]) {
-    debug(`[${LogTags.RPC_EXT}] ExtensionEndpoint created`);
+    log.debug('ExtensionEndpoint created');
     this.webview = webview;
     this.disposables = disposables;
   }
 
   postMessage(message: unknown): void {
-    debug(`[${LogTags.RPC_EXT}] postMessage called`);
+    log.debug('postMessage called');
     this.webview.postMessage(message);
   }
 
@@ -52,11 +54,11 @@ class ExtensionEndpoint implements Endpoint {
     _type: AllowedTypeForComlink,
     listener: EventListenerOrEventListenerObject
   ): void {
-    debug(`[${LogTags.RPC_EXT}] addEventListener called`);
+    log.debug('addEventListener called');
     this.currentListener = listener;
     this.disposeEventListener = this.webview.onDidReceiveMessage(
       (message) => {
-        debug(`[${LogTags.RPC_EXT}] Received message from webview`);
+        log.debug('Received message from webview');
         const messageEvent = {
           data: message,
         } as MessageEvent;
@@ -75,7 +77,7 @@ class ExtensionEndpoint implements Endpoint {
     _type: AllowedTypeForComlink,
     listener: EventListenerOrEventListenerObject
   ): void {
-    debug(`[${LogTags.RPC_EXT}] removeEventListener called`);
+    log.debug('removeEventListener called');
     if (this.currentListener === listener && this.disposeEventListener) {
       this.disposeEventListener.dispose();
     }
@@ -90,18 +92,18 @@ export function initRPCExtensionSide(
   webview: vscode.Webview,
   disposables: vscode.Disposable[]
 ): WebviewHandleType {
-  debug(`[${LogTags.RPC_EXT}] initRPCExtensionSide called`);
+  log.debug('initRPCExtensionSide called');
   const extensionEndpoint = new ExtensionEndpoint(webview, disposables);
 
   // webview to extension calls
-  debug(`[${LogTags.RPC_EXT}] Creating ExtensionHandle`);
+  log.debug('Creating ExtensionHandle');
   const handle = new ExtensionHandle(preview);
-  debug(`[${LogTags.RPC_EXT}] Exposing ExtensionHandle via comlink`);
+  log.debug('Exposing ExtensionHandle via comlink');
   comlink.expose(handle, extensionEndpoint);
 
   // extension to webview calls
-  debug(`[${LogTags.RPC_EXT}] Wrapping WebviewHandle via comlink`);
+  log.debug('Wrapping WebviewHandle via comlink');
   const WebviewHandle = comlink.wrap<WebviewRemoteHandle>(extensionEndpoint);
-  debug(`[${LogTags.RPC_EXT}] initRPCExtensionSide complete`);
+  log.debug('initRPCExtensionSide complete');
   return WebviewHandle;
 }

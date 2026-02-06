@@ -1,22 +1,20 @@
 // packages/webview-app/src/theme/context.tsx
 // React context for theme state - consumes state pushed from extension (server-driven theming)
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-  type ReactNode,
-} from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { injectPreviewTheme, injectCodeBlockTheme } from './loader';
-import type { PreviewTheme, CodeBlockTheme, MermaidTheme, WebviewThemeState } from '@mdx-preview/shared';
+import type {
+  PreviewTheme,
+  CodeBlockTheme,
+  MermaidTheme,
+  WebviewThemeState,
+} from '@mdx-preview/shared';
 import {
   getCurrentVSCodeTheme,
   onVSCodeThemeChange,
   type VSCodeTheme,
 } from './detection';
+import { createContextProvider } from '../context/createContextProvider';
 
 interface ThemeContextValue {
   // VS Code theme (detected locally for UI adjustments)
@@ -31,16 +29,8 @@ interface ThemeContextValue {
   setPreviewThemeState: (state: WebviewThemeState) => void;
 }
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-interface ThemeProviderProps {
-  children: ReactNode;
-}
-
-// theme provider that receives theme state from extension
-// VS Code theme is detected locally only for UI adjustments (e.g., icon colors)
-// preview/code block themes are fully controlled by extension
-export function ThemeProvider({ children }: ThemeProviderProps) {
+// build theme context value from extension payloads & local VS Code theme state
+function useThemeValue(): ThemeContextValue {
   // VS Code theme detection (local, for UI adjustments only)
   const [vsCodeTheme, setVSCodeTheme] = useState<VSCodeTheme>(
     getCurrentVSCodeTheme
@@ -85,19 +75,22 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       mermaidTheme,
       setPreviewThemeState,
     }),
-    [vsCodeTheme, previewTheme, codeBlockTheme, mermaidTheme, setPreviewThemeState]
+    [
+      vsCodeTheme,
+      previewTheme,
+      codeBlockTheme,
+      mermaidTheme,
+      setPreviewThemeState,
+    ]
   );
 
-  return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-  );
+  return value;
 }
 
-// hook to access the current theme context
-export function useTheme(): ThemeContextValue {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
-}
+const { Provider, useContextValue } = createContextProvider<ThemeContextValue>(
+  'Theme',
+  useThemeValue
+);
+
+export const ThemeProvider = Provider;
+export const useTheme = useContextValue;

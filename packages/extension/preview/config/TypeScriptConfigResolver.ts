@@ -3,8 +3,13 @@
 
 import * as path from 'path';
 import { parse, type TSConfckParseResult } from 'tsconfck';
-import { error as logError, debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
+import { getErrorReporter } from '../../services';
+import { ErrorContext } from '../../errors/ErrorReporter';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.TS_CONFIG);
 import { findUp } from '../../utils/find-up';
 import { PathCache } from '../../utils/cache';
 
@@ -39,17 +44,17 @@ function setupConfigWatcher(configFile: string): void {
 
   configCache.watchPath(configFile, {
     onChange: () => {
-      debug(`[${LogTags.TS_CONFIG}] tsconfig.json changed: ${configFile}`);
+      log.debug(`tsconfig.json changed: ${configFile}`);
       configCache.delete(cacheKey);
     },
     onDelete: () => {
-      debug(`[${LogTags.TS_CONFIG}] tsconfig.json deleted: ${configFile}`);
+      log.debug(`tsconfig.json deleted: ${configFile}`);
       configCache.delete(cacheKey);
       // clean up watcher for deleted file
       configCache.unwatchPath(configFile);
     },
   });
-  debug(`[${LogTags.TS_CONFIG}] Watching: ${configFile}`);
+  log.debug(`Watching: ${configFile}`);
 }
 
 // resolve TypeScript configuration from tsconfig.json (handles extends, paths, baseUrl)
@@ -77,8 +82,8 @@ export async function resolveTypescriptConfigAsync(
       configPath: configFile,
     };
 
-    debug(
-      `[${LogTags.TS_CONFIG}] Parsed ${configFile}: baseUrl=${config.baseUrl}, paths=${Object.keys(config.paths ?? {}).length} aliases`
+    log.debug(
+      `Parsed ${configFile}: baseUrl=${config.baseUrl}, paths=${Object.keys(config.paths ?? {}).length} aliases`
     );
 
     configCache.set(cacheKey, config);
@@ -88,7 +93,9 @@ export async function resolveTypescriptConfigAsync(
 
     return config;
   } catch (err) {
-    logError(`[${LogTags.TS_CONFIG}] Failed to parse tsconfig:`, err);
+    getErrorReporter().reportSilent(err, ErrorContext.Config, {
+      configPath: configFile,
+    });
     configCache.set(cacheKey, null);
     return null;
   }
@@ -118,11 +125,11 @@ export function resolveTypescriptConfig(
 // clear the config cache (for testing or when tsconfig changes)
 export function clearTsConfigCache(): void {
   configCache.clear();
-  debug(`[${LogTags.TS_CONFIG}] Config cache cleared`);
+  log.debug('Config cache cleared');
 }
 
 // dispose all config file watchers (called during extension deactivation)
 export function disposeConfigWatchers(): void {
   configCache.dispose();
-  debug(`[${LogTags.TS_CONFIG}] Config watchers disposed`);
+  log.debug('Config watchers disposed');
 }

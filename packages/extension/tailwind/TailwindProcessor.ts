@@ -5,26 +5,33 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { performance } from 'perf_hooks';
-import { debug, warn } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { SingletonService } from '../services/SingletonService';
 import { getErrorReporter, getFrameworkDetector } from '../services';
 import type { ResolutionContext } from '../types';
 import { ErrorContext, ErrorSeverity } from '../errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
-import { TailwindScanCache } from './TailwindScanCache';
 import { TailwindCompiler, type TailwindVersion } from './TailwindCompiler';
 import {
   MIN_SUPPORTED_TAILWIND_VERSION,
   MAX_KNOWN_TAILWIND_VERSION,
   TAILWIND_CACHE_SCHEMA_VERSION,
   CACHE_DEFAULT_MAX_ENTRIES,
+  SCAN_CACHE_DEFAULT_MAX_ENTRIES,
   CACHE_DEFAULT_TTL_MS,
 } from './constants';
-import { LRUCache, LogTags } from '@mdx-preview/shared';
+import {
+  ContentHashCache,
+  LRUCache,
+  LogTags,
+  normalizeError,
+  type TrustState,
+} from '@mdx-preview/shared';
 import type { Preview } from '../preview/preview-manager';
-import { normalizeError, type TrustState } from '@mdx-preview/shared';
 import type { TailwindConfig } from '../types';
+
+const log = createTaggedLogger(LogTags.TAILWIND);
 
 export interface TailwindProcessOptions {
   preview: Preview;
@@ -48,13 +55,17 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   private detector = new TailwindDetector();
   private scanner = new TailwindScanner();
   private cache: LRUCache<string, string>;
-  private scanCache = new TailwindScanCache();
+  private scanCache: ContentHashCache<string[]>;
   private compiler = new TailwindCompiler();
 
   protected constructor() {
     super();
     this.cache = new LRUCache<string, string>({
       maxEntries: CACHE_DEFAULT_MAX_ENTRIES,
+      ttlMs: CACHE_DEFAULT_TTL_MS,
+    });
+    this.scanCache = new ContentHashCache<string[]>({
+      maxEntries: SCAN_CACHE_DEFAULT_MAX_ENTRIES,
       ttlMs: CACHE_DEFAULT_TTL_MS,
     });
   }
@@ -77,7 +88,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       ttlMs: tailwindConfig.cacheTtlSeconds * 1000,
     });
 
-    debug(`[${LogTags.TAILWIND}] Process start`);
+    log.debug('Process start');
 
     if (!trustState.canExecute) {
       return { css: '', watchFiles: [], enabled: false };
@@ -116,8 +127,8 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       versionInfo.major !== null &&
       versionInfo.major < MIN_SUPPORTED_TAILWIND_VERSION
     ) {
-      debug(
-        `[${LogTags.TAILWIND}] Unsupported Tailwind version ${versionInfo.version} (v${versionInfo.major}). Minimum supported: v${MIN_SUPPORTED_TAILWIND_VERSION}`
+      log.debug(
+        `Unsupported Tailwind version ${versionInfo.version} (v${versionInfo.major}). Minimum supported: v${MIN_SUPPORTED_TAILWIND_VERSION}`
       );
       return { css: '', watchFiles: [], enabled: false };
     }
@@ -127,8 +138,8 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       versionInfo.major !== null &&
       versionInfo.major > MAX_KNOWN_TAILWIND_VERSION
     ) {
-      warn(
-        `[${LogTags.TAILWIND}] Tailwind v${versionInfo.major} detected. This extension supports v4. ` +
+      log.warn(
+        `Tailwind v${versionInfo.major} detected. This extension supports v4. ` +
           `v${versionInfo.major} will be treated as v4, which may cause issues.`
       );
     }
@@ -163,8 +174,8 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       scanCache: this.scanCache,
     });
     const scanDuration = performance.now() - scanStart;
-    debug(
-      `[${LogTags.TAILWIND}] Scanned ${scanResult.scannedFiles.length + 1} file(s) in ${Math.round(
+    log.debug(
+      `Scanned ${scanResult.scannedFiles.length + 1} file(s) in ${Math.round(
         scanDuration
       )}ms`
     );
@@ -189,7 +200,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
 
     const compileStart = performance.now();
     try {
-      debug(`[${LogTags.TAILWIND}] Compiling CSS...`);
+      log.debug('Compiling CSS...');
       const css = await this.compiler.compile({
         tailwindVersion,
         configPath,
@@ -198,8 +209,8 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
         baseDir,
       });
       const compileDuration = performance.now() - compileStart;
-      debug(
-        `[${LogTags.TAILWIND}] Compiled in ${Math.round(compileDuration)}ms (classes=${scanResult.classList.length})`
+      log.debug(
+        `Compiled in ${Math.round(compileDuration)}ms (classes=${scanResult.classList.length})`
       );
       this.cache.set(cacheKey, css);
       return {
@@ -207,7 +218,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
         watchFiles: this.buildWatchFiles(configPath, entryCssPath),
         enabled: true,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       // Tailwind errors are non-blocking
       getErrorReporter().report(normalizeError(error), {
         context: ErrorContext.Tailwind,
@@ -233,7 +244,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   // custom cleanup - clear caches
   protected override onDispose(): void {
     this.cache.clear();
-    debug(`[${LogTags.TAILWIND}] Cache cleared`);
+    log.debug('Cache cleared');
     this.scanCache.clear();
     this.detector.invalidateVersionCache();
   }
@@ -242,9 +253,12 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   // useful when DependencyWatcher detects external file changes
   invalidateScanCache(fsPath?: string): void {
     if (fsPath) {
-      this.scanCache.invalidate(fsPath);
+      if (this.scanCache.delete(fsPath)) {
+        log.debug(`Invalidated scan cache for ${fsPath}`);
+      }
     } else {
       this.scanCache.clear();
+      log.debug('Scan cache cleared');
     }
   }
 
@@ -295,10 +309,10 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     try {
       const stat = await fs.promises.stat(filePath);
       return `${stat.mtimeMs}`;
-    } catch (error) {
+    } catch (error: unknown) {
       // return unique error stamp to bust cache on transient errors
       // this prevents stale cache hits when file is temporarily unreadable
-      debug(`[${LogTags.TAILWIND}] Failed to stat file ${filePath}: ${error}`);
+      log.debug(`Failed to stat file ${filePath}: ${error}`);
       return `error:${Date.now()}`;
     }
   }

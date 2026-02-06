@@ -157,6 +157,12 @@ export const MDX_PREVIEW_CONFIG_SCHEMA = {
         "How to handle unknown JSX components in Safe Mode. 'strip' removes entirely, 'placeholder' shows a styled box w/ name & children, 'raw' renders children without wrapper.",
       examples: ['placeholder', 'strip', 'raw'],
     },
+    enableScripts: {
+      type: 'boolean',
+      default: true,
+      description:
+        'Force Safe Mode for this project. Set to false to disable script execution regardless of VS Code settings. Cannot enable scripts in untrusted workspaces.',
+    },
   },
   additionalProperties: false,
 } as const;

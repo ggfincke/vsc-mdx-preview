@@ -2,25 +2,24 @@
 // unified module resolution combining framework aliases, TypeScript paths, & enhanced-resolve
 
 import { resolveAlias, isBuiltInShim } from './alias-resolver';
-import { debug } from '../../logging';
+import { createTaggedLogger } from '../../logging';
 import { isNpmModuleId, LogTags } from '@mdx-preview/shared';
 import { createResettableSingleton } from '../../utils/singleton-factory';
 import { buildShimResolutionResult } from './result-builders';
-
-// import strategies
 import {
   getTypeScriptPathStrategy,
   getEnhancedResolveStrategy,
   getFileProbeStrategy,
 } from './strategies';
-
-// import consolidated types from centralized types
 import {
   ResolutionStrategy,
   type ResolutionContext,
   type ResolutionResult,
   type ResolutionMode,
 } from '../../types';
+
+// module-level tagged logger for unified resolver
+const log = createTaggedLogger(LogTags.UNIFIED_RESOLVER);
 
 // result of framework alias resolution step
 export interface FrameworkAliasResult {
@@ -60,8 +59,8 @@ export function resolveFrameworkAliasStep(
   }
 
   if (isBuiltInShim(aliasedPath)) {
-    debug(
-      `[${LogTags.UNIFIED_RESOLVER}] Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
+    log.debug(
+      `Strategy: ${ResolutionStrategy.FrameworkShim} | ${specifier} -> ${aliasedPath}`
     );
     return {
       specifier,
@@ -74,9 +73,7 @@ export function resolveFrameworkAliasStep(
   }
 
   // alias resolved to a path - continue w/ that path
-  debug(
-    `[${LogTags.UNIFIED_RESOLVER}] Framework alias (non-shim): ${specifier} -> ${aliasedPath}`
-  );
+  log.debug(`Framework alias (non-shim): ${specifier} -> ${aliasedPath}`);
   return { specifier: aliasedPath };
 }
 
@@ -150,9 +147,7 @@ export class UnifiedResolver {
       }
     }
 
-    debug(
-      `[${LogTags.UNIFIED_RESOLVER}] Could not resolve: ${specifier} from ${context.baseDir}`
-    );
+    log.debug(`Could not resolve: ${specifier} from ${context.baseDir}`);
     return null;
   }
 
@@ -209,9 +204,7 @@ export class UnifiedResolver {
       }
     }
 
-    debug(
-      `[${LogTags.UNIFIED_RESOLVER}] Could not resolve: ${specifier} from ${context.baseDir}`
-    );
+    log.debug(`Could not resolve: ${specifier} from ${context.baseDir}`);
     return null;
   }
 }

@@ -1,4 +1,3 @@
-
 # Changelog
 
 All notable changes to the MDX Preview extension will be documented in this file.
@@ -7,6 +6,92 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-02-04
+
+This release represents a complete rewrite of the MDX Preview extension, introducing a two-mode security model, modern framework support, and extensive new features while maintaining backward compatibility with existing MDX workflows.
+
+### Added
+
+#### Core Features
+
+- **Two-Mode Rendering System**: Safe Mode (static HTML, no JS) for untrusted workspaces; Trusted Mode (full React evaluation) for trusted workspaces
+- **Workspace Trust Integration**: Respects VS Code's workspace trust model with explicit opt-in for script execution
+- **Preview Themes**: 15+ preview themes (GitHub, Atom, Solarized, etc.) with auto light/dark switching
+- **Code Block Themes**: 24 syntax highlighting themes with configurable selection
+- **Table of Contents**: Automatic TOC generation from headings with collapsible sections
+
+#### Framework Support
+
+- **Docusaurus**: Auto-detection, admonitions (:::note, :::tip, etc.), Tabs, Cards, Details components
+- **Nextra**: Full support with Callout, Tabs, Cards, FileTree, Steps, Bleed components and `_meta.json` awareness
+- **Astro Starlight**: Component shims for Starlight documentation sites
+- **Next.js**: Image and Link component shims with MDX integration
+
+#### Rich Content
+
+- **Syntax Highlighting**: Shiki-based highlighting with language aliases (js→javascript, ts→typescript, etc.)
+- **Mermaid Diagrams**: Client-side rendering of flowcharts, sequence diagrams, state diagrams, and more
+- **Math Expressions**: KaTeX integration for inline and block math expressions
+- **GitHub Alerts**: Support for NOTE, TIP, WARNING, CAUTION, IMPORTANT callouts
+- **Raw HTML Support**: HTML passthrough in both rendering modes
+
+#### Tailwind CSS
+
+- **Live Compilation**: Real-time Tailwind utility class compilation in MDX previews (Trusted Mode)
+- **Version Support**: Both Tailwind v3 and v4 with automatic detection
+- **Smart Extraction**: Class extraction from MDX/JSX content and dependencies
+- **Configuration**: Per-project settings via `mdx-preview.tailwind.*` or `.mdx-previewrc.json`
+
+#### Configuration
+
+- **Config File Support**: Per-project customization via `.mdx-previewrc.json` with JSON schema validation
+- **Custom Plugin Loading**: Load custom remark/rehype plugins from workspace `node_modules` (Trusted Mode)
+- **Component Mapping**: Auto-generate import statements for custom components via config file
+- **Frontmatter Support**: Visual display of YAML frontmatter metadata in both modes
+
+#### Developer Experience
+
+- **Image Lightbox**: Click images to view full-size with zoom support
+- **Clickable Stack Traces**: Error stack traces link to source file locations
+- **Diagnostics**: Component detection with quick-fix code actions for unknown components
+- **Dependency Watching**: Automatic preview refresh when imported local files change
+- **MDX Link Navigation**: In-preview navigation between MDX documents
+- **Stale Content Indicator**: Visual indicator when preview content is outdated
+
+#### Architecture
+
+- **Service Registry**: Centralized service lifecycle management with lazy initialization and ordered disposal
+- **Monorepo Structure**: Organized into extension, webview-app, and shared packages
+- **Module Prewarming**: Background module prewarming for faster first render
+- **Cache Subsystem**: Unified cache lifecycle management with coordinated invalidation
+
+### Changed
+
+- **MDX 3**: Upgraded from MDX 1/2 to MDX 3 with modern unified ecosystem
+- **React 18**: Upgraded from React 16/17 to React 18 with concurrent features
+- **TypeScript**: ES2022 target with strict mode enabled
+- **Build System**: Vite-based webview build, esbuild for extension bundling
+- **Module Resolution**: Enhanced-resolve with proper `exports` field and browser condition support
+- **Test Infrastructure**: Unified on Vitest with integration test support
+
+### Security
+
+- **Content Security Policy**: Dynamic CSP generation based on trust state (strict for Safe Mode, relaxed for Trusted Mode)
+- **Path Traversal Prevention**: File path validation to prevent directory traversal attacks
+- **Trust Validation**: Central TrustManager with throwing assertions for security-critical operations
+- **Binary Detection**: Automatic detection and rejection of binary files
+- **Resource Limits**: Module loading depth and concurrency limits to prevent abuse
+
+### Removed
+
+- **Scroll Sync**: Removed bidirectional scroll synchronization (simplifies architecture)
+- **Zoom Commands**: Removed zoom in/out/reset commands for simplification
+
+---
+
+<details>
+<summary><strong>Alpha Releases (1.0.0-alpha.1 – 1.0.0-alpha.13)</strong></summary>
 
 ## [1.0.0-alpha.13] - 2026-02-03
 
@@ -369,6 +454,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Trusted Mode requires explicit opt-in via workspace trust + configuration
 - CSP restricts script sources and prevents inline script injection
 
+</details>
+
 ---
 
-_For changes prior to the 1.0.0 rewrite, see [CHANGELOG-legacy.md](./dev-docs/CHANGELOG-legacy.md)._
+<details>
+<summary><strong>Legacy Releases (v0.1.1 – v0.3.0)</strong></summary>
+
+The following releases were part of the original extension by [xyc](https://github.com/xyc):
+
+## [0.3.0] - 2020-04-30
+
+- Upgraded TypeScript to 3.8.3
+- Support SASS version `^1.26.3`
+- Bug fix: Don't resolve dependency path `..` as npm module
+- Updated test scripts
+
+## [0.2.2] - 2019-09-21
+
+- Fixed Windows path issues ([#13](https://github.com/xyc/vscode-mdx-preview/issues/13))
+
+## [0.2.1] - 2019-05-07
+
+- TypeScript fix: tsconfig target default to ESNext
+
+## [0.2.0] - 2019-05-07
+
+- Added TypeScript support ([#1](https://github.com/xyc/vscode-mdx-preview/issues/1))
+- Added dynamic imports support ([#3](https://github.com/xyc/vscode-mdx-preview/pull/3))
+- Added hot update for dependent files ([#5](https://github.com/xyc/vscode-mdx-preview/issues/5))
+
+## [0.1.5] - 2019-04-13
+
+- Added preview refresh button
+
+## [0.1.4] - 2019-04-08
+
+- Updated webview DOM structure (default renders to #root)
+
+## [0.1.3] - 2019-04-08
+
+- Fixed issue [#2](https://github.com/xyc/vscode-mdx-preview/issues/2)
+- Updated default React to 16.8.6
+- Documentation update
+
+## [0.1.2] - 2019-04-02
+
+- Fixed typo in documentation
+
+## [0.1.1] - 2019-04-01
+
+- Initial release
+
+</details>

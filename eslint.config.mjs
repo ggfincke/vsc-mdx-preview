@@ -46,6 +46,8 @@ export default tseslint.config(
       'local/no-direct-vscode-config': 'error',
       // Enforce LogTags usage for log prefixes
       'local/no-raw-log-tag': 'error',
+      // Enforce createTaggedLogger over manual tag interpolation
+      'local/prefer-tagged-logger': 'error',
     },
   },
   {

@@ -2,11 +2,12 @@
 // * manage trust state for MDX preview (Safe Mode: static HTML | Trusted Mode: full MDX w/ React)
 
 import * as vscode from 'vscode';
-import { error as logError } from '../logging';
-import { SingletonService } from '../services/SingletonService';
+import { createTaggedLogger } from '../logging';
+import { WithSubscribers } from '../services/SingletonService';
 import { getConfigManager } from '../services';
-import { SubscriberManager } from '../utils/SubscriberManager';
 import { LogTags, type TrustState } from '@mdx-preview/shared';
+
+const log = createTaggedLogger(LogTags.TRUST_MANAGER);
 
 export type { TrustState } from '@mdx-preview/shared';
 
@@ -28,21 +29,14 @@ export interface TrustedModeCheck {
 }
 
 // manage trust state for MDX preview
-export class TrustManager extends SingletonService<TrustManager> {
+export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
   protected static override instance: TrustManager | undefined;
   protected readonly logTag = LogTags.TRUST_MANAGER;
 
-  private subscriberManager = new SubscriberManager<TrustState>(
-    LogTags.TRUST_MANAGER,
-    (error) =>
-      logError(
-        `[${LogTags.TRUST_MANAGER}] Error in TrustManager listener`,
-        error
-      )
-  );
-
   protected constructor() {
-    super();
+    super(LogTags.TRUST_MANAGER, (error) =>
+      log.error('Error in TrustManager listener', error)
+    );
     const workspaceWithTrust = vscode.workspace as typeof vscode.workspace & {
       onDidChangeWorkspaceTrust?: vscode.Event<boolean>;
     };
@@ -51,14 +45,14 @@ export class TrustManager extends SingletonService<TrustManager> {
       // listen for workspace trust changes (grant & revoke)
       this.addDisposable(
         workspaceWithTrust.onDidChangeWorkspaceTrust(() => {
-          this.notifyListeners();
+          this.notifyTrustStateChange();
         })
       );
     } else {
       // fallback for older VS Code versions (grant only)
       this.addDisposable(
         vscode.workspace.onDidGrantWorkspaceTrust(() => {
-          this.notifyListeners();
+          this.notifyTrustStateChange();
         })
       );
     }
@@ -66,7 +60,7 @@ export class TrustManager extends SingletonService<TrustManager> {
     // listen for configuration changes via centralized dispatcher
     this.addDisposable(
       getConfigManager().onDidChangeKey('preview.enableScripts', () => {
-        this.notifyListeners();
+        this.notifyTrustStateChange();
       })
     );
   }
@@ -159,18 +153,8 @@ export class TrustManager extends SingletonService<TrustManager> {
     return baseState;
   }
 
-  // subscribe to trust state changes
-  subscribe(listener: (state: TrustState) => void): vscode.Disposable {
-    return this.subscriberManager.subscribe(listener);
-  }
-
-  // notify all listeners of state change
-  private notifyListeners(): void {
-    this.subscriberManager.notify(this.getState());
-  }
-
-  // custom cleanup - clear listeners (disposables handled by base class)
-  protected override onDispose(): void {
-    this.subscriberManager.clear();
+  // notify subscribers of trust state change
+  private notifyTrustStateChange(): void {
+    this.notifySubscribers(this.getState());
   }
 }

@@ -8,9 +8,13 @@ import {
   invalidateComponentCache,
 } from './ComponentDetector';
 import type { DetectedComponent } from '../types';
-import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/shared';
 import { resolveConfig } from '../preview/config/ConfigResolver';
-import { debug, info } from '../logging';
+import { createTaggedLogger } from '../logging';
+import { getErrorReporter } from '../services';
+import { ErrorContext } from '../errors/ErrorReporter';
+
+const log = createTaggedLogger(LogTags.COMPONENT_DIAGNOSTICS);
 import { SingletonService } from '../services/SingletonService';
 
 // diagnostic codes for component issues
@@ -79,7 +83,7 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       }
     }
 
-    info(`[${LogTags.COMPONENT_DIAGNOSTICS}] Service initialized`);
+    log.info('Service initialized');
   }
 
   // check if document is MDX
@@ -112,9 +116,7 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       return;
     }
 
-    debug(
-      `[${LogTags.COMPONENT_DIAGNOSTICS}] Updating diagnostics for ${document.uri}`
-    );
+    log.debug(`Updating diagnostics for ${document.uri}`);
 
     try {
       // get config components
@@ -142,14 +144,12 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       // update collection
       this.diagnosticCollection.set(document.uri, diagnostics);
 
-      debug(
-        `[${LogTags.COMPONENT_DIAGNOSTICS}] Set ${diagnostics.length} diagnostics for ${document.uri}`
-      );
+      log.debug(`Set ${diagnostics.length} diagnostics for ${document.uri}`);
     } catch (err) {
-      const message = extractErrorMessage(err);
-      debug(
-        `[${LogTags.COMPONENT_DIAGNOSTICS}] Error updating diagnostics: ${message}`
-      );
+      getErrorReporter().reportSilent(err, ErrorContext.Extension, {
+        phase: 'diagnostics',
+        uri: document.uri.toString(),
+      });
     }
   }
 
@@ -171,7 +171,7 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       new vscode.DiagnosticRelatedInformation(
         new vscode.Location(
           vscode.Uri.parse(
-            'https://github.com/example/mdx-preview#component-mapping'
+            'https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/configuration.md#components'
           ),
           new vscode.Range(0, 0, 0, 0)
         ),

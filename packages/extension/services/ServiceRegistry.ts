@@ -2,10 +2,13 @@
 // central registry for managing service lifecycle
 
 import type { Disposable } from 'vscode';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { ServiceError, CircularDependencyError } from '../errors';
 import type { IService, ServiceFactory, ServiceRegistration } from '../types';
+
+// module-level tagged logger for service registry
+const log = createTaggedLogger(LogTags.SERVICE_REGISTRY);
 
 // subsystem disposal function type
 type SubsystemDisposeFn = () => void;
@@ -56,9 +59,7 @@ export class ServiceRegistry implements Disposable {
     }
 
     if (this.services.has(name)) {
-      debug(
-        `[${LogTags.SERVICE_REGISTRY}] Warning: Overwriting registration for ${name}`
-      );
+      log.debug(`Warning: Overwriting registration for ${name}`);
     }
 
     this.services.set(name, {
@@ -68,7 +69,7 @@ export class ServiceRegistry implements Disposable {
       registrationOrder: this.registrationCounter++,
     });
 
-    debug(`[${LogTags.SERVICE_REGISTRY}] Registered: ${name}`);
+    log.debug(`Registered: ${name}`);
   }
 
   // register a subsystem w/ disposal function
@@ -83,9 +84,7 @@ export class ServiceRegistry implements Disposable {
     }
 
     if (this.subsystems.has(name)) {
-      debug(
-        `[${LogTags.SERVICE_REGISTRY}] Warning: Overwriting subsystem registration for ${name}`
-      );
+      log.debug(`Warning: Overwriting subsystem registration for ${name}`);
     }
 
     this.subsystems.set(name, {
@@ -94,7 +93,7 @@ export class ServiceRegistry implements Disposable {
       registrationOrder: this.subsystemCounter++,
     });
 
-    debug(`[${LogTags.SERVICE_REGISTRY}] Registered subsystem: ${name}`);
+    log.debug(`Registered subsystem: ${name}`);
   }
 
   // get a service instance by name (creates on first access via lazy initialization)
@@ -121,7 +120,7 @@ export class ServiceRegistry implements Disposable {
 
     // lazy initialization w/ cycle tracking
     if (!registration.instance) {
-      debug(`[${LogTags.SERVICE_REGISTRY}] Creating instance: ${name}`);
+      log.debug(`Creating instance: ${name}`);
 
       // push onto stack before initialization
       this.initializationStack.push(name);
@@ -160,7 +159,7 @@ export class ServiceRegistry implements Disposable {
       return;
     }
 
-    debug(`[${LogTags.SERVICE_REGISTRY}] Starting disposal...`);
+    log.debug('Starting disposal...');
 
     // 1. dispose subsystems in reverse registration order (FIRST)
     const sortedSubsystems = Array.from(this.subsystems.values()).sort(
@@ -168,15 +167,11 @@ export class ServiceRegistry implements Disposable {
     );
 
     for (const subsystem of sortedSubsystems) {
-      debug(
-        `[${LogTags.SERVICE_REGISTRY}] Disposing subsystem: ${subsystem.name}`
-      );
+      log.debug(`Disposing subsystem: ${subsystem.name}`);
       try {
         subsystem.dispose();
-      } catch (error) {
-        debug(
-          `[${LogTags.SERVICE_REGISTRY}] Error disposing subsystem ${subsystem.name}: ${error}`
-        );
+      } catch (error: unknown) {
+        log.debug(`Error disposing subsystem ${subsystem.name}: ${error}`);
       }
     }
     this.subsystems.clear();
@@ -187,21 +182,17 @@ export class ServiceRegistry implements Disposable {
       .sort((a, b) => b.registrationOrder - a.registrationOrder);
 
     for (const registration of sortedRegistrations) {
-      debug(
-        `[${LogTags.SERVICE_REGISTRY}] Disposing service: ${registration.name}`
-      );
+      log.debug(`Disposing service: ${registration.name}`);
       try {
         registration.instance?.dispose?.();
-      } catch (error) {
-        debug(
-          `[${LogTags.SERVICE_REGISTRY}] Error disposing service ${registration.name}: ${error}`
-        );
+      } catch (error: unknown) {
+        log.debug(`Error disposing service ${registration.name}: ${error}`);
       }
     }
 
     this.services.clear();
     this.disposed = true;
-    debug(`[${LogTags.SERVICE_REGISTRY}] All subsystems & services disposed`);
+    log.debug('All subsystems & services disposed');
   }
 
   // reset the registry (for testing) - disposes all subsystems & services, clears registrations

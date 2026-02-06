@@ -2,7 +2,7 @@
 // module & webview cache management commands
 
 import * as vscode from 'vscode';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 import { clearResolverCache } from '../module-system/resolver/resolver-factory';
 import { clearSassCache } from '../module-system/handlers';
@@ -11,9 +11,11 @@ import { getPreviewManager } from '../services';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 
+const log = createTaggedLogger(LogTags.CMD);
+
 // comprehensive command - clears all extension & webview caches
 const clearAllCaches = async (): Promise<void> => {
-  debug(`[${LogTags.CMD}] clearAllCaches command triggered`);
+  log.debug('clearAllCaches command triggered');
 
   // extension-side caches (resolver & sass)
   clearResolverCache();

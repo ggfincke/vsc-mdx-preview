@@ -3,12 +3,12 @@
 
 import * as vscode from 'vscode';
 import debounce from 'lodash.debounce';
+import type {
+  UpdateModeValue,
+  TailwindEnabledValue,
+} from '@mdx-preview/shared';
 import { SecurityPolicy } from '../security/security';
 import { getConfigManager } from '../services';
-import type { UpdateMode, TailwindEnabledSetting } from '../config';
-
-// re-export types
-export type { UpdateMode, TailwindEnabledSetting };
 
 export interface StyleConfiguration {
   useVscodeMarkdownStyles: boolean;
@@ -16,7 +16,7 @@ export interface StyleConfiguration {
 }
 
 export interface ConfigurationState {
-  updateMode: UpdateMode;
+  updateMode: UpdateModeValue;
   debounceDelay: number;
   useVscodeMarkdownStyles: boolean;
   useWhiteBackground: boolean;
@@ -24,7 +24,7 @@ export interface ConfigurationState {
   customCss: string;
   useSucraseTranspiler: boolean;
   securityPolicy: SecurityPolicy;
-  tailwindEnabled: TailwindEnabledSetting;
+  tailwindEnabled: TailwindEnabledValue;
 }
 
 export interface ConfigChangeResult {

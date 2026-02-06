@@ -2,8 +2,11 @@
 // individual preview instance w/ stale detection & custom CSS support
 
 import * as vscode from 'vscode';
-import { error as logError, debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.PREVIEW);
 
 import { refreshPanel } from './webview-manager';
 import type { ResolvedConfig, TypeScriptConfiguration } from '../types';
@@ -154,7 +157,7 @@ export class Preview {
   }
 
   constructor(doc: vscode.TextDocument) {
-    debug(`[${LogTags.PREVIEW}] Preview constructor called`);
+    log.debug('Preview constructor called');
 
     // initialize extracted state component
     this.state = new PreviewState();
@@ -176,6 +179,9 @@ export class Preview {
     this.watcherManager = this.initializer.createWatchers(
       this.configManager.configuration.customCss,
       async (fsPath) => {
+        if (!this.active) {
+          return;
+        }
         await this.webviewBridge.invalidate(fsPath);
         await this.updateWebview(true);
       },
@@ -220,7 +226,7 @@ export class Preview {
       () => {
         this.documentHandler.reloadMdxConfig();
         this.refreshWebview().catch((err) =>
-          logError('Failed to refresh after config change', err)
+          log.error('Failed to refresh after config change', err)
         );
       }
     );
@@ -233,7 +239,7 @@ export class Preview {
       watchFiles,
       (_changedPaths) => {
         this.updateWebview(true).catch((err) =>
-          logError('Failed to refresh after Tailwind change', err)
+          log.error('Failed to refresh after Tailwind change', err)
         );
       }
     );
@@ -288,7 +294,7 @@ export class Preview {
   }
 
   async refreshWebview(): Promise<void> {
-    debug(`[${LogTags.PREVIEW}] refreshWebview called`);
+    log.debug('refreshWebview called');
     const currentPreview = getPreviewManager().getCurrentPreview();
     if (currentPreview) {
       refreshPanel(currentPreview);
@@ -339,7 +345,7 @@ export class Preview {
 
     if (result.needsWebviewRefresh) {
       this.refreshWebview().catch((err) =>
-        logError('Failed to refresh preview', err)
+        log.error('Failed to refresh preview', err)
       );
     }
   }

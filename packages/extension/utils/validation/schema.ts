@@ -110,6 +110,7 @@ export interface ConfigValidationResult {
       configPath?: string;
     };
     unknownBehavior?: 'strip' | 'placeholder' | 'raw';
+    enableScripts?: boolean;
   };
 }
 

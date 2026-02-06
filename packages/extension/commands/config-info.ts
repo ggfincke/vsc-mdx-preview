@@ -2,12 +2,14 @@
 // configuration inspection command for debugging & troubleshooting
 
 import * as vscode from 'vscode';
-import { debug } from '../logging';
+import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
+import { ErrorContext } from '../errors/ErrorReporter';
 import {
   getConfigManager,
   getTrustManager,
   getFrameworkDetector,
+  getErrorReporter,
 } from '../services';
 import { resolveConfig } from '../preview/config/ConfigResolver';
 import { buildEffectivePreviewConfig } from '../config/EffectivePreviewConfig';
@@ -16,6 +18,8 @@ import { extractFrontmatter } from '../compiler/shared/mdx-common';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 import type { SettingKey } from '../config/ConfigManager';
+
+const log = createTaggedLogger(LogTags.CMD);
 
 // define source type for each configuration value
 type ConfigSourceType =
@@ -267,7 +271,7 @@ function formatConfigOutput(
 
 // show effective configuration command handler
 const showEffectiveConfig = async (): Promise<void> => {
-  debug(`[${LogTags.CMD}] showEffectiveConfig command triggered`);
+  log.debug('showEffectiveConfig command triggered');
 
   // get active editor
   const editor = vscode.window.activeTextEditor;
@@ -304,12 +308,9 @@ const showEffectiveConfig = async (): Promise<void> => {
       preview: true,
     });
 
-    debug(`[${LogTags.CMD}] showEffectiveConfig complete`);
-  } catch (error) {
-    debug(`[${LogTags.CMD}] showEffectiveConfig error: ${error}`);
-    vscode.window.showErrorMessage(
-      `MDX Preview: Failed to show effective config: ${error instanceof Error ? error.message : String(error)}`
-    );
+    log.debug('showEffectiveConfig complete');
+  } catch (error: unknown) {
+    getErrorReporter().reportToUser(error, ErrorContext.Config);
   }
 };
 
