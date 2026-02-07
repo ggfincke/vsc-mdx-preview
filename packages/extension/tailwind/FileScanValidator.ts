@@ -21,7 +21,7 @@ export interface FileReadResult {
 }
 
 // validate files before scanning for Tailwind classes
-// consolidates file I/O & validation logic for testability
+// consolidate file I/O & validation logic for testability
 export class FileScanValidator {
   // validate file size before reading
   async validateFileSize(

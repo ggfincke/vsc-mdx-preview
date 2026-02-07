@@ -1,7 +1,7 @@
 // packages/extension/utils/find-up.ts
 // unified upward directory traversal for config file discovery
 //
-// consolidates repeated "find up" patterns from
+// consolidate repeated "find up" patterns from
 // - ConfigResolver.ts (find .mdx-previewrc.json)
 // - TypeScriptConfigResolver.ts (find tsconfig.json)
 // - FrameworkDetector.ts (find package.json)

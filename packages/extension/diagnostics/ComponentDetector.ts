@@ -1,5 +1,5 @@
 // packages/extension/diagnostics/ComponentDetector.ts
-// detects JSX components in MDX files for diagnostics
+// detect JSX components in MDX files for diagnostics
 
 import * as vscode from 'vscode';
 import { unified } from 'unified';
@@ -45,7 +45,7 @@ const parseCache = new ContentHashCache<ComponentDetectionResult>({
 });
 
 // fast djb2 hash for content-based cache invalidation
-// returns hex string for ContentHashCache compatibility
+// return hex string for ContentHashCache compatibility
 function contentHash(str: string): string {
   let hash = 5381;
   for (let i = 0; i < str.length; i++) {

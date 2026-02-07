@@ -67,35 +67,21 @@ const COMMON_CSS_LOCATIONS = [
   'css/styles.css',
 ];
 
-export interface TailwindVersionInfo {
-  version: string | null;
-  major: number | null;
-  modulePath?: string;
-}
+// re-export canonical type definitions from types/
+export type {
+  TailwindVersionInfo,
+  TailwindDetectionResult,
+  ResolveWorkspaceRootOptions,
+  ResolveConfigPathOptions,
+  ResolveEntryCssPathOptions,
+} from '../types';
 
-export interface TailwindDetectionResult {
-  workspaceRoot: string | null;
-  configPath: string | null;
-  entryCssPath: string | null;
-}
-
-export interface ResolveWorkspaceRootOptions {
-  docUri: vscode.Uri;
-  entryDir?: string | null;
-}
-
-export interface ResolveConfigPathOptions {
-  entryDir?: string | null;
-  workspaceRoot?: string | null;
-  configOverride?: string;
-  configDir?: string;
-}
-
-export interface ResolveEntryCssPathOptions {
-  workspaceRoot: string | null;
-  entryDir: string | null;
-  maxCssFilesToSearch?: number;
-}
+import type {
+  TailwindVersionInfo,
+  ResolveWorkspaceRootOptions,
+  ResolveConfigPathOptions,
+  ResolveEntryCssPathOptions,
+} from '../types';
 
 export class TailwindDetector {
   // use LRUCache to prevent unbounded memory growth in large workspaces

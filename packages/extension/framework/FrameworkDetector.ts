@@ -13,14 +13,10 @@ import { readJsonSync, pathExists } from '../utils/file-utils';
 const log = createTaggedLogger(LogTags.FRAMEWORK);
 import { findUp } from '../utils/find-up';
 import { PathCache } from '../utils/cache';
+import type { FrameworkInfo } from '../types';
 
-// framework detection result
-export interface FrameworkInfo {
-  framework: FrameworkId;
-  // true = auto-detected, false = from setting
-  detected: boolean;
-  version?: string;
-}
+// re-export canonical type definition from types/
+export type { FrameworkInfo } from '../types';
 
 // framework detection rules
 interface FrameworkRule {

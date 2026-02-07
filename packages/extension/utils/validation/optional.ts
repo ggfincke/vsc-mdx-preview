@@ -1,5 +1,5 @@
 // packages/extension/utils/validation/optional.ts
-// optional value validators (wrappers that pass undefined through without logging)
+// optional value validators (wrappers that pass undefined through w/o logging)
 
 import { createOptionalValidator } from '../validation-factory';
 import { validateNumber } from './primitives';

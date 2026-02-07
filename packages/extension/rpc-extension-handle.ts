@@ -5,7 +5,11 @@ import { performance } from 'perf_hooks';
 import * as vscode from 'vscode';
 import { Preview } from './preview/preview-manager';
 import { fetchLocal } from './module-system/fetcher/fetchLocal';
-import { getTrustManager, getErrorReporter, getConfigManager } from './services';
+import {
+  getTrustManager,
+  getErrorReporter,
+  getConfigManager,
+} from './services';
 import { tryRequireTrustedModeForDocument } from './security/validateTrust';
 import { createTaggedLogger } from './logging';
 import {
@@ -348,10 +352,7 @@ class ExtensionHandle implements ExtensionRPC {
       }
     }
 
-    log.error(
-      'All PlantUML endpoints failed',
-      extractErrorMessage(lastError)
-    );
+    log.error('All PlantUML endpoints failed', extractErrorMessage(lastError));
     return undefined;
   }
 }

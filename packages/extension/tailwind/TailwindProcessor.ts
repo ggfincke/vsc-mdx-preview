@@ -26,27 +26,14 @@ import {
   LRUCache,
   LogTags,
   normalizeError,
-  type TrustState,
 } from '@mdx-preview/shared';
-import type { Preview } from '../preview/preview-manager';
-import type { TailwindConfig } from '../types';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
 
-export interface TailwindProcessOptions {
-  preview: Preview;
-  mdxText: string;
-  entryFilePath: string;
-  entryFileDependencies: string[];
-  trustState: TrustState;
-  tailwindConfig: TailwindConfig;
-}
+// re-export canonical type definitions from types/
+export type { TailwindProcessOptions, TailwindProcessResult } from '../types';
 
-export interface TailwindProcessResult {
-  css: string;
-  watchFiles: string[];
-  enabled: boolean;
-}
+import type { TailwindProcessOptions, TailwindProcessResult } from '../types';
 
 export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   protected static override instance: TailwindProcessor | undefined;
