@@ -16,73 +16,71 @@ interface StackFrame {
   isNavigable: boolean;
 }
 
-// patterns for parsing different stack trace formats
+// frame pattern descriptor for table-driven parsing
+interface FramePatternDescriptor {
+  // regex to match against trimmed line
+  pattern: RegExp;
+  // capture group index for function name (null if pattern has no fn group)
+  fnGroup: number | null;
+  // capture group index for file path
+  fileGroup: number;
+  // capture group index for line number
+  lineGroup: number;
+  // capture group index for column number
+  colGroup: number;
+}
 
-// Chrome/V8: "    at functionName (file:line:column)" or "    at file:line:column"
-const CHROME_PATTERN = /^\s*at\s+(?:(.+?)\s+\()?([^()]+):(\d+):(\d+)\)?$/;
-
-// Firefox: "functionName@file:line:column"
-const FIREFOX_PATTERN = /^(.+?)@(.+):(\d+):(\d+)$/;
-
-// Safari: similar to Firefox
-const SAFARI_PATTERN = /^(.+?)@(.+):(\d+):(\d+)$/;
-
-// simple "file:line:column" pattern for error messages
-const SIMPLE_LOCATION_PATTERN = /^(.+):(\d+):(\d+)$/;
+// frame patterns in priority order (Chrome first, then Firefox/Safari, then simple)
+const FRAME_PATTERNS: readonly FramePatternDescriptor[] = [
+  // Chrome/V8: "    at functionName (file:line:column)" or "    at file:line:column"
+  {
+    pattern: /^\s*at\s+(?:(.+?)\s+\()?([^()]+):(\d+):(\d+)\)?$/,
+    fnGroup: 1,
+    fileGroup: 2,
+    lineGroup: 3,
+    colGroup: 4,
+  },
+  // Firefox & Safari: "functionName@file:line:column"
+  {
+    pattern: /^(.+?)@(.+):(\d+):(\d+)$/,
+    fnGroup: 1,
+    fileGroup: 2,
+    lineGroup: 3,
+    colGroup: 4,
+  },
+  // simple "file:line:column" pattern for error messages
+  {
+    pattern: /^(.+):(\d+):(\d+)$/,
+    fnGroup: null,
+    fileGroup: 1,
+    lineGroup: 2,
+    colGroup: 3,
+  },
+];
 
 // parse a single stack trace line
 function parseStackLine(line: string): StackFrame {
   const trimmed = line.trim();
 
-  // try Chrome/V8 format first (most common in webviews)
-  let match = trimmed.match(CHROME_PATTERN);
-  if (match) {
-    return {
-      raw: line,
-      functionName: match[1] || undefined,
-      filePath: cleanFilePath(match[2]),
-      line: parseInt(match[3], 10),
-      column: parseInt(match[4], 10),
-      isNavigable: true,
-    };
-  }
-
-  // try Firefox format
-  match = trimmed.match(FIREFOX_PATTERN);
-  if (match) {
-    return {
-      raw: line,
-      functionName: match[1] || undefined,
-      filePath: cleanFilePath(match[2]),
-      line: parseInt(match[3], 10),
-      column: parseInt(match[4], 10),
-      isNavigable: true,
-    };
-  }
-
-  // try Safari format (same as Firefox)
-  match = trimmed.match(SAFARI_PATTERN);
-  if (match) {
-    return {
-      raw: line,
-      functionName: match[1] || undefined,
-      filePath: cleanFilePath(match[2]),
-      line: parseInt(match[3], 10),
-      column: parseInt(match[4], 10),
-      isNavigable: true,
-    };
-  }
-
-  // try simple location pattern
-  match = trimmed.match(SIMPLE_LOCATION_PATTERN);
-  if (match) {
-    return {
-      raw: line,
-      filePath: cleanFilePath(match[1]),
-      line: parseInt(match[2], 10),
-      column: parseInt(match[3], 10),
-      isNavigable: true,
-    };
+  for (const {
+    pattern,
+    fnGroup,
+    fileGroup,
+    lineGroup,
+    colGroup,
+  } of FRAME_PATTERNS) {
+    const match = trimmed.match(pattern);
+    if (match) {
+      return {
+        raw: line,
+        functionName:
+          fnGroup !== null ? match[fnGroup] || undefined : undefined,
+        filePath: cleanFilePath(match[fileGroup]),
+        line: parseInt(match[lineGroup], 10),
+        column: parseInt(match[colGroup], 10),
+        isNavigable: true,
+      };
+    }
   }
 
   // no match - return as non-navigable
@@ -131,7 +129,7 @@ export function parseStackTrace(stack: string): StackFrame[] {
       continue;
     }
 
-    // skip the error message line (usually the first line without "at")
+    // skip the error message line (usually the first line w/o "at")
     if (!line.includes('at ') && !line.includes('@')) {
       // but still include it as non-navigable context
       frames.push({

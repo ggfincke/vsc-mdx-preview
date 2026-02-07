@@ -1,11 +1,14 @@
 // packages/webview-app/src/components/shims/docusaurus/Details.tsx
 // Docusaurus Details component shim for MDX Preview
 
-import { createCollapsible, type BaseCollapsibleProps } from '../base/createCollapsible';
-import { DOCUSAURUS_DETAILS_CLASSES } from '../base/BaseCollapsible';
+import {
+  createCollapsible,
+  DOCUSAURUS_DETAILS_CLASSES,
+  type BaseCollapsibleProps,
+} from '../base/createCollapsible';
 
 // create base details w/ Docusaurus configuration
-// uses native toggle handling (more semantic)
+// use native toggle handling (more semantic)
 const BaseDetails = createCollapsible({
   classNames: DOCUSAURUS_DETAILS_CLASSES,
   iconSize: 14,
