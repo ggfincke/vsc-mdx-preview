@@ -149,7 +149,7 @@ See [docs/troubleshooting.md](https://github.com/ggfincke/vsc-mdx-preview/blob/m
 - [Security](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/security.md) - Security model deep dive
 - [Troubleshooting](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/troubleshooting.md) - Common issues and solutions
 - [Contributing](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/contributing.md) - Development setup and guidelines
-- [Examples](https://github.com/ggfincke/vsc-mdx-preview/tree/main/examples) - Working examples for Docusaurus, Starlight, Nextra, Next.js, and more
+- [Examples](https://github.com/ggfincke/vsc-mdx-preview/tree/main/examples) - Working examples for Docusaurus, Starlight, Nextra, Next.js, PlantUML, Graphviz, and more
 
 ## Credits
 

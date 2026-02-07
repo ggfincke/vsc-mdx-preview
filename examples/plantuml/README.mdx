@@ -1,0 +1,124 @@
+---
+title: PlantUML Diagram Rendering
+description: Demonstrates inline PlantUML rendering in MDX Preview
+---
+
+# PlantUML Diagram Rendering
+
+MDX Preview renders fenced code blocks labeled `plantuml` as inline SVG diagrams.
+
+> [!NOTE]
+> PlantUML rendering uses an HTTP server endpoint. The default server is `https://kroki.io`.
+
+---
+
+## Quick Start
+
+```plantuml
+@startuml
+title Preview Render Flow
+actor Author
+participant "VS Code" as VSCode
+participant "MDX Preview" as Preview
+participant "PlantUML Server" as Server
+
+Author -> VSCode: Edit README.mdx
+VSCode -> Preview: Update webview
+Preview -> Server: POST PlantUML source
+Server --> Preview: SVG
+Preview --> Author: Inline diagram
+@enduml
+```
+
+---
+
+## Sequence Diagram Example
+
+```plantuml
+@startuml
+autonumber
+participant "Extension Host" as Extension
+participant "Compiler" as Compiler
+participant "Webview" as Webview
+
+Extension -> Compiler: compileTrusted(mdx)
+Compiler --> Extension: code + metadata
+Extension -> Webview: postMessage(render payload)
+Webview --> Extension: handshake + ready
+@enduml
+```
+
+---
+
+## Component Diagram Example
+
+```plantuml
+@startuml
+skinparam componentStyle rectangle
+title Extension Architecture Snapshot
+
+component "PreviewManager" as PM
+component "TrustManager" as TM
+component "ThemeManager" as ThM
+component "Webview App" as WV
+component "PlantUMLRenderer" as PR
+
+PM --> TM : read trust state
+PM --> ThM : read theme config
+PM --> WV : send render payload
+WV --> PR : mount renderer
+@enduml
+```
+
+---
+
+## Activity Diagram Example
+
+```plantuml
+@startuml
+title Safe Mode vs Trusted Mode
+
+start
+if (Workspace trusted?) then (yes)
+  if (enableScripts?) then (yes)
+    :Trusted Mode;
+    :Render JSX & modules;
+  else (no)
+    :Safe Mode;
+    :Render static HTML;
+  endif
+else (no)
+  :Safe Mode;
+  :Skip script evaluation;
+endif
+stop
+@enduml
+```
+
+---
+
+## PlantUML Server Configuration
+
+Configure the server globally in VS Code settings:
+
+```json
+{
+  "mdx-preview.diagrams.plantUmlServer": "https://kroki.io"
+}
+```
+
+Use a self-hosted instance if you need local or private rendering:
+
+```json
+{
+  "mdx-preview.diagrams.plantUmlServer": "http://localhost:8000"
+}
+```
+
+---
+
+## Notes
+
+- PlantUML diagrams render in both Safe Mode and Trusted Mode
+- Network access to the configured server is required
+- On server errors, MDX Preview shows an inline error UI with source toggle
