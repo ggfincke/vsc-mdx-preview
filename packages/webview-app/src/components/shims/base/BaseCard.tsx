@@ -16,7 +16,7 @@ export interface BaseCardProps {
 }
 
 // base card component that can render as div or anchor
-// provides a flexible foundation for Card & LinkCard components
+// provide a flexible foundation for Card & LinkCard components
 // across different framework shims
 export function BaseCard({
   children,

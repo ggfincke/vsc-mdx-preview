@@ -16,7 +16,7 @@ interface LoadingContextValue {
 // module-level tagged logger (avoids per-render allocation)
 const log = createTaggedLogger(LogTags.LOADING_CONTEXT);
 
-// hook that provides the Loading context value
+// hook that provide the Loading context value
 function useLoadingProviderValue(): LoadingContextValue {
   const [isLoading, setIsLoadingState] = useState(true);
   const [isStale, setStaleState] = useState(false);

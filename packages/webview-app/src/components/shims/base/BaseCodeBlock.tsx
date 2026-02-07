@@ -60,7 +60,7 @@ export function createCodeBlock(config: CodeBlockConfig): React.FC<BaseCodeBlock
     className,
     showLineNumbers,
   }: BaseCodeBlockProps): ReactElement {
-    // resolve language (supports both `language` & `lang` props)
+    // resolve language (support both `language` & `lang` props)
     const effectiveLanguage = language ?? lang;
 
     // extract code text: from `code` prop if codeAsString, otherwise from children

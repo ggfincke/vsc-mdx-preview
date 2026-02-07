@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/generic/Callout.tsx
 // Generic Callout/Alert/Admonition component shim for MDX Preview
-// provides preview-compatible versions of common callout patterns
+// provide preview-compatible versions of common callout patterns
 
 import { ReactElement } from 'react';
 import {

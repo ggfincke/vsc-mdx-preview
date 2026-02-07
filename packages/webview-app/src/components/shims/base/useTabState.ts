@@ -46,7 +46,7 @@ export interface UseTabStateResult {
   tabItems: TabItem[];
 }
 
-// extracts TabItem children w/ their props
+// extract TabItem children w/ their props
 export function extractTabItems(children: ReactNode): TabItem[] {
   const items: TabItem[] = [];
 
@@ -94,8 +94,8 @@ function findDefaultFromChildren(
 }
 
 // hook for managing tab state
-// extracts tab items from children, determines initial active value
-// & provides state management for tab selection
+// extract tab items from children, determine initial active value
+// & provide state management for tab selection
 export function useTabState(options: UseTabStateOptions): UseTabStateResult {
   const { children, defaultValue, values } = options;
 

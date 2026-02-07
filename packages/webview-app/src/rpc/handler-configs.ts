@@ -12,7 +12,7 @@ import type {
 // these handlers buffer messages until React mounts, then flush to state handlers
 
 // factory for creating simple pass-through queued configs
-// use for handlers where the payload is passed directly without transformation
+// use for handlers where the payload is passed directly w/o transformation
 function createSimpleQueuedConfig<T>(
   methodName: string,
   messageType: QueuedMessageType,

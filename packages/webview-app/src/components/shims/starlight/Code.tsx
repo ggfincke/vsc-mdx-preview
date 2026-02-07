@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/Code.tsx
 // Starlight Code component shim for MDX Preview
-// provides preview-compatible version of @astrojs/starlight/components Code
+// provide preview-compatible version of @astrojs/starlight/components Code
 
 import { createCodeBlock } from '../base/BaseCodeBlock';
 

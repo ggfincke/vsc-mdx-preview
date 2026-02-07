@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/docusaurus/CodeBlock.tsx
 // Docusaurus CodeBlock component shim for MDX Preview
-// provides preview-compatible version of @theme/CodeBlock
+// provide preview-compatible version of @theme/CodeBlock
 
 import { createCodeBlock } from '../base/BaseCodeBlock';
 

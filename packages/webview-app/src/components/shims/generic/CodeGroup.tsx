@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/generic/CodeGroup.tsx
 // Generic CodeGroup component shim for MDX Preview
-// provides tabbed code blocks without framework dependency
+// provide tabbed code blocks w/o framework dependency
 
 import React, {
   ReactElement,

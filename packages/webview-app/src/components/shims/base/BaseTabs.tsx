@@ -227,7 +227,7 @@ export interface CreateIndexTabsResult<T> {
 }
 
 // factory for creating index-based Tabs components (Nextra style)
-// uses items array instead of extracting tabs from children
+// use items array instead of extracting tabs from children
 export function createIndexTabs<T>(
   config: IndexTabsConfig,
   accessors: IndexTabsItemAccessors<T>

@@ -15,7 +15,7 @@ interface NextraContextValue {
 // module-level tagged logger (avoids per-render allocation)
 const log = createTaggedLogger(LogTags.NEXTRA_CONTEXT);
 
-// hook that provides the Nextra context value
+// hook that provide the Nextra context value
 function useNextraProviderValue(): NextraContextValue {
   const [nextraMeta, setNextraMetaState] = useState<NextraPageMeta | null>(null);
 

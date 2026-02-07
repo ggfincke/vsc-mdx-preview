@@ -7,7 +7,7 @@ import { createNextraWrapper, type NextraWrapperProps } from './createNextraWrap
 // Steps props (compatible w/ Nextra)
 export type StepsProps = NextraWrapperProps;
 
-// Steps component - wraps Starlight's implementation w/ Nextra styling
+// Steps component - wrap Starlight's implementation w/ Nextra styling
 export const Steps = createNextraWrapper({
   StarlightComponent: StarlightSteps,
   wrapperClassName: 'mdx-preview-nextra-steps',
