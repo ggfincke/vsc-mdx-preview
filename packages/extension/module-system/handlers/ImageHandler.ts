@@ -1,5 +1,5 @@
 // packages/extension/module-system/handlers/ImageHandler.ts
-// handler for image files - converts to webview URI
+// handler for image files - convert to webview URI
 
 import type { FetchResult } from '@mdx-preview/shared';
 import type { Preview } from '../../preview/preview-manager';

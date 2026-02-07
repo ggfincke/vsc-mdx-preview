@@ -1,5 +1,5 @@
 // packages/extension/module-system/resolver/PackageJsonWatcher.ts
-// watches package.json & lock files to invalidate resolver cache
+// watch package.json & lock files to invalidate resolver cache
 
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../logging';

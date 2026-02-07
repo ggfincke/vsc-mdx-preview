@@ -1,5 +1,5 @@
 // packages/extension/module-system/handlers/SassHandler.ts
-// handler for SASS/SCSS files - compiles to CSS using workspace's sass package
+// handler for SASS/SCSS files - compile to CSS using workspace's sass package
 
 import * as path from 'path';
 import type { FetchResult } from '@mdx-preview/shared';
