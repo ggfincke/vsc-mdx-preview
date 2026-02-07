@@ -80,7 +80,7 @@ export interface ResolvedConfig {
 }
 
 // unified effective preview configuration
-// combines VS Code settings, project config file, & frontmatter overrides
+// combine VS Code settings, project config file, & frontmatter overrides
 export interface EffectivePreviewConfig {
   // VS Code settings
   updateMode: UpdateModeValue;
