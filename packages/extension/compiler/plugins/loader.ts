@@ -108,15 +108,10 @@ async function loadPluginList(
   return { plugins: loaded, errorCount };
 }
 
-// result of loading plugins from config
-export interface LoadedPlugins {
-  // custom remark plugins to add after built-in plugins
-  remarkPlugins: Pluggable[];
-  // custom rehype plugins to add after built-in plugins
-  rehypePlugins: Pluggable[];
-  // count of plugins that failed to load (errors logged via ErrorReporter)
-  errorCount: number;
-}
+// re-export canonical type definition from types/
+export type { LoadedPlugins } from '../../types';
+
+import type { LoadedPlugins } from '../../types';
 
 // load custom plugins from MDX Preview config (only loads in Trusted Mode, returns empty arrays in Safe Mode w/ warning)
 export async function loadPluginsFromConfig(

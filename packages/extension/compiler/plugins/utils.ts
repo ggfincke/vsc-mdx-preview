@@ -1,15 +1,10 @@
 // packages/extension/compiler/plugins/utils.ts
 // plugin specification parsing utilities
 
-import type { PluginSpec } from '../../types';
+import type { PluginSpec, ParsedPluginSpec } from '../../types';
 
-// parsed plugin specification w/ separated name & options
-export interface ParsedPluginSpec {
-  // plugin name (npm package or relative path)
-  name: string;
-  // plugin options object, undefined if none specified
-  options: Record<string, unknown> | undefined;
-}
+// re-export canonical type definition from types/
+export type { ParsedPluginSpec } from '../../types';
 
 // parse a plugin specification to extract name & options
 export function parsePluginSpec(spec: PluginSpec): ParsedPluginSpec {

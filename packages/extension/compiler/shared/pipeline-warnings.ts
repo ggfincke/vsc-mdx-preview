@@ -2,33 +2,12 @@
 // consolidated warning codes & messages for MDX pipeline operations
 
 import { warn, info, debug } from '../../logging';
+import { PipelineWarningCode } from '../../types';
+import type { PipelineWarning } from '../../types';
 
-// warning codes for MDX pipeline operations
-export enum PipelineWarningCode {
-  // Safe Mode warnings
-  CUSTOM_PLUGINS_IGNORED = 'MDX001',
-  CUSTOM_COMPONENTS_IGNORED = 'MDX002',
-
-  // plugin loading warnings
-  PLUGIN_LOAD_FAILED = 'MDX003',
-  PLUGIN_INVALID_EXPORT = 'MDX004',
-
-  // component handling warnings
-  BUILTIN_TRANSFORM_FAILED = 'MDX005',
-  UNKNOWN_COMPONENT_DETECTED = 'MDX006',
-
-  // configuration warnings
-  INVALID_CONFIG_VALUE = 'MDX007',
-  CONFIG_FILE_NOT_FOUND = 'MDX008',
-}
-
-// structured warning object
-export interface PipelineWarning {
-  code: PipelineWarningCode;
-  message: string;
-  severity: 'info' | 'warning' | 'error';
-  context?: Record<string, unknown>;
-}
+// re-export canonical type definitions from types/
+export { PipelineWarningCode } from '../../types';
+export type { PipelineWarning } from '../../types';
 
 // create warning for custom plugins being ignored in Safe Mode
 export function createIgnoredPluginsWarning(
