@@ -41,12 +41,12 @@ vi.mock('../../packages/webview-app/src/hooks', () => ({
 vi.mock(
   '../../packages/webview-app/src/components/PreviewContainer/PreviewContainer',
   () => ({
-    PreviewContainer: ({ mode, children, mermaidPortals }: any) =>
+    PreviewContainer: ({ mode, children, diagramPortals }: any) =>
       createElement(
         'section',
         { 'data-preview-mode': mode },
         children,
-        mermaidPortals
+        diagramPortals
       ),
   })
 );

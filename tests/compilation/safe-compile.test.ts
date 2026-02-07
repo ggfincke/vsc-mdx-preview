@@ -98,6 +98,32 @@ describe('compileSafe()', () => {
     expect(result.html).toContain('const');
   });
 
+  it('converts PlantUML code blocks into placeholders', async () => {
+    const result = await compileSafe(
+      `\`\`\`plantuml
+@startuml
+Alice -> Bob: Hi
+@enduml
+\`\`\``,
+      createMockCompilerConfig()
+    );
+
+    expect(result.html).toContain('plantuml-container');
+    expect(result.html).toContain('data-plantuml-code');
+  });
+
+  it('converts Graphviz code blocks into placeholders', async () => {
+    const result = await compileSafe(
+      `\`\`\`dot
+digraph G { A -> B }
+\`\`\``,
+      createMockCompilerConfig()
+    );
+
+    expect(result.html).toContain('graphviz-container');
+    expect(result.html).toContain('data-graphviz-code');
+  });
+
   it('returns empty frontmatter when none present', async () => {
     const result = await compileSafe(
       FIXTURES.basicMdx,

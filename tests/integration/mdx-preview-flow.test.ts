@@ -197,6 +197,38 @@ graph TD
       expect(result.code).toContain('mermaid');
     });
 
+    it('handles PlantUML diagrams', async () => {
+      const mdx = `# PlantUML Test
+
+\`\`\`plantuml
+@startuml
+Alice -> Bob: Hello
+@enduml
+\`\`\``;
+
+      const preview = createMockPreview({ content: mdx });
+      const result = await compileTrusted(mdx, true, trustedConfig(preview));
+
+      expect(result.code).toContain('plantuml-container');
+      expect(result.code).toContain('data-plantuml-code');
+    });
+
+    it('handles Graphviz diagrams', async () => {
+      const mdx = `# Graphviz Test
+
+\`\`\`dot
+digraph G {
+  A -> B
+}
+\`\`\``;
+
+      const preview = createMockPreview({ content: mdx });
+      const result = await compileTrusted(mdx, true, trustedConfig(preview));
+
+      expect(result.code).toContain('graphviz-container');
+      expect(result.code).toContain('data-graphviz-code');
+    });
+
     it('injects VS Code markdown styles when configured', async () => {
       const preview = createMockPreview({
         content: FIXTURES.basicMdx,
@@ -326,6 +358,36 @@ graph TD
 
       // math should be rendered to HTML (KaTeX)
       expect(result.html).toContain('katex');
+    });
+
+    it('handles PlantUML diagrams', async () => {
+      const mdx = `# PlantUML
+
+\`\`\`plantuml
+@startuml
+Alice -> Bob: Test
+@enduml
+\`\`\``;
+
+      const result = await compileSafe(mdx, safeConfig());
+
+      expect(result.html).toContain('plantuml-container');
+      expect(result.html).toContain('data-plantuml-code');
+    });
+
+    it('handles Graphviz diagrams', async () => {
+      const mdx = `# Graphviz
+
+\`\`\`graphviz
+digraph G {
+  A -> B
+}
+\`\`\``;
+
+      const result = await compileSafe(mdx, safeConfig());
+
+      expect(result.html).toContain('graphviz-container');
+      expect(result.html).toContain('data-graphviz-code');
     });
 
     it('returns empty frontmatter when none present', async () => {
