@@ -63,6 +63,7 @@ export function buildEffectivePreviewConfig(
     codeBlockTheme: (frontmatterTheme.codeBlockTheme ??
       settings['preview.codeBlockTheme']) as CodeBlockTheme,
     autoTheme: settings['preview.autoTheme'],
+    plantUmlServer: settings['diagrams.plantUmlServer'],
 
     // Tailwind (config file can override enabled & provide configPath)
     tailwind: {

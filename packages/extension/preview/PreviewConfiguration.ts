@@ -22,6 +22,7 @@ export interface ConfigurationState {
   useWhiteBackground: boolean;
   customLayoutFilePath: string;
   customCss: string;
+  plantUmlServer: string;
   useSucraseTranspiler: boolean;
   securityPolicy: SecurityPolicy;
   tailwindEnabled: TailwindEnabledValue;
@@ -65,6 +66,7 @@ export class PreviewConfiguration {
         docUri
       ),
       customCss: configManager.get('preview.customCss', docUri),
+      plantUmlServer: configManager.get('diagrams.plantUmlServer', docUri),
       securityPolicy: configManager.get('preview.security', docUri),
       tailwindEnabled: configManager.get('tailwind.enabled', docUri),
     };
@@ -117,6 +119,7 @@ export class PreviewConfiguration {
       docUri
     );
     const customCss = configManager.get('preview.customCss', docUri);
+    const plantUmlServer = configManager.get('diagrams.plantUmlServer', docUri);
     const securityPolicy = configManager.get('preview.security', docUri);
     const tailwindEnabled = configManager.get('tailwind.enabled', docUri);
 
@@ -124,6 +127,7 @@ export class PreviewConfiguration {
       useVscodeMarkdownStyles !== this._configuration.useVscodeMarkdownStyles ||
       useWhiteBackground !== this._configuration.useWhiteBackground ||
       customLayoutFilePath !== this._configuration.customLayoutFilePath ||
+      plantUmlServer !== this._configuration.plantUmlServer ||
       securityPolicy !== this._configuration.securityPolicy ||
       tailwindEnabled !== this._configuration.tailwindEnabled;
 
@@ -145,6 +149,7 @@ export class PreviewConfiguration {
       useWhiteBackground,
       customLayoutFilePath,
       customCss,
+      plantUmlServer,
       securityPolicy,
       tailwindEnabled,
     });

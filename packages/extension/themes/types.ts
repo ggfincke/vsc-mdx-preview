@@ -30,6 +30,7 @@ export interface ThemeConfiguration {
   codeBlockTheme: CodeBlockTheme;
   mermaidTheme: MermaidTheme;
   autoTheme: boolean;
+  plantUmlServer: string;
 }
 
 // theme display names (extension-only, used in settings UI)

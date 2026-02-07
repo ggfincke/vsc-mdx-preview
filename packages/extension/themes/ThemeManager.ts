@@ -56,6 +56,7 @@ export class ThemeManager extends WithSubscribers<
         docUri
       ) as MermaidTheme,
       autoTheme: configManager.get('preview.autoTheme', docUri),
+      plantUmlServer: configManager.get('diagrams.plantUmlServer', docUri),
     };
   }
 
@@ -130,6 +131,7 @@ export class ThemeManager extends WithSubscribers<
       codeBlockTheme: effectiveCodeBlockTheme,
       mermaidTheme: config.mermaidTheme,
       isLight: this.isLightTheme(),
+      plantUmlServer: config.plantUmlServer,
     };
   }
 

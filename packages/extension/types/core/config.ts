@@ -98,6 +98,7 @@ export interface EffectivePreviewConfig {
   previewTheme: PreviewTheme;
   codeBlockTheme: CodeBlockTheme;
   autoTheme: boolean;
+  plantUmlServer: string;
 
   // Tailwind (consolidated)
   tailwind: TailwindConfig;

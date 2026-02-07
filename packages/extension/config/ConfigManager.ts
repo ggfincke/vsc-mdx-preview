@@ -31,6 +31,7 @@ export type SettingKey =
   | 'preview.codeBlockTheme'
   | 'preview.mermaidTheme'
   | 'preview.autoTheme'
+  | 'diagrams.plantUmlServer'
   | 'build.useSucraseTranspiler'
   | 'tailwind.enabled'
   | 'tailwind.maxFileSizeBytes'
@@ -61,6 +62,7 @@ export interface SettingTypes {
   'preview.codeBlockTheme': string;
   'preview.mermaidTheme': string;
   'preview.autoTheme': boolean;
+  'diagrams.plantUmlServer': string;
   'build.useSucraseTranspiler': boolean;
   'tailwind.enabled': TailwindEnabledValue;
   'tailwind.maxFileSizeBytes': number;
@@ -99,6 +101,7 @@ function mapDefaults(): SettingTypes {
     'preview.codeBlockTheme': SETTINGS_DEFAULTS['preview.codeBlockTheme'],
     'preview.mermaidTheme': SETTINGS_DEFAULTS['preview.mermaidTheme'],
     'preview.autoTheme': SETTINGS_DEFAULTS['preview.autoTheme'],
+    'diagrams.plantUmlServer': SETTINGS_DEFAULTS['diagrams.plantUmlServer'],
     'build.useSucraseTranspiler':
       SETTINGS_DEFAULTS['build.useSucraseTranspiler'],
     'tailwind.enabled': SETTINGS_DEFAULTS['tailwind.enabled'],
@@ -129,6 +132,7 @@ export const THEME_KEYS: readonly SettingKey[] = [
   'preview.codeBlockTheme',
   'preview.mermaidTheme',
   'preview.autoTheme',
+  'diagrams.plantUmlServer',
 ] as const;
 
 export const PREVIEW_CONFIG_KEYS: readonly SettingKey[] = [
@@ -139,6 +143,7 @@ export const PREVIEW_CONFIG_KEYS: readonly SettingKey[] = [
   'preview.customCss',
   'preview.mdx.customLayoutFilePath',
   'preview.security',
+  'diagrams.plantUmlServer',
   'tailwind.enabled',
   'build.useSucraseTranspiler',
 ] as const;

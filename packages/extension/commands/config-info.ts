@@ -134,6 +134,7 @@ function buildSourcesMap(
     'preview.previewTheme',
     'preview.codeBlockTheme',
     'preview.autoTheme',
+    'diagrams.plantUmlServer',
     'build.useSucraseTranspiler',
     'tailwind.enabled',
     'framework',
@@ -246,6 +247,7 @@ function formatConfigOutput(
       previewTheme: configWithSources.effectiveConfig.previewTheme,
       codeBlockTheme: configWithSources.effectiveConfig.codeBlockTheme,
       autoTheme: configWithSources.effectiveConfig.autoTheme,
+      plantUmlServer: configWithSources.effectiveConfig.plantUmlServer,
       tailwind: configWithSources.effectiveConfig.tailwind,
       framework: configWithSources.effectiveConfig.framework,
       frameworkComponentShims:
