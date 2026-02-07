@@ -7,6 +7,33 @@ import {
   UNKNOWN_BEHAVIOR_VALUES,
 } from './enums';
 
+// shared JSON schema for plugin specification items (remark & rehype)
+const PLUGIN_SPEC_ITEMS = {
+  oneOf: [
+    {
+      type: 'string',
+      description: 'Plugin package name',
+    },
+    {
+      type: 'array',
+      description: 'Plugin w/ options: [packageName, options]',
+      items: [
+        {
+          type: 'string',
+          description: 'Plugin package name',
+        },
+        {
+          type: 'object',
+          description: 'Plugin options',
+          additionalProperties: true,
+        },
+      ],
+      minItems: 2,
+      maxItems: 2,
+    },
+  ],
+} as const;
+
 export const MDX_PREVIEW_CONFIG_SCHEMA = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'MDX Preview Configuration',
@@ -18,31 +45,7 @@ export const MDX_PREVIEW_CONFIG_SCHEMA = {
       type: 'array',
       description:
         'Custom remark plugins to add after built-in plugins. Only loaded in Trusted Mode.',
-      items: {
-        oneOf: [
-          {
-            type: 'string',
-            description: "Plugin package name (e.g., 'remark-toc')",
-          },
-          {
-            type: 'array',
-            description: 'Plugin w/ options: [packageName, options]',
-            items: [
-              {
-                type: 'string',
-                description: 'Plugin package name',
-              },
-              {
-                type: 'object',
-                description: 'Plugin options',
-                additionalProperties: true,
-              },
-            ],
-            minItems: 2,
-            maxItems: 2,
-          },
-        ],
-      },
+      items: PLUGIN_SPEC_ITEMS,
       examples: [
         ['remark-toc'],
         [['remark-toc', { tight: true, maxDepth: 3 }]],
@@ -52,31 +55,7 @@ export const MDX_PREVIEW_CONFIG_SCHEMA = {
       type: 'array',
       description:
         'Custom rehype plugins to add after built-in plugins. Only loaded in Trusted Mode.',
-      items: {
-        oneOf: [
-          {
-            type: 'string',
-            description: "Plugin package name (e.g., 'rehype-external-links')",
-          },
-          {
-            type: 'array',
-            description: 'Plugin w/ options: [packageName, options]',
-            items: [
-              {
-                type: 'string',
-                description: 'Plugin package name',
-              },
-              {
-                type: 'object',
-                description: 'Plugin options',
-                additionalProperties: true,
-              },
-            ],
-            minItems: 2,
-            maxItems: 2,
-          },
-        ],
-      },
+      items: PLUGIN_SPEC_ITEMS,
       examples: [
         ['rehype-external-links'],
         [['rehype-external-links', { target: '_blank', rel: ['noopener'] }]],

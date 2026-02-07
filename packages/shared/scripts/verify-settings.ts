@@ -4,7 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { PREVIEW_THEMES, CODE_BLOCK_THEMES, MERMAID_THEMES } from '../index';
+import { PREVIEW_THEMES, CODE_BLOCK_THEMES, MERMAID_THEMES } from '../themes';
 import {
   FRAMEWORK_SETTINGS,
   TAILWIND_ENABLED_VALUES,
@@ -167,7 +167,7 @@ function main(): void {
     errors.forEach((error) => console.error(`  ${error}\n`));
     console.error(
       '\nTo fix: update package.json enums to match the canonical sources in:\n' +
-        '  - packages/shared/index.ts (theme arrays)\n' +
+        '  - packages/shared/themes/data.ts (theme arrays)\n' +
         '  - packages/shared/config/enums.ts (config enums)\n'
     );
     process.exit(1);
