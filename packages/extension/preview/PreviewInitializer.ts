@@ -136,7 +136,7 @@ export class PreviewInitializer {
     await watcherManager.startAll();
   }
 
-  // setup config change subscription (subscribes to ConfigCache events from ConfigResolver)
+  // setup config change subscription (subscribe to ConfigCache events from ConfigResolver)
   setupConfigWatcher(
     watcherManager: WatcherManager,
     docScheme: string,
@@ -153,7 +153,7 @@ export class PreviewInitializer {
 
     const configPath = mdxPreviewConfig.configPath;
 
-    // create IWatcher adapter for config subscription (subscribes to ConfigCache events)
+    // create IWatcher adapter for config subscription (subscribe to ConfigCache events)
     let subscription: vscode.Disposable | null = null;
     let active = false;
 
@@ -245,7 +245,7 @@ export class PreviewInitializer {
       (changedPaths) => {
         log.debug('Tailwind config changed, reloading...');
         const tailwindProcessor = getTailwindProcessor();
-        // invalidate version cache when config changes (handles v3->v4 upgrades)
+        // invalidate version cache when config changes (handle v3->v4 upgrades)
         tailwindProcessor.invalidateVersionCache();
         // invalidate detection cache for config & entry CSS paths
         tailwindProcessor.invalidateDetectionCaches(changedPaths);

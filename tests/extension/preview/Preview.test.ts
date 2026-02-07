@@ -1,18 +1,18 @@
 // tests/extension/preview/Preview.test.ts
-// unit tests for Preview composition, delegation, and refresh wiring
+// unit tests for Preview composition, delegation, & refresh wiring
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mocks = vi.hoisted(() => {
-  const stateInstances: any[] = [];
   const initializerInstances: any[] = [];
   const documentHandlerInstances: any[] = [];
   const configInstances: any[] = [];
   const webviewBridgeInstances: any[] = [];
-  const evaluatorInstances: any[] = [];
 
   const mockResolveHandshake = vi.fn();
   const mockRefreshPanel = vi.fn();
+  const mockEvaluateInWebview = vi.fn(async () => {});
+  const mockReadFileAsync = vi.fn(async () => '# saved content');
   const mockPreviewManager = {
     getCurrentPreview: vi.fn(),
   };
@@ -35,14 +35,14 @@ const mocks = vi.hoisted(() => {
   };
 
   return {
-    stateInstances,
     initializerInstances,
     documentHandlerInstances,
     configInstances,
     webviewBridgeInstances,
-    evaluatorInstances,
     mockResolveHandshake,
     mockRefreshPanel,
+    mockEvaluateInWebview,
+    mockReadFileAsync,
     mockPreviewManager,
     mockWatcherManager,
     mockWebviewHandle,
@@ -66,20 +66,12 @@ vi.mock('../../../packages/extension/preview/webview-manager', () => ({
   refreshPanel: (...args: any[]) => mocks.mockRefreshPanel(...args),
 }));
 
-vi.mock('../../../packages/extension/preview/PreviewState', () => ({
-  PreviewState: class MockPreviewState {
-    performanceObserver = undefined;
-    evaluationDuration = 0;
-    previewDuration = 0;
-    nextTailwindRequestId = vi.fn(() => 42);
-    isTailwindRequestCurrent = vi.fn((id: number) => id === 42);
-    setupPerformanceObserver = vi.fn();
-    dispose = vi.fn();
+vi.mock('../../../packages/extension/preview/evaluate-in-webview', () => ({
+  default: (...args: any[]) => mocks.mockEvaluateInWebview(...args),
+}));
 
-    constructor() {
-      mocks.stateInstances.push(this);
-    }
-  },
+vi.mock('../../../packages/extension/utils/file-utils', () => ({
+  readFileAsync: (...args: any[]) => mocks.mockReadFileAsync(...args),
 }));
 
 vi.mock('../../../packages/extension/preview/PreviewInitializer', () => ({
@@ -119,6 +111,7 @@ vi.mock('../../../packages/extension/preview/PreviewDocumentHandler', () => ({
       this.dependentFsPaths = new Set([doc.uri.fsPath]);
     });
 
+    setActions = vi.fn();
     reloadMdxConfig = vi.fn();
     resetRenderedVersion = vi.fn();
     markStale = vi.fn();
@@ -178,16 +171,6 @@ vi.mock('../../../packages/extension/preview/PreviewWebviewBridge', () => ({
   },
 }));
 
-vi.mock('../../../packages/extension/preview/PreviewEvaluator', () => ({
-  PreviewEvaluator: class MockPreviewEvaluator {
-    updateWebview = vi.fn(async () => {});
-
-    constructor() {
-      mocks.evaluatorInstances.push(this);
-    }
-  },
-}));
-
 import { Preview } from '../../../packages/extension/preview/Preview';
 
 function createDoc(overrides: Partial<any> = {}): any {
@@ -210,22 +193,19 @@ function last<T>(items: T[]): T {
 describe('Preview', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.stateInstances.length = 0;
     mocks.initializerInstances.length = 0;
     mocks.documentHandlerInstances.length = 0;
     mocks.configInstances.length = 0;
     mocks.webviewBridgeInstances.length = 0;
-    mocks.evaluatorInstances.length = 0;
     mocks.mockPreviewManager.getCurrentPreview.mockReturnValue(undefined);
   });
 
-  it('constructor wires modules, sets doc, and starts watchers', async () => {
+  it('constructor wires modules, sets doc, & starts watchers', async () => {
     const doc = createDoc();
     new Preview(doc);
 
     const initializer = last(mocks.initializerInstances);
     const documentHandler = last(mocks.documentHandlerInstances);
-    const state = last(mocks.stateInstances);
 
     expect(initializer.createHandshake).toHaveBeenCalledTimes(1);
     expect(initializer.createWatchers).toHaveBeenCalledWith(
@@ -233,6 +213,12 @@ describe('Preview', () => {
       expect.any(Function),
       expect.any(Promise)
     );
+    expect(documentHandler.setActions).toHaveBeenCalledWith({
+      markStale: expect.any(Function),
+      invalidate: expect.any(Function),
+      debouncedUpdate: expect.any(Function),
+      updateWebview: expect.any(Function),
+    });
     expect(documentHandler.setDoc).toHaveBeenCalledWith(
       doc,
       mocks.mockWatcherManager
@@ -242,10 +228,9 @@ describe('Preview', () => {
         mocks.mockWatcherManager
       );
     });
-    expect(state.setupPerformanceObserver).toHaveBeenCalledTimes(1);
   });
 
-  it('webview setter updates bridge and stores value', () => {
+  it('webview setter updates bridge & stores value', () => {
     const preview = new Preview(createDoc());
     const bridge = last(mocks.webviewBridgeInstances);
     const webview = { asWebviewUri: vi.fn() } as any;
@@ -256,7 +241,7 @@ describe('Preview', () => {
     expect(bridge.setWebview).toHaveBeenCalledWith(webview);
   });
 
-  it('completeHandshake and cancelHandshakeTimeout delegate to initializer', () => {
+  it('completeHandshake & cancelHandshakeTimeout delegate correctly', () => {
     const preview = new Preview(createDoc());
     const initializer = last(mocks.initializerInstances);
 
@@ -267,19 +252,35 @@ describe('Preview', () => {
     expect(initializer.cancelHandshakeTimeout).toHaveBeenCalledTimes(1);
   });
 
-  it('updateWebview delegates to evaluator', async () => {
+  it('updateWebview calls evaluateInWebview w/ current text', async () => {
     const preview = new Preview(createDoc());
-    const evaluator = last(mocks.evaluatorInstances);
 
     await preview.updateWebview(true);
 
-    expect(evaluator.updateWebview).toHaveBeenCalledWith(true);
+    expect(mocks.mockEvaluateInWebview).toHaveBeenCalledWith(
+      preview,
+      '# doc',
+      '/workspace/doc.mdx'
+    );
   });
 
-  it('updateTailwindWatchFiles delegates and callback forces update', async () => {
+  it('updateWebview skips if version already rendered', async () => {
+    const mockDocTracker = {
+      hasRenderedVersion: vi.fn(() => true),
+      markRendered: vi.fn(),
+    };
+    mocks.mockWatcherManager.get.mockReturnValue(mockDocTracker);
+
+    const preview = new Preview(createDoc());
+    await preview.updateWebview(false);
+
+    expect(mocks.mockEvaluateInWebview).not.toHaveBeenCalled();
+    mocks.mockWatcherManager.get.mockReturnValue(undefined);
+  });
+
+  it('updateTailwindWatchFiles delegates & callback forces update', async () => {
     const preview = new Preview(createDoc());
     const initializer = last(mocks.initializerInstances);
-    const evaluator = last(mocks.evaluatorInstances);
 
     preview.updateTailwindWatchFiles(['/workspace/tailwind.config.ts']);
 
@@ -292,7 +293,7 @@ describe('Preview', () => {
     const callback = initializer.setupTailwindConfigWatcher.mock.calls[0][2];
     await callback(['/workspace/tailwind.config.ts']);
 
-    expect(evaluator.updateWebview).toHaveBeenCalledWith(true);
+    expect(mocks.mockEvaluateInWebview).toHaveBeenCalled();
   });
 
   it('updateConfiguration updates CSS watcher when flags request it', () => {
@@ -318,11 +319,9 @@ describe('Preview', () => {
     expect(mocks.mockRefreshPanel).not.toHaveBeenCalled();
   });
 
-  it('handleDidChangeTextDocument passes composed callbacks to document handler', async () => {
+  it('handleDidChangeTextDocument passes args to document handler', async () => {
     const preview = new Preview(createDoc());
     const documentHandler = last(mocks.documentHandlerInstances);
-    const bridge = last(mocks.webviewBridgeInstances);
-    const config = last(mocks.configInstances);
 
     preview.active = true;
     const editDoc = createDoc({
@@ -332,63 +331,53 @@ describe('Preview', () => {
 
     await preview.handleDidChangeTextDocument('/workspace/dep.ts', editDoc);
 
-    const call = documentHandler.handleDidChangeTextDocument.mock.calls[0];
-    expect(call[0]).toBe('/workspace/dep.ts');
-    expect(call[1]).toBe(editDoc);
-    expect(call[2]).toBe(true);
-    expect(call[3]).toBe('onType');
-
-    const markStale = call[4] as () => void;
-    const invalidate = call[5] as (fsPath: string) => Promise<void>;
-    const debouncedUpdate = call[6] as () => void;
-
-    markStale();
-    await invalidate('/workspace/dep.ts');
-    debouncedUpdate();
-
-    expect(documentHandler.markStale).toHaveBeenCalledWith(
-      mocks.mockWatcherManager
+    expect(documentHandler.handleDidChangeTextDocument).toHaveBeenCalledWith(
+      '/workspace/dep.ts',
+      editDoc,
+      true,
+      'onType'
     );
-    expect(bridge.invalidate).toHaveBeenCalledWith('/workspace/dep.ts');
-    expect(config.debouncedUpdateWebview).toHaveBeenCalledTimes(1);
   });
 
-  it('handleDidSaveTextDocument passes composed callbacks to document handler', async () => {
+  it('handleDidSaveTextDocument passes args to document handler', async () => {
     const preview = new Preview(createDoc());
     const documentHandler = last(mocks.documentHandlerInstances);
-    const bridge = last(mocks.webviewBridgeInstances);
-    const evaluator = last(mocks.evaluatorInstances);
 
     preview.active = true;
     await preview.handleDidSaveTextDocument('/workspace/dep.ts');
 
-    const call = documentHandler.handleDidSaveTextDocument.mock.calls[0];
-    expect(call[0]).toBe('/workspace/dep.ts');
-    expect(call[1]).toBe(true);
-    expect(call[2]).toBe('onType');
-
-    const markStale = call[3] as () => void;
-    const invalidate = call[4] as (fsPath: string) => Promise<void>;
-    const update = call[5] as () => Promise<void>;
-
-    markStale();
-    await invalidate('/workspace/dep.ts');
-    await update();
-
-    expect(documentHandler.markStale).toHaveBeenCalledWith(
-      mocks.mockWatcherManager
+    expect(documentHandler.handleDidSaveTextDocument).toHaveBeenCalledWith(
+      '/workspace/dep.ts',
+      true,
+      'onType'
     );
-    expect(bridge.invalidate).toHaveBeenCalledWith('/workspace/dep.ts');
-    expect(evaluator.updateWebview).toHaveBeenCalledWith(false);
   });
 
-  it('dispose releases state and watcher manager resources', () => {
+  it('nextTailwindRequestId returns incrementing values', () => {
     const preview = new Preview(createDoc());
-    const state = last(mocks.stateInstances);
+
+    expect(preview.nextTailwindRequestId()).toBe(1);
+    expect(preview.nextTailwindRequestId()).toBe(2);
+    expect(preview.nextTailwindRequestId()).toBe(3);
+  });
+
+  it('isTailwindRequestCurrent checks against latest ID', () => {
+    const preview = new Preview(createDoc());
+
+    const id = preview.nextTailwindRequestId();
+    expect(preview.isTailwindRequestCurrent(id)).toBe(true);
+    expect(preview.isTailwindRequestCurrent(id - 1)).toBe(false);
+
+    const id2 = preview.nextTailwindRequestId();
+    expect(preview.isTailwindRequestCurrent(id)).toBe(false);
+    expect(preview.isTailwindRequestCurrent(id2)).toBe(true);
+  });
+
+  it('dispose releases watcher manager resources', () => {
+    const preview = new Preview(createDoc());
 
     preview.dispose();
 
-    expect(state.dispose).toHaveBeenCalledTimes(1);
     expect(mocks.mockWatcherManager.dispose).toHaveBeenCalledTimes(1);
   });
 });

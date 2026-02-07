@@ -2,19 +2,23 @@
 // individual preview instance w/ stale detection & custom CSS support
 
 import * as vscode from 'vscode';
+import {
+  PerformanceObserver,
+  type PerformanceObserverEntryList,
+  performance,
+} from 'perf_hooks';
 import { createTaggedLogger } from '../logging';
 import { LogTags } from '@mdx-preview/shared';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.PREVIEW);
 
+import { TextDecoder } from 'util';
 import { refreshPanel } from './webview-manager';
+import evaluateInWebview from './evaluate-in-webview';
 import type { ResolvedConfig, TypeScriptConfiguration } from '../types';
-import type { WatcherManager } from './watchers';
-
-// extracted components for Preview class
-import { PreviewState } from './PreviewState';
-import { PreviewEvaluator } from './PreviewEvaluator';
+import type { WatcherManager, DocumentTracker } from './watchers';
+import { readFileAsync } from '../utils/file-utils';
 
 // extracted modules
 import {
@@ -28,17 +32,7 @@ import {
 } from './PreviewWebviewBridge';
 import { PreviewDocumentHandler } from './PreviewDocumentHandler';
 import { PreviewInitializer } from './PreviewInitializer';
-
-// import PreviewManager type for refreshWebview (controlled dependency via singleton lookup)
-import type { PreviewManager } from './preview-manager';
-
-// lazy import to avoid circular dependency at module load time (uses service-locator)
-function getPreviewManager(): PreviewManager {
-  const { getPreviewManager: getManager } = require('../services') as {
-    getPreviewManager: () => PreviewManager;
-  };
-  return getManager();
-}
+import { getPreviewManager } from '../services/service-locator';
 
 // re-export types for consumers
 export type { StyleConfiguration, WebviewHandle };
@@ -68,9 +62,13 @@ export class Preview {
   // watcher manager for coordinated lifecycle management
   private watcherManager: WatcherManager;
 
-  // extracted components (new)
-  private state: PreviewState;
-  private evaluator!: PreviewEvaluator;
+  // Tailwind request ID counter (ensure stale responses are ignored)
+  private tailwindRequestId = 0;
+
+  // performance tracking (development only)
+  private _performanceObserver?: PerformanceObserver;
+  private _evaluationDuration = 0;
+  private _previewDuration = 0;
 
   // handshake state
   webviewHandshakePromise!: Promise<void>;
@@ -86,21 +84,12 @@ export class Preview {
     this.initializer.cancelHandshakeTimeout();
   }
 
-  // delegate performance tracking to PreviewState
-  get performanceObserver() {
-    return this.state.performanceObserver;
-  }
-
   get evaluationDuration(): number {
-    return this.state.evaluationDuration;
+    return this._evaluationDuration;
   }
 
   set evaluationDuration(value: number) {
-    this.state.evaluationDuration = value;
-  }
-
-  get previewDuration(): number {
-    return this.state.previewDuration;
+    this._evaluationDuration = value;
   }
 
   // delegate getters to composed modules
@@ -159,9 +148,6 @@ export class Preview {
   constructor(doc: vscode.TextDocument) {
     log.debug('Preview constructor called');
 
-    // initialize extracted state component
-    this.state = new PreviewState();
-
     // initialize composed modules
     this.initializer = new PreviewInitializer();
     this.documentHandler = new PreviewDocumentHandler();
@@ -188,13 +174,13 @@ export class Preview {
       this.webviewHandshakePromise
     );
 
-    // initialize evaluator (needs this preview instance)
-    this.evaluator = new PreviewEvaluator(
-      this,
-      this.documentHandler,
-      this.configManager,
-      this.watcherManager
-    );
+    // set document handler actions (provides callbacks w/out per-call injection)
+    this.documentHandler.setActions({
+      markStale: () => this.markStale(),
+      invalidate: (fsPath) => this.webviewBridge.invalidate(fsPath),
+      debouncedUpdate: () => this.configManager.debouncedUpdateWebview(),
+      updateWebview: () => this.updateWebview(),
+    });
 
     // set document first (sets document directory for watchers)
     this.setDoc(doc);
@@ -202,8 +188,20 @@ export class Preview {
     // then start watchers (now document directory is set)
     void this.initializer.startWatchers(this.watcherManager);
 
-    // setup performance observer in development
-    this.state.setupPerformanceObserver();
+    // setup performance observer (development only)
+    if (process.env.NODE_ENV === 'development') {
+      this._performanceObserver = new PerformanceObserver(
+        (list: PerformanceObserverEntryList) => {
+          this._previewDuration = list.getEntries()[0].duration;
+          vscode.window.showInformationMessage(
+            `Previewing used: ${Number(this._previewDuration / 1000).toFixed(2)} seconds. ` +
+              `Evaluation used: ${Number(this._evaluationDuration / 1000).toFixed(2)} seconds.`
+          );
+          performance.clearMarks();
+        }
+      );
+      this._performanceObserver.observe({ entryTypes: ['measure'] });
+    }
   }
 
   initWebviewHandshakePromise(): void {
@@ -245,14 +243,15 @@ export class Preview {
     );
   }
 
-  // delegate to PreviewState
+  // get next Tailwind request ID (increment for each new compilation)
   nextTailwindRequestId(): number {
-    return this.state.nextTailwindRequestId();
+    this.tailwindRequestId += 1;
+    return this.tailwindRequestId;
   }
 
-  // delegate to PreviewState
+  // check if Tailwind request ID is still current (not superseded)
   isTailwindRequestCurrent(requestId: number): boolean {
-    return this.state.isTailwindRequestCurrent(requestId);
+    return requestId === this.tailwindRequestId;
   }
 
   resetRenderedVersion(): void {
@@ -288,9 +287,69 @@ export class Preview {
     this.documentHandler.updateDependencies(imports, this.watcherManager);
   }
 
-  // delegate to PreviewEvaluator
+  // update webview w/ current document content (force bypasses version tracking)
   async updateWebview(force = false): Promise<void> {
-    await this.evaluator.updateWebview(force);
+    log.debug('updateWebview called');
+    const { uri } = this.doc;
+    const { scheme, fsPath } = uri;
+    log.debug(`updateWebview scheme=${scheme}, fsPath=${fsPath}`);
+
+    const currentVersion = this.doc.version;
+    const docTracker = this.watcherManager.get<DocumentTracker>('document');
+
+    // skip if we've already rendered this version (unless forced)
+    if (!force && docTracker?.hasRenderedVersion(currentVersion)) {
+      log.debug('Skipping update - same version');
+      return;
+    }
+
+    switch (scheme) {
+      case 'untitled': {
+        log.debug('updateWebview: untitled scheme');
+        await evaluateInWebview(this, this.text, this.entryFsDirectory ?? '');
+        break;
+      }
+      case 'file': {
+        log.debug('updateWebview: file scheme');
+        if (this.configuration.updateMode === 'onType') {
+          await evaluateInWebview(this, this.text, fsPath);
+        } else {
+          // onSave or manual mode: read from disk
+          let readError: unknown;
+          const savedText = await readFileAsync(fsPath, 'utf8', {
+            onError: (error) => {
+              readError = error;
+            },
+          });
+
+          if (savedText === null) {
+            throw readError instanceof Error
+              ? readError
+              : new Error(`Failed to read file: ${fsPath}`);
+          }
+          await evaluateInWebview(this, savedText, fsPath);
+        }
+        break;
+      }
+      default: {
+        // vscode-remote, vscode-vfs, etc
+        log.debug(`updateWebview: default scheme (${scheme})`);
+        let text = this.text;
+        if (this.configuration.updateMode !== 'onType') {
+          try {
+            const bytes = await vscode.workspace.fs.readFile(uri);
+            text = new TextDecoder().decode(bytes);
+          } catch {
+            text = this.text;
+          }
+        }
+        await evaluateInWebview(this, text, fsPath);
+        break;
+      }
+    }
+
+    // update tracking after successful render
+    docTracker?.markRendered(currentVersion);
   }
 
   async refreshWebview(): Promise<void> {
@@ -310,10 +369,7 @@ export class Preview {
       fsPath,
       doc,
       this.active,
-      this.configuration.updateMode,
-      () => this.markStale(),
-      (path) => this.webviewBridge.invalidate(path),
-      () => this.configManager.debouncedUpdateWebview()
+      this.configuration.updateMode
     );
   }
 
@@ -321,10 +377,7 @@ export class Preview {
     await this.documentHandler.handleDidSaveTextDocument(
       fsPath,
       this.active,
-      this.configuration.updateMode,
-      () => this.markStale(),
-      (path) => this.webviewBridge.invalidate(path),
-      () => this.updateWebview()
+      this.configuration.updateMode
     );
   }
 
@@ -352,7 +405,8 @@ export class Preview {
 
   // dispose of resources held by this preview
   dispose(): void {
-    this.state.dispose();
+    this._performanceObserver?.disconnect();
+    this._performanceObserver = undefined;
     this.watcherManager.dispose();
   }
 }

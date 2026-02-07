@@ -7,7 +7,7 @@ import type { IWatcher } from '../../types';
 // webview handle w/ setStale method
 type StaleNotifier = Pick<WebviewRPC, 'setStale'>;
 
-// track document version & stale state (implements IWatcher directly, no file watching)
+// track document version & stale state (implement IWatcher directly, no file watching)
 export class DocumentTracker implements IWatcher {
   private _isActive = true;
   private lastRenderedVersion = -1;

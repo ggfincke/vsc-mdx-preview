@@ -15,8 +15,17 @@ export interface DocumentState {
   mdxPreviewConfig?: ResolvedConfig;
 }
 
+// actions provided by Preview for document event handling
+export interface PreviewActions {
+  markStale: () => void;
+  invalidate: (fsPath: string) => Promise<void>;
+  debouncedUpdate: () => void;
+  updateWebview: () => Promise<void>;
+}
+
 // handle document state, tracking, & change events for a preview instance
 export class PreviewDocumentHandler {
+  private actions?: PreviewActions;
   private _doc!: vscode.TextDocument;
   private _dependentFsPaths: Set<string> = new Set();
   private _typescriptConfiguration?: TypeScriptConfiguration;
@@ -45,6 +54,11 @@ export class PreviewDocumentHandler {
 
   get editingDoc(): vscode.TextDocument | undefined {
     return this._editingDoc;
+  }
+
+  // set actions for document event handling (called once after construction)
+  setActions(actions: PreviewActions): void {
+    this.actions = actions;
   }
 
   get fsPath(): string {
@@ -127,10 +141,7 @@ export class PreviewDocumentHandler {
     fsPath: string,
     doc: vscode.TextDocument,
     active: boolean,
-    updateMode: UpdateModeValue,
-    markStaleFn: () => void,
-    invalidateFn: (fsPath: string) => Promise<void>,
-    debouncedUpdateFn: () => void
+    updateMode: UpdateModeValue
   ): Promise<void> {
     if (!active) {
       return;
@@ -144,16 +155,16 @@ export class PreviewDocumentHandler {
 
     switch (updateMode) {
       case 'onType': {
-        markStaleFn();
+        this.actions!.markStale();
         if (fsPath !== this.fsPath) {
-          await invalidateFn(fsPath);
+          await this.actions!.invalidate(fsPath);
         }
-        debouncedUpdateFn();
+        this.actions!.debouncedUpdate();
         break;
       }
       case 'onSave':
       case 'manual': {
-        markStaleFn();
+        this.actions!.markStale();
         break;
       }
     }
@@ -163,10 +174,7 @@ export class PreviewDocumentHandler {
   async handleDidSaveTextDocument(
     fsPath: string,
     active: boolean,
-    updateMode: UpdateModeValue,
-    markStaleFn: () => void,
-    invalidateFn: (fsPath: string) => Promise<void>,
-    updateWebviewFn: () => Promise<void>
+    updateMode: UpdateModeValue
   ): Promise<void> {
     if (!active) {
       return;
@@ -177,13 +185,13 @@ export class PreviewDocumentHandler {
     }
 
     if (updateMode === 'manual') {
-      markStaleFn();
+      this.actions!.markStale();
       return;
     }
 
     if (fsPath !== this.fsPath) {
-      await invalidateFn(fsPath);
+      await this.actions!.invalidate(fsPath);
     }
-    await updateWebviewFn();
+    await this.actions!.updateWebview();
   }
 }

@@ -57,7 +57,7 @@ function setupConfigWatcher(configFile: string): void {
   log.debug(`Watching: ${configFile}`);
 }
 
-// resolve TypeScript configuration from tsconfig.json (handles extends, paths, baseUrl)
+// resolve TypeScript configuration from tsconfig.json (handle extends, paths, baseUrl)
 export async function resolveTypescriptConfigAsync(
   configFile: string | null
 ): Promise<TypeScriptConfiguration | null> {
@@ -101,7 +101,7 @@ export async function resolveTypescriptConfigAsync(
   }
 }
 
-// sync wrapper for cached access (triggers async load if not cached, returns null)
+// sync wrapper for cached access (trigger async load if not cached, return null)
 export function resolveTypescriptConfig(
   configFile: string | null
 ): TypeScriptConfiguration | null {

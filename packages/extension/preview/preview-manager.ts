@@ -20,11 +20,10 @@ export {
 } from './Preview';
 export { openPreview, refreshPreview } from './preview-commands';
 
-// webview app URIs (loaded from Vite manifest)
-export interface WebviewAppUris {
-  mainScript: vscode.Uri;
-  mainStyle: vscode.Uri | undefined;
-}
+// re-export canonical type definition from types/
+export type { WebviewAppUris } from '../types';
+
+import type { WebviewAppUris } from '../types';
 
 // * singleton manager for all preview instances
 // manage preview lifecycle, panel state, & subscriber notifications
