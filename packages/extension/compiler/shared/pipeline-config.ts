@@ -121,12 +121,12 @@ export function describePipeline(config: PipelineConfig): PipelineDescription {
     });
   }
 
-  // pre-math plugins (mermaid placeholder)
+  // pre-math plugins (diagram placeholders)
   for (const plugin of sharedRehypePluginsPreMath) {
     rehypePlugins.push({
       plugin,
       phase: 'preMath' as const,
-      description: 'mermaid placeholder',
+      description: 'diagram placeholder',
     });
   }
 

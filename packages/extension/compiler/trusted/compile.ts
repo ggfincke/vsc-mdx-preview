@@ -157,7 +157,7 @@ export async function compileTrusted(
     providerImportSource: '@mdx-js/react',
     // remark plugins: GFM, GitHub alerts, math (shared w/ Safe Mode) & custom
     remarkPlugins,
-    // rehype plugins: raw HTML (via rehype-raw), mermaid, math, syntax, anchors, lazy images & custom
+    // rehype plugins: raw HTML, diagram placeholders, math, syntax, anchors, lazy images & custom
     rehypePlugins,
   });
 
