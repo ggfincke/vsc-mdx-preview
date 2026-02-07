@@ -94,6 +94,8 @@ export const LogTags = {
   LOADING_CONTEXT: 'LOADING-CONTEXT',
   TRUST_CONTEXT: 'TRUST-CONTEXT',
   MERMAID_RENDERER: 'MERMAID-RENDERER',
+  PLANTUML_RENDERER: 'PLANTUML-RENDERER',
+  GRAPHVIZ_RENDERER: 'GRAPHVIZ-RENDERER',
 } as const;
 
 export type LogTag = (typeof LogTags)[keyof typeof LogTags];

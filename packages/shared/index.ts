@@ -17,6 +17,14 @@ export {
   SHIM_LOAD_RETRY_DELAY_MS,
 } from './constants';
 
+// diagram server utilities
+export {
+  DEFAULT_PLANTUML_SERVER,
+  normalizePlantUmlServerUrl,
+  getPlantUmlServerOrigin,
+  getPlantUmlRenderEndpoints,
+} from './diagrams';
+
 // component registry - single source of truth for all shim definitions
 export {
   // types
@@ -255,6 +263,7 @@ export interface WebviewThemeState {
   codeBlockTheme: CodeBlockTheme;
   mermaidTheme: MermaidTheme;
   isLight: boolean;
+  plantUmlServer: string;
 }
 
 // check if a preview theme is a light theme
@@ -359,6 +368,7 @@ export interface ExtensionRPC {
     column?: number
   ): Promise<void>;
   openPreview(relativePath: string): Promise<void>;
+  renderPlantUml(code: string): Promise<string | undefined>;
 }
 
 // Nextra _meta.json page-level settings (preview-relevant only)
@@ -432,6 +442,7 @@ export {
   DEFAULT_CODE_BLOCK_THEME,
   DEFAULT_MERMAID_THEME,
   DEFAULT_AUTO_THEME,
+  DEFAULT_DIAGRAMS_PLANTUML_SERVER,
   DEFAULT_USE_SUCRASE_TRANSPILER,
   DEFAULT_TAILWIND_ENABLED,
   DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES,
