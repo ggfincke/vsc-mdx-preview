@@ -1,5 +1,5 @@
 // packages/webview-app/src/hooks/usePreviewSetup.ts
-// shared preview setup hook - consolidates diagram rendering, lightbox & container ref
+// shared preview setup hook - consolidate diagram rendering, lightbox & container ref
 
 import { useRef, type RefObject, type ReactNode } from 'react';
 import { useMermaidRendering } from './useMermaidRendering';
@@ -27,7 +27,7 @@ interface PreviewSetupResult {
   scan: () => void;
 }
 
-// shared preview setup - provides container ref, diagram rendering & lightbox
+// shared preview setup - provide container ref, diagram rendering & lightbox
 // use in SafePreview & TrustedPreview to consolidate shared setup logic
 export function usePreviewSetup(
   options: PreviewSetupOptions

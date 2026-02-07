@@ -1,30 +1,30 @@
 // packages/webview-app/src/utils/findGraphvizContainers.ts
 // extract Graphviz diagram info from DOM containers
 
-export interface GraphvizDiagramInfo {
-  id: string;
-  code: string;
+import {
+  createDiagramContainerFinder,
+  type BaseDiagramInfo,
+} from './createDiagramContainerFinder';
+
+export interface GraphvizDiagramInfo extends BaseDiagramInfo {
   language: 'dot' | 'graphviz';
-  el: HTMLElement;
 }
 
 // find all Graphviz containers w/ data attributes in given root
-export function findGraphvizContainers(
-  root: ParentNode
-): GraphvizDiagramInfo[] {
-  const results: GraphvizDiagramInfo[] = [];
-  const containers = root.querySelectorAll(
-    '.graphviz-container[data-graphviz-code]'
-  );
-
-  containers.forEach((el) => {
-    const code = el.getAttribute('data-graphviz-code');
-    const id = el.getAttribute('data-graphviz-id');
-    const language = el.getAttribute('data-graphviz-language');
-    if (code && id && (language === 'dot' || language === 'graphviz')) {
-      results.push({ id, code, language, el: el as HTMLElement });
-    }
+export const findGraphvizContainers =
+  createDiagramContainerFinder<GraphvizDiagramInfo>({
+    selector: '.graphviz-container[data-graphviz-code]',
+    attributes: {
+      codeAttr: 'data-graphviz-code',
+      idAttr: 'data-graphviz-id',
+    },
+    extra: {
+      extract: (el) => {
+        const language = el.getAttribute('data-graphviz-language');
+        if (language === 'dot' || language === 'graphviz') {
+          return { language };
+        }
+        return null;
+      },
+    },
   });
-
-  return results;
-}

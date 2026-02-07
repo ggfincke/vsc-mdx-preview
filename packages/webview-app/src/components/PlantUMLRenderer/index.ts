@@ -2,4 +2,3 @@
 // exports for PlantUML renderer component
 
 export { PlantUMLRenderer } from './PlantUMLRenderer';
-export { default } from './PlantUMLRenderer';

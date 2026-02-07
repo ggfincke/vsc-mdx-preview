@@ -2,4 +2,3 @@
 // exports for Graphviz renderer component
 
 export { GraphvizRenderer } from './GraphvizRenderer';
-export { default } from './GraphvizRenderer';
