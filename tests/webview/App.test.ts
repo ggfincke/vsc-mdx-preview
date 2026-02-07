@@ -1,5 +1,5 @@
 // tests/webview/App.test.ts
-// integration-style unit tests for App rendering paths and link handling
+// integration-style unit tests for App rendering paths & link handling
 //
 // @vitest-environment jsdom
 
