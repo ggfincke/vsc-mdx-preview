@@ -12,8 +12,8 @@ export interface PreviewContainerProps {
   mode: 'safe' | 'trusted';
   // image click handler
   onImageClick?: (event: MouseEvent<HTMLDivElement>) => void;
-  // mermaid portals
-  mermaidPortals: ReactNode;
+  // diagram portals
+  diagramPortals: ReactNode;
   // children
   children?: ReactNode;
   // className
@@ -25,13 +25,13 @@ export interface PreviewContainerProps {
 // - container ref attachment for DOM manipulation
 // - mode attribute for styling hooks
 // - optional onClick handler for image lightbox
-// - mermaid portal rendering
+// - diagram portal rendering
 // - markdown-body class for styling
 export function PreviewContainer({
   containerRef,
   mode,
   onImageClick,
-  mermaidPortals,
+  diagramPortals,
   children,
   className,
 }: PreviewContainerProps) {
@@ -45,7 +45,7 @@ export function PreviewContainer({
       onClick={onImageClick}
     >
       {children}
-      {mermaidPortals}
+      {diagramPortals}
     </div>
   );
 }

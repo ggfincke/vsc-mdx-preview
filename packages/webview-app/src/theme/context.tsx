@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { injectPreviewTheme, injectCodeBlockTheme } from './loader';
+import { DEFAULT_PLANTUML_SERVER } from '@mdx-preview/shared';
 import type {
   PreviewTheme,
   CodeBlockTheme,
@@ -25,6 +26,7 @@ interface ThemeContextValue {
   previewTheme: PreviewTheme;
   codeBlockTheme: CodeBlockTheme;
   mermaidTheme: MermaidTheme;
+  plantUmlServer: string;
   // handler for extension to push theme state
   setPreviewThemeState: (state: WebviewThemeState) => void;
 }
@@ -40,6 +42,8 @@ function useThemeValue(): ThemeContextValue {
   const [previewTheme, setPreviewTheme] = useState<PreviewTheme>('none');
   const [codeBlockTheme, setCodeBlockTheme] = useState<CodeBlockTheme>('auto');
   const [mermaidTheme, setMermaidTheme] = useState<MermaidTheme>('default');
+  const [plantUmlServer, setPlantUmlServer] =
+    useState<string>(DEFAULT_PLANTUML_SERVER);
   const [isLight, setIsLight] = useState(true);
 
   // track VS Code theme changes (local detection for UI only)
@@ -63,6 +67,7 @@ function useThemeValue(): ThemeContextValue {
     setCodeBlockTheme(state.codeBlockTheme);
     setMermaidTheme(state.mermaidTheme);
     setIsLight(state.isLight);
+    setPlantUmlServer(state.plantUmlServer);
   }, []);
 
   const value = useMemo<ThemeContextValue>(
@@ -73,6 +78,7 @@ function useThemeValue(): ThemeContextValue {
       previewTheme,
       codeBlockTheme,
       mermaidTheme,
+      plantUmlServer,
       setPreviewThemeState,
     }),
     [
@@ -80,6 +86,7 @@ function useThemeValue(): ThemeContextValue {
       previewTheme,
       codeBlockTheme,
       mermaidTheme,
+      plantUmlServer,
       setPreviewThemeState,
     ]
   );
