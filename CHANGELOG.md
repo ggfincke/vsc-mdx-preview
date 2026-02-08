@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-02-08
+
+### Added
+
+- **PlantUML Diagrams**: Server-side PlantUML rendering via configurable server URL with RPC proxy
+- **Graphviz Diagrams**: Client-side Graphviz rendering using `@viz-js/viz` WASM engine
+- **Diagram Rendering Pipeline**: Integrated PlantUML and Graphviz renderers into both Safe and Trusted Mode previews
+
+### Changed
+
+- Extracted preview, RPC, and theme types into dedicated modules in shared package
+- Consolidated extension type definitions with re-exports from runtime sources
+- Inlined `SubscriberManager` into `SingletonService`
+- Inlined `PreviewState` and `PreviewEvaluator` into `Preview` class
+- Table-driven resolution steps in module system resolver
+- Added `createDiagramPlaceholder` factory for rehype plugins
+- Added `createIconComponent` factory and table-driven stack parser in webview
+- Added module error factories and consolidated type re-exports
+- Extracted `addClasses` utility and DRY file-utils helpers
+
+### Infrastructure
+
+- Added `contents: write` permission for GitHub Releases in CI workflow
+
+### Tests
+
+- Added PlantUML, Graphviz, and CSP connect-src tests
+- Added command handler, watcher, and semaphore test coverage
+
+### Documentation
+
+- Refreshed project documentation
+
 ## [1.0.2] - 2026-02-06
 
 ### Changed
