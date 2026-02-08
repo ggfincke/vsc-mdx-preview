@@ -6,13 +6,15 @@ This document covers all configuration options for MDX Preview, including VS Cod
 
 ## Overview
 
-MDX Preview uses a layered configuration system with three levels of precedence:
+MDX Preview uses a layered configuration system with five levels of precedence:
 
 ```mermaid
 flowchart LR
     A[Frontmatter] -->|Highest| FINAL
     B[".mdx-previewrc.json"] --> FINAL
-    C[VS Code Settings] -->|Lowest| FINAL
+    C[VS Code Workspace Settings] --> FINAL
+    D[VS Code User Settings] --> FINAL
+    E[Defaults] -->|Lowest| FINAL
 
     FINAL[Effective Config]
 ```
@@ -21,9 +23,11 @@ flowchart LR
 
 1. **Frontmatter** - Per-document overrides in YAML front matter
 2. **Project Config File** - `.mdx-previewrc.json` in project directory
-3. **VS Code Settings** - User or workspace settings
+3. **VS Code Workspace Settings** - `.vscode/settings.json` in your project
+4. **VS Code User Settings** - Global user settings
+5. **Defaults** - Built-in extension defaults
 
-This allows you to set defaults in VS Code settings, customize them per-project, and override specific values per-document.
+This allows you to set defaults globally, customize them per-workspace, override per-project, and fine-tune per-document.
 
 ---
 
@@ -484,10 +488,10 @@ Configuration files are cached for performance:
 - **File watchers** - Changes to config files trigger cache invalidation
 - **Automatic refresh** - Preview updates when config changes
 
-To manually clear the configuration cache, use the command:
+To manually clear all caches (including configuration), use the command:
 
 ```
-MDX Preview: Clear Config Cache
+MDX Preview: Clear All Caches
 ```
 
 ---
