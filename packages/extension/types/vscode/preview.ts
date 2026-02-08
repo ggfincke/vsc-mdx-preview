@@ -3,12 +3,9 @@
 
 import type * as vscode from 'vscode';
 import type {
-  TrustState,
   UpdateModeValue,
   TailwindEnabledValue,
 } from '@mdx-preview/shared';
-import type { TypeScriptConfiguration } from '../core/module-system';
-import type { ResolvedConfig, TailwindConfig } from '../core/config';
 import type { SecurityPolicy } from './csp';
 
 // webview app URIs (loaded from Vite manifest)
@@ -31,6 +28,7 @@ export interface ConfigurationState {
   useWhiteBackground: boolean;
   customLayoutFilePath: string;
   customCss: string;
+  plantUmlServer: string;
   useSucraseTranspiler: boolean;
   securityPolicy: SecurityPolicy;
   tailwindEnabled: TailwindEnabledValue;
@@ -44,48 +42,14 @@ export interface ConfigChangeResult {
   oldCssPath: string;
 }
 
-// document state for preview
-export interface DocumentState {
-  doc: vscode.TextDocument;
-  dependentFsPaths: Set<string>;
-  typescriptConfiguration?: TypeScriptConfiguration;
-  mdxPreviewConfig?: ResolvedConfig;
-}
-
-// result of webview handshake
-export interface HandshakeResult {
-  promise: Promise<void>;
-  resolve: () => void;
-}
-
-// result of evaluating MDX in Trusted Mode
-export interface TrustedEvaluationResult {
-  // transpiled code
-  code: string;
-  // entry file path
-  entryFilePath: string;
-  // dependencies
-  dependencies: string[];
-  // frontmatter
-  frontmatter: Record<string, unknown> | undefined;
-}
-
-// result of evaluating MDX in Safe Mode
-export interface SafeEvaluationResult {
-  // sanitized HTML
-  html: string;
-  // frontmatter
-  frontmatter: Record<string, unknown> | undefined;
-}
-
-// parameters for Tailwind CSS processing
-export interface TailwindProcessParams {
-  mdxText: string;
-  entryFilePath: string;
-  entryFileDependencies: string[];
-  trustState: TrustState;
-  tailwindConfig: TailwindConfig;
-}
+// re-export canonical preview state types from runtime modules
+export type { DocumentState } from '../../preview/PreviewDocumentHandler';
+export type { HandshakeResult } from '../../preview/PreviewInitializer';
+export type {
+  TrustedEvaluationResult,
+  SafeEvaluationResult,
+  TailwindProcessParams,
+} from '../../preview/EvaluationEngine';
 
 // webview handle type re-exported for convenience
 export type { WebviewHandleType as WebviewHandle } from '../../rpc-extension';

@@ -37,6 +37,28 @@ export interface BaseCollapsibleProps {
   className?: string;
 }
 
+// preset class configurations for each framework
+
+// class names for Generic Collapsible
+export const GENERIC_COLLAPSIBLE_CLASSES: CollapsibleClassNames = {
+  container: 'mdx-preview-generic-collapsible',
+  summary: 'mdx-preview-generic-collapsible-summary',
+  icon: 'mdx-preview-generic-collapsible-icon',
+  iconOpen: 'open',
+  title: 'mdx-preview-generic-collapsible-title',
+  content: 'mdx-preview-generic-collapsible-content',
+};
+
+// class names for Docusaurus Details
+export const DOCUSAURUS_DETAILS_CLASSES: CollapsibleClassNames = {
+  container: 'docusaurus-details',
+  summary: 'details-summary',
+  icon: 'details-toggle-icon',
+  iconOpen: 'expanded',
+  title: 'details-summary-text',
+  content: 'details-content',
+};
+
 // factory function to create framework-specific Collapsible components
 export function createCollapsible(config: CollapsibleConfig): React.FC<BaseCollapsibleProps> {
   const {

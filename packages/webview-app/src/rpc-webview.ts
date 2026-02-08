@@ -69,7 +69,7 @@ let webviewEndpoint: WebviewProxy;
 let stateHandlers: WebviewStateHandlers | null = null;
 
 // K.1: cache for ./module-system dynamic import (avoids repeated promise creation)
-// uses error recovery pattern to reset cache on failure
+// use error recovery pattern to reset cache on failure
 let moduleSystemPromise: Promise<typeof import('./module-system')> | null =
   null;
 

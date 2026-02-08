@@ -1,5 +1,5 @@
 // packages/extension/diagnostics/ComponentCodeActions.ts
-// provides quick-fix code actions for component diagnostics
+// provide quick-fix code actions for component diagnostics
 
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -17,7 +17,7 @@ import { readJsonSync } from '../utils/file-utils';
 // config file name
 const CONFIG_FILE_NAME = '.mdx-previewrc.json';
 
-// * code action provider for component diagnostics
+// code action provider for component diagnostics
 export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
   static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix];
 

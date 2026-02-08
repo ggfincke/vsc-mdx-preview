@@ -5,7 +5,7 @@
 // - null: not started
 // - Promise<void>: loading in progress (deduplicates concurrent calls)
 // - true: loaded successfully
-// - false: failed (allows retry if allowRetry is true)
+// - false: failed (allow retry if allowRetry is true)
 
 import { LogTags } from '@mdx-preview/shared';
 import { createTaggedLogger } from './createTaggedLogger';
@@ -43,7 +43,7 @@ type LoaderState = null | Promise<void> | boolean;
 //   );
 //   // multiple calls deduplicate
 //   await Promise.all([katexLoader.load(), katexLoader.load()]);
-//   // already loaded, returns immediately
+//   // already loaded, return immediately
 //   await katexLoader.load();
 export function createResourceLoader(
   loadFn: () => Promise<void>,

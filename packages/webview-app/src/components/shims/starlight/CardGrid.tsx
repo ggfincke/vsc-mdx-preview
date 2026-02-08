@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/CardGrid.tsx
 // Starlight CardGrid component shim for MDX Preview
-// provides preview-compatible version of @astrojs/starlight/components CardGrid
+// provide preview-compatible version of @astrojs/starlight/components CardGrid
 
 import React, { ReactNode, ReactElement } from 'react';
 

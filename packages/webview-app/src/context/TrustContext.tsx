@@ -23,7 +23,7 @@ const INITIAL_TRUST_STATE: TrustState = {
 // module-level tagged logger (avoids per-render allocation)
 const log = createTaggedLogger(LogTags.TRUST_CONTEXT);
 
-// hook that provides the Trust context value
+// hook that provide the Trust context value
 function useTrustProviderValue(): TrustContextValue {
   const [trustState, setTrustStateInternal] = useState<TrustState>(INITIAL_TRUST_STATE);
 

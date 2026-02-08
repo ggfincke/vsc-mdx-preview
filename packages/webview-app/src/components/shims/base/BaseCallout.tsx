@@ -15,7 +15,7 @@ export interface BaseCalloutConfig<T extends string> {
   defaultType: T;
   icons: IconSource<T>;
   defaultTitles: Record<T, string>;
-  // 'header' wraps icon+title, 'inline' renders icon directly
+  // 'header' wrap icon+title, 'inline' render icon directly
   layout: 'header' | 'inline';
 }
 
@@ -29,7 +29,7 @@ export interface BaseCalloutProps<T extends string> {
   className?: string;
 }
 
-// renders an icon from SVG string
+// render an icon from SVG string
 function SvgIcon({
   svg,
   className,
@@ -42,7 +42,7 @@ function SvgIcon({
   );
 }
 
-// renders an icon from React component
+// render an icon from React component
 function ComponentIcon({
   Icon,
   size,

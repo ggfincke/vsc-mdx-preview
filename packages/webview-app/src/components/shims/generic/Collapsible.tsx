@@ -1,12 +1,11 @@
 // packages/webview-app/src/components/shims/generic/Collapsible.tsx
 // Generic Collapsible/Accordion component shim for MDX Preview
 
-import { createCollapsible } from '../base/createCollapsible';
-import { GENERIC_COLLAPSIBLE_CLASSES } from '../base/BaseCollapsible';
+import { createCollapsible, GENERIC_COLLAPSIBLE_CLASSES } from '../base/createCollapsible';
 import { CollapsibleProps } from './types';
 
 // create base collapsible w/ generic configuration
-// uses custom click handling (prevents native toggle for more control)
+// use custom click handling (prevent native toggle for more control)
 const BaseCollapsible = createCollapsible({
   classNames: GENERIC_COLLAPSIBLE_CLASSES,
   iconSize: 16,

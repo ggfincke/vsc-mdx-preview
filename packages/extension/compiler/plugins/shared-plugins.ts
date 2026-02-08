@@ -12,6 +12,8 @@ import remarkGithubAlerts from '../shared/remark/github-alerts';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeMermaidPlaceholder from '../shared/rehype/mermaid-placeholder';
+import rehypePlantUmlPlaceholder from '../shared/rehype/plantuml-placeholder';
+import rehypeGraphvizPlaceholder from '../shared/rehype/graphviz-placeholder';
 import rehypeKatex from 'rehype-katex';
 import rehypeShiki from '../shared/rehype/shiki';
 import rehypeSlug from 'rehype-slug';
@@ -42,9 +44,11 @@ export const sharedRemarkPlugins: Pluggable[] = [
   remarkMath,
 ];
 
-// shared rehype plugins before math rendering (same order in both pipelines)
+// shared rehype plugins before math rendering (diagram placeholders for lazy rendering)
 export const sharedRehypePluginsPreMath: Pluggable[] = [
   rehypeMermaidPlaceholder,
+  rehypePlantUmlPlaceholder,
+  rehypeGraphvizPlaceholder,
 ];
 
 // rehype-katex plugin (shared between both pipelines)

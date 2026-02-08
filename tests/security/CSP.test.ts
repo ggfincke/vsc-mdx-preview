@@ -113,6 +113,7 @@ describe('generateCSP()', () => {
     expect(csp).toContain('img-src');
     expect(csp).toContain('style-src');
     expect(csp).toContain('script-src');
+    expect(csp).toContain('connect-src');
     expect(csp).toContain('font-src');
   });
 
@@ -144,6 +145,27 @@ describe('generateCSP()', () => {
     });
 
     expect(csp).toMatch(/style-src[^;]*'unsafe-inline'/);
+  });
+
+  it('includes connect-src for webview origin', () => {
+    const csp = generateCSP({
+      webview: mockWebview as any,
+      nonce: 'test-nonce',
+      allowUnsafeEval: false,
+    });
+
+    expect(csp).toMatch(/connect-src[^;]*https:\/\/file\+\.vscode-resource/);
+  });
+
+  it('includes custom connect-src origins when provided', () => {
+    const csp = generateCSP({
+      webview: mockWebview as any,
+      nonce: 'test-nonce',
+      allowUnsafeEval: false,
+      connectSrc: ['https://kroki.io'],
+    });
+
+    expect(csp).toMatch(/connect-src[^;]*https:\/\/kroki\.io/);
   });
 });
 
@@ -244,5 +266,25 @@ describe('getCSP()', () => {
 
     const safeCsp = getCSP(mockWebview as any, 'nonce2', safeState);
     expect(safeCsp).not.toContain("'unsafe-eval'");
+  });
+
+  it('does not include external origins in connect-src by default', () => {
+    const trustState: TrustState = {
+      workspaceTrusted: true,
+      scriptsEnabled: true,
+      canExecute: true,
+      openMdxLinksInPreview: true,
+    };
+
+    const csp = getCSP(
+      mockWebview as any,
+      'test-nonce',
+      trustState,
+      SecurityPolicy.Strict
+    );
+
+    // connect-src should only contain the webview cspSource
+    expect(csp).toMatch(/connect-src\s+https:\/\/file\+\.vscode-resource/);
+    expect(csp).not.toMatch(/connect-src[^;]*kroki/);
   });
 });

@@ -56,7 +56,7 @@ export interface TailwindProcessParams {
   tailwindConfig: TailwindConfig;
 }
 
-// evaluation engine handles core evaluation logic for MDX content
+// evaluation engine - handle core evaluation logic for MDX content
 export class EvaluationEngine {
   // evaluate MDX in Trusted Mode (transpile to executable JS w/ React components)
   async evaluateTrusted(
@@ -68,7 +68,7 @@ export class EvaluationEngine {
     log.debug('evaluateTrusted called');
 
     log.debug('Transforming entry...');
-    // transformEntry returns esmCode for import extraction (timeout prevents hang)
+    // transformEntry: return esmCode for import extraction (timeout to prevent hang)
     const transformResult = await raceTimeout(
       transformEntry(text, fsPath, preview, compilerConfig),
       {
@@ -101,7 +101,7 @@ export class EvaluationEngine {
     };
   }
 
-  // evaluate MDX content in Safe Mode - compiles MDX to sanitized HTML w/o code execution
+  // evaluate MDX content in Safe Mode - compile MDX to sanitized HTML w/o code execution
   async evaluateSafe(
     text: string,
     compilerConfig: CompilerConfig

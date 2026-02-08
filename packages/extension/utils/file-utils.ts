@@ -32,6 +32,36 @@ export interface FileOptions {
   onError?: (error: unknown) => void;
 }
 
+// handle file operation errors (invoke callback & optionally log)
+function handleFileError(
+  err: unknown,
+  filePath: string,
+  operation: string,
+  options?: FileOptions
+): null {
+  options?.onError?.(err);
+  if (options?.logOnError) {
+    const log = options.logger ?? defaultLog;
+    log.debug(
+      `Failed to ${operation} ${filePath}: ${extractErrorMessage(err)}`
+    );
+  }
+  return null;
+}
+
+// parse JSON content w/ error handling
+function parseJsonSafe<T>(
+  content: string,
+  filePath: string,
+  options?: FileOptions
+): T | null {
+  try {
+    return JSON.parse(content) as T;
+  } catch (err) {
+    return handleFileError(err, filePath, 'parse JSON at', options);
+  }
+}
+
 // synchronous file operations
 
 // safely read a file synchronously, returning null on any failure
@@ -43,12 +73,7 @@ export function readFileSync(
   try {
     return fs.readFileSync(filePath, encoding);
   } catch (err) {
-    options?.onError?.(err);
-    if (options?.logOnError) {
-      const log = options.logger ?? defaultLog;
-      log.debug(`Failed to read ${filePath}: ${extractErrorMessage(err)}`);
-    }
-    return null;
+    return handleFileError(err, filePath, 'read', options);
   }
 }
 
@@ -62,18 +87,7 @@ export function readJsonSync<T = unknown>(
     return null;
   }
 
-  try {
-    return JSON.parse(content) as T;
-  } catch (err) {
-    options?.onError?.(err);
-    if (options?.logOnError) {
-      const log = options.logger ?? defaultLog;
-      log.debug(
-        `Failed to parse JSON at ${filePath}: ${extractErrorMessage(err)}`
-      );
-    }
-    return null;
-  }
+  return parseJsonSafe<T>(content, filePath, options);
 }
 
 // check if a path exists (file or directory)
@@ -125,12 +139,7 @@ export async function readFileAsync(
       errorMessage: timeoutMessage,
     });
   } catch (err) {
-    options?.onError?.(err);
-    if (options?.logOnError) {
-      const log = options.logger ?? defaultLog;
-      log.debug(`Failed to read ${filePath}: ${extractErrorMessage(err)}`);
-    }
-    return null;
+    return handleFileError(err, filePath, 'read', options);
   }
 }
 
@@ -144,18 +153,7 @@ export async function readJsonAsync<T = unknown>(
     return null;
   }
 
-  try {
-    return JSON.parse(content) as T;
-  } catch (err) {
-    options?.onError?.(err);
-    if (options?.logOnError) {
-      const log = options.logger ?? defaultLog;
-      log.debug(
-        `Failed to parse JSON at ${filePath}: ${extractErrorMessage(err)}`
-      );
-    }
-    return null;
-  }
+  return parseJsonSafe<T>(content, filePath, options);
 }
 
 // check if a file exists & is readable asynchronously w/ optional size validation
@@ -197,11 +195,6 @@ export async function readFileIfUnderSize(
     }
     return await fs.promises.readFile(filePath, 'utf-8');
   } catch (err) {
-    options?.onError?.(err);
-    if (options?.logOnError) {
-      const log = options.logger ?? defaultLog;
-      log.debug(`Failed to read ${filePath}: ${extractErrorMessage(err)}`);
-    }
-    return null;
+    return handleFileError(err, filePath, 'read', options);
   }
 }

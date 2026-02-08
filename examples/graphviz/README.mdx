@@ -1,0 +1,102 @@
+---
+title: Graphviz DOT Rendering
+description: Demonstrates inline Graphviz rendering in MDX Preview
+---
+
+# Graphviz DOT Rendering
+
+MDX Preview renders both `dot` and `graphviz` fenced code blocks as inline SVG diagrams.
+
+> [!TIP]
+> Graphviz rendering is client-side via `@viz-js/viz`, so it does not require a network request.
+
+---
+
+## `dot` Fence Example
+
+```dot
+digraph RequestFlow {
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fillcolor="#f7f7f7"];
+  edge [fontsize=10];
+
+  Editor -> Extension [label="document change"];
+  Extension -> Compiler [label="compile MDX"];
+  Compiler -> Webview [label="render payload"];
+  Webview -> Renderer [label="portal mount"];
+}
+```
+
+---
+
+## `graphviz` Fence Example
+
+```graphviz
+digraph ReleasePipeline {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect, style="rounded,filled", fillcolor="#eef5ff"];
+
+  subgraph cluster_ci {
+    label="CI";
+    color="#6b8cff";
+    Build;
+    Test;
+    Lint;
+  }
+
+  subgraph cluster_cd {
+    label="CD";
+    color="#23a55a";
+    Package;
+    Deploy;
+  }
+
+  Build -> Test;
+  Test -> Lint;
+  Lint -> Package;
+  Package -> Deploy;
+}
+```
+
+---
+
+## State Machine Example
+
+```dot
+digraph PreviewState {
+  rankdir=LR;
+  node [shape=circle];
+
+  Idle -> Loading;
+  Loading -> Ready [label="compile ok"];
+  Loading -> Error [label="compile error"];
+  Error -> Loading [label="retry"];
+  Ready -> Loading [label="file change"];
+}
+```
+
+---
+
+## Dependency Graph Example
+
+```graphviz
+digraph ModuleDeps {
+  rankdir=TB;
+  node [shape=box];
+
+  "README.mdx" -> "./components/Card.tsx";
+  "README.mdx" -> "./styles/theme.css";
+  "./components/Card.tsx" -> "react";
+  "./components/Card.tsx" -> "./utils/format.ts";
+  "./utils/format.ts" -> "date-fns";
+}
+```
+
+---
+
+## Notes
+
+- Both `dot` and `graphviz` language tags are supported
+- Graph colors are adjusted for light and dark preview themes
+- On parse/render errors, MDX Preview shows an inline error UI with source toggle

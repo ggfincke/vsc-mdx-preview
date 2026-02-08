@@ -456,15 +456,6 @@ describe('ErrorReporter', () => {
   // convenience methods
 
   describe('convenience methods', () => {
-    it('reportWebviewError sends to webview handle', () => {
-      const handle = { showPreviewError: vi.fn() };
-      const reporter = ErrorReporter.getInstance();
-      reporter.reportWebviewError(new Error('wv'), handle);
-      expect(handle.showPreviewError).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'wv' })
-      );
-    });
-
     it('reportSilent uses Debug severity & no notification', () => {
       const errSpy = vi.spyOn(vscode.window, 'showErrorMessage');
       const warnSpy = vi.spyOn(vscode.window, 'showWarningMessage');
@@ -544,30 +535,37 @@ describe('ErrorReporter', () => {
     });
   });
 
-  // error normalization
+  // error normalization & webview error building
+  // helper: report error to webview & return the PreviewError sent to the handle
+  function reportToWebview(
+    error: unknown,
+    context: ErrorContext = ErrorContext.Extension
+  ) {
+    const handle = { showPreviewError: vi.fn() };
+    const reporter = ErrorReporter.getInstance();
+    reporter.report(error, {
+      context,
+      showInWebview: true,
+      webviewHandle: handle,
+    });
+    return handle.showPreviewError;
+  }
 
   describe('error normalization', () => {
     it('ExtensionError is preserved', () => {
-      const handle = { showPreviewError: vi.fn() };
-      const reporter = ErrorReporter.getInstance();
-      const extErr = new ExtensionError('ext-err', 'PATH_TRAVERSAL');
-      reporter.reportWebviewError(extErr, handle);
-      expect(handle.showPreviewError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          code: 'PATH_TRAVERSAL',
-        })
+      const spy = reportToWebview(
+        new ExtensionError('ext-err', 'PATH_TRAVERSAL')
+      );
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'PATH_TRAVERSAL' })
       );
     });
 
     it('ModuleError is preserved', () => {
-      const handle = { showPreviewError: vi.fn() };
-      const reporter = ErrorReporter.getInstance();
-      const modErr = new ModuleError('mod not found', {
-        code: 'E100',
-        moduleId: 'test-mod',
-      });
-      reporter.reportWebviewError(modErr, handle);
-      expect(handle.showPreviewError).toHaveBeenCalledWith(
+      const spy = reportToWebview(
+        new ModuleError('mod not found', { code: 'E100', moduleId: 'test-mod' })
+      );
+      expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
           code: 'E100',
           moduleError: expect.objectContaining({ moduleId: 'test-mod' }),
@@ -576,36 +574,27 @@ describe('ErrorReporter', () => {
     });
 
     it('generic Error is normalized', () => {
-      const handle = { showPreviewError: vi.fn() };
-      const reporter = ErrorReporter.getInstance();
-      reporter.reportWebviewError(new Error('generic'), handle);
-      expect(handle.showPreviewError).toHaveBeenCalledWith(
+      const spy = reportToWebview(new Error('generic'));
+      expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'generic' })
       );
     });
 
     it('non-Error value (string) is normalized', () => {
-      const handle = { showPreviewError: vi.fn() };
-      const reporter = ErrorReporter.getInstance();
-      reporter.reportWebviewError('string error' as any, handle);
-      expect(handle.showPreviewError).toHaveBeenCalledWith(
+      const spy = reportToWebview('string error');
+      expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'string error' })
       );
     });
   });
 
-  // webview error building
-
   describe('webview error building', () => {
     it('PreviewError includes message, code, stack, context, recoverable', () => {
-      const handle = { showPreviewError: vi.fn() };
-      const reporter = ErrorReporter.getInstance();
-      reporter.reportWebviewError(
+      const spy = reportToWebview(
         new ExtensionError('test', 'E100'),
-        handle,
         ErrorContext.ModuleFetch
       );
-      const previewErr = handle.showPreviewError.mock.calls[0][0];
+      const previewErr = spy.mock.calls[0][0];
       expect(previewErr).toHaveProperty('message');
       expect(previewErr).toHaveProperty('code', 'E100');
       expect(previewErr).toHaveProperty('stack');
@@ -614,63 +603,48 @@ describe('ErrorReporter', () => {
     });
 
     it('ModuleError includes moduleError data', () => {
-      const handle = { showPreviewError: vi.fn() };
-      const reporter = ErrorReporter.getInstance();
-      const modErr = new ModuleError('not found', {
-        code: 'E100',
-        moduleId: 'foo',
-        parentModuleId: 'bar',
-      });
-      reporter.reportWebviewError(modErr, handle);
-      const previewErr = handle.showPreviewError.mock.calls[0][0];
+      const spy = reportToWebview(
+        new ModuleError('not found', {
+          code: 'E100',
+          moduleId: 'foo',
+          parentModuleId: 'bar',
+        })
+      );
+      const previewErr = spy.mock.calls[0][0];
       expect(previewErr.moduleError).toBeDefined();
       expect(previewErr.moduleError.moduleId).toBe('foo');
     });
 
     it('ModuleError uses .recoverable field', () => {
-      const handle = { showPreviewError: vi.fn() };
-      const reporter = ErrorReporter.getInstance();
-      const modErr = new ModuleError('not found recoverable', {
-        code: 'E100',
-        moduleId: 'foo',
-        recoverable: false,
-      });
-      reporter.reportWebviewError(modErr, handle);
-      const previewErr = handle.showPreviewError.mock.calls[0][0];
-      expect(previewErr.recoverable).toBe(false);
+      const spy = reportToWebview(
+        new ModuleError('not found recoverable', {
+          code: 'E100',
+          moduleId: 'foo',
+          recoverable: false,
+        })
+      );
+      expect(spy.mock.calls[0][0].recoverable).toBe(false);
     });
 
     it('ExtensionError w/ recoverable codes returns true', () => {
-      const handle = { showPreviewError: vi.fn() };
-      const reporter = ErrorReporter.getInstance();
       for (const code of ['E100', 'E102', 'E110', 'E120', 'E300']) {
-        handle.showPreviewError.mockClear();
-        reporter.reportWebviewError(
-          new ExtensionError(`recoverable-${code}`, code),
-          handle
+        const spy = reportToWebview(
+          new ExtensionError(`recoverable-${code}`, code)
         );
-        const previewErr = handle.showPreviewError.mock.calls[0][0];
-        expect(previewErr.recoverable).toBe(true);
+        expect(spy.mock.calls[0][0].recoverable).toBe(true);
       }
     });
 
     it('ExtensionError w/ non-recoverable code returns false', () => {
-      const handle = { showPreviewError: vi.fn() };
-      const reporter = ErrorReporter.getInstance();
-      reporter.reportWebviewError(
-        new ExtensionError('test', 'PATH_TRAVERSAL'),
-        handle
+      const spy = reportToWebview(
+        new ExtensionError('test', 'PATH_TRAVERSAL')
       );
-      const previewErr = handle.showPreviewError.mock.calls[0][0];
-      expect(previewErr.recoverable).toBe(false);
+      expect(spy.mock.calls[0][0].recoverable).toBe(false);
     });
 
     it('generic Error defaults to recoverable true', () => {
-      const handle = { showPreviewError: vi.fn() };
-      const reporter = ErrorReporter.getInstance();
-      reporter.reportWebviewError(new Error('generic'), handle);
-      const previewErr = handle.showPreviewError.mock.calls[0][0];
-      expect(previewErr.recoverable).toBe(true);
+      const spy = reportToWebview(new Error('generic'));
+      expect(spy.mock.calls[0][0].recoverable).toBe(true);
     });
   });
 

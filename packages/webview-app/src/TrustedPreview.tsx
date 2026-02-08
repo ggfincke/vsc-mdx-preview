@@ -91,10 +91,10 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   // evaluation phase spinner
   const [isEvaluating, setIsEvaluating] = useState(false);
 
-  // shared preview setup (container ref, mermaid rendering, image lightbox)
+  // shared preview setup (container ref, diagram rendering, image lightbox)
   const { containerRef, handleImageClick, renderPortals, scan } =
     usePreviewSetup({
-      mermaidMode: 'before-paint',
+      diagramMode: 'before-paint',
       filterStale: true,
     });
 
@@ -118,7 +118,7 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
     }
   );
 
-  // trigger mermaid scan when component becomes available
+  // trigger diagram scan when component becomes available
   // (hook's initial scan runs before container is rendered during loading state)
   useLayoutEffect(() => {
     if (evaluatedComponent && containerRef.current) {
@@ -150,7 +150,7 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
       containerRef={containerRef}
       mode="trusted"
       onImageClick={handleImageClick}
-      mermaidPortals={renderPortals()}
+      diagramPortals={renderPortals()}
     >
       {mdxNode}
     </PreviewContainer>

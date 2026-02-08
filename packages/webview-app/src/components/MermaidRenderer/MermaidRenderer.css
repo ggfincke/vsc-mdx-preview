@@ -1,130 +1,15 @@
 /* packages/webview-app/src/components/MermaidRenderer/MermaidRenderer.css */
-/* Phase 3.1: Mermaid diagram styles */
-/* CSS naming convention: mdx-preview-mermaid-* */
+/* Mermaid-specific diagram styles */
 
-.mdx-preview-mermaid {
-  position: relative;
-  margin: 16px 0;
-  overflow-x: auto;
-}
+@import '../DiagramRenderer/diagram-shared.css';
 
+/* mermaid diagram background */
 .mdx-preview-mermaid-diagram {
-  /* theme-aware background colors (can be overridden via custom CSS) */
   --mermaid-bg-light: #f8f8f8;
   --mermaid-bg-dark: #1e1e1e;
-
-  display: flex;
-  justify-content: center;
-  margin: 16px 0;
   background: var(--mermaid-bg-light);
-  border-radius: 8px;
-  padding: 16px;
 }
 
 .mdx-preview-mermaid-diagram[data-theme='dark'] {
   background: var(--mermaid-bg-dark);
-}
-
-.mdx-preview-mermaid-diagram svg {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Loading overlay - positioned over the hidden diagram container */
-.mdx-preview-mermaid-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 24px;
-  color: var(--vscode-descriptionForeground, #717171);
-  font-size: 13px;
-}
-
-.mdx-preview-mermaid-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--vscode-progressBar-background, #0e70c0);
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: mdx-preview-mermaid-spin 1s linear infinite;
-}
-
-@keyframes mdx-preview-mermaid-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Error state */
-.mdx-preview-mermaid-error {
-  margin: 16px 0;
-  padding: 12px 16px;
-  background: var(
-    --vscode-inputValidation-errorBackground,
-    rgba(255, 0, 0, 0.1)
-  );
-  border: 1px solid var(--vscode-inputValidation-errorBorder, #be1100);
-  border-radius: 4px;
-}
-
-.mdx-preview-mermaid-error-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.mdx-preview-mermaid-error-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--vscode-errorForeground, #f48771);
-  color: white;
-  font-weight: bold;
-  font-size: 12px;
-  flex-shrink: 0;
-}
-
-.mdx-preview-mermaid-error-msg {
-  color: var(--vscode-errorForeground, #f48771);
-  font-size: 13px;
-}
-
-.mdx-preview-mermaid-toggle {
-  padding: 4px 8px;
-  background: var(
-    --vscode-button-secondaryBackground,
-    rgba(255, 255, 255, 0.1)
-  );
-  color: var(--vscode-button-secondaryForeground, inherit);
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.mdx-preview-mermaid-toggle:hover {
-  background: var(
-    --vscode-button-secondaryHoverBackground,
-    rgba(255, 255, 255, 0.2)
-  );
-}
-
-.mdx-preview-mermaid-source {
-  margin: 12px 0 0 0;
-  padding: 12px;
-  background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
-  border-radius: 4px;
-  overflow-x: auto;
-  font-size: 12px;
-  font-family: var(--vscode-editor-font-family, monospace);
-}
-
-.mdx-preview-mermaid-source code {
-  background: transparent;
-  padding: 0;
 }

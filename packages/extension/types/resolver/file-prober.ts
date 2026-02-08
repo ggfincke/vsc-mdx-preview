@@ -10,10 +10,10 @@ export interface StatResult {
 
 // options for file probing operations
 export interface FileProbingOptions {
-  // extensions to probe
-  extensions?: string[];
+  // extensions to try
+  extensions: readonly string[];
   // index files
-  indexFiles?: string[];
-  // use stat cache
-  useCache?: boolean;
+  indexFiles: readonly string[];
+  // skip node_modules
+  skipNodeModules?: boolean;
 }

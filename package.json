@@ -493,6 +493,12 @@
           "markdownDescription": "Theme for Mermaid diagrams (flowcharts, sequence diagrams, etc.)",
           "scope": "resource"
         },
+        "mdx-preview.diagrams.plantUmlServer": {
+          "type": "string",
+          "default": "https://kroki.io",
+          "markdownDescription": "PlantUML rendering server URL. Supports Kroki (`https://kroki.io`) and compatible PlantUML servers.",
+          "scope": "resource"
+        },
         "mdx-preview.framework": {
           "type": "string",
           "enum": [

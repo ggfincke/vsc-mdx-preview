@@ -5,6 +5,7 @@ import { visit } from 'unist-util-visit';
 import type { Root, Blockquote, Paragraph, Text, Html } from 'mdast';
 import type { Parent } from 'unist';
 import { GITHUB_ALERT_ICONS } from '../icon-registry';
+import { escapeHtml } from '../transforms/utils';
 
 // alert type configuration
 const ALERT_CONFIG = {
@@ -142,14 +143,4 @@ function extractTextContent(paragraph: Paragraph): string {
   }
 
   return parts.join('');
-}
-
-// escape HTML special characters
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }

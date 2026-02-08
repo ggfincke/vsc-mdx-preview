@@ -18,12 +18,5 @@ export interface TransformResult {
   esmCode: string;
 }
 
-// options for transpilation
-export interface TranspileOptions {
-  // prefer Sucrase
-  useSucrase: boolean;
-  // logging context
-  context?: string;
-  // file path
-  filePath?: string;
-}
+// re-export canonical transpile options type from runtime module
+export type { TranspileOptions } from '../../module-system/transform/selector';

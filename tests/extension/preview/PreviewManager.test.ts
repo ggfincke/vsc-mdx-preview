@@ -24,6 +24,12 @@ vi.mock('../../../packages/extension/preview/preview-commands', () => ({
   refreshPreview: vi.fn(),
 }));
 
+// mock Preview module to avoid transitive dep chain
+// (Preview → EvaluationEngine → transform → sucrase)
+vi.mock('../../../packages/extension/preview/Preview', () => ({
+  Preview: vi.fn(),
+}));
+
 import { PreviewManager } from '../../../packages/extension/preview/preview-manager';
 import type { Preview } from '../../../packages/extension/preview/Preview';
 

@@ -1,7 +1,7 @@
 // packages/webview-app/src/components/shims/nextra/Cards.tsx
 // Nextra Cards component shim for MDX Preview
-// provides preview-compatible version of nextra/components Cards
-// uses compound component pattern: Cards & Cards.Card
+// provide preview-compatible version of nextra/components Cards
+// use compound component pattern: Cards & Cards.Card
 
 import React, { ReactNode, ReactElement, HTMLAttributes, CSSProperties } from 'react';
 import { cn } from '../../../utils/cn';

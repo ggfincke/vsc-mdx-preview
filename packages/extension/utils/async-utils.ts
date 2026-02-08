@@ -88,7 +88,7 @@ export async function withSyncFallback<T>(
   }
 }
 
-// retry async operation with exponential backoff
+// retry async operation w/ exponential backoff
 export async function withRetry<T>(
   asyncFn: () => Promise<T>,
   options?: {

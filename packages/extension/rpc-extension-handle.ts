@@ -5,10 +5,18 @@ import { performance } from 'perf_hooks';
 import * as vscode from 'vscode';
 import { Preview } from './preview/preview-manager';
 import { fetchLocal } from './module-system/fetcher/fetchLocal';
-import { getTrustManager, getErrorReporter } from './services';
+import {
+  getTrustManager,
+  getErrorReporter,
+  getConfigManager,
+} from './services';
 import { tryRequireTrustedModeForDocument } from './security/validateTrust';
 import { createTaggedLogger } from './logging';
-import { LogTags } from '@mdx-preview/shared';
+import {
+  LogTags,
+  extractErrorMessage,
+  getPlantUmlRenderEndpoints,
+} from '@mdx-preview/shared';
 
 const log = createTaggedLogger(LogTags.EXT_HANDLE);
 import { ErrorContext } from './errors';
@@ -297,6 +305,55 @@ class ExtensionHandle implements ExtensionRPC {
         ErrorContext.Extension
       );
     }
+  }
+
+  // proxy PlantUML rendering via extension host (avoids CORS in webview)
+  async renderPlantUml(code: string): Promise<string | undefined> {
+    const opts = { context: 'renderPlantUml' };
+
+    const validCode = validateString(code, 'code', opts);
+    if (!validCode) {
+      return undefined;
+    }
+
+    const serverUrl = getConfigManager().get('diagrams.plantUmlServer');
+    const endpoints = getPlantUmlRenderEndpoints(serverUrl);
+    let lastError: unknown = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain; charset=utf-8',
+            Accept: 'image/svg+xml,text/plain,*/*',
+          },
+          body: validCode,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} from ${endpoint}`);
+        }
+
+        const svg = await response.text();
+        if (!svg.includes('<svg')) {
+          throw new Error(
+            `Server response from ${endpoint} did not contain SVG`
+          );
+        }
+
+        return svg;
+      } catch (error) {
+        lastError = error;
+        log.debug('PlantUML endpoint failed', {
+          endpoint,
+          error: extractErrorMessage(error),
+        });
+      }
+    }
+
+    log.error('All PlantUML endpoints failed', extractErrorMessage(lastError));
+    return undefined;
   }
 }
 

@@ -2,6 +2,7 @@
 // extract Tailwind classes from static patterns (className="...", @apply, @layer)
 
 import { CLASS_TOKEN_RE } from '../constants';
+import { addClasses } from './utils';
 
 // static class attribute: className="..." or class='...'
 const CLASS_ATTR_RE = /\bclass(Name)?\s*=\s*("([^"]*)"|'([^']*)')/g;
@@ -21,7 +22,7 @@ export class PatternScanner {
   extractStaticAttributes(text: string, classSet: Set<string>): void {
     for (const match of text.matchAll(CLASS_ATTR_RE)) {
       const raw = match[3] ?? match[4] ?? '';
-      this.addClasses(raw, classSet);
+      addClasses(raw, classSet);
     }
   }
 
@@ -29,7 +30,7 @@ export class PatternScanner {
   extractApplyDirectives(text: string, classSet: Set<string>): void {
     for (const match of text.matchAll(APPLY_RE)) {
       const raw = match[1] ?? '';
-      this.addClasses(raw, classSet);
+      addClasses(raw, classSet);
     }
   }
 
@@ -51,16 +52,6 @@ export class PatternScanner {
         if (className && CLASS_TOKEN_RE.test(className)) {
           classSet.add(className);
         }
-      }
-    }
-  }
-
-  // add space-separated class tokens to the set
-  addClasses(raw: string, classSet: Set<string>): void {
-    const tokens = raw.split(/\s+/).filter(Boolean);
-    for (const token of tokens) {
-      if (CLASS_TOKEN_RE.test(token)) {
-        classSet.add(token);
       }
     }
   }

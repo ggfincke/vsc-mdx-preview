@@ -1,5 +1,5 @@
 // tests/extension/preview/watchers/CustomCssWatcher.test.ts
-// unit tests for custom CSS watcher path resolution, loading, and notifications
+// unit tests for custom CSS watcher path resolution, loading, & notifications
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 

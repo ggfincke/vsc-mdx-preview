@@ -11,7 +11,7 @@
         "oneOf": [
           {
             "type": "string",
-            "description": "Plugin package name (e.g., 'remark-toc')"
+            "description": "Plugin package name"
           },
           {
             "type": "array",
@@ -54,7 +54,7 @@
         "oneOf": [
           {
             "type": "string",
-            "description": "Plugin package name (e.g., 'rehype-external-links')"
+            "description": "Plugin package name"
           },
           {
             "type": "array",

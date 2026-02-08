@@ -108,7 +108,7 @@ export abstract class BaseWatcher implements IWatcher {
     return this._isActive;
   }
 
-  // default: ready when active & checkReadiness() returns true
+  // default: ready when active & checkReadiness() return true
   isReady(): boolean {
     return this._isActive && this.checkReadiness();
   }

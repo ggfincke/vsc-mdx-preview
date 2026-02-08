@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/FileTree.tsx
 // Starlight FileTree component shim for MDX Preview
-// provides preview-compatible version of @astrojs/starlight/components FileTree
+// provide preview-compatible version of @astrojs/starlight/components FileTree
 
 import React, {
   ReactNode,
@@ -133,7 +133,7 @@ function parseLiElement(li: ReactElement): FileTreeEntry | null {
 }
 
 // parse children (unordered list) into structured entries
-// handles both nested structure (<li>folder/<ul>...</ul></li>) &
+// handle both nested structure (<li>folder/<ul>...</ul></li>) &
 // sibling structure (<li>folder/</li><ul>...</ul>)
 function parseFileTreeChildren(children: ReactNode): FileTreeEntry[] {
   const entries: FileTreeEntry[] = [];
@@ -160,7 +160,7 @@ function parseFileTreeChildren(children: ReactNode): FileTreeEntry[] {
       }
 
       // check if next sibling is a <ul> that should be this directory's children
-      // this handles the sibling pattern: <li>folder/</li><ul>...</ul>
+      // handle the sibling pattern: <li>folder/</li><ul>...</ul>
       const nextChild = childArray[i + 1];
       if (
         entry.isDirectory &&
@@ -232,7 +232,7 @@ function FileTreeItem({ entry }: { entry: FileTreeEntry }): ReactElement {
   );
 }
 
-// file tree component - renders a file/folder tree structure
+// file tree component - render a file/folder tree structure
 export function FileTree({ children }: FileTreeProps): ReactElement {
   const entries = parseFileTreeChildren(children);
 

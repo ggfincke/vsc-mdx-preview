@@ -8,6 +8,10 @@ export type {
 } from './useAsyncEffect';
 export { useMermaidRendering } from './useMermaidRendering';
 export type { MermaidScanMode } from './useMermaidRendering';
+export { usePlantUMLRendering } from './usePlantUMLRendering';
+export type { PlantUMLScanMode } from './usePlantUMLRendering';
+export { useGraphvizRendering } from './useGraphvizRendering';
+export type { GraphvizScanMode } from './useGraphvizRendering';
 export { useImageLightbox } from './useImageLightbox';
 export { useSafeModeProcessing } from './useSafeModeProcessing';
 export { usePreviewSetup } from './usePreviewSetup';

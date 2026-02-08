@@ -18,9 +18,9 @@ interface SafePreviewRendererProps {
 // wrapped w/ React.memo to prevent unnecessary re-renders
 export const SafePreviewRenderer = memo(
   function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
-    // shared preview setup (container ref, mermaid rendering, image lightbox)
+    // shared preview setup (container ref, diagram rendering, image lightbox)
     const { containerRef, handleImageClick, renderPortals } = usePreviewSetup({
-      mermaidMode: 'after-paint',
+      diagramMode: 'after-paint',
     });
 
     // process Safe Mode HTML (sanitize, post-process links/images, enhance code blocks)
@@ -46,7 +46,7 @@ export const SafePreviewRenderer = memo(
       <PreviewContainer
         containerRef={containerRef}
         mode="safe"
-        mermaidPortals={renderPortals()}
+        diagramPortals={renderPortals()}
         className="markdown-body"
       />
     );

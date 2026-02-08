@@ -7,7 +7,7 @@ import { createNextraWrapper, type NextraWrapperProps } from './createNextraWrap
 // FileTree props (compatible w/ Nextra)
 export type FileTreeProps = NextraWrapperProps;
 
-// FileTree component - wraps Starlight's implementation w/ Nextra styling
+// FileTree component - wrap Starlight's implementation w/ Nextra styling
 export const FileTree = createNextraWrapper({
   StarlightComponent: StarlightFileTree,
   wrapperClassName: 'mdx-preview-nextra-file-tree',

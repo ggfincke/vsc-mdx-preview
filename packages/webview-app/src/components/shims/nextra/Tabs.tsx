@@ -1,7 +1,7 @@
 // packages/webview-app/src/components/shims/nextra/Tabs.tsx
 // Nextra Tabs component shim for MDX Preview
-// provides preview-compatible version of nextra/components Tabs
-// uses createIndexTabs factory from BaseTabs
+// provide preview-compatible version of nextra/components Tabs
+// use createIndexTabs factory from BaseTabs
 
 import { ReactNode } from 'react';
 import {

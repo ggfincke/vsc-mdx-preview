@@ -11,7 +11,7 @@ import {
   UPDATE_MODE_VALUES,
   SECURITY_POLICY_VALUES,
 } from '../config';
-import { PREVIEW_THEMES, CODE_BLOCK_THEMES, MERMAID_THEMES } from '../index';
+import { PREVIEW_THEMES, CODE_BLOCK_THEMES, MERMAID_THEMES } from '../themes';
 
 const ROOT_DIR = path.resolve(__dirname, '../../..');
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, 'package.json');

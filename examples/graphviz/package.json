@@ -1,0 +1,5 @@
+{
+  "name": "mdx-preview-graphviz-example",
+  "description": "MDX Preview example demonstrating Graphviz DOT rendering",
+  "private": true
+}

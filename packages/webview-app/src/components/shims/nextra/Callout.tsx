@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/nextra/Callout.tsx
 // Nextra Callout component shim for MDX Preview
-// provides preview-compatible version of nextra/components Callout
+// provide preview-compatible version of nextra/components Callout
 
 import React, { ReactNode, ReactElement, HTMLAttributes } from 'react';
 import { cn } from '../../../utils/cn';
@@ -40,7 +40,7 @@ const BaseCallout = createCallout<NextraCalloutType>({
 });
 
 // Nextra Callout component
-// wraps the base callout to support Nextra-specific props (emoji, className, spread props)
+// wrap the base callout to support Nextra-specific props (emoji, className, spread props)
 export function Callout({
   children,
   type = 'default',

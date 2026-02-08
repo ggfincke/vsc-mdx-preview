@@ -3,7 +3,8 @@
 
 import { createTaggedLogger } from '../../logging';
 import { LogTags } from '@mdx-preview/shared';
-import { CLASS_TOKEN_RE, SCANNER_MAX_RECURSION_DEPTH } from '../constants';
+import { SCANNER_MAX_RECURSION_DEPTH } from '../constants';
+import { addClasses } from './utils';
 
 const log = createTaggedLogger(LogTags.TAILWIND_SCAN);
 
@@ -32,7 +33,7 @@ export class ContentScanner {
     )) {
       const literals = this.extractStringLiterals(expr);
       for (const literal of literals) {
-        this.addClasses(literal, classSet);
+        addClasses(literal, classSet);
       }
     }
   }
@@ -47,7 +48,7 @@ export class ContentScanner {
     )) {
       const literals = this.extractStringLiterals(expr);
       for (const literal of literals) {
-        this.addClasses(literal, classSet);
+        addClasses(literal, classSet);
       }
     }
   }
@@ -62,7 +63,7 @@ export class ContentScanner {
     )) {
       const literals = this.extractStringLiterals(expr);
       for (const literal of literals) {
-        this.addClasses(literal, classSet);
+        addClasses(literal, classSet);
       }
     }
   }
@@ -75,7 +76,7 @@ export class ContentScanner {
       // extract string literals from inside the array brackets
       const literals = this.extractStringLiterals(`[${arrayContent}]`);
       for (const literal of literals) {
-        this.addClasses(literal, classSet);
+        addClasses(literal, classSet);
       }
     }
   }
@@ -301,15 +302,5 @@ export class ContentScanner {
       j--;
     }
     return backslashCount % 2 === 1;
-  }
-
-  // add space-separated class tokens to the set
-  private addClasses(raw: string, classSet: Set<string>): void {
-    const tokens = raw.split(/\s+/).filter(Boolean);
-    for (const token of tokens) {
-      if (CLASS_TOKEN_RE.test(token)) {
-        classSet.add(token);
-      }
-    }
   }
 }

@@ -16,7 +16,7 @@ interface LightboxContextValue {
   closeLightbox: () => void;
 }
 
-// hook that provides the Lightbox context value
+// hook that provide the Lightbox context value
 function useLightboxProviderValue(): LightboxContextValue {
   const [isOpen, setIsOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState<LightboxImage | null>(null);

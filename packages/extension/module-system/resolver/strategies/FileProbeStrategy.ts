@@ -18,6 +18,22 @@ import { probeModuleFile, probeModuleFileAsync } from '../file-prober';
 // module-level tagged logger for file probe strategy
 const log = createTaggedLogger(LogTags.FILE_PROBE);
 
+// build resolution result from probed path
+function buildProbeResult(
+  specifier: string,
+  probed: string | null
+): ResolutionResult | null {
+  if (probed) {
+    log.debug(`${specifier} -> ${probed}`);
+    return buildResolutionResult(
+      probed,
+      specifier,
+      ResolutionStrategy.FileProbe
+    );
+  }
+  return null;
+}
+
 // file probing strategy for relative imports
 // probe for files w/ common extensions (.ts, .tsx, .js, .jsx, .mdx, .md)
 // & index files when the specifier points to a directory
@@ -31,17 +47,7 @@ export class FileProbeStrategy implements IResolutionStrategy {
     _mode: ResolutionMode
   ): ResolutionResult | null {
     const resolved = path.resolve(context.baseDir, specifier);
-    const probed = probeModuleFile(resolved);
-
-    if (probed) {
-      log.debug(`${specifier} -> ${probed}`);
-      return buildResolutionResult(
-        probed,
-        specifier,
-        ResolutionStrategy.FileProbe
-      );
-    }
-    return null;
+    return buildProbeResult(specifier, probeModuleFile(resolved));
   }
 
   async resolveAsync(
@@ -50,17 +56,7 @@ export class FileProbeStrategy implements IResolutionStrategy {
     _mode: ResolutionMode
   ): Promise<ResolutionResult | null> {
     const resolved = path.resolve(context.baseDir, specifier);
-    const probed = await probeModuleFileAsync(resolved);
-
-    if (probed) {
-      log.debug(`${specifier} -> ${probed}`);
-      return buildResolutionResult(
-        probed,
-        specifier,
-        ResolutionStrategy.FileProbe
-      );
-    }
-    return null;
+    return buildProbeResult(specifier, await probeModuleFileAsync(resolved));
   }
 }
 

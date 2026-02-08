@@ -31,7 +31,35 @@ import {
   getUsedGenericComponents,
 } from '../diagnostics/ComponentDetector';
 
-// evaluate MDX content in webview (routes to Trusted/Safe mode based on trust state)
+// apply frontmatter overrides & send Nextra metadata
+function applyFrontmatterAndMeta(
+  preview: Preview,
+  webviewHandle: Preview['webviewHandle'],
+  fsPath: string,
+  frontmatter: Record<string, unknown> | undefined
+): void {
+  // push theme state w/ frontmatter overrides
+  if (frontmatter) {
+    preview.pushThemeState(frontmatter);
+  }
+
+  // for Nextra projects, resolve & send page metadata
+  sendNextraMetaIfNeeded(preview, webviewHandle, fsPath, frontmatter);
+}
+
+// clear stale Tailwind CSS (when Tailwind is disabled or in Safe Mode)
+function clearTailwindCss(
+  preview: Preview,
+  webviewHandle: Preview['webviewHandle']
+): void {
+  const tailwindRequestId = preview.nextTailwindRequestId();
+  if (preview.isTailwindRequestCurrent(tailwindRequestId)) {
+    preview.updateTailwindWatchFiles([]);
+    webviewHandle.setTailwindCss('');
+  }
+}
+
+// evaluate MDX content in webview (route to Trusted/Safe mode based on trust state)
 export default async function evaluateInWebview(
   preview: Preview,
   text: string,
@@ -96,13 +124,7 @@ export default async function evaluateInWebview(
       // update dependency watcher w/ local imports
       preview.updateDependencies(result.dependencies);
 
-      // push theme state w/ frontmatter overrides
-      if (result.frontmatter) {
-        preview.pushThemeState(result.frontmatter);
-      }
-
-      // for Nextra projects, resolve & send page metadata
-      sendNextraMetaIfNeeded(
+      applyFrontmatterAndMeta(
         preview,
         webviewHandle,
         fsPath,
@@ -155,32 +177,18 @@ export default async function evaluateInWebview(
         );
       } else {
         // clear any stale Tailwind CSS when disabled
-        const tailwindRequestId = preview.nextTailwindRequestId();
-        if (preview.isTailwindRequestCurrent(tailwindRequestId)) {
-          preview.updateTailwindWatchFiles([]);
-          webviewHandle.setTailwindCss('');
-        }
+        clearTailwindCss(preview, webviewHandle);
       }
     } else {
       // safe mode: static HTML rendering
       log.debug('Using Safe Mode');
 
       // disable Tailwind in safe mode
-      const tailwindRequestId = preview.nextTailwindRequestId();
-      if (preview.isTailwindRequestCurrent(tailwindRequestId)) {
-        preview.updateTailwindWatchFiles([]);
-        webviewHandle.setTailwindCss('');
-      }
+      clearTailwindCss(preview, webviewHandle);
 
       const result = await engine.evaluateSafe(text, compilerConfig);
 
-      // push theme state w/ frontmatter overrides
-      if (result.frontmatter) {
-        preview.pushThemeState(result.frontmatter);
-      }
-
-      // for Nextra projects, resolve & send page metadata
-      sendNextraMetaIfNeeded(
+      applyFrontmatterAndMeta(
         preview,
         webviewHandle,
         fsPath,
@@ -204,7 +212,7 @@ export default async function evaluateInWebview(
   }
 }
 
-// resolve & send Nextra page metadata (only runs for Nextra projects)
+// resolve & send Nextra page metadata (only run for Nextra projects)
 function sendNextraMetaIfNeeded(
   preview: Preview,
   webviewHandle: Preview['webviewHandle'],

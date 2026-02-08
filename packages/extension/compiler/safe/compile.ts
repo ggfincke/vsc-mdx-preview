@@ -18,6 +18,7 @@ import { warnIgnoredSafeModeConfig } from '../shared/pipeline-warnings';
 import remarkGenericComponents, {
   KNOWN_GENERIC_COMPONENTS,
 } from '../shared/remark/generic-components';
+import { escapeHtml } from '../shared/transforms/utils';
 
 import type {
   CompilerConfig,
@@ -36,16 +37,6 @@ interface MdxJsxElement {
   type: 'mdxJsxFlowElement' | 'mdxJsxTextElement';
   name: string | null;
   children: RootContent[];
-}
-
-// escape HTML special characters for safe output
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }
 
 // remark plugin to strip MDX-specific nodes (replaces JSX elements & expressions based on behavior)

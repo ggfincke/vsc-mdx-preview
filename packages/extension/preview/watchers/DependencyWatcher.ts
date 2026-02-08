@@ -12,7 +12,7 @@ import { getUnifiedResolver } from '../../module-system/resolver/UnifiedResolver
 import type { ResolutionContext } from '../../types';
 import { BaseWatcher } from './BaseWatcher';
 
-// watch local file dependencies for changes (LRU eviction prevents unbounded growth)
+// watch local file dependencies for changes (LRU eviction to prevent unbounded growth)
 export class DependencyWatcher extends BaseWatcher {
   protected readonly logTag = LogTags.DEP_WATCHER;
   private watchers: LRUCache<string, vscode.FileSystemWatcher>;

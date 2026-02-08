@@ -1,11 +1,11 @@
 // packages/extension/module-system/transform/typescript-transpile.ts
 // unified TypeScript transpilation helper using Sucrase (lightweight)
 
-import { transform as sucraseTransform } from 'sucrase';
+import { sucraseTransform } from './sucrase';
 import type { Preview } from '../../preview/preview-manager';
 
 // transpile TypeScript/TSX code using Sucrase
-// sucrase is already bundled & provides fast transpilation
+// use bundled sucrase for fast transpilation
 export function transpileTypeScript(
   code: string,
   fsPath: string,

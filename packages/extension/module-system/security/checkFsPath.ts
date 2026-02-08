@@ -105,7 +105,7 @@ export function handleDidChangeWorkspaceFolders(): void {
 }
 
 // ! async check if file path is inside workspace (security validation w/ symlink resolution)
-// use this for security-critical checks - resolves symlinks & handles case-insensitivity
+// use for security-critical checks - resolve symlinks & handle case-insensitivity
 export async function checkFsPathAsync(
   entryFsDirectory: string,
   fsPath: string
@@ -119,7 +119,7 @@ export async function checkFsPathAsync(
   const realFsPath = await getCachedRealPath(fsPath);
   if (!realFsPath) {
     // file doesn't exist yet - use normalized path for check
-    // this handles the case of checking a path before it's created
+    // handle the case of checking a path before it's created
     const normalized = normalizePathForComparison(path.normalize(fsPath));
     const normalizedRoot = normalizePathForComparison(rootDirectory);
     const relative = path.relative(normalizedRoot, normalized);

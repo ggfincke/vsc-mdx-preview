@@ -1,6 +1,6 @@
 /* packages/webview-app/src/components/shims/base/styles/collapsible.css */
 /* Shared collapsible/details styles using data-attribute selectors */
-/* Works w/ all frameworks that use BaseCollapsible */
+/* Works w/ all frameworks that use createCollapsible */
 
 /* Import shared tokens */
 @import '../../shared/tokens.css';

@@ -69,7 +69,7 @@ export function createPrimitiveValidator<T>(
   };
 }
 
-// create a validator for optional values (undefined passes through without logging)
+// create a validator for optional values (undefined passes through w/o logging)
 export function createOptionalValidator<
   T,
   O extends ValidationOptions = ValidationOptions,

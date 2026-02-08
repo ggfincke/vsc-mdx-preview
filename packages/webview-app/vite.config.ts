@@ -27,6 +27,7 @@ export default defineConfig({
         // code splitting for heavy dependencies (M.4 optimization)
         manualChunks: {
           mermaid: ['mermaid'],
+          graphviz: ['@viz-js/viz'],
           katex: ['katex'],
           dompurify: ['dompurify'],
         },

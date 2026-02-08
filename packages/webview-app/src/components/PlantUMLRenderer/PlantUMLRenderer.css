@@ -1,0 +1,60 @@
+/* packages/webview-app/src/components/PlantUMLRenderer/PlantUMLRenderer.css */
+/* PlantUML-specific diagram styles */
+
+@import '../DiagramRenderer/diagram-shared.css';
+
+/* plantuml diagram background */
+.mdx-preview-plantuml-diagram {
+  --plantuml-bg-light: #f8f8f8;
+  --plantuml-bg-dark: #1e1e1e;
+  background: var(--plantuml-bg-light);
+}
+
+.mdx-preview-plantuml-diagram[data-theme='dark'] {
+  background: var(--plantuml-bg-dark);
+}
+
+/* dark mode: override inline SVG colors for readability */
+.mdx-preview-plantuml-diagram[data-theme='dark'] rect {
+  fill: #2d2d30 !important;
+  stroke: #555 !important;
+}
+
+.mdx-preview-plantuml-diagram[data-theme='dark'] polygon {
+  fill: #2d2d30 !important;
+  stroke: #555 !important;
+}
+
+.mdx-preview-plantuml-diagram[data-theme='dark'] ellipse,
+.mdx-preview-plantuml-diagram[data-theme='dark'] circle {
+  fill: #2d2d30 !important;
+  stroke: #555 !important;
+}
+
+.mdx-preview-plantuml-diagram[data-theme='dark'] line {
+  stroke: #888 !important;
+}
+
+.mdx-preview-plantuml-diagram[data-theme='dark'] path {
+  fill: none !important;
+  stroke: #888 !important;
+}
+
+/* arrowheads */
+.mdx-preview-plantuml-diagram[data-theme='dark'] polygon[fill] {
+  fill: #888 !important;
+  stroke: #888 !important;
+}
+
+.mdx-preview-plantuml-diagram[data-theme='dark'] text {
+  fill: #d4d4d4 !important;
+}
+
+/* graph background transparent */
+.mdx-preview-plantuml-diagram[data-theme='dark'] > svg > rect:first-child {
+  fill: transparent !important;
+}
+
+.mdx-preview-plantuml-diagram text {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+}

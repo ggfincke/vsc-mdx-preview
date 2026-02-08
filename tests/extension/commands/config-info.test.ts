@@ -101,6 +101,7 @@ describe('config-info commands', () => {
       previewTheme: 'github-dark',
       codeBlockTheme: 'auto',
       autoTheme: true,
+      plantUmlServer: 'https://kroki.io',
       tailwind: { enabled: 'enabled' },
       framework: 'docusaurus',
       frameworkComponentShims: true,
@@ -214,4 +215,3 @@ describe('config-info commands', () => {
     );
   });
 });
-

@@ -27,7 +27,7 @@ function getCache() {
 }
 
 // find & parse .mdx-previewrc.json config file for document
-// searches from document's directory upward to workspace root
+// search from document's directory upward to workspace root
 export function resolveConfig(documentPath: string): ResolvedConfig | null {
   const documentDir = path.dirname(documentPath);
   const cache = getCache();
@@ -144,7 +144,7 @@ function setupConfigWatcher(configPath: string): void {
 }
 
 // subscribe to config file changes
-// callback receives a ConfigChangeEvent w/ type, configPath, & timestamp
+// callback: receive ConfigChangeEvent w/ type, configPath, & timestamp
 export function onConfigChange(
   callback: (
     event: import('../../config/ConfigCache').ConfigChangeEvent

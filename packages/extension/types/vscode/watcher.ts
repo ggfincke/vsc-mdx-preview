@@ -4,12 +4,12 @@
 import type * as vscode from 'vscode';
 
 // common interface for all watchers
-// provides unified lifecycle management (start/stop/dispose)
+// provide unified lifecycle management (start/stop/dispose)
 export interface IWatcher extends vscode.Disposable {
   // start watching & initialize (returns promise when ready)
   start(): Promise<void>;
 
-  // stop watching without disposing (can restart later w/ start())
+  // stop watching w/o disposing (can restart later w/ start())
   stop(): void;
 
   // check if the watcher is currently active

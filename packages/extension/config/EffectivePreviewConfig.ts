@@ -10,6 +10,7 @@
 
 import { getConfigManager, getThemeManager } from '../services';
 import { resolveConfig } from '../preview/config/ConfigResolver';
+import { mapSettingsToPreviewConfiguration } from './preview-settings';
 import type { PreviewTheme, CodeBlockTheme } from '../themes/types';
 
 // import consolidated types from centralized types
@@ -29,6 +30,7 @@ export function buildEffectivePreviewConfig(
 
   // load VS Code settings (scoped to document)
   const settings = configManager.getAll(docUri);
+  const previewConfig = mapSettingsToPreviewConfiguration(settings);
 
   // load config file (if present)
   const configFile = resolveConfig(docFsPath);
@@ -42,20 +44,20 @@ export function buildEffectivePreviewConfig(
   // merge w/ precedence: frontmatter > config file > VS Code settings
   return {
     // VS Code settings (config file can only disable, not enable)
-    updateMode: settings['preview.updateMode'],
-    debounceDelay: settings['preview.debounceDelay'],
+    updateMode: previewConfig.updateMode,
+    debounceDelay: previewConfig.debounceDelay,
     // config file can force Safe Mode (false), but cannot force Trusted Mode
     enableScripts:
       fileConfig?.enableScripts === false
         ? false
         : settings['preview.enableScripts'],
     openMdxLinksInPreview: settings['preview.openMdxLinksInPreview'],
-    securityPolicy: settings['preview.security'],
-    useVscodeMarkdownStyles: settings['preview.useVscodeMarkdownStyles'],
-    useWhiteBackground: settings['preview.useWhiteBackground'],
-    customCss: settings['preview.customCss'],
-    customLayoutFilePath: settings['preview.mdx.customLayoutFilePath'],
-    useSucraseTranspiler: settings['build.useSucraseTranspiler'],
+    securityPolicy: previewConfig.securityPolicy,
+    useVscodeMarkdownStyles: previewConfig.useVscodeMarkdownStyles,
+    useWhiteBackground: previewConfig.useWhiteBackground,
+    customCss: previewConfig.customCss,
+    customLayoutFilePath: previewConfig.customLayoutFilePath,
+    useSucraseTranspiler: previewConfig.useSucraseTranspiler,
 
     // themes w/ frontmatter override (frontmatter > VS Code settings)
     previewTheme: (frontmatterTheme.previewTheme ??
@@ -63,10 +65,11 @@ export function buildEffectivePreviewConfig(
     codeBlockTheme: (frontmatterTheme.codeBlockTheme ??
       settings['preview.codeBlockTheme']) as CodeBlockTheme,
     autoTheme: settings['preview.autoTheme'],
+    plantUmlServer: previewConfig.plantUmlServer,
 
     // Tailwind (config file can override enabled & provide configPath)
     tailwind: {
-      enabled: fileConfig?.tailwind?.enabled ?? settings['tailwind.enabled'],
+      enabled: fileConfig?.tailwind?.enabled ?? previewConfig.tailwindEnabled,
       maxFileSizeBytes: settings['tailwind.maxFileSizeBytes'],
       maxCssFilesToSearch: settings['tailwind.maxCssFilesToSearch'],
       cacheMaxEntries: settings['tailwind.cacheMaxEntries'],

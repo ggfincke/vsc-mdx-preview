@@ -208,7 +208,13 @@ describe('handler-factory', () => {
         log
       );
 
-      setTheme({ previewTheme: 'github-light', codeBlockTheme: 'auto', mermaidTheme: 'default', isLight: true });
+      setTheme({
+        previewTheme: 'github-light',
+        codeBlockTheme: 'auto',
+        mermaidTheme: 'default',
+        isLight: true,
+        plantUmlServer: 'https://kroki.io',
+      });
 
       expect(handlers!.setTheme).toHaveBeenCalled();
     });
@@ -228,7 +234,15 @@ describe('handler-factory', () => {
         log
       );
 
-      expect(() => setTheme({ previewTheme: 'github-light', codeBlockTheme: 'auto', mermaidTheme: 'default', isLight: true })).not.toThrow();
+      expect(() =>
+        setTheme({
+          previewTheme: 'github-light',
+          codeBlockTheme: 'auto',
+          mermaidTheme: 'default',
+          isLight: true,
+          plantUmlServer: 'https://kroki.io',
+        })
+      ).not.toThrow();
     });
 
     it('should not throw when handlers not registered', () => {
@@ -244,7 +258,15 @@ describe('handler-factory', () => {
         log
       );
 
-      expect(() => setTheme({ previewTheme: 'github-light', codeBlockTheme: 'auto', mermaidTheme: 'default', isLight: true })).not.toThrow();
+      expect(() =>
+        setTheme({
+          previewTheme: 'github-light',
+          codeBlockTheme: 'auto',
+          mermaidTheme: 'default',
+          isLight: true,
+          plantUmlServer: 'https://kroki.io',
+        })
+      ).not.toThrow();
     });
   });
 });

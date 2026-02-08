@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/Card.tsx
 // Starlight Card component shim for MDX Preview
-// provides preview-compatible version of @astrojs/starlight/components Card
+// provide preview-compatible version of @astrojs/starlight/components Card
 
 import React, { ReactNode, ReactElement } from 'react';
 import { BaseCard } from '../base';

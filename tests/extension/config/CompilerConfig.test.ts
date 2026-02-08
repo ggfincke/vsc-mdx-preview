@@ -53,6 +53,7 @@ const BASE_SETTINGS = {
   'preview.previewTheme': 'github-light',
   'preview.codeBlockTheme': 'auto',
   'preview.autoTheme': true,
+  'diagrams.plantUmlServer': 'https://kroki.io',
   'tailwind.enabled': 'auto',
   'tailwind.maxFileSizeBytes': 1024,
   'tailwind.maxCssFilesToSearch': 50,
@@ -80,6 +81,7 @@ function createEffectiveConfig(): EffectivePreviewConfig {
     previewTheme: 'github-light',
     codeBlockTheme: 'auto',
     autoTheme: true,
+    plantUmlServer: 'https://kroki.io',
     tailwind: {
       enabled: 'auto',
       maxFileSizeBytes: 1024,

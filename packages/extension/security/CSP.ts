@@ -19,21 +19,38 @@ export interface CSPOptions {
   webview: vscode.Webview;
   nonce: string;
   allowUnsafeEval: boolean;
+  connectSrc?: string[];
+}
+
+// build connect-src directive values w/ deduplication
+function buildConnectSources(
+  webview: vscode.Webview,
+  connectSrc: string[] = []
+): string[] {
+  const sources = new Set<string>([webview.cspSource]);
+  for (const source of connectSrc) {
+    if (source.trim()) {
+      sources.add(source);
+    }
+  }
+  return [...sources];
 }
 
 // generate CSP string w/ configurable eval policy
 export function generateCSP(options: CSPOptions): string {
-  const { webview, nonce, allowUnsafeEval } = options;
+  const { webview, nonce, allowUnsafeEval, connectSrc } = options;
   // include cspSource to allow dynamic chunk imports (e.g. mermaid)
   const scriptSrc = allowUnsafeEval
-    ? `${webview.cspSource} 'nonce-${nonce}' 'unsafe-eval'`
-    : `${webview.cspSource} 'nonce-${nonce}'`;
+    ? `${webview.cspSource} 'nonce-${nonce}' 'unsafe-eval' 'wasm-unsafe-eval'`
+    : `${webview.cspSource} 'nonce-${nonce}' 'wasm-unsafe-eval'`;
+  const connectSources = buildConnectSources(webview, connectSrc);
 
   return [
     "default-src 'none'",
     `img-src ${webview.cspSource} https: data:`,
     `style-src ${webview.cspSource} 'unsafe-inline'`,
     `script-src ${scriptSrc}`,
+    `connect-src ${connectSources.join(' ')}`,
     `font-src ${webview.cspSource}`,
   ].join('; ');
 }
@@ -50,7 +67,6 @@ export function getCSP(
     return '';
   }
 
-  // only allow eval if workspace trusted & scripts enabled
   return generateCSP({
     webview,
     nonce,

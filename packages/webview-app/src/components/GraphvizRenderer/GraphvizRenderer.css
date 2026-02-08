@@ -1,0 +1,58 @@
+/* packages/webview-app/src/components/GraphvizRenderer/GraphvizRenderer.css */
+/* Graphviz-specific diagram styles */
+
+@import '../DiagramRenderer/diagram-shared.css';
+
+/* graphviz diagram background */
+.mdx-preview-graphviz-diagram {
+  --graphviz-bg-light: #f8f8f8;
+  --graphviz-bg-dark: #1e1e1e;
+  background: var(--graphviz-bg-light);
+}
+
+.mdx-preview-graphviz-diagram[data-theme='dark'] {
+  background: var(--graphviz-bg-dark);
+}
+
+/* dark mode: override inline SVG colors for readability */
+.mdx-preview-graphviz-diagram[data-theme='dark'] .node polygon,
+.mdx-preview-graphviz-diagram[data-theme='dark'] .node ellipse,
+.mdx-preview-graphviz-diagram[data-theme='dark'] .node path {
+  fill: #2d2d30 !important;
+  stroke: #555 !important;
+}
+
+.mdx-preview-graphviz-diagram[data-theme='dark'] .node text {
+  fill: #d4d4d4 !important;
+}
+
+.mdx-preview-graphviz-diagram[data-theme='dark'] .edge path {
+  stroke: #888 !important;
+}
+
+.mdx-preview-graphviz-diagram[data-theme='dark'] .edge polygon {
+  fill: #888 !important;
+  stroke: #888 !important;
+}
+
+.mdx-preview-graphviz-diagram[data-theme='dark'] .edge text {
+  fill: #b0b0b0 !important;
+}
+
+.mdx-preview-graphviz-diagram[data-theme='dark'] .cluster > polygon,
+.mdx-preview-graphviz-diagram[data-theme='dark'] .cluster > path {
+  fill: rgba(255, 255, 255, 0.03) !important;
+  stroke: #555 !important;
+}
+
+.mdx-preview-graphviz-diagram[data-theme='dark'] .cluster > text {
+  fill: #d4d4d4 !important;
+}
+
+.mdx-preview-graphviz-diagram[data-theme='dark'] .graph > polygon {
+  fill: transparent !important;
+}
+
+.mdx-preview-graphviz-diagram text {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+}

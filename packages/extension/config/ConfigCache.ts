@@ -12,21 +12,12 @@ import { PathCache } from '../utils/cache';
 
 const log = createTaggedLogger(LogTags.CONFIG_CACHE);
 
-// typed config change event types
-export enum ConfigChangeType {
-  FileChanged = 'fileChanged',
-  FileDeleted = 'fileDeleted',
-  FileCreated = 'fileCreated',
-}
+// re-export canonical type definitions from types/
+export { ConfigChangeType } from '../types';
+export type { ConfigChangeEvent, ConfigChangeCallback } from '../types';
 
-// typed config change event
-export interface ConfigChangeEvent {
-  type: ConfigChangeType;
-  configPath: string;
-  timestamp: number;
-}
-
-export type ConfigChangeCallback = (event: ConfigChangeEvent) => void;
+import { ConfigChangeType } from '../types';
+import type { ConfigChangeEvent } from '../types';
 
 // max entries before LRU eviction kicks in
 const CONFIG_CACHE_MAX_ENTRIES = 100;

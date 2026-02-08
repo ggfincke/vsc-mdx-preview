@@ -90,7 +90,7 @@ function compilePathsIndex(
   }
 
   // sort wildcard patterns by prefix length descending (most specific first)
-  // ensures @components/icons/* matches before @components/*
+  // ensure @components/icons/* matches before @components/*
   wildcardPatterns.sort((a, b) => b.prefix.length - a.prefix.length);
 
   return {
@@ -207,6 +207,27 @@ export function getResolutionCandidates(
   return { candidates, absoluteBaseUrl };
 }
 
+// process probed candidate & build result if valid
+// return undefined to continue iterating, or ResolutionResult to stop
+function processCandidate(
+  resolved: string | null,
+  specifier: string
+): ResolutionResult | undefined {
+  if (!resolved) {
+    return undefined;
+  }
+  // skip .d.ts files
+  if (resolved.endsWith('.d.ts')) {
+    return undefined;
+  }
+  log.debug(`${specifier} -> ${resolved}`);
+  return buildResolutionResult(
+    resolved,
+    specifier,
+    ResolutionStrategy.TypeScript
+  );
+}
+
 // TypeScript path resolution strategy (tsconfig.json paths)
 // use custom pattern matching instead of TypeScript compiler for performance
 // patterns compiled once per tsconfig & cached
@@ -225,18 +246,12 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
 
     // try each candidate path using shared file prober
     for (const candidate of setup.candidates) {
-      const resolved = probeTypeScriptFile(candidate);
-      if (resolved) {
-        // skip .d.ts files
-        if (resolved.endsWith('.d.ts')) {
-          continue;
-        }
-        log.debug(`${specifier} -> ${resolved}`);
-        return buildResolutionResult(
-          resolved,
-          specifier,
-          ResolutionStrategy.TypeScript
-        );
+      const result = processCandidate(
+        probeTypeScriptFile(candidate),
+        specifier
+      );
+      if (result) {
+        return result;
       }
     }
 
@@ -255,18 +270,12 @@ export class TypeScriptPathStrategy implements IResolutionStrategy {
 
     // try each candidate path w/ async probing
     for (const candidate of setup.candidates) {
-      const resolved = await probeTypeScriptFileAsync(candidate);
-      if (resolved) {
-        // skip .d.ts files
-        if (resolved.endsWith('.d.ts')) {
-          continue;
-        }
-        log.debug(`${specifier} -> ${resolved}`);
-        return buildResolutionResult(
-          resolved,
-          specifier,
-          ResolutionStrategy.TypeScript
-        );
+      const result = processCandidate(
+        await probeTypeScriptFileAsync(candidate),
+        specifier
+      );
+      if (result) {
+        return result;
       }
     }
 

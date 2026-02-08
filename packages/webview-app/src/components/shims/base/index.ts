@@ -42,6 +42,8 @@ export { createCodeBlock, type BaseCodeBlockProps } from './BaseCodeBlock';
 
 export {
   createCollapsible,
+  GENERIC_COLLAPSIBLE_CLASSES,
+  DOCUSAURUS_DETAILS_CLASSES,
   type CollapsibleConfig,
   type CollapsibleClassNames,
   type BaseCollapsibleProps,

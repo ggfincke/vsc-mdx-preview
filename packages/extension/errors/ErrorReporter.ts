@@ -133,19 +133,6 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     }
   }
 
-  // convenience method for webview errors - log & display in webview
-  reportWebviewError(
-    error: Error | ExtensionError | ModuleError | unknown,
-    webviewHandle: WebviewErrorHandle,
-    context: ErrorContext = ErrorContext.Extension
-  ): void {
-    this.report(error, {
-      context,
-      showInWebview: true,
-      webviewHandle,
-    });
-  }
-
   // convenience method for background/silent errors - log only, never show to user
   reportSilent(
     error: Error | ExtensionError | ModuleError | unknown,
@@ -234,7 +221,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   }
 
   // normalize any error type to ExtensionError, ModuleError, or Error
-  // preserves extension-specific error types, falls back to shared normalizeError
+  // preserve extension-specific error types, fall back to shared normalizeError
   private normalizeError(error: unknown): ExtensionError | ModuleError | Error {
     // preserve extension-specific error types
     if (error instanceof ExtensionError) {

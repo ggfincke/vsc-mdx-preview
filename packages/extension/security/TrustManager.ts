@@ -11,22 +11,12 @@ const log = createTaggedLogger(LogTags.TRUST_MANAGER);
 
 export type { TrustState } from '@mdx-preview/shared';
 
-// security mode enum for explicit type safety
-export enum SecurityMode {
-  Safe = 'safe',
-  Trusted = 'trusted',
-}
+// re-export canonical type definitions from types/
+export { SecurityMode, getSecurityMode } from '../types';
+export type { TrustedModeCheck } from '../types';
 
-// derive SecurityMode from TrustState
-export function getSecurityMode(state: TrustState): SecurityMode {
-  return state.canExecute ? SecurityMode.Trusted : SecurityMode.Safe;
-}
-
-// result of checking Trusted Mode availability for document
-export interface TrustedModeCheck {
-  allowed: boolean;
-  reason?: string;
-}
+import { SecurityMode, getSecurityMode } from '../types';
+import type { TrustedModeCheck } from '../types';
 
 // manage trust state for MDX preview
 export class TrustManager extends WithSubscribers<TrustManager, TrustState> {

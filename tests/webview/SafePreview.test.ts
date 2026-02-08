@@ -300,6 +300,17 @@ describe('DOMPurify Configuration', () => {
       expect(allowedAttrs).toContain('data-mermaid-id');
     });
 
+    it('allows PlantUML data attributes', () => {
+      expect(allowedAttrs).toContain('data-plantuml-code');
+      expect(allowedAttrs).toContain('data-plantuml-id');
+    });
+
+    it('allows Graphviz data attributes', () => {
+      expect(allowedAttrs).toContain('data-graphviz-code');
+      expect(allowedAttrs).toContain('data-graphviz-id');
+      expect(allowedAttrs).toContain('data-graphviz-language');
+    });
+
     it('allows admonition data attribute', () => {
       expect(allowedAttrs).toContain('data-admonition-type');
     });

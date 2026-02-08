@@ -222,6 +222,13 @@ const LANGUAGE_ALIASES: Record<string, BundledLanguage> = {
   // text & plaintext map to fallback (handled separately)
 };
 
+const DIAGRAM_LANGUAGE_CLASSES = new Set([
+  'language-mermaid',
+  'language-plantuml',
+  'language-dot',
+  'language-graphviz',
+]);
+
 // resolve language alias to canonical name
 function resolveLanguageAlias(lang: string): string {
   return LANGUAGE_ALIASES[lang] || lang;
@@ -257,10 +264,10 @@ export default function rehypeShiki() {
         return;
       }
 
-      // skip mermaid blocks (handle via rehype-mermaid-placeholder)
+      // skip diagram blocks (handle via diagram placeholder plugins)
       const className = codeChild.properties?.className;
       const classNames = Array.isArray(className) ? className : [];
-      if (classNames.some((c) => String(c) === 'language-mermaid')) {
+      if (classNames.some((c) => DIAGRAM_LANGUAGE_CLASSES.has(String(c)))) {
         return;
       }
 

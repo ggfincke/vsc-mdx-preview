@@ -19,7 +19,7 @@ export type NextraWrapperProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 // factory function to create Nextra wrapper components
-// wraps Starlight components w/ Nextra-specific styling
+// wrap Starlight components w/ Nextra-specific styling
 export function createNextraWrapper<P extends { children: ReactNode }>(
   config: NextraWrapperConfig<P>
 ): React.FC<NextraWrapperProps> {

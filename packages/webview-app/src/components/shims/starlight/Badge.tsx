@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/Badge.tsx
 // Starlight Badge component shim for MDX Preview
-// provides preview-compatible version of @astrojs/starlight/components Badge
+// provide preview-compatible version of @astrojs/starlight/components Badge
 
 import React, { ReactNode, ReactElement } from 'react';
 

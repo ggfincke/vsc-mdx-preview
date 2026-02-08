@@ -14,7 +14,7 @@ export interface UnknownComponentPlaceholderProps {
 }
 
 // placeholder for unknown components in Trusted Mode
-// shows component name w/ optional children in a styled box
+// show component name w/ optional children in a styled box
 export function UnknownComponentPlaceholder({
   name,
   children,

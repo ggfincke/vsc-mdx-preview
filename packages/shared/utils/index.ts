@@ -1,14 +1,7 @@
 // packages/shared/utils/index.ts
 // barrel export for utility modules
 
-export {
-  LRUCache,
-  type LRUCacheOptions,
-  NullableLRUCache,
-  type NullableLRUCacheOptions,
-  type NullableCacheResult,
-} from './lru-cache';
-// note: NullableLRUCacheOptions does not have a generic parameter
+export { LRUCache, type LRUCacheOptions } from './lru-cache';
 export {
   ContentHashCache,
   type ContentHashCacheOptions,

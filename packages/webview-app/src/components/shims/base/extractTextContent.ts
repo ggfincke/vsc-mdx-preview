@@ -3,7 +3,7 @@
 
 import { ReactNode, isValidElement } from 'react';
 
-// extracts plain text content from React children
+// extract plain text content from React children
 export function extractTextContent(node: ReactNode): string {
   if (typeof node === 'string') {
     return node;

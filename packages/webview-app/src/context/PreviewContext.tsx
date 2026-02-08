@@ -19,7 +19,7 @@ interface PreviewContextValue {
 // module-level tagged logger (avoids per-render allocation)
 const log = createTaggedLogger(LogTags.PREVIEW_CONTEXT);
 
-// hook that provides the Preview context value
+// hook that provide the Preview context value
 function usePreviewProviderValue(): PreviewContextValue {
   const [content, setContent] = useState<PreviewContent | null>(null);
   const [error, setErrorState] = useState<PreviewError | null>(null);

@@ -223,9 +223,20 @@ export const DOMPURIFY_CONFIG: Config = {
     'patternContentUnits',
     'preserveAspectRatio',
     'xlink:href',
+    'xmlns:xlink',
+    'version',
+    'role',
+    'aria-label',
     // Mermaid data attributes
     'data-mermaid-chart',
     'data-mermaid-id',
+    // PlantUML data attributes
+    'data-plantuml-code',
+    'data-plantuml-id',
+    // Graphviz data attributes
+    'data-graphviz-code',
+    'data-graphviz-id',
+    'data-graphviz-language',
     // Admonition data attributes
     'data-admonition-type',
   ],

@@ -20,25 +20,13 @@ const getCompileTrustedModule = createLazyImport(
   () => import('../../compiler/trusted/compile')
 );
 
-// result type for entry transformation (includes frontmatter)
-export interface TransformEntryResult {
-  code: string;
-  // ESM code for import extraction
-  esmCode: string;
-  frontmatter: Record<string, unknown>;
-}
+// re-export canonical type definitions from types/
+export type { TransformEntryResult, TransformResult } from '../../types';
 
-// result type for dependency transformation
-// return both ESM (for import extraction) & CJS (for webview evaluation)
-export interface TransformResult {
-  // CJS for webview evaluation
-  code: string;
-  // ESM for import extraction
-  esmCode: string;
-}
+import type { TransformEntryResult, TransformResult } from '../../types';
 
 // transform entry file (MDX → TS → Babel/Sucrase)
-// I.1: returns both esmCode (for import extraction) & code (for webview)
+// I.1: return both esmCode (for import extraction) & code (for webview)
 async function transformEntry(
   code: string,
   fsPath: string,
@@ -80,7 +68,7 @@ async function transformEntry(
 }
 
 // transform dependency file (MDX → TS → Babel/Sucrase, skip node_modules unless ESM)
-// I.1: returns both esmCode (for import extraction) & code (for webview)
+// I.1: return both esmCode (for import extraction) & code (for webview)
 async function transform(
   code: string,
   fsPath: string,

@@ -80,7 +80,7 @@ export interface ResolvedConfig {
 }
 
 // unified effective preview configuration
-// combines VS Code settings, project config file, & frontmatter overrides
+// combine VS Code settings, project config file, & frontmatter overrides
 export interface EffectivePreviewConfig {
   // VS Code settings
   updateMode: UpdateModeValue;
@@ -98,6 +98,7 @@ export interface EffectivePreviewConfig {
   previewTheme: PreviewTheme;
   codeBlockTheme: CodeBlockTheme;
   autoTheme: boolean;
+  plantUmlServer: string;
 
   // Tailwind (consolidated)
   tailwind: TailwindConfig;

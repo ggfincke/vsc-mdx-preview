@@ -1,6 +1,6 @@
 // packages/webview-app/src/components/shims/starlight/Aside.tsx
 // Starlight Aside component shim for MDX Preview
-// provides preview-compatible version of @astrojs/starlight/components Aside
+// provide preview-compatible version of @astrojs/starlight/components Aside
 // note: this is the JSX alternative to ::: directive syntax
 
 import { ReactElement } from 'react';

@@ -170,7 +170,7 @@ export function getExtension(filePath: string): string {
   return path.extname(filePath);
 }
 
-// get the base name without extension
+// get the base name w/o extension
 export function getBaseName(filePath: string): string {
   return path.basename(filePath, path.extname(filePath));
 }

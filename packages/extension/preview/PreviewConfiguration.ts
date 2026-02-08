@@ -3,36 +3,21 @@
 
 import * as vscode from 'vscode';
 import debounce from 'lodash.debounce';
-import type {
-  UpdateModeValue,
-  TailwindEnabledValue,
-} from '@mdx-preview/shared';
-import { SecurityPolicy } from '../security/security';
 import { getConfigManager } from '../services';
+import { SecurityPolicy } from '../security/security';
+import { readPreviewConfigurationState } from '../config/preview-settings';
+import type {
+  StyleConfiguration,
+  ConfigurationState,
+  ConfigChangeResult,
+} from '../types';
 
-export interface StyleConfiguration {
-  useVscodeMarkdownStyles: boolean;
-  useWhiteBackground: boolean;
-}
-
-export interface ConfigurationState {
-  updateMode: UpdateModeValue;
-  debounceDelay: number;
-  useVscodeMarkdownStyles: boolean;
-  useWhiteBackground: boolean;
-  customLayoutFilePath: string;
-  customCss: string;
-  useSucraseTranspiler: boolean;
-  securityPolicy: SecurityPolicy;
-  tailwindEnabled: TailwindEnabledValue;
-}
-
-export interface ConfigChangeResult {
-  needsWebviewRefresh: boolean;
-  needsDebounceRecreate: boolean;
-  needsCssWatcherUpdate: boolean;
-  oldCssPath: string;
-}
+// re-export canonical type definitions from types/
+export type {
+  StyleConfiguration,
+  ConfigurationState,
+  ConfigChangeResult,
+} from '../types';
 
 // manage preview configuration state & updates
 // reads from VS Code settings & tracks changes that require preview refresh
@@ -42,34 +27,11 @@ export class PreviewConfiguration {
 
   constructor(docUri: vscode.Uri, updateWebviewFn: () => void) {
     const configManager = getConfigManager();
-
-    const debounceDelay = configManager.get('preview.debounceDelay', docUri);
-
-    this._configuration = {
-      updateMode: configManager.get('preview.updateMode', docUri),
-      debounceDelay,
-      useSucraseTranspiler: configManager.get(
-        'build.useSucraseTranspiler',
-        docUri
-      ),
-      useVscodeMarkdownStyles: configManager.get(
-        'preview.useVscodeMarkdownStyles',
-        docUri
-      ),
-      useWhiteBackground: configManager.get(
-        'preview.useWhiteBackground',
-        docUri
-      ),
-      customLayoutFilePath: configManager.get(
-        'preview.mdx.customLayoutFilePath',
-        docUri
-      ),
-      customCss: configManager.get('preview.customCss', docUri),
-      securityPolicy: configManager.get('preview.security', docUri),
-      tailwindEnabled: configManager.get('tailwind.enabled', docUri),
-    };
-
-    this._debouncedUpdateWebview = debounce(updateWebviewFn, debounceDelay);
+    this._configuration = readPreviewConfigurationState(configManager, docUri);
+    this._debouncedUpdateWebview = debounce(
+      updateWebviewFn,
+      this._configuration.debounceDelay
+    );
   }
 
   get configuration(): ConfigurationState {
@@ -97,57 +59,33 @@ export class PreviewConfiguration {
     updateWebviewFn: () => void
   ): ConfigChangeResult {
     const configManager = getConfigManager();
-
-    const updateMode = configManager.get('preview.updateMode', docUri);
-    const debounceDelay = configManager.get('preview.debounceDelay', docUri);
-    const useSucraseTranspiler = configManager.get(
-      'build.useSucraseTranspiler',
-      docUri
-    );
-    const useVscodeMarkdownStyles = configManager.get(
-      'preview.useVscodeMarkdownStyles',
-      docUri
-    );
-    const useWhiteBackground = configManager.get(
-      'preview.useWhiteBackground',
-      docUri
-    );
-    const customLayoutFilePath = configManager.get(
-      'preview.mdx.customLayoutFilePath',
-      docUri
-    );
-    const customCss = configManager.get('preview.customCss', docUri);
-    const securityPolicy = configManager.get('preview.security', docUri);
-    const tailwindEnabled = configManager.get('tailwind.enabled', docUri);
+    const newConfig = readPreviewConfigurationState(configManager, docUri);
 
     const needsWebviewRefresh =
-      useVscodeMarkdownStyles !== this._configuration.useVscodeMarkdownStyles ||
-      useWhiteBackground !== this._configuration.useWhiteBackground ||
-      customLayoutFilePath !== this._configuration.customLayoutFilePath ||
-      securityPolicy !== this._configuration.securityPolicy ||
-      tailwindEnabled !== this._configuration.tailwindEnabled;
+      newConfig.useVscodeMarkdownStyles !==
+        this._configuration.useVscodeMarkdownStyles ||
+      newConfig.useWhiteBackground !== this._configuration.useWhiteBackground ||
+      newConfig.customLayoutFilePath !==
+        this._configuration.customLayoutFilePath ||
+      newConfig.plantUmlServer !== this._configuration.plantUmlServer ||
+      newConfig.securityPolicy !== this._configuration.securityPolicy ||
+      newConfig.tailwindEnabled !== this._configuration.tailwindEnabled;
 
     const needsDebounceRecreate =
-      debounceDelay !== this._configuration.debounceDelay;
-    const needsCssWatcherUpdate = customCss !== this._configuration.customCss;
+      newConfig.debounceDelay !== this._configuration.debounceDelay;
+    const needsCssWatcherUpdate =
+      newConfig.customCss !== this._configuration.customCss;
     const oldCssPath = this._configuration.customCss;
 
     // recreate debounced function if delay changed
     if (needsDebounceRecreate) {
-      this._debouncedUpdateWebview = debounce(updateWebviewFn, debounceDelay);
+      this._debouncedUpdateWebview = debounce(
+        updateWebviewFn,
+        newConfig.debounceDelay
+      );
     }
 
-    Object.assign(this._configuration, {
-      updateMode,
-      debounceDelay,
-      useSucraseTranspiler,
-      useVscodeMarkdownStyles,
-      useWhiteBackground,
-      customLayoutFilePath,
-      customCss,
-      securityPolicy,
-      tailwindEnabled,
-    });
+    this._configuration = newConfig;
 
     return {
       needsWebviewRefresh,

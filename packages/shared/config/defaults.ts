@@ -5,6 +5,7 @@ import {
   STANDARD_DEBOUNCE_MS,
   STANDARD_WATCHER_DEBOUNCE_MS,
 } from '../constants';
+import { DEFAULT_PLANTUML_SERVER } from '../diagrams/plantuml-server';
 
 // preview defaults
 export const DEFAULT_PREVIEW_UPDATE_MODE = 'onType' as const;
@@ -20,6 +21,7 @@ export const DEFAULT_PREVIEW_THEME = 'none' as const;
 export const DEFAULT_CODE_BLOCK_THEME = 'auto' as const;
 export const DEFAULT_MERMAID_THEME = 'default' as const;
 export const DEFAULT_AUTO_THEME = true;
+export const DEFAULT_DIAGRAMS_PLANTUML_SERVER = DEFAULT_PLANTUML_SERVER;
 
 // build defaults
 export const DEFAULT_USE_SUCRASE_TRANSPILER = false;
@@ -59,6 +61,7 @@ export const SETTINGS_DEFAULTS = {
   'preview.codeBlockTheme': DEFAULT_CODE_BLOCK_THEME,
   'preview.mermaidTheme': DEFAULT_MERMAID_THEME,
   'preview.autoTheme': DEFAULT_AUTO_THEME,
+  'diagrams.plantUmlServer': DEFAULT_DIAGRAMS_PLANTUML_SERVER,
   'build.useSucraseTranspiler': DEFAULT_USE_SUCRASE_TRANSPILER,
   'tailwind.enabled': DEFAULT_TAILWIND_ENABLED,
   'tailwind.maxFileSizeBytes': DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES,

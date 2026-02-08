@@ -1,6 +1,6 @@
 // packages/extension/module-system/resolver/file-prober.ts
 // shared file probing utility for module resolution strategies
-// provides sync & async probing w/ stat caching
+// provide sync & async probing w/ stat caching
 
 import * as path from 'path';
 import * as fs from 'fs';
@@ -11,15 +11,12 @@ import {
   FILE_PROBE_EXTENSIONS,
   FILE_PROBE_INDEX_FILES,
 } from '../../constants';
+import type { StatResult, FileProbingOptions } from '../../types';
+
+// re-export canonical type definitions from types/
+export type { StatResult, FileProbingOptions } from '../../types';
 
 // stat cache (LRU w/ TTL for file stat results)
-
-// cached stat result containing file existence & type info
-export interface StatResult {
-  exists: boolean;
-  isFile: boolean;
-  isDirectory: boolean;
-}
 
 // stat cache TTL (5 seconds)
 const STAT_CACHE_TTL_MS = 5000;
@@ -116,16 +113,6 @@ export async function batchStatAsync(
 }
 
 // file probing (sync & async w/ configurable extensions)
-
-// options for file probing
-export interface FileProbingOptions {
-  // extensions to try
-  extensions: readonly string[];
-  // index files
-  indexFiles: readonly string[];
-  // skip node_modules
-  skipNodeModules?: boolean;
-}
 
 // parsed probing options w/ defaults applied
 export interface ParsedProbingOptions {
@@ -277,48 +264,49 @@ export async function probeFileAsync(
 
 // convenience functions (pre-configured probing for common use cases)
 
-// probe for TypeScript/JavaScript files (sync)
-// use TYPESCRIPT_RESOLUTION_EXTENSIONS & TS_INDEX_FILES
-export function probeTypeScriptFile(basePath: string): string | null {
-  return probeFile(basePath, {
-    extensions: TYPESCRIPT_RESOLUTION_EXTENSIONS,
-    indexFiles: TS_INDEX_FILES,
-    // TypeScript paths can resolve into node_modules
-    skipNodeModules: false,
-  });
+// probe config for creating sync/async pairs
+interface ProbeConfig {
+  extensions: readonly string[];
+  indexFiles: readonly string[];
+  skipNodeModules: boolean;
 }
+
+// create sync & async probe functions from shared config
+function createProbePair(config: ProbeConfig): {
+  sync: (basePath: string) => string | null;
+  async: (basePath: string) => Promise<string | null>;
+} {
+  return {
+    sync: (basePath: string) => probeFile(basePath, config),
+    async: (basePath: string) => probeFileAsync(basePath, config),
+  };
+}
+
+// TypeScript file probing (sync & async)
+// use TYPESCRIPT_RESOLUTION_EXTENSIONS & TS_INDEX_FILES
+const tsProbe = createProbePair({
+  extensions: TYPESCRIPT_RESOLUTION_EXTENSIONS,
+  indexFiles: TS_INDEX_FILES,
+  // TypeScript paths can resolve into node_modules
+  skipNodeModules: false,
+});
+
+// probe for TypeScript/JavaScript files (sync)
+export const probeTypeScriptFile = tsProbe.sync;
 
 // probe for TypeScript/JavaScript files (async)
-// use TYPESCRIPT_RESOLUTION_EXTENSIONS & TS_INDEX_FILES
-export async function probeTypeScriptFileAsync(
-  basePath: string
-): Promise<string | null> {
-  return probeFileAsync(basePath, {
-    extensions: TYPESCRIPT_RESOLUTION_EXTENSIONS,
-    indexFiles: TS_INDEX_FILES,
-    // TypeScript paths can resolve into node_modules
-    skipNodeModules: false,
-  });
-}
+export const probeTypeScriptFileAsync = tsProbe.async;
+
+// module file probing (sync & async)
+// use FILE_PROBE_EXTENSIONS & FILE_PROBE_INDEX_FILES
+const moduleProbe = createProbePair({
+  extensions: FILE_PROBE_EXTENSIONS,
+  indexFiles: FILE_PROBE_INDEX_FILES,
+  skipNodeModules: true,
+});
 
 // probe for general module files including MDX (sync)
-// use FILE_PROBE_EXTENSIONS & FILE_PROBE_INDEX_FILES
-export function probeModuleFile(basePath: string): string | null {
-  return probeFile(basePath, {
-    extensions: FILE_PROBE_EXTENSIONS,
-    indexFiles: FILE_PROBE_INDEX_FILES,
-    skipNodeModules: true,
-  });
-}
+export const probeModuleFile = moduleProbe.sync;
 
 // probe for general module files including MDX (async)
-// use FILE_PROBE_EXTENSIONS & FILE_PROBE_INDEX_FILES
-export async function probeModuleFileAsync(
-  basePath: string
-): Promise<string | null> {
-  return probeFileAsync(basePath, {
-    extensions: FILE_PROBE_EXTENSIONS,
-    indexFiles: FILE_PROBE_INDEX_FILES,
-    skipNodeModules: true,
-  });
-}
+export const probeModuleFileAsync = moduleProbe.async;
