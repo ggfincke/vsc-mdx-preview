@@ -28,7 +28,7 @@ export function useAsyncEffect<T>(
   const { onSuccess, onError, onLoadingChange } = options;
 
   // store latest callbacks in ref to avoid requiring them in deps
-  // ensures we always call the most recent callback w/o needing the caller to memoize them
+  // ensure we always call the most recent callback w/o needing the caller to memoize them
   const callbacksRef = useRef({ onSuccess, onError, onLoadingChange });
   callbacksRef.current = { onSuccess, onError, onLoadingChange };
 

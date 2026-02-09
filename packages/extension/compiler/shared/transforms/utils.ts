@@ -22,7 +22,7 @@ export function getStaticStringProp(
 }
 
 // extract a static boolean prop from an MDX JSX element
-// supports boolean shorthand (e.g., `<Comp open />` = true)
+// support boolean shorthand (e.g., `<Comp open />` = true)
 // only processes literal values; expression values are ignored
 export function getStaticBooleanProp(
   node: MdxJsxElement,

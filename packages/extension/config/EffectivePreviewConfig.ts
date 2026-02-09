@@ -2,7 +2,7 @@
 // unified config object merging VS Code settings + config file + frontmatter
 // precedence: frontmatter > config file > VS Code settings
 //
-// Config Architecture
+// config architecture
 // 1. ConfigManager: low-level VS Code settings access (no caching, VS Code caches internally)
 // 2. PreviewConfiguration: per-preview state snapshot for change detection
 // 3. EffectivePreviewConfig: stateless builder merging settings + config file + frontmatter

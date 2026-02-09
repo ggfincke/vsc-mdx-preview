@@ -56,7 +56,7 @@ export function setCachedStat(
 }
 
 // get or create stat result for a path (sync)
-// uses cache if available, otherwise performs fs.statSync
+// use cache if available, otherwise perform fs.statSync
 export function getOrCreateStat(filePath: string): StatResult {
   const cached = getCachedStat(filePath);
   if (cached) {
@@ -74,7 +74,7 @@ export function getOrCreateStat(filePath: string): StatResult {
 // batch stat utilities (parallel file stat for async probing)
 
 // batch stat multiple paths in parallel
-// uses cache for already-cached paths, parallel stat for uncached
+// use cache for already-cached paths, parallel stat for uncached
 export async function batchStatAsync(
   paths: string[]
 ): Promise<Map<string, StatResult>> {
@@ -212,7 +212,7 @@ export function probeFile(
 }
 
 // probe for a file w/ various extensions (async)
-// uses parallel stat calls for better performance on initial resolution
+// use parallel stat calls for better performance on initial resolution
 // subsequent calls benefit from cache
 export async function probeFileAsync(
   basePath: string,

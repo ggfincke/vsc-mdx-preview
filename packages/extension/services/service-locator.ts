@@ -27,13 +27,13 @@
 // 3. Decoupling - consuming code doesn't depend on service implementation
 // 4. Testability - services can be mocked via ServiceRegistry
 //
-// For more details, see: packages/extension/services/ARCHITECTURE.md
+// for more details, see: packages/extension/services/ARCHITECTURE.md
 
 import { ServiceRegistry } from './ServiceRegistry';
 import { ServiceNames, type ServiceName } from './service-names';
 import type { IService } from '../types';
 
-// Import service types for typed convenience functions
+// import service types for typed convenience functions
 import type { ConfigManager } from '../config/ConfigManager';
 import type { ConfigCache } from '../config/ConfigCache';
 import type { TrustManager } from '../security/TrustManager';

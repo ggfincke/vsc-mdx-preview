@@ -39,7 +39,7 @@ export const TAILWIND_CACHE_SCHEMA_VERSION = 1;
 export const MAX_INLINE_SOURCE_CHUNK_SIZE = 2000;
 
 // max recursion depth for nested template literal extraction
-// prevents stack overflow from pathological input like deeply nested templates
+// prevent stack overflow from pathological input like deeply nested templates
 export const SCANNER_MAX_RECURSION_DEPTH = 10;
 
 // concurrency limits
@@ -78,7 +78,7 @@ export const MAX_KNOWN_TAILWIND_VERSION = 5;
 // watcher configuration
 
 // debounce delay in milliseconds for Tailwind config file watcher
-// prevents rapid recompilations when files are saved multiple times in quick succession
+// prevent rapid recompilations when files are saved multiple times in quick succession
 // use shared standard debounce constant
 export const CONFIG_WATCHER_DEBOUNCE_MS = STANDARD_DEBOUNCE_MS;
 

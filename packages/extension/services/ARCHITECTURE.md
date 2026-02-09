@@ -203,7 +203,7 @@ The extension provides two approaches for trust checking:
 ```typescript
 const trustState = getTrustManager().getState();
 if (trustState.canExecute) {
-  // Proceed with trusted operation
+  // proceed w/ trusted operation
 } else {
   // Fallback behavior
 }

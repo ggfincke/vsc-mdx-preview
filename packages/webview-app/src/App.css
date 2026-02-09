@@ -354,7 +354,7 @@ body.wordWrap .markdown-body pre {
   background: none;
 }
 
-/** Theming */
+/* theming */
 .markdown-body pre {
   background-color: var(--vscode-textCodeBlock-background);
   border: 1px solid var(--vscode-widget-border);

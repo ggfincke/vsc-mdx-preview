@@ -53,7 +53,7 @@ function StackTrace({ stack }: { stack: string }) {
   );
 }
 
-// Error display props for external use
+// error display props for external use
 export interface ErrorDisplayProps {
   error: Error;
   onReset?: () => void;
@@ -74,8 +74,8 @@ function extractSuggestions(error: Error): string[] {
   return [];
 }
 
-// Error display component w/ VS Code styling
-// Exported for reuse in App.tsx & other error handling contexts
+// error display component w/ VS Code styling
+// exported for reuse in App.tsx & other error handling contexts
 export function ErrorDisplay({
   error,
   onReset,

@@ -218,7 +218,7 @@ export async function activate(
   log.debug('Subsystems registered');
 
   // G.3 optimization: Initialize resources in background (non-blocking)
-  // Resources will be awaited when first preview panel is created
+  // resources will be awaited when first preview panel is created
   log.debug('Starting webview HTML resource initialization (background)...');
   initWebviewAppHTMLResourcesAsync(context);
   log.debug('Webview HTML resource initialization started');

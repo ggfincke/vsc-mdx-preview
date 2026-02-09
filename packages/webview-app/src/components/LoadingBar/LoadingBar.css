@@ -53,9 +53,9 @@
   will-change: transform;
 }
 
-/**
- * The progress bit has a width: 2% (1/50) of the parent container. The animation moves it from 0% to 100% of
- * that container. Since translateX is relative to the progress bit size, we have to multiple it with
+/*
+ * the progress bit has a width: 2% (1/50) of the parent container. the animation moves it from 0% to 100% of
+ * that container. since translateX is relative to the progress bit size, we have to multiply it w/
  * its relative size to the parent container:
  *  50%: 50 * 50 = 2500%
  * 100%: 50 * 100 - 50 (do not overflow): 4950%
