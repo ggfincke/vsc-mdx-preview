@@ -5,6 +5,10 @@
   "type": "module",
   "license": "GPL-3.0-or-later",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./components": "./src/components/index.ts",
+    "./callout": "./src/callout/index.ts",
+    "./icons": "./src/icons/index.ts",
+    "./shims": "./src/shims/index.ts"
   }
 }
