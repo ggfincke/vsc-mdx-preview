@@ -1,0 +1,64 @@
+/* packages/webview-app/src/components/shims/base/styles/callout.css */
+/* Shared callout/aside/admonition styles using data-attribute selectors */
+/* Works w/ all frameworks that use createCallout() factory */
+
+/* Import shared tokens & callout color variants */
+@import '../../shared/index.css';
+
+/* ==================== Base Structure ==================== */
+[data-callout-type] {
+  padding: var(--mdx-space-lg) var(--mdx-space-xl);
+  margin: var(--mdx-space-lg) 0;
+  border-left: var(--mdx-callout-border-width) solid
+    var(--callout-color, var(--mdx-text-muted));
+  border-radius: 0 var(--mdx-radius-lg) var(--mdx-radius-lg) 0;
+  background-color: var(
+    --callout-bg,
+    rgba(128, 128, 128, var(--mdx-alpha-subtle))
+  );
+}
+
+/* Header layout (Generic, Starlight) */
+[data-callout-type] > [class*='-header'] {
+  display: flex;
+  align-items: center;
+  gap: var(--mdx-space-sm);
+  font-weight: var(--mdx-font-weight-semibold);
+  margin-bottom: var(--mdx-space-md);
+  color: var(--callout-color);
+}
+
+/* Title text - uppercase for header layout */
+[data-callout-type] > [class*='-header'] > [class*='-title'] {
+  text-transform: uppercase;
+  font-size: var(--mdx-font-size-sm);
+  letter-spacing: var(--mdx-letter-spacing-wide);
+}
+
+/* Icon container */
+[data-callout-type] [class*='-icon'] {
+  display: inline-flex;
+  align-items: center;
+}
+
+[data-callout-type] [class*='-icon'] svg {
+  width: 1.25em;
+  height: 1.25em;
+}
+
+/* Content container */
+[data-callout-type] > [class*='-content'] > :first-child {
+  margin-top: 0;
+}
+
+[data-callout-type] > [class*='-content'] > :last-child {
+  margin-bottom: 0;
+}
+
+/* ==================== Color Variants ==================== */
+/* Color variants are defined in shared/callout-variants.css using tokens */
+/* No need to duplicate them here - they're imported via shared/index.css */
+
+/* ==================== Dark Mode ==================== */
+/* Dark mode alpha adjustment is handled by --mdx-alpha-subtle in tokens.css */
+/* No need to duplicate dark mode rules - they use CSS custom properties */

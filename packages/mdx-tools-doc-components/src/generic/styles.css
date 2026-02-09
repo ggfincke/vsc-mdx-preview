@@ -1,0 +1,102 @@
+/* packages/webview-app/src/components/shims/generic/styles.css */
+/* Generic component shim styles - framework-specific overrides only */
+/* Base callout/tabs/collapsible styles are in base/styles/ */
+
+/* Import shared tokens */
+@import '../shared/tokens.css';
+
+/* ==================== TabItem (standalone) ==================== */
+/* TabItem rendered outside of Tabs context */
+.mdx-preview-generic-tab-item {
+  padding: var(--mdx-space-lg);
+  border: 1px solid var(--vscode-panel-border, var(--mdx-border-color));
+  border-radius: var(--mdx-radius-lg);
+  margin: var(--mdx-space-lg) 0;
+}
+
+/* ==================== CodeGroup ==================== */
+.mdx-preview-generic-code-group {
+  margin: var(--mdx-space-lg) 0;
+  border: 1px solid var(--vscode-panel-border, var(--mdx-border-color));
+  border-radius: var(--mdx-radius-lg);
+  overflow: hidden;
+}
+
+.mdx-preview-generic-code-group-header {
+  display: flex;
+  gap: 0;
+  background-color: var(
+    --vscode-editorGroupHeader-tabsBackground,
+    var(--mdx-bg-tertiary)
+  );
+  border-bottom: 1px solid var(--vscode-panel-border, var(--mdx-border-color));
+  overflow-x: auto;
+}
+
+.mdx-preview-generic-code-group-button {
+  padding: var(--mdx-space-sm) var(--mdx-space-lg);
+  border: none;
+  background: transparent;
+  color: var(--vscode-foreground, var(--mdx-text-primary));
+  font-size: var(--mdx-font-size-sm);
+  font-family: var(--vscode-editor-font-family, monospace);
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all var(--mdx-transition-normal) ease;
+}
+
+.mdx-preview-generic-code-group-button:hover {
+  background-color: var(
+    --vscode-list-hoverBackground,
+    rgba(0, 0, 0, var(--mdx-alpha-hover))
+  );
+}
+
+.mdx-preview-generic-code-group-button.active {
+  color: var(--vscode-textLink-foreground, var(--mdx-link-color));
+  border-bottom-color: var(--vscode-textLink-foreground, var(--mdx-link-color));
+  background-color: var(--vscode-editor-background, var(--mdx-bg-primary));
+}
+
+.mdx-preview-generic-code-group-button:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder, var(--mdx-link-color));
+  outline-offset: -2px;
+}
+
+.mdx-preview-generic-code-group-content {
+  background-color: var(--vscode-editor-background, var(--mdx-bg-primary));
+}
+
+.mdx-preview-generic-code-group-panel pre {
+  margin: 0;
+  border-radius: 0;
+}
+
+.mdx-preview-generic-code-group-panel[hidden] {
+  display: none;
+}
+
+.mdx-preview-generic-code-group-empty {
+  margin: var(--mdx-space-lg) 0;
+}
+
+/* ==================== Dark Mode ==================== */
+/* Dark mode values are handled by VS Code CSS variables w/ fallbacks to tokens */
+
+.vscode-dark .mdx-preview-generic-code-group {
+  border-color: var(--vscode-panel-border, var(--mdx-border-color));
+}
+
+.vscode-dark .mdx-preview-generic-code-group-header {
+  background-color: var(
+    --vscode-editorGroupHeader-tabsBackground,
+    var(--mdx-bg-secondary)
+  );
+  border-bottom-color: var(--vscode-panel-border, var(--mdx-border-color));
+}
+
+.vscode-dark .mdx-preview-generic-code-group-button.active {
+  background-color: var(--vscode-editor-background, var(--mdx-bg-primary));
+}
