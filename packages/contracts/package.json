@@ -1,0 +1,18 @@
+{
+  "name": "@mdx-preview/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "exports": {
+    ".": "./src/index.ts",
+    "./config": "./src/config/index.ts",
+    "./errors": "./src/errors/index.ts",
+    "./logging": "./src/logging/index.ts",
+    "./preview": "./src/preview/index.ts",
+    "./rpc": "./src/rpc/index.ts",
+    "./themes": "./src/themes/index.ts",
+    "./diagrams": "./src/diagrams/index.ts",
+    "./runtime": "./src/runtime/index.ts"
+  }
+}
