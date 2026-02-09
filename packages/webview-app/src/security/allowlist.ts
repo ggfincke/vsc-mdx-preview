@@ -6,24 +6,24 @@ import type { Config } from 'dompurify';
 // DOMPurify configuration for safe rendering (only safe HTML elements & attributes)
 export const DOMPURIFY_CONFIG: Config = {
   ALLOWED_TAGS: [
-    // Headings
+    // headings
     'h1',
     'h2',
     'h3',
     'h4',
     'h5',
     'h6',
-    // Text content
+    // text content
     'p',
     'span',
     'div',
     'br',
     'hr',
-    // Lists
+    // lists
     'ul',
     'ol',
     'li',
-    // Text formatting
+    // text formatting
     'strong',
     'b',
     'em',
@@ -37,7 +37,7 @@ export const DOMPURIFY_CONFIG: Config = {
     'sub',
     'sup',
     'small',
-    // Code
+    // code
     'pre',
     'code',
     'kbd',
@@ -51,7 +51,7 @@ export const DOMPURIFY_CONFIG: Config = {
     'q',
     'cite',
     'abbr',
-    // Tables
+    // tables
     'table',
     'thead',
     'tbody',
@@ -62,11 +62,11 @@ export const DOMPURIFY_CONFIG: Config = {
     'caption',
     'colgroup',
     'col',
-    // Definition lists
+    // definition lists
     'dl',
     'dt',
     'dd',
-    // Other
+    // other
     'details',
     'summary',
     'figure',
@@ -237,7 +237,7 @@ export const DOMPURIFY_CONFIG: Config = {
     'data-graphviz-code',
     'data-graphviz-id',
     'data-graphviz-language',
-    // Admonition data attributes
+    // admonition data attributes
     'data-admonition-type',
   ],
   ADD_ATTR: ['target', 'rel'],

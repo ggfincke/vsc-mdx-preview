@@ -2,7 +2,7 @@
 // concurrency control primitives shared across packages
 
 // concurrency limiting semaphore for async operations
-// prevents resource exhaustion from unbounded parallelism
+// prevent resource exhaustion from unbounded parallelism
 export class Semaphore {
   private permits: number;
   private waitQueue: (() => void)[] = [];

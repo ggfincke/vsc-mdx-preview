@@ -21,9 +21,9 @@ export {
 // module loading limits (security & DoS prevention)
 
 // max module loading depth
-// prevents stack overflow from deep dependency chains
+// prevent stack overflow from deep dependency chains
 export const MAX_MODULE_LOAD_DEPTH = 100;
 
 // max concurrent fetches
-// prevents resource exhaustion from unbounded parallelism
+// prevent resource exhaustion from unbounded parallelism
 export const MAX_CONCURRENT_FETCHES = 10;
