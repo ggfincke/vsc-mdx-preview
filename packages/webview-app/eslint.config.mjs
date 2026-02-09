@@ -49,6 +49,19 @@ export default tseslint.config(
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
 
+      // Cross-package boundary enforcement
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/extension/**'],
+              message: 'Webview code must not import from extension.',
+            },
+          ],
+        },
+      ],
+
       // General
       'no-unused-expressions': 'warn',
       curly: 'error',

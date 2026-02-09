@@ -41,6 +41,19 @@ export default tseslint.config(
       // some dynamic requires are intentional
       '@typescript-eslint/no-require-imports': 'off',
 
+      // Cross-package boundary enforcement
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/webview-app/**'],
+              message: 'Extension/shared code must not import from webview-app.',
+            },
+          ],
+        },
+      ],
+
       // Custom local rules
       // Enforce ConfigManager usage for VS Code configuration access
       'local/no-direct-vscode-config': 'error',

@@ -29,6 +29,12 @@ jobs:
       - name: Run linting
         run: npm run lint
 
+      - name: Check dependency boundaries
+        run: npm run deps:check
+
+      - name: Check generated file locations
+        run: npm run check:generated
+
       - name: Check formatting
         run: npm run format:check
 
