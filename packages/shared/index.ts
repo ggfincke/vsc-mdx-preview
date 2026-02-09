@@ -1,6 +1,6 @@
 // packages/shared/index.ts
 // re-export facade for backward compatibility
-// moved modules re-exported from @mdx-preview/contracts
+// moved modules re-exported from @mdx-preview/contracts, @mdx-preview/registry, and @mdx-preview/runtime-utils
 
 // framework type aliases (from contracts)
 export type {
@@ -21,15 +21,17 @@ export {
   SHIM_LOAD_RETRY_DELAY_MS,
 } from '@mdx-preview/contracts';
 
-// diagram server utilities (from contracts)
+// diagram constants (from contracts)
+export { DEFAULT_PLANTUML_SERVER } from '@mdx-preview/contracts';
+
+// diagram runtime helpers (from runtime-utils)
 export {
-  DEFAULT_PLANTUML_SERVER,
   normalizePlantUmlServerUrl,
   getPlantUmlServerOrigin,
   getPlantUmlRenderEndpoints,
-} from '@mdx-preview/contracts';
+} from '@mdx-preview/runtime-utils';
 
-// component registry - stays local until Phase 3
+// component registry - moved to registry package in Phase 3
 export {
   SHIM_PREFIX,
   type ComponentRegistryEntry,
@@ -54,7 +56,7 @@ export {
   isFrameworkComponent,
   getGenericShimPath,
   getFrameworkShimPath,
-} from './registry';
+} from '@mdx-preview/registry';
 
 // core preloaded module IDs (from contracts)
 export {
@@ -72,7 +74,7 @@ export {
   type NextraPageMeta,
 } from '@mdx-preview/contracts';
 
-// error handling utilities - stays local until Phase 4
+// error handling utilities (from runtime-utils)
 export {
   isError,
   extractErrorMessage,
@@ -82,7 +84,7 @@ export {
   extractErrorChain,
   formatErrorWithCause,
   type ErrorInfo,
-} from './utils/errors';
+} from '@mdx-preview/runtime-utils';
 
 // module error types (from contracts)
 export {
@@ -107,7 +109,7 @@ export {
   createModuleDepthExceededError,
 } from '@mdx-preview/contracts';
 
-// module ID utilities - stays local until Phase 4
+// module ID utilities (from runtime-utils)
 export {
   NPM_MODULE_PREFIX,
   isNpmModuleId,
@@ -118,20 +120,20 @@ export {
   isValidModuleRequest,
   URL_SCHEME_PATTERN,
   type ParsedNpmModuleId,
-} from './utils/module-id';
+} from '@mdx-preview/runtime-utils';
 
-// LRU cache utilities - stays local until Phase 4
+// LRU cache utilities (from runtime-utils)
 export {
   LRUCache,
   type LRUCacheOptions,
   ContentHashCache,
   type ContentHashCacheOptions,
-} from './utils';
+} from '@mdx-preview/runtime-utils';
 
-// concurrency utilities - stays local until Phase 4
-export { Semaphore } from './utils';
+// concurrency utilities (from runtime-utils)
+export { Semaphore } from '@mdx-preview/runtime-utils';
 
-// validation utilities - stays local until Phase 4
+// validation utilities (from runtime-utils)
 export {
   isString,
   isNonEmptyString,
@@ -148,7 +150,7 @@ export {
   asNonEmptyString,
   asBoolean,
   asNumber,
-} from './utils';
+} from '@mdx-preview/runtime-utils';
 
 // theme types, constants & functions (from contracts)
 export {
@@ -224,7 +226,7 @@ export {
   type SecurityPolicyValue,
 } from '@mdx-preview/contracts';
 
-// callout types & normalization - stays local until Phase 3
+// callout types & normalization (from registry)
 export {
   type CalloutType,
   VALID_CALLOUT_TYPES,
@@ -233,9 +235,9 @@ export {
   CALLOUT_TITLES,
   normalizeCalloutType,
   isValidCalloutType,
-} from './callout';
+} from '@mdx-preview/registry';
 
-// centralized icon definitions - stays local until Phase 3
+// centralized icon definitions (from registry)
 export {
   CALLOUT_ICONS,
   GITHUB_ICONS,
@@ -247,4 +249,4 @@ export {
   type GitHubAlertIconType,
   type FileTreeIconType,
   type LucideIconType,
-} from './icons';
+} from '@mdx-preview/registry';
