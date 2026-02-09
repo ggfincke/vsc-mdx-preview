@@ -2,8 +2,8 @@
 // Unit tests for evaluateModule error handling w/ stack preservation
 
 import { describe, it, expect, vi } from 'vitest';
-import { evaluateModule } from '../../packages/webview-app/src/module-system/eval/evaluateModule';
-import type { ModuleRuntime } from '../../packages/webview-app/src/module-system/types';
+import { evaluateModule } from '../../packages/webview-client/src/features/module-runtime/eval/evaluateModule';
+import type { ModuleRuntime } from '../../packages/webview-client/src/features/module-runtime/types';
 
 function createMockRuntime(): ModuleRuntime {
   return {
@@ -123,3 +123,5 @@ describe('evaluateModule', () => {
     });
   });
 });
+
+

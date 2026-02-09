@@ -2,7 +2,7 @@
 // unit tests for import extraction w/ emphasis on edge cases
 
 import { describe, it, expect } from 'vitest';
-import { extractImportSpecifiers } from '../../../packages/extension/module-system/deps/import-extractor';
+import { extractImportSpecifiers } from '../../../packages/extension-host/src/features/module-runtime/dependencies/import-extractor';
 
 describe('extractImportSpecifiers', () => {
   describe('ESM imports', () => {

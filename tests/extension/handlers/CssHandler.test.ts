@@ -2,9 +2,9 @@
 // focused tests for CSS handler critical behavior
 
 import { describe, it, expect } from 'vitest';
-import { createSimpleHandler, buildCssResult } from '../../../packages/extension/module-system/handlers/result-builders';
-import { CSS_EXTENSIONS } from '../../../packages/extension/constants';
-import type { Preview } from '../../../packages/extension/preview/preview-manager';
+import { createSimpleHandler, buildCssResult } from '../../../packages/extension-host/src/features/module-runtime/handlers/result-builders';
+import { CSS_EXTENSIONS } from '../../../packages/extension-host/src/shared/constants';
+import type { Preview } from '../../../packages/extension-host/src/features/preview/preview-manager';
 
 const mockPreview = {} as Preview;
 

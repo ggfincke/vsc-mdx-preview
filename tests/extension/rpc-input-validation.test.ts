@@ -63,7 +63,7 @@ const { mockTrustManager, mockErrorReporter } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../packages/extension/services', () => ({
+vi.mock('../../packages/extension-host/src/app/services', () => ({
   getTrustManager: () => mockTrustManager,
   getErrorReporter: () => mockErrorReporter,
 }));
@@ -77,7 +77,7 @@ vi.mock('perf_hooks', () => ({
 }));
 
 // mock logging
-vi.mock('../../packages/extension/logging', () => ({
+vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -91,13 +91,13 @@ vi.mock('../../packages/extension/logging', () => ({
 }));
 
 // mock fetchLocal to avoid complex dependencies
-vi.mock('../../packages/extension/module-system/fetcher/fetchLocal', () => ({
+vi.mock('../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal', () => ({
   fetchLocal: vi.fn().mockResolvedValue({ code: '', dependencies: [], fsPath: '' }),
 }));
 
 // import after mocks
-import ExtensionHandle from '../../packages/extension/rpc-extension-handle';
-import { MAX_FETCH_REQUEST_LENGTH } from '../../packages/extension/constants';
+import ExtensionHandle from '../../packages/extension-host/src/platform/rpc/extension-rpc-handler';
+import { MAX_FETCH_REQUEST_LENGTH } from '../../packages/extension-host/src/shared/constants';
 
 // minimal mock Preview
 function createMockPreview(fsPath = '/workspace/test.mdx') {

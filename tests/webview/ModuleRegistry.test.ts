@@ -6,7 +6,7 @@ import { describe, it, expect, vi } from 'vitest';
 async function createRegistry() {
   vi.resetModules();
   const module = await import(
-    '../../packages/webview-app/src/module-system/registry/ModuleRegistry'
+    '../../packages/webview-client/src/features/module-runtime/registry/ModuleRegistry'
   );
   return new module.ModuleRegistry();
 }
@@ -164,3 +164,5 @@ describe('ModuleRegistry', () => {
     });
   });
 });
+
+

@@ -3,7 +3,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { LogTags } from '@mdx-preview/shared';
-import { WithSubscribers } from '../../packages/extension/services/SingletonService';
+import { WithSubscribers } from '../../packages/extension-host/src/app/services/SingletonService';
 
 const subscriberErrorHandler = vi.fn();
 

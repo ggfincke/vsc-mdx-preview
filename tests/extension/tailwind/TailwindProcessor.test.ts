@@ -5,8 +5,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { TailwindProcessor } from '../../../packages/extension/tailwind/TailwindProcessor';
-import type { TailwindConfig } from '../../../packages/extension/config/EffectivePreviewConfig';
+import { TailwindProcessor } from '../../../packages/extension-host/src/features/tailwind/TailwindProcessor';
+import type { TailwindConfig } from '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig';
 import type { TrustState } from '@mdx-preview/shared';
 import { createMockPreview } from '../../helpers/mock-preview';
 
@@ -20,12 +20,12 @@ const { mockFrameworkDetector, mockErrorReporter } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getFrameworkDetector: () => mockFrameworkDetector,
   getErrorReporter: () => mockErrorReporter,
 }));
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),

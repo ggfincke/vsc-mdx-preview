@@ -18,7 +18,7 @@ const mockFrameworkDetector = {
   getFrameworkDisplayName: vi.fn((id: string) => id),
 };
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -31,13 +31,13 @@ vi.mock('../../../packages/extension/logging', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
   getPreviewManager: () => mockPreviewManager,
   getFrameworkDetector: () => mockFrameworkDetector,
 }));
 
-import { commands } from '../../../packages/extension/commands/framework-selection';
+import { commands } from '../../../packages/extension-host/src/features/commands/framework-selection';
 
 describe('framework-selection commands', () => {
   const handler = commands.find(

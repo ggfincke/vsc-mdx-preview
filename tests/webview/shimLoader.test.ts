@@ -5,30 +5,23 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   loadFrameworkShimsWithRetry,
   loadGenericShimsWithRetry,
-} from '../../packages/webview-app/src/module-system/preload/shimLoader';
-import type { ModuleRegistry } from '../../packages/webview-app/src/module-system/registry/ModuleRegistry';
+} from '../../packages/webview-client/src/features/module-runtime/preload/shimLoader';
+import type { ModuleRegistry } from '../../packages/webview-client/src/features/module-runtime/registry/ModuleRegistry';
 
-vi.mock('../../packages/webview-app/src/utils/debug', () => {
-  const debug = vi.fn();
-  const info = vi.fn();
-  const warn = vi.fn();
-  const error = vi.fn();
+vi.mock('../../packages/webview-client/src/shared/utils/createTaggedLogger', () => {
+  const logger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  };
 
   return {
-    debug,
-    info,
-    warn,
-    error,
-    logger: {
-      debug,
-      info,
-      warn,
-      error,
-    },
+    createTaggedLogger: () => logger,
   };
 });
 
-vi.mock('../../packages/webview-app/src/constants', () => ({
+vi.mock('../../packages/webview-client/src/app/constants', () => ({
   SHIM_LOAD_MAX_RETRIES: 2,
   SHIM_LOAD_RETRY_DELAY_MS: 10,
 }));
@@ -190,3 +183,5 @@ describe('shimLoader', () => {
     });
   });
 });
+
+

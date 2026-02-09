@@ -12,7 +12,7 @@ const mockPreviewManager = {
   clearAllWebviewCaches: vi.fn(async () => {}),
 };
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -25,23 +25,23 @@ vi.mock('../../../packages/extension/logging', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension/module-system/resolver/resolver-factory', () => ({
+vi.mock('../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory', () => ({
   clearResolverCache: (...args: any[]) => mockClearResolverCache(...args),
 }));
 
-vi.mock('../../../packages/extension/module-system/handlers', () => ({
+vi.mock('../../../packages/extension-host/src/features/module-runtime/handlers', () => ({
   clearSassCache: (...args: any[]) => mockClearSassCache(...args),
 }));
 
-vi.mock('../../../packages/extension/cache-subsystem', () => ({
+vi.mock('../../../packages/extension-host/src/app/lifecycle/cache-subsystem', () => ({
   clearUnmanagedCaches: (...args: any[]) => mockClearUnmanagedCaches(...args),
 }));
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getPreviewManager: () => mockPreviewManager,
 }));
 
-import { commands } from '../../../packages/extension/commands/cache';
+import { commands } from '../../../packages/extension-host/src/features/commands/cache';
 
 describe('cache commands', () => {
   const handler = commands.find(

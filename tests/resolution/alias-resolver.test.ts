@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import {
   resolveAlias,
   isBuiltInShim,
-} from '../../packages/extension/module-system/resolver/alias-resolver';
+} from '../../packages/extension-host/src/features/module-runtime/resolution/alias-resolver';
 
 describe('resolveAlias()', () => {
   describe('Docusaurus aliases', () => {

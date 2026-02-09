@@ -1,5 +1,5 @@
 // tests/shared/registry-queries.test.ts
-// unit tests for shared component registry query helpers
+// unit tests for registry package query helpers
 
 import { describe, it, expect } from 'vitest';
 import {
@@ -12,7 +12,7 @@ import {
   isFrameworkComponent,
   getGenericShimPath,
   getFrameworkShimPath,
-} from '../../packages/shared/registry/queries';
+} from '@mdx-preview/registry';
 
 describe('registry queries', () => {
   it('returns generic component names including aliases', () => {

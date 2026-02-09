@@ -5,7 +5,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { TailwindDetector } from '../../../packages/extension/tailwind/TailwindDetector';
+import { TailwindDetector } from '../../../packages/extension-host/src/features/tailwind/TailwindDetector';
 
 function createTempWorkspace(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-tailwind-'));

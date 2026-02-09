@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 vi.mock('vscode', () => ({}));
 
 // Mock logging
-vi.mock('../../packages/extension/logging', () => ({
+vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
@@ -28,7 +28,7 @@ const mockNodeResolver = {
   resolveSync: vi.fn(),
 };
 vi.mock(
-  '../../packages/extension/module-system/resolver/resolver-factory',
+  '../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory',
   () => ({
     getBrowserResolver: () => mockBrowserResolver,
     getNodeResolver: () => mockNodeResolver,
@@ -39,8 +39,8 @@ vi.mock(
 import {
   EnhancedResolveStrategy,
   getEnhancedResolveStrategy,
-} from '../../packages/extension/module-system/resolver/strategies/EnhancedResolveStrategy';
-import { ResolutionStrategy } from '../../packages/extension/types';
+} from '../../packages/extension-host/src/features/module-runtime/resolution/strategies/EnhancedResolveStrategy';
+import { ResolutionStrategy } from '../../packages/extension-host/src/types';
 
 describe('EnhancedResolveStrategy', () => {
   let strategy: EnhancedResolveStrategy;

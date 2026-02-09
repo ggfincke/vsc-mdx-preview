@@ -24,7 +24,7 @@ const { mockTrustManager } = vi.hoisted(() => ({
 }));
 
 // Mock services
-vi.mock('../../packages/extension/services', () => ({
+vi.mock('../../packages/extension-host/src/app/services', () => ({
   getTrustManager: () => mockTrustManager,
 }));
 
@@ -44,8 +44,8 @@ import {
   requireTrustedModeForDocument,
   tryRequireTrustedMode,
   tryRequireTrustedModeForDocument,
-} from '../../packages/extension/security/validateTrust';
-import { SecurityMode } from '../../packages/extension/security/TrustManager';
+} from '../../packages/extension-host/src/features/security/validateTrust';
+import { SecurityMode } from '../../packages/extension-host/src/features/security/TrustManager';
 
 describe('TrustError', () => {
   it('is an instance of Error', () => {

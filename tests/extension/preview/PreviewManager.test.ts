@@ -3,7 +3,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -16,22 +16,22 @@ vi.mock('../../../packages/extension/logging', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension/services', () => ({}));
+vi.mock('../../../packages/extension-host/src/app/services', () => ({}));
 
 // mock preview-commands to avoid pulling in heavy deps
-vi.mock('../../../packages/extension/preview/preview-commands', () => ({
+vi.mock('../../../packages/extension-host/src/features/preview/preview-commands', () => ({
   openPreview: vi.fn(),
   refreshPreview: vi.fn(),
 }));
 
 // mock Preview module to avoid transitive dep chain
 // (Preview → EvaluationEngine → transform → sucrase)
-vi.mock('../../../packages/extension/preview/Preview', () => ({
+vi.mock('../../../packages/extension-host/src/features/preview/Preview', () => ({
   Preview: vi.fn(),
 }));
 
-import { PreviewManager } from '../../../packages/extension/preview/preview-manager';
-import type { Preview } from '../../../packages/extension/preview/Preview';
+import { PreviewManager } from '../../../packages/extension-host/src/features/preview/preview-manager';
+import type { Preview } from '../../../packages/extension-host/src/features/preview/Preview';
 
 function createMockPreview(opts?: { active?: boolean }): Preview {
   return {

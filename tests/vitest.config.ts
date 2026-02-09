@@ -14,7 +14,7 @@ export default defineConfig({
     alias: {
       vscode: path.resolve(
         __dirname,
-        '../packages/extension/test/__mocks__/vscode.ts'
+        '../packages/extension-host/test/__mocks__/vscode.ts'
       ),
       '@mdx-preview/shared': path.resolve(
         __dirname,
@@ -42,7 +42,7 @@ export default defineConfig({
     alias: {
       vscode: path.resolve(
         __dirname,
-        '../packages/extension/test/__mocks__/vscode.ts'
+        '../packages/extension-host/test/__mocks__/vscode.ts'
       ),
       '@mdx-preview/shared': path.resolve(
         __dirname,

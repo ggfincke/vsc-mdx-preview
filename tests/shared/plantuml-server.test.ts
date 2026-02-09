@@ -1,13 +1,13 @@
 // tests/shared/plantuml-server.test.ts
-// unit tests for shared PlantUML server URL helpers
+// unit tests for PlantUML server constant and runtime URL helpers
 
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_PLANTUML_SERVER } from '@mdx-preview/contracts';
 import {
-  DEFAULT_PLANTUML_SERVER,
   normalizePlantUmlServerUrl,
   getPlantUmlServerOrigin,
   getPlantUmlRenderEndpoints,
-} from '../../packages/shared/diagrams/plantuml-server';
+} from '@mdx-preview/runtime-utils';
 
 describe('PlantUML server helpers', () => {
   it('normalizes empty input to default server', () => {

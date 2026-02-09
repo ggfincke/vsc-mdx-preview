@@ -18,8 +18,8 @@ vi.mock('vscode', () => ({
 import {
   checkFsPathAsync,
   handleDidChangeWorkspaceFolders,
-} from '../../../packages/extension/module-system/security/checkFsPath';
-import { normalizePathForComparison } from '../../../packages/extension/utils/path-utils';
+} from '../../../packages/extension-host/src/features/module-runtime/security/checkFsPath';
+import { normalizePathForComparison } from '../../../packages/extension-host/src/shared/utils/path-utils';
 
 describe('checkFsPathAsync', () => {
   beforeEach(() => {
@@ -340,7 +340,7 @@ describe('normalizePathForComparison', () => {
   it('should lowercase paths on Windows', () => {
     Object.defineProperty(process, 'platform', { value: 'win32' });
     const result = normalizePathForComparison('C:\\Users\\Test\\File.ts');
-    expect(result).toBe('c:\\users\\test\\file.ts');
+    expect(result).toBe('c:/users/test/file.ts');
   });
 
   it('should preserve case on Unix', () => {

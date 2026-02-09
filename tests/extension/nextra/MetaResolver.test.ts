@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { MetaResolver, resolveNextraMeta, mergeNextraMeta } from '../../../packages/extension/nextra/MetaResolver';
+import { MetaResolver, resolveNextraMeta, mergeNextraMeta } from '../../../packages/extension-host/src/features/framework/nextra/MetaResolver';
 
 const tempDirs: string[] = [];
 

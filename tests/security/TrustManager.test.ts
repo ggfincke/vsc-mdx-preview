@@ -38,12 +38,12 @@ vi.mock('vscode', () => ({
 }));
 
 // Mock services
-vi.mock('../../packages/extension/services', () => ({
+vi.mock('../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
 }));
 
 // Mock logging
-vi.mock('../../packages/extension/logging', () => ({
+vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
   error: vi.fn(),
   warn: vi.fn(),
   debug: vi.fn(),
@@ -57,7 +57,7 @@ vi.mock('../../packages/extension/logging', () => ({
 }));
 
 // Import after mocks are set up
-import { TrustManager, SecurityMode, getSecurityMode } from '../../packages/extension/security/TrustManager';
+import { TrustManager, SecurityMode, getSecurityMode } from '../../packages/extension-host/src/features/security/TrustManager';
 import type { TrustState } from '@mdx-preview/shared';
 
 describe('TrustManager', () => {

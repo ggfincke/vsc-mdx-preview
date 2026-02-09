@@ -35,14 +35,14 @@ const { mockTrustManager, mockFrameworkDetector, mockErrorReporter } =
     },
   }));
 
-vi.mock('../../packages/extension/services', () => ({
+vi.mock('../../packages/extension-host/src/app/services', () => ({
   getTrustManager: () => mockTrustManager,
   getFrameworkDetector: () => mockFrameworkDetector,
   getErrorReporter: () => mockErrorReporter,
 }));
 
 // mock logging
-vi.mock('../../packages/extension/logging', () => ({
+vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -56,8 +56,8 @@ vi.mock('../../packages/extension/logging', () => ({
 }));
 
 // import after mocks
-import { compileTrusted } from '../../packages/extension/compiler/trusted/compile';
-import { compileSafe } from '../../packages/extension/compiler/safe/compile';
+import { compileTrusted } from '../../packages/extension-host/src/features/compilation/trusted/compile';
+import { compileSafe } from '../../packages/extension-host/src/features/compilation/safe/compile';
 import {
   FIXTURES,
   createMockPreview,

@@ -1,8 +1,8 @@
 // tests/shared/semaphore.test.ts
-// unit tests for shared async semaphore behavior
+// unit tests for runtime-utils async semaphore behavior
 
 import { describe, it, expect } from 'vitest';
-import { Semaphore } from '../../packages/shared/utils/concurrency';
+import { Semaphore } from '@mdx-preview/runtime-utils';
 
 describe('Semaphore', () => {
   it('acquire uses available permits immediately', async () => {

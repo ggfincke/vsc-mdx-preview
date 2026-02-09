@@ -14,7 +14,7 @@ let trustState: TrustState = { canExecute: false };
 let trustHandlers: TrustHandler[] = [];
 
 const setupTrustManagerMock = async (): Promise<void> => {
-  const services = await import('../../../packages/extension/services');
+  const services = await import('../../../packages/extension-host/src/app/services');
   const getTrustManager = services.getTrustManager as unknown as vi.Mock;
 
   getTrustManager.mockImplementation(() => ({
@@ -31,13 +31,13 @@ beforeEach(async () => {
   trustState = { canExecute: false };
   trustHandlers = [];
 
-  const logging = await import('../../../packages/extension/logging');
+  const logging = await import('../../../packages/extension-host/src/shared/logging/logger');
   (logging.debug as unknown as vi.Mock).mockClear();
 
   await setupTrustManagerMock();
 
   const babelModule = await import(
-    '../../../packages/extension/module-system/transform/babel'
+    '../../../packages/extension-host/src/features/module-runtime/transform/babel'
   );
   babelModule.resetPrewarmState();
   babelModule.clearBabelConfigCache();
@@ -46,7 +46,7 @@ beforeEach(async () => {
 describe('prewarmBabel()', () => {
   it('marks prewarm complete after successful prewarm', async () => {
     const babelModule = await import(
-      '../../../packages/extension/module-system/transform/babel'
+      '../../../packages/extension-host/src/features/module-runtime/transform/babel'
     );
 
     await babelModule.prewarmBabel();
@@ -56,9 +56,9 @@ describe('prewarmBabel()', () => {
 
   it('is idempotent when called multiple times', async () => {
     const babelModule = await import(
-      '../../../packages/extension/module-system/transform/babel'
+      '../../../packages/extension-host/src/features/module-runtime/transform/babel'
     );
-    const logging = await import('../../../packages/extension/logging');
+    const logging = await import('../../../packages/extension-host/src/shared/logging/logger');
     const debugMock = logging.debug as unknown as vi.Mock;
 
     await babelModule.prewarmBabel();
@@ -71,7 +71,7 @@ describe('prewarmBabel()', () => {
 
   it('allows transformAsync to work without explicit prewarm', async () => {
     const babelModule = await import(
-      '../../../packages/extension/module-system/transform/babel'
+      '../../../packages/extension-host/src/features/module-runtime/transform/babel'
     );
 
     const result = await babelModule.transformAsync(
@@ -85,14 +85,14 @@ describe('prewarmBabel()', () => {
 describe('initPrewarm()', () => {
   it('triggers prewarm when trust state changes to canExecute', async () => {
     const babelModule = await import(
-      '../../../packages/extension/module-system/transform/babel'
+      '../../../packages/extension-host/src/features/module-runtime/transform/babel'
     );
     const prewarmSpy = vi
       .spyOn(babelModule, 'prewarmBabel')
       .mockResolvedValue();
 
     const prewarmModule = await import(
-      '../../../packages/extension/prewarm'
+      '../../../packages/extension-host/src/features/prewarm'
     );
 
     const disposable = prewarmModule.initPrewarm();
@@ -111,14 +111,14 @@ describe('initPrewarm()', () => {
 
   it('does not prewarm in Safe Mode', async () => {
     const babelModule = await import(
-      '../../../packages/extension/module-system/transform/babel'
+      '../../../packages/extension-host/src/features/module-runtime/transform/babel'
     );
     const prewarmSpy = vi
       .spyOn(babelModule, 'prewarmBabel')
       .mockResolvedValue();
 
     const prewarmModule = await import(
-      '../../../packages/extension/prewarm'
+      '../../../packages/extension-host/src/features/prewarm'
     );
     const vscode = await import('vscode');
 

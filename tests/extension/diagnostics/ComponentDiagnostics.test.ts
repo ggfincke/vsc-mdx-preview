@@ -2,7 +2,7 @@
 // unit tests for component diagnostics
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ComponentDiagnostics } from '../../../packages/extension/diagnostics/ComponentDiagnostics';
+import { ComponentDiagnostics } from '../../../packages/extension-host/src/features/diagnostics/ComponentDiagnostics';
 import { Range, Uri } from 'vscode';
 
 const { mockDetectComponents, mockGetUnknownComponents } = vi.hoisted(() => ({
@@ -10,17 +10,17 @@ const { mockDetectComponents, mockGetUnknownComponents } = vi.hoisted(() => ({
   mockGetUnknownComponents: vi.fn(),
 }));
 
-vi.mock('../../../packages/extension/diagnostics/ComponentDetector', () => ({
+vi.mock('../../../packages/extension-host/src/features/diagnostics/ComponentDetector', () => ({
   detectComponents: mockDetectComponents,
   getUnknownComponents: mockGetUnknownComponents,
   invalidateComponentCache: vi.fn(),
 }));
 
-vi.mock('../../../packages/extension/preview/config/ConfigResolver', () => ({
+vi.mock('../../../packages/extension-host/src/features/preview/configuration/ConfigResolver', () => ({
   resolveConfig: vi.fn(() => undefined),
 }));
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),

@@ -3,11 +3,11 @@
 
 import * as fs from 'fs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ErrorContext } from '../../../packages/extension/errors';
+import { ErrorContext } from '../../../packages/extension-host/src/shared/errors';
 import {
   MDX_COMPILATION_TIMEOUT_MS,
   TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
-} from '../../../packages/extension/constants';
+} from '../../../packages/extension-host/src/shared/constants';
 
 const {
   mockRaceTimeout,
@@ -27,27 +27,27 @@ const {
   },
 }));
 
-vi.mock('../../../packages/extension/utils/async-utils', () => ({
+vi.mock('../../../packages/extension-host/src/shared/utils/async-utils', () => ({
   raceTimeout: mockRaceTimeout,
 }));
 
-vi.mock('../../../packages/extension/module-system/transform/transform', () => ({
+vi.mock('../../../packages/extension-host/src/features/module-runtime/transform/transform', () => ({
   transformEntry: mockTransformEntry,
 }));
 
 vi.mock(
-  '../../../packages/extension/module-system/deps/import-extractor',
+  '../../../packages/extension-host/src/features/module-runtime/dependencies/import-extractor',
   () => ({
     extractImportSpecifiers: mockExtractImportSpecifiers,
   })
 );
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getTailwindProcessor: () => mockTailwindProcessor,
   getErrorReporter: () => mockErrorReporter,
 }));
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   createTaggedLogger: () => ({
     debug: vi.fn(),
     info: vi.fn(),
@@ -56,7 +56,7 @@ vi.mock('../../../packages/extension/logging', () => ({
   }),
 }));
 
-import { EvaluationEngine } from '../../../packages/extension/preview/EvaluationEngine';
+import { EvaluationEngine } from '../../../packages/extension-host/src/features/preview/EvaluationEngine';
 
 function createPreview() {
   return {

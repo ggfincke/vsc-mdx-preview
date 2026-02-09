@@ -4,9 +4,9 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';
-import { findMermaidContainers } from '../../packages/webview-app/src/utils/findMermaidContainers';
-import { findPlantUMLContainers } from '../../packages/webview-app/src/utils/findPlantUMLContainers';
-import { findGraphvizContainers } from '../../packages/webview-app/src/utils/findGraphvizContainers';
+import { findMermaidContainers } from '../../packages/webview-client/src/features/diagrams/utils/findMermaidContainers';
+import { findPlantUMLContainers } from '../../packages/webview-client/src/features/diagrams/utils/findPlantUMLContainers';
+import { findGraphvizContainers } from '../../packages/webview-client/src/features/diagrams/utils/findGraphvizContainers';
 
 describe('diagram container finders', () => {
   it('finds Mermaid containers w/ required attributes', () => {
@@ -52,3 +52,5 @@ describe('diagram container finders', () => {
     });
   });
 });
+
+

@@ -5,8 +5,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ErrorContext } from '../../../packages/extension/errors';
-import { MODULE_FETCH_TIMEOUT_MS } from '../../../packages/extension/constants';
+import { ErrorContext } from '../../../packages/extension-host/src/shared/errors';
+import { MODULE_FETCH_TIMEOUT_MS } from '../../../packages/extension-host/src/shared/constants';
 
 const {
   mockCheckFsPathAsync,
@@ -31,31 +31,35 @@ const {
   },
 }));
 
-vi.mock('../../../packages/extension/module-system/security/checkFsPath', () => ({
+vi.mock('../../../packages/extension-host/src/features/module-runtime/security/checkFsPath', () => ({
   checkFsPathAsync: mockCheckFsPathAsync,
 }));
 
-vi.mock('../../../packages/extension/utils/file-utils', () => ({
+vi.mock('../../../packages/extension-host/src/shared/utils/file-utils', () => ({
   readFileAsync: mockReadFileAsync,
 }));
 
-vi.mock('../../../packages/extension/module-system/handlers', () => ({
+vi.mock('../../../packages/extension-host/src/features/module-runtime/handlers', () => ({
   handleByExtension: mockHandleByExtension,
 }));
 
 vi.mock(
-  '../../../packages/extension/module-system/resolver/UnifiedResolver',
+  '../../../packages/extension-host/src/features/module-runtime/resolution/UnifiedResolver',
   () => ({
     getUnifiedResolver: () => mockResolver,
   })
 );
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getFrameworkDetector: () => mockFrameworkDetector,
   getErrorReporter: () => mockErrorReporter,
 }));
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
   createTaggedLogger: () => ({
     debug: vi.fn(),
     info: vi.fn(),
@@ -64,7 +68,7 @@ vi.mock('../../../packages/extension/logging', () => ({
   }),
 }));
 
-import { fetchLocal } from '../../../packages/extension/module-system/fetcher/fetchLocal';
+import { fetchLocal } from '../../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal';
 
 describe('fetchLocal timeout delegation', () => {
   let tempDir: string;

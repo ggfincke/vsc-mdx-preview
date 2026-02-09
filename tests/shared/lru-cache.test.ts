@@ -1,10 +1,10 @@
 // tests/shared/lru-cache.test.ts
-// unit tests for shared LRU cache behaviors
+// unit tests for runtime-utils LRU cache behaviors
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   LRUCache,
-} from '../../packages/shared/utils/lru-cache';
+} from '@mdx-preview/runtime-utils';
 
 describe('LRUCache', () => {
   afterEach(() => {

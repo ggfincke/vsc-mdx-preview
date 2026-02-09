@@ -3,7 +3,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../../../packages/extension/logging', () => ({
+vi.mock('../../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -16,8 +16,8 @@ vi.mock('../../../../packages/extension/logging', () => ({
   })),
 }));
 
-import { WatcherManager } from '../../../../packages/extension/preview/watchers/WatcherManager';
-import type { IWatcher } from '../../../../packages/extension/types';
+import { WatcherManager } from '../../../../packages/extension-host/src/features/preview/watchers/WatcherManager';
+import type { IWatcher } from '../../../../packages/extension-host/src/types';
 
 function createMockWatcher(opts?: {
   active?: boolean;

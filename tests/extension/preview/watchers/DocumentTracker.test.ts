@@ -2,7 +2,7 @@
 // unit tests for document version & stale state tracking
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DocumentTracker } from '../../../../packages/extension/preview/watchers/DocumentTracker';
+import { DocumentTracker } from '../../../../packages/extension-host/src/features/preview/watchers/DocumentTracker';
 
 describe('DocumentTracker', () => {
   let tracker: DocumentTracker;

@@ -4,7 +4,7 @@
 import { vi, beforeEach, afterEach } from 'vitest';
 
 // mock logging to prevent noise in test output
-vi.mock('../packages/extension/logging', () => ({
+vi.mock('../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock('../packages/extension/logging', () => ({
 }));
 
 // mock services w/ sensible defaults (tests can override as needed)
-vi.mock('../packages/extension/services', () => ({
+vi.mock('../packages/extension-host/src/app/services', () => ({
   getConfigManager: vi.fn(() => ({
     get: vi.fn((key: string) => {
       const defaults: Record<string, unknown> = {

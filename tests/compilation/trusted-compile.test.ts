@@ -23,12 +23,12 @@ const { mockTrustManager } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../packages/extension/services', () => ({
+vi.mock('../../packages/extension-host/src/app/services', () => ({
   getTrustManager: () => mockTrustManager,
 }));
 
 // Mock logging
-vi.mock('../../packages/extension/logging', () => ({
+vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
   error: vi.fn(),
   warn: vi.fn(),
   debug: vi.fn(),
@@ -42,7 +42,7 @@ vi.mock('../../packages/extension/logging', () => ({
 }));
 
 // Mock plugin loader (avoid loading real plugins)
-vi.mock('../../packages/extension/compiler/plugins/loader', () => ({
+vi.mock('../../packages/extension-host/src/features/compilation/plugins/loader', () => ({
   loadPluginsFromConfig: vi.fn(async () => ({
     remarkPlugins: [],
     rehypePlugins: [],
@@ -51,7 +51,7 @@ vi.mock('../../packages/extension/compiler/plugins/loader', () => ({
 }));
 
 // Import after mocks
-import { compileTrusted } from '../../packages/extension/compiler/trusted/compile';
+import { compileTrusted } from '../../packages/extension-host/src/features/compilation/trusted/compile';
 import {
   createMockPreview,
   createMockCompilerConfigFromPreview,

@@ -8,7 +8,7 @@ import * as path from 'path';
 vi.mock('vscode', () => ({}));
 
 // Mock logging
-vi.mock('../../packages/extension/logging', () => ({
+vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock('../../packages/extension/logging', () => ({
 // Mock file-prober
 const mockProbeTypeScriptFile = vi.fn();
 const mockProbeTypeScriptFileAsync = vi.fn();
-vi.mock('../../packages/extension/module-system/resolver/file-prober', () => ({
+vi.mock('../../packages/extension-host/src/features/module-runtime/resolution/file-prober', () => ({
   probeTypeScriptFile: (...args: unknown[]) => mockProbeTypeScriptFile(...args),
   probeTypeScriptFileAsync: (...args: unknown[]) =>
     mockProbeTypeScriptFileAsync(...args),
@@ -38,8 +38,8 @@ import {
   clearStatCache,
   clearCompiledIndexCache,
   getResolutionCandidates,
-} from '../../packages/extension/module-system/resolver/strategies/TypeScriptPathStrategy';
-import { ResolutionStrategy } from '../../packages/extension/types';
+} from '../../packages/extension-host/src/features/module-runtime/resolution/strategies/TypeScriptPathStrategy';
+import { ResolutionStrategy } from '../../packages/extension-host/src/types';
 
 describe('TypeScriptPathStrategy', () => {
   let strategy: TypeScriptPathStrategy;

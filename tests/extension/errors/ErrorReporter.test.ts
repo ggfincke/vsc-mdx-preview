@@ -11,7 +11,7 @@ const { mockLogDebug, mockLogWarn, mockLogError, mockTaggedDebug } = vi.hoisted(
   mockTaggedDebug: vi.fn(),
 }));
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: mockLogDebug,
   info: vi.fn(),
   warn: mockLogWarn,
@@ -24,7 +24,7 @@ vi.mock('../../../packages/extension/logging', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension/services', () => ({}));
+vi.mock('../../../packages/extension-host/src/app/services', () => ({}));
 
 import {
   ErrorReporter,
@@ -32,7 +32,7 @@ import {
   ErrorContext,
   ExtensionError,
   ModuleError,
-} from '../../../packages/extension/errors';
+} from '../../../packages/extension-host/src/shared/errors';
 
 describe('ErrorReporter', () => {
   beforeEach(() => {

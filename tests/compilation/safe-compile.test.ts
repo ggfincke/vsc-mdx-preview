@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('vscode', () => ({}));
 
 // Mock logging
-vi.mock('../../packages/extension/logging', () => ({
+vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
   error: vi.fn(),
   warn: vi.fn(),
   debug: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock('../../packages/extension/logging', () => ({
 }));
 
 // Import after mocks
-import { compileSafe } from '../../packages/extension/compiler/safe/compile';
+import { compileSafe } from '../../packages/extension-host/src/features/compilation/safe/compile';
 import { FIXTURES, createMockCompilerConfig } from '../helpers';
 
 describe('compileSafe()', () => {

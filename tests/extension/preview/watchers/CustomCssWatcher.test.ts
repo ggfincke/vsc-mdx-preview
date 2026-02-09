@@ -18,7 +18,7 @@ const { mockReadFileAsync, mockResolvePathWithFallbacks, createdWatchers } =
     >(),
   }));
 
-vi.mock('../../../../packages/extension/logging', () => ({
+vi.mock('../../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -31,16 +31,16 @@ vi.mock('../../../../packages/extension/logging', () => ({
   })),
 }));
 
-vi.mock('../../../../packages/extension/utils/file-utils', () => ({
+vi.mock('../../../../packages/extension-host/src/shared/utils/file-utils', () => ({
   readFileAsync: (...args: any[]) => mockReadFileAsync(...args),
 }));
 
-vi.mock('../../../../packages/extension/utils/path-utils', () => ({
+vi.mock('../../../../packages/extension-host/src/shared/utils/path-utils', () => ({
   resolvePathWithFallbacks: (...args: any[]) =>
     mockResolvePathWithFallbacks(...args),
 }));
 
-vi.mock('../../../../packages/extension/utils/createFileWatcher', () => ({
+vi.mock('../../../../packages/extension-host/src/shared/utils/createFileWatcher', () => ({
   createFileWatcher: vi.fn((config: any) => {
     const fsPath = String(config.pattern);
     const watcher = {
@@ -60,7 +60,7 @@ vi.mock('../../../../packages/extension/utils/createFileWatcher', () => ({
   }),
 }));
 
-import { CustomCssWatcher } from '../../../../packages/extension/preview/watchers/CustomCssWatcher';
+import { CustomCssWatcher } from '../../../../packages/extension-host/src/features/preview/watchers/CustomCssWatcher';
 
 describe('CustomCssWatcher', () => {
   beforeEach(() => {

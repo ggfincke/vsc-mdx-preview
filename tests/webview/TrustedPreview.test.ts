@@ -1,4 +1,4 @@
-// tests/webview/TrustedPreview.test.ts
+// tests/webview/features/preview/trusted/TrustedPreview.test.ts
 // unit tests for trusted preview rendering & export resolution
 //
 // @vitest-environment jsdom
@@ -16,17 +16,20 @@ const { asyncBehavior } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../packages/webview-app/src/module-system', () => ({
+vi.mock('../../packages/webview-client/src/features/module-runtime', () => ({
   evaluateModuleToComponent: vi.fn(),
 }));
 
-vi.mock('../../packages/webview-app/src/hooks', () => ({
+vi.mock('../../packages/webview-client/src/features/preview/shared/hooks/usePreviewSetup', () => ({
   usePreviewSetup: () => ({
     containerRef: { current: {} },
     handleImageClick: vi.fn(),
     renderPortals: () => null,
     scan: vi.fn(),
   }),
+}));
+
+vi.mock('../../packages/webview-client/src/shared/hooks/useAsyncEffect', () => ({
   useAsyncEffect: (_fn: any, _deps: any[], options: any) => {
     if (asyncBehavior.mode === 'success') {
       options?.onSuccess?.(asyncBehavior.result);
@@ -34,12 +37,18 @@ vi.mock('../../packages/webview-app/src/hooks', () => ({
       options?.onError?.(asyncBehavior.error);
     }
   },
+}));
+
+vi.mock('../../packages/webview-client/src/features/code-block/hooks/useKatexDetection', () => ({
   useKatexDetection: vi.fn(),
+}));
+
+vi.mock('../../packages/webview-client/src/features/code-block/hooks/useCodeBlockEnhancement', () => ({
   useCodeBlockEnhancement: vi.fn(),
 }));
 
 vi.mock(
-  '../../packages/webview-app/src/components/PreviewContainer/PreviewContainer',
+  '../../packages/webview-client/src/features/preview/shared/ui/PreviewContainer/PreviewContainer',
   () => ({
     PreviewContainer: ({ mode, children, diagramPortals }: any) =>
       createElement(
@@ -51,8 +60,8 @@ vi.mock(
   })
 );
 
-import { TrustedPreviewRenderer } from '../../packages/webview-app/src/TrustedPreview';
-import type { TrustedPreviewContent } from '../../packages/webview-app/src/types';
+import { TrustedPreviewRenderer } from '../../packages/webview-client/src/features/preview/trusted/TrustedPreview';
+import type { TrustedPreviewContent } from '../../packages/webview-client/src/app/types';
 
 const content: TrustedPreviewContent = {
   mode: 'trusted',
@@ -200,3 +209,5 @@ describe('TrustedPreviewRenderer', () => {
     unmountRenderer(root);
   });
 });
+
+

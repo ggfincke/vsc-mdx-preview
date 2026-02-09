@@ -30,7 +30,7 @@ const {
   },
 }));
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -43,27 +43,27 @@ vi.mock('../../../packages/extension/logging', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension/preview/config/ConfigResolver', () => ({
+vi.mock('../../../packages/extension-host/src/features/preview/configuration/ConfigResolver', () => ({
   resolveConfig: (...args: any[]) => mockResolveConfig(...args),
 }));
 
-vi.mock('../../../packages/extension/config/EffectivePreviewConfig', () => ({
+vi.mock('../../../packages/extension-host/src/shared/config/EffectivePreviewConfig', () => ({
   buildEffectivePreviewConfig: (...args: any[]) =>
     mockBuildEffectivePreviewConfig(...args),
 }));
 
-vi.mock('../../../packages/extension/compiler/shared/mdx-common', () => ({
+vi.mock('../../../packages/extension-host/src/features/compilation/pipeline/common/mdx-common', () => ({
   extractFrontmatter: (...args: any[]) => mockExtractFrontmatter(...args),
 }));
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
   getFrameworkDetector: () => mockFrameworkDetector,
   getTrustManager: () => mockTrustManager,
   getErrorReporter: () => mockErrorReporter,
 }));
 
-import { commands } from '../../../packages/extension/commands/config-info';
+import { commands } from '../../../packages/extension-host/src/features/commands/config-info';
 
 describe('config-info commands', () => {
   const handler = commands.find(

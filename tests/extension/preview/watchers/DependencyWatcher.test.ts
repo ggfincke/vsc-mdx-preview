@@ -19,7 +19,7 @@ const { mockResolver, createdWatchers } = vi.hoisted(() => ({
   >(),
 }));
 
-vi.mock('../../../../packages/extension/logging', () => ({
+vi.mock('../../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -33,13 +33,13 @@ vi.mock('../../../../packages/extension/logging', () => ({
 }));
 
 vi.mock(
-  '../../../../packages/extension/module-system/resolver/UnifiedResolver',
+  '../../../../packages/extension-host/src/features/module-runtime/resolution/UnifiedResolver',
   () => ({
     getUnifiedResolver: () => mockResolver,
   })
 );
 
-vi.mock('../../../../packages/extension/utils/createFileWatcher', () => ({
+vi.mock('../../../../packages/extension-host/src/shared/utils/createFileWatcher', () => ({
   createFileWatcher: vi.fn((config: any) => {
     const fsPath = String(config.pattern);
     const watcher = {
@@ -56,7 +56,7 @@ vi.mock('../../../../packages/extension/utils/createFileWatcher', () => ({
   }),
 }));
 
-import { DependencyWatcher } from '../../../../packages/extension/preview/watchers/DependencyWatcher';
+import { DependencyWatcher } from '../../../../packages/extension-host/src/features/preview/watchers/DependencyWatcher';
 
 function getInternalCache(watcher: DependencyWatcher): any {
   return (watcher as any).watchers;

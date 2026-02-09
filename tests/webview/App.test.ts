@@ -1,4 +1,4 @@
-// tests/webview/App.test.ts
+// tests/webview/app/App.test.ts
 // integration-style unit tests for App rendering paths & link handling
 //
 // @vitest-environment jsdom
@@ -36,7 +36,7 @@ const {
   ),
 }));
 
-vi.mock('../../packages/webview-app/src/utils/createTaggedLogger', () => ({
+vi.mock('../../packages/webview-client/src/shared/utils/createTaggedLogger', () => ({
   createTaggedLogger: () => ({
     debug: vi.fn(),
     info: vi.fn(),
@@ -45,7 +45,7 @@ vi.mock('../../packages/webview-app/src/utils/createTaggedLogger', () => ({
   }),
 }));
 
-vi.mock('../../packages/webview-app/src/context', () => ({
+vi.mock('../../packages/webview-client/src/app/state', () => ({
   useTrust: () => ({ trustState: appState.trustState }),
   usePreview: () => ({
     content: appState.content,
@@ -62,16 +62,16 @@ vi.mock('../../packages/webview-app/src/context', () => ({
   }),
 }));
 
-vi.mock('../../packages/webview-app/src/theme', () => ({
+vi.mock('../../packages/webview-client/src/features/theme/runtime', () => ({
   useTheme: () => ({ previewTheme: appState.previewTheme }),
 }));
 
-vi.mock('../../packages/webview-app/src/components/LoadingBar/LoadingBar', () => ({
+vi.mock('../../packages/webview-client/src/features/preview/shared/ui/LoadingBar/LoadingBar', () => ({
   default: () => createElement('div', { 'data-testid': 'loading-bar' }, 'loading'),
 }));
 
 vi.mock(
-  '../../packages/webview-app/src/components/ErrorBoundary/ErrorBoundary',
+  '../../packages/webview-client/src/shared/ui/error-boundary/ErrorBoundary',
   () => ({
     MDXErrorBoundary: ({ children }: any) => createElement('div', null, children),
     ErrorDisplay: ({ error }: any) =>
@@ -79,38 +79,38 @@ vi.mock(
   })
 );
 
-vi.mock('../../packages/webview-app/src/components/TrustBanner/TrustBanner', () => ({
+vi.mock('../../packages/webview-client/src/features/preview/shared/ui/TrustBanner/TrustBanner', () => ({
   TrustBanner: () => createElement('div', { 'data-testid': 'trust-banner' }, 'trust'),
 }));
 
 vi.mock(
-  '../../packages/webview-app/src/components/StaleIndicator/StaleIndicator',
+  '../../packages/webview-client/src/features/preview/shared/ui/StaleIndicator/StaleIndicator',
   () => ({
     StaleIndicator: ({ isStale }: { isStale: boolean }) =>
       createElement('div', { 'data-testid': 'stale-indicator' }, String(isStale)),
   })
 );
 
-vi.mock('../../packages/webview-app/src/SafePreview', () => ({
+vi.mock('../../packages/webview-client/src/features/preview/safe/SafePreview', () => ({
   SafePreviewRenderer: () =>
     createElement('a', { href: 'https://example.com', 'data-testid': 'safe-preview' }, 'safe'),
 }));
 
-vi.mock('../../packages/webview-app/src/TrustedPreview', () => ({
+vi.mock('../../packages/webview-client/src/features/preview/trusted/TrustedPreview', () => ({
   TrustedPreviewRenderer: (props: any) => mockTrustedPreviewRenderer(props),
 }));
 
-vi.mock('../../packages/webview-app/src/rpc-webview', () => ({
+vi.mock('../../packages/webview-client/src/platform/rpc/webview-rpc-client', () => ({
   ExtensionHandle: {
     openExternal: (...args: any[]) => mockOpenExternal(...args),
   },
 }));
 
-vi.mock('../../packages/webview-app/src/utils/linkHandler', () => ({
+vi.mock('../../packages/webview-client/src/shared/utils/linkHandler', () => ({
   classifyLink: (...args: any[]) => mockClassifyLink(...args),
 }));
 
-import App from '../../packages/webview-app/src/App';
+import App from '../../packages/webview-client/src/app/App';
 
 function renderAppToString(): string {
   return renderToStaticMarkup(createElement(App));
@@ -283,3 +283,5 @@ describe('App', () => {
     unmountApp(root);
   });
 });
+
+

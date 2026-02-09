@@ -7,7 +7,7 @@ import {
   getUnknownComponents,
   getUsedGenericComponents,
   clearComponentCache,
-} from '../../../packages/extension/diagnostics/ComponentDetector';
+} from '../../../packages/extension-host/src/features/diagnostics/ComponentDetector';
 
 const mdxSample = `
 import { Foo } from './Foo';

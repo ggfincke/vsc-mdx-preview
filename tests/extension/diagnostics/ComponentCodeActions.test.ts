@@ -4,10 +4,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   ComponentCodeActionsProvider,
-} from '../../../packages/extension/diagnostics/ComponentCodeActions';
+} from '../../../packages/extension-host/src/features/diagnostics/ComponentCodeActions';
 import {
   DIAGNOSTIC_CODES,
-} from '../../../packages/extension/diagnostics/ComponentDiagnostics';
+} from '../../../packages/extension-host/src/features/diagnostics/ComponentDiagnostics';
 import {
   Diagnostic,
   DiagnosticSeverity,

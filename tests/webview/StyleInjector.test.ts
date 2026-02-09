@@ -97,7 +97,7 @@ afterEach(() => {
 
 async function getStyleInjector() {
   vi.resetModules();
-  const module = await import('../../packages/webview-app/src/utils/StyleInjector');
+  const module = await import('../../packages/webview-client/src/shared/utils/StyleInjector');
   return module.StyleInjector;
 }
 
@@ -164,3 +164,5 @@ describe('StyleInjector', () => {
     });
   });
 });
+
+

@@ -2,7 +2,7 @@
 // unit tests for content-hash validated cache wrapper
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { ContentHashCache } from '../../packages/shared/utils/content-hash-cache';
+import { ContentHashCache } from '@mdx-preview/runtime-utils';
 
 describe('ContentHashCache', () => {
   afterEach(() => {

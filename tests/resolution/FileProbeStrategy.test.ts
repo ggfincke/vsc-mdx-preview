@@ -8,7 +8,7 @@ import * as path from 'path';
 vi.mock('vscode', () => ({}));
 
 // Mock logging
-vi.mock('../../packages/extension/logging', () => ({
+vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock('../../packages/extension/logging', () => ({
 // Mock file-prober
 const mockProbeModuleFile = vi.fn();
 const mockProbeModuleFileAsync = vi.fn();
-vi.mock('../../packages/extension/module-system/resolver/file-prober', () => ({
+vi.mock('../../packages/extension-host/src/features/module-runtime/resolution/file-prober', () => ({
   probeModuleFile: (...args: unknown[]) => mockProbeModuleFile(...args),
   probeModuleFileAsync: (...args: unknown[]) =>
     mockProbeModuleFileAsync(...args),
@@ -34,8 +34,8 @@ vi.mock('../../packages/extension/module-system/resolver/file-prober', () => ({
 import {
   FileProbeStrategy,
   getFileProbeStrategy,
-} from '../../packages/extension/module-system/resolver/strategies/FileProbeStrategy';
-import { ResolutionStrategy } from '../../packages/extension/types';
+} from '../../packages/extension-host/src/features/module-runtime/resolution/strategies/FileProbeStrategy';
+import { ResolutionStrategy } from '../../packages/extension-host/src/types';
 
 describe('FileProbeStrategy', () => {
   let strategy: FileProbeStrategy;

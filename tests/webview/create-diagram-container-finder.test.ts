@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import {
   createDiagramContainerFinder,
   type BaseDiagramInfo,
-} from '../../packages/webview-app/src/utils/createDiagramContainerFinder';
+} from '../../packages/webview-client/src/features/diagrams/utils/createDiagramContainerFinder';
 
 describe('createDiagramContainerFinder', () => {
   it('finds containers w/ required attributes', () => {
@@ -128,3 +128,5 @@ describe('createDiagramContainerFinder', () => {
     expect(finder(document.body)).toHaveLength(0);
   });
 });
+
+

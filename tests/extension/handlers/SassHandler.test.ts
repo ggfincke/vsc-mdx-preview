@@ -2,14 +2,14 @@
 // focused tests for SASS handler critical behavior
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Preview } from '../../../packages/extension/preview/preview-manager';
+import type { Preview } from '../../../packages/extension-host/src/features/preview/preview-manager';
 
 const { mockGet, mockClear } = vi.hoisted(() => ({
   mockGet: vi.fn(),
   mockClear: vi.fn(),
 }));
 
-vi.mock('../../../packages/extension/utils/lazy-import', () => ({
+vi.mock('../../../packages/extension-host/src/shared/utils/lazy-import', () => ({
   createKeyedLazyImport: vi.fn(() => ({
     get: mockGet,
     clear: mockClear,
@@ -17,7 +17,7 @@ vi.mock('../../../packages/extension/utils/lazy-import', () => ({
   loadModuleWithEsmFallback: vi.fn(),
 }));
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   createTaggedLogger: vi.fn(() => ({
     debug: vi.fn(),
     info: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock('../../../packages/extension/logging', () => ({
 }));
 
 vi.mock(
-  '../../../packages/extension/module-system/resolver/resolver-factory',
+  '../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory',
   () => ({
     getBrowserResolver: () => ({
       resolveSync: vi.fn(() => undefined),
@@ -38,7 +38,7 @@ vi.mock(
 import {
   SassHandler,
   clearSassCache,
-} from '../../../packages/extension/module-system/handlers/SassHandler';
+} from '../../../packages/extension-host/src/features/module-runtime/handlers/SassHandler';
 
 function createMockPreview(entryFsDirectory: string): Preview {
   return {

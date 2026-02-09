@@ -13,7 +13,7 @@ const mockShowOutput = vi.fn();
 const mockDoOpenPreview = vi.fn();
 const mockDoRefreshPreview = vi.fn();
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock('../../../packages/extension/logging', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
   getPreviewManager: vi.fn(),
   getTrustManager: vi.fn(),
@@ -36,33 +36,33 @@ vi.mock('../../../packages/extension/services', () => ({
 }));
 
 // mock commands that pull in heavy deps
-vi.mock('../../../packages/extension/preview/preview-manager', () => ({
+vi.mock('../../../packages/extension-host/src/features/preview/preview-manager', () => ({
   openPreview: (...args: any[]) => mockDoOpenPreview(...args),
   refreshPreview: (...args: any[]) => mockDoRefreshPreview(...args),
 }));
 
 // mock authoring guide text
-vi.mock('../../../packages/extension/commands/authoring-guide-text', () => ({
+vi.mock('../../../packages/extension-host/src/features/commands/authoring-guide-text', () => ({
   MDX_AUTHORING_GUIDE_TEXT: 'test guide content',
 }));
 
 // mock config-info (used in index.ts)
-vi.mock('../../../packages/extension/commands/config-info', () => ({
+vi.mock('../../../packages/extension-host/src/features/commands/config-info', () => ({
   commands: [],
 }));
 
 // mock security (used in index.ts)
-vi.mock('../../../packages/extension/security/security', () => ({
+vi.mock('../../../packages/extension-host/src/features/security/security', () => ({
   selectSecurityPolicy: vi.fn(),
   SecurityPolicy: { Strict: 'strict', Disabled: 'disabled' },
 }));
 
-vi.mock('../../../packages/extension/errors', () => ({
+vi.mock('../../../packages/extension-host/src/shared/errors', () => ({
   ErrorContext: { Security: 'security' },
 }));
 
 // mock cache deps (used in index.ts)
-vi.mock('../../../packages/extension/module-system/resolver/resolver-factory', () => ({
+vi.mock('../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory', () => ({
   clearResolverCache: vi.fn(),
 }));
 
@@ -70,7 +70,7 @@ vi.mock('../../../packages/extension/module-system/handlers', () => ({
   clearSassCache: vi.fn(),
 }));
 
-vi.mock('../../../packages/extension/cache-subsystem', () => ({
+vi.mock('../../../packages/extension-host/src/app/lifecycle/cache-subsystem', () => ({
   clearUnmanagedCaches: vi.fn(),
 }));
 
@@ -82,7 +82,7 @@ describe('debug commands', () => {
   // import lazily to avoid issues w/ mock ordering
   async function getDebugHandler() {
     const mod = await import(
-      '../../../packages/extension/commands/debug'
+      '../../../packages/extension-host/src/features/commands/debug'
     );
     return mod.commands.find(
       (c) => c.id === 'mdx-preview.commands.toggleDebugOutput'
@@ -127,7 +127,7 @@ describe('authoring-guide commands', () => {
 
   async function getAuthoringHandler() {
     const mod = await import(
-      '../../../packages/extension/commands/authoring-guide'
+      '../../../packages/extension-host/src/features/commands/authoring-guide'
     );
     return mod.commands.find(
       (c) => c.id === 'mdx-preview.commands.copyAuthoringGuide'
@@ -153,7 +153,7 @@ describe('preview commands', () => {
 
   async function getPreviewCommands() {
     const mod = await import(
-      '../../../packages/extension/commands/preview'
+      '../../../packages/extension-host/src/features/commands/preview'
     );
     return mod.commands;
   }
@@ -194,7 +194,7 @@ describe('registerAllCommands', () => {
     (vscode.commands as any).registerCommand = mockRegister;
 
     const { registerAllCommands } = await import(
-      '../../../packages/extension/commands/index'
+      '../../../packages/extension-host/src/features/commands/index'
     );
     const disposables = registerAllCommands();
     expect(Array.isArray(disposables)).toBe(true);

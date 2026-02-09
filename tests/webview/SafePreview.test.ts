@@ -1,4 +1,4 @@
-// tests/webview/SafePreview.test.ts
+// tests/webview/features/preview/safe/SafePreview.test.ts
 // XSS prevention tests for Safe Mode DOMPurify configuration
 //
 // verify DOMPurify allowlist configuration used by SafePreview
@@ -8,7 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import DOMPurify from 'dompurify';
-import { DOMPURIFY_CONFIG } from '../../packages/webview-app/src/security/allowlist';
+import { DOMPURIFY_CONFIG } from '../../packages/webview-client/src/features/preview/safe/security/allowlist';
 
 describe('DOMPurify Configuration', () => {
   describe('ALLOWED_TAGS', () => {
@@ -698,3 +698,5 @@ describe('XSS Payload Injection Tests', () => {
     });
   });
 });
+
+

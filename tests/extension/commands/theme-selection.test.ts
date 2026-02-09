@@ -13,7 +13,7 @@ const mockPreviewManager = {
   refreshAllPreviews: vi.fn(async () => {}),
 };
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -26,12 +26,12 @@ vi.mock('../../../packages/extension/logging', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
   getPreviewManager: () => mockPreviewManager,
 }));
 
-import { commands } from '../../../packages/extension/commands/theme-selection';
+import { commands } from '../../../packages/extension-host/src/features/commands/theme-selection';
 
 describe('theme-selection commands', () => {
   beforeEach(() => {

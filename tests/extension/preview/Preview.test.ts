@@ -49,7 +49,7 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -62,19 +62,19 @@ vi.mock('../../../packages/extension/logging', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension/preview/webview-manager', () => ({
+vi.mock('../../../packages/extension-host/src/features/preview/webview-manager', () => ({
   refreshPanel: (...args: any[]) => mocks.mockRefreshPanel(...args),
 }));
 
-vi.mock('../../../packages/extension/preview/evaluate-in-webview', () => ({
+vi.mock('../../../packages/extension-host/src/features/preview/evaluate-in-webview', () => ({
   default: (...args: any[]) => mocks.mockEvaluateInWebview(...args),
 }));
 
-vi.mock('../../../packages/extension/utils/file-utils', () => ({
+vi.mock('../../../packages/extension-host/src/shared/utils/file-utils', () => ({
   readFileAsync: (...args: any[]) => mocks.mockReadFileAsync(...args),
 }));
 
-vi.mock('../../../packages/extension/preview/PreviewInitializer', () => ({
+vi.mock('../../../packages/extension-host/src/features/preview/PreviewInitializer', () => ({
   PreviewInitializer: class MockPreviewInitializer {
     cancelHandshakeTimeout = vi.fn();
     createHandshake = vi.fn(() => ({
@@ -93,7 +93,7 @@ vi.mock('../../../packages/extension/preview/PreviewInitializer', () => ({
   },
 }));
 
-vi.mock('../../../packages/extension/preview/PreviewDocumentHandler', () => ({
+vi.mock('../../../packages/extension-host/src/features/preview/PreviewDocumentHandler', () => ({
   PreviewDocumentHandler: class MockPreviewDocumentHandler {
     private _doc: any;
     editingDoc = undefined;
@@ -129,7 +129,7 @@ vi.mock('../../../packages/extension/preview/PreviewDocumentHandler', () => ({
   },
 }));
 
-vi.mock('../../../packages/extension/preview/PreviewConfiguration', () => ({
+vi.mock('../../../packages/extension-host/src/features/preview/PreviewConfiguration', () => ({
   PreviewConfiguration: class MockPreviewConfiguration {
     configuration = {
       updateMode: 'onType',
@@ -154,7 +154,7 @@ vi.mock('../../../packages/extension/preview/PreviewConfiguration', () => ({
   },
 }));
 
-vi.mock('../../../packages/extension/preview/PreviewWebviewBridge', () => ({
+vi.mock('../../../packages/extension-host/src/features/preview/PreviewWebviewBridge', () => ({
   PreviewWebviewBridge: class MockPreviewWebviewBridge {
     setWebview = vi.fn();
     setWebviewHandle = vi.fn();
@@ -171,7 +171,7 @@ vi.mock('../../../packages/extension/preview/PreviewWebviewBridge', () => ({
   },
 }));
 
-import { Preview } from '../../../packages/extension/preview/Preview';
+import { Preview } from '../../../packages/extension-host/src/features/preview/Preview';
 
 function createDoc(overrides: Partial<any> = {}): any {
   return {

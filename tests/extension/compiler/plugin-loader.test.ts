@@ -21,22 +21,22 @@ const {
 }));
 
 vi.mock(
-  '../../../packages/extension/module-system/resolver/resolver-factory',
+  '../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory',
   () => ({
     getNodeResolver: () => mockNodeResolver,
   })
 );
 
-vi.mock('../../../packages/extension/security/validateTrust', () => ({
+vi.mock('../../../packages/extension-host/src/features/security/validateTrust', () => ({
   tryRequireTrustedModeForDocument: (...args: unknown[]) =>
     mockTryRequireTrustedModeForDocument(...args),
 }));
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getErrorReporter: () => mockErrorReporter,
 }));
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
@@ -52,7 +52,7 @@ vi.mock('../../../packages/extension/logging', () => ({
 import {
   loadPluginsFromConfig,
   mergePlugins,
-} from '../../../packages/extension/compiler/plugins/loader';
+} from '../../../packages/extension-host/src/features/compilation/plugins/loader';
 
 function createPluginModule(tempDir: string, name: string): string {
   const pluginPath = path.join(tempDir, `${name}.cjs`);

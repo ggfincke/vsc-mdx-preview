@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { FrameworkDetector } from '../../../packages/extension/framework/FrameworkDetector';
+import { FrameworkDetector } from '../../../packages/extension-host/src/features/framework/FrameworkDetector';
 import { Uri } from 'vscode';
 
 const { mockConfigManager } = vi.hoisted(() => ({
@@ -15,12 +15,12 @@ const { mockConfigManager } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
   getErrorReporter: () => ({ reportSilent: vi.fn() }),
 }));
 
-vi.mock('../../../packages/extension/logging', () => ({
+vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
   createTaggedLogger: vi.fn(() => ({
     debug: vi.fn(),
