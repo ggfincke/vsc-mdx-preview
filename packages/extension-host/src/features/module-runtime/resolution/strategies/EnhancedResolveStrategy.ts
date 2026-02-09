@@ -1,0 +1,63 @@
+// packages/extension/module-system/resolver/strategies/EnhancedResolveStrategy.ts
+// node.js-style resolution using enhanced-resolve
+
+import type { Resolver } from 'enhanced-resolve';
+import { getBrowserResolver, getNodeResolver } from '../resolver-factory';
+import { createTaggedLogger } from '../../../../shared/logging/logger';
+import { LogTags } from '@mdx-preview/shared';
+import { createSingleton } from '../../../../shared/utils/singleton-factory';
+import {
+  ResolutionStrategy,
+  type ResolutionContext,
+  type ResolutionResult,
+  type ResolutionMode,
+  type IResolutionStrategy,
+} from '../../../types';
+import { buildResolutionResult } from '../resolution-builders';
+
+// module-level tagged logger for enhanced-resolve strategy
+const log = createTaggedLogger(LogTags.ENHANCED_RESOLVE);
+
+// enhanced-resolve strategy for node_modules resolution
+export class EnhancedResolveStrategy implements IResolutionStrategy {
+  readonly name = 'EnhancedResolve';
+
+  private browserResolver: Resolver;
+  private nodeResolver: Resolver;
+
+  constructor() {
+    this.browserResolver = getBrowserResolver();
+    this.nodeResolver = getNodeResolver();
+  }
+
+  resolve(
+    specifier: string,
+    context: ResolutionContext,
+    mode: ResolutionMode
+  ): ResolutionResult | null {
+    const resolver = mode === 'node' ? this.nodeResolver : this.browserResolver;
+
+    try {
+      const resolved = resolver.resolveSync({}, context.baseDir, specifier);
+      if (resolved) {
+        log.debug(`${specifier} -> ${resolved}`);
+        return buildResolutionResult(
+          resolved,
+          specifier,
+          ResolutionStrategy.EnhancedResolve
+        );
+      }
+    } catch {
+      // module not found - continue to next strategy
+    }
+
+    return null;
+  }
+}
+
+// singleton instance
+const { get: getEnhancedResolveStrategy } = createSingleton(
+  () => new EnhancedResolveStrategy()
+);
+
+export { getEnhancedResolveStrategy };
