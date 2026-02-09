@@ -12,9 +12,9 @@ module.exports = {
     {
       name: 'no-extension-imports-webview',
       severity: 'error',
-      comment: 'Extension code must not import from webview-app',
-      from: { path: '^packages/extension/' },
-      to: { path: '^packages/webview-app/' },
+      comment: 'Extension code must not import from webview-client',
+      from: { path: '^packages/extension-host/' },
+      to: { path: '^packages/webview-client/' },
     },
     {
       name: 'no-webview-imports-extension',
@@ -22,10 +22,10 @@ module.exports = {
       comment:
         'Webview code must not import from extension (eslint configs excluded)',
       from: {
-        path: '^packages/webview-app/',
+        path: '^packages/webview-client/',
         pathNot: 'eslint\\.config\\.mjs$',
       },
-      to: { path: '^packages/extension/', pathNot: 'eslint-rules/' },
+      to: { path: '^packages/extension-host/', pathNot: 'eslint-rules/' },
     },
     {
       name: 'contracts-isolation',
@@ -33,7 +33,7 @@ module.exports = {
       comment: 'contracts must not depend on any other internal package',
       from: { path: '^packages/contracts/' },
       to: {
-        path: '^packages/(registry|runtime-utils|codegen|extension|webview-app|shared)/',
+        path: '^packages/(registry|runtime-utils|codegen|extension-host|webview-client|shared)/',
       },
     },
     {
@@ -42,7 +42,7 @@ module.exports = {
       comment: 'registry may only depend on contracts',
       from: { path: '^packages/registry/' },
       to: {
-        path: '^packages/(runtime-utils|codegen|extension|webview-app|shared)/',
+        path: '^packages/(runtime-utils|codegen|extension-host|webview-client|shared)/',
       },
     },
     {
@@ -51,7 +51,7 @@ module.exports = {
       comment: 'runtime-utils may only depend on contracts',
       from: { path: '^packages/runtime-utils/' },
       to: {
-        path: '^packages/(registry|codegen|extension|webview-app|shared)/',
+        path: '^packages/(registry|codegen|extension-host|webview-client|shared)/',
       },
     },
     {

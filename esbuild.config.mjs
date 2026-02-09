@@ -10,7 +10,7 @@ const watch = process.argv.includes('--watch');
 
 // @type {esbuild.BuildOptions}
 const buildOptions = {
-  entryPoints: ['packages/extension/extension.ts'],
+  entryPoints: ['packages/extension-host/src/entry/activate.ts'],
   bundle: true,
   outfile: 'build/extension/extension.js',
   // exclude vscode (provided by VS Code at runtime)

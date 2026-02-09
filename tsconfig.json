@@ -27,7 +27,7 @@
       "@mdx-preview/codegen": ["./packages/codegen/src/index.ts"]
     }
   },
-  "include": ["packages/extension", "packages/shared"],
+  "include": ["packages/extension-host", "packages/shared"],
   "exclude": [
     "node_modules",
     ".vscode-test",
