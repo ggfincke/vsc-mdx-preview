@@ -4,15 +4,17 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { PREVIEW_THEMES, CODE_BLOCK_THEMES, MERMAID_THEMES } from '../themes';
 import {
+  PREVIEW_THEMES,
+  CODE_BLOCK_THEMES,
+  MERMAID_THEMES,
   FRAMEWORK_SETTINGS,
   TAILWIND_ENABLED_VALUES,
   UNKNOWN_BEHAVIOR_VALUES,
   UPDATE_MODE_VALUES,
   SECURITY_POLICY_VALUES,
-} from '../config/enums';
-import { SETTINGS_DEFAULTS } from '../config/defaults';
+  SETTINGS_DEFAULTS,
+} from '@mdx-preview/contracts';
 
 const ROOT_DIR = path.resolve(__dirname, '../../..');
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, 'package.json');

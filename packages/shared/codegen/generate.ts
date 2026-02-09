@@ -9,7 +9,7 @@ import {
   type ComponentRegistryEntry,
   type FrameworkId,
 } from '../registry';
-import { PRELOADED_MODULE_IDS } from '../core-modules';
+import { PRELOADED_MODULE_IDS } from '@mdx-preview/contracts';
 
 const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT
 // Source: packages/shared/registry/registry-data.ts

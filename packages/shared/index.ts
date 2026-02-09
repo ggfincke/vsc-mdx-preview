@@ -1,7 +1,15 @@
 // packages/shared/index.ts
-// shared type definitions & registries for extension & webview packages
+// re-export facade for backward compatibility
+// moved modules re-exported from @mdx-preview/contracts
 
-// shared timing & limit constants
+// framework type aliases (from contracts)
+export type {
+  Framework,
+  FrameworkId,
+  FrameworkSetting,
+} from '@mdx-preview/contracts';
+
+// shared timing & limit constants (from contracts)
 export {
   STANDARD_DEBOUNCE_MS,
   STANDARD_CACHE_TTL_MS,
@@ -11,30 +19,22 @@ export {
   RPC_PENDING_MESSAGES_WARNING_THRESHOLD,
   SHIM_LOAD_MAX_RETRIES,
   SHIM_LOAD_RETRY_DELAY_MS,
-} from './constants';
+} from '@mdx-preview/contracts';
 
-// diagram server utilities
+// diagram server utilities (from contracts)
 export {
   DEFAULT_PLANTUML_SERVER,
   normalizePlantUmlServerUrl,
   getPlantUmlServerOrigin,
   getPlantUmlRenderEndpoints,
-} from './diagrams';
+} from '@mdx-preview/contracts';
 
-// component registry - single source of truth for all shim definitions
+// component registry - stays local until Phase 3
 export {
-  // types
   SHIM_PREFIX,
   type ComponentRegistryEntry,
   type ComponentDefinition,
   type ComponentBarrelDefinition,
-  type Framework,
-  type FrameworkId,
-  type FrameworkSetting,
-  // registry data
-  COMPONENT_REGISTRY,
-  GENERIC_COMPONENTS,
-  FRAMEWORK_COMPONENTS,
   type ComponentRegistryEntryType,
   type GenericComponentName,
   type GenericComponentAlias,
@@ -42,7 +42,9 @@ export {
   type StarlightComponent,
   type NextjsComponent,
   type NextraComponent,
-  // queries
+  COMPONENT_REGISTRY,
+  GENERIC_COMPONENTS,
+  FRAMEWORK_COMPONENTS,
   getAllGenericComponentNames,
   getGenericComponentSet,
   getPrimaryGenericComponentNames,
@@ -54,10 +56,13 @@ export {
   getFrameworkShimPath,
 } from './registry';
 
-// core preloaded module IDs (react, mdx, layout)
-export { PRELOADED_MODULE_IDS, type PreloadedModuleId } from './core-modules';
+// core preloaded module IDs (from contracts)
+export {
+  PRELOADED_MODULE_IDS,
+  type PreloadedModuleId,
+} from '@mdx-preview/contracts';
 
-// preview types (FetchResult, TrustState, PreviewError, NextraPageMeta)
+// preview types (from contracts)
 export {
   type FetchResult,
   type TrustState,
@@ -65,9 +70,9 @@ export {
   isPreviewError,
   formatTrustStateForDebug,
   type NextraPageMeta,
-} from './preview';
+} from '@mdx-preview/contracts';
 
-// error handling utilities
+// error handling utilities - stays local until Phase 4
 export {
   isError,
   extractErrorMessage,
@@ -79,7 +84,7 @@ export {
   type ErrorInfo,
 } from './utils/errors';
 
-// module error types (shared between extension & webview)
+// module error types (from contracts)
 export {
   type ModuleErrorCode,
   type ModuleErrorData,
@@ -90,7 +95,6 @@ export {
   getSuggestionsForCode,
   ModuleError,
   type ModuleErrorOptions,
-  // error factory functions
   type ExtensionModuleErrorCode,
   type WebviewModuleErrorCode,
   createModuleNotFoundError,
@@ -101,9 +105,9 @@ export {
   createFetchFailedError,
   createEvaluationFailedError,
   createModuleDepthExceededError,
-} from './errors';
+} from '@mdx-preview/contracts';
 
-// module ID utilities (npm:// format handling)
+// module ID utilities - stays local until Phase 4
 export {
   NPM_MODULE_PREFIX,
   isNpmModuleId,
@@ -116,7 +120,7 @@ export {
   type ParsedNpmModuleId,
 } from './utils/module-id';
 
-// LRU cache utilities
+// LRU cache utilities - stays local until Phase 4
 export {
   LRUCache,
   type LRUCacheOptions,
@@ -124,10 +128,10 @@ export {
   type ContentHashCacheOptions,
 } from './utils';
 
-// concurrency utilities
+// concurrency utilities - stays local until Phase 4
 export { Semaphore } from './utils';
 
-// validation utilities (pure type guards & coercers)
+// validation utilities - stays local until Phase 4
 export {
   isString,
   isNonEmptyString,
@@ -146,7 +150,7 @@ export {
   asNumber,
 } from './utils';
 
-// theme types, constants & functions
+// theme types, constants & functions (from contracts)
 export {
   type PreviewTheme,
   type MermaidTheme,
@@ -158,12 +162,12 @@ export {
   CODE_BLOCK_THEMES,
   THEME_PAIRS,
   getOppositeTheme,
-} from './themes';
+} from '@mdx-preview/contracts';
 
-// RPC interface contracts (extension <-> webview)
-export type { ExtensionRPC, WebviewRPC } from './rpc';
+// RPC interface contracts (from contracts)
+export type { ExtensionRPC, WebviewRPC } from '@mdx-preview/contracts';
 
-// logging types & tags (shared between extension & webview)
+// logging types & tags (from contracts)
 export {
   LogLevel,
   type LogFn,
@@ -176,9 +180,9 @@ export {
   type LogTag,
   createTaggedLoggerFactory,
   type BaseLoggerVariadic,
-} from './logging';
+} from '@mdx-preview/contracts';
 
-// config enums (canonical source for validation & settings)
+// config enums, defaults & schema (from contracts)
 export {
   FRAMEWORK_IDS,
   FRAMEWORK_SETTINGS,
@@ -218,9 +222,9 @@ export {
   type UnknownBehaviorValue,
   type UpdateModeValue,
   type SecurityPolicyValue,
-} from './config';
+} from '@mdx-preview/contracts';
 
-// callout types & normalization (shared between extension & webview)
+// callout types & normalization - stays local until Phase 3
 export {
   type CalloutType,
   VALID_CALLOUT_TYPES,
@@ -231,7 +235,7 @@ export {
   isValidCalloutType,
 } from './callout';
 
-// centralized icon definitions (shared between extension & webview)
+// centralized icon definitions - stays local until Phase 3
 export {
   CALLOUT_ICONS,
   GITHUB_ICONS,

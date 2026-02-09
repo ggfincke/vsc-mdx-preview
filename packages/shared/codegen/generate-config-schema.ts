@@ -1,8 +1,8 @@
 // packages/shared/codegen/generate-config-schema.ts
 // generates the mdx-previewrc.schema.json from canonical TypeScript sources
-// ensures JSON schema stays in sync w/ runtime validation enums
+// ensure JSON schema stays in sync w/ runtime validation enums
 
-import { MDX_PREVIEW_CONFIG_SCHEMA } from '../config/schema';
+import { MDX_PREVIEW_CONFIG_SCHEMA } from '@mdx-preview/contracts';
 
 // return static schema structure from shared config schema
 export function generateConfigSchema(): object {

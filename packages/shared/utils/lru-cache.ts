@@ -171,10 +171,14 @@ export class LRUCache<K, V> {
 
   // count of protected entries
   get protectedCount(): number {
-    if (!this._isProtected) return 0;
+    if (!this._isProtected) {
+      return 0;
+    }
     let count = 0;
     for (const [key, entry] of this.cache) {
-      if (this._isProtected(key, entry.value)) count++;
+      if (this._isProtected(key, entry.value)) {
+        count++;
+      }
     }
     return count;
   }
@@ -253,20 +257,28 @@ export class LRUCache<K, V> {
 
   // count non-protected entries (for capacity checking)
   private countEvictable(): number {
-    if (!this._isProtected) return this.cache.size;
+    if (!this._isProtected) {
+      return this.cache.size;
+    }
     let count = 0;
     for (const [key, entry] of this.cache) {
-      if (!this._isProtected(key, entry.value)) count++;
+      if (!this._isProtected(key, entry.value)) {
+        count++;
+      }
     }
     return count;
   }
 
   // get memory used by non-protected entries
   private getEvictableMemory(): number {
-    if (!this._isProtected) return this._currentMemoryBytes;
+    if (!this._isProtected) {
+      return this._currentMemoryBytes;
+    }
     let memory = 0;
     for (const [key, entry] of this.cache) {
-      if (!this._isProtected(key, entry.value)) memory += entry.size;
+      if (!this._isProtected(key, entry.value)) {
+        memory += entry.size;
+      }
     }
     return memory;
   }
@@ -287,7 +299,9 @@ export class LRUCache<K, V> {
   private evictOverflow(): void {
     // evict by count (only non-protected entries count against limit)
     while (this.countEvictable() > this._maxEntries) {
-      if (!this.evictOldestEvictable()) break;
+      if (!this.evictOldestEvictable()) {
+        break;
+      }
     }
 
     // evict by memory (if configured, only non-protected memory counts)
@@ -296,7 +310,9 @@ export class LRUCache<K, V> {
         this.getEvictableMemory() > this._maxMemoryBytes &&
         this.countEvictable() > 0
       ) {
-        if (!this.evictOldestEvictable()) break;
+        if (!this.evictOldestEvictable()) {
+          break;
+        }
       }
     }
   }
