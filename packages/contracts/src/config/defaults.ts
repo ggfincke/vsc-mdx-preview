@@ -5,7 +5,7 @@ import {
   STANDARD_DEBOUNCE_MS,
   STANDARD_WATCHER_DEBOUNCE_MS,
 } from '../runtime/constants';
-import { DEFAULT_PLANTUML_SERVER } from '../diagrams/plantuml-server';
+import { DEFAULT_PLANTUML_SERVER } from '../diagrams/constants';
 
 // preview defaults
 export const DEFAULT_PREVIEW_UPDATE_MODE = 'onType' as const;

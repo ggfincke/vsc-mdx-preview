@@ -19,13 +19,8 @@ export {
 // core preloaded module IDs
 export { PRELOADED_MODULE_IDS, type PreloadedModuleId } from './runtime';
 
-// diagram server utilities
-export {
-  DEFAULT_PLANTUML_SERVER,
-  normalizePlantUmlServerUrl,
-  getPlantUmlServerOrigin,
-  getPlantUmlRenderEndpoints,
-} from './diagrams';
+// diagram constants
+export { DEFAULT_PLANTUML_SERVER } from './diagrams';
 
 // preview types
 export {
