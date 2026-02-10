@@ -23,9 +23,12 @@ vi.mock('../../../packages/extension-host/src/app/services', () => ({
   }),
 }));
 
-vi.mock('../../../packages/extension-host/src/features/preview/configuration/ConfigResolver', () => ({
-  resolveConfig: mockResolveConfig,
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/configuration/ConfigResolver',
+  () => ({
+    resolveConfig: mockResolveConfig,
+  })
+);
 
 import {
   buildCompilerConfig,

@@ -43,14 +43,20 @@ vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension-host/src/features/preview/configuration/ConfigResolver', () => ({
-  resolveConfig: (...args: any[]) => mockResolveConfig(...args),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/configuration/ConfigResolver',
+  () => ({
+    resolveConfig: (...args: any[]) => mockResolveConfig(...args),
+  })
+);
 
-vi.mock('../../../packages/extension-host/src/shared/config/EffectivePreviewConfig', () => ({
-  buildEffectivePreviewConfig: (...args: any[]) =>
-    mockBuildEffectivePreviewConfig(...args),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig',
+  () => ({
+    buildEffectivePreviewConfig: (...args: any[]) =>
+      mockBuildEffectivePreviewConfig(...args),
+  })
+);
 
 vi.mock('mdx-tools/compiler', () => ({
   extractFrontmatter: (...args: any[]) => mockExtractFrontmatter(...args),

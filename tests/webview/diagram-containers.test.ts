@@ -52,5 +52,3 @@ describe('diagram container finders', () => {
     });
   });
 });
-
-

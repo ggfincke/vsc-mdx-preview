@@ -7,7 +7,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { TailwindProcessor } from '../../../packages/extension-host/src/features/tailwind/TailwindProcessor';
 import type { TailwindConfig } from '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig';
-import type { TrustState } from '@mdx-preview/shared';
+import type { TrustState } from '@mdx-preview/contracts';
 import { createMockPreview } from '../../helpers/mock-preview';
 
 const { mockFrameworkDetector, mockErrorReporter } = vi.hoisted(() => ({
@@ -265,7 +265,8 @@ describe('TailwindProcessor', () => {
 
     const result = await processor.process({
       preview,
-      mdxText: '<style type="text/tailwindcss">@theme { --color-brand: #123456; }</style>',
+      mdxText:
+        '<style type="text/tailwindcss">@theme { --color-brand: #123456; }</style>',
       entryFilePath: preview.fsPath,
       entryFileDependencies: [],
       trustState: trustedState,

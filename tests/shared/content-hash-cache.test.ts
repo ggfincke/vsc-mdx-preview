@@ -52,6 +52,4 @@ describe('ContentHashCache', () => {
     expect(cache.pruneExpired()).toBe(2);
     expect(cache.size).toBe(0);
   });
-
 });
-

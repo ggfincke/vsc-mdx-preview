@@ -11,7 +11,7 @@ import {
   type PendingMessage,
   type QueuedMessageType,
 } from '../../packages/webview-client/src/platform/rpc/handler-factory';
-import type { TrustState, PreviewError } from '@mdx-preview/shared';
+import type { PreviewError, TrustState } from '@mdx-preview/contracts';
 import {
   SET_TRUST_STATE_CONFIG,
   UPDATE_PREVIEW_CONFIG,
@@ -283,7 +283,9 @@ describe('message queue architecture (P0-3)', () => {
       queue.set('trust', { type: 'trust', payload: { canExecute: true } });
 
       expect(queue.size).toBe(1);
-      expect((queue.get('trust')?.payload as { canExecute: boolean }).canExecute).toBe(true);
+      expect(
+        (queue.get('trust')?.payload as { canExecute: boolean }).canExecute
+      ).toBe(true);
     });
 
     it('different message types are preserved', () => {
@@ -436,5 +438,3 @@ describe('type safety', () => {
     expect(types).toHaveLength(5);
   });
 });
-
-

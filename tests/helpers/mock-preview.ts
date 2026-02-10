@@ -67,7 +67,9 @@ const DEFAULT_CONFIGURATION: MockConfigurationState = {
   tailwindEnabled: 'auto',
 };
 
-export function createMockPreview(options: MockPreviewOptions = {}): MockPreview {
+export function createMockPreview(
+  options: MockPreviewOptions = {}
+): MockPreview {
   const {
     content = '# Test',
     fsPath = '/workspace/test.mdx',

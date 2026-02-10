@@ -19,18 +19,21 @@ const { mockResolver, createdWatchers } = vi.hoisted(() => ({
   >(),
 }));
 
-vi.mock('../../../../packages/extension-host/src/shared/logging/logger', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
+vi.mock(
+  '../../../../packages/extension-host/src/shared/logging/logger',
+  () => ({
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-  })),
-}));
+    createTaggedLogger: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  })
+);
 
 vi.mock(
   '../../../../packages/extension-host/src/features/module-runtime/resolution/UnifiedResolver',
@@ -39,22 +42,25 @@ vi.mock(
   })
 );
 
-vi.mock('../../../../packages/extension-host/src/shared/utils/createFileWatcher', () => ({
-  createFileWatcher: vi.fn((config: any) => {
-    const fsPath = String(config.pattern);
-    const watcher = {
-      dispose: vi.fn(),
-      triggerChange: () => {
-        config.onChange?.({ fsPath });
-      },
-      triggerDelete: () => {
-        config.onDelete?.({ fsPath });
-      },
-    };
-    createdWatchers.set(fsPath, watcher);
-    return watcher;
-  }),
-}));
+vi.mock(
+  '../../../../packages/extension-host/src/shared/utils/createFileWatcher',
+  () => ({
+    createFileWatcher: vi.fn((config: any) => {
+      const fsPath = String(config.pattern);
+      const watcher = {
+        dispose: vi.fn(),
+        triggerChange: () => {
+          config.onChange?.({ fsPath });
+        },
+        triggerDelete: () => {
+          config.onDelete?.({ fsPath });
+        },
+      };
+      createdWatchers.set(fsPath, watcher);
+      return watcher;
+    }),
+  })
+);
 
 import { DependencyWatcher } from '../../../../packages/extension-host/src/features/preview/watchers/DependencyWatcher';
 
@@ -189,4 +195,3 @@ describe('DependencyWatcher', () => {
     expect(createdWatchers.get('/workspace/b.tsx')?.dispose).toHaveBeenCalled();
   });
 });
-

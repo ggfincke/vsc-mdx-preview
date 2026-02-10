@@ -32,7 +32,11 @@ vi.mock('vscode', () => ({
     file: (path: string) => ({ scheme: 'file', fsPath: path, path }),
     parse: (uri: string) => {
       const url = new URL(uri);
-      return { scheme: url.protocol.replace(':', ''), fsPath: url.pathname, path: url.pathname };
+      return {
+        scheme: url.protocol.replace(':', ''),
+        fsPath: url.pathname,
+        path: url.pathname,
+      };
     },
   },
 }));
@@ -57,8 +61,12 @@ vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
 }));
 
 // Import after mocks are set up
-import { TrustManager, SecurityMode, getSecurityMode } from '../../packages/extension-host/src/features/security/TrustManager';
-import type { TrustState } from '@mdx-preview/shared';
+import {
+  TrustManager,
+  SecurityMode,
+  getSecurityMode,
+} from '../../packages/extension-host/src/features/security/TrustManager';
+import type { TrustState } from '@mdx-preview/contracts';
 
 describe('TrustManager', () => {
   let trustManager: TrustManager;
@@ -147,7 +155,11 @@ describe('TrustManager', () => {
       mockEnv.remoteName = 'ssh-remote';
       mockConfigManager.get.mockReturnValue(true);
 
-      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const docUri = {
+        scheme: 'file',
+        fsPath: '/workspace/test.mdx',
+        path: '/workspace/test.mdx',
+      };
       const state = trustManager.getStateForDocument(docUri as any);
 
       expect(state.canExecute).toBe(false);
@@ -159,7 +171,11 @@ describe('TrustManager', () => {
       mockEnv.remoteName = undefined;
       mockConfigManager.get.mockReturnValue(true);
 
-      const docUri = { scheme: 'vscode-remote', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const docUri = {
+        scheme: 'vscode-remote',
+        fsPath: '/workspace/test.mdx',
+        path: '/workspace/test.mdx',
+      };
       const state = trustManager.getStateForDocument(docUri as any);
 
       expect(state.canExecute).toBe(false);
@@ -171,7 +187,11 @@ describe('TrustManager', () => {
       mockEnv.remoteName = undefined;
       mockConfigManager.get.mockReturnValue(true);
 
-      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const docUri = {
+        scheme: 'file',
+        fsPath: '/workspace/test.mdx',
+        path: '/workspace/test.mdx',
+      };
       const state = trustManager.getStateForDocument(docUri as any);
 
       expect(state.canExecute).toBe(true);
@@ -183,7 +203,11 @@ describe('TrustManager', () => {
       mockEnv.remoteName = undefined;
       mockConfigManager.get.mockReturnValue(true);
 
-      const docUri = { scheme: 'untitled', fsPath: 'Untitled-1', path: 'Untitled-1' };
+      const docUri = {
+        scheme: 'untitled',
+        fsPath: 'Untitled-1',
+        path: 'Untitled-1',
+      };
       const state = trustManager.getStateForDocument(docUri as any);
 
       expect(state.canExecute).toBe(true);
@@ -192,7 +216,11 @@ describe('TrustManager', () => {
     it('includes reason when blocked', () => {
       mockWorkspace.isTrusted = false;
 
-      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const docUri = {
+        scheme: 'file',
+        fsPath: '/workspace/test.mdx',
+        path: '/workspace/test.mdx',
+      };
       const state = trustManager.getStateForDocument(docUri as any);
 
       expect(state.canExecute).toBe(false);
@@ -241,7 +269,11 @@ describe('TrustManager', () => {
       mockEnv.remoteName = 'ssh-remote';
       mockConfigManager.get.mockReturnValue(true);
 
-      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const docUri = {
+        scheme: 'file',
+        fsPath: '/workspace/test.mdx',
+        path: '/workspace/test.mdx',
+      };
       const result = trustManager.canUseTrustedMode(docUri as any);
 
       expect(result.allowed).toBe(false);
@@ -265,7 +297,11 @@ describe('TrustManager', () => {
       mockEnv.remoteName = undefined;
       mockConfigManager.get.mockReturnValue(true);
 
-      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const docUri = {
+        scheme: 'file',
+        fsPath: '/workspace/test.mdx',
+        path: '/workspace/test.mdx',
+      };
       const result = trustManager.canUseTrustedMode(docUri as any);
 
       expect(result.allowed).toBe(true);
@@ -275,7 +311,11 @@ describe('TrustManager', () => {
     it('returns allowed: false when workspace not trusted', () => {
       mockWorkspace.isTrusted = false;
 
-      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const docUri = {
+        scheme: 'file',
+        fsPath: '/workspace/test.mdx',
+        path: '/workspace/test.mdx',
+      };
       const result = trustManager.canUseTrustedMode(docUri as any);
 
       expect(result.allowed).toBe(false);
@@ -289,7 +329,11 @@ describe('TrustManager', () => {
         return undefined;
       });
 
-      const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx', path: '/workspace/test.mdx' };
+      const docUri = {
+        scheme: 'file',
+        fsPath: '/workspace/test.mdx',
+        path: '/workspace/test.mdx',
+      };
       const result = trustManager.canUseTrustedMode(docUri as any);
 
       expect(result.allowed).toBe(false);

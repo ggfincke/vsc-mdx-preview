@@ -217,7 +217,11 @@ describe('evaluate-in-webview Tailwind routing', () => {
       inlineTailwindStyles: [],
     });
 
-    await evaluateInWebview(preview as unknown as MockPreview, '# doc', '/workspace/doc.mdx');
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# doc',
+      '/workspace/doc.mdx'
+    );
 
     expect(mockTailwindProcessor.detectProfile).toHaveBeenCalledTimes(1);
     expect(preview.setTailwindBrowserRuntimeEnabled).toHaveBeenCalledWith(true);
@@ -244,8 +248,16 @@ describe('evaluate-in-webview Tailwind routing', () => {
       inlineTailwindStyles: [],
     });
 
-    await evaluateInWebview(preview as unknown as MockPreview, '# doc', '/workspace/doc.mdx');
-    await evaluateInWebview(preview as unknown as MockPreview, '# doc', '/workspace/doc.mdx');
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# doc',
+      '/workspace/doc.mdx'
+    );
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# doc',
+      '/workspace/doc.mdx'
+    );
 
     expect(mockStatusBarMessage).toHaveBeenCalledTimes(1);
     expect(mockStatusBarMessage).toHaveBeenCalledWith(
@@ -255,7 +267,9 @@ describe('evaluate-in-webview Tailwind routing', () => {
       10000
     );
 
-    expect(preview.webviewHandle.setTailwindBrowserCss).toHaveBeenCalledWith('');
+    expect(preview.webviewHandle.setTailwindBrowserCss).toHaveBeenCalledWith(
+      ''
+    );
     expect(preview.webviewHandle.setTailwindCss).toHaveBeenCalledWith('');
     expect(mockEngine.evaluateSafe).toHaveBeenCalledTimes(2);
   });

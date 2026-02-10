@@ -91,9 +91,14 @@ vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
 }));
 
 // mock fetchLocal to avoid complex dependencies
-vi.mock('../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal', () => ({
-  fetchLocal: vi.fn().mockResolvedValue({ code: '', dependencies: [], fsPath: '' }),
-}));
+vi.mock(
+  '../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal',
+  () => ({
+    fetchLocal: vi
+      .fn()
+      .mockResolvedValue({ code: '', dependencies: [], fsPath: '' }),
+  })
+);
 
 // import after mocks
 import ExtensionHandle from '../../packages/extension-host/src/platform/rpc/extension-rpc-handler';
@@ -110,7 +115,9 @@ function createMockPreview(fsPath = '/workspace/test.mdx') {
     entryFsDirectory: '/workspace',
     completeHandshake: vi.fn(),
     evaluationDuration: 0,
-  } as unknown as Parameters<typeof ExtensionHandle extends new (p: infer P) => unknown ? P : never>[0];
+  } as unknown as Parameters<
+    typeof ExtensionHandle extends new (p: infer P) => unknown ? P : never
+  >[0];
 }
 
 describe('RPC Input Validation', () => {
@@ -120,7 +127,9 @@ describe('RPC Input Validation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     preview = createMockPreview();
-    handle = new ExtensionHandle(preview as Parameters<typeof ExtensionHandle>[0]);
+    handle = new ExtensionHandle(
+      preview as Parameters<typeof ExtensionHandle>[0]
+    );
 
     // reset trust to trusted state
     mockTrustManager.getState.mockReturnValue({
@@ -160,13 +169,21 @@ describe('RPC Input Validation', () => {
     });
 
     it('rejects null byte injection attempts', async () => {
-      const result = await handle.fetch('react\0.malicious', false, '/entry.mdx');
+      const result = await handle.fetch(
+        'react\0.malicious',
+        false,
+        '/entry.mdx'
+      );
 
       expect(result).toBeUndefined();
     });
 
     it('rejects file:// URL scheme', async () => {
-      const result = await handle.fetch('file:///etc/passwd', false, '/entry.mdx');
+      const result = await handle.fetch(
+        'file:///etc/passwd',
+        false,
+        '/entry.mdx'
+      );
 
       expect(result).toBeUndefined();
     });
@@ -218,7 +235,11 @@ describe('RPC Input Validation', () => {
     });
 
     it('rejects non-string parentId parameter', async () => {
-      const result = await handle.fetch('react', true, 123 as unknown as string);
+      const result = await handle.fetch(
+        'react',
+        true,
+        123 as unknown as string
+      );
 
       expect(result).toBeUndefined();
     });

@@ -5,7 +5,11 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { MetaResolver, resolveNextraMeta, mergeNextraMeta } from '../../../packages/extension-host/src/features/framework/nextra/MetaResolver';
+import {
+  MetaResolver,
+  resolveNextraMeta,
+  mergeNextraMeta,
+} from '../../../packages/extension-host/src/features/framework/nextra/MetaResolver';
 
 const tempDirs: string[] = [];
 
@@ -30,7 +34,9 @@ describe('MetaResolver', () => {
   });
 
   it('resolves string title entries', () => {
-    const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-nextra-'));
+    const workspaceRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-nextra-')
+    );
     tempDirs.push(workspaceRoot);
 
     const metaPath = path.join(workspaceRoot, '_meta.json');
@@ -50,7 +56,9 @@ describe('MetaResolver', () => {
   });
 
   it('resolves theme options from object entries', () => {
-    const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-nextra-'));
+    const workspaceRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-nextra-')
+    );
     tempDirs.push(workspaceRoot);
 
     const metaPath = path.join(workspaceRoot, '_meta.json');
@@ -82,7 +90,9 @@ describe('MetaResolver', () => {
   });
 
   it('invalidates cache when meta changes', () => {
-    const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-nextra-'));
+    const workspaceRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-nextra-')
+    );
     tempDirs.push(workspaceRoot);
 
     const metaPath = path.join(workspaceRoot, '_meta.json');

@@ -31,17 +31,23 @@ const {
   },
 }));
 
-vi.mock('../../../packages/extension-host/src/features/module-runtime/security/checkFsPath', () => ({
-  checkFsPathAsync: mockCheckFsPathAsync,
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/module-runtime/security/checkFsPath',
+  () => ({
+    checkFsPathAsync: mockCheckFsPathAsync,
+  })
+);
 
 vi.mock('../../../packages/extension-host/src/shared/utils/file-utils', () => ({
   readFileAsync: mockReadFileAsync,
 }));
 
-vi.mock('../../../packages/extension-host/src/features/module-runtime/handlers', () => ({
-  handleByExtension: mockHandleByExtension,
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/module-runtime/handlers',
+  () => ({
+    handleByExtension: mockHandleByExtension,
+  })
+);
 
 vi.mock(
   '../../../packages/extension-host/src/features/module-runtime/resolution/UnifiedResolver',
@@ -77,7 +83,9 @@ describe('fetchLocal timeout delegation', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-fetch-local-'));
+    tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-fetch-local-')
+    );
     modulePath = path.join(tempDir, 'module.js');
     await fs.promises.writeFile(modulePath, 'export const value = 1;', 'utf-8');
 

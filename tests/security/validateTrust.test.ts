@@ -161,7 +161,10 @@ describe('requireTrustedModeForDocument()', () => {
     mockTrustManager.getStateForDocument.mockReturnValue(mockState);
 
     const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx' };
-    const result = requireTrustedModeForDocument(docUri as any, 'test operation');
+    const result = requireTrustedModeForDocument(
+      docUri as any,
+      'test operation'
+    );
 
     expect(result).toEqual(mockState);
     expect(mockTrustManager.getStateForDocument).toHaveBeenCalledWith(docUri);

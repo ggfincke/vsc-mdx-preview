@@ -110,9 +110,7 @@ describe('framework-selection commands', () => {
       vscode.ConfigurationTarget.Workspace
     );
     expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalled();
-    expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Docusaurus')
-    );
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('Docusaurus'));
   });
 
   it('cancel → no changes', async () => {

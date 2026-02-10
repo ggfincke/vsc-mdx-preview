@@ -25,14 +25,22 @@ describe('resolveAlias()', () => {
     });
 
     it('resolves @site/ to workspace-relative path', () => {
-      const result = resolveAlias('@site/src/components/Button', 'docusaurus', '/workspace');
+      const result = resolveAlias(
+        '@site/src/components/Button',
+        'docusaurus',
+        '/workspace'
+      );
 
       expect(result).not.toBeNull();
       expect(result).toBe('/workspace/src/components/Button');
     });
 
     it('returns null for @docusaurus/ internal imports', () => {
-      const result = resolveAlias('@docusaurus/core', 'docusaurus', '/workspace');
+      const result = resolveAlias(
+        '@docusaurus/core',
+        'docusaurus',
+        '/workspace'
+      );
 
       expect(result).toBeNull();
     });
@@ -40,7 +48,11 @@ describe('resolveAlias()', () => {
 
   describe('Starlight aliases', () => {
     it('resolves @astrojs/starlight/components to shim path', () => {
-      const result = resolveAlias('@astrojs/starlight/components', 'starlight', '/workspace');
+      const result = resolveAlias(
+        '@astrojs/starlight/components',
+        'starlight',
+        '/workspace'
+      );
 
       expect(result).not.toBeNull();
       expect(result).toContain('@mdx-preview/shims');
@@ -62,7 +74,11 @@ describe('resolveAlias()', () => {
 
   describe('unknown aliases', () => {
     it('returns null for unknown alias', () => {
-      const result = resolveAlias('@unknown/component', 'docusaurus', '/workspace');
+      const result = resolveAlias(
+        '@unknown/component',
+        'docusaurus',
+        '/workspace'
+      );
 
       expect(result).toBeNull();
     });

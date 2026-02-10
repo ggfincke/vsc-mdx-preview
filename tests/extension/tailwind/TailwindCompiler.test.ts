@@ -8,9 +8,12 @@ const { mockLoadModuleWithEsmFallback } = vi.hoisted(() => ({
   mockLoadModuleWithEsmFallback: vi.fn(),
 }));
 
-vi.mock('../../../packages/extension-host/src/shared/utils/lazy-import', () => ({
-  loadModuleWithEsmFallback: mockLoadModuleWithEsmFallback,
-}));
+vi.mock(
+  '../../../packages/extension-host/src/shared/utils/lazy-import',
+  () => ({
+    loadModuleWithEsmFallback: mockLoadModuleWithEsmFallback,
+  })
+);
 
 vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   createTaggedLogger: () => ({

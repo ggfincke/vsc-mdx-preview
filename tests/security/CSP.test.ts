@@ -9,7 +9,11 @@ vi.mock('vscode', () => ({
 }));
 
 // Import after mock
-import { generateNonce, generateCSP, getCSP } from '../../packages/extension-host/src/features/security/CSP';
+import {
+  generateNonce,
+  generateCSP,
+  getCSP,
+} from '../../packages/extension-host/src/features/security/CSP';
 import { SecurityPolicy } from '../../packages/extension-host/src/features/security/security';
 import type { TrustState } from '../../packages/extension-host/src/features/security/TrustManager';
 

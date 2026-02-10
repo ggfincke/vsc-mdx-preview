@@ -7,9 +7,7 @@ import type { CompilerConfig } from 'mdx-tools/compiler';
 import { FIXTURES } from '../helpers';
 
 // create library-native CompilerConfig
-function createConfig(
-  overrides: Partial<CompilerConfig> = {}
-): CompilerConfig {
+function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
   return {
     documentPath: '/workspace/test.mdx',
     useVscodeMarkdownStyles: true,
@@ -254,10 +252,7 @@ digraph G {
     });
 
     it('removes import/export statements', async () => {
-      const result = await compileSafe(
-        FIXTURES.mdxWithImports,
-        createConfig()
-      );
+      const result = await compileSafe(FIXTURES.mdxWithImports, createConfig());
 
       // imports should be removed
       expect(result.html).not.toContain('import');
@@ -371,10 +366,7 @@ digraph G {
     });
 
     it('handles Docusaurus components in Safe Mode', async () => {
-      const result = await compileSafe(
-        FIXTURES.docusaurusTabs,
-        createConfig()
-      );
+      const result = await compileSafe(FIXTURES.docusaurusTabs, createConfig());
 
       // components should be replaced w/ placeholders
       expect(result.html).toBeDefined();

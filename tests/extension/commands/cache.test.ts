@@ -25,17 +25,26 @@ vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory', () => ({
-  clearResolverCache: (...args: any[]) => mockClearResolverCache(...args),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory',
+  () => ({
+    clearResolverCache: (...args: any[]) => mockClearResolverCache(...args),
+  })
+);
 
-vi.mock('../../../packages/extension-host/src/features/module-runtime/handlers', () => ({
-  clearSassCache: (...args: any[]) => mockClearSassCache(...args),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/module-runtime/handlers',
+  () => ({
+    clearSassCache: (...args: any[]) => mockClearSassCache(...args),
+  })
+);
 
-vi.mock('../../../packages/extension-host/src/app/lifecycle/cache-subsystem', () => ({
-  clearUnmanagedCaches: (...args: any[]) => mockClearUnmanagedCaches(...args),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/app/lifecycle/cache-subsystem',
+  () => ({
+    clearUnmanagedCaches: (...args: any[]) => mockClearUnmanagedCaches(...args),
+  })
+);
 
 vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getPreviewManager: () => mockPreviewManager,
@@ -75,8 +84,6 @@ describe('cache commands', () => {
   it('shows confirmation message', async () => {
     const spy = vi.spyOn(vscode.window, 'showInformationMessage');
     await handler();
-    expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining('caches cleared')
-    );
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('caches cleared'));
   });
 });

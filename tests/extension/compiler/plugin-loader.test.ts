@@ -5,10 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import {
-  loadPluginsFromConfig,
-  mergePlugins,
-} from 'mdx-tools/compiler';
+import { loadPluginsFromConfig, mergePlugins } from 'mdx-tools/compiler';
 import type {
   CompilerConfig,
   PluginLoader,
@@ -27,9 +24,7 @@ function createPluginModule(tempDir: string, name: string): string {
 }
 
 // create a mock plugin loader that resolves plugins from temp dir
-function createMockPluginLoader(
-  resolveMap: Map<string, string>
-): PluginLoader {
+function createMockPluginLoader(resolveMap: Map<string, string>): PluginLoader {
   return {
     resolve(specifier: string, _fromDir: string): string {
       const resolved = resolveMap.get(specifier);

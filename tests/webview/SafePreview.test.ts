@@ -631,7 +631,8 @@ describe('XSS Payload Injection Tests', () => {
   describe('Encoded/obfuscated payloads', () => {
     it('handles HTML entity encoded event handlers', () => {
       // &#111;&#110;&#101;&#114;&#114;&#111;&#114; = onerror
-      const malicious = '<img src=x &#111;&#110;&#101;&#114;&#114;&#111;&#114;="alert(1)">';
+      const malicious =
+        '<img src=x &#111;&#110;&#101;&#114;&#114;&#111;&#114;="alert(1)">';
       const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
       expect(result).not.toContain('onerror');
     });
@@ -698,5 +699,3 @@ describe('XSS Payload Injection Tests', () => {
     });
   });
 });
-
-

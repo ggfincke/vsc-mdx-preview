@@ -9,13 +9,16 @@ const { mockGet, mockClear } = vi.hoisted(() => ({
   mockClear: vi.fn(),
 }));
 
-vi.mock('../../../packages/extension-host/src/shared/utils/lazy-import', () => ({
-  createKeyedLazyImport: vi.fn(() => ({
-    get: mockGet,
-    clear: mockClear,
-  })),
-  loadModuleWithEsmFallback: vi.fn(),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/shared/utils/lazy-import',
+  () => ({
+    createKeyedLazyImport: vi.fn(() => ({
+      get: mockGet,
+      clear: mockClear,
+    })),
+    loadModuleWithEsmFallback: vi.fn(),
+  })
+);
 
 vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   createTaggedLogger: vi.fn(() => ({
@@ -93,7 +96,11 @@ describe('SassHandler', () => {
     mockGet.mockResolvedValueOnce({ compileAsync });
 
     const fsPath = '/workspace/styles/main.scss';
-    const result = await handler.handle('', fsPath, createMockPreview('/workspace'));
+    const result = await handler.handle(
+      '',
+      fsPath,
+      createMockPreview('/workspace')
+    );
 
     expect(compileAsync).toHaveBeenCalledTimes(1);
     expect(compileAsync).toHaveBeenCalledWith(

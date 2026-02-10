@@ -69,4 +69,3 @@ describe('Semaphore', () => {
     expect(semaphore.waiting).toBe(0);
   });
 });
-

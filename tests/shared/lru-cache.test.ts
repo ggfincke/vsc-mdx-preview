@@ -2,9 +2,7 @@
 // unit tests for runtime-utils LRU cache behaviors
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import {
-  LRUCache,
-} from '@mdx-preview/runtime-utils';
+import { LRUCache } from '@mdx-preview/runtime-utils';
 
 describe('LRUCache', () => {
   afterEach(() => {
@@ -64,6 +62,4 @@ describe('LRUCache', () => {
     expect(cache.pruneExpired()).toBe(0);
     expect(cache.size).toBe(0);
   });
-
 });
-

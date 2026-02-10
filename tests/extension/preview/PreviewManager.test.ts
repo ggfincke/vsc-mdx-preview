@@ -19,16 +19,22 @@ vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
 vi.mock('../../../packages/extension-host/src/app/services', () => ({}));
 
 // mock preview-commands to avoid pulling in heavy deps
-vi.mock('../../../packages/extension-host/src/features/preview/preview-commands', () => ({
-  openPreview: vi.fn(),
-  refreshPreview: vi.fn(),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/preview-commands',
+  () => ({
+    openPreview: vi.fn(),
+    refreshPreview: vi.fn(),
+  })
+);
 
 // mock Preview module to avoid transitive dep chain
 // (Preview → EvaluationEngine → transform → sucrase)
-vi.mock('../../../packages/extension-host/src/features/preview/Preview', () => ({
-  Preview: vi.fn(),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/Preview',
+  () => ({
+    Preview: vi.fn(),
+  })
+);
 
 import { PreviewManager } from '../../../packages/extension-host/src/features/preview/preview-manager';
 import type { Preview } from '../../../packages/extension-host/src/features/preview/Preview';
@@ -81,7 +87,6 @@ describe('PreviewManager', () => {
       const mgr = PreviewManager.getInstance();
       await mgr.refreshAllPreviews();
     });
-
   });
 
   // clearAllWebviewCaches
@@ -105,7 +110,6 @@ describe('PreviewManager', () => {
       // should not throw
       await mgr.clearAllWebviewCaches();
     });
-
   });
 
   // panel lifecycle

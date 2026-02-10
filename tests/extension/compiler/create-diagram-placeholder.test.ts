@@ -74,16 +74,10 @@ describe('createDiagramPlaceholder', () => {
       idAttr: 'data-multi-id',
     });
 
-    const htmlAlpha = await processMarkdown(
-      '```alpha\nfoo\n```',
-      multiPlugin
-    );
+    const htmlAlpha = await processMarkdown('```alpha\nfoo\n```', multiPlugin);
     expect(htmlAlpha).toContain('multi-container');
 
-    const htmlBeta = await processMarkdown(
-      '```beta\nbar\n```',
-      multiPlugin
-    );
+    const htmlBeta = await processMarkdown('```beta\nbar\n```', multiPlugin);
     expect(htmlBeta).toContain('multi-container');
   });
 

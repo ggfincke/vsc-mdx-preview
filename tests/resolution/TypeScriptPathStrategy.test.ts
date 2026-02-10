@@ -24,12 +24,16 @@ vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
 // Mock file-prober
 const mockProbeTypeScriptFile = vi.fn();
 const mockProbeTypeScriptFileAsync = vi.fn();
-vi.mock('../../packages/extension-host/src/features/module-runtime/resolution/file-prober', () => ({
-  probeTypeScriptFile: (...args: unknown[]) => mockProbeTypeScriptFile(...args),
-  probeTypeScriptFileAsync: (...args: unknown[]) =>
-    mockProbeTypeScriptFileAsync(...args),
-  clearStatCache: vi.fn(),
-}));
+vi.mock(
+  '../../packages/extension-host/src/features/module-runtime/resolution/file-prober',
+  () => ({
+    probeTypeScriptFile: (...args: unknown[]) =>
+      mockProbeTypeScriptFile(...args),
+    probeTypeScriptFileAsync: (...args: unknown[]) =>
+      mockProbeTypeScriptFileAsync(...args),
+    clearStatCache: vi.fn(),
+  })
+);
 
 // Import after mocks
 import {

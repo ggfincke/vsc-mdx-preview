@@ -7,24 +7,29 @@ import { WatcherManager } from '../../../packages/extension-host/src/features/pr
 import { WEBVIEW_HANDSHAKE_TIMEOUT_MS } from '../../../packages/extension-host/src/shared/constants';
 import type { ResolvedConfig } from '../../../packages/extension-host/src/types';
 
-const { configHandlers, mockTailwindProcessor, mockConfigManager } = vi.hoisted(() => ({
-  configHandlers: [] as Array<(event: { configPath: string }) => void>,
-  mockTailwindProcessor: {
-    invalidateVersionCache: vi.fn(),
-    invalidateDetectionCaches: vi.fn(),
-    invalidateScanCache: vi.fn(),
-  },
-  mockConfigManager: {
-    get: vi.fn(() => 200),
-  },
-}));
+const { configHandlers, mockTailwindProcessor, mockConfigManager } = vi.hoisted(
+  () => ({
+    configHandlers: [] as Array<(event: { configPath: string }) => void>,
+    mockTailwindProcessor: {
+      invalidateVersionCache: vi.fn(),
+      invalidateDetectionCaches: vi.fn(),
+      invalidateScanCache: vi.fn(),
+    },
+    mockConfigManager: {
+      get: vi.fn(() => 200),
+    },
+  })
+);
 
-vi.mock('../../../packages/extension-host/src/features/preview/configuration', () => ({
-  onConfigChange: (handler: (event: { configPath: string }) => void) => {
-    configHandlers.push(handler);
-    return { dispose: vi.fn() };
-  },
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/configuration',
+  () => ({
+    onConfigChange: (handler: (event: { configPath: string }) => void) => {
+      configHandlers.push(handler);
+      return { dispose: vi.fn() };
+    },
+  })
+);
 
 vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
@@ -86,7 +91,12 @@ describe('PreviewInitializer', () => {
 
     const names = watcherManager.getNames();
     expect(names).toEqual(
-      expect.arrayContaining(['document', 'dependency', 'customCss', 'packageJson'])
+      expect.arrayContaining([
+        'document',
+        'dependency',
+        'customCss',
+        'packageJson',
+      ])
     );
   });
 

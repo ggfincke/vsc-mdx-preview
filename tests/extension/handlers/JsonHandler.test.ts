@@ -2,7 +2,10 @@
 // unit tests for JSON file handler
 
 import { describe, it, expect } from 'vitest';
-import { createSimpleHandler, buildModuleExportResult } from '../../../packages/extension-host/src/features/module-runtime/handlers/result-builders';
+import {
+  createSimpleHandler,
+  buildModuleExportResult,
+} from '../../../packages/extension-host/src/features/module-runtime/handlers/result-builders';
 import { JSON_EXTENSIONS } from '../../../packages/extension-host/src/shared/constants';
 import type { Preview } from '../../../packages/extension-host/src/features/preview/preview-manager';
 

@@ -7,9 +7,7 @@ import type { CompilerConfig } from 'mdx-tools/compiler';
 import { FIXTURES } from '../helpers';
 
 // create library-native CompilerConfig
-function createConfig(
-  overrides: Partial<CompilerConfig> = {}
-): CompilerConfig {
+function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
   return {
     documentPath: '/workspace/test.mdx',
     useVscodeMarkdownStyles: true,

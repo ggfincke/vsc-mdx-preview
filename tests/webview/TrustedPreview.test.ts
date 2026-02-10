@@ -20,32 +20,44 @@ vi.mock('../../packages/webview-client/src/features/module-runtime', () => ({
   evaluateModuleToComponent: vi.fn(),
 }));
 
-vi.mock('../../packages/webview-client/src/features/preview/shared/hooks/usePreviewSetup', () => ({
-  usePreviewSetup: () => ({
-    containerRef: { current: {} },
-    handleImageClick: vi.fn(),
-    renderPortals: () => null,
-    scan: vi.fn(),
-  }),
-}));
+vi.mock(
+  '../../packages/webview-client/src/features/preview/shared/hooks/usePreviewSetup',
+  () => ({
+    usePreviewSetup: () => ({
+      containerRef: { current: {} },
+      handleImageClick: vi.fn(),
+      renderPortals: () => null,
+      scan: vi.fn(),
+    }),
+  })
+);
 
-vi.mock('../../packages/webview-client/src/shared/hooks/useAsyncEffect', () => ({
-  useAsyncEffect: (_fn: any, _deps: any[], options: any) => {
-    if (asyncBehavior.mode === 'success') {
-      options?.onSuccess?.(asyncBehavior.result);
-    } else if (asyncBehavior.mode === 'error') {
-      options?.onError?.(asyncBehavior.error);
-    }
-  },
-}));
+vi.mock(
+  '../../packages/webview-client/src/shared/hooks/useAsyncEffect',
+  () => ({
+    useAsyncEffect: (_fn: any, _deps: any[], options: any) => {
+      if (asyncBehavior.mode === 'success') {
+        options?.onSuccess?.(asyncBehavior.result);
+      } else if (asyncBehavior.mode === 'error') {
+        options?.onError?.(asyncBehavior.error);
+      }
+    },
+  })
+);
 
-vi.mock('../../packages/webview-client/src/features/code-block/hooks/useKatexDetection', () => ({
-  useKatexDetection: vi.fn(),
-}));
+vi.mock(
+  '../../packages/webview-client/src/features/code-block/hooks/useKatexDetection',
+  () => ({
+    useKatexDetection: vi.fn(),
+  })
+);
 
-vi.mock('../../packages/webview-client/src/features/code-block/hooks/useCodeBlockEnhancement', () => ({
-  useCodeBlockEnhancement: vi.fn(),
-}));
+vi.mock(
+  '../../packages/webview-client/src/features/code-block/hooks/useCodeBlockEnhancement',
+  () => ({
+    useCodeBlockEnhancement: vi.fn(),
+  })
+);
 
 vi.mock(
   '../../packages/webview-client/src/features/preview/shared/ui/PreviewContainer/PreviewContainer',
@@ -70,9 +82,10 @@ const content: TrustedPreviewContent = {
   dependencies: [],
 };
 
-function mountRenderer(
-  props: Parameters<typeof TrustedPreviewRenderer>[0]
-): { container: HTMLElement; root: Root } {
+function mountRenderer(props: Parameters<typeof TrustedPreviewRenderer>[0]): {
+  container: HTMLElement;
+  root: Root;
+} {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -90,8 +103,9 @@ function unmountRenderer(root: Root): void {
 
 describe('TrustedPreviewRenderer', () => {
   beforeEach(() => {
-    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean })
-      .IS_REACT_ACT_ENVIRONMENT = true;
+    (
+      globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = true;
     vi.clearAllMocks();
     asyncBehavior.mode = 'none';
     asyncBehavior.result = undefined;
@@ -99,8 +113,9 @@ describe('TrustedPreviewRenderer', () => {
   });
 
   afterEach(() => {
-    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean })
-      .IS_REACT_ACT_ENVIRONMENT = false;
+    (
+      globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = false;
     document.body.innerHTML = '';
   });
 
@@ -125,7 +140,9 @@ describe('TrustedPreviewRenderer', () => {
       onError: vi.fn(),
     });
 
-    const previewRoot = container.querySelector('[data-preview-mode="trusted"]');
+    const previewRoot = container.querySelector(
+      '[data-preview-mode="trusted"]'
+    );
     expect(previewRoot).toBeTruthy();
     expect(container.textContent).toContain('Rendered Demo');
     unmountRenderer(root);
@@ -209,5 +226,3 @@ describe('TrustedPreviewRenderer', () => {
     unmountRenderer(root);
   });
 });
-
-

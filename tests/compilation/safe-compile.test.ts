@@ -7,9 +7,7 @@ import type { CompilerConfig } from 'mdx-tools/compiler';
 import { FIXTURES } from '../helpers';
 
 // create library-native CompilerConfig
-function createConfig(
-  overrides: Partial<CompilerConfig> = {}
-): CompilerConfig {
+function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
   return {
     documentPath: '/workspace/test.mdx',
     useVscodeMarkdownStyles: true,
@@ -77,10 +75,7 @@ describe('compileSafe()', () => {
   });
 
   it('handles code blocks correctly', async () => {
-    const result = await compileSafe(
-      FIXTURES.mdxWithCodeBlock,
-      createConfig()
-    );
+    const result = await compileSafe(FIXTURES.mdxWithCodeBlock, createConfig());
 
     expect(result.html).toContain('<pre');
     expect(result.html).toContain('<code');

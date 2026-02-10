@@ -12,10 +12,6 @@ const aliases = [
     ),
   },
   {
-    find: '@mdx-preview/shared',
-    replacement: path.resolve(__dirname, '../packages/shared/index.ts'),
-  },
-  {
     find: '@mdx-preview/contracts',
     replacement: path.resolve(__dirname, '../packages/contracts/src/index.ts'),
   },
@@ -25,7 +21,10 @@ const aliases = [
   },
   {
     find: '@mdx-preview/runtime-utils',
-    replacement: path.resolve(__dirname, '../packages/runtime-utils/src/index.ts'),
+    replacement: path.resolve(
+      __dirname,
+      '../packages/runtime-utils/src/index.ts'
+    ),
   },
   {
     find: '@mdx-preview/codegen',

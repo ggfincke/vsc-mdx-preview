@@ -1,7 +1,7 @@
 // tests/helpers/mock-compiler-config.ts
 // factory helpers for CompilerConfig test inputs
 
-import type { UnknownBehaviorValue } from '@mdx-preview/shared';
+import type { UnknownBehaviorValue } from '@mdx-preview/contracts';
 import type {
   CompilerConfig,
   ResolvedConfig,

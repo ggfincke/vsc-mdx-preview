@@ -8,18 +8,21 @@ import {
 } from '../../packages/webview-client/src/features/module-runtime/preload/shimLoader';
 import type { ModuleRegistry } from '../../packages/webview-client/src/features/module-runtime/registry/ModuleRegistry';
 
-vi.mock('../../packages/webview-client/src/shared/utils/createTaggedLogger', () => {
-  const logger = {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  };
+vi.mock(
+  '../../packages/webview-client/src/shared/utils/createTaggedLogger',
+  () => {
+    const logger = {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    };
 
-  return {
-    createTaggedLogger: () => logger,
-  };
-});
+    return {
+      createTaggedLogger: () => logger,
+    };
+  }
+);
 
 vi.mock('../../packages/webview-client/src/app/constants', () => ({
   SHIM_LOAD_MAX_RETRIES: 2,
@@ -84,7 +87,9 @@ describe('shimLoader', () => {
     });
 
     it('should report failure when both framework and fallback fail', async () => {
-      const frameworkLoader = vi.fn().mockRejectedValue(new Error('Framework failed'));
+      const frameworkLoader = vi
+        .fn()
+        .mockRejectedValue(new Error('Framework failed'));
       const fallbackLoader = vi.fn().mockImplementation(() => {
         throw new Error('Fallback failed');
       });
@@ -183,5 +188,3 @@ describe('shimLoader', () => {
     });
   });
 });
-
-

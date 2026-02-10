@@ -57,7 +57,9 @@ describe('evaluateModule', () => {
       } catch (error: unknown) {
         const err = error as Error & { cause?: Error };
 
-        expect(err.message).toContain('Error evaluating module "error-test.js"');
+        expect(err.message).toContain(
+          'Error evaluating module "error-test.js"'
+        );
         expect(err.message).toContain('original error message');
         expect(err.cause).toBeInstanceOf(Error);
         expect(err.cause?.message).toBe('original error message');
@@ -103,7 +105,9 @@ describe('evaluateModule', () => {
       } catch (error: unknown) {
         const err = error as Error & { cause?: Error };
 
-        expect(err.message).toContain('Error evaluating module "syntax-error.js"');
+        expect(err.message).toContain(
+          'Error evaluating module "syntax-error.js"'
+        );
         expect(err.cause).toBeDefined();
       }
     });
@@ -123,5 +127,3 @@ describe('evaluateModule', () => {
     });
   });
 });
-
-

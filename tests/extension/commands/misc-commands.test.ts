@@ -36,43 +36,61 @@ vi.mock('../../../packages/extension-host/src/app/services', () => ({
 }));
 
 // mock commands that pull in heavy deps
-vi.mock('../../../packages/extension-host/src/features/preview/preview-manager', () => ({
-  openPreview: (...args: any[]) => mockDoOpenPreview(...args),
-  refreshPreview: (...args: any[]) => mockDoRefreshPreview(...args),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/preview-manager',
+  () => ({
+    openPreview: (...args: any[]) => mockDoOpenPreview(...args),
+    refreshPreview: (...args: any[]) => mockDoRefreshPreview(...args),
+  })
+);
 
 // mock authoring guide text
-vi.mock('../../../packages/extension-host/src/features/commands/authoring-guide-text', () => ({
-  MDX_AUTHORING_GUIDE_TEXT: 'test guide content',
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/commands/authoring-guide-text',
+  () => ({
+    MDX_AUTHORING_GUIDE_TEXT: 'test guide content',
+  })
+);
 
 // mock config-info (used in index.ts)
-vi.mock('../../../packages/extension-host/src/features/commands/config-info', () => ({
-  commands: [],
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/commands/config-info',
+  () => ({
+    commands: [],
+  })
+);
 
 // mock security (used in index.ts)
-vi.mock('../../../packages/extension-host/src/features/security/security', () => ({
-  selectSecurityPolicy: vi.fn(),
-  SecurityPolicy: { Strict: 'strict', Disabled: 'disabled' },
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/security/security',
+  () => ({
+    selectSecurityPolicy: vi.fn(),
+    SecurityPolicy: { Strict: 'strict', Disabled: 'disabled' },
+  })
+);
 
 vi.mock('../../../packages/extension-host/src/shared/errors', () => ({
   ErrorContext: { Security: 'security' },
 }));
 
 // mock cache deps (used in index.ts)
-vi.mock('../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory', () => ({
-  clearResolverCache: vi.fn(),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory',
+  () => ({
+    clearResolverCache: vi.fn(),
+  })
+);
 
 vi.mock('../../../packages/extension/module-system/handlers', () => ({
   clearSassCache: vi.fn(),
 }));
 
-vi.mock('../../../packages/extension-host/src/app/lifecycle/cache-subsystem', () => ({
-  clearUnmanagedCaches: vi.fn(),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/app/lifecycle/cache-subsystem',
+  () => ({
+    clearUnmanagedCaches: vi.fn(),
+  })
+);
 
 describe('debug commands', () => {
   beforeEach(() => {
@@ -81,9 +99,8 @@ describe('debug commands', () => {
 
   // import lazily to avoid issues w/ mock ordering
   async function getDebugHandler() {
-    const mod = await import(
-      '../../../packages/extension-host/src/features/commands/debug'
-    );
+    const mod =
+      await import('../../../packages/extension-host/src/features/commands/debug');
     return mod.commands.find(
       (c) => c.id === 'mdx-preview.commands.toggleDebugOutput'
     )!.handler;
@@ -99,9 +116,7 @@ describe('debug commands', () => {
       true
     );
     expect(mockShowOutput).toHaveBeenCalled();
-    expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining('enabled')
-    );
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('enabled'));
   });
 
   it('toggle off: sets false, no showOutput, shows info', async () => {
@@ -114,9 +129,7 @@ describe('debug commands', () => {
       false
     );
     expect(mockShowOutput).not.toHaveBeenCalled();
-    expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining('disabled')
-    );
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('disabled'));
   });
 });
 
@@ -126,9 +139,8 @@ describe('authoring-guide commands', () => {
   });
 
   async function getAuthoringHandler() {
-    const mod = await import(
-      '../../../packages/extension-host/src/features/commands/authoring-guide'
-    );
+    const mod =
+      await import('../../../packages/extension-host/src/features/commands/authoring-guide');
     return mod.commands.find(
       (c) => c.id === 'mdx-preview.commands.copyAuthoringGuide'
     )!.handler;
@@ -140,9 +152,7 @@ describe('authoring-guide commands', () => {
     const handler = await getAuthoringHandler();
     await handler();
     expect(clipSpy).toHaveBeenCalledWith('test guide content');
-    expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining('clipboard')
-    );
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('clipboard'));
   });
 });
 
@@ -152,9 +162,8 @@ describe('preview commands', () => {
   });
 
   async function getPreviewCommands() {
-    const mod = await import(
-      '../../../packages/extension-host/src/features/commands/preview'
-    );
+    const mod =
+      await import('../../../packages/extension-host/src/features/commands/preview');
     return mod.commands;
   }
 
@@ -193,9 +202,8 @@ describe('registerAllCommands', () => {
     }));
     (vscode.commands as any).registerCommand = mockRegister;
 
-    const { registerAllCommands } = await import(
-      '../../../packages/extension-host/src/features/commands/index'
-    );
+    const { registerAllCommands } =
+      await import('../../../packages/extension-host/src/features/commands/index');
     const disposables = registerAllCommands();
     expect(Array.isArray(disposables)).toBe(true);
     expect(disposables.length).toBeGreaterThan(0);

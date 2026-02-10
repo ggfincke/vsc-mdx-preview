@@ -10,15 +10,21 @@ const { mockDetectComponents, mockGetUnknownComponents } = vi.hoisted(() => ({
   mockGetUnknownComponents: vi.fn(),
 }));
 
-vi.mock('../../../packages/extension-host/src/features/diagnostics/ComponentDetector', () => ({
-  detectComponents: mockDetectComponents,
-  getUnknownComponents: mockGetUnknownComponents,
-  invalidateComponentCache: vi.fn(),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/diagnostics/ComponentDetector',
+  () => ({
+    detectComponents: mockDetectComponents,
+    getUnknownComponents: mockGetUnknownComponents,
+    invalidateComponentCache: vi.fn(),
+  })
+);
 
-vi.mock('../../../packages/extension-host/src/features/preview/configuration/ConfigResolver', () => ({
-  resolveConfig: vi.fn(() => undefined),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/configuration/ConfigResolver',
+  () => ({
+    resolveConfig: vi.fn(() => undefined),
+  })
+);
 
 vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   debug: vi.fn(),
@@ -51,7 +57,11 @@ describe('ComponentDiagnostics', () => {
       source: 'unknown',
     };
 
-    mockDetectComponents.mockResolvedValue({ components: [], imports: new Map(), errors: [] });
+    mockDetectComponents.mockResolvedValue({
+      components: [],
+      imports: new Map(),
+      errors: [],
+    });
     mockGetUnknownComponents.mockReturnValue([unknownComponent]);
 
     const service = ComponentDiagnostics.getInstance();

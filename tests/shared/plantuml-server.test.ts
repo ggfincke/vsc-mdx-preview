@@ -45,8 +45,8 @@ describe('PlantUML server helpers', () => {
   });
 
   it('uses direct endpoint when server already points to /svg', () => {
-    expect(getPlantUmlRenderEndpoints('https://example.com/custom/svg')).toEqual([
-      'https://example.com/custom/svg',
-    ]);
+    expect(
+      getPlantUmlRenderEndpoints('https://example.com/custom/svg')
+    ).toEqual(['https://example.com/custom/svg']);
   });
 });

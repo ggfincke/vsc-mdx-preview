@@ -32,9 +32,12 @@ vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension-host/src/features/security/security', () => ({
-  selectSecurityPolicy: (...args: any[]) => mockSelectSecurityPolicy(...args),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/security/security',
+  () => ({
+    selectSecurityPolicy: (...args: any[]) => mockSelectSecurityPolicy(...args),
+  })
+);
 
 vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
@@ -98,9 +101,7 @@ describe('security commands', () => {
         false,
         vscode.ConfigurationTarget.Workspace
       );
-      expect(infoSpy).toHaveBeenCalledWith(
-        expect.stringContaining('disabled')
-      );
+      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('disabled'));
     });
 
     it('trusted + disabled → sets true w/ Workspace scope & shows info', async () => {
@@ -115,9 +116,7 @@ describe('security commands', () => {
         true,
         vscode.ConfigurationTarget.Workspace
       );
-      expect(infoSpy).toHaveBeenCalledWith(
-        expect.stringContaining('enabled')
-      );
+      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('enabled'));
     });
 
     it('Manage Trust action executes trust management command', async () => {

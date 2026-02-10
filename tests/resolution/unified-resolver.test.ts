@@ -36,11 +36,14 @@ const mockFileProbeStrategy = {
   resolveAsync: vi.fn(),
 };
 
-vi.mock('../../packages/extension-host/src/features/module-runtime/resolution/strategies', () => ({
-  getTypeScriptPathStrategy: () => mockTypeScriptStrategy,
-  getEnhancedResolveStrategy: () => mockEnhancedResolveStrategy,
-  getFileProbeStrategy: () => mockFileProbeStrategy,
-}));
+vi.mock(
+  '../../packages/extension-host/src/features/module-runtime/resolution/strategies',
+  () => ({
+    getTypeScriptPathStrategy: () => mockTypeScriptStrategy,
+    getEnhancedResolveStrategy: () => mockEnhancedResolveStrategy,
+    getFileProbeStrategy: () => mockFileProbeStrategy,
+  })
+);
 
 // Import after mocks
 import {

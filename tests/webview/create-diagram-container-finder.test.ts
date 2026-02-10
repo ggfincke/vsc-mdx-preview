@@ -128,5 +128,3 @@ describe('createDiagramContainerFinder', () => {
     expect(finder(document.body)).toHaveLength(0);
   });
 });
-
-
