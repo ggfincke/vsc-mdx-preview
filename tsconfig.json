@@ -20,7 +20,6 @@
     "resolveJsonModule": true,
     "types": ["node"],
     "paths": {
-      "@mdx-preview/shared": ["./packages/shared/index.ts"],
       "@mdx-preview/contracts": ["./packages/contracts/src/index.ts"],
       "@mdx-preview/registry": ["./packages/registry/src/index.ts"],
       "@mdx-preview/runtime-utils": ["./packages/runtime-utils/src/index.ts"],
@@ -33,7 +32,7 @@
       "mdx-tools/components/*": ["./packages/mdx-tools/src/components/*"]
     }
   },
-  "include": ["packages/extension-host", "packages/shared"],
+  "include": ["packages/extension-host"],
   "exclude": [
     "node_modules",
     ".vscode-test",

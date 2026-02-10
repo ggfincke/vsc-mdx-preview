@@ -34,7 +34,8 @@ interface CacheEntry<V> {
 // ```typescript
 // const cache = new LRUCache<string, string>({ maxEntries: 100, ttlMs: 60000 });
 // cache.set('key', 'value');
-// const value = cache.get('key'); // 'value' or null if expired/evicted
+// get value or null if expired or evicted
+// const value = cache.get('key');
 // ```
 export class LRUCache<K, V> {
   private cache = new Map<K, CacheEntry<V>>();

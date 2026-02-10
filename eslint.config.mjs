@@ -51,6 +51,11 @@ export default tseslint.config(
               message:
                 'Extension/shared code must not import from webview-client.',
             },
+            {
+              group: ['@mdx-preview/shared', '@mdx-preview/shared/*'],
+              message:
+                'packages/shared was removed. Import from @mdx-preview/contracts, @mdx-preview/registry, or @mdx-preview/runtime-utils.',
+            },
           ],
         },
       ],
@@ -74,6 +79,8 @@ export default tseslint.config(
       'packages/webview-client/**',
       // plain JS files not in tsconfig
       '**/*.mjs',
+      // package-local vitest configs are outside main tsconfig scopes
+      '**/vitest.config.ts',
       // local eslint rules (plain JS)
       'packages/extension-host/eslint-rules/**',
       // test files (not in main tsconfig, tests currently disabled)

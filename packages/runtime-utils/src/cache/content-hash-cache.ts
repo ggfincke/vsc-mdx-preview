@@ -25,12 +25,12 @@ export interface ContentHashCacheOptions<V> extends Omit<
 // ```typescript
 // const cache = new ContentHashCache<string[]>({ maxEntries: 50, ttlMs: 300000 });
 //
-// // Store w/ content hash
+// store w/ content hash
 // cache.setWithHash('/path/to/file', contentHash, ['class1', 'class2']);
 //
-// // Retrieve only if hash matches current content
+// retrieve only if hash matches current content
 // const classes = cache.getIfHashMatches('/path/to/file', currentHash);
-// // Returns null if file has changed (hash mismatch)
+// return null if file has changed (hash mismatch)
 // ```
 export class ContentHashCache<V> {
   private cache: LRUCache<string, HashValidatedEntry<V>>;

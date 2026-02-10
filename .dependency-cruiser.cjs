@@ -28,12 +28,23 @@ module.exports = {
       to: { path: '^packages/extension-host/', pathNot: 'eslint-rules/' },
     },
     {
+      name: 'no-generated-deep-imports',
+      severity: 'error',
+      comment:
+        'Only feature barrel modules may import from generated output',
+      from: {
+        path: '^packages/webview-client/src/',
+        pathNot: '^packages/webview-client/src/features/.*/index\\.ts$',
+      },
+      to: { path: '^packages/webview-client/src/generated/' },
+    },
+    {
       name: 'contracts-isolation',
       severity: 'error',
       comment: 'contracts must not depend on any other internal package',
       from: { path: '^packages/contracts/' },
       to: {
-        path: '^packages/(registry|runtime-utils|codegen|extension-host|webview-client|shared)/',
+        path: '^packages/(registry|runtime-utils|codegen|extension-host|webview-client)/',
       },
     },
     {
@@ -42,7 +53,7 @@ module.exports = {
       comment: 'registry may only depend on contracts',
       from: { path: '^packages/registry/' },
       to: {
-        path: '^packages/(runtime-utils|codegen|extension-host|webview-client|shared)/',
+        path: '^packages/(runtime-utils|codegen|extension-host|webview-client)/',
       },
     },
     {
@@ -51,8 +62,51 @@ module.exports = {
       comment: 'runtime-utils may only depend on contracts',
       from: { path: '^packages/runtime-utils/' },
       to: {
-        path: '^packages/(registry|codegen|extension-host|webview-client|shared)/',
+        path: '^packages/(registry|codegen|extension-host|webview-client)/',
       },
+    },
+    {
+      name: 'mdx-tools-self-contained',
+      severity: 'error',
+      comment:
+        'mdx-tools must not import from @mdx-preview/* internal packages',
+      from: { path: '^packages/mdx-tools/' },
+      to: {
+        path: '^packages/(contracts|registry|runtime-utils|codegen|extension-host|webview-client)/',
+      },
+    },
+    {
+      name: 'no-mdx-tools-browser-node-builtins',
+      severity: 'error',
+      comment: 'mdx-tools/browser must remain browser-safe (no Node builtins)',
+      from: { path: '^packages/mdx-tools/src/browser/' },
+      to: { dependencyTypes: ['core'] },
+    },
+    {
+      name: 'mdx-tools-internal-no-domains',
+      severity: 'error',
+      comment:
+        'mdx-tools/internal must not import from domain dirs or @mdx-preview packages',
+      from: { path: '^packages/mdx-tools/src/internal/' },
+      to: {
+        path: '^packages/(contracts|registry|runtime-utils|codegen|extension-host|webview-client)/',
+      },
+    },
+    {
+      name: 'codegen-allowed-deps',
+      severity: 'error',
+      comment:
+        'codegen may only depend on contracts, registry, runtime-utils, & mdx-tools',
+      from: { path: '^packages/codegen/' },
+      to: { path: '^packages/(extension-host|webview-client)/' },
+    },
+    {
+      name: 'no-shared-imports',
+      severity: 'error',
+      comment:
+        'packages/shared was deleted in Phase 10 — use direct package imports',
+      from: {},
+      to: { path: '^packages/shared/' },
     },
     {
       name: 'no-contracts-node-builtins',

@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ggfincke/vsc-mdx-preview"
+    "url": "git+https://github.com/ggfincke/vsc-mdx-preview.git"
   },
   "bugs": {
     "url": "https://github.com/ggfincke/vsc-mdx-preview/issues"
@@ -636,19 +636,19 @@
     "start:webview-app": "npm run start:webview-client",
     "build:webview-app": "npm run build:webview-client",
     "verify:settings": "tsx packages/codegen/src/cli/verify-settings.ts",
-    "pretest": "npm run generate:settings && npm run generate:preload && npm run generate:shims && npm run verify:settings && npm run format:generated",
+    "verify:codegen": "node scripts/verify-codegen-idempotency.mjs",
+    "pretest": "npm run generate:settings && npm run generate:preload && npm run generate:shims && npm run generate:schema && npm run verify:settings && npm run format:generated && npm run verify:codegen",
     "test": "vitest run --config tests/vitest.config.ts",
     "test:watch": "vitest --config tests/vitest.config.ts",
     "test:webview": "vitest run --config tests/vitest.config.ts tests/webview",
     "test:all": "vitest run --config tests/vitest.config.ts",
     "test:shiki-smoke": "node packages/extension-host/test/shiki-smoke.mjs",
-    "lint": "eslint packages/extension-host packages/shared packages/contracts packages/registry packages/runtime-utils packages/codegen packages/mdx-tools && npm run lint -w webview && npm run check:guardrails",
-    "lint:fix": "eslint packages/extension-host packages/shared packages/contracts packages/registry packages/runtime-utils packages/codegen packages/mdx-tools --fix && npm run lint:fix -w webview && npm run check:guardrails",
+    "lint": "eslint packages/extension-host packages/contracts packages/registry packages/runtime-utils packages/codegen packages/mdx-tools && npm run lint -w webview && npm run check:guardrails",
+    "lint:fix": "eslint packages/extension-host packages/contracts packages/registry packages/runtime-utils packages/codegen packages/mdx-tools --fix && npm run lint:fix -w webview && npm run check:guardrails",
     "deps:check": "depcruise packages --config .dependency-cruiser.cjs",
     "check:generated": "node scripts/check-generated-files.mjs",
-    "check:shared-compat": "node scripts/check-shared-compat.mjs",
     "check:library-publication-gate": "node scripts/check-library-publication-gate.mjs",
-    "check:guardrails": "npm run check:generated && npm run check:shared-compat",
+    "check:guardrails": "npm run check:generated && npm run deps:check",
     "format": "prettier --write \"packages/**/*.{ts,js,json}\" \"*.{md,json}\"",
     "format:check": "prettier --check \"packages/**/*.{ts,js,json}\" \"*.{md,json}\"",
     "format:generated": "prettier --write \"packages/webview-client/src/generated/preload/*.generated.ts\" \"packages/webview-client/src/generated/framework-css/frameworkCssLoader.ts\" \"packages/webview-client/src/generated/shim-barrels/*/index.ts\"",
@@ -719,5 +719,11 @@
     "comlink": "^4.4.1",
     "lodash-es": "4.17.21"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "tests"
+  },
+  "type": "commonjs"
 }

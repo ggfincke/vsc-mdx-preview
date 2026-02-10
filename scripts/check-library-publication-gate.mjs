@@ -156,7 +156,7 @@ function main() {
     );
   }
 
-  console.log('Publication gate passed for all @mdx-tools packages.');
+  console.log('Publication gate passed for all tracked mdx-tools packages.');
 }
 
 main();

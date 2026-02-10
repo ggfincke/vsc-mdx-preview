@@ -4,7 +4,7 @@
   "type": "module",
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "files": [
     "dist/",
@@ -105,8 +105,10 @@
   },
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "build": "npm run clean && tsc -p tsconfig.build.json && node ./scripts/copy-css.mjs",
+    "build": "npm run clean && tsc -p tsconfig.build.json && node ./scripts/fix-esm-import-specifiers.mjs && node ./scripts/copy-css.mjs",
+    "check:esm-specifiers": "node ./scripts/fix-esm-import-specifiers.mjs --check",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepublishOnly": "npm run build && node ../../scripts/check-library-publication-gate.mjs --package mdx-tools"
+    "test": "vitest run --config vitest.config.ts",
+    "prepublishOnly": "npm run build && npm run check:esm-specifiers && node ../../scripts/check-library-publication-gate.mjs --package mdx-tools"
   }
 }
