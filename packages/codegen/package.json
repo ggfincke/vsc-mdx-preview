@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "mdx-forge": "0.1.1"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./lib/generate-preload": "./src/lib/generate-preload.ts",

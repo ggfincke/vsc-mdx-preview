@@ -8,10 +8,10 @@ import {
   type ComponentDefinition,
   type ComponentRegistryEntry,
   type FrameworkId,
-} from 'mdx-tools/components/registry';
+} from 'mdx-forge/components/registry';
 
 const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/mdx-tools/src/components/registry/registry-data.ts
+// Source: packages/mdx-forge/src/components/registry/registry-data.ts
 `;
 
 export interface GeneratePreloadOptions {
@@ -49,7 +49,7 @@ function getRelativeWebviewImport(
 ): string {
   // framework shims now come from the extracted doc-components library
   if (entry.webviewImport.startsWith('features/shims/')) {
-    return `mdx-tools/components/${entry.framework}`;
+    return `mdx-forge/components/${entry.framework}`;
   }
 
   // bare package imports should pass through untouched
@@ -95,7 +95,7 @@ function getImportStatement(
 ): string {
   if (
     entry.kind === 'component' &&
-    relativeImport.startsWith('mdx-tools/components/')
+    relativeImport.startsWith('mdx-forge/components/')
   ) {
     const importName = entry.importName ?? entry.name;
     return `import { ${importName} as ${importVar} } from '${relativeImport}';`;
@@ -119,7 +119,7 @@ function getDynamicImportExpression(
 ): string {
   if (
     entry.kind === 'component' &&
-    relativeImport.startsWith('mdx-tools/components/')
+    relativeImport.startsWith('mdx-forge/components/')
   ) {
     const importName = entry.importName ?? entry.name;
     return `import('${relativeImport}').then(m => m.${importName})`;
@@ -179,7 +179,7 @@ function generateGenericPreloadFunction(
       );
 
       const loaderExpression = relativeImport.startsWith(
-        'mdx-tools/components/'
+        'mdx-forge/components/'
       )
         ? `import('${relativeImport}').then(m => m.${entry.importName ?? entry.name})`
         : `import('${relativeImport}').then(m => m.default)`;

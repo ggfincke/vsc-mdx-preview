@@ -5,9 +5,9 @@ import * as path from 'path';
 import {
   FRAMEWORK_CSS_CONFIG,
   SHIM_BARREL_CONFIG,
-} from 'mdx-tools/components/registry';
+} from 'mdx-forge/components/registry';
 
-const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT\n// Source: packages/mdx-tools/src/components/registry/shim-config.ts\n`;
+const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT\n// Source: packages/mdx-forge/src/components/registry/shim-config.ts\n`;
 
 export interface GenerateShimsOptions {
   webviewSrcDir: string;
@@ -57,7 +57,7 @@ export function generateShimBarrelFiles(
     fileLines.push('');
 
     const framework = getFrameworkFromOutputPath(entry.outputPath);
-    const frameworkImport = `mdx-tools/components/${framework}`;
+    const frameworkImport = `mdx-forge/components/${framework}`;
 
     for (const exportEntry of entry.exports) {
       if (exportEntry.values && exportEntry.values.length > 0) {
@@ -79,7 +79,7 @@ export function generateShimBarrelFiles(
       for (const sideEffect of entry.sideEffectImports) {
         if (sideEffect.endsWith('.css')) {
           fileLines.push(
-            `import 'mdx-tools/components/styles/${framework}.css';`
+            `import 'mdx-forge/components/styles/${framework}.css';`
           );
           continue;
         }

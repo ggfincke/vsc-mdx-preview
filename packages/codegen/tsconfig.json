@@ -19,11 +19,7 @@
     "emitDeclarationOnly": true,
     "rootDir": "..",
     "outDir": "dist",
-    "types": ["node"],
-    "paths": {
-      "mdx-tools/components": ["../mdx-tools/src/components/index.ts"],
-      "mdx-tools/components/*": ["../mdx-tools/src/components/*"]
-    }
+    "types": ["node"]
   },
-  "include": ["src", "../mdx-tools/src/components/registry/**/*.ts"]
+  "include": ["src"]
 }
