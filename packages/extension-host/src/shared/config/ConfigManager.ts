@@ -11,8 +11,8 @@ import {
   type UnknownBehaviorValue,
   type UpdateModeValue,
   LogTags,
-} from '@mdx-preview/shared';
-import { SETTINGS_DEFAULTS } from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
+import { SETTINGS_DEFAULTS } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.CONFIG_MANAGER);
 

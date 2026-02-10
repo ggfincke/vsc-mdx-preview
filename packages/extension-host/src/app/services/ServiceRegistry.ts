@@ -3,7 +3,7 @@
 
 import type { Disposable } from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { ServiceError, CircularDependencyError } from '../../shared/errors';
 import type { IService, ServiceFactory, ServiceRegistration } from '../types';
 

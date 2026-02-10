@@ -5,7 +5,7 @@
 
 import * as path from 'path';
 import { createTaggedLogger } from '../logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { WithSubscribers } from '../../app/services/SingletonService';
 import type { ResolvedConfig } from '../types';
 import { PathCache } from '../utils/cache';

@@ -12,11 +12,11 @@ import {
 } from '../../app/services';
 import { tryRequireTrustedModeForDocument } from '../../features/security/validateTrust';
 import { createTaggedLogger } from '../../shared/logging/logger';
+import { LogTags } from '@mdx-preview/contracts';
 import {
-  LogTags,
   extractErrorMessage,
   getPlantUmlRenderEndpoints,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/runtime-utils';
 
 const log = createTaggedLogger(LogTags.EXT_HANDLE);
 import { ErrorContext } from '../../shared/errors';
@@ -32,8 +32,8 @@ import {
   reportTrustViolationError,
 } from '../../features/security/pathSecurity';
 import { MAX_FETCH_REQUEST_LENGTH } from '../../shared/constants';
-import { isValidModuleRequest } from '@mdx-preview/shared';
-import type { ExtensionRPC, FetchResult } from '@mdx-preview/shared';
+import { isValidModuleRequest } from '@mdx-preview/runtime-utils';
+import type { ExtensionRPC, FetchResult } from '@mdx-preview/contracts';
 
 // allowed URL schemes for openExternal
 const ALLOWED_EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];

@@ -5,14 +5,14 @@
 
 import type * as vscode from 'vscode';
 import type {
+  CodeBlockTheme,
   FrameworkId,
   PreviewTheme,
-  CodeBlockTheme,
+  SecurityPolicyValue,
   TailwindEnabledValue,
   UnknownBehaviorValue,
   UpdateModeValue,
-  SecurityPolicyValue,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 import type {
   PluginSpec,
   ComponentMapping,
@@ -21,11 +21,11 @@ import type {
 
 // Re-export shared types for convenience
 export type {
+  SecurityPolicyValue,
   TailwindEnabledValue,
   UnknownBehaviorValue,
   UpdateModeValue,
-  SecurityPolicyValue,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 
 // Tailwind configuration subset
 export interface TailwindConfig {

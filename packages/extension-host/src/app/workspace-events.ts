@@ -4,7 +4,7 @@
 import { workspace, ExtensionContext } from 'vscode';
 
 import { createTaggedLogger } from '../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { getPreviewManager, getConfigManager } from './services';
 import { handleDidChangeWorkspaceFolders } from '../features/module-runtime/security/checkFsPath';
 import { PREVIEW_CONFIG_KEYS } from '../shared/config';

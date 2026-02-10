@@ -2,11 +2,11 @@
 // structured error classes for extension w/ error codes & context
 
 import {
+  type ExtensionModuleErrorCode,
   type ModuleErrorCode,
   type ModuleErrorData,
-  type ExtensionModuleErrorCode,
   ModuleError,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 
 export {
   ErrorReporter,
@@ -23,12 +23,12 @@ export { ModuleError, type ModuleErrorCode, type ModuleErrorData };
 
 // re-export error factories from shared package
 export {
+  type ExtensionModuleErrorCode,
   createModuleNotFoundError,
   createOutsideWorkspaceError,
   createParseError,
   createTransformError,
-  type ExtensionModuleErrorCode,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 
 // base error class w/ error code for programmatic handling
 export class ExtensionError extends Error {

@@ -8,9 +8,9 @@ import {
 } from '../validation-factory';
 import Ajv from 'ajv';
 import {
-  MDX_PREVIEW_CONFIG_SCHEMA,
   type FrameworkId,
-} from '@mdx-preview/shared';
+  MDX_PREVIEW_CONFIG_SCHEMA,
+} from '@mdx-preview/contracts';
 
 // validate value is one of allowed enum string values
 export function validateEnumValue<T extends string>(

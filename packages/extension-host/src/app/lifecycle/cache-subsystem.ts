@@ -3,7 +3,7 @@
 
 import { ServiceRegistry } from '../services';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.CACHE_SUBSYSTEM);
 import { clearComponentCache } from '../../features/diagnostics/ComponentDetector';

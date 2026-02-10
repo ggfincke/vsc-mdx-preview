@@ -36,7 +36,7 @@ export interface FindUpOptions {
 // stop at workspace boundary, custom boundary, or filesystem root
 // return found path or undefined if not found
 // example
-// // Find .mdx-previewrc.json, stop at workspace root
+// find .mdx-previewrc.json, stop at workspace root
 // findUp({
 //   filename: ['.mdx-previewrc.json', '.mdx-previewrc'],
 //   startDir: documentDir,
@@ -44,14 +44,14 @@ export interface FindUpOptions {
 // });
 //
 // example
-// // Find tsconfig.json, search to filesystem root
+// find tsconfig.json, search to filesystem root
 // findUp({
 //   filename: 'tsconfig.json',
 //   startDir: directory
 // })
 //
 // example
-// // Find package.json, return containing directory
+// find package.json, return containing directory
 // findUp({
 //   filename: 'package.json',
 //   startDir: documentDir,
@@ -143,7 +143,7 @@ export function createWorkspaceStopPredicate(): (dir: string) => boolean {
 // create a stop predicate that stops when leaving a parent directory
 // (uses startsWith to check containment w/ Windows case normalization)
 // example
-// // Stop when outside workspace root
+// stop when outside workspace root
 // findUp({
 //   filename: '_meta.json',
 //   startDir: docDir,

@@ -2,12 +2,12 @@
 // centralized logging using VS Code's OutputChannel for user-visible logs
 
 import * as vscode from 'vscode';
-import type { Logger } from '@mdx-preview/shared';
+import type { Logger } from '@mdx-preview/contracts';
 import {
   LogLevel,
   LogTags,
   createTaggedLoggerFactory,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 
 // debug logging state (mutable for reactive updates)
 let debugEnabled = false;

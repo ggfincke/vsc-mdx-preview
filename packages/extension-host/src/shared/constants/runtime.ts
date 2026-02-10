@@ -5,7 +5,7 @@ import {
   DEFAULT_PREVIEW_DEBOUNCE_DELAY_MS,
   DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS,
   DEFAULT_WATCHER_DEBOUNCE_MS,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 
 // timeouts
 

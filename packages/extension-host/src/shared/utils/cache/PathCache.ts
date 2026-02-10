@@ -1,7 +1,7 @@
 // packages/extension/utils/cache/PathCache.ts
 // WatchableCache helper for path-based keys
 
-import type { LogTag } from '@mdx-preview/shared';
+import type { LogTag } from '@mdx-preview/contracts';
 import { WatchableCache } from './WatchableCache';
 
 export interface PathCacheOptions {

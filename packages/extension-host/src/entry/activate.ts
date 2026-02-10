@@ -17,7 +17,7 @@ import {
   initLogging,
   isDebugEnabled,
 } from '../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.ACTIVATE);
 const themeLog = createTaggedLogger(LogTags.THEME);

@@ -1,0 +1,16 @@
+{
+  "name": "@mdx-preview/extension-host",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
+  },
+  "dependencies": {
+    "@mdx-preview/contracts": "1.0.0",
+    "@mdx-preview/registry": "1.0.0",
+    "@mdx-preview/runtime-utils": "1.0.0",
+    "mdx-tools": "workspace:*"
+  }
+}

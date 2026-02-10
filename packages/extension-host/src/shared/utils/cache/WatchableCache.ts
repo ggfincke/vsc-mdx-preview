@@ -2,8 +2,8 @@
 // manage LRU cache entries w/ optional path watchers
 
 import type * as vscode from 'vscode';
-import type { LogTag } from '@mdx-preview/shared';
-import { LRUCache } from '@mdx-preview/shared';
+import type { LogTag } from '@mdx-preview/contracts';
+import { LRUCache } from '@mdx-preview/runtime-utils';
 import { createFileWatcher } from '../createFileWatcher';
 
 export type WatchEventType = 'change' | 'create' | 'delete';

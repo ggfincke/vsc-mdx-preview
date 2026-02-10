@@ -7,9 +7,9 @@ import * as vscode from 'vscode';
 
 import ExtensionHandle from './extension-rpc-handler';
 import { Preview } from '../../features/preview/preview-manager';
-import type { WebviewRPC } from '@mdx-preview/shared';
+import type { WebviewRPC } from '@mdx-preview/contracts';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.RPC_EXT);
 

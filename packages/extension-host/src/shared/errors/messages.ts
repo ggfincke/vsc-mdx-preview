@@ -2,7 +2,7 @@
 // user-friendly error message templates & formatting
 
 import type { ExtensionError } from './index';
-import type { ModuleError } from '@mdx-preview/shared';
+import type { ModuleError } from '@mdx-preview/contracts';
 
 // message templates w/ {placeholder} syntax
 // ! Placeholders must match actual field names on error classes

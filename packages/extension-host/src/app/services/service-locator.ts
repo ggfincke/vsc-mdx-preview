@@ -16,8 +16,8 @@
 // const updateMode = config.get('preview.updateMode');
 //
 // const trustState = getTrustManager().getState();
+// proceed w/ trusted operation
 // if (trustState.canExecute) {
-//   // proceed w/ trusted operation
 // }
 // ```
 //

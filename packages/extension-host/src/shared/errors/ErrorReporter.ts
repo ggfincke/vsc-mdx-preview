@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { ExtensionError } from './index';
 import { formatUserError, formatLogError } from './messages';
-import type { PreviewError } from '@mdx-preview/shared';
+import type { PreviewError } from '@mdx-preview/contracts';
 import {
   error as logError,
   warn as logWarn,
@@ -16,12 +16,11 @@ import {
   ERROR_DEDUPE_MAX_ENTRIES,
 } from '../constants';
 import { SingletonService } from '../../app/services/SingletonService';
+import { LogTags, ModuleError } from '@mdx-preview/contracts';
 import {
   LRUCache,
-  LogTags,
-  ModuleError,
   normalizeError as sharedNormalizeError,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/runtime-utils';
 
 // module-level tagged logger for error reporter
 const log = createTaggedLogger(LogTags.ERROR_REPORTER);

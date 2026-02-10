@@ -8,11 +8,8 @@
 
 import * as fs from 'fs';
 import { createTaggedLogger } from '../logging/logger';
-import {
-  extractErrorMessage,
-  LogTags,
-  type TaggedLogger,
-} from '@mdx-preview/shared';
+import { type TaggedLogger, LogTags } from '@mdx-preview/contracts';
+import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { raceTimeout } from './async-utils';
 
 // default logger for file operations

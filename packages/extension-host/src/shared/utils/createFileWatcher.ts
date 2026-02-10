@@ -12,14 +12,15 @@
 //   pattern: '**/tsconfig.json',
 //   onChange: (uri) => { console.log('Changed:', uri.fsPath); },
 //   logTag: LogTags.TS_CONFIG,
-//   debounceMs: 100,  // optional: debounce change events
+//   optional debounce change events
+//   debounceMs: 100,
 // });
 // ```
 
 import debounce from 'lodash.debounce';
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../logging/logger';
-import { LogTags, type LogTag } from '@mdx-preview/shared';
+import { type LogTag, LogTags } from '@mdx-preview/contracts';
 
 // options for creating a file watcher
 export interface FileWatcherConfig {
