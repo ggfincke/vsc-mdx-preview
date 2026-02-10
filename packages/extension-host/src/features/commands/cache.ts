@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { clearResolverCache } from '../module-runtime/resolution/resolver-factory';
 import { clearSassCache } from '../module-runtime/handlers';
 import { clearUnmanagedCaches } from '../../app/lifecycle/cache-subsystem';

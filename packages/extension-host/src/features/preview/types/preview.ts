@@ -3,9 +3,9 @@
 
 import type * as vscode from 'vscode';
 import type {
-  UpdateModeValue,
   TailwindEnabledValue,
-} from '@mdx-preview/shared';
+  UpdateModeValue,
+} from '@mdx-preview/contracts';
 import type { SecurityPolicy } from '../../security/types/csp';
 
 // webview app URIs (loaded from Vite manifest)

@@ -2,7 +2,7 @@
 // compile Tailwind CSS via PostCSS w/ lazy-loading for startup performance
 
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { TailwindError } from '../../shared/errors';
 import { MAX_INLINE_SOURCE_CHUNK_SIZE } from './constants';
 import { loadModuleWithEsmFallback } from '../../shared/utils/lazy-import';

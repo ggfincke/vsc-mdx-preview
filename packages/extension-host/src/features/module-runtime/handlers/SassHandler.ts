@@ -2,8 +2,9 @@
 // handler for SASS/SCSS files - compile to CSS using workspace's sass package
 
 import * as path from 'path';
-import type { FetchResult } from '@mdx-preview/shared';
-import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
+import type { FetchResult } from '@mdx-preview/contracts';
+import { LogTags } from '@mdx-preview/contracts';
+import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { getBrowserResolver } from '../resolution/resolver-factory';

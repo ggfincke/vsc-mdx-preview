@@ -1,7 +1,7 @@
 // packages/extension/preview/watchers/DocumentTracker.ts
 // track document versions & stale state for preview updates
 
-import type { WebviewRPC } from '@mdx-preview/shared';
+import type { WebviewRPC } from '@mdx-preview/contracts';
 import type { IWatcher } from '../../types';
 
 // webview handle w/ setStale method

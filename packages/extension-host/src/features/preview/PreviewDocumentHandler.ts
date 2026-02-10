@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import type { UpdateModeValue } from '@mdx-preview/shared';
+import type { UpdateModeValue } from '@mdx-preview/contracts';
 import {
   resolveTypescriptConfig,
   findTsConfig,

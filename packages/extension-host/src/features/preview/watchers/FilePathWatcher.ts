@@ -2,7 +2,7 @@
 // wrap single-pattern file watchers w/ BaseWatcher
 
 import type * as vscode from 'vscode';
-import type { LogTag } from '@mdx-preview/shared';
+import type { LogTag } from '@mdx-preview/contracts';
 import { BaseWatcher } from './BaseWatcher';
 
 export interface FilePathWatcherConfig {

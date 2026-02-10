@@ -3,7 +3,8 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { extractErrorMessage, LRUCache, LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
+import { LRUCache, extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { getNodeResolver } from '../module-runtime/resolution/resolver-factory';
 import { VERSION_CACHE_TTL_MS } from './constants';

@@ -1,7 +1,7 @@
 // packages/extension/module-system/handlers/ImageHandler.ts
 // handler for image files - convert to webview URI
 
-import type { FetchResult } from '@mdx-preview/shared';
+import type { FetchResult } from '@mdx-preview/contracts';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { createTransformError } from '../../../shared/errors';

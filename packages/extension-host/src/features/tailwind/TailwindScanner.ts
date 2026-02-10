@@ -3,7 +3,7 @@
 
 import { PatternScanner, ContentScanner, DependencyScanner } from './scanning';
 import type { ResolutionContext } from '../types';
-import type { ContentHashCache } from '@mdx-preview/shared';
+import type { ContentHashCache } from '@mdx-preview/runtime-utils';
 
 export interface TailwindScanOptions {
   includeDependencies: boolean;

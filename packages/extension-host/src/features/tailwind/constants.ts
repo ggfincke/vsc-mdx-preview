@@ -2,13 +2,13 @@
 // centralized constants for the Tailwind module - consolidate magic numbers for maintainability
 
 import {
-  STANDARD_CACHE_TTL_MS,
-  STANDARD_DEBOUNCE_MS,
-  DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES,
-  DEFAULT_TAILWIND_MAX_CSS_FILES_TO_SEARCH,
   DEFAULT_TAILWIND_CACHE_MAX_ENTRIES,
   DEFAULT_TAILWIND_CACHE_TTL_SECONDS,
-} from '@mdx-preview/shared';
+  DEFAULT_TAILWIND_MAX_CSS_FILES_TO_SEARCH,
+  DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES,
+  STANDARD_CACHE_TTL_MS,
+  STANDARD_DEBOUNCE_MS,
+} from '@mdx-preview/contracts';
 
 // cache configuration
 

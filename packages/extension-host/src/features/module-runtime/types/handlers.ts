@@ -1,7 +1,7 @@
 // packages/extension/types/handlers/index.ts
 // type definitions for file type handlers
 
-import type { FetchResult } from '@mdx-preview/shared';
+import type { FetchResult } from '@mdx-preview/contracts';
 import type { Preview } from '../../preview/preview-manager';
 
 // handler for a specific file type

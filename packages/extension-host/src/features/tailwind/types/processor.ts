@@ -1,7 +1,7 @@
 // packages/extension/types/tailwind/processor.ts
 // type definitions for Tailwind CSS processing
 
-import type { TrustState } from '@mdx-preview/shared';
+import type { TrustState } from '@mdx-preview/contracts';
 import type { TailwindConfig } from '../../../shared/config/types';
 import type { Preview } from '../../preview/preview-manager';
 import type { TailwindProfileDetectionResult } from './detector';

@@ -1,7 +1,7 @@
 // packages/extension/module-system/handlers/index.ts
 // file type handler registry & dispatch for module fetching
 
-import type { FetchResult } from '@mdx-preview/shared';
+import type { FetchResult } from '@mdx-preview/contracts';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from '../../types';
 

@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { WithSubscribers } from '../../app/services/SingletonService';
 
 // module-level tagged logger

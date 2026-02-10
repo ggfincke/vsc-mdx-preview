@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../../shared/logging/logger';
 import { CONFIG_WATCHER_DEBOUNCE_MS } from '../../tailwind/constants';
 import { BaseWatcher } from './BaseWatcher';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.TAILWIND_WATCHER);

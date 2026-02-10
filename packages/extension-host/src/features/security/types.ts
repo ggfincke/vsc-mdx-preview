@@ -1,10 +1,10 @@
 // packages/extension/types/security/index.ts
 // type definitions for security & trust management
 
-import type { TrustState } from '@mdx-preview/shared';
+import type { TrustState } from '@mdx-preview/contracts';
 
 // re-export TrustState from shared
-export type { TrustState } from '@mdx-preview/shared';
+export type { TrustState } from '@mdx-preview/contracts';
 
 // security mode enum for explicit type safety
 export enum SecurityMode {

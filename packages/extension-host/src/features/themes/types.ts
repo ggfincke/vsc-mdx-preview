@@ -3,26 +3,26 @@
 
 // re-export shared types & utilities from @mdx-preview/shared
 export type {
-  PreviewTheme,
   CodeBlockTheme,
   MermaidTheme,
+  PreviewTheme,
   WebviewThemeState,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 
 export {
-  isLightPreviewTheme,
-  PREVIEW_THEMES,
   CODE_BLOCK_THEMES,
   MERMAID_THEMES,
+  PREVIEW_THEMES,
   THEME_PAIRS,
   getOppositeTheme,
-} from '@mdx-preview/shared';
+  isLightPreviewTheme,
+} from '@mdx-preview/contracts';
 
 import type {
-  PreviewTheme,
   CodeBlockTheme,
   MermaidTheme,
-} from '@mdx-preview/shared';
+  PreviewTheme,
+} from '@mdx-preview/contracts';
 
 // theme configuration (extension-only)
 export interface ThemeConfiguration {

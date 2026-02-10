@@ -16,7 +16,7 @@ import {
 
 // import consolidated types from centralized types
 import type { MdxPreviewConfig, ResolvedConfig } from '../../types';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.CONFIG);

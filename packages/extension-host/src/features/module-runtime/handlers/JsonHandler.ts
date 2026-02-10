@@ -1,7 +1,7 @@
 // packages/extension/module-system/handlers/JsonHandler.ts
 // handler for JSON files - wrap as CommonJS module
 
-import type { FetchResult } from '@mdx-preview/shared';
+import type { FetchResult } from '@mdx-preview/contracts';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { buildModuleExportResult } from './result-builders';

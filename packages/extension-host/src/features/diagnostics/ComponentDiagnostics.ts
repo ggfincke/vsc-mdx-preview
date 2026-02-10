@@ -8,7 +8,7 @@ import {
   invalidateComponentCache,
 } from './ComponentDetector';
 import type { DetectedComponent } from '../types';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { resolveConfig } from '../preview/configuration/ConfigResolver';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { getErrorReporter } from '../../app/services';

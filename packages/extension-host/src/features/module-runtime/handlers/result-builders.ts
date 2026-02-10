@@ -1,7 +1,7 @@
 // packages/extension/module-system/handlers/result-builders.ts
 // builder functions for constructing FetchResult objects consistently
 
-import type { FetchResult } from '@mdx-preview/shared';
+import type { FetchResult } from '@mdx-preview/contracts';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 

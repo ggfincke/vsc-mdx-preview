@@ -8,7 +8,8 @@ import { DIAGNOSTIC_CODES } from './ComponentDiagnostics';
 import { KNOWN_GENERIC_COMPONENTS } from 'mdx-tools/compiler';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { ConfigError, ErrorContext } from '../../shared/errors';
-import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
+import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 
 const log = createTaggedLogger(LogTags.COMPONENT_CODE_ACTIONS);
 import { getErrorReporter } from '../../app/services';

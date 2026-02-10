@@ -7,7 +7,8 @@ import { createTaggedLogger } from '../../shared/logging/logger';
 import { WithSubscribers } from '../../app/services/SingletonService';
 import { getConfigManager, getErrorReporter } from '../../app/services';
 import { ErrorContext } from '../../shared/errors';
-import { normalizeError, LogTags, type FrameworkId } from '@mdx-preview/shared';
+import { type FrameworkId, LogTags } from '@mdx-preview/contracts';
+import { normalizeError } from '@mdx-preview/runtime-utils';
 import { readJsonSync, pathExists } from '../../shared/utils/file-utils';
 
 const log = createTaggedLogger(LogTags.FRAMEWORK);

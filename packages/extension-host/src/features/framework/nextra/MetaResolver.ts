@@ -3,8 +3,8 @@
 
 import * as path from 'path';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
-import type { NextraPageMeta } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
+import type { NextraPageMeta } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.NEXTRA_META);
 import { readJsonSync } from '../../../shared/utils/file-utils';

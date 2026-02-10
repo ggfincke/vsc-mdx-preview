@@ -4,7 +4,7 @@
 import type { Resolver } from 'enhanced-resolve';
 import { getBrowserResolver, getNodeResolver } from '../resolver-factory';
 import { createTaggedLogger } from '../../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { createSingleton } from '../../../../shared/utils/singleton-factory';
 import {
   ResolutionStrategy,

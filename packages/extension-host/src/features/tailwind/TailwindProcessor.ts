@@ -21,12 +21,12 @@ import {
   SCAN_CACHE_DEFAULT_MAX_ENTRIES,
   CACHE_DEFAULT_TTL_MS,
 } from './constants';
+import { LogTags } from '@mdx-preview/contracts';
 import {
   ContentHashCache,
   LRUCache,
-  LogTags,
   normalizeError,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/runtime-utils';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
 

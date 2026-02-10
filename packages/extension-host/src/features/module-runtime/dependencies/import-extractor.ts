@@ -2,7 +2,8 @@
 // consolidated import/export specifier extraction from JavaScript/TypeScript code
 
 import { init as initLexer, parse as parseImports } from 'es-module-lexer';
-import { extractErrorMessage, LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
+import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { createTaggedLogger } from '../../../shared/logging/logger';
 
 // module-level tagged logger for import extraction

@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve';
 import type { Resolver } from 'enhanced-resolve';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import {
   RESOLVER_CACHE_TTL_MS,
   BROWSER_RESOLVE_EXTENSIONS,

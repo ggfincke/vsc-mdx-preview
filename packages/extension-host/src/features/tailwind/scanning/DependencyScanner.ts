@@ -2,7 +2,7 @@
 // scan imported dependencies for Tailwind classes
 
 import * as path from 'path';
-import { ContentHashCache, Semaphore } from '@mdx-preview/shared';
+import { ContentHashCache, Semaphore } from '@mdx-preview/runtime-utils';
 import { getUnifiedResolver } from '../../module-runtime/resolution/UnifiedResolver';
 import type { ResolutionContext, TextExtractor } from '../../types';
 import { FileScanValidator } from '../FileScanValidator';

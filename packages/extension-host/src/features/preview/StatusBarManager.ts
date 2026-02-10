@@ -13,7 +13,7 @@ import {
   STATUS_BAR_FRAMEWORK_PRIORITY,
 } from '../../shared/constants';
 import { SingletonService } from '../../app/services/SingletonService';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 // * status bar manager singleton for MDX preview status display
 export class StatusBarManager extends SingletonService<StatusBarManager> {

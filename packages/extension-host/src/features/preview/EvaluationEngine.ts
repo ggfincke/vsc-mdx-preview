@@ -8,7 +8,7 @@ import { createLazyImport } from '../../shared/utils/lazy-import';
 import { createSingleton } from '../../shared/utils/singleton-factory';
 import { raceTimeout } from '../../shared/utils/async-utils';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.ENGINE);
@@ -25,7 +25,7 @@ import {
 } from '../../shared/constants';
 import { toMdxToolsCompilerConfig } from '../../shared/config/EffectivePreviewConfig';
 import type { Preview, WebviewHandle } from './preview-manager';
-import type { TrustState } from '@mdx-preview/shared';
+import type { TrustState } from '@mdx-preview/contracts';
 import type {
   CompilerConfig,
   TailwindConfig,

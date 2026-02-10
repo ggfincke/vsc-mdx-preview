@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { SecurityMode } from './TrustManager';
 import { getTrustManager } from '../../app/services';
-import type { TrustState } from '@mdx-preview/shared';
+import type { TrustState } from '@mdx-preview/contracts';
 
 // error thrown when an operation requires Trusted Mode but the current state is Safe Mode
 export class TrustError extends Error {

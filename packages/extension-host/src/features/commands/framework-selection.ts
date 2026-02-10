@@ -3,13 +3,13 @@
 
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import {
   getConfigManager,
   getFrameworkDetector,
   getPreviewManager,
 } from '../../app/services';
-import type { FrameworkId, FrameworkSetting } from '@mdx-preview/shared';
+import type { FrameworkId, FrameworkSetting } from '@mdx-preview/contracts';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 

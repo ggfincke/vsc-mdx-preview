@@ -2,13 +2,13 @@
 // resolve framework-specific import aliases (@theme/*, @astrojs/starlight/components, etc.)
 
 import * as path from 'path';
+import type { FrameworkId } from '@mdx-preview/contracts';
 import {
   COMPONENT_REGISTRY,
   SHIM_PREFIX,
-  type FrameworkId,
-  isGenericComponent,
   getCanonicalComponentName,
-} from '@mdx-preview/shared';
+  isGenericComponent,
+} from 'mdx-tools/components/registry';
 import { normalizePathSeparators } from '../../../shared/utils/path-utils';
 
 type AliasFrameworkKey = Exclude<FrameworkId, 'generic'>;

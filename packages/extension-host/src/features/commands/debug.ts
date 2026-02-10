@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { createTaggedLogger, showOutput } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { getConfigManager } from '../../app/services';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';

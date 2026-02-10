@@ -3,7 +3,7 @@
 
 import { ServiceRegistry } from '../../../app/services';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import {
   browserResolverSingleton,
   nodeResolverSingleton,

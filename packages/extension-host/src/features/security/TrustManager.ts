@@ -5,11 +5,11 @@ import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { WithSubscribers } from '../../app/services/SingletonService';
 import { getConfigManager } from '../../app/services';
-import { LogTags, type TrustState } from '@mdx-preview/shared';
+import { type TrustState, LogTags } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.TRUST_MANAGER);
 
-export type { TrustState } from '@mdx-preview/shared';
+export type { TrustState } from '@mdx-preview/contracts';
 
 // re-export canonical type definitions from types/
 export { SecurityMode, getSecurityMode } from '../types';

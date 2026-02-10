@@ -20,7 +20,7 @@ import {
   VITE_MANIFEST_FILE,
   WEBVIEW_BUILD_DIR,
 } from '../../shared/constants';
-import { formatTrustStateForDebug, LogTags } from '@mdx-preview/shared';
+import { LogTags, formatTrustStateForDebug } from '@mdx-preview/contracts';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.WEBVIEW_MGR);

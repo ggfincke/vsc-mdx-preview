@@ -1,7 +1,7 @@
 // packages/extension/types/core/module-system.ts
 // type definitions for the module system
 
-import type { FrameworkId, FetchResult } from '@mdx-preview/shared';
+import type { FetchResult, FrameworkId } from '@mdx-preview/contracts';
 
 // re-export shared types
 export type { FetchResult, FrameworkId };

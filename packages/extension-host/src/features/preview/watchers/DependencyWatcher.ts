@@ -4,7 +4,8 @@
 import * as vscode from 'vscode';
 import { DEP_WATCHER_MAX_ENTRIES } from '../../../shared/constants';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LRUCache, LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
+import { LRUCache } from '@mdx-preview/runtime-utils';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.DEP_WATCHER);

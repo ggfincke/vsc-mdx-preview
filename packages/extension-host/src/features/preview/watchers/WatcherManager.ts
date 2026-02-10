@@ -3,7 +3,7 @@
 
 import type { Disposable } from 'vscode';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.WATCHER_MANAGER);

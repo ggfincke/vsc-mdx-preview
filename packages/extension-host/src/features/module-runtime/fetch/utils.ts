@@ -2,7 +2,7 @@
 // shared utilities for module fetching & resolution
 
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 // module-level tagged logger for module fetching utilities
 const log = createTaggedLogger(LogTags.MODULE_SYSTEM);

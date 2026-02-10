@@ -9,12 +9,11 @@ import { visit } from 'unist-util-visit';
 import type { Root } from 'mdast';
 import matter from 'gray-matter';
 import { KNOWN_GENERIC_COMPONENTS } from 'mdx-tools/compiler';
+import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
 import {
-  extractErrorMessage,
-  LogTags,
   ContentHashCache,
-  STANDARD_CACHE_TTL_MS,
-} from '@mdx-preview/shared';
+  extractErrorMessage,
+} from '@mdx-preview/runtime-utils';
 import type {
   DetectedComponent,
   ComponentDetectionResult,
@@ -26,10 +25,10 @@ import { createTaggedLogger } from '../../shared/logging/logger';
 
 // use shared component registry as single source of truth
 import {
-  isFrameworkComponent,
-  getGenericComponentSet,
   getCanonicalComponentName,
-} from '@mdx-preview/shared';
+  getGenericComponentSet,
+  isFrameworkComponent,
+} from 'mdx-tools/components/registry';
 
 const log = createTaggedLogger(LogTags.COMPONENT_DETECTOR);
 

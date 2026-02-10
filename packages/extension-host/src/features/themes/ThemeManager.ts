@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { WithSubscribers } from '../../app/services/SingletonService';
 import { getConfigManager } from '../../app/services';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { THEME_KEYS } from '../../shared/config';
 import type {
   PreviewTheme,

@@ -9,7 +9,7 @@
 // for Safe Mode users who never need Babel
 
 import type * as BabelCore from '@babel/core';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { createTaggedLogger } from '../../../shared/logging/logger';
 import { createLazyImport } from '../../../shared/utils/lazy-import';
 

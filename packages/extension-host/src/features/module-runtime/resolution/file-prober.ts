@@ -4,7 +4,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { LRUCache } from '@mdx-preview/shared';
+import { LRUCache } from '@mdx-preview/runtime-utils';
 import {
   TYPESCRIPT_RESOLUTION_EXTENSIONS,
   TS_INDEX_FILES,

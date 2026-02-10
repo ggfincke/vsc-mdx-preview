@@ -3,7 +3,8 @@
 
 import { resolveAlias, isBuiltInShim } from './alias-resolver';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { isNpmModuleId, LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
+import { isNpmModuleId } from '@mdx-preview/runtime-utils';
 import { createResettableSingleton } from '../../../shared/utils/singleton-factory';
 import { buildShimResolutionResult } from './resolution-builders';
 import {

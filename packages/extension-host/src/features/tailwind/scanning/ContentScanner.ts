@@ -2,7 +2,7 @@
 // extract Tailwind classes from dynamic expressions (className={...}, clsx(), cva())
 
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { SCANNER_MAX_RECURSION_DEPTH } from '../constants';
 import { addClasses } from './utils';
 

@@ -13,7 +13,7 @@ import {
   type FileWatcherConfig,
 } from '../../../shared/utils/createFileWatcher';
 import type { IWatcher } from '../../types';
-import type { LogTag } from '@mdx-preview/shared';
+import type { LogTag } from '@mdx-preview/contracts';
 
 // file watcher options for subclasses (omits pattern & logTag, derived from class)
 type FileWatcherOptions = Omit<FileWatcherConfig, 'pattern' | 'logTag'>;

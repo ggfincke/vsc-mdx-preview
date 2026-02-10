@@ -2,7 +2,7 @@
 // preview lifecycle commands
 
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import {
   openPreview as doOpenPreview,
   refreshPreview as doRefreshPreview,

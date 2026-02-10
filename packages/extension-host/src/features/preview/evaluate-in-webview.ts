@@ -6,11 +6,8 @@ import { performance } from 'perf_hooks';
 import { Preview } from './preview-manager';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { ErrorContext } from '../../shared/errors';
-import {
-  extractErrorMessage,
-  formatTrustStateForDebug,
-  LogTags,
-} from '@mdx-preview/shared';
+import { LogTags, formatTrustStateForDebug } from '@mdx-preview/contracts';
+import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.EVALUATE);

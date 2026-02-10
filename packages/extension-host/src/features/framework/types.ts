@@ -1,10 +1,10 @@
 // packages/extension/types/framework/index.ts
 // type definitions for framework detection
 
-import type { FrameworkId } from '@mdx-preview/shared';
+import type { FrameworkId } from '@mdx-preview/contracts';
 
 // re-export FrameworkId from shared
-export type { FrameworkId } from '@mdx-preview/shared';
+export type { FrameworkId } from '@mdx-preview/contracts';
 
 // framework detection result
 export interface FrameworkInfo {

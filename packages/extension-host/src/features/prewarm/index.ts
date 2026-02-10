@@ -2,7 +2,7 @@
 // coordinate prewarming of heavy modules for improved first-render UX
 
 import * as vscode from 'vscode';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { createTaggedLogger } from '../../shared/logging/logger';
 
 const log = createTaggedLogger(LogTags.PREWARM);

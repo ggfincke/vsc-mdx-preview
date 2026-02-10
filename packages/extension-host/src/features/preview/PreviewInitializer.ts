@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 // module-level tagged loggers
 const log = createTaggedLogger(LogTags.PREVIEW);

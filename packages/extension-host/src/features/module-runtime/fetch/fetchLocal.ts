@@ -12,7 +12,7 @@ import {
 } from '../../../shared/errors';
 import { getErrorReporter, getFrameworkDetector } from '../../../app/services';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags, type FetchResult } from '@mdx-preview/shared';
+import { type FetchResult, LogTags } from '@mdx-preview/contracts';
 import {
   MAX_MODULE_FILE_SIZE_BYTES,
   MAX_DEPENDENCIES_PER_MODULE,
@@ -34,7 +34,7 @@ import { readFileAsync } from '../../../shared/utils/file-utils';
 // module-level tagged logger for module fetcher
 const log = createTaggedLogger(LogTags.MODULE_SYSTEM);
 
-export type { FetchResult } from '@mdx-preview/shared';
+export type { FetchResult } from '@mdx-preview/contracts';
 
 // binary file magic bytes signatures
 const BINARY_SIGNATURES: readonly number[][] = [

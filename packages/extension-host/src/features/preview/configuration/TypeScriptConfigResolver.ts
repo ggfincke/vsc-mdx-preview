@@ -4,7 +4,7 @@
 import * as path from 'path';
 import { parse, type TSConfckParseResult } from 'tsconfck';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { getErrorReporter } from '../../../app/services';
 import { ErrorContext } from '../../../shared/errors/ErrorReporter';
 

@@ -3,7 +3,8 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { LRUCache, STANDARD_CACHE_TTL_MS } from '@mdx-preview/shared';
+import { STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
+import { LRUCache } from '@mdx-preview/runtime-utils';
 
 // re-export PathAccessDeniedError from centralized errors module
 export { PathAccessDeniedError } from '../../../shared/errors';

@@ -1,7 +1,7 @@
 // packages/extension/module-system/handlers/ScriptHandler.ts
 // handler for JavaScript/TypeScript files - delegate to transform.ts
 
-import type { FetchResult } from '@mdx-preview/shared';
+import type { FetchResult } from '@mdx-preview/contracts';
 import type { Preview } from '../../preview/preview-manager';
 import type { FileTypeHandler } from './index';
 import { transform } from '../transform/transform';
