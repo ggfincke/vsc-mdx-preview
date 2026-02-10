@@ -51,7 +51,7 @@ export function classifyLink(href: string): LinkType {
 
 // check if a string looks like a relative file path
 function looksLikeRelativePath(href: string): boolean {
-  // starts w/ ./ or ../
+  // start w/ ./ or ../
   if (href.startsWith('./') || href.startsWith('../')) {
     return true;
   }

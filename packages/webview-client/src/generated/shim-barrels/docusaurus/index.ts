@@ -1,15 +1,12 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/registry/src/shims/shim-config.ts
+// Source: packages/mdx-tools/src/components/registry/shim-config.ts
 // generated/shim-barrels/docusaurus/index.ts
 
-export { Tabs, TabItem } from '../../../features/shims/docusaurus/Tabs';
-export type {
-  TabsProps,
-  TabItemProps,
-} from '../../../features/shims/docusaurus/Tabs';
+export { Tabs, TabItem } from 'mdx-tools/components/docusaurus';
+export type { TabsProps, TabItemProps } from 'mdx-tools/components/docusaurus';
 
-export { CodeBlock } from '../../../features/shims/docusaurus/CodeBlock';
-export type { CodeBlockProps } from '../../../features/shims/docusaurus/CodeBlock';
+export { CodeBlock } from 'mdx-tools/components/docusaurus';
+export type { CodeBlockProps } from 'mdx-tools/components/docusaurus';
 
-export { Details } from '../../../features/shims/docusaurus/Details';
-export type { DetailsProps } from '../../../features/shims/docusaurus/Details';
+export { Details } from 'mdx-tools/components/docusaurus';
+export type { DetailsProps } from 'mdx-tools/components/docusaurus';

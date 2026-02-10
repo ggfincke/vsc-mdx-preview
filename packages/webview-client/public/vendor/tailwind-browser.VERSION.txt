@@ -1,0 +1,4 @@
+Source package: @tailwindcss/browser@4.1.18
+Original file: dist/index.global.js
+Local file: vendor/tailwind-browser.min.js
+License: MIT (see tailwind-browser.LICENSE.txt)

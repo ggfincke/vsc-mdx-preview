@@ -1,7 +1,7 @@
 // packages/webview-app/src/utils/createResourceLoader.ts
 // factory for creating idempotent async resource loaders w/ state machine
 //
-// implements the loader state machine pattern
+// implement the loader state machine pattern
 // - null: not started
 // - Promise<void>: loading in progress (deduplicates concurrent calls)
 // - true: loaded successfully

@@ -140,7 +140,7 @@ export default useTabState;
 export interface UseIndexTabsOptions<T> {
   items: T[];
   defaultIndex?: number;
-  // overrides internal state
+  // override internal state
   controlledIndex?: number;
   // localStorage persistence key
   storageKey?: string;

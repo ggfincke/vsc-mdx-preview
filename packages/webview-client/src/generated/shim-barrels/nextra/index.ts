@@ -1,31 +1,21 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/registry/src/shims/shim-config.ts
+// Source: packages/mdx-tools/src/components/registry/shim-config.ts
 // generated/shim-barrels/nextra/index.ts
 
-export { Callout } from '../../../features/shims/nextra/Callout';
-export type {
-  CalloutProps,
-  CalloutType,
-} from '../../../features/shims/nextra/Callout';
+export { Callout } from 'mdx-tools/components/nextra';
+export type { CalloutProps, CalloutType } from 'mdx-tools/components/nextra';
 
-export { Tabs } from '../../../features/shims/nextra/Tabs';
-export type {
-  TabsProps,
-  TabProps,
-  TabItem,
-} from '../../../features/shims/nextra/Tabs';
+export { Tabs } from 'mdx-tools/components/nextra';
+export type { TabsProps, TabProps, TabItem } from 'mdx-tools/components/nextra';
 
-export { Cards } from '../../../features/shims/nextra/Cards';
-export type {
-  CardsProps,
-  CardProps,
-} from '../../../features/shims/nextra/Cards';
+export { Cards } from 'mdx-tools/components/nextra';
+export type { CardsProps, CardProps } from 'mdx-tools/components/nextra';
 
-export { FileTree } from '../../../features/shims/nextra/FileTree';
-export type { FileTreeProps } from '../../../features/shims/nextra/FileTree';
+export { FileTree } from 'mdx-tools/components/nextra';
+export type { FileTreeProps } from 'mdx-tools/components/nextra';
 
-export { Steps } from '../../../features/shims/nextra/Steps';
-export type { StepsProps } from '../../../features/shims/nextra/Steps';
+export { Steps } from 'mdx-tools/components/nextra';
+export type { StepsProps } from 'mdx-tools/components/nextra';
 
-export { Bleed } from '../../../features/shims/nextra/Bleed';
-export type { BleedProps } from '../../../features/shims/nextra/Bleed';
+export { Bleed } from 'mdx-tools/components/nextra';
+export type { BleedProps } from 'mdx-tools/components/nextra';

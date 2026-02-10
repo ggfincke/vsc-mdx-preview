@@ -43,7 +43,7 @@ function parseSvg(svgString: string): ParsedSvg {
 }
 
 // create a React icon component from a shared SVG string
-// parses the SVG once at module level for zero per-render overhead
+// parse the SVG once at module level for zero per-render overhead
 // inner content rendered via dangerouslySetInnerHTML (safe: compile-time constants)
 export function createIconComponent(
   svgString: string,

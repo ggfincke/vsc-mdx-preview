@@ -7,6 +7,7 @@ import * as ReactDOMClient from 'react-dom/client';
 import * as jsxRuntime from 'react/jsx-runtime';
 import { MDXProvider, useMDXComponents } from '@mdx-js/react';
 import { PRELOADED_MODULE_IDS } from '@mdx-preview/shared';
+import { registerPreloadEntries, type PreloadEntry } from 'mdx-tools/browser';
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
 
 export interface LayoutOptions {
@@ -72,22 +73,45 @@ export function createBarrelModule(
   return module;
 }
 
+export function preloadEntry(
+  registry: ModuleRegistry,
+  entry: PreloadEntry
+): void {
+  registerPreloadEntries(registry, [entry]);
+}
+
 // initialize core preloaded modules in the registry
 export function preloadCoreModules(
   registry: ModuleRegistry,
   vscodeMarkdownLayout: unknown
 ): void {
   // React
-  registry.preload(PRELOADED_MODULE_IDS.react, React);
+  preloadEntry(registry, {
+    id: PRELOADED_MODULE_IDS.react,
+    exports: React,
+    aliases: ['react', 'npm://react'],
+  });
 
   // ReactDOM (full API including createPortal, flushSync, etc.)
-  registry.preload(PRELOADED_MODULE_IDS.reactDom, ReactDOM);
+  preloadEntry(registry, {
+    id: PRELOADED_MODULE_IDS.reactDom,
+    exports: ReactDOM,
+    aliases: ['react-dom', 'npm://react-dom'],
+  });
 
   // ReactDOM/client (createRoot, hydrateRoot)
-  registry.preload(PRELOADED_MODULE_IDS.reactDomClient, ReactDOMClient);
+  preloadEntry(registry, {
+    id: PRELOADED_MODULE_IDS.reactDomClient,
+    exports: ReactDOMClient,
+    aliases: ['react-dom/client', 'npm://react-dom/client'],
+  });
 
   // JSX Runtime
-  registry.preload(PRELOADED_MODULE_IDS.jsxRuntime, jsxRuntime);
+  preloadEntry(registry, {
+    id: PRELOADED_MODULE_IDS.jsxRuntime,
+    exports: jsxRuntime,
+    aliases: ['react/jsx-runtime', 'npm://react/jsx-runtime'],
+  });
 
   // MDX React (must include useMDXComponents for MDX 3 compiled code to read context)
   const mdxModule = {
@@ -95,8 +119,16 @@ export function preloadCoreModules(
     MDXProvider,
     useMDXComponents,
   };
-  registry.preload(PRELOADED_MODULE_IDS.mdxReact, mdxModule);
+  preloadEntry(registry, {
+    id: PRELOADED_MODULE_IDS.mdxReact,
+    exports: mdxModule,
+    aliases: ['@mdx-js/react', 'npm://@mdx-js/react'],
+  });
 
   // VSCode Markdown Layout
-  registry.preload(PRELOADED_MODULE_IDS.vscodeLayout, vscodeMarkdownLayout);
+  preloadEntry(registry, {
+    id: PRELOADED_MODULE_IDS.vscodeLayout,
+    exports: vscodeMarkdownLayout,
+    aliases: ['vscode-markdown-layout', 'npm://vscode-markdown-layout'],
+  });
 }

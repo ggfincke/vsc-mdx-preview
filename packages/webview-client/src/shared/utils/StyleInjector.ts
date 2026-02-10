@@ -15,6 +15,8 @@ export interface StyleInjectorOptions {
   insertBefore?: string;
   // document data attribute
   dataAttribute?: { name: string; value: string };
+  // optional attributes applied to the style element
+  attributes?: Record<string, string>;
 }
 
 // well-known style element IDs used by the extension - ensures consistency across the codebase
@@ -23,6 +25,7 @@ export const STYLE_IDS = {
   CODE_BLOCK_THEME: 'mpe-code-block-theme',
   CUSTOM_CSS: 'mdx-preview-custom-css',
   TAILWIND_CSS: 'mdx-preview-tailwind-css',
+  TAILWIND_BROWSER_INPUT_CSS: 'mdx-preview-tailwind-browser-input-css',
 } as const;
 
 // centralized style injection manager
@@ -38,7 +41,12 @@ class StyleInjectorImpl {
   // inject CSS w/ the given ID - creates or updates a <style> element in document.head
   // for non-module styles (themes, custom CSS, etc.)
   inject(id: string, css: string, options: StyleInjectorOptions = {}): void {
-    const { deduplicate = false, insertBefore, dataAttribute } = options;
+    const {
+      deduplicate = false,
+      insertBefore,
+      dataAttribute,
+      attributes,
+    } = options;
 
     // deduplication check - skip if already injected w/ this ID
     if (deduplicate && this.injectedIds.has(id)) {
@@ -65,6 +73,12 @@ class StyleInjectorImpl {
     }
 
     styleEl.textContent = css;
+
+    if (attributes) {
+      for (const [name, value] of Object.entries(attributes)) {
+        styleEl.setAttribute(name, value);
+      }
+    }
 
     if (deduplicate) {
       this.injectedIds.add(id);

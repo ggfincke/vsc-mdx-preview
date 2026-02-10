@@ -1,39 +1,30 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/registry/src/shims/shim-config.ts
+// Source: packages/mdx-tools/src/components/registry/shim-config.ts
 // generated/shim-barrels/starlight/index.ts
 
-export { Card } from '../../../features/shims/starlight/Card';
-export type { CardProps } from '../../../features/shims/starlight/Card';
+export { Card } from 'mdx-tools/components/starlight';
+export type { CardProps } from 'mdx-tools/components/starlight';
 
-export { CardGrid } from '../../../features/shims/starlight/CardGrid';
-export type { CardGridProps } from '../../../features/shims/starlight/CardGrid';
+export { CardGrid } from 'mdx-tools/components/starlight';
+export type { CardGridProps } from 'mdx-tools/components/starlight';
 
-export { LinkCard } from '../../../features/shims/starlight/LinkCard';
-export type { LinkCardProps } from '../../../features/shims/starlight/LinkCard';
+export { LinkCard } from 'mdx-tools/components/starlight';
+export type { LinkCardProps } from 'mdx-tools/components/starlight';
 
-export { Steps } from '../../../features/shims/starlight/Steps';
-export type { StepsProps } from '../../../features/shims/starlight/Steps';
+export { Steps } from 'mdx-tools/components/starlight';
+export type { StepsProps } from 'mdx-tools/components/starlight';
 
-export { Badge } from '../../../features/shims/starlight/Badge';
-export type {
-  BadgeProps,
-  BadgeVariant,
-} from '../../../features/shims/starlight/Badge';
+export { Badge } from 'mdx-tools/components/starlight';
+export type { BadgeProps, BadgeVariant } from 'mdx-tools/components/starlight';
 
-export { Aside } from '../../../features/shims/starlight/Aside';
-export type {
-  AsideProps,
-  AsideType,
-} from '../../../features/shims/starlight/Aside';
+export { Aside } from 'mdx-tools/components/starlight';
+export type { AsideProps, AsideType } from 'mdx-tools/components/starlight';
 
-export { Tabs, TabItem } from '../../../features/shims/starlight/Tabs';
-export type {
-  TabsProps,
-  TabItemProps,
-} from '../../../features/shims/starlight/Tabs';
+export { Tabs, TabItem } from 'mdx-tools/components/starlight';
+export type { TabsProps, TabItemProps } from 'mdx-tools/components/starlight';
 
-export { FileTree } from '../../../features/shims/starlight/FileTree';
-export type { FileTreeProps } from '../../../features/shims/starlight/FileTree';
+export { FileTree } from 'mdx-tools/components/starlight';
+export type { FileTreeProps } from 'mdx-tools/components/starlight';
 
-export { Code } from '../../../features/shims/starlight/Code';
-export type { CodeProps } from '../../../features/shims/starlight/Code';
+export { Code } from 'mdx-tools/components/starlight';
+export type { CodeProps } from 'mdx-tools/components/starlight';

@@ -1,37 +1,27 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/registry/src/shims/shim-config.ts
+// Source: packages/mdx-tools/src/components/registry/shim-config.ts
 // generated/shim-barrels/generic/index.ts
 
 export {
   normalizeCalloutType,
   CALLOUT_TITLES,
-} from '../../../features/shims/generic/types';
+} from 'mdx-tools/components/generic';
 export type {
   CalloutType,
   CalloutProps,
   CollapsibleProps,
   CodeGroupProps,
-} from '../../../features/shims/generic/types';
+} from 'mdx-tools/components/generic';
 
-export {
-  Callout,
-  Alert,
-  Admonition,
-} from '../../../features/shims/generic/Callout';
+export { Callout, Alert, Admonition } from 'mdx-tools/components/generic';
 
-export {
-  Collapsible,
-  Accordion,
-} from '../../../features/shims/generic/Collapsible';
+export { Collapsible, Accordion } from 'mdx-tools/components/generic';
 
-export {
-  Tabs,
-  useGenericTabsContext,
-} from '../../../features/shims/generic/Tabs';
-export type { TabsProps } from '../../../features/shims/generic/Tabs';
+export { Tabs, useGenericTabsContext } from 'mdx-tools/components/generic';
+export type { TabsProps } from 'mdx-tools/components/generic';
 
-export { TabItem, Tab } from '../../../features/shims/generic/TabItem';
+export { TabItem, Tab } from 'mdx-tools/components/generic';
 
-export { CodeGroup } from '../../../features/shims/generic/CodeGroup';
+export { CodeGroup } from 'mdx-tools/components/generic';
 
-import '../../../features/shims/generic/styles.css';
+import 'mdx-tools/components/styles/generic.css';

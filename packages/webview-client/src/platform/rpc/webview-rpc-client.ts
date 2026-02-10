@@ -70,16 +70,21 @@ let stateHandlers: WebviewStateHandlers | null = null;
 
 // K.1: cache for ./module-system dynamic import (avoids repeated promise creation)
 // use error recovery pattern to reset cache on failure
-let moduleSystemPromise: Promise<typeof import('../../features/module-runtime')> | null =
-  null;
+let moduleSystemPromise: Promise<
+  typeof import('../../features/module-runtime')
+> | null = null;
 
-function getModuleSystem(): Promise<typeof import('../../features/module-runtime')> {
+function getModuleSystem(): Promise<
+  typeof import('../../features/module-runtime')
+> {
   if (!moduleSystemPromise) {
-    moduleSystemPromise = import('../../features/module-runtime').catch((err) => {
-      // reset cache on failure so subsequent calls can retry
-      moduleSystemPromise = null;
-      throw err;
-    });
+    moduleSystemPromise = import('../../features/module-runtime').catch(
+      (err) => {
+        // reset cache on failure so subsequent calls can retry
+        moduleSystemPromise = null;
+        throw err;
+      }
+    );
   }
   return moduleSystemPromise;
 }
@@ -227,8 +232,29 @@ class RPCWebviewHandle implements WebviewRPC {
 
   setTailwindCss(css: string): void {
     log.debug(`setTailwindCss called, length: ${css.length}`);
+    StyleInjector.remove(STYLE_IDS.TAILWIND_BROWSER_INPUT_CSS);
+    if (!css.trim()) {
+      StyleInjector.remove(STYLE_IDS.TAILWIND_CSS);
+      return;
+    }
     StyleInjector.inject(STYLE_IDS.TAILWIND_CSS, css, {
       insertBefore: STYLE_IDS.CUSTOM_CSS,
+    });
+  }
+
+  setTailwindBrowserCss(css: string): void {
+    log.debug(`setTailwindBrowserCss called, length: ${css.length}`);
+    StyleInjector.remove(STYLE_IDS.TAILWIND_CSS);
+    if (!css.trim()) {
+      StyleInjector.remove(STYLE_IDS.TAILWIND_BROWSER_INPUT_CSS);
+      return;
+    }
+
+    StyleInjector.inject(STYLE_IDS.TAILWIND_BROWSER_INPUT_CSS, css, {
+      insertBefore: STYLE_IDS.CUSTOM_CSS,
+      attributes: {
+        type: 'text/tailwindcss',
+      },
     });
   }
 

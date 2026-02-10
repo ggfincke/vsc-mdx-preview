@@ -24,7 +24,7 @@ export interface BaseCalloutProps<T extends string> {
   children: ReactNode;
   type?: T;
   title?: string;
-  // overrides default icon
+  // override default icon
   icon?: ReactNode;
   className?: string;
 }

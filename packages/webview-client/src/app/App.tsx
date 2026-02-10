@@ -22,8 +22,8 @@ import {
 } from './state';
 import './styles/App.css';
 import '../features/preview/shared/styles/admonitions.css';
-// base styles (shared via data-attribute selectors) - always needed
-import '../features/shims/base/styles/index.css';
+// base generic shim styles from extracted doc-components library
+import 'mdx-tools/components/styles/generic.css';
 // framework-specific styles are lazy-loaded via frameworkCssLoader.ts
 
 // module-level tagged logger (avoids per-render allocation)

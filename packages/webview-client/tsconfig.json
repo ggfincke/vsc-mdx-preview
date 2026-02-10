@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "ES2022",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "allowJs": true,
@@ -10,6 +11,12 @@
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "paths": {
+      "mdx-tools/components": ["../mdx-tools/src/components/index.ts"],
+      "mdx-tools/components/*": ["../mdx-tools/src/components/*"],
+      "mdx-tools/browser": ["../mdx-tools/src/browser/index.ts"],
+      "mdx-tools/browser/*": ["../mdx-tools/src/browser/*"]
+    },
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,

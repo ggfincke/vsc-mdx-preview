@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/registry/src/shims/shim-config.ts
+// Source: packages/mdx-tools/src/components/registry/shim-config.ts
 // packages/webview-client/src/generated/framework-css/frameworkCssLoader.ts
 // load framework CSS only when that framework shims are used
 
@@ -13,24 +13,24 @@ import {
 const loaders: Record<FrameworkId, ResourceLoader> = {
   generic: createResourceLoader(
     () =>
-      import('../../features/shims/generic/styles.css').then(() => undefined),
+      import('mdx-tools/components/styles/generic.css').then(() => undefined),
     { name: 'generic-css', allowRetry: true }
   ),
   docusaurus: createResourceLoader(
     () =>
-      import('../../features/shims/docusaurus/styles.css').then(
+      import('mdx-tools/components/styles/docusaurus.css').then(
         () => undefined
       ),
     { name: 'docusaurus-css', allowRetry: true }
   ),
   starlight: createResourceLoader(
     () =>
-      import('../../features/shims/starlight/styles.css').then(() => undefined),
+      import('mdx-tools/components/styles/starlight.css').then(() => undefined),
     { name: 'starlight-css', allowRetry: true }
   ),
   nextra: createResourceLoader(
     () =>
-      import('../../features/shims/nextra/styles.css').then(() => undefined),
+      import('mdx-tools/components/styles/nextra.css').then(() => undefined),
     { name: 'nextra-css', allowRetry: true }
   ),
   nextjs: createResourceLoader(() => Promise.resolve(), {

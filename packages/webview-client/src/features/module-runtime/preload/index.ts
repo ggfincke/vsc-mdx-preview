@@ -23,10 +23,7 @@ import {
 } from './shimLoader';
 
 export { fallbackLayoutModule } from './core';
-export {
-  PRELOAD_ALIASES,
-  PRELOADED_SHIM_IDS,
-} from '../../../generated/preload/aliases.generated';
+export { PRELOADED_SHIM_IDS } from '../../../generated/preload/aliases.generated';
 
 // module-level tagged logger (avoids per-call allocation)
 const log = createTaggedLogger(LogTags.PRELOAD);

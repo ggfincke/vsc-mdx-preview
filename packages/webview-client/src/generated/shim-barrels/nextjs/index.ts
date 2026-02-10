@@ -1,9 +1,9 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/registry/src/shims/shim-config.ts
+// Source: packages/mdx-tools/src/components/registry/shim-config.ts
 // generated/shim-barrels/nextjs/index.ts
 
-export { Image } from '../../../features/shims/nextjs/Image';
-export type { ImageProps } from '../../../features/shims/nextjs/Image';
+export { Image } from 'mdx-tools/components/nextjs';
+export type { ImageProps } from 'mdx-tools/components/nextjs';
 
-export { Link } from '../../../features/shims/nextjs/Link';
-export type { LinkProps } from '../../../features/shims/nextjs/Link';
+export { Link } from 'mdx-tools/components/nextjs';
+export type { LinkProps } from 'mdx-tools/components/nextjs';
