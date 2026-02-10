@@ -85,7 +85,7 @@ export const CONFIG_WATCHER_DEBOUNCE_MS = STANDARD_DEBOUNCE_MS;
 // class extraction patterns
 
 // valid Tailwind class token pattern
-// matches common Tailwind patterns including
+// match common Tailwind patterns including
 // - basic classes: flex, gap-4, text-sm
 // - responsive/state variants: sm:flex, hover:bg-blue-500
 // - arbitrary values: w-[100px], bg-[#ff0000]

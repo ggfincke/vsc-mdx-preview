@@ -10,11 +10,25 @@ export interface TailwindVersionInfo {
   modulePath?: string;
 }
 
+// capability-routed Tailwind profiles (Phase 8)
+export type TailwindProfile = 'browser' | 'advanced';
+
 // result of Tailwind detection
 export interface TailwindDetectionResult {
   workspaceRoot: string | null;
   configPath: string | null;
   entryCssPath: string | null;
+}
+
+// profile detection result used to route browser vs advanced Tailwind paths
+export interface TailwindProfileDetectionResult {
+  profile: TailwindProfile;
+  reason: string;
+  workspaceRoot: string | null;
+  configPath: string | null;
+  entryCssPath: string | null;
+  hasTailwindInput: boolean;
+  inlineTailwindStyles: string[];
 }
 
 // options for resolving workspace root
@@ -36,4 +50,14 @@ export interface ResolveEntryCssPathOptions {
   workspaceRoot: string | null;
   entryDir: string | null;
   maxCssFilesToSearch?: number;
+}
+
+// options for routing Tailwind to browser or advanced profile
+export interface DetectTailwindProfileOptions {
+  workspaceRoot: string | null;
+  entryDir: string | null;
+  configOverride?: string;
+  configDir?: string;
+  maxCssFilesToSearch?: number;
+  mdxText?: string;
 }

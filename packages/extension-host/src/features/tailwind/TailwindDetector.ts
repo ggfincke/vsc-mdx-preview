@@ -7,7 +7,11 @@ import { extractErrorMessage, LRUCache, LogTags } from '@mdx-preview/shared';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { getNodeResolver } from '../module-runtime/resolution/resolver-factory';
 import { VERSION_CACHE_TTL_MS } from './constants';
-import { pathExists, readFileAsync, readJsonSync } from '../../shared/utils/file-utils';
+import {
+  pathExists,
+  readFileAsync,
+  readJsonSync,
+} from '../../shared/utils/file-utils';
 import { toAbsolutePath } from '../../shared/utils/path-utils';
 import { findUp } from '../../shared/utils/find-up';
 import { PathCache } from '../../shared/utils/cache';
@@ -28,6 +32,9 @@ const CONFIG_FILES = [
 
 const TAILWIND_IMPORT_RE = /@import\s+['"]tailwindcss(?:\/[^'"]+)?['"]/;
 const TAILWIND_DIRECTIVE_RE = /@tailwind\s+(base|components|utilities)\b/;
+const TAILWIND_PLUGIN_DIRECTIVE_RE = /@plugin\b/;
+const INLINE_TAILWIND_STYLE_RE =
+  /<style\b[^>]*\btype\s*=\s*["']text\/tailwindcss["'][^>]*>([\s\S]*?)<\/style>/gi;
 
 // common CSS file locations to check before doing a full workspace scan
 // ordered by likelihood based on typical project structures
@@ -71,16 +78,21 @@ const COMMON_CSS_LOCATIONS = [
 export type {
   TailwindVersionInfo,
   TailwindDetectionResult,
+  TailwindProfile,
+  TailwindProfileDetectionResult,
   ResolveWorkspaceRootOptions,
   ResolveConfigPathOptions,
   ResolveEntryCssPathOptions,
+  DetectTailwindProfileOptions,
 } from '../types';
 
 import type {
   TailwindVersionInfo,
+  TailwindProfileDetectionResult,
   ResolveWorkspaceRootOptions,
   ResolveConfigPathOptions,
   ResolveEntryCssPathOptions,
+  DetectTailwindProfileOptions,
 } from '../types';
 
 export class TailwindDetector {
@@ -214,6 +226,109 @@ export class TailwindDetector {
 
     this.entryCssCache.set(cacheKey, null);
     return null;
+  }
+
+  // route workspace to browser or advanced Tailwind profile
+  async detectProfile(
+    options: DetectTailwindProfileOptions
+  ): Promise<TailwindProfileDetectionResult> {
+    const {
+      workspaceRoot,
+      entryDir,
+      configOverride,
+      configDir,
+      maxCssFilesToSearch = 500,
+      mdxText,
+    } = options;
+
+    const configPath = this.resolveConfigPath({
+      entryDir,
+      workspaceRoot,
+      configOverride,
+      configDir,
+    });
+    const entryCssPath = await this.resolveEntryCssPath({
+      workspaceRoot,
+      entryDir,
+      maxCssFilesToSearch,
+    });
+
+    const inlineTailwindStyles = this.extractInlineTailwindStyles(mdxText);
+    const hasInlinePluginDirective = inlineTailwindStyles.some((styleText) =>
+      TAILWIND_PLUGIN_DIRECTIVE_RE.test(styleText)
+    );
+
+    let entryCssHasPluginDirective = false;
+    if (entryCssPath) {
+      const entryCss = await readFileAsync(entryCssPath);
+      entryCssHasPluginDirective =
+        entryCss !== null && TAILWIND_PLUGIN_DIRECTIVE_RE.test(entryCss);
+    }
+
+    if (configPath) {
+      return {
+        profile: 'advanced',
+        reason: `tailwind.config.* detected at ${configPath}`,
+        workspaceRoot,
+        configPath,
+        entryCssPath,
+        hasTailwindInput: true,
+        inlineTailwindStyles,
+      };
+    }
+
+    if (entryCssHasPluginDirective) {
+      return {
+        profile: 'advanced',
+        reason: `@plugin directive detected in ${entryCssPath}`,
+        workspaceRoot,
+        configPath,
+        entryCssPath,
+        hasTailwindInput: true,
+        inlineTailwindStyles,
+      };
+    }
+
+    if (hasInlinePluginDirective) {
+      return {
+        profile: 'advanced',
+        reason:
+          '@plugin directive detected in inline style[type="text/tailwindcss"] block',
+        workspaceRoot,
+        configPath,
+        entryCssPath,
+        hasTailwindInput: true,
+        inlineTailwindStyles,
+      };
+    }
+
+    return {
+      profile: 'browser',
+      reason: 'No tailwind.config.* or plugin directives detected',
+      workspaceRoot,
+      configPath,
+      entryCssPath,
+      hasTailwindInput:
+        Boolean(entryCssPath) || inlineTailwindStyles.length > 0,
+      inlineTailwindStyles,
+    };
+  }
+
+  // collect inline Tailwind style blocks from the current MDX source
+  extractInlineTailwindStyles(mdxText?: string): string[] {
+    if (!mdxText) {
+      return [];
+    }
+
+    const styles: string[] = [];
+    const matcher = new RegExp(INLINE_TAILWIND_STYLE_RE.source, 'gi');
+    for (const match of mdxText.matchAll(matcher)) {
+      const cssText = match[1]?.trim();
+      if (cssText) {
+        styles.push(cssText);
+      }
+    }
+    return styles;
   }
 
   // invalidate cached config & entry CSS results for changed paths

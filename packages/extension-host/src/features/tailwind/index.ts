@@ -4,8 +4,10 @@
 // primary API - TailwindProcessor is the main entry point for Tailwind compilation
 export { TailwindProcessor } from './TailwindProcessor';
 export type {
+  TailwindProfileOptions,
   TailwindProcessOptions,
   TailwindProcessResult,
+  TailwindRuntimeProfile,
 } from './TailwindProcessor';
 
 // detection - config/CSS/version discovery
@@ -13,9 +15,12 @@ export { TailwindDetector } from './TailwindDetector';
 export type {
   TailwindVersionInfo,
   TailwindDetectionResult,
+  TailwindProfile,
+  TailwindProfileDetectionResult,
   ResolveWorkspaceRootOptions,
   ResolveConfigPathOptions,
   ResolveEntryCssPathOptions,
+  DetectTailwindProfileOptions,
 } from './TailwindDetector';
 
 // scanning - class extraction from MDX/JSX

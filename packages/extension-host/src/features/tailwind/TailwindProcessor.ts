@@ -31,9 +31,19 @@ import {
 const log = createTaggedLogger(LogTags.TAILWIND);
 
 // re-export canonical type definitions from types/
-export type { TailwindProcessOptions, TailwindProcessResult } from '../types';
+export type {
+  TailwindRuntimeProfile,
+  TailwindProfileOptions,
+  TailwindProcessOptions,
+  TailwindProcessResult,
+} from '../types';
 
-import type { TailwindProcessOptions, TailwindProcessResult } from '../types';
+import type {
+  TailwindProfileDetectionResult,
+  TailwindProfileOptions,
+  TailwindProcessOptions,
+  TailwindProcessResult,
+} from '../types';
 
 export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   protected static override instance: TailwindProcessor | undefined;
@@ -67,6 +77,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       entryFileDependencies,
       trustState,
       tailwindConfig,
+      profileHint,
     } = options;
 
     // update cache settings from unified config
@@ -78,32 +89,63 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     log.debug('Process start');
 
     if (!trustState.canExecute) {
-      return { css: '', watchFiles: [], enabled: false };
+      return {
+        profile: 'disabled',
+        profileReason: 'Trusted Mode is required for Tailwind processing',
+        css: '',
+        watchFiles: [],
+        enabled: false,
+      };
     }
 
     if (tailwindConfig.enabled === 'disabled') {
-      return { css: '', watchFiles: [], enabled: false };
+      return {
+        profile: 'disabled',
+        profileReason: 'Tailwind is disabled by configuration',
+        css: '',
+        watchFiles: [],
+        enabled: false,
+      };
     }
 
-    const workspaceRoot = this.detector.resolveWorkspaceRoot({
-      docUri: preview.doc.uri,
-      entryDir: preview.entryFsDirectory,
-    });
-    const configPathOverride = tailwindConfig.configPath;
-    const configPath = this.detector.resolveConfigPath({
-      entryDir: preview.entryFsDirectory,
-      workspaceRoot,
-      configOverride: configPathOverride,
-      configDir: preview.mdxPreviewConfig?.configDir,
-    });
-    const entryCssPath = await this.detector.resolveEntryCssPath({
-      workspaceRoot,
-      entryDir: preview.entryFsDirectory,
-      maxCssFilesToSearch: tailwindConfig.maxCssFilesToSearch,
-    });
+    const profile =
+      profileHint ??
+      (await this.detectProfile({
+        preview,
+        mdxText,
+        tailwindConfig,
+      }));
 
-    if (tailwindConfig.enabled === 'auto' && !configPath && !entryCssPath) {
-      return { css: '', watchFiles: [], enabled: false };
+    const {
+      profile: activeProfile,
+      reason,
+      workspaceRoot,
+      configPath,
+      entryCssPath,
+    } = profile;
+
+    if (tailwindConfig.enabled === 'auto' && !profile.hasTailwindInput) {
+      return {
+        profile: 'disabled',
+        profileReason: 'Tailwind auto mode found no Tailwind CSS input',
+        css: '',
+        watchFiles: [],
+        enabled: false,
+      };
+    }
+
+    if (activeProfile === 'browser') {
+      const browserInputCss = await this.buildBrowserInputCss(
+        entryCssPath,
+        profile.inlineTailwindStyles
+      );
+      return {
+        profile: 'browser',
+        profileReason: reason,
+        css: browserInputCss,
+        watchFiles: this.buildWatchFiles(null, entryCssPath),
+        enabled: true,
+      };
     }
 
     const versionInfo =
@@ -117,7 +159,13 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       log.debug(
         `Unsupported Tailwind version ${versionInfo.version} (v${versionInfo.major}). Minimum supported: v${MIN_SUPPORTED_TAILWIND_VERSION}`
       );
-      return { css: '', watchFiles: [], enabled: false };
+      return {
+        profile: 'disabled',
+        profileReason: `Unsupported Tailwind version ${versionInfo.version ?? 'unknown'}`,
+        css: '',
+        watchFiles: [],
+        enabled: false,
+      };
     }
 
     // warn about unknown future versions (may need updates)
@@ -179,6 +227,8 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     const cached = this.cache.get(cacheKey);
     if (cached !== null) {
       return {
+        profile: 'advanced',
+        profileReason: reason,
         css: cached,
         watchFiles: this.buildWatchFiles(configPath, entryCssPath),
         enabled: true,
@@ -201,6 +251,8 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       );
       this.cache.set(cacheKey, css);
       return {
+        profile: 'advanced',
+        profileReason: reason,
         css,
         watchFiles: this.buildWatchFiles(configPath, entryCssPath),
         enabled: true,
@@ -213,8 +265,35 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
         showNotification: false,
         metadata: { operation: 'compilation' },
       });
-      return { css: '', watchFiles: [], enabled: false };
+      return {
+        profile: 'disabled',
+        profileReason: 'Tailwind advanced compilation failed',
+        css: '',
+        watchFiles: [],
+        enabled: false,
+      };
     }
+  }
+
+  // capability routing for Tailwind browser vs advanced profiles
+  async detectProfile(
+    options: TailwindProfileOptions
+  ): Promise<TailwindProfileDetectionResult> {
+    const { preview, mdxText, tailwindConfig } = options;
+
+    const workspaceRoot = this.detector.resolveWorkspaceRoot({
+      docUri: preview.doc.uri,
+      entryDir: preview.entryFsDirectory,
+    });
+
+    return this.detector.detectProfile({
+      workspaceRoot,
+      entryDir: preview.entryFsDirectory,
+      configOverride: tailwindConfig.configPath,
+      configDir: preview.mdxPreviewConfig?.configDir,
+      maxCssFilesToSearch: tailwindConfig.maxCssFilesToSearch,
+      mdxText,
+    });
   }
 
   // invalidate the Tailwind version cache
@@ -262,6 +341,35 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     }
     // sort for deterministic ordering (consistent w/ TailwindScanner)
     return Array.from(files).sort();
+  }
+
+  // build Tailwind browser runtime input CSS from entry file + inline style blocks
+  private async buildBrowserInputCss(
+    entryCssPath: string | null,
+    inlineTailwindStyles: string[]
+  ): Promise<string> {
+    const segments: string[] = [];
+
+    if (entryCssPath) {
+      try {
+        const entryCss = await fs.promises.readFile(entryCssPath, 'utf8');
+        segments.push(entryCss.trim());
+      } catch (error: unknown) {
+        log.warn(`Failed to read Tailwind entry CSS at ${entryCssPath}`, error);
+      }
+    }
+
+    for (const inlineCss of inlineTailwindStyles) {
+      if (inlineCss.trim()) {
+        segments.push(inlineCss.trim());
+      }
+    }
+
+    if (segments.length === 0) {
+      return '@import "tailwindcss";';
+    }
+
+    return segments.join('\n\n');
   }
 
   private async buildCacheKey(
