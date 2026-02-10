@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/mdx-tools/src/components/registry/registry-data.ts
+// Source: packages/mdx-forge/src/components/registry/registry-data.ts
 
 import type { ModuleRegistry } from '../../features/module-runtime/registry/ModuleRegistry';
 import {
@@ -10,11 +10,11 @@ import {
 import type { FrameworkId } from '@mdx-preview/contracts';
 
 // static imports for generic shims
-import { Callout as generic_Callout } from 'mdx-tools/components/generic';
-import { Collapsible as generic_Collapsible } from 'mdx-tools/components/generic';
-import { Tabs as generic_Tabs } from 'mdx-tools/components/generic';
-import { TabItem as generic_TabItem } from 'mdx-tools/components/generic';
-import { CodeGroup as generic_CodeGroup } from 'mdx-tools/components/generic';
+import { Callout as generic_Callout } from 'mdx-forge/components/generic';
+import { Collapsible as generic_Collapsible } from 'mdx-forge/components/generic';
+import { Tabs as generic_Tabs } from 'mdx-forge/components/generic';
+import { TabItem as generic_TabItem } from 'mdx-forge/components/generic';
+import { CodeGroup as generic_CodeGroup } from 'mdx-forge/components/generic';
 
 // preload generic shims synchronously
 export function preloadGenericShims(registry: ModuleRegistry): void {
@@ -78,7 +78,7 @@ export const GENERIC_SHIM_LOADERS: Record<
   (registry: ModuleRegistry) => Promise<void>
 > = {
   Callout: async (registry: ModuleRegistry) => {
-    const component = await import('mdx-tools/components/generic').then(
+    const component = await import('mdx-forge/components/generic').then(
       (m) => m.Callout
     );
     preloadEntry(registry, {
@@ -99,7 +99,7 @@ export const GENERIC_SHIM_LOADERS: Record<
     });
   },
   Collapsible: async (registry: ModuleRegistry) => {
-    const component = await import('mdx-tools/components/generic').then(
+    const component = await import('mdx-forge/components/generic').then(
       (m) => m.Collapsible
     );
     preloadEntry(registry, {
@@ -120,7 +120,7 @@ export const GENERIC_SHIM_LOADERS: Record<
     });
   },
   Tabs: async (registry: ModuleRegistry) => {
-    const component = await import('mdx-tools/components/generic').then(
+    const component = await import('mdx-forge/components/generic').then(
       (m) => m.Tabs
     );
     preloadEntry(registry, {
@@ -130,7 +130,7 @@ export const GENERIC_SHIM_LOADERS: Record<
     });
   },
   TabItem: async (registry: ModuleRegistry) => {
-    const component = await import('mdx-tools/components/generic').then(
+    const component = await import('mdx-forge/components/generic').then(
       (m) => m.TabItem
     );
     preloadEntry(registry, {
@@ -145,7 +145,7 @@ export const GENERIC_SHIM_LOADERS: Record<
     });
   },
   CodeGroup: async (registry: ModuleRegistry) => {
-    const component = await import('mdx-tools/components/generic').then(
+    const component = await import('mdx-forge/components/generic').then(
       (m) => m.CodeGroup
     );
     preloadEntry(registry, {
@@ -166,10 +166,10 @@ export async function loadDocusaurusShims(
     docusaurus_CodeBlock,
     docusaurus_Details,
   ] = await Promise.all([
-    import('mdx-tools/components/docusaurus').then((m) => m.Tabs),
-    import('mdx-tools/components/docusaurus').then((m) => m.TabItem),
-    import('mdx-tools/components/docusaurus').then((m) => m.CodeBlock),
-    import('mdx-tools/components/docusaurus').then((m) => m.Details),
+    import('mdx-forge/components/docusaurus').then((m) => m.Tabs),
+    import('mdx-forge/components/docusaurus').then((m) => m.TabItem),
+    import('mdx-forge/components/docusaurus').then((m) => m.CodeBlock),
+    import('mdx-forge/components/docusaurus').then((m) => m.Details),
   ]);
 
   preloadEntry(registry, {
@@ -211,17 +211,17 @@ export async function loadStarlightShims(
     starlight_FileTree,
     starlight_Code,
   ] = await Promise.all([
-    import('mdx-tools/components/starlight'),
-    import('mdx-tools/components/starlight').then((m) => m.Card),
-    import('mdx-tools/components/starlight').then((m) => m.CardGrid),
-    import('mdx-tools/components/starlight').then((m) => m.LinkCard),
-    import('mdx-tools/components/starlight').then((m) => m.Steps),
-    import('mdx-tools/components/starlight').then((m) => m.Badge),
-    import('mdx-tools/components/starlight').then((m) => m.Aside),
-    import('mdx-tools/components/starlight').then((m) => m.Tabs),
-    import('mdx-tools/components/starlight').then((m) => m.TabItem),
-    import('mdx-tools/components/starlight').then((m) => m.FileTree),
-    import('mdx-tools/components/starlight').then((m) => m.Code),
+    import('mdx-forge/components/starlight'),
+    import('mdx-forge/components/starlight').then((m) => m.Card),
+    import('mdx-forge/components/starlight').then((m) => m.CardGrid),
+    import('mdx-forge/components/starlight').then((m) => m.LinkCard),
+    import('mdx-forge/components/starlight').then((m) => m.Steps),
+    import('mdx-forge/components/starlight').then((m) => m.Badge),
+    import('mdx-forge/components/starlight').then((m) => m.Aside),
+    import('mdx-forge/components/starlight').then((m) => m.Tabs),
+    import('mdx-forge/components/starlight').then((m) => m.TabItem),
+    import('mdx-forge/components/starlight').then((m) => m.FileTree),
+    import('mdx-forge/components/starlight').then((m) => m.Code),
   ]);
 
   preloadEntry(registry, {
@@ -333,13 +333,13 @@ export async function loadNextraShims(registry: ModuleRegistry): Promise<void> {
     nextra_Steps,
     nextra_Bleed,
   ] = await Promise.all([
-    import('mdx-tools/components/nextra'),
-    import('mdx-tools/components/nextra').then((m) => m.Callout),
-    import('mdx-tools/components/nextra').then((m) => m.Tabs),
-    import('mdx-tools/components/nextra').then((m) => m.Cards),
-    import('mdx-tools/components/nextra').then((m) => m.FileTree),
-    import('mdx-tools/components/nextra').then((m) => m.Steps),
-    import('mdx-tools/components/nextra').then((m) => m.Bleed),
+    import('mdx-forge/components/nextra'),
+    import('mdx-forge/components/nextra').then((m) => m.Callout),
+    import('mdx-forge/components/nextra').then((m) => m.Tabs),
+    import('mdx-forge/components/nextra').then((m) => m.Cards),
+    import('mdx-forge/components/nextra').then((m) => m.FileTree),
+    import('mdx-forge/components/nextra').then((m) => m.Steps),
+    import('mdx-forge/components/nextra').then((m) => m.Bleed),
   ]);
 
   preloadEntry(registry, {
@@ -397,8 +397,8 @@ export async function loadNextraShims(registry: ModuleRegistry): Promise<void> {
 // lazy-load nextjs shims on demand
 export async function loadNextjsShims(registry: ModuleRegistry): Promise<void> {
   const [nextjs_Image, nextjs_Link] = await Promise.all([
-    import('mdx-tools/components/nextjs').then((m) => m.Image),
-    import('mdx-tools/components/nextjs').then((m) => m.Link),
+    import('mdx-forge/components/nextjs').then((m) => m.Image),
+    import('mdx-forge/components/nextjs').then((m) => m.Link),
   ]);
 
   preloadEntry(registry, {

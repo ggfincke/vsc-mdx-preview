@@ -1,15 +1,12 @@
-/*
- * From https://github.com/Microsoft/vscode/blob/6d8b6d39ccf849ecd2805937d386a8c159559e1f/src/vs/base/browser/ui/progressbar/progressbar.css
- */
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+/* From https://github.com/Microsoft/vscode/blob/6d8b6d39ccf849ecd2805937d386a8c159559e1f/src/vs/base/browser/ui/progressbar/progressbar.css */
+/* Copyright (c) Microsoft Corporation. All rights reserved. */
+/* Licensed under the MIT License. See License.txt in the project root for license information. */
 
 .monaco-progress-container {
   width: 100%;
   height: 5px;
-  overflow: hidden; /* keep progress bit in bounds */
+  /* keep progress bit in bounds */
+  overflow: hidden;
 }
 
 .monaco-progress-container .progress-bit {
@@ -53,13 +50,9 @@
   will-change: transform;
 }
 
-/*
- * the progress bit has a width: 2% (1/50) of the parent container. the animation moves it from 0% to 100% of
- * that container. since translateX is relative to the progress bit size, we have to multiply it w/
- * its relative size to the parent container:
- *  50%: 50 * 50 = 2500%
- * 100%: 50 * 100 - 50 (do not overflow): 4950%
- */
+/* progress bit has width: 2% (1/50) of parent. animation moves it 0% to 100% */
+/* since translateX is relative to bit size, multiply by relative size to parent */
+/* 50%: 50 * 50 = 2500%, 100%: 50 * 100 - 50 (no overflow) = 4950% */
 @keyframes progress {
   from {
     transform: translateX(0%) scaleX(1);

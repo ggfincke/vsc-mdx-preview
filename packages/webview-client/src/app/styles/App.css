@@ -9,7 +9,8 @@
 .mdx-preview-content {
   padding: 0 26px;
   padding-top: 1em;
-  overflow-x: hidden; /* Prevent horizontal scroll from Bleed components */
+  /* prevent horizontal scroll from Bleed components */
+  overflow-x: hidden;
 }
 
 /* Error Display */
@@ -394,7 +395,8 @@ body.wordWrap .markdown-body pre {
 .markdown-body h5,
 .markdown-body h6 {
   position: relative;
-  scroll-margin-top: 60px; /* Offset for fixed header */
+  /* offset for fixed header */
+  scroll-margin-top: 60px;
 }
 
 .markdown-body .anchor-link {
@@ -428,11 +430,13 @@ body.wordWrap .markdown-body pre {
 
 /* Adjust content when TOC is visible */
 .mdx-preview-container.has-toc .mdx-preview-content {
-  padding-right: 236px; /* TOC width + margin */
+  /* TOC width + margin */
+  padding-right: 236px;
 }
 
 .mdx-preview-container.has-toc.toc-collapsed .mdx-preview-content {
-  padding-right: 48px; /* Collapsed TOC width + margin */
+  /* collapsed TOC width + margin */
+  padding-right: 48px;
 }
 
 /* Phase 3.4: GitHub-style alerts/callouts */
@@ -518,12 +522,13 @@ body.wordWrap .markdown-body pre {
   min-height: 100vh;
 }
 
+/* ensure MPE theme background extends to edges */
 [data-mpe-theme-active='true'] .markdown-body {
-  /* Ensure MPE theme background extends to edges */
   min-height: 100vh;
   margin: 0;
   padding: 16px;
-  padding-top: 40px; /* Space for mode badge */
+  /* space for mode badge */
+  padding-top: 40px;
 }
 
 /* Remove default padding when MPE theme handles it */

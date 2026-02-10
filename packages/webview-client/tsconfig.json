@@ -13,11 +13,7 @@
     "moduleResolution": "bundler",
     "paths": {
       "@mdx-preview/contracts": ["../contracts/src/index.ts"],
-      "@mdx-preview/runtime-utils": ["../runtime-utils/src/index.ts"],
-      "mdx-tools/components": ["../mdx-tools/src/components/index.ts"],
-      "mdx-tools/components/*": ["../mdx-tools/src/components/*"],
-      "mdx-tools/browser": ["../mdx-tools/src/browser/index.ts"],
-      "mdx-tools/browser/*": ["../mdx-tools/src/browser/*"]
+      "@mdx-preview/runtime-utils": ["../runtime-utils/src/index.ts"]
     },
     "resolveJsonModule": true,
     "isolatedModules": true,

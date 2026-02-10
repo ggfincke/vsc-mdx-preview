@@ -27,7 +27,7 @@ import { useTrust, usePreview, useLoading, useNextra } from './state';
 import './styles/App.css';
 import '../features/preview/shared/styles/admonitions.css';
 // base generic shim styles from extracted doc-components library
-import 'mdx-tools/components/styles/generic.css';
+import 'mdx-forge/components/styles/generic.css';
 import '../features/shims/vscode-dark-adapter.css';
 // framework-specific styles are lazy-loaded via frameworkCssLoader.ts
 

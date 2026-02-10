@@ -13,9 +13,9 @@
   },
   "dependencies": {
     "@mdx-js/react": "^3.0.0",
-    "mdx-tools": "workspace:*",
-    "@mdx-preview/contracts": "1.0.0",
-    "@mdx-preview/runtime-utils": "1.0.0",
+    "mdx-forge": "0.1.1",
+    "@mdx-preview/contracts": "*",
+    "@mdx-preview/runtime-utils": "*",
     "@viz-js/viz": "^3.24.0",
     "comlink": "^4.4.1",
     "dompurify": "^3.0.0",

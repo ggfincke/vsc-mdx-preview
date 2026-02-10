@@ -1,1 +1,1 @@
-export { injectStyles, clearInjectedStyles } from 'mdx-tools/browser';
+export { injectStyles, clearInjectedStyles } from 'mdx-forge/browser';

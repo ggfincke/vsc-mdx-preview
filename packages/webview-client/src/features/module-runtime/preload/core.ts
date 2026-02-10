@@ -7,7 +7,7 @@ import * as ReactDOMClient from 'react-dom/client';
 import * as jsxRuntime from 'react/jsx-runtime';
 import { MDXProvider, useMDXComponents } from '@mdx-js/react';
 import { PRELOADED_MODULE_IDS } from '@mdx-preview/contracts';
-import { registerPreloadEntries, type PreloadEntry } from 'mdx-tools/browser';
+import { registerPreloadEntries, type PreloadEntry } from 'mdx-forge/browser';
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
 
 export interface LayoutOptions {

@@ -18,29 +18,9 @@ export default defineConfig({
         find: '@mdx-preview/runtime-utils',
         replacement: path.resolve(__dirname, '../runtime-utils/src/index.ts'),
       },
-      {
-        find: /^mdx-tools\/components\/styles\/(.+\.css)$/,
-        replacement: path.resolve(
-          __dirname,
-          '../mdx-tools/src/components/styles/$1'
-        ),
-      },
-      {
-        find: /^mdx-tools\/components\/(.+)$/,
-        replacement: path.resolve(__dirname, '../mdx-tools/src/components/$1'),
-      },
-      {
-        find: /^mdx-tools\/browser\/(.+)$/,
-        replacement: path.resolve(__dirname, '../mdx-tools/src/browser/$1'),
-      },
-      {
-        find: 'mdx-tools/browser',
-        replacement: path.resolve(
-          __dirname,
-          '../mdx-tools/src/browser/index.ts'
-        ),
-      },
     ],
+    // dedupe react so symlinked mdx-forge resolves peer deps from this project
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
   },
   // use relative base so dynamic chunk imports resolve relative to main.js
   // (not the document's base href which points to the MDX file's directory)

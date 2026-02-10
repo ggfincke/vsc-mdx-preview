@@ -138,7 +138,8 @@
 }
 
 .mdx-safe-collapsible-summary::before {
-  content: '\25B6'; /* right triangle */
+  /* right triangle */
+  content: '\25B6';
   display: inline-block;
   margin-right: 0.5rem;
   font-size: 0.75rem;

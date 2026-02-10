@@ -1,1 +1,1 @@
-export { evaluateModule } from 'mdx-tools/browser';
+export { evaluateModule } from 'mdx-forge/browser';

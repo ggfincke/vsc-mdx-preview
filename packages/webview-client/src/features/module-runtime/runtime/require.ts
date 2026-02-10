@@ -1,1 +1,1 @@
-export { createSyncRequire } from 'mdx-tools/browser';
+export { createSyncRequire } from 'mdx-forge/browser';
