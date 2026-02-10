@@ -297,7 +297,8 @@ class ExtensionHandle implements ExtensionRPC {
 
       // dynamically import openPreview to avoid circular dependency
       // openPreview() uses the active editor's document
-      const { openPreview } = await import('../../features/preview/preview-manager');
+      const { openPreview } =
+        await import('../../features/preview/preview-manager');
       await openPreview();
     } catch {
       getErrorReporter().reportToUser(

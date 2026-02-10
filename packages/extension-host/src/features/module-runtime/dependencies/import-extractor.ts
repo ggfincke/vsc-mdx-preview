@@ -36,12 +36,12 @@ async function ensureLexerInitialized(): Promise<void> {
 // limitations: dynamic requires, computed paths, & template interpolation unsupported
 
 // pattern 1: standard string quotes (single, double) w/ escaped char support
-// matches: require('lodash'), require("express"), require('path\'s/file')
+// match: require('lodash'), require("express"), require('path\'s/file')
 const REQUIRE_QUOTED =
   /require\s*\(\s*(['"])([^'"\\]*(?:\\.[^'"\\]*)*)\1\s*\)/g;
 
 // pattern 2: template literals (simple, no interpolation)
-// matches: require(`lodash`) but NOT require(`${dynamic}`)
+// match: require(`lodash`) but NOT require(`${dynamic}`)
 const REQUIRE_TEMPLATE = /require\s*\(\s*`([^`\\]*(?:\\.[^`\\]*)*)`\s*\)/g;
 
 // extract import specifiers from JavaScript/TypeScript code

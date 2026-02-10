@@ -20,7 +20,7 @@ export type {
 } from '../types';
 
 // manage preview configuration state & updates
-// reads from VS Code settings & tracks changes that require preview refresh
+// read from VS Code settings & track changes that require preview refresh
 export class PreviewConfiguration {
   private _configuration: ConfigurationState;
   private _debouncedUpdateWebview: ReturnType<typeof debounce>;

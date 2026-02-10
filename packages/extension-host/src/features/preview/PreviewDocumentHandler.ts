@@ -4,7 +4,11 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import type { UpdateModeValue } from '@mdx-preview/shared';
-import { resolveTypescriptConfig, findTsConfig, resolveConfig } from './configuration';
+import {
+  resolveTypescriptConfig,
+  findTsConfig,
+  resolveConfig,
+} from './configuration';
 import type { TypeScriptConfiguration, ResolvedConfig } from '../types';
 import { DocumentTracker, DependencyWatcher, WatcherManager } from './watchers';
 

@@ -15,7 +15,7 @@ const log = createTaggedLogger(LogTags.ENGINE);
 
 // lazy load Safe Mode compiler - only loaded when Safe Mode is actually used
 const getCompileSafeModule = createLazyImport(
-  () => import('../compilation/safe/compile')
+  () => import('mdx-tools/compiler')
 );
 import { ErrorContext } from '../../shared/errors';
 import { getTailwindProcessor, getErrorReporter } from '../../app/services';
@@ -23,9 +23,14 @@ import {
   TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
   MDX_COMPILATION_TIMEOUT_MS,
 } from '../../shared/constants';
+import { toMdxToolsCompilerConfig } from '../../shared/config/EffectivePreviewConfig';
 import type { Preview, WebviewHandle } from './preview-manager';
 import type { TrustState } from '@mdx-preview/shared';
-import type { CompilerConfig, TailwindConfig } from '../types';
+import type {
+  CompilerConfig,
+  TailwindConfig,
+  TailwindProfileDetectionResult,
+} from '../types';
 
 // result of evaluating MDX in Trusted Mode
 export interface TrustedEvaluationResult {
@@ -54,6 +59,7 @@ export interface TailwindProcessParams {
   entryFileDependencies: string[];
   trustState: TrustState;
   tailwindConfig: TailwindConfig;
+  profileHint?: TailwindProfileDetectionResult;
 }
 
 // evaluation engine - handle core evaluation logic for MDX content
@@ -112,7 +118,10 @@ export class EvaluationEngine {
     const { compileSafe } = await getCompileSafeModule();
 
     log.debug('Compiling to safe HTML...');
-    const { html, frontmatter } = await compileSafe(text, compilerConfig);
+    const { html, frontmatter } = await compileSafe(
+      text,
+      toMdxToolsCompilerConfig(compilerConfig)
+    );
     log.debug(`Safe HTML compiled, length: ${html.length}`);
 
     return { html, frontmatter };
@@ -140,6 +149,7 @@ export class EvaluationEngine {
           entryFileDependencies: params.entryFileDependencies,
           trustState: params.trustState,
           tailwindConfig: params.tailwindConfig,
+          profileHint: params.profileHint,
         }),
         {
           timeoutMs: compilationTimeout,
@@ -162,7 +172,21 @@ export class EvaluationEngine {
       }
 
       preview.updateTailwindWatchFiles(result.watchFiles);
-      webviewHandle.setTailwindCss(result.css);
+
+      if (result.profile === 'browser') {
+        webviewHandle.setTailwindCss('');
+        webviewHandle.setTailwindBrowserCss(result.css);
+        return;
+      }
+
+      if (result.profile === 'advanced' && result.enabled) {
+        webviewHandle.setTailwindBrowserCss('');
+        webviewHandle.setTailwindCss(result.css);
+        return;
+      }
+
+      webviewHandle.setTailwindBrowserCss('');
+      webviewHandle.setTailwindCss('');
     } catch (error: unknown) {
       getErrorReporter().report(error, {
         context: ErrorContext.Tailwind,

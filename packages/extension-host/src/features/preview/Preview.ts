@@ -64,6 +64,8 @@ export class Preview {
 
   // Tailwind request ID counter (ensure stale responses are ignored)
   private tailwindRequestId = 0;
+  private tailwindBrowserRuntimeEnabled = false;
+  private tailwindFallbackReason: string | null = null;
 
   // performance tracking (development only)
   private _performanceObserver?: PerformanceObserver;
@@ -252,6 +254,32 @@ export class Preview {
   // check if Tailwind request ID is still current (not superseded)
   isTailwindRequestCurrent(requestId: number): boolean {
     return requestId === this.tailwindRequestId;
+  }
+
+  // toggle whether the webview HTML should include the Tailwind browser runtime script
+  setTailwindBrowserRuntimeEnabled(enabled: boolean): boolean {
+    if (this.tailwindBrowserRuntimeEnabled === enabled) {
+      return false;
+    }
+    this.tailwindBrowserRuntimeEnabled = enabled;
+    return true;
+  }
+
+  isTailwindBrowserRuntimeEnabled(): boolean {
+    return this.tailwindBrowserRuntimeEnabled;
+  }
+
+  // return true only when the fallback reason changed (used for one-time user messaging)
+  markTailwindFallbackReason(reason: string): boolean {
+    if (this.tailwindFallbackReason === reason) {
+      return false;
+    }
+    this.tailwindFallbackReason = reason;
+    return true;
+  }
+
+  clearTailwindFallbackReason(): void {
+    this.tailwindFallbackReason = null;
   }
 
   resetRenderedVersion(): void {

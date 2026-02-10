@@ -14,7 +14,7 @@ export interface SingletonResult<T> {
   // get the singleton instance, creating it lazily on first call
   get: () => T;
   // reset the singleton instance (no-op unless resettable: true)
-  // calls dispose callback if configured
+  // call dispose callback if configured
   reset: () => void;
   // dispose the singleton instance (always clears, calls dispose callback)
   dispose: () => void;

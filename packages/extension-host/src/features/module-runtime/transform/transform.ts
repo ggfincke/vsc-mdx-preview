@@ -6,7 +6,10 @@ import * as path from 'path';
 import isModule from 'is-module';
 import { createLazyImport } from '../../../shared/utils/lazy-import';
 import { transpileWithFallback } from './selector';
-import { buildCompilerConfig } from '../../../shared/config/EffectivePreviewConfig';
+import {
+  buildCompilerConfig,
+  toMdxToolsCompilerConfig,
+} from '../../../shared/config/EffectivePreviewConfig';
 import { debug } from '../../../shared/logging/logger';
 import {
   transpileTypeScript,
@@ -17,7 +20,7 @@ import type { CompilerConfig } from '../../types';
 
 // lazy load Trusted Mode compiler - only loaded when Trusted Mode is actually used
 const getCompileTrustedModule = createLazyImport(
-  () => import('../../compilation/trusted/compile')
+  () => import('mdx-tools/compiler')
 );
 
 // re-export canonical type definitions from types/
@@ -43,7 +46,11 @@ async function transformEntry(
     uri.scheme === 'untitled'
   ) {
     const { compileTrusted } = await getCompileTrustedModule();
-    const mdxResult = await compileTrusted(code, true, compilerConfig);
+    const mdxResult = await compileTrusted(
+      code,
+      true,
+      toMdxToolsCompilerConfig(compilerConfig)
+    );
     code = mdxResult.code;
     frontmatter = mdxResult.frontmatter;
   }
@@ -82,7 +89,11 @@ async function transform(
       docFsPath: fsPath,
     });
     const { compileTrusted } = await getCompileTrustedModule();
-    const mdxResult = await compileTrusted(code, false, compilerConfig);
+    const mdxResult = await compileTrusted(
+      code,
+      false,
+      toMdxToolsCompilerConfig(compilerConfig)
+    );
     code = mdxResult.code;
   }
 

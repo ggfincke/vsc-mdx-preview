@@ -12,6 +12,7 @@ import type { SecurityPolicy } from '../../security/types/csp';
 export interface WebviewAppUris {
   mainScript: vscode.Uri;
   mainStyle: vscode.Uri | undefined;
+  tailwindBrowserScript?: vscode.Uri;
 }
 
 // style configuration for preview rendering

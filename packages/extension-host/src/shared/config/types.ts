@@ -17,7 +17,7 @@ import type {
   PluginSpec,
   ComponentMapping,
   UnknownBehavior,
-} from '../../features/compilation/types/compiler';
+} from 'mdx-tools/compiler';
 
 // Re-export shared types for convenience
 export type {

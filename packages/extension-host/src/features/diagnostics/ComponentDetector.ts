@@ -8,7 +8,7 @@ import remarkMdx from 'remark-mdx';
 import { visit } from 'unist-util-visit';
 import type { Root } from 'mdast';
 import matter from 'gray-matter';
-import { KNOWN_GENERIC_COMPONENTS } from '../compilation/pipeline/remark/generic-components';
+import { KNOWN_GENERIC_COMPONENTS } from 'mdx-tools/compiler';
 import {
   extractErrorMessage,
   LogTags,

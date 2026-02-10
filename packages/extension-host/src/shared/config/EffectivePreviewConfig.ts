@@ -19,6 +19,7 @@ import type {
   BuildEffectiveConfigOptions,
   CompilerConfig,
 } from '../types';
+import type { CompilerConfig as MdxToolsCompilerConfig } from 'mdx-tools/compiler';
 
 // build unified effective preview configuration
 export function buildEffectivePreviewConfig(
@@ -120,4 +121,24 @@ export function buildCompilerConfig(
 ): CompilerConfig {
   const effectiveConfig = buildEffectivePreviewConfig(options);
   return toCompilerConfig(effectiveConfig, options);
+}
+
+// project extension compiler config to mdx-tools/compiler contract
+export function toMdxToolsCompilerConfig(
+  config: CompilerConfig
+): MdxToolsCompilerConfig {
+  const docUri = config.docUri.toString();
+  return {
+    documentPath: config.docFsPath,
+    documentUri: docUri,
+    // keep legacy aliases populated for compatibility paths during migration
+    docFsPath: config.docFsPath,
+    docUri,
+    customLayoutFilePath: config.customLayoutFilePath,
+    useVscodeMarkdownStyles: config.useVscodeMarkdownStyles,
+    useWhiteBackground: config.useWhiteBackground,
+    componentsBuiltins: config.componentsBuiltins,
+    componentsUnknownBehavior: config.componentsUnknownBehavior,
+    configFile: config.configFile,
+  };
 }

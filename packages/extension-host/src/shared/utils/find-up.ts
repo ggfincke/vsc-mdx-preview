@@ -33,7 +33,7 @@ export interface FindUpOptions {
 }
 
 // search upward from startDir for a file matching filename(s)
-// stops at workspace boundary, custom boundary, or filesystem root
+// stop at workspace boundary, custom boundary, or filesystem root
 // return found path or undefined if not found
 // example
 // // Find .mdx-previewrc.json, stop at workspace root

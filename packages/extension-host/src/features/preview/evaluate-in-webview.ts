@@ -18,10 +18,14 @@ import {
   getTrustManager,
   getErrorReporter,
   getFrameworkDetector,
+  getTailwindProcessor,
 } from '../../app/services';
 import { getEvaluationEngine } from './EvaluationEngine';
-import { resolveNextraMeta, mergeNextraMeta } from '../framework/nextra/MetaResolver';
-import { extractNextraFrontmatter } from '../compilation/pipeline/common/mdx-common';
+import {
+  resolveNextraMeta,
+  mergeNextraMeta,
+} from '../framework/nextra/MetaResolver';
+import { extractNextraFrontmatter } from 'mdx-tools/compiler';
 import {
   buildEffectivePreviewConfig,
   toCompilerConfig,
@@ -30,6 +34,7 @@ import {
   detectComponents,
   getUsedGenericComponents,
 } from '../diagnostics/ComponentDetector';
+import type { TailwindProfileDetectionResult } from '../types';
 
 // apply frontmatter overrides & send Nextra metadata
 function applyFrontmatterAndMeta(
@@ -55,6 +60,7 @@ function clearTailwindCss(
   const tailwindRequestId = preview.nextTailwindRequestId();
   if (preview.isTailwindRequestCurrent(tailwindRequestId)) {
     preview.updateTailwindWatchFiles([]);
+    webviewHandle.setTailwindBrowserCss('');
     webviewHandle.setTailwindCss('');
   }
 }
@@ -83,13 +89,60 @@ export default async function evaluateInWebview(
     docFsPath: fsPath,
   });
 
-  // effective canExecute: trust state AND per-project enableScripts (config file can force Safe Mode)
+  // effective canExecute: trust state & per-project enableScripts (config file can force Safe Mode)
   const canExecute = trustState.canExecute && effectiveConfig.enableScripts;
   log.debug(
     `Effective canExecute: ${canExecute} (trustState.canExecute=${trustState.canExecute}, effectiveConfig.enableScripts=${effectiveConfig.enableScripts})`
   );
 
   try {
+    let tailwindProfileHint: TailwindProfileDetectionResult | undefined;
+    const tailwindEnabled = effectiveConfig.tailwind.enabled !== 'disabled';
+    const shouldProcessTailwind = canExecute && tailwindEnabled;
+
+    if (tailwindEnabled) {
+      tailwindProfileHint = await getTailwindProcessor().detectProfile({
+        preview,
+        mdxText: text,
+        tailwindConfig: effectiveConfig.tailwind,
+      });
+
+      if (tailwindProfileHint.profile === 'advanced') {
+        const fallbackReason = tailwindProfileHint.reason;
+        const fallbackKey = canExecute
+          ? `trusted:${fallbackReason}`
+          : `safe:${fallbackReason}`;
+        if (preview.markTailwindFallbackReason(fallbackKey)) {
+          if (canExecute) {
+            log.warn(`Tailwind advanced fallback active: ${fallbackReason}`);
+            vscode.window.setStatusBarMessage(
+              `MDX Preview Tailwind: advanced fallback active (${fallbackReason})`,
+              8000
+            );
+          } else {
+            log.warn(
+              `Tailwind advanced profile detected in Safe Mode: ${fallbackReason}`
+            );
+            vscode.window.setStatusBarMessage(
+              `MDX Preview Tailwind: advanced config detected (${fallbackReason}); enable Trusted Mode for full Tailwind support`,
+              10000
+            );
+          }
+        }
+      } else {
+        preview.clearTailwindFallbackReason();
+      }
+    } else {
+      preview.clearTailwindFallbackReason();
+    }
+
+    const needsBrowserRuntime =
+      tailwindProfileHint?.profile === 'browser' && shouldProcessTailwind;
+    if (preview.setTailwindBrowserRuntimeEnabled(needsBrowserRuntime)) {
+      await preview.refreshWebview();
+      return;
+    }
+
     performance.mark('preview/start');
 
     log.debug('Waiting for webviewHandshakePromise...');
@@ -161,7 +214,7 @@ export default async function evaluateInWebview(
       log.debug('updatePreview called');
 
       // compile Tailwind CSS after preview update (skip if explicitly disabled)
-      if (effectiveConfig.tailwind.enabled !== 'disabled') {
+      if (tailwindEnabled) {
         const tailwindRequestId = preview.nextTailwindRequestId();
         void engine.processTailwindAsync(
           preview,
@@ -171,6 +224,7 @@ export default async function evaluateInWebview(
             entryFileDependencies: result.dependencies,
             trustState,
             tailwindConfig: effectiveConfig.tailwind,
+            profileHint: tailwindProfileHint,
           },
           tailwindRequestId,
           webviewHandle

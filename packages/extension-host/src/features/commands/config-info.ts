@@ -14,7 +14,7 @@ import {
 import { resolveConfig } from '../preview/configuration/ConfigResolver';
 import { buildEffectivePreviewConfig } from '../../shared/config/EffectivePreviewConfig';
 import type { ResolvedConfig, EffectivePreviewConfig } from '../types';
-import { extractFrontmatter } from '../compilation/pipeline/common/mdx-common';
+import { extractFrontmatter } from 'mdx-tools/compiler';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 import type { SettingKey } from '../../shared/config/ConfigManager';

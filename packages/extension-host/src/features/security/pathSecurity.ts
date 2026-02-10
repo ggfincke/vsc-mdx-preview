@@ -3,7 +3,11 @@
 
 import * as path from 'path';
 import { checkFsPathAsync } from '../module-runtime/security/checkFsPath';
-import { SecurityError, ErrorContext, ErrorSeverity } from '../../shared/errors';
+import {
+  SecurityError,
+  ErrorContext,
+  ErrorSeverity,
+} from '../../shared/errors';
 import { getErrorReporter } from '../../app/services';
 import { warn as logWarn } from '../../shared/logging/logger';
 import type { Preview } from '../preview/preview-manager';
@@ -17,7 +21,7 @@ export interface SecurePathResult {
 }
 
 // validate & resolve a relative path securely within a preview's context
-// performs entry directory validation & path traversal checks
+// perform entry directory validation & path traversal checks
 export async function validateAndResolveSecurePath(
   preview: Preview,
   relativePath: string,

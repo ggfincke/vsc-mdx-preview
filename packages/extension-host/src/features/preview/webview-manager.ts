@@ -27,6 +27,7 @@ const log = createTaggedLogger(LogTags.WEBVIEW_MGR);
 
 const VIEW_TYPE = 'mdx.preview';
 const MDX_PREVIEW_FOCUS_CONTEXT_KEY = 'mdxPreviewFocus';
+const TAILWIND_BROWSER_RUNTIME_PATH = 'vendor/tailwind-browser.min.js';
 
 // panel, panelDoc, disposables, & URI state moved to PreviewManager for testability
 
@@ -94,16 +95,34 @@ export async function initWebviewAppHTMLResources(
     context.extensionUri,
     ...WEBVIEW_BUILD_DIR.split('/')
   );
+  const tailwindBrowserUri = vscode.Uri.joinPath(
+    webviewAppBaseUri,
+    ...TAILWIND_BROWSER_RUNTIME_PATH.split('/')
+  );
+
+  try {
+    await vscode.workspace.fs.stat(tailwindBrowserUri);
+  } catch {
+    throw new WebviewError(
+      `Could not find Tailwind browser runtime at ${tailwindBrowserUri.fsPath}`,
+      'E600',
+      'init'
+    );
+  }
 
   const webviewAppUris: WebviewAppUris = {
     mainScript: vscode.Uri.joinPath(webviewAppBaseUri, entry.file),
     mainStyle: entry.css?.[0]
       ? vscode.Uri.joinPath(webviewAppBaseUri, entry.css[0])
       : undefined,
+    tailwindBrowserScript: tailwindBrowserUri,
   };
   manager.setWebviewAppUris(webviewAppUris);
   log.debug(`Loaded mainScript: ${webviewAppUris.mainScript.fsPath}`);
   log.debug(`Loaded mainStyle: ${webviewAppUris.mainStyle?.fsPath ?? 'none'}`);
+  log.debug(
+    `Loaded tailwind browser runtime: ${webviewAppUris.tailwindBrowserScript?.fsPath ?? 'none'}`
+  );
 }
 
 function getWebviewAppHTML(
@@ -111,7 +130,8 @@ function getWebviewAppHTML(
   baseHref: string,
   nonce: string,
   contentSecurityPolicy: string,
-  styleConfiguration: StyleConfiguration
+  styleConfiguration: StyleConfiguration,
+  tailwindBrowserRuntimeEnabled: boolean
 ): string | undefined {
   const webviewAppUris = getPreviewManager().getWebviewAppUris();
   if (!webviewAppUris) {
@@ -125,6 +145,9 @@ function getWebviewAppHTML(
   const scriptUri = webview.asWebviewUri(webviewAppUris.mainScript);
   const styleUri = webviewAppUris.mainStyle
     ? webview.asWebviewUri(webviewAppUris.mainStyle)
+    : undefined;
+  const tailwindBrowserScriptUri = webviewAppUris.tailwindBrowserScript
+    ? webview.asWebviewUri(webviewAppUris.tailwindBrowserScript)
     : undefined;
 
   log.debug(`getWebviewAppHTML: scriptUri=${scriptUri.toString()}`);
@@ -145,6 +168,10 @@ function getWebviewAppHTML(
   const styleLink = styleUri
     ? `<link rel="stylesheet" type="text/css" href="${styleUri}">`
     : '';
+  const tailwindScriptTag =
+    tailwindBrowserRuntimeEnabled && tailwindBrowserScriptUri
+      ? `<script nonce="${nonce}" src="${tailwindBrowserScriptUri}"></script>`
+      : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -159,6 +186,7 @@ function getWebviewAppHTML(
 </head>
 <body>
     <div id="root"></div>
+    ${tailwindScriptTag}
     <script type="module" crossorigin nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;
@@ -201,7 +229,8 @@ function setPanelHTMLFromPreview(preview: Preview): void {
     previewBaseHref,
     nonce,
     csp,
-    styleConfiguration
+    styleConfiguration,
+    preview.isTailwindBrowserRuntimeEnabled()
   );
 
   if (webviewAppHTML) {

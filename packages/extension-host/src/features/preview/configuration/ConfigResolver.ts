@@ -9,7 +9,10 @@ import { ConfigError } from '../../../shared/errors';
 import { ConfigChangeType } from '../../../shared/config/ConfigCache';
 import { validateConfigSchema } from '../../../shared/utils/validation';
 import { readJsonSync } from '../../../shared/utils/file-utils';
-import { findUp, createWorkspaceStopPredicate } from '../../../shared/utils/find-up';
+import {
+  findUp,
+  createWorkspaceStopPredicate,
+} from '../../../shared/utils/find-up';
 
 // import consolidated types from centralized types
 import type { MdxPreviewConfig, ResolvedConfig } from '../../types';
