@@ -1,9 +1,9 @@
 // tests/compilation/trusted-compile.test.ts
-// unit tests for Trusted Mode MDX compilation (MDX -> JavaScript) via mdx-tools/compiler
+// unit tests for Trusted Mode MDX compilation (MDX -> JavaScript) via mdx-forge/compiler
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { compileTrusted } from 'mdx-tools/compiler';
-import type { CompilerConfig } from 'mdx-tools/compiler';
+import { compileTrusted } from 'mdx-forge/compiler';
+import type { CompilerConfig } from 'mdx-forge/compiler';
 import { FIXTURES } from '../helpers';
 
 // create library-native CompilerConfig

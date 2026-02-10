@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compileSafe, type CompilerConfig } from 'mdx-tools/compiler';
+import { compileSafe, type CompilerConfig } from 'mdx-forge/compiler';
 
 const BASE_CONFIG: CompilerConfig = {
   documentPath: '/workspace/docs/example.mdx',

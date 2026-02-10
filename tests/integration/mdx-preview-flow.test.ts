@@ -1,9 +1,9 @@
 // tests/integration/mdx-preview-flow.test.ts
-// end-to-end tests for MDX compilation & preview flow via mdx-tools/compiler
+// end-to-end tests for MDX compilation & preview flow via mdx-forge/compiler
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { compileTrusted, compileSafe } from 'mdx-tools/compiler';
-import type { CompilerConfig } from 'mdx-tools/compiler';
+import { compileTrusted, compileSafe } from 'mdx-forge/compiler';
+import type { CompilerConfig } from 'mdx-forge/compiler';
 import { FIXTURES } from '../helpers';
 
 // create library-native CompilerConfig

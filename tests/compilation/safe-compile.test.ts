@@ -1,9 +1,9 @@
 // tests/compilation/safe-compile.test.ts
-// unit tests for Safe Mode MDX compilation (MDX -> HTML) via mdx-tools/compiler
+// unit tests for Safe Mode MDX compilation (MDX -> HTML) via mdx-forge/compiler
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { compileSafe } from 'mdx-tools/compiler';
-import type { CompilerConfig } from 'mdx-tools/compiler';
+import { compileSafe } from 'mdx-forge/compiler';
+import type { CompilerConfig } from 'mdx-forge/compiler';
 import { FIXTURES } from '../helpers';
 
 // create library-native CompilerConfig

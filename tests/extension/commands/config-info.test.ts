@@ -58,7 +58,7 @@ vi.mock(
   })
 );
 
-vi.mock('mdx-tools/compiler', () => ({
+vi.mock('mdx-forge/compiler', () => ({
   extractFrontmatter: (...args: any[]) => mockExtractFrontmatter(...args),
 }));
 

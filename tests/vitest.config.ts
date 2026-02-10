@@ -1,8 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
 
-const mdxToolsSrc = path.resolve(__dirname, '../packages/mdx-tools/src');
-
 const aliases = [
   {
     find: 'vscode',
@@ -29,50 +27,6 @@ const aliases = [
   {
     find: '@mdx-preview/codegen',
     replacement: path.resolve(__dirname, '../packages/codegen/src/index.ts'),
-  },
-  {
-    find: /^mdx-tools\/compiler\/plugins$/,
-    replacement: path.resolve(mdxToolsSrc, 'compiler/plugins/index.ts'),
-  },
-  {
-    find: /^mdx-tools\/compiler\/transforms$/,
-    replacement: path.resolve(mdxToolsSrc, 'compiler/transforms/index.ts'),
-  },
-  {
-    find: /^mdx-tools\/compiler\/(.*)$/,
-    replacement: `${mdxToolsSrc}/compiler/$1`,
-  },
-  {
-    find: 'mdx-tools/compiler',
-    replacement: path.resolve(mdxToolsSrc, 'compiler/index.ts'),
-  },
-  {
-    find: /^mdx-tools\/browser\/registry$/,
-    replacement: path.resolve(mdxToolsSrc, 'browser/registry/index.ts'),
-  },
-  {
-    find: /^mdx-tools\/browser\/(.*)$/,
-    replacement: `${mdxToolsSrc}/browser/$1`,
-  },
-  {
-    find: 'mdx-tools/browser',
-    replacement: path.resolve(mdxToolsSrc, 'browser/index.ts'),
-  },
-  {
-    find: /^mdx-tools\/components\/styles\/(.+\.css)$/,
-    replacement: `${mdxToolsSrc}/components/styles/$1`,
-  },
-  {
-    find: /^mdx-tools\/components\/registry$/,
-    replacement: path.resolve(mdxToolsSrc, 'components/registry/index.ts'),
-  },
-  {
-    find: /^mdx-tools\/components\/(.*)$/,
-    replacement: `${mdxToolsSrc}/components/$1`,
-  },
-  {
-    find: 'mdx-tools/components',
-    replacement: path.resolve(mdxToolsSrc, 'components/index.ts'),
   },
 ];
 

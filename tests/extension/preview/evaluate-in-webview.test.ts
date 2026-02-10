@@ -92,7 +92,7 @@ vi.mock(
   })
 );
 
-vi.mock('mdx-tools/compiler', () => ({
+vi.mock('mdx-forge/compiler', () => ({
   extractNextraFrontmatter: vi.fn(() => ({})),
 }));
 

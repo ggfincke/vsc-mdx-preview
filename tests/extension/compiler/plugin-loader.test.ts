@@ -1,17 +1,17 @@
 // tests/extension/compiler/plugin-loader.test.ts
-// unit tests for custom plugin loading via mdx-tools/compiler
+// unit tests for custom plugin loading via mdx-forge/compiler
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { loadPluginsFromConfig, mergePlugins } from 'mdx-tools/compiler';
+import { loadPluginsFromConfig, mergePlugins } from 'mdx-forge/compiler';
 import type {
   CompilerConfig,
   PluginLoader,
   ErrorReporter,
   TrustValidator,
-} from 'mdx-tools/compiler';
+} from 'mdx-forge/compiler';
 
 function createPluginModule(tempDir: string, name: string): string {
   const pluginPath = path.join(tempDir, `${name}.cjs`);
