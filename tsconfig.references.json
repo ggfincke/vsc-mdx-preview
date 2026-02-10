@@ -4,7 +4,6 @@
     { "path": "packages/contracts" },
     { "path": "packages/registry" },
     { "path": "packages/runtime-utils" },
-    { "path": "packages/codegen" },
-    { "path": "packages/mdx-tools" }
+    { "path": "packages/codegen" }
   ]
 }

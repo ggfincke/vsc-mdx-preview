@@ -23,13 +23,7 @@
       "@mdx-preview/contracts": ["./packages/contracts/src/index.ts"],
       "@mdx-preview/registry": ["./packages/registry/src/index.ts"],
       "@mdx-preview/runtime-utils": ["./packages/runtime-utils/src/index.ts"],
-      "@mdx-preview/codegen": ["./packages/codegen/src/index.ts"],
-      "mdx-tools/compiler": ["./packages/mdx-tools/src/compiler/index.ts"],
-      "mdx-tools/compiler/*": ["./packages/mdx-tools/src/compiler/*"],
-      "mdx-tools/browser": ["./packages/mdx-tools/src/browser/index.ts"],
-      "mdx-tools/browser/*": ["./packages/mdx-tools/src/browser/*"],
-      "mdx-tools/components": ["./packages/mdx-tools/src/components/index.ts"],
-      "mdx-tools/components/*": ["./packages/mdx-tools/src/components/*"]
+      "@mdx-preview/codegen": ["./packages/codegen/src/index.ts"]
     }
   },
   "include": ["packages/extension-host"],
