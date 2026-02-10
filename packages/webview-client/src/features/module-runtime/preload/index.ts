@@ -2,10 +2,10 @@
 // preload orchestration for core modules & shim registry
 
 import {
-  PRELOADED_MODULE_IDS,
-  LogTags,
   type FrameworkId,
-} from '@mdx-preview/shared';
+  LogTags,
+  PRELOADED_MODULE_IDS,
+} from '@mdx-preview/contracts';
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
 import { preloadCoreModules } from './core';
 import { PRELOADED_SHIM_IDS } from '../../../generated/preload/aliases.generated';

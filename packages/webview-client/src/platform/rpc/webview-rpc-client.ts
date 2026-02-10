@@ -13,13 +13,13 @@ import {
   RPC_PENDING_MESSAGES_WARNING_THRESHOLD,
 } from '../../app/constants';
 import {
-  LogTags,
   type ExtensionRPC,
-  type WebviewRPC,
-  type TrustState,
-  type PreviewError,
   type Framework,
-} from '@mdx-preview/shared';
+  type PreviewError,
+  type TrustState,
+  type WebviewRPC,
+  LogTags,
+} from '@mdx-preview/contracts';
 import {
   createHandlerFactories,
   type WebviewStateHandlers,

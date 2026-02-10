@@ -3,11 +3,11 @@
 
 import type { TaggedLogger } from '../../shared/utils/debug';
 import type {
-  TrustState,
-  PreviewError,
-  WebviewThemeState,
   NextraPageMeta,
-} from '@mdx-preview/shared';
+  PreviewError,
+  TrustState,
+  WebviewThemeState,
+} from '@mdx-preview/contracts';
 
 // message types for queued handlers (can be buffered until React mounts)
 export type QueuedMessageType =

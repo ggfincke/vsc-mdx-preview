@@ -1,29 +1,34 @@
 // packages/webview-app/src/App.tsx
 // MDX Preview App - single React root managing preview rendering (Safe & Trusted mode)
 
-import { useCallback, useEffect, useState, type ComponentType, type MouseEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ComponentType,
+  type MouseEvent,
+} from 'react';
 import LoadingBar from '../features/preview/shared/ui/LoadingBar/LoadingBar';
-import { MDXErrorBoundary, ErrorDisplay } from '../shared/ui/error-boundary/ErrorBoundary';
+import {
+  MDXErrorBoundary,
+  ErrorDisplay,
+} from '../shared/ui/error-boundary/ErrorBoundary';
 import { TrustBanner } from '../features/preview/shared/ui/TrustBanner/TrustBanner';
 import { StaleIndicator } from '../features/preview/shared/ui/StaleIndicator/StaleIndicator';
 import { SafePreviewRenderer } from '../features/preview/safe/SafePreview';
 import { TrustedPreviewRenderer } from '../features/preview/trusted/TrustedPreview';
 import { ExtensionHandle } from '../platform/rpc/webview-rpc-client';
 import { createTaggedLogger } from '../shared/utils/createTaggedLogger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { classifyLink } from '../shared/utils/linkHandler';
 import type { TrustedPreviewContent } from './types';
 import { useTheme } from '../features/theme/runtime';
-import {
-  useTrust,
-  usePreview,
-  useLoading,
-  useNextra,
-} from './state';
+import { useTrust, usePreview, useLoading, useNextra } from './state';
 import './styles/App.css';
 import '../features/preview/shared/styles/admonitions.css';
 // base generic shim styles from extracted doc-components library
 import 'mdx-tools/components/styles/generic.css';
+import '../features/shims/vscode-dark-adapter.css';
 // framework-specific styles are lazy-loaded via frameworkCssLoader.ts
 
 // module-level tagged logger (avoids per-render allocation)
@@ -40,7 +45,8 @@ function App() {
   const { isLoading, isStale } = useLoading();
 
   // evaluatedComponent kept in local state (not context) to avoid React #130 issue
-  const [evaluatedComponent, setEvaluatedComponent] = useState<ComponentType | null>(null);
+  const [evaluatedComponent, setEvaluatedComponent] =
+    useState<ComponentType | null>(null);
 
   // clear evaluated component when content changes (new file or file modified)
   useEffect(() => {

@@ -3,12 +3,12 @@
 
 // re-export shared types from @mdx-preview/shared
 export type {
-  TrustState,
+  ExtensionRPC,
   FetchResult,
   PreviewError,
-  ExtensionRPC,
+  TrustState,
   WebviewRPC,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 
 // preview content for Trusted Mode
 export interface TrustedPreviewContent {
@@ -28,7 +28,7 @@ export interface SafePreviewContent {
 export type PreviewContent = TrustedPreviewContent | SafePreviewContent;
 
 // complete preview state managed by App component
-import type { TrustState, PreviewError } from '@mdx-preview/shared';
+import type { PreviewError, TrustState } from '@mdx-preview/contracts';
 export interface PreviewState {
   trustState: TrustState;
   content: PreviewContent | null;

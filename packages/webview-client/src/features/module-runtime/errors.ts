@@ -4,25 +4,25 @@
 import type {
   ModuleErrorOptions,
   WebviewModuleErrorCode,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 
 // re-export core types from shared
 export {
-  ModuleError,
   type ModuleErrorCode,
   type ModuleErrorData,
+  ModuleError,
   isModuleErrorData,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 
 // re-export webview error factories from shared
 export {
   type WebviewModuleErrorCode,
-  createModuleNotFoundError,
   createCircularDependencyError,
-  createFetchFailedError,
   createEvaluationFailedError,
+  createFetchFailedError,
   createModuleDepthExceededError,
-} from '@mdx-preview/shared';
+  createModuleNotFoundError,
+} from '@mdx-preview/contracts';
 
 // local type alias for convenience
 export type WebviewModuleErrorOptions =

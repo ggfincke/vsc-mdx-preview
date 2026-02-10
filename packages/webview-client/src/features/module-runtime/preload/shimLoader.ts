@@ -2,17 +2,17 @@
 // resilient shim loading w/ retry & fallback to generic shims
 
 import { createTaggedLogger } from '../../../shared/utils/createTaggedLogger';
+import { LogTags } from '@mdx-preview/contracts';
 import {
-  normalizeError,
   extractErrorMessage,
-  LogTags,
-} from '@mdx-preview/shared';
+  normalizeError,
+} from '@mdx-preview/runtime-utils';
 import {
   SHIM_LOAD_MAX_RETRIES,
   SHIM_LOAD_RETRY_DELAY_MS,
 } from '../../../app/constants';
 import type { ModuleRegistry } from '../registry/ModuleRegistry';
-import type { Framework } from '@mdx-preview/shared';
+import type { Framework } from '@mdx-preview/contracts';
 
 // module-level tagged logger (avoids per-call allocation)
 const log = createTaggedLogger(LogTags.SHIM_LOADER);

@@ -2,7 +2,7 @@
 // PlantUML renderer - render via extension host proxy to avoid CORS
 
 import DOMPurify from 'dompurify';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
 import { ExtensionHandle } from '../../../../platform/rpc/webview-rpc-client';
@@ -38,4 +38,3 @@ export const PlantUMLRenderer = createDiagramRenderer<PlantUMLProps>({
     return svg;
   },
 });
-

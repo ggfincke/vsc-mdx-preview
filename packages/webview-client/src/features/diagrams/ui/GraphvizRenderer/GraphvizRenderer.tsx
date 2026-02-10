@@ -2,7 +2,7 @@
 // lazy Graphviz renderer w/ client-side DOT to SVG conversion
 
 import DOMPurify from 'dompurify';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
 import { DOMPURIFY_CONFIG } from '../../../preview/safe/security/allowlist';
@@ -65,4 +65,3 @@ export const GraphvizRenderer = createDiagramRenderer<GraphvizProps>({
     });
   },
 });
-

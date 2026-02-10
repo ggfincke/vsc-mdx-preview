@@ -2,9 +2,12 @@
 // factory for creating diagram renderer components w/ shared state & JSX
 
 import { useRef, useState, useCallback } from 'react';
-import { extractErrorMessage } from '@mdx-preview/shared';
+import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { createTaggedLogger } from '../../../../shared/utils/createTaggedLogger';
-import { useAsyncEffect, type CancellationSignal } from '../../../../shared/hooks';
+import {
+  useAsyncEffect,
+  type CancellationSignal,
+} from '../../../../shared/hooks';
 
 // base props all diagram renderers share
 export interface DiagramRendererBaseProps {

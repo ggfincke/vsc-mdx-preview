@@ -3,7 +3,7 @@
 
 import { previewThemes, codeBlockThemes } from './css';
 import { StyleInjector, STYLE_IDS } from '../../../shared/utils/StyleInjector';
-import type { PreviewTheme, CodeBlockTheme } from '@mdx-preview/shared';
+import type { CodeBlockTheme, PreviewTheme } from '@mdx-preview/contracts';
 
 // inject preview theme CSS into the document
 export function injectPreviewTheme(theme: PreviewTheme): void {

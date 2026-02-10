@@ -11,6 +11,14 @@ export default defineConfig({
   resolve: {
     alias: [
       {
+        find: '@mdx-preview/contracts',
+        replacement: path.resolve(__dirname, '../contracts/src/index.ts'),
+      },
+      {
+        find: '@mdx-preview/runtime-utils',
+        replacement: path.resolve(__dirname, '../runtime-utils/src/index.ts'),
+      },
+      {
         find: /^mdx-tools\/components\/styles\/(.+\.css)$/,
         replacement: path.resolve(
           __dirname,

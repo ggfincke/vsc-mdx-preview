@@ -32,7 +32,9 @@ export function UnknownComponentPlaceholder({
           <WarningIcon />
         </span>
         <code>&lt;{name}&gt;</code>
-        <span className="mdx-preview-unknown-hint">({hint || defaultHint})</span>
+        <span className="mdx-preview-unknown-hint">
+          ({hint || defaultHint})
+        </span>
       </div>
       {hasChildren && (
         <div className="mdx-preview-unknown-component-content">{children}</div>

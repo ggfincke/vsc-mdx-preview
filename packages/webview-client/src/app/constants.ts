@@ -11,12 +11,12 @@ export const LOADING_BAR_SHOW_DELAY_MS = 500;
 
 // rpc & shim loading constants (re-exported from shared)
 export {
-  RPC_HANDLER_RETRY_DELAY_MS,
   RPC_HANDLER_MAX_RETRIES,
+  RPC_HANDLER_RETRY_DELAY_MS,
   RPC_PENDING_MESSAGES_WARNING_THRESHOLD,
   SHIM_LOAD_MAX_RETRIES,
   SHIM_LOAD_RETRY_DELAY_MS,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 
 // module loading limits (security & DoS prevention)
 

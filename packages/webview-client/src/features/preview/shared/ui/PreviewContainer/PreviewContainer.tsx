@@ -35,7 +35,8 @@ export function PreviewContainer({
   children,
   className,
 }: PreviewContainerProps) {
-  const baseClass = mode === 'safe' ? 'mdx-safe-preview' : 'mdx-trusted-preview';
+  const baseClass =
+    mode === 'safe' ? 'mdx-safe-preview' : 'mdx-trusted-preview';
 
   return (
     <div

@@ -4,7 +4,7 @@
 import { createRoot } from 'react-dom/client';
 import { initRPCWebviewSide } from '../platform/rpc/webview-rpc-client';
 import { createTaggedLogger } from '../shared/utils/createTaggedLogger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { ThemeProvider } from '../features/theme/runtime';
 import { LightboxProvider } from '../app/state/LightboxContext';
 // import directly to avoid barrel export import chain issues

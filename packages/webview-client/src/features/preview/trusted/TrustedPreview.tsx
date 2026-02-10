@@ -18,8 +18,11 @@ import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
 import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnhancement';
 import { PreviewContainer } from '../shared/ui/PreviewContainer/PreviewContainer';
 import type { TrustedPreviewContent, PreviewError } from '../../../app/types';
-import { extractErrorInfo } from '@mdx-preview/shared';
-import { shallowArrayEquals, createFieldComparator } from '../../../shared/utils/memoCompare';
+import { extractErrorInfo } from '@mdx-preview/runtime-utils';
+import {
+  shallowArrayEquals,
+  createFieldComparator,
+} from '../../../shared/utils/memoCompare';
 
 // resolve MDX export to renderable React node
 // handle both function components & pre-rendered React elements

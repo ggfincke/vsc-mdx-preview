@@ -2,9 +2,9 @@
 // React context for Nextra page metadata - manage page-level settings from _meta.json
 
 import { useState, useCallback, useMemo } from 'react';
-import type { NextraPageMeta } from '@mdx-preview/shared';
+import type { NextraPageMeta } from '@mdx-preview/contracts';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { createContextProvider } from '../providers/createContextProvider';
 
 interface NextraContextValue {
@@ -17,7 +17,9 @@ const log = createTaggedLogger(LogTags.NEXTRA_CONTEXT);
 
 // hook that provide the Nextra context value
 function useNextraProviderValue(): NextraContextValue {
-  const [nextraMeta, setNextraMetaState] = useState<NextraPageMeta | null>(null);
+  const [nextraMeta, setNextraMetaState] = useState<NextraPageMeta | null>(
+    null
+  );
 
   const setNextraMeta = useCallback((meta: NextraPageMeta | null) => {
     log.debug('setNextraMeta called', meta);

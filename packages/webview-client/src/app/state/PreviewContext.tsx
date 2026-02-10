@@ -4,14 +4,18 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { PreviewContent, PreviewError } from '../types';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { createContextProvider } from '../providers/createContextProvider';
 
 interface PreviewContextValue {
   content: PreviewContent | null;
   error: PreviewError | null;
   setSafeContent: (html: string) => void;
-  setTrustedContent: (code: string, entryFilePath: string, dependencies: string[]) => void;
+  setTrustedContent: (
+    code: string,
+    entryFilePath: string,
+    dependencies: string[]
+  ) => void;
   setError: (error: PreviewError) => void;
   clearError: () => void;
 }
@@ -60,21 +64,15 @@ function usePreviewProviderValue(): PreviewContextValue {
       setError,
       clearError,
     }),
-    [
-      content,
-      error,
-      setSafeContent,
-      setTrustedContent,
-      setError,
-      clearError,
-    ]
+    [content, error, setSafeContent, setTrustedContent, setError, clearError]
   );
 }
 
-const { Provider, useContextValue } = createContextProvider<PreviewContextValue>(
-  'Preview',
-  usePreviewProviderValue
-);
+const { Provider, useContextValue } =
+  createContextProvider<PreviewContextValue>(
+    'Preview',
+    usePreviewProviderValue
+  );
 
 export const PreviewProvider = Provider;
 export const usePreview = useContextValue;

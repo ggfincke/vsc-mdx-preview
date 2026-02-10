@@ -1,7 +1,7 @@
 // packages/webview-app/src/components/MermaidRenderer/MermaidRenderer.tsx
 // lazy-loaded mermaid diagram renderer w/ error handling & source toggle
 
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
 import './MermaidRenderer.css';
@@ -46,8 +46,7 @@ export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
 
     // only re-initialize if theme or dark state changed (perf optimization)
     const needsReinit =
-      lastInitializedTheme !== mermaidTheme ||
-      lastInitializedDark !== isDark;
+      lastInitializedTheme !== mermaidTheme || lastInitializedDark !== isDark;
 
     if (needsReinit) {
       // initialize mermaid w/ strict config (no foreignObject)
@@ -91,11 +90,7 @@ export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
     }
 
     // render diagram to SVG
-    const { svg } = await mermaid.default.render(
-      `mermaid-svg-${id}`,
-      code
-    );
+    const { svg } = await mermaid.default.render(`mermaid-svg-${id}`, code);
     return svg;
   },
 });
-

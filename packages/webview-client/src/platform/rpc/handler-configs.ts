@@ -1,7 +1,7 @@
 // packages/webview-app/src/rpc/handler-configs.ts
 // declarative configurations for RPC handler methods
 
-import type { TrustState, PreviewError } from '@mdx-preview/shared';
+import type { PreviewError, TrustState } from '@mdx-preview/contracts';
 import type {
   QueuedHandlerConfig,
   OptionalHandlerConfig,
@@ -156,7 +156,7 @@ export type ConfiguredMethodNames = QueuedMethodNames | OptionalMethodNames;
 // compile-time validation that all configured methods exist in WebviewRPC
 // if this produces a type error, it means a config references a method that
 // doesn't exist in the WebviewRPC interface
-import type { WebviewRPC } from '@mdx-preview/shared';
+import type { WebviewRPC } from '@mdx-preview/contracts';
 
 // this type will error at compile time if any configured method doesn't exist in WebviewRPC
 type ValidateMethodExists<T extends string> = T extends keyof WebviewRPC

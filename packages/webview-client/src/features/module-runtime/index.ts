@@ -12,7 +12,7 @@ import {
   ensureFrameworkShims,
   ensureGenericShims,
 } from './preload';
-import type { Framework } from '@mdx-preview/shared';
+import type { Framework } from '@mdx-preview/contracts';
 import type { FetchResult } from './types';
 import { ExtensionHandle } from '../../platform/rpc/webview-rpc-client';
 

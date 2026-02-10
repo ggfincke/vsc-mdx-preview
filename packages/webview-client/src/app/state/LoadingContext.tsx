@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { createContextProvider } from '../providers/createContextProvider';
 
 interface LoadingContextValue {
@@ -42,10 +42,11 @@ function useLoadingProviderValue(): LoadingContextValue {
   );
 }
 
-const { Provider, useContextValue } = createContextProvider<LoadingContextValue>(
-  'Loading',
-  useLoadingProviderValue
-);
+const { Provider, useContextValue } =
+  createContextProvider<LoadingContextValue>(
+    'Loading',
+    useLoadingProviderValue
+  );
 
 export const LoadingProvider = Provider;
 export const useLoading = useContextValue;

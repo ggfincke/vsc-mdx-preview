@@ -1,4 +1,5 @@
 // wrapper-only import surface for generated shim barrels
+import './vscode-dark-adapter.css';
 
 export * as generic from './generic';
 export * as docusaurus from './docusaurus';

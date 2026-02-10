@@ -17,7 +17,11 @@ export const StaleIndicator = memo(function StaleIndicator({
   }
 
   return (
-    <div className="mdx-preview-stale-indicator" role="status" aria-live="polite">
+    <div
+      className="mdx-preview-stale-indicator"
+      role="status"
+      aria-live="polite"
+    >
       Outdated
     </div>
   );

@@ -3,13 +3,13 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { injectPreviewTheme, injectCodeBlockTheme } from './loader';
-import { DEFAULT_PLANTUML_SERVER } from '@mdx-preview/shared';
+import { DEFAULT_PLANTUML_SERVER } from '@mdx-preview/contracts';
 import type {
-  PreviewTheme,
   CodeBlockTheme,
   MermaidTheme,
+  PreviewTheme,
   WebviewThemeState,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 import {
   getCurrentVSCodeTheme,
   onVSCodeThemeChange,
@@ -42,8 +42,9 @@ function useThemeValue(): ThemeContextValue {
   const [previewTheme, setPreviewTheme] = useState<PreviewTheme>('none');
   const [codeBlockTheme, setCodeBlockTheme] = useState<CodeBlockTheme>('auto');
   const [mermaidTheme, setMermaidTheme] = useState<MermaidTheme>('default');
-  const [plantUmlServer, setPlantUmlServer] =
-    useState<string>(DEFAULT_PLANTUML_SERVER);
+  const [plantUmlServer, setPlantUmlServer] = useState<string>(
+    DEFAULT_PLANTUML_SERVER
+  );
   const [isLight, setIsLight] = useState(true);
 
   // track VS Code theme changes (local detection for UI only)

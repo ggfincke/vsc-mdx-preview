@@ -71,9 +71,7 @@ export function createDiagramRendering<T extends BaseDiagramInfo>(
 
         // filter stale elements (removed from DOM during re-render)
         if (filterStale) {
-          found = found.filter((d) =>
-            containerRef.current!.contains(d.el)
-          );
+          found = found.filter((d) => containerRef.current!.contains(d.el));
         }
 
         setDiagrams(found);
@@ -85,18 +83,13 @@ export function createDiagramRendering<T extends BaseDiagramInfo>(
       (): ReactNode[] =>
         diagrams.map((diagram) =>
           // key must be on portal (3rd arg), not on child element
-          createPortal(
-            config.renderElement(diagram),
-            diagram.el,
-            diagram.id
-          )
+          createPortal(config.renderElement(diagram), diagram.el, diagram.id)
         ),
       [diagrams]
     );
 
     // select hook based on mode
-    const useEffectHook =
-      mode === 'before-paint' ? useLayoutEffect : useEffect;
+    const useEffectHook = mode === 'before-paint' ? useLayoutEffect : useEffect;
 
     // set up MutationObserver to detect dynamic content changes
     useEffectHook(() => {
@@ -107,9 +100,7 @@ export function createDiagramRendering<T extends BaseDiagramInfo>(
       // initial scan (not debounced for first paint)
       let found = config.findContainers(containerRef.current);
       if (filterStale) {
-        found = found.filter((d) =>
-          containerRef.current!.contains(d.el)
-        );
+        found = found.filter((d) => containerRef.current!.contains(d.el));
       }
       setDiagrams(found);
 

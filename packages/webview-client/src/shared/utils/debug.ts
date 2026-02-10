@@ -1,7 +1,7 @@
 // packages/webview-app/src/utils/debug.ts
 // debug logging utilities stripped in production builds (uses import.meta.env.DEV)
 
-import type { LogFnVariadic, LoggerVariadic } from '@mdx-preview/shared';
+import type { LogFnVariadic, LoggerVariadic } from '@mdx-preview/contracts';
 
 // log a debug message (only outputs in development mode)
 export const debug: LogFnVariadic = import.meta.env.DEV
@@ -42,4 +42,4 @@ export const logger: LoggerVariadic = {
 };
 
 // re-export TaggedLogger type for convenience
-export type { TaggedLogger } from '@mdx-preview/shared';
+export type { TaggedLogger } from '@mdx-preview/contracts';

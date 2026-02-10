@@ -45,10 +45,11 @@ function useLightboxProviderValue(): LightboxContextValue {
   );
 }
 
-const { Provider, useContextValue } = createContextProvider<LightboxContextValue>(
-  'Lightbox',
-  useLightboxProviderValue
-);
+const { Provider, useContextValue } =
+  createContextProvider<LightboxContextValue>(
+    'Lightbox',
+    useLightboxProviderValue
+  );
 
 export const LightboxProvider = Provider;
 export const useLightbox = useContextValue;

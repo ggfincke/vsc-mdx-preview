@@ -12,8 +12,8 @@ import {
 export type GraphvizScanMode = 'after-paint' | 'before-paint';
 
 // hook for Graphviz detection & portal rendering
-export const useGraphvizRendering =
-  createDiagramRendering<GraphvizDiagramInfo>({
+export const useGraphvizRendering = createDiagramRendering<GraphvizDiagramInfo>(
+  {
     findContainers: findGraphvizContainers,
     renderElement: (diagram) => (
       <GraphvizRenderer
@@ -22,4 +22,5 @@ export const useGraphvizRendering =
         language={diagram.language}
       />
     ),
-  });
+  }
+);

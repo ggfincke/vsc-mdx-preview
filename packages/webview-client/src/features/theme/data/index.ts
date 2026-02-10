@@ -2,13 +2,13 @@
 // MPE-style preview themes adapted from crossnote (selectors changed to ".markdown-body")
 // NOTE: this file contains raw CSS theme data - for theme context/hooks, use the theme/ module
 
-import type { PreviewTheme, CodeBlockTheme } from '@mdx-preview/shared';
+import type { CodeBlockTheme, PreviewTheme } from '@mdx-preview/contracts';
 
 export type {
-  PreviewTheme,
   CodeBlockTheme,
+  PreviewTheme,
   WebviewThemeState,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 
 // preview theme CSS content
 export const previewThemes: Record<PreviewTheme, string> = {

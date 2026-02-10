@@ -7,17 +7,17 @@ export { ThemeProvider, useTheme } from './context';
 
 // theme types & constants (from shared package)
 export type {
-  PreviewTheme,
   CodeBlockTheme,
+  PreviewTheme,
   WebviewThemeState,
-} from '@mdx-preview/shared';
+} from '@mdx-preview/contracts';
 export {
-  isLightPreviewTheme,
-  PREVIEW_THEMES,
   CODE_BLOCK_THEMES,
+  PREVIEW_THEMES,
   THEME_PAIRS,
   getOppositeTheme,
-} from '@mdx-preview/shared';
+  isLightPreviewTheme,
+} from '@mdx-preview/contracts';
 
 // VS Code theme detection
 export type { VSCodeTheme } from './detection';

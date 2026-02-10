@@ -7,7 +7,7 @@
 // - true: loaded successfully
 // - false: failed (allow retry if allowRetry is true)
 
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 import { createTaggedLogger } from './createTaggedLogger';
 
 const log = createTaggedLogger(LogTags.RESOURCE_LOADER);
@@ -41,9 +41,9 @@ type LoaderState = null | Promise<void> | boolean;
 //     async () => { await import('katex/dist/katex.min.css'); },
 //     { name: 'KaTeX CSS' }
 //   );
-//   // multiple calls deduplicate
+//   run multiple calls to deduplicate loading
 //   await Promise.all([katexLoader.load(), katexLoader.load()]);
-//   // already loaded, return immediately
+//   call again to return immediately after success
 //   await katexLoader.load();
 export function createResourceLoader(
   loadFn: () => Promise<void>,

@@ -1,7 +1,7 @@
 // packages/webview-app/src/module-system/registry/StyleCache.ts
 // style tracking w/ reference counting using shared LRUCache
 
-import { LRUCache } from '@mdx-preview/shared';
+import { LRUCache } from '@mdx-preview/runtime-utils';
 
 const DEFAULT_MAX_STYLES = 100;
 

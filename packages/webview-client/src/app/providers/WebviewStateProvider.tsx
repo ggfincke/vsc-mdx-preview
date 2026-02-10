@@ -9,7 +9,7 @@ import { NextraProvider, useNextra } from '../state/NextraContext';
 import { useTheme } from '../../features/theme/runtime';
 import { registerWebviewHandlers } from '../../platform/rpc/webview-rpc-client';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 // module-level tagged logger (avoids per-render allocation)
 const log = createTaggedLogger(LogTags.WEBVIEW_STATE);

@@ -2,7 +2,7 @@
 // module cache w/ LRU eviction (count + memory based) & pending fetch tracking
 // use shared LRUCache w/ isProtected for preloaded module protection
 
-import { LRUCache } from '@mdx-preview/shared';
+import { LRUCache } from '@mdx-preview/runtime-utils';
 import type { Module } from '../types';
 
 // lru configuration defaults

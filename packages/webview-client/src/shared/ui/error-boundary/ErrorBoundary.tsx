@@ -12,8 +12,9 @@ import {
   isUserCode,
 } from '../../utils/stackTraceParser';
 import { copyToClipboard } from '../../utils/clipboard';
-import { normalizeError, isModuleErrorData } from '@mdx-preview/shared';
-import type { ModuleErrorData } from '@mdx-preview/shared';
+import { isModuleErrorData } from '@mdx-preview/contracts';
+import { normalizeError } from '@mdx-preview/runtime-utils';
+import type { ModuleErrorData } from '@mdx-preview/contracts';
 import { ModuleError } from '../../../features/module-runtime/errors';
 
 // type for Error objects that may have moduleError attached (from PreviewError)
@@ -68,7 +69,10 @@ function extractSuggestions(error: Error): string[] {
   }
   // handle Error w/ moduleError attached from extension via RPC
   const errorWithData = error as ErrorWithModuleData;
-  if (errorWithData.moduleError && isModuleErrorData(errorWithData.moduleError)) {
+  if (
+    errorWithData.moduleError &&
+    isModuleErrorData(errorWithData.moduleError)
+  ) {
     return errorWithData.moduleError.suggestions;
   }
   return [];
@@ -90,7 +94,11 @@ export function ErrorDisplay({
   }, [error]);
 
   return (
-    <div className="mdx-preview-error-overlay" role="alert" aria-live="assertive">
+    <div
+      className="mdx-preview-error-overlay"
+      role="alert"
+      aria-live="assertive"
+    >
       <div className="mdx-preview-error-container">
         <div className="mdx-preview-error-header">
           <span className="mdx-preview-error-icon">!</span>
@@ -120,7 +128,10 @@ export function ErrorDisplay({
             Copy Error
           </button>
           {onReset && (
-            <button onClick={onReset} className="mdx-preview-error-button primary">
+            <button
+              onClick={onReset}
+              className="mdx-preview-error-button primary"
+            >
               Retry
             </button>
           )}
@@ -154,14 +165,18 @@ export function MDXErrorBoundary({ children, onError }: MDXErrorBoundaryProps) {
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
       event.preventDefault();
-      const error = normalizeError(event.error ?? event.message ?? 'Unknown error');
+      const error = normalizeError(
+        event.error ?? event.message ?? 'Unknown error'
+      );
       setGlobalError(error);
       onError?.(error);
     };
 
     const handleRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault();
-      const error = normalizeError(event.reason ?? 'Unhandled promise rejection');
+      const error = normalizeError(
+        event.reason ?? 'Unhandled promise rejection'
+      );
       setGlobalError(error);
       onError?.(error);
     };

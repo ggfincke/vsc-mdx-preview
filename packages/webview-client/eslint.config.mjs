@@ -58,6 +58,11 @@ export default tseslint.config(
               group: ['**/extension-host/**', '**/extension/**'],
               message: 'Webview code must not import from extension-host.',
             },
+            {
+              group: ['@mdx-preview/shared', '@mdx-preview/shared/*'],
+              message:
+                'packages/shared was removed. Import from @mdx-preview/contracts, @mdx-preview/registry, or @mdx-preview/runtime-utils.',
+            },
           ],
         },
       ],
