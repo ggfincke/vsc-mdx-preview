@@ -1,11 +1,11 @@
 // packages/runtime-utils/src/diagrams/plantuml-server.ts
-// normalize PlantUML server URLs and derive render endpoints
+// normalize PlantUML server URLs & derive render endpoints
 
 import { DEFAULT_PLANTUML_SERVER } from '@mdx-preview/contracts';
 
 const DEFAULT_SERVER = new URL(DEFAULT_PLANTUML_SERVER);
 
-// parse a user-provided server URL and enforce http/https only
+// parse a user-provided server URL & enforce http/https only
 function parseServerUrl(input: string): URL | null {
   const trimmed = input.trim();
   if (!trimmed) {
@@ -59,7 +59,7 @@ function pushUnique(target: string[], value: string): void {
   }
 }
 
-// build fallback endpoint list for Kroki and PlantUML-compatible servers
+// build fallback endpoint list for Kroki & PlantUML-compatible servers
 export function getPlantUmlRenderEndpoints(serverUrl: string): string[] {
   const normalized = normalizePlantUmlServerUrl(serverUrl);
 

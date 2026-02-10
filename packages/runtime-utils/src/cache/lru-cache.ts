@@ -200,7 +200,7 @@ export class LRUCache<K, V> {
   }
 
   // update cache settings dynamically
-  // triggers eviction if new limits are lower
+  // trigger eviction if new limits are lower
   updateSettings(options: Partial<LRUCacheOptions<K, V>>): void {
     if (options.maxEntries !== undefined) {
       this._maxEntries = options.maxEntries;
@@ -246,7 +246,7 @@ export class LRUCache<K, V> {
   }
 
   // delete an entry & update memory tracking
-  // calls onEvict if configured
+  // call onEvict if configured
   private deleteEntry(key: K, entry: CacheEntry<V>): void {
     this.cache.delete(key);
     this._currentMemoryBytes -= entry.size;

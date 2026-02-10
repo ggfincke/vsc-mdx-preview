@@ -8,11 +8,10 @@ import {
   type ComponentDefinition,
   type ComponentRegistryEntry,
   type FrameworkId,
-} from '@mdx-preview/registry';
-import { PRELOADED_MODULE_IDS } from '@mdx-preview/contracts';
+} from 'mdx-tools/components/registry';
 
 const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/registry/src/components/registry-data.ts
+// Source: packages/mdx-tools/src/components/registry/registry-data.ts
 `;
 
 export interface GeneratePreloadOptions {
@@ -48,6 +47,20 @@ function getRelativeWebviewImport(
   entry: ComponentRegistryEntry,
   options: GeneratePreloadOptions
 ): string {
+  // framework shims now come from the extracted doc-components library
+  if (entry.webviewImport.startsWith('features/shims/')) {
+    return `mdx-tools/components/${entry.framework}`;
+  }
+
+  // bare package imports should pass through untouched
+  const isBareSpecifier =
+    !entry.webviewImport.startsWith('.') &&
+    !entry.webviewImport.startsWith('/') &&
+    !/^[a-zA-Z]:[\\/]/.test(entry.webviewImport);
+  if (isBareSpecifier) {
+    return entry.webviewImport;
+  }
+
   const absoluteTarget = path.resolve(
     options.webviewSrcDir,
     entry.webviewImport
@@ -80,6 +93,14 @@ function getImportStatement(
   importVar: string,
   relativeImport: string
 ): string {
+  if (
+    entry.kind === 'component' &&
+    relativeImport.startsWith('mdx-tools/components/')
+  ) {
+    const importName = entry.importName ?? entry.name;
+    return `import { ${importName} as ${importVar} } from '${relativeImport}';`;
+  }
+
   if (entry.kind === 'barrel') {
     return `import * as ${importVar} from '${relativeImport}';`;
   }
@@ -96,6 +117,14 @@ function getDynamicImportExpression(
   entry: ComponentRegistryEntry,
   relativeImport: string
 ): string {
+  if (
+    entry.kind === 'component' &&
+    relativeImport.startsWith('mdx-tools/components/')
+  ) {
+    const importName = entry.importName ?? entry.name;
+    return `import('${relativeImport}').then(m => m.${importName})`;
+  }
+
   if (entry.kind === 'barrel') {
     return `import('${relativeImport}')`;
   }
@@ -128,7 +157,8 @@ function groupEntriesByFramework(
 
 function generateGenericPreloadFunction(
   entries: ComponentRegistryEntry[],
-  options: GeneratePreloadOptions
+  options: GeneratePreloadOptions,
+  aliasesByPreloadId: Readonly<Record<string, readonly string[]>>
 ): { imports: string[]; func: string; loaders: string } {
   const importLines: string[] = [];
   const preloadLines: string[] = [];
@@ -138,26 +168,34 @@ function generateGenericPreloadFunction(
     const importVar = toImportVarName(entry);
     const relativeImport = getRelativeWebviewImport(entry, options);
     importLines.push(getImportStatement(entry, importVar, relativeImport));
+    const aliases = aliasesByPreloadId[entry.preloadId] ?? [];
+    const aliasesJson = JSON.stringify(aliases);
 
     if (isComponentEntry(entry)) {
       const exportNames = getComponentExportNames(entry);
       const exportNamesJson = JSON.stringify(exportNames);
       preloadLines.push(
-        `  registry.preload('${entry.preloadId}', createComponentModule(${importVar}, ${exportNamesJson}));`
+        `  preloadEntry(registry, { id: '${entry.preloadId}', exports: createComponentModule(${importVar}, ${exportNamesJson}), aliases: ${aliasesJson} });`
       );
+
+      const loaderExpression = relativeImport.startsWith(
+        'mdx-tools/components/'
+      )
+        ? `import('${relativeImport}').then(m => m.${entry.importName ?? entry.name})`
+        : `import('${relativeImport}').then(m => m.default)`;
 
       // generate individual lazy loader for conditional preloading
       loaderEntries.push(
         `  '${entry.name}': async (registry: ModuleRegistry) => {
-    const component = await import('${relativeImport}').then(m => m.default);
-    registry.preload('${entry.preloadId}', createComponentModule(component, ${exportNamesJson}));
+    const component = await ${loaderExpression};
+    preloadEntry(registry, { id: '${entry.preloadId}', exports: createComponentModule(component, ${exportNamesJson}), aliases: ${aliasesJson} });
   }`
       );
     } else {
       preloadLines.push(
-        `  registry.preload('${entry.preloadId}', createBarrelModule(${importVar}, ${JSON.stringify(
+        `  preloadEntry(registry, { id: '${entry.preloadId}', exports: createBarrelModule(${importVar}, ${JSON.stringify(
           entry.exportNames
-        )}));`
+        )}), aliases: ${aliasesJson} });`
       );
     }
   }
@@ -178,7 +216,8 @@ ${loaderEntries.join(',\n')}
 function generateFrameworkLoader(
   framework: FrameworkId,
   entries: ComponentRegistryEntry[],
-  options: GeneratePreloadOptions
+  options: GeneratePreloadOptions,
+  aliasesByPreloadId: Readonly<Record<string, readonly string[]>>
 ): string {
   const funcName = `load${capitalize(framework)}Shims`;
 
@@ -199,19 +238,21 @@ function generateFrameworkLoader(
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
     const varName = varNames[i];
+    const aliases = aliasesByPreloadId[entry.preloadId] ?? [];
+    const aliasesJson = JSON.stringify(aliases);
 
     if (isComponentEntry(entry)) {
       const exportNames = getComponentExportNames(entry);
       preloadCalls.push(
-        `  registry.preload('${entry.preloadId}', createComponentModule(${varName}, ${JSON.stringify(
+        `  preloadEntry(registry, { id: '${entry.preloadId}', exports: createComponentModule(${varName}, ${JSON.stringify(
           exportNames
-        )}));`
+        )}), aliases: ${aliasesJson} });`
       );
     } else {
       preloadCalls.push(
-        `  registry.preload('${entry.preloadId}', createBarrelModule(${varName}, ${JSON.stringify(
+        `  preloadEntry(registry, { id: '${entry.preloadId}', exports: createBarrelModule(${varName}, ${JSON.stringify(
           entry.exportNames
-        )}));`
+        )}), aliases: ${aliasesJson} });`
       );
     }
   }
@@ -230,6 +271,8 @@ ${preloadCalls.join('\n')}
 
 export function generatePreloadTs(options: GeneratePreloadOptions): string {
   const grouped = groupEntriesByFramework(REGISTRY_ENTRIES);
+  const { aliases: shimAliases } = buildShimAliases();
+  const aliasesByPreloadId = buildAliasesByPreloadId(shimAliases);
   const moduleRegistryImport = normalizeImportPath(
     path.relative(
       options.outputDir,
@@ -242,7 +285,10 @@ export function generatePreloadTs(options: GeneratePreloadOptions): string {
   const preloadCoreImport = normalizeImportPath(
     path.relative(
       options.outputDir,
-      path.resolve(options.webviewSrcDir, 'features/module-runtime/preload/core')
+      path.resolve(
+        options.webviewSrcDir,
+        'features/module-runtime/preload/core'
+      )
     )
   );
 
@@ -252,7 +298,11 @@ export function generatePreloadTs(options: GeneratePreloadOptions): string {
     imports: genericImports,
     func: genericFunc,
     loaders: genericLoaders,
-  } = generateGenericPreloadFunction(genericEntries, options);
+  } = generateGenericPreloadFunction(
+    genericEntries,
+    options,
+    aliasesByPreloadId
+  );
 
   // generate framework loaders (dynamic imports)
   const frameworkLoaders: string[] = [];
@@ -260,7 +310,7 @@ export function generatePreloadTs(options: GeneratePreloadOptions): string {
     const entries = grouped.get(framework) ?? [];
     if (entries.length > 0) {
       frameworkLoaders.push(
-        generateFrameworkLoader(framework, entries, options)
+        generateFrameworkLoader(framework, entries, options, aliasesByPreloadId)
       );
     }
   }
@@ -274,7 +324,7 @@ export function generatePreloadTs(options: GeneratePreloadOptions): string {
 
   return `${GENERATED_HEADER}
 import type { ModuleRegistry } from '${moduleRegistryImport}';
-import { createBarrelModule, createComponentModule } from '${preloadCoreImport}';
+import { createBarrelModule, createComponentModule, preloadEntry } from '${preloadCoreImport}';
 import type { FrameworkId } from '@mdx-preview/contracts';
 
 // static imports for generic shims
@@ -304,28 +354,6 @@ function setAlias(
     throw new Error(`Alias collision for "${key}": ${existing} vs ${value}`);
   }
   aliases[key] = value;
-}
-
-function buildCoreAliases(): Record<string, string> {
-  return {
-    // react core aliases
-    react: PRELOADED_MODULE_IDS.react,
-    'npm://react': PRELOADED_MODULE_IDS.react,
-    'react-dom': PRELOADED_MODULE_IDS.reactDom,
-    'npm://react-dom': PRELOADED_MODULE_IDS.reactDom,
-    'react-dom/client': PRELOADED_MODULE_IDS.reactDomClient,
-    'npm://react-dom/client': PRELOADED_MODULE_IDS.reactDomClient,
-    'react/jsx-runtime': PRELOADED_MODULE_IDS.jsxRuntime,
-    'npm://react/jsx-runtime': PRELOADED_MODULE_IDS.jsxRuntime,
-
-    // mdx aliases
-    '@mdx-js/react': PRELOADED_MODULE_IDS.mdxReact,
-    'npm://@mdx-js/react': PRELOADED_MODULE_IDS.mdxReact,
-
-    // layout aliases
-    'vscode-markdown-layout': PRELOADED_MODULE_IDS.vscodeLayout,
-    'npm://vscode-markdown-layout': PRELOADED_MODULE_IDS.vscodeLayout,
-  };
 }
 
 function buildShimAliases(): {
@@ -360,19 +388,31 @@ function buildShimAliases(): {
   return { aliases, preloadIds };
 }
 
+function buildAliasesByPreloadId(
+  aliases: Readonly<Record<string, string>>
+): Record<string, string[]> {
+  const byPreloadId: Record<string, string[]> = {};
+
+  for (const [alias, preloadId] of Object.entries(aliases)) {
+    const existing = byPreloadId[preloadId];
+    if (existing) {
+      existing.push(alias);
+    } else {
+      byPreloadId[preloadId] = [alias];
+    }
+  }
+
+  for (const preloadId of Object.keys(byPreloadId)) {
+    byPreloadId[preloadId].sort();
+  }
+
+  return byPreloadId;
+}
+
 export function generatePreloadAliasesTs(): string {
-  const { aliases: shimAliases, preloadIds } = buildShimAliases();
-  const coreAliases = buildCoreAliases();
-  const allAliases = { ...shimAliases, ...coreAliases };
+  const { preloadIds } = buildShimAliases();
 
   return `${GENERATED_HEADER}
-// maps import specifiers to preload IDs
-export const PRELOAD_ALIASES: Record<string, string> = ${JSON.stringify(
-    allAliases,
-    null,
-    2
-  )};
-
 // canonical shim preload IDs (used for cache resets)
 export const PRELOADED_SHIM_IDS: string[] = ${JSON.stringify(preloadIds, null, 2)};
 `;

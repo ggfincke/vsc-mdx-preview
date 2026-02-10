@@ -50,6 +50,7 @@ export interface WebviewRPC {
   setStale(isStale: boolean): void;
   setCustomCss(css: string): void;
   setTailwindCss(css: string): void;
+  setTailwindBrowserCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
   setNextraMeta(meta: NextraPageMeta): void;
 }

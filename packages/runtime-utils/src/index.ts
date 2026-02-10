@@ -1,5 +1,5 @@
 // packages/runtime-utils/src/index.ts
-// pure runtime utilities shared by extension and webview
+// pure runtime utilities shared by extension & webview
 
 export { LRUCache, type LRUCacheOptions } from './cache/lru-cache';
 export {

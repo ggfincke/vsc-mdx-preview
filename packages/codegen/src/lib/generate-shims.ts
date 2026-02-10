@@ -5,9 +5,9 @@ import * as path from 'path';
 import {
   FRAMEWORK_CSS_CONFIG,
   SHIM_BARREL_CONFIG,
-} from '@mdx-preview/registry';
+} from 'mdx-tools/components/registry';
 
-const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT\n// Source: packages/registry/src/shims/shim-config.ts\n`;
+const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT\n// Source: packages/mdx-tools/src/components/registry/shim-config.ts\n`;
 
 export interface GenerateShimsOptions {
   webviewSrcDir: string;
@@ -31,26 +31,17 @@ function buildRelativeImport(fromDir: string, targetPath: string): string {
   return normalizeImportPath(relative);
 }
 
-function remapShimImportPath(
-  outputPath: string,
-  importPath: string
-): string {
-  if (!importPath.startsWith('./')) {
-    return importPath;
-  }
-
+function getFrameworkFromOutputPath(outputPath: string): string {
   const segments = outputPath.replace(/\\/g, '/').split('/');
   if (
-    segments.length < 4 ||
-    segments[0] !== 'generated' ||
-    segments[1] !== 'shim-barrels'
+    segments.length >= 3 &&
+    segments[0] === 'generated' &&
+    segments[1] === 'shim-barrels'
   ) {
-    return importPath;
+    return segments[2];
   }
 
-  const framework = segments[2];
-  const suffix = importPath.slice(2);
-  return `../../../features/shims/${framework}/${suffix}`;
+  return 'generic';
 }
 
 export function generateShimBarrelFiles(
@@ -65,18 +56,19 @@ export function generateShimBarrelFiles(
     fileLines.push(`// ${entry.outputPath}`);
     fileLines.push('');
 
-    for (const exportEntry of entry.exports) {
-      const remappedFrom = remapShimImportPath(entry.outputPath, exportEntry.from);
+    const framework = getFrameworkFromOutputPath(entry.outputPath);
+    const frameworkImport = `mdx-tools/components/${framework}`;
 
+    for (const exportEntry of entry.exports) {
       if (exportEntry.values && exportEntry.values.length > 0) {
         fileLines.push(
-          `export { ${exportEntry.values.join(', ')} } from '${remappedFrom}';`
+          `export { ${exportEntry.values.join(', ')} } from '${frameworkImport}';`
         );
       }
 
       if (exportEntry.types && exportEntry.types.length > 0) {
         fileLines.push(
-          `export type { ${exportEntry.types.join(', ')} } from '${remappedFrom}';`
+          `export type { ${exportEntry.types.join(', ')} } from '${frameworkImport}';`
         );
       }
 
@@ -85,8 +77,14 @@ export function generateShimBarrelFiles(
 
     if (entry.sideEffectImports && entry.sideEffectImports.length > 0) {
       for (const sideEffect of entry.sideEffectImports) {
-        const remappedImport = remapShimImportPath(entry.outputPath, sideEffect);
-        fileLines.push(`import '${remappedImport}';`);
+        if (sideEffect.endsWith('.css')) {
+          fileLines.push(
+            `import 'mdx-tools/components/styles/${framework}.css';`
+          );
+          continue;
+        }
+
+        fileLines.push(`import '${frameworkImport}';`);
       }
       fileLines.push('');
     }
@@ -113,6 +111,10 @@ export function generateFrameworkCssLoaderTs(
     outputDir,
     path.resolve(options.webviewSrcDir, 'shared/utils/createResourceLoader')
   );
+  const isBareSpecifier = (specifier: string): boolean =>
+    !specifier.startsWith('.') &&
+    !specifier.startsWith('/') &&
+    !/^[a-zA-Z]:[\\/]/.test(specifier);
 
   const loaderLines: string[] = [];
   loaderLines.push(GENERATED_HEADER.trimEnd());
@@ -137,11 +139,15 @@ export function generateFrameworkCssLoaderTs(
     const loaderName = `${entry.framework}-css`;
 
     if (entry.cssImport) {
-      const absoluteCss = path.resolve(options.webviewSrcDir, entry.cssImport);
-      const relativeCss = buildRelativeImport(outputDir, absoluteCss);
+      const cssImport = isBareSpecifier(entry.cssImport)
+        ? entry.cssImport
+        : buildRelativeImport(
+            outputDir,
+            path.resolve(options.webviewSrcDir, entry.cssImport)
+          );
       loaderLines.push(`  ${entry.framework}: createResourceLoader(`);
       loaderLines.push(
-        `    () => import('${relativeCss}').then(() => undefined),`
+        `    () => import('${cssImport}').then(() => undefined),`
       );
       loaderLines.push(
         `    { name: '${loaderName}', allowRetry: ${entry.allowRetry ? 'true' : 'false'} }`

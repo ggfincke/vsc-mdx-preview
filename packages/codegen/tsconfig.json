@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "ES2022",
     "lib": ["ES2022"],
     "module": "ESNext",
@@ -16,9 +17,13 @@
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,
-    "rootDir": "src",
+    "rootDir": "..",
     "outDir": "dist",
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "mdx-tools/components": ["../mdx-tools/src/components/index.ts"],
+      "mdx-tools/components/*": ["../mdx-tools/src/components/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "../mdx-tools/src/components/registry/**/*.ts"]
 }

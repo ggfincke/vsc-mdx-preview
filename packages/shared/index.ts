@@ -1,6 +1,6 @@
 // packages/shared/index.ts
 // re-export facade for backward compatibility
-// moved modules re-exported from @mdx-preview/contracts, @mdx-preview/registry, and @mdx-preview/runtime-utils
+// moved modules re-exported from @mdx-preview/contracts, @mdx-preview/registry, & @mdx-preview/runtime-utils
 
 // framework type aliases (from contracts)
 export type {
@@ -31,7 +31,7 @@ export {
   getPlantUmlRenderEndpoints,
 } from '@mdx-preview/runtime-utils';
 
-// component registry - moved to registry package in Phase 3
+// component shim registry metadata (source of truth in doc-components)
 export {
   SHIM_PREFIX,
   type ComponentRegistryEntry,
@@ -56,7 +56,7 @@ export {
   isFrameworkComponent,
   getGenericShimPath,
   getFrameworkShimPath,
-} from '@mdx-preview/registry';
+} from 'mdx-tools/components/registry';
 
 // core preloaded module IDs (from contracts)
 export {

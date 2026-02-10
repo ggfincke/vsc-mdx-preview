@@ -141,7 +141,7 @@ export function createNpmModuleId(
 }
 
 // URL scheme pattern for module ID validation
-// matches: http://, https://, npm://, file://, etc
+// match: http://, https://, npm://, file://, etc
 // (side comment removed - pattern is self-explanatory)
 export const URL_SCHEME_PATTERN = /^[a-z]+:\/\//i;
 

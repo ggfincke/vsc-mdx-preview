@@ -1,7 +1,5 @@
 // packages/registry/src/index.ts
-// metadata registry exports for component shims, callouts, and icons
+// metadata registry exports (non-component metadata only)
 
-export * from './components';
 export * from './callout';
 export * from './icons';
-export * from './shims';
