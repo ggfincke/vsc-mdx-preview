@@ -66,37 +66,10 @@ module.exports = {
       },
     },
     {
-      name: 'mdx-tools-self-contained',
-      severity: 'error',
-      comment:
-        'mdx-tools must not import from @mdx-preview/* internal packages',
-      from: { path: '^packages/mdx-tools/' },
-      to: {
-        path: '^packages/(contracts|registry|runtime-utils|codegen|extension-host|webview-client)/',
-      },
-    },
-    {
-      name: 'no-mdx-tools-browser-node-builtins',
-      severity: 'error',
-      comment: 'mdx-tools/browser must remain browser-safe (no Node builtins)',
-      from: { path: '^packages/mdx-tools/src/browser/' },
-      to: { dependencyTypes: ['core'] },
-    },
-    {
-      name: 'mdx-tools-internal-no-domains',
-      severity: 'error',
-      comment:
-        'mdx-tools/internal must not import from domain dirs or @mdx-preview packages',
-      from: { path: '^packages/mdx-tools/src/internal/' },
-      to: {
-        path: '^packages/(contracts|registry|runtime-utils|codegen|extension-host|webview-client)/',
-      },
-    },
-    {
       name: 'codegen-allowed-deps',
       severity: 'error',
       comment:
-        'codegen may only depend on contracts, registry, runtime-utils, & mdx-tools',
+        'codegen may only depend on contracts, registry, runtime-utils, & mdx-forge',
       from: { path: '^packages/codegen/' },
       to: { path: '^packages/(extension-host|webview-client)/' },
     },
