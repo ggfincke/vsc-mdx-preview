@@ -14,6 +14,7 @@ const ALLOWED_MODULES = new Set([
   '@mdx-preview/contracts',
   '@mdx-preview/registry',
   '@mdx-preview/runtime-utils',
+  'mdx-tools/components/registry',
 ]);
 
 function getLineNumber(sourceFile, node) {
