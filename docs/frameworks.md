@@ -329,12 +329,12 @@ MDX Preview uses a central component registry to map framework imports to shim i
 
 ### Registry Architecture
 
-Component registry data is owned directly by
-`packages/mdx-tools/src/components/registry/` and consumed via the stable
-`mdx-tools/components/registry` export:
+Component registry data lives in the `mdx-forge` npm package
+(`src/components/registry/`) & is consumed via the stable
+`mdx-forge/components/registry` export:
 
 ```
-packages/mdx-tools/src/components/registry/
+mdx-forge/src/components/registry/   # inside the mdx-forge npm package
 ├── registry-data.ts   # COMPONENT_REGISTRY constant
 ├── queries.ts         # Query functions
 ├── shim-config.ts     # Framework shim configurations
@@ -351,7 +351,7 @@ import {
   isGenericComponent,
   getCanonicalComponentName,
   getFrameworkShimPath,
-} from 'mdx-tools/components/registry';
+} from 'mdx-forge/components/registry';
 
 // Check if a name is a generic component or alias
 isGenericComponent('Callout'); // true

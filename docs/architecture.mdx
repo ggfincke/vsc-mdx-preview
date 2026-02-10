@@ -48,17 +48,17 @@ graph TB
 
 ### Monorepo Structure
 
-The project uses npm workspaces with seven packages:
+The project uses npm workspaces w/ six packages plus one external npm dependency:
 
-| Package                   | Environment | Purpose                                                               |
-| ------------------------- | ----------- | --------------------------------------------------------------------- |
-| `packages/extension-host` | Node.js     | VS Code extension host - handles compilation, resolution, security    |
-| `packages/webview-client` | Browser     | React 18 app rendered in VS Code webview iframe                       |
-| `packages/contracts`      | Both        | Shared types, constants, enums, & lightweight behavioral abstractions |
-| `packages/registry`       | Both        | Metadata registry (callout types, icon definitions, theme data)       |
-| `packages/runtime-utils`  | Both        | Cross-runtime utilities (LRU cache, validation, error handling)       |
-| `packages/codegen`        | Build-time  | Code generation scripts & libraries                                   |
-| `packages/mdx-tools`      | Both        | Unified library (compiler, browser modules, component shims)          |
+| Package                   | Environment          | Purpose                                                               |
+| ------------------------- | -------------------- | --------------------------------------------------------------------- |
+| `packages/extension-host` | Node.js              | VS Code extension host - handles compilation, resolution, security    |
+| `packages/webview-client` | Browser              | React 18 app rendered in VS Code webview iframe                       |
+| `packages/contracts`      | Both                 | Shared types, constants, enums, & lightweight behavioral abstractions |
+| `packages/registry`       | Both                 | Metadata registry (callout types, icon definitions, theme data)       |
+| `packages/runtime-utils`  | Both                 | Cross-runtime utilities (LRU cache, validation, error handling)       |
+| `packages/codegen`        | Build-time           | Code generation scripts & libraries                                   |
+| `mdx-forge` (npm)         | External npm package | Unified library (compiler, browser modules, component shims)          |
 
 > [!NOTE]
 > The extension and webview run in completely separate JavaScript environments. They communicate via Comlink RPC over VS Code's webview messaging API.
@@ -786,7 +786,7 @@ sequenceDiagram
 
 Modules are evaluated safely using the Function constructor:
 
-```typescript title="packages/mdx-tools/src/browser/eval/evaluateModule.ts"
+```typescript title="mdx-forge: src/browser/eval/evaluateModule.ts"
 function evaluateModule(
   code: string,
   runtime: ModuleRuntime,
@@ -831,7 +831,7 @@ Core modules are preloaded and protected from cache eviction:
 
 Framework-specific components are loaded on-demand:
 
-```typescript title="packages/mdx-tools/src/browser/preload/shimLoader.ts"
+```typescript title="mdx-forge: src/browser/preload/shimLoader.ts"
 // Docusaurus shims
 'npm://@mdx-preview/shims-docusaurus/Tabs';
 'npm://@mdx-preview/shims-docusaurus/TabItem';
@@ -1055,7 +1055,7 @@ flowchart LR
 
 Plugins are loaded from workspace `node_modules` in Trusted Mode only:
 
-```typescript title="packages/mdx-tools/src/compiler/plugins/loader.ts"
+```typescript title="mdx-forge: src/compiler/plugins/loader.ts"
 // Plugin spec formats
 'plugin-name'[('plugin-name', { option: true })]; // Just name // With options
 
@@ -1606,7 +1606,7 @@ All parallel operations use a custom `Semaphore` utility to prevent resource exh
 | `src/features/preview/trusted/` | Trusted Mode rendering                                   |
 | `src/features/preview/shared/`  | Shared preview UI (loading, stale, trust)                |
 | `src/features/module-runtime/`  | Module caching, loading, preload                         |
-| `src/features/shims/`           | Framework component shim re-exports (from mdx-tools)     |
+| `src/features/shims/`           | Framework component shim re-exports (from mdx-forge)     |
 | `src/features/diagrams/`        | Mermaid, PlantUML, Graphviz rendering                    |
 | `src/features/code-block/`      | Code block enhancement & KaTeX                           |
 | `src/features/lightbox/`        | Image lightbox                                           |
@@ -1625,15 +1625,15 @@ All parallel operations use a custom `Semaphore` utility to prevent resource exh
 | `@mdx-preview/runtime-utils` | LRU cache, validation, error handling, Semaphore, module ID     |
 | `@mdx-preview/codegen`       | Code generation scripts & libraries                             |
 
-### mdx-tools Library (`packages/mdx-tools`)
+### mdx-forge Library (External)
 
 | Subpath                         | Purpose                                                                |
 | ------------------------------- | ---------------------------------------------------------------------- |
-| `mdx-tools/compiler`            | MDX compilation (safe & trusted modes), plugins, transforms            |
-| `mdx-tools/browser`             | Browser module loading, evaluation, preload, registry                  |
-| `mdx-tools/components`          | React component shims (generic, docusaurus, starlight, nextra, nextjs) |
-| `mdx-tools/components/registry` | Component registry metadata & queries                                  |
-| `mdx-tools/components/styles/*` | Framework CSS files                                                    |
+| `mdx-forge/compiler`            | MDX compilation (safe & trusted modes), plugins, transforms            |
+| `mdx-forge/browser`             | Browser module loading, evaluation, preload, registry                  |
+| `mdx-forge/components`          | React component shims (generic, docusaurus, starlight, nextra, nextjs) |
+| `mdx-forge/components/registry` | Component registry metadata & queries                                  |
+| `mdx-forge/components/styles/*` | Framework CSS files                                                    |
 
 ---
 

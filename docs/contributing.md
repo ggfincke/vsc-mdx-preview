@@ -72,7 +72,7 @@ vscode-mdx-preview/
 │   ├── registry/                # Callout types, icon definitions
 │   ├── runtime-utils/           # LRU cache, validation, Semaphore
 │   ├── codegen/                 # Code generation scripts & libraries
-│   └── mdx-tools/              # Unified library (compiler, browser, components)
+│   └── mdx-forge/              # Unified library (compiler, browser, components)
 │       └── src/
 │           ├── compiler/        # MDX compilation pipeline
 │           ├── browser/         # Browser module loading & eval
@@ -141,7 +141,7 @@ The webview is a React 18 app running in an isolated iframe:
 - **features/preview/safe/**: Renders sanitized HTML (Safe Mode)
 - **features/preview/trusted/**: Evaluates and renders MDX (Trusted Mode)
 - **features/module-runtime/**: Module registry, loader, preload, style/dependency caching
-- **features/shims/**: Framework component shim re-exports (from mdx-tools)
+- **features/shims/**: Framework component shim re-exports (from mdx-forge)
 - **features/diagrams/**: Mermaid, PlantUML, Graphviz rendering
 - **features/code-block/**: Code block enhancement & KaTeX
 - **app/state/**: Granular React contexts (Trust, Preview, Loading, Nextra, Theme)
