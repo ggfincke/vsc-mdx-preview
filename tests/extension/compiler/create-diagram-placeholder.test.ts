@@ -2,7 +2,7 @@
 // unit tests for the diagram placeholder rehype plugin factory
 
 import { describe, it, expect } from 'vitest';
-import { createDiagramPlaceholder } from '../../../packages/extension-host/src/features/compilation/pipeline/rehype/create-diagram-placeholder';
+import { createDiagramPlaceholder } from '../../../packages/mdx-tools/src/compiler/pipeline/rehype/create-diagram-placeholder';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';

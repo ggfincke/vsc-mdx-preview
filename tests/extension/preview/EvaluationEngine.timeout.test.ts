@@ -27,13 +27,19 @@ const {
   },
 }));
 
-vi.mock('../../../packages/extension-host/src/shared/utils/async-utils', () => ({
-  raceTimeout: mockRaceTimeout,
-}));
+vi.mock(
+  '../../../packages/extension-host/src/shared/utils/async-utils',
+  () => ({
+    raceTimeout: mockRaceTimeout,
+  })
+);
 
-vi.mock('../../../packages/extension-host/src/features/module-runtime/transform/transform', () => ({
-  transformEntry: mockTransformEntry,
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/module-runtime/transform/transform',
+  () => ({
+    transformEntry: mockTransformEntry,
+  })
+);
 
 vi.mock(
   '../../../packages/extension-host/src/features/module-runtime/dependencies/import-extractor',
@@ -48,6 +54,10 @@ vi.mock('../../../packages/extension-host/src/app/services', () => ({
 }));
 
 vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
+  error: vi.fn(),
+  warn: vi.fn(),
+  debug: vi.fn(),
+  info: vi.fn(),
   createTaggedLogger: () => ({
     debug: vi.fn(),
     info: vi.fn(),
@@ -78,6 +88,7 @@ describe('EvaluationEngine timeout behavior', () => {
     });
     mockExtractImportSpecifiers.mockResolvedValue(['x']);
     mockTailwindProcessor.process.mockResolvedValue({
+      profile: 'advanced',
       enabled: true,
       css: '',
       watchFiles: [],
@@ -146,6 +157,7 @@ describe('EvaluationEngine timeout behavior', () => {
     const preview = createPreview();
     const webviewHandle = {
       setTailwindCss: vi.fn(),
+      setTailwindBrowserCss: vi.fn(),
     };
 
     await engine.processTailwindAsync(
@@ -186,10 +198,12 @@ describe('EvaluationEngine timeout behavior', () => {
       })
     );
     expect(webviewHandle.setTailwindCss).not.toHaveBeenCalled();
+    expect(webviewHandle.setTailwindBrowserCss).not.toHaveBeenCalled();
   });
 
   it('uses default Tailwind timeout when config value is missing', async () => {
     mockRaceTimeout.mockResolvedValueOnce({
+      profile: 'advanced',
       enabled: true,
       css: '.x{}',
       watchFiles: ['tailwind.config.js'],
@@ -199,6 +213,7 @@ describe('EvaluationEngine timeout behavior', () => {
     const preview = createPreview();
     const webviewHandle = {
       setTailwindCss: vi.fn(),
+      setTailwindBrowserCss: vi.fn(),
     };
 
     await engine.processTailwindAsync(
@@ -233,6 +248,56 @@ describe('EvaluationEngine timeout behavior', () => {
     expect(preview.updateTailwindWatchFiles).toHaveBeenCalledWith([
       'tailwind.config.js',
     ]);
+    expect(webviewHandle.setTailwindBrowserCss).toHaveBeenCalledWith('');
     expect(webviewHandle.setTailwindCss).toHaveBeenCalledWith('.x{}');
+  });
+
+  it('routes CSS to browser-tailwind handler when profile is browser', async () => {
+    mockRaceTimeout.mockResolvedValueOnce({
+      profile: 'browser',
+      enabled: true,
+      css: '@import "tailwindcss";',
+      watchFiles: ['tailwind.css'],
+    });
+
+    const engine = new EvaluationEngine();
+    const preview = createPreview();
+    const webviewHandle = {
+      setTailwindCss: vi.fn(),
+      setTailwindBrowserCss: vi.fn(),
+    };
+
+    await engine.processTailwindAsync(
+      preview as any,
+      {
+        mdxText: '# Tailwind',
+        entryFilePath: '/workspace/doc.mdx',
+        entryFileDependencies: [],
+        trustState: {
+          workspaceTrusted: true,
+          scriptsEnabled: true,
+          canExecute: true,
+          openMdxLinksInPreview: true,
+        },
+        tailwindConfig: {
+          enabled: 'enabled',
+          maxFileSizeBytes: 1024,
+          maxCssFilesToSearch: 50,
+          cacheMaxEntries: 10,
+          cacheTtlSeconds: 60,
+          compilationTimeout: 1234,
+        },
+      },
+      3,
+      webviewHandle as any
+    );
+
+    expect(preview.updateTailwindWatchFiles).toHaveBeenCalledWith([
+      'tailwind.css',
+    ]);
+    expect(webviewHandle.setTailwindCss).toHaveBeenCalledWith('');
+    expect(webviewHandle.setTailwindBrowserCss).toHaveBeenCalledWith(
+      '@import "tailwindcss";'
+    );
   });
 });

@@ -52,7 +52,7 @@ vi.mock('../../../packages/extension-host/src/shared/config/EffectivePreviewConf
     mockBuildEffectivePreviewConfig(...args),
 }));
 
-vi.mock('../../../packages/extension-host/src/features/compilation/pipeline/common/mdx-common', () => ({
+vi.mock('mdx-tools/compiler', () => ({
   extractFrontmatter: (...args: any[]) => mockExtractFrontmatter(...args),
 }));
 

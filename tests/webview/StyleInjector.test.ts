@@ -102,6 +102,24 @@ async function getStyleInjector() {
 }
 
 describe('StyleInjector', () => {
+  describe('inject', () => {
+    it('applies custom attributes to style elements', async () => {
+      const StyleInjector = await getStyleInjector();
+
+      StyleInjector.inject('tailwind-browser-style', '@import "tailwindcss";', {
+        attributes: {
+          type: 'text/tailwindcss',
+        },
+      });
+
+      expect(mockHead.children.length).toBe(1);
+      expect(mockHead.children[0].id).toBe('tailwind-browser-style');
+      expect(mockHead.children[0].getAttribute('type')).toBe(
+        'text/tailwindcss'
+      );
+    });
+  });
+
   describe('injectModuleCss', () => {
     it('should create a style element in document.head', async () => {
       const StyleInjector = await getStyleInjector();

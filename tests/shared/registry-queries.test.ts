@@ -12,7 +12,7 @@ import {
   isFrameworkComponent,
   getGenericShimPath,
   getFrameworkShimPath,
-} from '@mdx-preview/registry';
+} from 'mdx-tools/components/registry';
 
 describe('registry queries', () => {
   it('returns generic component names including aliases', () => {
@@ -77,4 +77,3 @@ describe('registry queries', () => {
     );
   });
 });
-

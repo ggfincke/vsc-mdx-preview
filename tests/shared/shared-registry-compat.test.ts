@@ -9,13 +9,13 @@ import {
 } from '@mdx-preview/shared';
 import {
   CALLOUT_ICONS as registryCalloutIcons,
-  getAllGenericComponentNames as getRegistryGenericNames,
   normalizeCalloutType as normalizeRegistryCalloutType,
 } from '@mdx-preview/registry';
+import { getAllGenericComponentNames as getDocComponentsGenericNames } from 'mdx-tools/components/registry';
 
 describe('shared registry compatibility', () => {
-  it('re-exports registry query helpers', () => {
-    expect(getSharedGenericNames()).toEqual(getRegistryGenericNames());
+  it('re-exports doc-components registry query helpers', () => {
+    expect(getSharedGenericNames()).toEqual(getDocComponentsGenericNames());
   });
 
   it('re-exports callout normalization behavior', () => {

@@ -30,6 +30,8 @@ const mocks = vi.hoisted(() => {
     setTheme: vi.fn(),
     setStale: vi.fn(),
     setCustomCss: vi.fn(),
+    setTailwindCss: vi.fn(),
+    setTailwindBrowserCss: vi.fn(),
     invalidate: vi.fn(async () => {}),
     clearAllCaches: vi.fn(async () => {}),
   };
@@ -371,6 +373,31 @@ describe('Preview', () => {
     const id2 = preview.nextTailwindRequestId();
     expect(preview.isTailwindRequestCurrent(id)).toBe(false);
     expect(preview.isTailwindRequestCurrent(id2)).toBe(true);
+  });
+
+  it('setTailwindBrowserRuntimeEnabled reports changes only on transitions', () => {
+    const preview = new Preview(createDoc());
+
+    expect(preview.setTailwindBrowserRuntimeEnabled(true)).toBe(true);
+    expect(preview.isTailwindBrowserRuntimeEnabled()).toBe(true);
+    expect(preview.setTailwindBrowserRuntimeEnabled(true)).toBe(false);
+    expect(preview.setTailwindBrowserRuntimeEnabled(false)).toBe(true);
+    expect(preview.isTailwindBrowserRuntimeEnabled()).toBe(false);
+  });
+
+  it('markTailwindFallbackReason coalesces duplicate reasons', () => {
+    const preview = new Preview(createDoc());
+
+    expect(preview.markTailwindFallbackReason('tailwind.config.js detected')).toBe(
+      true
+    );
+    expect(preview.markTailwindFallbackReason('tailwind.config.js detected')).toBe(
+      false
+    );
+    preview.clearTailwindFallbackReason();
+    expect(preview.markTailwindFallbackReason('tailwind.config.js detected')).toBe(
+      true
+    );
   });
 
   it('dispose releases watcher manager resources', () => {

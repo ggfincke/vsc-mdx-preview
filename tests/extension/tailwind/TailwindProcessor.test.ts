@@ -101,6 +101,7 @@ describe('TailwindProcessor', () => {
     });
 
     expect(result.enabled).toBe(false);
+    expect(result.profile).toBe('disabled');
     expect(result.css).toBe('');
     expect(result.watchFiles).toEqual([]);
   });
@@ -119,6 +120,7 @@ describe('TailwindProcessor', () => {
     });
 
     expect(result.enabled).toBe(false);
+    expect(result.profile).toBe('disabled');
     expect(result.css).toBe('');
   });
 
@@ -141,6 +143,7 @@ describe('TailwindProcessor', () => {
     });
 
     expect(result.enabled).toBe(false);
+    expect(result.profile).toBe('disabled');
     expect(result.css).toBe('');
   });
 
@@ -191,8 +194,87 @@ describe('TailwindProcessor', () => {
     });
 
     expect(result.enabled).toBe(true);
+    expect(result.profile).toBe('advanced');
     expect(result.css).toBe('/* compiled */');
     expect(result.watchFiles).toEqual([configPath, cssPath].sort());
+  });
+
+  it('uses browser profile when workspace is CSS-first', async () => {
+    const processor = TailwindProcessor.getInstance();
+    const tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-tailwind-browser-')
+    );
+    tempDirs.push(tempDir);
+
+    const cssPath = path.join(tempDir, 'tailwind.css');
+    fs.writeFileSync(cssPath, '@import "tailwindcss";', 'utf-8');
+
+    const preview = createMockPreview({
+      fsPath: path.join(tempDir, 'doc.mdx'),
+    }) as any;
+
+    const detector = (processor as any).detector;
+    const compiler = (processor as any).compiler;
+    const scanner = (processor as any).scanner;
+
+    vi.spyOn(detector, 'resolveWorkspaceRoot').mockReturnValue(tempDir);
+    vi.spyOn(detector, 'detectProfile').mockResolvedValue({
+      profile: 'browser',
+      reason: 'No tailwind.config.* or plugin directives detected',
+      workspaceRoot: tempDir,
+      configPath: null,
+      entryCssPath: cssPath,
+      hasTailwindInput: true,
+      inlineTailwindStyles: [],
+    });
+    const compileSpy = vi.spyOn(compiler, 'compile');
+    const scanSpy = vi.spyOn(scanner, 'scan');
+
+    const result = await processor.process({
+      preview,
+      mdxText: '# Test',
+      entryFilePath: preview.fsPath,
+      entryFileDependencies: [],
+      trustState: trustedState,
+      tailwindConfig: createTailwindConfig(),
+    });
+
+    expect(result.enabled).toBe(true);
+    expect(result.profile).toBe('browser');
+    expect(result.css).toContain('@import "tailwindcss";');
+    expect(result.watchFiles).toEqual([cssPath]);
+    expect(compileSpy).not.toHaveBeenCalled();
+    expect(scanSpy).not.toHaveBeenCalled();
+  });
+
+  it('enables browser profile in auto mode when inline Tailwind CSS input exists', async () => {
+    const processor = TailwindProcessor.getInstance();
+    const preview = createMockPreview() as any;
+
+    const detector = (processor as any).detector;
+    vi.spyOn(detector, 'resolveWorkspaceRoot').mockReturnValue('/workspace');
+    vi.spyOn(detector, 'detectProfile').mockResolvedValue({
+      profile: 'browser',
+      reason: 'No tailwind.config.* or plugin directives detected',
+      workspaceRoot: '/workspace',
+      configPath: null,
+      entryCssPath: null,
+      hasTailwindInput: true,
+      inlineTailwindStyles: ['@theme { --color-brand: #123456; }'],
+    });
+
+    const result = await processor.process({
+      preview,
+      mdxText: '<style type="text/tailwindcss">@theme { --color-brand: #123456; }</style>',
+      entryFilePath: preview.fsPath,
+      entryFileDependencies: [],
+      trustState: trustedState,
+      tailwindConfig: createTailwindConfig({ enabled: 'auto' }),
+    });
+
+    expect(result.enabled).toBe(true);
+    expect(result.profile).toBe('browser');
+    expect(result.css).toContain('@theme');
   });
 
   it('invalidates specific scan cache entry when fsPath is provided', () => {

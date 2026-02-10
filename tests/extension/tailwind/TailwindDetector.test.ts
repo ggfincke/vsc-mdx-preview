@@ -95,4 +95,75 @@ describe('TailwindDetector', () => {
     expect(configCache.has(cacheKey)).toBe(false);
     expect(entryCache.has(cacheKey)).toBe(false);
   });
+
+  it('routes to advanced profile when tailwind.config.* is present', async () => {
+    const workspaceRoot = createTempWorkspace();
+    tempDirs.push(workspaceRoot);
+
+    const configPath = path.join(workspaceRoot, 'tailwind.config.ts');
+    writeFile(configPath, 'export default {}');
+    const cssPath = path.join(workspaceRoot, 'tailwind.css');
+    writeFile(cssPath, '@import "tailwindcss";');
+
+    const detector = new TailwindDetector();
+    const result = await detector.detectProfile({
+      workspaceRoot,
+      entryDir: workspaceRoot,
+      maxCssFilesToSearch: 50,
+      mdxText: '# Test',
+    });
+
+    expect(result.profile).toBe('advanced');
+    expect(result.reason).toContain('tailwind.config.*');
+    expect(result.configPath).toBe(configPath);
+    expect(result.entryCssPath).toBe(cssPath);
+  });
+
+  it('routes to advanced profile when entry CSS contains @plugin', async () => {
+    const workspaceRoot = createTempWorkspace();
+    tempDirs.push(workspaceRoot);
+
+    const cssPath = path.join(workspaceRoot, 'tailwind.css');
+    writeFile(
+      cssPath,
+      '@import "tailwindcss";\n@plugin "@tailwindcss/typography";'
+    );
+
+    const detector = new TailwindDetector();
+    const result = await detector.detectProfile({
+      workspaceRoot,
+      entryDir: workspaceRoot,
+      maxCssFilesToSearch: 50,
+      mdxText: '# Test',
+    });
+
+    expect(result.profile).toBe('advanced');
+    expect(result.reason).toContain('@plugin');
+    expect(result.entryCssPath).toBe(cssPath);
+  });
+
+  it('extracts inline Tailwind styles and keeps browser profile without advanced signals', async () => {
+    const workspaceRoot = createTempWorkspace();
+    tempDirs.push(workspaceRoot);
+    const cssPath = path.join(workspaceRoot, 'tailwind.css');
+    writeFile(cssPath, '@import "tailwindcss";');
+
+    const detector = new TailwindDetector();
+    const result = await detector.detectProfile({
+      workspaceRoot,
+      entryDir: workspaceRoot,
+      maxCssFilesToSearch: 50,
+      mdxText: `<style type="text/tailwindcss">
+@theme {
+  --color-brand: #123456;
+}
+</style>`,
+    });
+
+    expect(result.profile).toBe('browser');
+    expect(result.hasTailwindInput).toBe(true);
+    expect(result.entryCssPath).toBe(cssPath);
+    expect(result.inlineTailwindStyles).toHaveLength(1);
+    expect(result.inlineTailwindStyles[0]).toContain('@theme');
+  });
 });
