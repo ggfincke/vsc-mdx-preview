@@ -38,111 +38,122 @@ Thank you for your interest in contributing to MDX Preview!
 ```
 vscode-mdx-preview/
 ├── packages/
-│   ├── extension/            # VS Code extension (Node.js)
-│   │   ├── commands/         # VS Code command handlers
-│   │   ├── compiler/         # MDX compilation (safe/trusted), plugins
-│   │   ├── config/           # Configuration management, caching
-│   │   ├── diagnostics/      # Component detection, code actions
-│   │   ├── errors/           # ErrorReporter, error codes, messages
-│   │   ├── eslint-rules/     # Custom ESLint rules (prefer-tagged-logger, etc.)
-│   │   ├── framework/        # Framework auto-detection
-│   │   ├── module-system/    # Resolution, handlers, transpilation
-│   │   ├── nextra/           # Nextra _meta.json support
-│   │   ├── preview/          # Preview management, webview bridge, evaluation
-│   │   ├── prewarm/          # Background module prewarming
-│   │   ├── security/         # Trust management, CSP, path validation
-│   │   ├── services/         # Service registry, singleton services
-│   │   ├── tailwind/         # Tailwind detection, scanning, compilation
-│   │   ├── themes/           # Theme management, auto-switching
-│   │   └── utils/            # Shared utilities (cache, file helpers)
-│   ├── shared/               # Shared types, registry, logging, config
-│   │   ├── config/           # Settings defaults, enums, schema
-│   │   ├── errors/           # ModuleError class, factories
-│   │   ├── logging/          # LogTags, TaggedLogger, factory
-│   │   ├── registry/         # Component registry data & queries
-│   │   └── utils/            # LRUCache, Semaphore, validation
-│   └── webview-app/          # React app rendered in webview
+│   ├── extension-host/          # VS Code extension (Node.js)
+│   │   └── src/
+│   │       ├── entry/           # Activation entry point
+│   │       ├── features/        # Feature-sliced modules
+│   │       │   ├── commands/    # VS Code command handlers
+│   │       │   ├── diagnostics/ # Component detection, code actions
+│   │       │   ├── framework/   # Framework detection, Nextra support
+│   │       │   ├── module-runtime/ # Resolution, handlers, transpilation
+│   │       │   ├── preview/     # Preview management, webview bridge
+│   │       │   ├── prewarm/     # Background module prewarming
+│   │       │   ├── security/    # Trust management, CSP
+│   │       │   ├── tailwind/    # Tailwind detection, scanning, compilation
+│   │       │   └── themes/      # Theme management, auto-switching
+│   │       ├── app/             # Service registry, lifecycle, types
+│   │       ├── shared/          # Config, errors, logging, utilities
+│   │       └── platform/        # RPC communication layer
+│   ├── webview-client/          # React app rendered in webview
+│   │   └── src/
+│   │       ├── app/             # App root, context providers, state
+│   │       ├── features/        # Feature-sliced modules
+│   │       │   ├── preview/     # Safe & Trusted preview renderers
+│   │       │   ├── module-runtime/ # Module caching, loading, preload
+│   │       │   ├── shims/       # Framework component shim re-exports
+│   │       │   ├── diagrams/    # Mermaid, PlantUML, Graphviz
+│   │       │   ├── code-block/  # Code block enhancement, KaTeX
+│   │       │   ├── lightbox/    # Image lightbox
+│   │       │   └── theme/       # Theme loading & detection
+│   │       ├── platform/        # RPC handler factory & client
+│   │       ├── shared/          # Hooks, UI components, utilities
+│   │       └── generated/       # Code-generated files (8 files)
+│   ├── contracts/               # Types, enums, constants, RPC contracts
+│   ├── registry/                # Callout types, icon definitions
+│   ├── runtime-utils/           # LRU cache, validation, Semaphore
+│   ├── codegen/                 # Code generation scripts & libraries
+│   └── mdx-tools/              # Unified library (compiler, browser, components)
 │       └── src/
-│           ├── components/   # React components & framework shims
-│           ├── context/      # React context providers
-│           ├── hooks/        # Shared React hooks
-│           ├── module-system/ # Browser-side module loading
-│           ├── rpc/          # RPC handler factory & configs
-│           ├── security/     # DOMPurify allowlist, processors
-│           └── theme/        # Theme loading & detection
-├── tests/                    # All tests (extension, webview, security, etc.)
-├── examples/                 # Example MDX projects
-└── assets/                   # Icons and images
+│           ├── compiler/        # MDX compilation pipeline
+│           ├── browser/         # Browser module loading & eval
+│           ├── components/      # React component shims & registry
+│           └── internal/        # Shared utilities (callout, icons, errors)
+├── tests/                       # All tests (extension, webview, security, etc.)
+├── examples/                    # Example MDX projects
+└── assets/                      # Icons and images
 ```
 
 ## npm Scripts
 
-| Script                      | Description                   |
-| --------------------------- | ----------------------------- |
-| `npm run build`             | Build extension and webview   |
-| `npm run build:extension`   | Build extension only          |
-| `npm run build:webview-app` | Build webview React app       |
-| `npm run watch`             | Watch mode for extension      |
-| `npm run start:webview-app` | Start webview dev server      |
-| `npm test`                  | Run extension unit tests (Vitest) |
-| `npm run test:watch`        | Run tests in watch mode       |
-| `npm run test:webview`      | Run webview tests only        |
-| `npm run test:all`          | Run all tests (extension and webview) |
-| `npm run test:integration`  | Run VS Code integration tests |
-| `npm run lint`              | Run ESLint                    |
-| `npm run lint:fix`          | Auto-fix linting issues       |
-| `npm run format`            | Format with Prettier          |
+| Script                         | Description                           |
+| ------------------------------ | ------------------------------------- |
+| `npm run build`                | Build extension and webview           |
+| `npm run build:extension`      | Build extension only                  |
+| `npm run build:webview-client` | Build webview React app               |
+| `npm run watch`                | Watch mode for extension              |
+| `npm run start:webview-client` | Start webview dev server              |
+| `npm test`                     | Run extension unit tests (Vitest)     |
+| `npm run test:watch`           | Run tests in watch mode               |
+| `npm run test:webview`         | Run webview tests only                |
+| `npm run test:all`             | Run all tests (extension and webview) |
+| `npm run test:integration`     | Run VS Code integration tests         |
+| `npm run lint`                 | Run ESLint                            |
+| `npm run lint:fix`             | Auto-fix linting issues               |
+| `npm run format`               | Format with Prettier                  |
 
 ## Architecture Overview
 
-### Extension Side (`packages/extension`)
+### Extension Side (`packages/extension-host`)
 
 The extension runs in VS Code's extension host (Node.js environment):
 
-- **extension.ts**: Entry point, service registration, event handlers
-- **services/**: Service registry with lazy initialization and ordered disposal
-- **preview/**: Preview management, webview bridge, evaluation engine, watchers
-- **compiler/**: MDX compilation (safe/trusted modes), plugin loading, remark/rehype plugins
-- **module-system/**: 4-strategy resolver, file type handlers, transpilation (Babel/Sucrase)
-- **security/**: TrustManager, CSP generation, path validation
-- **config/**: ConfigManager (VS Code settings), ConfigCache (.mdx-previewrc.json)
-- **themes/**: ThemeManager with auto light/dark switching
-- **tailwind/**: TailwindProcessor with detection, scanning, and compilation
-- **framework/**: FrameworkDetector (Docusaurus, Starlight, Nextra, Next.js)
-- **diagnostics/**: ComponentDiagnostics, ComponentDetector, code actions
-- **nextra/**: MetaResolver for _meta.json support
-- **commands/**: All VS Code command handlers organized by category
-- **errors/**: ErrorReporter with severity inference and deduplication
-- **prewarm/**: Background Babel prewarming for faster first render
+- **entry/activate.ts**: Entry point, service registration, event handlers
+- **app/services/**: Service registry with lazy initialization and ordered disposal
+- **features/preview/**: Preview management, webview bridge, evaluation engine, watchers
+- **features/module-runtime/**: 4-strategy resolver, file type handlers, transpilation (Babel/Sucrase)
+- **features/security/**: TrustManager, CSP generation
+- **features/commands/**: All VS Code command handlers organized by category
+- **features/diagnostics/**: ComponentDiagnostics, ComponentDetector, code actions
+- **features/framework/**: FrameworkDetector (Docusaurus, Starlight, Nextra, Next.js), MetaResolver
+- **features/tailwind/**: TailwindProcessor with detection, scanning, and compilation
+- **features/themes/**: ThemeManager with auto light/dark switching
+- **features/prewarm/**: Background Babel prewarming for faster first render
+- **shared/config/**: ConfigManager (VS Code settings), ConfigCache (.mdx-previewrc.json)
+- **shared/errors/**: ErrorReporter with severity inference and deduplication
+- **shared/logging/**: Tagged logger for extension host
+- **platform/rpc/**: Extension-side RPC endpoint and handler
 - **eslint-rules/**: Custom rules (prefer-tagged-logger, no-direct-vscode-config)
 
-### Shared Package (`packages/shared`)
+### Shared Packages
 
-Shared types, registries, utilities, and constants used by both extension and webview:
+Shared concerns are split across 4 packages used by both extension & webview:
 
-- **registry/**: Component registry (COMPONENT_REGISTRY, query functions)
-- **logging/**: LogTags enum, TaggedLogger types, createTaggedLoggerFactory
-- **config/**: Settings defaults, enums, JSON schema generation
-- **errors/**: ModuleError class, error factories, suggestion mapping
-- **utils/**: LRUCache, Semaphore, validation helpers
+- **`@mdx-preview/contracts`** (`packages/contracts/`): Types, enums, constants, error classes, logger factory
+- **`@mdx-preview/registry`** (`packages/registry/`): Callout types, icon definitions, pure queries
+- **`@mdx-preview/runtime-utils`** (`packages/runtime-utils/`): LRU cache, Semaphore, validation, error handling, module ID
+- **`@mdx-preview/codegen`** (`packages/codegen/`): Code generation scripts & libraries
 
-### Webview Side (`packages/webview-app`)
+### Webview Side (`packages/webview-client`)
 
 The webview is a React 18 app running in an isolated iframe:
 
-- **App.tsx**: Main component, switches between Safe/Trusted mode
-- **SafePreview.tsx**: Renders sanitized HTML (Safe Mode)
-- **TrustedPreview.tsx**: Evaluates and renders MDX (Trusted Mode)
-- **module-system/**: Module registry, loader, evaluator, style/dependency caching
-- **context/**: Granular React contexts (Trust, Preview, Loading, Nextra, Theme)
-- **components/shims/**: Framework-specific component shims
+- **app/App.tsx**: Main component, switches between Safe/Trusted mode
+- **features/preview/safe/**: Renders sanitized HTML (Safe Mode)
+- **features/preview/trusted/**: Evaluates and renders MDX (Trusted Mode)
+- **features/module-runtime/**: Module registry, loader, preload, style/dependency caching
+- **features/shims/**: Framework component shim re-exports (from mdx-tools)
+- **features/diagrams/**: Mermaid, PlantUML, Graphviz rendering
+- **features/code-block/**: Code block enhancement & KaTeX
+- **app/state/**: Granular React contexts (Trust, Preview, Loading, Nextra, Theme)
+- **platform/rpc/**: Webview-side RPC with message queuing and three-phase flush
+- **generated/**: Code-generated files (preload, shim-barrels, CSS loader)
 
 ### Communication
 
 Extension and webview communicate via Comlink RPC:
 
-- **rpc-extension.ts**: Extension-side RPC endpoint
-- **rpc-webview.ts**: Webview-side RPC with message queuing and three-phase flush
+- **platform/rpc/extension-endpoint.ts**: Extension-side RPC endpoint
+- **platform/rpc/webview-rpc-client.ts**: Webview-side RPC with message queuing and three-phase flush
 
 ## Security Model
 
@@ -177,7 +188,7 @@ When enabled:
 npm test
 ```
 
-Tests are in `tests/` at the repo root, organized by category: `tests/extension/`, `tests/webview/`, `tests/compilation/`, `tests/resolution/`, `tests/security/`, `tests/services/`, and `tests/integration/`. The vscode module is mocked via `packages/extension/test/__mocks__/vscode.ts`.
+Tests are in `tests/` at the repo root, organized by category: `tests/extension/`, `tests/webview/`, `tests/compilation/`, `tests/resolution/`, `tests/security/`, `tests/services/`, and `tests/integration/`. The vscode module is mocked via `packages/extension-host/test/__mocks__/vscode.ts`.
 
 ### Integration Tests
 
@@ -222,7 +233,7 @@ The extension uses a tagged logger pattern for consistent, filterable output:
 
 ```typescript
 import { createTaggedLogger } from './logging';
-import { LogTags } from '@mdx-preview/shared';
+import { LogTags } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.MY_SUBSYSTEM);
 log.debug('Processing module', { moduleId });
@@ -236,7 +247,7 @@ All subsystems use `LogTags` from the shared package. The `prefer-tagged-logger`
 
 ### Extension
 
-1. Set breakpoints in `packages/extension/`
+1. Set breakpoints in `packages/extension-host/`
 2. Press `F5` to launch Extension Development Host
 3. Use Debug Console for output
 
