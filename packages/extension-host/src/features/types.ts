@@ -1,8 +1,8 @@
 // feature-level type barrel
 
 export * from './commands/types';
-// compilation types sourced from mdx-tools/compiler (selective to avoid name conflicts)
-export type { MdxJsxElement, MdxJsxAttribute } from 'mdx-tools/compiler';
+// compilation types sourced from mdx-forge/compiler (selective to avoid name conflicts)
+export type { MdxJsxElement, MdxJsxAttribute } from 'mdx-forge/compiler';
 export * from './diagnostics/types';
 export * from './framework/types';
 export * from './module-runtime/types/module-system';

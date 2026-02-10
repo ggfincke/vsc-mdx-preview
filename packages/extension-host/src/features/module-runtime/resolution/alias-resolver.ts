@@ -8,7 +8,7 @@ import {
   SHIM_PREFIX,
   getCanonicalComponentName,
   isGenericComponent,
-} from 'mdx-tools/components/registry';
+} from 'mdx-forge/components/registry';
 import { normalizePathSeparators } from '../../../shared/utils/path-utils';
 
 type AliasFrameworkKey = Exclude<FrameworkId, 'generic'>;

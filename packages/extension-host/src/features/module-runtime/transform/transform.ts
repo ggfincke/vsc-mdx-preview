@@ -8,7 +8,7 @@ import { createLazyImport } from '../../../shared/utils/lazy-import';
 import { transpileWithFallback } from './selector';
 import {
   buildCompilerConfig,
-  toMdxToolsCompilerConfig,
+  toMdxForgeCompilerConfig,
 } from '../../../shared/config/EffectivePreviewConfig';
 import { debug } from '../../../shared/logging/logger';
 import {
@@ -20,7 +20,7 @@ import type { CompilerConfig } from '../../types';
 
 // lazy load Trusted Mode compiler - only loaded when Trusted Mode is actually used
 const getCompileTrustedModule = createLazyImport(
-  () => import('mdx-tools/compiler')
+  () => import('mdx-forge/compiler')
 );
 
 // re-export canonical type definitions from types/
@@ -49,7 +49,7 @@ async function transformEntry(
     const mdxResult = await compileTrusted(
       code,
       true,
-      toMdxToolsCompilerConfig(compilerConfig)
+      toMdxForgeCompilerConfig(compilerConfig)
     );
     code = mdxResult.code;
     frontmatter = mdxResult.frontmatter;
@@ -92,7 +92,7 @@ async function transform(
     const mdxResult = await compileTrusted(
       code,
       false,
-      toMdxToolsCompilerConfig(compilerConfig)
+      toMdxForgeCompilerConfig(compilerConfig)
     );
     code = mdxResult.code;
   }

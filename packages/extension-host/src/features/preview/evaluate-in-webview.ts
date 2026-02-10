@@ -22,7 +22,7 @@ import {
   resolveNextraMeta,
   mergeNextraMeta,
 } from '../framework/nextra/MetaResolver';
-import { extractNextraFrontmatter } from 'mdx-tools/compiler';
+import { extractNextraFrontmatter } from 'mdx-forge/compiler';
 import {
   buildEffectivePreviewConfig,
   toCompilerConfig,

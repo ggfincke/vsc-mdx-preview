@@ -19,7 +19,7 @@ import type {
   BuildEffectiveConfigOptions,
   CompilerConfig,
 } from '../types';
-import type { CompilerConfig as MdxToolsCompilerConfig } from 'mdx-tools/compiler';
+import type { CompilerConfig as MdxForgeCompilerConfig } from 'mdx-forge/compiler';
 
 // build unified effective preview configuration
 export function buildEffectivePreviewConfig(
@@ -123,10 +123,10 @@ export function buildCompilerConfig(
   return toCompilerConfig(effectiveConfig, options);
 }
 
-// project extension compiler config to mdx-tools/compiler contract
-export function toMdxToolsCompilerConfig(
+// project extension compiler config to mdx-forge/compiler contract
+export function toMdxForgeCompilerConfig(
   config: CompilerConfig
-): MdxToolsCompilerConfig {
+): MdxForgeCompilerConfig {
   const docUri = config.docUri.toString();
   return {
     documentPath: config.docFsPath,

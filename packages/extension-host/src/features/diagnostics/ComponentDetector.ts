@@ -8,7 +8,7 @@ import remarkMdx from 'remark-mdx';
 import { visit } from 'unist-util-visit';
 import type { Root } from 'mdast';
 import matter from 'gray-matter';
-import { KNOWN_GENERIC_COMPONENTS } from 'mdx-tools/compiler';
+import { KNOWN_GENERIC_COMPONENTS } from 'mdx-forge/compiler';
 import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
 import {
   ContentHashCache,
@@ -28,7 +28,7 @@ import {
   getCanonicalComponentName,
   getGenericComponentSet,
   isFrameworkComponent,
-} from 'mdx-tools/components/registry';
+} from 'mdx-forge/components/registry';
 
 const log = createTaggedLogger(LogTags.COMPONENT_DETECTOR);
 

@@ -15,7 +15,7 @@ const log = createTaggedLogger(LogTags.ENGINE);
 
 // lazy load Safe Mode compiler - only loaded when Safe Mode is actually used
 const getCompileSafeModule = createLazyImport(
-  () => import('mdx-tools/compiler')
+  () => import('mdx-forge/compiler')
 );
 import { ErrorContext } from '../../shared/errors';
 import { getTailwindProcessor, getErrorReporter } from '../../app/services';
@@ -23,7 +23,7 @@ import {
   TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
   MDX_COMPILATION_TIMEOUT_MS,
 } from '../../shared/constants';
-import { toMdxToolsCompilerConfig } from '../../shared/config/EffectivePreviewConfig';
+import { toMdxForgeCompilerConfig } from '../../shared/config/EffectivePreviewConfig';
 import type { Preview, WebviewHandle } from './preview-manager';
 import type { TrustState } from '@mdx-preview/contracts';
 import type {
@@ -120,7 +120,7 @@ export class EvaluationEngine {
     log.debug('Compiling to safe HTML...');
     const { html, frontmatter } = await compileSafe(
       text,
-      toMdxToolsCompilerConfig(compilerConfig)
+      toMdxForgeCompilerConfig(compilerConfig)
     );
     log.debug(`Safe HTML compiled, length: ${html.length}`);
 

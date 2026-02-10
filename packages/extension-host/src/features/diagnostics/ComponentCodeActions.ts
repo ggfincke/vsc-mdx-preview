@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { writeFileSync } from 'fs';
 import { DIAGNOSTIC_CODES } from './ComponentDiagnostics';
-import { KNOWN_GENERIC_COMPONENTS } from 'mdx-tools/compiler';
+import { KNOWN_GENERIC_COMPONENTS } from 'mdx-forge/compiler';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { ConfigError, ErrorContext } from '../../shared/errors';
 import { LogTags } from '@mdx-preview/contracts';
