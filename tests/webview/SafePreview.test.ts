@@ -2,7 +2,7 @@
 // XSS prevention tests for Safe Mode DOMPurify configuration
 //
 // verify DOMPurify allowlist configuration used by SafePreview
-// includes both config validation & actual payload injection tests
+// include both config validation & actual payload injection tests
 //
 // @vitest-environment jsdom
 

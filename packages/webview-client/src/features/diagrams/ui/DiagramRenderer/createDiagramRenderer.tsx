@@ -23,7 +23,7 @@ export interface DiagramRendererConfig<P extends DiagramRendererBaseProps> {
   // log tag for tagged logger
   logTag: string;
   // render function: produce SVG string from props
-  // receives themeValue from useThemeValue hook
+  // receive themeValue from useThemeValue hook
   render: (
     props: P,
     signal: CancellationSignal,

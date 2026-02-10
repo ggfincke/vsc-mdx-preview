@@ -26,6 +26,9 @@ coverage/
 # OS files
 .DS_Store
 Thumbs.db
+Desktop.ini
+nul
+NUL
 
 # IDE
 .idea/

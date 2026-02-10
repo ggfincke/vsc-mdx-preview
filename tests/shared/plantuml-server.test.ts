@@ -1,5 +1,5 @@
 // tests/shared/plantuml-server.test.ts
-// unit tests for PlantUML server constant and runtime URL helpers
+// unit tests for PlantUML server constant & runtime URL helpers
 
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PLANTUML_SERVER } from '@mdx-preview/contracts';
