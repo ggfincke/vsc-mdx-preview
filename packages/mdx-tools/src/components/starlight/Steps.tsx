@@ -1,0 +1,17 @@
+// packages/webview-app/src/components/shims/starlight/Steps.tsx
+// Starlight Steps component shim for MDX Preview
+// provide preview-compatible version of @astrojs/starlight/components Steps
+
+import React, { ReactNode, ReactElement } from 'react';
+
+// steps props (compatible w/ Starlight)
+export interface StepsProps {
+  children: ReactNode;
+}
+
+// steps component - render numbered steps from ordered list children
+export function Steps({ children }: StepsProps): ReactElement {
+  return <div className="mdx-preview-starlight-steps">{children}</div>;
+}
+
+export default Steps;

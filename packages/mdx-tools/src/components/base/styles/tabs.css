@@ -1,0 +1,97 @@
+/* packages/webview-app/src/components/shims/base/styles/tabs.css */
+/* Shared tabs styles using data-attribute selectors */
+/* Works w/ all frameworks that use createTabs() factory */
+
+/* Import shared tokens */
+@import '../../shared/tokens.css';
+
+/* ==================== Base Structure ==================== */
+[data-component='tabs'] {
+  margin: var(--mdx-space-lg) 0;
+  border: 1px solid var(--vscode-panel-border, var(--mdx-border-color));
+  border-radius: var(--mdx-radius-lg);
+  overflow: hidden;
+}
+
+/* Tab header / tablist */
+[data-component='tabs'] [role='tablist'] {
+  display: flex;
+  gap: 0;
+  background-color: var(--vscode-editor-background, var(--mdx-bg-secondary));
+  border-bottom: 1px solid var(--vscode-panel-border, var(--mdx-border-color));
+  overflow-x: auto;
+}
+
+/* Tab buttons */
+[data-component='tabs'] [role='tab'] {
+  padding: var(--mdx-space-md) var(--mdx-space-xl);
+  border: none;
+  background: transparent;
+  color: var(--vscode-foreground, var(--mdx-text-primary));
+  font-size: 0.9rem;
+  font-weight: var(--mdx-font-weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all var(--mdx-transition-normal) ease;
+}
+
+[data-component='tabs'] [role='tab']:hover {
+  background-color: var(
+    --vscode-list-hoverBackground,
+    rgba(0, 0, 0, var(--mdx-alpha-hover))
+  );
+}
+
+[data-component='tabs'] [role='tab'][aria-selected='true'],
+[data-component='tabs'] [role='tab'].active {
+  color: var(--vscode-textLink-foreground, var(--mdx-link-color));
+  border-bottom-color: var(--vscode-textLink-foreground, var(--mdx-link-color));
+  background-color: var(--vscode-editor-background, var(--mdx-bg-primary));
+}
+
+[data-component='tabs'] [role='tab']:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder, var(--mdx-link-color));
+  outline-offset: -2px;
+}
+
+/* Tab content container */
+[data-component='tabs'] > [class*='-content'] {
+  background-color: var(--vscode-editor-background, var(--mdx-bg-primary));
+}
+
+/* Tab panels */
+[data-component='tabs'] [role='tabpanel'] {
+  padding: var(--mdx-space-lg);
+}
+
+[data-component='tabs'] [role='tabpanel'] > :first-child {
+  margin-top: 0;
+}
+
+[data-component='tabs'] [role='tabpanel'] > :last-child {
+  margin-bottom: 0;
+}
+
+[data-component='tabs'] [role='tabpanel'][hidden] {
+  display: none;
+}
+
+/* ==================== Dark Mode ==================== */
+/* Dark mode values are handled by VS Code CSS variables w/ fallbacks to tokens */
+/* --mdx-border-color & other tokens are updated in .vscode-dark via tokens.css */
+
+.vscode-dark [data-component='tabs'] {
+  border-color: var(--vscode-panel-border, var(--mdx-border-color));
+}
+
+.vscode-dark [data-component='tabs'] [role='tablist'] {
+  background-color: var(--vscode-editor-background, var(--mdx-bg-secondary));
+  border-bottom-color: var(--vscode-panel-border, var(--mdx-border-color));
+}
+
+.vscode-dark [data-component='tabs'] [role='tab'][aria-selected='true'],
+.vscode-dark [data-component='tabs'] [role='tab'].active {
+  background-color: var(--vscode-editor-background, var(--mdx-bg-primary));
+}

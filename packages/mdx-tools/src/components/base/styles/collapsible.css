@@ -1,0 +1,96 @@
+/* packages/webview-app/src/components/shims/base/styles/collapsible.css */
+/* Shared collapsible/details styles using data-attribute selectors */
+/* Works w/ all frameworks that use createCollapsible */
+
+/* Import shared tokens */
+@import '../../shared/tokens.css';
+
+/* ==================== Base Structure ==================== */
+[data-component='collapsible'] {
+  margin: var(--mdx-space-lg) 0;
+  border: 1px solid var(--vscode-panel-border, var(--mdx-border-color));
+  border-radius: var(--mdx-radius-lg);
+  overflow: hidden;
+}
+
+/* Summary / header element */
+[data-component='collapsible'] > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--mdx-space-sm);
+  padding: var(--mdx-space-md) var(--mdx-space-lg);
+  cursor: pointer;
+  background-color: var(--vscode-editor-background, var(--mdx-bg-secondary));
+  font-weight: var(--mdx-font-weight-medium);
+  list-style: none;
+  user-select: none;
+}
+
+/* Hide native disclosure markers */
+[data-component='collapsible'] > summary::-webkit-details-marker {
+  display: none;
+}
+
+[data-component='collapsible'] > summary::marker {
+  display: none;
+}
+
+[data-component='collapsible'] > summary:hover {
+  background-color: var(
+    --vscode-list-hoverBackground,
+    rgba(0, 0, 0, var(--mdx-alpha-hover))
+  );
+}
+
+/* Icon container */
+[data-component='collapsible'] > summary > [class*='-icon'] {
+  display: inline-flex;
+  align-items: center;
+  transition: transform var(--mdx-transition-normal) ease;
+}
+
+/* Icon rotation when open */
+[data-component='collapsible'] > summary > [class*='-icon'].open,
+[data-component='collapsible'] > summary > [class*='-icon'].expanded {
+  transform: rotate(90deg);
+}
+
+[data-component='collapsible'] > summary > [class*='-icon'] svg {
+  width: 1em;
+  height: 1em;
+}
+
+/* Title text */
+[data-component='collapsible'] > summary > [class*='-title'],
+[data-component='collapsible'] > summary > [class*='-text'] {
+  flex: 1;
+}
+
+/* Content container */
+[data-component='collapsible'] > [class*='-content'] {
+  padding: var(--mdx-space-lg);
+  border-top: 1px solid var(--vscode-panel-border, var(--mdx-border-color));
+}
+
+[data-component='collapsible'] > [class*='-content'] > :first-child {
+  margin-top: 0;
+}
+
+[data-component='collapsible'] > [class*='-content'] > :last-child {
+  margin-bottom: 0;
+}
+
+/* ==================== Dark Mode ==================== */
+/* Dark mode values are handled by VS Code CSS variables w/ fallbacks to tokens */
+
+.vscode-dark [data-component='collapsible'] {
+  border-color: var(--vscode-panel-border, var(--mdx-border-color));
+}
+
+.vscode-dark [data-component='collapsible'] > summary {
+  background-color: var(--vscode-editor-background, var(--mdx-bg-primary));
+}
+
+.vscode-dark [data-component='collapsible'] > [class*='-content'] {
+  border-top-color: var(--vscode-panel-border, var(--mdx-border-color));
+}

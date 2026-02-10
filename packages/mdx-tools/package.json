@@ -1,0 +1,112 @@
+{
+  "name": "mdx-tools",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    "./compiler": {
+      "import": "./dist/esm/compiler/index.js",
+      "types": "./dist/types/compiler/index.d.ts"
+    },
+    "./compiler/plugins": {
+      "import": "./dist/esm/compiler/plugins/index.js",
+      "types": "./dist/types/compiler/plugins/index.d.ts"
+    },
+    "./compiler/transforms": {
+      "import": "./dist/esm/compiler/transforms/index.js",
+      "types": "./dist/types/compiler/transforms/index.d.ts"
+    },
+    "./browser": {
+      "import": "./dist/esm/browser/index.js",
+      "types": "./dist/types/browser/index.d.ts"
+    },
+    "./browser/registry": {
+      "import": "./dist/esm/browser/registry/index.js",
+      "types": "./dist/types/browser/registry/index.d.ts"
+    },
+    "./components": {
+      "import": "./dist/esm/components/index.js",
+      "types": "./dist/types/components/index.d.ts"
+    },
+    "./components/generic": {
+      "import": "./dist/esm/components/generic/index.js",
+      "types": "./dist/types/components/generic/index.d.ts"
+    },
+    "./components/docusaurus": {
+      "import": "./dist/esm/components/docusaurus/index.js",
+      "types": "./dist/types/components/docusaurus/index.d.ts"
+    },
+    "./components/starlight": {
+      "import": "./dist/esm/components/starlight/index.js",
+      "types": "./dist/types/components/starlight/index.d.ts"
+    },
+    "./components/nextra": {
+      "import": "./dist/esm/components/nextra/index.js",
+      "types": "./dist/types/components/nextra/index.d.ts"
+    },
+    "./components/nextjs": {
+      "import": "./dist/esm/components/nextjs/index.js",
+      "types": "./dist/types/components/nextjs/index.d.ts"
+    },
+    "./components/registry": {
+      "import": "./dist/esm/components/registry/index.js",
+      "types": "./dist/types/components/registry/index.d.ts"
+    },
+    "./components/styles/generic.css": "./dist/components/styles/generic.css",
+    "./components/styles/docusaurus.css": "./dist/components/styles/docusaurus.css",
+    "./components/styles/starlight.css": "./dist/components/styles/starlight.css",
+    "./components/styles/nextra.css": "./dist/components/styles/nextra.css",
+    "./components/styles/nextjs.css": "./dist/components/styles/nextjs.css",
+    "./components/styles/tokens.css": "./dist/components/styles/tokens.css"
+  },
+  "peerDependencies": {
+    "@mdx-js/mdx": "^3.0.0",
+    "unified": "^11.0.0",
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "@mdx-js/mdx": {
+      "optional": true
+    },
+    "unified": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.2",
+    "hast-util-from-html-isomorphic": "^2.0.0",
+    "rehype-autolink-headings": "^7.1.0",
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "rehype-slug": "^6.0.0",
+    "rehype-stringify": "^10.0.0",
+    "remark-directive": "^4.0.0",
+    "remark-gfm": "^4.0.0",
+    "remark-math": "^6.0.0",
+    "remark-mdx": "^3.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.0.0",
+    "shiki": "^1.29.2",
+    "unist-util-visit": "^5.0.0"
+  },
+  "scripts": {
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.build.json && node ./scripts/copy-css.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run build && node ../../scripts/check-library-publication-gate.mjs --package mdx-tools"
+  }
+}

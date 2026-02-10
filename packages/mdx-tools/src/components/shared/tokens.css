@@ -1,0 +1,105 @@
+/* packages/webview-app/src/components/shims/shared/tokens.css */
+/* Shared CSS custom properties for all shim components */
+/* This is the single source of truth for colors, spacing, & other design tokens */
+
+:root {
+  /* ==================== Semantic Colors ==================== */
+  /* Note/Info - Blue (Google Material style) */
+  --mdx-color-note: #4285f4;
+  --mdx-color-note-rgb: 66, 133, 244;
+
+  /* Tip/Success - Green (Google Material style) */
+  --mdx-color-tip: #34a853;
+  --mdx-color-tip-rgb: 52, 168, 83;
+
+  /* Warning/Caution - Amber */
+  --mdx-color-warning: #f59e0b;
+  --mdx-color-warning-rgb: 245, 158, 11;
+
+  /* Danger/Error - Red */
+  --mdx-color-danger: #ef4444;
+  --mdx-color-danger-rgb: 239, 68, 68;
+
+  /* Important - Purple */
+  --mdx-color-important: #8b5cf6;
+  --mdx-color-important-rgb: 139, 92, 246;
+
+  /* Aliases - map to canonical colors */
+  --mdx-color-info: var(--mdx-color-note);
+  --mdx-color-info-rgb: var(--mdx-color-note-rgb);
+  --mdx-color-caution: var(--mdx-color-warning);
+  --mdx-color-caution-rgb: var(--mdx-color-warning-rgb);
+  --mdx-color-success: var(--mdx-color-tip);
+  --mdx-color-success-rgb: var(--mdx-color-tip-rgb);
+  --mdx-color-error: var(--mdx-color-danger);
+  --mdx-color-error-rgb: var(--mdx-color-danger-rgb);
+
+  /* ==================== UI Colors ==================== */
+  --mdx-border-color: #e0e0e0;
+  --mdx-bg-primary: #fff;
+  --mdx-bg-secondary: #f5f5f5;
+  --mdx-bg-tertiary: #f3f3f3;
+  --mdx-text-primary: #333;
+  --mdx-text-secondary: #666;
+  --mdx-text-muted: #888;
+  --mdx-link-color: #0066cc;
+
+  /* ==================== Opacity Tokens ==================== */
+  /* Background alpha for light mode */
+  --mdx-alpha-subtle: 0.1;
+  /* Background alpha for dark mode (slightly higher) */
+  --mdx-alpha-subtle-dark: 0.15;
+  /* Border alpha (for bordered callouts) */
+  --mdx-alpha-border: 0.3;
+  /* Hover state alpha */
+  --mdx-alpha-hover: 0.05;
+
+  /* ==================== Spacing ==================== */
+  --mdx-space-xs: 0.25rem;
+  --mdx-space-sm: 0.5rem;
+  --mdx-space-md: 0.75rem;
+  --mdx-space-lg: 1rem;
+  --mdx-space-xl: 1.25rem;
+
+  /* ==================== Border Radius ==================== */
+  --mdx-radius-sm: 4px;
+  --mdx-radius-md: 6px;
+  --mdx-radius-lg: 8px;
+
+  /* ==================== Typography ==================== */
+  --mdx-font-weight-medium: 500;
+  --mdx-font-weight-semibold: 600;
+  --mdx-font-size-sm: 0.85rem;
+  --mdx-font-size-xs: 0.75rem;
+  --mdx-letter-spacing-wide: 0.025em;
+
+  /* ==================== Animation ==================== */
+  --mdx-transition-fast: 0.15s;
+  --mdx-transition-normal: 0.2s;
+  --mdx-transition-slow: 0.4s;
+
+  /* ==================== Component-Specific ==================== */
+  /* Callout border width for left-border style */
+  --mdx-callout-border-width: 4px;
+}
+
+/* ==================== Dark Mode Overrides ==================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mdx-border-color: #333;
+    --mdx-bg-primary: #1e1e1e;
+    --mdx-bg-secondary: #252526;
+    --mdx-bg-tertiary: #252526;
+    --mdx-alpha-subtle: var(--mdx-alpha-subtle-dark);
+  }
+}
+
+/* VS Code host adapter for webview theme variables */
+.vscode-dark {
+  --mdx-border-color: #333;
+  --mdx-bg-primary: #1e1e1e;
+  --mdx-bg-secondary: #252526;
+  --mdx-bg-tertiary: #252526;
+  /* Use darker alpha for dark mode */
+  --mdx-alpha-subtle: var(--mdx-alpha-subtle-dark);
+}

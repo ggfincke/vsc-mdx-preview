@@ -1,0 +1,602 @@
+/* packages/webview-app/src/components/shims/starlight/styles.css */
+/* Starlight component shim styles */
+/* Designed to closely match Starlight default styling */
+
+/* Import shared tokens */
+@import '../shared/tokens.css';
+
+/* ==================== Card ==================== */
+.mdx-preview-starlight-card {
+  padding: var(--mdx-space-lg) var(--mdx-space-xl);
+  border: 1px solid var(--vscode-panel-border, var(--mdx-border-color));
+  border-radius: var(--mdx-radius-lg);
+  background-color: var(--vscode-editor-background, var(--mdx-bg-primary));
+}
+
+.mdx-preview-starlight-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--mdx-space-sm);
+  margin-bottom: var(--mdx-space-md);
+}
+
+.mdx-preview-starlight-card-icon {
+  font-size: 1.25rem;
+}
+
+.mdx-preview-starlight-card-title {
+  font-weight: var(--mdx-font-weight-semibold);
+  font-size: 1.1rem;
+  color: var(--vscode-foreground, var(--mdx-text-primary));
+}
+
+.mdx-preview-starlight-card-content {
+  color: var(--vscode-descriptionForeground, var(--mdx-text-secondary));
+  font-size: 0.95rem;
+}
+
+.mdx-preview-starlight-card-content > :first-child {
+  margin-top: 0;
+}
+
+.mdx-preview-starlight-card-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* ==================== CardGrid ==================== */
+.mdx-preview-starlight-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--mdx-space-lg);
+  margin: var(--mdx-space-lg) 0;
+}
+
+/* Stagger animation */
+@keyframes starlight-card-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mdx-preview-starlight-card-grid.stagger > .mdx-preview-starlight-card {
+  animation: starlight-card-fade-in 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.mdx-preview-starlight-card-grid.stagger
+  > .mdx-preview-starlight-card:nth-child(1) {
+  animation-delay: 0s;
+}
+.mdx-preview-starlight-card-grid.stagger
+  > .mdx-preview-starlight-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.mdx-preview-starlight-card-grid.stagger
+  > .mdx-preview-starlight-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.mdx-preview-starlight-card-grid.stagger
+  > .mdx-preview-starlight-card:nth-child(4) {
+  animation-delay: 0.3s;
+}
+.mdx-preview-starlight-card-grid.stagger
+  > .mdx-preview-starlight-card:nth-child(5) {
+  animation-delay: 0.4s;
+}
+.mdx-preview-starlight-card-grid.stagger
+  > .mdx-preview-starlight-card:nth-child(6) {
+  animation-delay: 0.5s;
+}
+
+/* ==================== LinkCard ==================== */
+.mdx-preview-starlight-link-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--vscode-panel-border, #e0e0e0);
+  border-radius: 8px;
+  background-color: var(--vscode-editor-background, #fff);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.mdx-preview-starlight-link-card:hover {
+  border-color: var(--vscode-textLink-foreground, #0066cc);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mdx-preview-starlight-link-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mdx-preview-starlight-link-card-title {
+  font-weight: 600;
+  color: var(--vscode-textLink-foreground, #0066cc);
+}
+
+.mdx-preview-starlight-link-card-description {
+  font-size: 0.9rem;
+  color: var(--vscode-descriptionForeground, #666);
+}
+
+.mdx-preview-starlight-link-card-arrow {
+  color: var(--vscode-textLink-foreground, #0066cc);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all 0.2s ease;
+}
+
+.mdx-preview-starlight-link-card:hover .mdx-preview-starlight-link-card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ==================== Steps ==================== */
+.mdx-preview-starlight-steps {
+  margin: 1rem 0;
+  padding-left: 0;
+}
+
+.mdx-preview-starlight-steps ol {
+  counter-reset: step-counter;
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.mdx-preview-starlight-steps ol > li {
+  position: relative;
+  padding-left: 2.5rem;
+  padding-bottom: 1rem;
+  border-left: 2px solid var(--vscode-panel-border, #e0e0e0);
+  margin-left: 0.75rem;
+}
+
+.mdx-preview-starlight-steps ol > li::before {
+  content: counter(step-counter);
+  counter-increment: step-counter;
+  position: absolute;
+  left: -0.85rem;
+  top: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--vscode-textLink-foreground, #0066cc);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.mdx-preview-starlight-steps ol > li:last-child {
+  border-left-color: transparent;
+  padding-bottom: 0;
+}
+
+/* ==================== Badge ==================== */
+.mdx-preview-starlight-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.mdx-preview-starlight-badge-small {
+  font-size: 0.7rem;
+}
+
+.mdx-preview-starlight-badge-medium {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.75rem;
+}
+
+.mdx-preview-starlight-badge-large {
+  font-size: 0.9rem;
+  padding: 0.375rem 1rem;
+}
+
+.mdx-preview-starlight-badge-default {
+  background-color: var(--vscode-badge-background, rgba(128, 128, 128, 0.2));
+  color: var(--vscode-badge-foreground, #333);
+}
+
+.mdx-preview-starlight-badge-note {
+  background-color: rgba(66, 133, 244, 0.15);
+  color: #4285f4;
+}
+
+.mdx-preview-starlight-badge-tip {
+  background-color: rgba(52, 168, 83, 0.15);
+  color: #34a853;
+}
+
+.mdx-preview-starlight-badge-caution {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.mdx-preview-starlight-badge-danger {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.mdx-preview-starlight-badge-success {
+  background-color: rgba(52, 168, 83, 0.15);
+  color: #34a853;
+}
+
+/* ==================== Aside ==================== */
+.mdx-preview-starlight-aside {
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  border-left: 4px solid;
+  border-radius: 0 8px 8px 0;
+  background-color: var(--aside-bg, rgba(128, 128, 128, 0.1));
+}
+
+.mdx-preview-starlight-aside-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.025em;
+}
+
+.mdx-preview-starlight-aside-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mdx-preview-starlight-aside-icon svg {
+  width: 1.25em;
+  height: 1.25em;
+}
+
+.mdx-preview-starlight-aside-content > :first-child {
+  margin-top: 0;
+}
+
+.mdx-preview-starlight-aside-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* Aside variants */
+.mdx-preview-starlight-aside-note {
+  --aside-color: #4285f4;
+  --aside-bg: rgba(66, 133, 244, 0.1);
+  border-color: var(--aside-color);
+}
+
+.mdx-preview-starlight-aside-note .mdx-preview-starlight-aside-header {
+  color: var(--aside-color);
+}
+
+.mdx-preview-starlight-aside-tip {
+  --aside-color: #34a853;
+  --aside-bg: rgba(52, 168, 83, 0.1);
+  border-color: var(--aside-color);
+}
+
+.mdx-preview-starlight-aside-tip .mdx-preview-starlight-aside-header {
+  color: var(--aside-color);
+}
+
+.mdx-preview-starlight-aside-caution {
+  --aside-color: #f59e0b;
+  --aside-bg: rgba(245, 158, 11, 0.1);
+  border-color: var(--aside-color);
+}
+
+.mdx-preview-starlight-aside-caution .mdx-preview-starlight-aside-header {
+  color: var(--aside-color);
+}
+
+.mdx-preview-starlight-aside-danger {
+  --aside-color: #ef4444;
+  --aside-bg: rgba(239, 68, 68, 0.1);
+  border-color: var(--aside-color);
+}
+
+.mdx-preview-starlight-aside-danger .mdx-preview-starlight-aside-header {
+  color: var(--aside-color);
+}
+
+/* ==================== Dark Mode ==================== */
+.vscode-dark .mdx-preview-starlight-card,
+.vscode-dark .mdx-preview-starlight-link-card {
+  border-color: var(--vscode-panel-border, #333);
+  background-color: var(--vscode-editor-background, #1e1e1e);
+}
+
+.vscode-dark .mdx-preview-starlight-steps ol > li {
+  border-left-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .mdx-preview-starlight-aside-note {
+  --aside-bg: rgba(66, 133, 244, 0.15);
+}
+
+.vscode-dark .mdx-preview-starlight-aside-tip {
+  --aside-bg: rgba(52, 168, 83, 0.15);
+}
+
+.vscode-dark .mdx-preview-starlight-aside-caution {
+  --aside-bg: rgba(245, 158, 11, 0.15);
+}
+
+.vscode-dark .mdx-preview-starlight-aside-danger {
+  --aside-bg: rgba(239, 68, 68, 0.15);
+}
+
+/* ==================== FileTree ==================== */
+.mdx-preview-starlight-file-tree {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: var(--vscode-editor-background, #f5f5f5);
+  border: 1px solid var(--vscode-panel-border, #e0e0e0);
+  border-radius: 8px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 0.9rem;
+}
+
+.mdx-preview-starlight-file-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mdx-preview-starlight-file-tree ul ul {
+  padding-left: 1.25rem;
+  border-left: 1px solid var(--vscode-panel-border, #ddd);
+  margin-left: 0.5rem;
+}
+
+.mdx-preview-starlight-file-tree li {
+  position: relative;
+}
+
+.mdx-preview-starlight-file-tree-directory > details > summary,
+.mdx-preview-starlight-file-tree-file {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.mdx-preview-starlight-file-tree-directory > details > summary:hover,
+.mdx-preview-starlight-file-tree-file:hover {
+  background-color: var(--vscode-list-hoverBackground, rgba(0, 0, 0, 0.05));
+}
+
+.mdx-preview-starlight-file-tree .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--vscode-foreground, #666);
+}
+
+.mdx-preview-starlight-file-tree .icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.mdx-preview-starlight-file-tree .icon.chevron {
+  transition: transform 0.15s ease;
+}
+
+.mdx-preview-starlight-file-tree .icon.folder {
+  color: var(--vscode-symbolIcon-folderForeground, #dcb67a);
+}
+
+.mdx-preview-starlight-file-tree .icon.file {
+  color: var(--vscode-symbolIcon-fileForeground, #6997d5);
+}
+
+.mdx-preview-starlight-file-tree .name {
+  color: var(--vscode-foreground, #333);
+}
+
+.mdx-preview-starlight-file-tree .comment {
+  color: var(--vscode-descriptionForeground, #666);
+  font-style: italic;
+  margin-left: 0.5rem;
+}
+
+.mdx-preview-starlight-file-tree .highlighted .name,
+.mdx-preview-starlight-file-tree-file.highlighted .name {
+  background-color: var(
+    --vscode-editor-selectionBackground,
+    rgba(66, 133, 244, 0.2)
+  );
+  padding: 0 0.25rem;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+.mdx-preview-starlight-file-tree-placeholder {
+  padding: 0.25rem 0.5rem;
+  padding-left: 2.25rem;
+  color: var(--vscode-descriptionForeground, #888);
+}
+
+.mdx-preview-starlight-file-tree details > summary {
+  list-style: none;
+}
+
+.mdx-preview-starlight-file-tree details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.mdx-preview-starlight-file-tree details[open] > summary .icon.chevron {
+  transform: rotate(90deg);
+}
+
+/* ==================== Code ==================== */
+.mdx-preview-starlight-code {
+  margin: 1rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--vscode-panel-border, #e0e0e0);
+}
+
+.mdx-preview-starlight-code-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--vscode-editorGroupHeader-tabsBackground, #f3f3f3);
+  border-bottom: 1px solid var(--vscode-panel-border, #e0e0e0);
+  font-size: 0.85rem;
+}
+
+.mdx-preview-starlight-code-title {
+  color: var(--vscode-foreground, #333);
+}
+
+.mdx-preview-starlight-code-terminal .mdx-preview-starlight-code-header {
+  background-color: #2d2d2d;
+}
+
+.mdx-preview-starlight-code-terminal .mdx-preview-starlight-code-title {
+  color: #ccc;
+}
+
+.mdx-preview-starlight-code .terminal-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.mdx-preview-starlight-code .terminal-dots .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.mdx-preview-starlight-code .terminal-dots .dot.red {
+  background-color: #ff5f56;
+}
+
+.mdx-preview-starlight-code .terminal-dots .dot.yellow {
+  background-color: #ffbd2e;
+}
+
+.mdx-preview-starlight-code .terminal-dots .dot.green {
+  background-color: #27c93f;
+}
+
+.mdx-preview-starlight-code-container {
+  position: relative;
+}
+
+.mdx-preview-starlight-code-copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: var(
+    --vscode-button-secondaryBackground,
+    rgba(255, 255, 255, 0.1)
+  );
+  border: 1px solid var(--vscode-panel-border, #444);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 1;
+  color: var(--vscode-foreground, #ccc);
+}
+
+.mdx-preview-starlight-code-copy span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mdx-preview-starlight-code-container:hover .mdx-preview-starlight-code-copy {
+  opacity: 1;
+}
+
+.mdx-preview-starlight-code-copy:hover {
+  background: var(
+    --vscode-button-secondaryHoverBackground,
+    rgba(255, 255, 255, 0.2)
+  );
+}
+
+.mdx-preview-starlight-code-copy.copied {
+  opacity: 1;
+  color: #34a853;
+}
+
+.mdx-preview-starlight-code-lang {
+  position: absolute;
+  top: 0.5rem;
+  right: 3rem;
+  font-size: 0.75rem;
+  color: var(--vscode-descriptionForeground, #888);
+  text-transform: uppercase;
+}
+
+.mdx-preview-starlight-code pre {
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+  background-color: var(--vscode-editor-background, #1e1e1e);
+}
+
+.mdx-preview-starlight-code pre code {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.mdx-preview-starlight-code-terminal pre {
+  background-color: #1e1e1e;
+  color: #ccc;
+}
+
+/* ==================== Dark Mode (FileTree & Code) ==================== */
+.vscode-dark .mdx-preview-starlight-file-tree {
+  background-color: var(--vscode-editor-background, #1e1e1e);
+  border-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .mdx-preview-starlight-file-tree ul ul {
+  border-left-color: var(--vscode-panel-border, #444);
+}
+
+.vscode-dark .mdx-preview-starlight-code {
+  border-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .mdx-preview-starlight-code-header {
+  background-color: var(--vscode-editorGroupHeader-tabsBackground, #252526);
+  border-bottom-color: var(--vscode-panel-border, #333);
+}

@@ -1,0 +1,81 @@
+/* packages/webview-app/src/components/shims/shared/callout-variants.css */
+/* Callout type color mappings using shared tokens */
+/* Used by base callout.css & framework-specific callout styles */
+
+/* ==================== Data-Attribute Based Variants ==================== */
+/* Used by createCallout() factory via data-callout-type attribute */
+
+/* Note / Info - Blue */
+[data-callout-type='note'],
+[data-callout-type='info'] {
+  --callout-color: var(--mdx-color-note);
+  --callout-bg: rgba(var(--mdx-color-note-rgb), var(--mdx-alpha-subtle));
+}
+
+/* Tip / Success - Green */
+[data-callout-type='tip'],
+[data-callout-type='success'] {
+  --callout-color: var(--mdx-color-tip);
+  --callout-bg: rgba(var(--mdx-color-tip-rgb), var(--mdx-alpha-subtle));
+}
+
+/* Warning / Caution / Warn - Amber */
+[data-callout-type='warning'],
+[data-callout-type='caution'],
+[data-callout-type='warn'] {
+  --callout-color: var(--mdx-color-warning);
+  --callout-bg: rgba(var(--mdx-color-warning-rgb), var(--mdx-alpha-subtle));
+}
+
+/* Danger / Error - Red */
+[data-callout-type='danger'],
+[data-callout-type='error'] {
+  --callout-color: var(--mdx-color-danger);
+  --callout-bg: rgba(var(--mdx-color-danger-rgb), var(--mdx-alpha-subtle));
+}
+
+/* Important - Purple */
+[data-callout-type='important'] {
+  --callout-color: var(--mdx-color-important);
+  --callout-bg: rgba(var(--mdx-color-important-rgb), var(--mdx-alpha-subtle));
+}
+
+/* ==================== Utility Classes ==================== */
+/* For frameworks that need class-based color application */
+
+.mdx-callout-note {
+  --callout-color: var(--mdx-color-note);
+  --callout-bg: rgba(var(--mdx-color-note-rgb), var(--mdx-alpha-subtle));
+}
+.mdx-callout-info {
+  --callout-color: var(--mdx-color-info);
+  --callout-bg: rgba(var(--mdx-color-info-rgb), var(--mdx-alpha-subtle));
+}
+.mdx-callout-tip {
+  --callout-color: var(--mdx-color-tip);
+  --callout-bg: rgba(var(--mdx-color-tip-rgb), var(--mdx-alpha-subtle));
+}
+.mdx-callout-success {
+  --callout-color: var(--mdx-color-success);
+  --callout-bg: rgba(var(--mdx-color-success-rgb), var(--mdx-alpha-subtle));
+}
+.mdx-callout-warning {
+  --callout-color: var(--mdx-color-warning);
+  --callout-bg: rgba(var(--mdx-color-warning-rgb), var(--mdx-alpha-subtle));
+}
+.mdx-callout-caution {
+  --callout-color: var(--mdx-color-caution);
+  --callout-bg: rgba(var(--mdx-color-caution-rgb), var(--mdx-alpha-subtle));
+}
+.mdx-callout-danger {
+  --callout-color: var(--mdx-color-danger);
+  --callout-bg: rgba(var(--mdx-color-danger-rgb), var(--mdx-alpha-subtle));
+}
+.mdx-callout-error {
+  --callout-color: var(--mdx-color-error);
+  --callout-bg: rgba(var(--mdx-color-error-rgb), var(--mdx-alpha-subtle));
+}
+.mdx-callout-important {
+  --callout-color: var(--mdx-color-important);
+  --callout-bg: rgba(var(--mdx-color-important-rgb), var(--mdx-alpha-subtle));
+}
