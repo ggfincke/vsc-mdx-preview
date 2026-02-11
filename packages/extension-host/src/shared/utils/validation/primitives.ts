@@ -1,13 +1,20 @@
 // packages/extension/utils/validation/primitives.ts
 // primitive type validators (string, boolean, number, function)
 
-import { error as logError } from '../../logging/logger';
+import { createTaggedLogger } from '../../logging/logger';
+import { LogTags } from '@mdx-preview/contracts';
 import {
   formatContext,
   getLogger,
   createPrimitiveValidator,
   type ValidationOptions,
+  type LogFn,
 } from '../validation-factory';
+
+const log = createTaggedLogger(LogTags.CONFIG);
+
+// adapt tagged logger to LogFn for validation defaults
+const defaultError: LogFn = (message, data?) => log.error(message, data);
 
 // validate value is a string, optionally non-empty
 export function validateString(
@@ -35,7 +42,7 @@ export function validateString(
 export const validateBoolean = createPrimitiveValidator<boolean>({
   typeName: 'boolean',
   typeCheck: (v): v is boolean => typeof v === 'boolean',
-  defaultLog: logError,
+  defaultLog: defaultError,
   logValue: false,
 });
 

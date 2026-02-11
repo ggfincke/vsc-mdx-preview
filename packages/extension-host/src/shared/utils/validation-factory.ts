@@ -1,14 +1,20 @@
 // packages/extension/utils/validation-factory.ts
 // factory utilities for creating type validators w/ consistent boilerplate handling
 
-import { warn as logWarn } from '../logging/logger';
+import { createTaggedLogger } from '../logging/logger';
+import { LogTags } from '@mdx-preview/contracts';
 
 // log function type for validation errors
 export type LogFn = (message: string, data?: unknown) => void;
 
+const log = createTaggedLogger(LogTags.CONFIG);
+
+// adapt tagged logger to LogFn for validation defaults
+const defaultWarn: LogFn = (message, data?) => log.warn(message, data);
+
 // options for validation functions
 export interface ValidationOptions {
-  // log function to use (defaults to logWarn)
+  // log function to use (defaults to defaultWarn)
   log?: LogFn;
   // context for error messages (e.g., "fetch", "openDocument")
   context?: string;
@@ -22,7 +28,7 @@ export function formatContext(context?: string): string {
 // get the log function w/ fallback to default
 export function getLogger(
   opts?: ValidationOptions,
-  defaultLog: LogFn = logWarn
+  defaultLog: LogFn = defaultWarn
 ): LogFn {
   return opts?.log ?? defaultLog;
 }
@@ -36,7 +42,7 @@ export interface PrimitiveValidatorConfig<T> {
   typeName: string;
   // type guard function
   typeCheck: TypeChecker<T>;
-  // default log function (defaults to logWarn)
+  // default log function (defaults to defaultWarn)
   defaultLog?: LogFn;
   // include value in log output (defaults to true)
   logValue?: boolean;
@@ -46,7 +52,12 @@ export interface PrimitiveValidatorConfig<T> {
 export function createPrimitiveValidator<T>(
   config: PrimitiveValidatorConfig<T>
 ): (value: unknown, name: string, opts?: ValidationOptions) => T | undefined {
-  const { typeName, typeCheck, defaultLog = logWarn, logValue = true } = config;
+  const {
+    typeName,
+    typeCheck,
+    defaultLog = defaultWarn,
+    logValue = true,
+  } = config;
 
   return (
     value: unknown,

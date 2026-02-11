@@ -10,7 +10,10 @@ import {
   buildCompilerConfig,
   toMdxForgeCompilerConfig,
 } from '../../../shared/config/EffectivePreviewConfig';
-import { debug } from '../../../shared/logging/logger';
+import { createTaggedLogger } from '../../../shared/logging/logger';
+import { LogTags } from '@mdx-preview/contracts';
+
+const log = createTaggedLogger(LogTags.COMPILE);
 import {
   transpileTypeScript,
   isTypeScriptExtension,
@@ -56,7 +59,9 @@ async function transformEntry(
   }
 
   const useSucrase = preview.configuration.useSucraseTranspiler;
-  debug(`Transpiler: ${useSucrase ? 'Sucrase' : 'Babel'} selected for entry`);
+  log.debug(
+    `Transpiler: ${useSucrase ? 'Sucrase' : 'Babel'} selected for entry`
+  );
 
   if (isTypeScriptLanguage(languageId) && !useSucrase) {
     code = transpileTypeScript(code, fsPath, preview);
@@ -108,7 +113,7 @@ async function transform(
   const isInNodeModules = fsPath.split(path.sep).includes('node_modules');
   if (!isInNodeModules || isModule(code)) {
     const preferSucrase = isInNodeModules || useSucrase;
-    debug(
+    log.debug(
       `Transpiling dependency: ${fsPath} (${preferSucrase ? 'Sucrase' : 'Babel'})`
     );
     code = await transpileWithFallback(code, {

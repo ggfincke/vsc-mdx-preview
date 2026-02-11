@@ -9,7 +9,10 @@ import {
   ErrorSeverity,
 } from '../../shared/errors';
 import { getErrorReporter } from '../../app/services';
-import { warn as logWarn } from '../../shared/logging/logger';
+import { createTaggedLogger } from '../../shared/logging/logger';
+import { LogTags } from '@mdx-preview/contracts';
+
+const log = createTaggedLogger(LogTags.SECURITY);
 import type { Preview } from '../preview/preview-manager';
 
 // result of validating a secure path
@@ -30,7 +33,7 @@ export async function validateAndResolveSecurePath(
   // check entry directory exists
   const entryDir = preview.entryFsDirectory;
   if (!entryDir) {
-    logWarn(`${context}: no entry directory`);
+    log.warn(`${context}: no entry directory`);
     return undefined;
   }
 
@@ -86,7 +89,7 @@ export function requireEntryDirectory(
 ): string | undefined {
   const entryDir = preview.entryFsDirectory;
   if (!entryDir) {
-    logWarn(`${context}: no entry directory`);
+    log.warn(`${context}: no entry directory`);
     return undefined;
   }
   return entryDir;

@@ -2,7 +2,7 @@
 // abstract base class for singleton services w/ automatic lifecycle management
 
 import * as vscode from 'vscode';
-import { createTaggedLogger, debug } from '../../shared/logging/logger';
+import { createTaggedLogger } from '../../shared/logging/logger';
 import type { IService } from '../types';
 import type { LogTag, TaggedLogger } from '@mdx-preview/contracts';
 
@@ -19,6 +19,12 @@ export abstract class SingletonService<
   // use log tag for debug logging (e.g., LogTags.CONFIG_MANAGER)
   protected abstract readonly logTag: LogTag;
 
+  // lazy-initialized tagged logger (uses subclass logTag)
+  private _log?: TaggedLogger;
+  protected get log(): TaggedLogger {
+    return (this._log ??= createTaggedLogger(this.logTag));
+  }
+
   // note: don't access abstract properties (like logTag) here - they aren't available yet
   protected constructor() {
     // initialization logging moved to getInstance() since logTag is abstract
@@ -32,7 +38,7 @@ export abstract class SingletonService<
     const ctor = this as unknown as { instance?: S; new (): S };
     if (!ctor.instance) {
       ctor.instance = new ctor();
-      debug(`[${ctor.instance.logTag}] Initialized`);
+      ctor.instance.log.debug('Initialized');
     }
     return ctor.instance;
   }
@@ -50,7 +56,7 @@ export abstract class SingletonService<
     const ctor = this.constructor as typeof SingletonService;
     ctor.instance = undefined;
 
-    debug(`[${this.logTag}] Disposed`);
+    this.log.debug('Disposed');
   }
 
   // static dispose for direct singleton cleanup without instance reference

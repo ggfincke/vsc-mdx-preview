@@ -3,7 +3,8 @@
 
 import debounce from 'lodash.debounce';
 import * as vscode from 'vscode';
-import { debug } from '../../../shared/logging/logger';
+import { createTaggedLogger } from '../../../shared/logging/logger';
+import type { TaggedLogger } from '@mdx-preview/contracts';
 import {
   disposeCollection as disposeCollectionUtil,
   disposeOne,
@@ -25,6 +26,12 @@ export abstract class BaseWatcher implements IWatcher {
 
   // use log tag for debug logging (e.g., LogTags.DEP_WATCHER)
   protected abstract readonly logTag: LogTag;
+
+  // lazy-initialized tagged logger (uses subclass logTag)
+  private _log?: TaggedLogger;
+  private get log(): TaggedLogger {
+    return (this._log ??= createTaggedLogger(this.logTag));
+  }
 
   // promise-based readiness tracking (replaces polling)
   private _readyPromise: Promise<void> | null = null;
@@ -49,7 +56,7 @@ export abstract class BaseWatcher implements IWatcher {
 
     this._isActive = true;
     await this.onStart();
-    debug(`[${this.logTag}] Started`);
+    this.log.debug('Started');
 
     // check if already ready after onStart completes
     this._checkAndResolveReady();
@@ -73,7 +80,7 @@ export abstract class BaseWatcher implements IWatcher {
     this._readyPromise = null;
     this._readyResolve = null;
 
-    debug(`[${this.logTag}] Stopped`);
+    this.log.debug('Stopped');
   }
 
   // update & restart pattern
@@ -181,7 +188,7 @@ export abstract class BaseWatcher implements IWatcher {
   // internal: check & resolve ready promise if conditions are met
   private _checkAndResolveReady(): void {
     if (this._isActive && this.checkReadiness() && this._readyResolve) {
-      debug(`[${this.logTag}] Ready`);
+      this.log.debug('Ready');
       this._readyResolve();
       // prevent double resolve
       this._readyResolve = null;

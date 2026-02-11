@@ -2,7 +2,10 @@
 // unified transpiler selection w/ automatic fallback from Sucrase to Babel
 
 import { transform as sucraseTransform } from './sucrase';
-import { debug } from '../../../shared/logging/logger';
+import { createTaggedLogger } from '../../../shared/logging/logger';
+import { LogTags } from '@mdx-preview/contracts';
+
+const log = createTaggedLogger(LogTags.COMPILE);
 import { createLazyImport } from '../../../shared/utils/lazy-import';
 
 // lazy load Babel (~2MB) - only loaded when Sucrase fails or is disabled
@@ -32,7 +35,7 @@ export async function transpileWithFallback(
     try {
       return sucraseTransform(code).code;
     } catch (e) {
-      debug(`Sucrase failed for ${context}, falling back to Babel`, {
+      log.debug(`Sucrase failed for ${context}, falling back to Babel`, {
         file: filePath,
         error: e,
       });
