@@ -105,9 +105,9 @@ export function resolveFrameworkAliasStep(
 
 // UnifiedResolver - orchestrate 4 resolution strategies in priority order
 export class UnifiedResolver {
-  // check if specifier is a relative import
+  // delegate to module-level function for consistency
   isRelativeImport(specifier: string): boolean {
-    return specifier.startsWith('./') || specifier.startsWith('../');
+    return isRelativeImport(specifier);
   }
 
   // check if specifier should be resolved (not a URL or npm: protocol)

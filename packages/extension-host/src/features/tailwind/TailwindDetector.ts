@@ -3,11 +3,10 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { LogTags } from '@mdx-preview/contracts';
+import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
 import { LRUCache, extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { getNodeResolver } from '../module-runtime/resolution/resolver-factory';
-import { VERSION_CACHE_TTL_MS } from './constants';
 import {
   pathExists,
   readFileAsync,
@@ -109,7 +108,7 @@ export class TailwindDetector {
   // version cache has both TTL & max entries
   private versionCache = new LRUCache<string, TailwindVersionInfo>({
     maxEntries: VERSION_CACHE_MAX_ENTRIES,
-    ttlMs: VERSION_CACHE_TTL_MS,
+    ttlMs: STANDARD_CACHE_TTL_MS,
   });
 
   resolveWorkspaceRoot(options: ResolveWorkspaceRootOptions): string | null {

@@ -19,9 +19,8 @@ import {
   TAILWIND_CACHE_SCHEMA_VERSION,
   CACHE_DEFAULT_MAX_ENTRIES,
   SCAN_CACHE_DEFAULT_MAX_ENTRIES,
-  CACHE_DEFAULT_TTL_MS,
 } from './constants';
-import { LogTags } from '@mdx-preview/contracts';
+import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
 import {
   ContentHashCache,
   LRUCache,
@@ -59,11 +58,11 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     super();
     this.cache = new LRUCache<string, string>({
       maxEntries: CACHE_DEFAULT_MAX_ENTRIES,
-      ttlMs: CACHE_DEFAULT_TTL_MS,
+      ttlMs: STANDARD_CACHE_TTL_MS,
     });
     this.scanCache = new ContentHashCache<string[]>({
       maxEntries: SCAN_CACHE_DEFAULT_MAX_ENTRIES,
-      ttlMs: CACHE_DEFAULT_TTL_MS,
+      ttlMs: STANDARD_CACHE_TTL_MS,
     });
   }
 

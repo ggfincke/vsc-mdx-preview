@@ -3,9 +3,8 @@
 
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { CONFIG_WATCHER_DEBOUNCE_MS } from '../../tailwind/constants';
 import { BaseWatcher } from './BaseWatcher';
-import { LogTags } from '@mdx-preview/contracts';
+import { LogTags, STANDARD_DEBOUNCE_MS } from '@mdx-preview/contracts';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.TAILWIND_WATCHER);
@@ -31,7 +30,7 @@ export class TailwindConfigWatcher extends BaseWatcher {
         return;
       }
       this.onChange(changedPaths);
-    }, CONFIG_WATCHER_DEBOUNCE_MS);
+    }, STANDARD_DEBOUNCE_MS);
   }
 
   // use updateAndRestartSync pattern from base class

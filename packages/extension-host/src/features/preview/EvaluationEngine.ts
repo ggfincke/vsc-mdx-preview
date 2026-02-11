@@ -19,10 +19,8 @@ const getCompileSafeModule = createLazyImport(
 );
 import { ErrorContext } from '../../shared/errors';
 import { getTailwindProcessor, getErrorReporter } from '../../app/services';
-import {
-  TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
-  MDX_COMPILATION_TIMEOUT_MS,
-} from '../../shared/constants';
+import { MDX_COMPILATION_TIMEOUT_MS } from '../../shared/constants';
+import { DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS } from '@mdx-preview/contracts';
 import { toMdxForgeCompilerConfig } from '../../shared/config/EffectivePreviewConfig';
 import type { Preview, WebviewHandle } from './preview-manager';
 import type { TrustState } from '@mdx-preview/contracts';
@@ -139,7 +137,7 @@ export class EvaluationEngine {
 
       const compilationTimeout =
         params.tailwindConfig.compilationTimeout ??
-        TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS;
+        DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS;
 
       const result = await raceTimeout(
         getTailwindProcessor().process({

@@ -1,29 +1,10 @@
 // packages/extension/constants/runtime.ts
 // runtime constants for the extension package (timeouts, limits, cache settings)
 
-import {
-  DEFAULT_PREVIEW_DEBOUNCE_DELAY_MS,
-  DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS,
-  DEFAULT_WATCHER_DEBOUNCE_MS,
-} from '@mdx-preview/contracts';
-
 // timeouts
 
 // webview handshake timeout - how long to wait for webview to respond (ms)
 export const WEBVIEW_HANDSHAKE_TIMEOUT_MS = 10000;
-
-// default Tailwind CSS compilation timeout (ms) - user can override via setting
-export const TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS =
-  DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS;
-
-// debounce intervals
-
-// debounce delay for package.json watcher (ms) - use shared default
-export const PACKAGE_JSON_WATCHER_DEBOUNCE_MS = DEFAULT_WATCHER_DEBOUNCE_MS;
-
-// default preview update debounce delay (ms) - use shared default
-export const PREVIEW_DEBOUNCE_DELAY_DEFAULT_MS =
-  DEFAULT_PREVIEW_DEBOUNCE_DELAY_MS;
 
 // error duplicate suppression window (ms)
 export const ERROR_DEDUPE_WINDOW_DEFAULT_MS = 5000;
