@@ -1,5 +1,9 @@
 import { defineConfig } from 'vitest/config';
+import { createRequire } from 'module';
 import path from 'path';
+import type { Plugin } from 'vite';
+
+const require = createRequire(import.meta.url);
 
 const aliases = [
   {
@@ -30,7 +34,36 @@ const aliases = [
   },
 ];
 
+// resolve react peer deps from this project's node_modules so symlinked
+// mdx-forge doesn't fail w/ __vite-optional-peer-dep virtual modules
+function resolveReactPeerDeps(): Plugin {
+  const reactPaths: Record<string, string> = {};
+  for (const subpath of [
+    'react',
+    'react/jsx-runtime',
+    'react/jsx-dev-runtime',
+    'react-dom',
+  ]) {
+    try {
+      reactPaths[subpath] = require.resolve(subpath);
+    } catch {
+      // skip if not installed
+    }
+  }
+
+  return {
+    name: 'resolve-react-peer-deps',
+    enforce: 'pre',
+    resolveId(id) {
+      if (id in reactPaths) {
+        return { id: reactPaths[id], external: false };
+      }
+    },
+  };
+}
+
 export default defineConfig({
+  plugins: [resolveReactPeerDeps()],
   test: {
     include: ['tests/**/*.test.ts'],
     setupFiles: ['./tests/setup.ts'],

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { setPreloadEntries } from 'mdx-forge/browser';
-import { registry } from '../../packages/webview-client/src/features/module-runtime/registry/ModuleRegistry';
-import { createSyncRequire } from '../../packages/webview-client/src/features/module-runtime/runtime/require';
+import { registry } from 'mdx-forge/browser';
+import { createSyncRequire } from 'mdx-forge/browser';
 import {
   loadDocusaurusShims,
   preloadGenericShims,

@@ -4,10 +4,8 @@
 import * as fs from 'fs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ErrorContext } from '../../../packages/extension-host/src/shared/errors';
-import {
-  MDX_COMPILATION_TIMEOUT_MS,
-  TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
-} from '../../../packages/extension-host/src/shared/constants';
+import { MDX_COMPILATION_TIMEOUT_MS } from '../../../packages/extension-host/src/shared/constants';
+import { DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS } from '@mdx-preview/contracts';
 
 const {
   mockRaceTimeout,
@@ -242,7 +240,7 @@ describe('EvaluationEngine timeout behavior', () => {
     );
 
     expect(mockRaceTimeout).toHaveBeenCalledWith(expect.any(Promise), {
-      timeoutMs: TAILWIND_COMPILATION_TIMEOUT_DEFAULT_MS,
+      timeoutMs: DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS,
       behavior: 'return-null',
     });
     expect(preview.updateTailwindWatchFiles).toHaveBeenCalledWith([

@@ -2,8 +2,8 @@
 // Unit tests for evaluateModule error handling w/ stack preservation
 
 import { describe, it, expect, vi } from 'vitest';
-import { evaluateModule } from '../../packages/webview-client/src/features/module-runtime/eval/evaluateModule';
-import type { ModuleRuntime } from '../../packages/webview-client/src/features/module-runtime/types';
+import { evaluateModule } from 'mdx-forge/browser';
+import type { ModuleRuntime } from 'mdx-forge/browser';
 
 function createMockRuntime(): ModuleRuntime {
   return {

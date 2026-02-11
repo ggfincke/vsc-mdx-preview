@@ -6,7 +6,7 @@ import {
   loadFrameworkShimsWithRetry,
   loadGenericShimsWithRetry,
 } from '../../packages/webview-client/src/features/module-runtime/preload/shimLoader';
-import type { ModuleRegistry } from '../../packages/webview-client/src/features/module-runtime/registry/ModuleRegistry';
+import type { ModuleRegistry } from 'mdx-forge/browser/registry';
 
 vi.mock(
   '../../packages/webview-client/src/shared/utils/createTaggedLogger',

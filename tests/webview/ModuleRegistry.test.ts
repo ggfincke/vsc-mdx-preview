@@ -6,7 +6,7 @@ import { describe, it, expect, vi } from 'vitest';
 async function createRegistry() {
   vi.resetModules();
   const module =
-    await import('../../packages/webview-client/src/features/module-runtime/registry/ModuleRegistry');
+    await import('mdx-forge/browser/registry');
   return new module.ModuleRegistry();
 }
 
