@@ -6,20 +6,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // Mock vscode
 vi.mock('vscode', () => ({}));
 
-// Mock logging
-vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
-  debug: vi.fn(),
-  error: vi.fn(),
-  warn: vi.fn(),
-  info: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
 // Mock resolver factory
 const mockBrowserResolver = {
   resolveSync: vi.fn(),

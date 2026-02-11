@@ -22,10 +22,6 @@ export function fastStringEquals(a: string, b: string): boolean {
 }
 
 // comparison strategy for a field
-// - 'shallow': use === comparison (default for unlisted fields)
-// - 'array': use shallowArrayEquals for array fields
-// - 'skip': ignore this field (useful for stable callbacks)
-// - function: custom comparator (prev, next) => boolean
 type FieldStrategy<V> =
   | 'shallow'
   | 'array'
@@ -38,14 +34,6 @@ type FieldConfig<T> = {
 };
 
 // create field-selective comparison function for React.memo
-// fields: object mapping field names to comparison strategy
-// example
-//   const arePropsEqual = createFieldComparator<Props>({
-//     dependencies: 'array',
-//     onError: 'skip',
-//     onSuccess: 'skip',
-//     content: (prev, next) => prev.code === next.code && prev.path === next.path,
-//   });
 export function createFieldComparator<T extends object>(
   fields: FieldConfig<T>
 ): (prev: T, next: T) => boolean {

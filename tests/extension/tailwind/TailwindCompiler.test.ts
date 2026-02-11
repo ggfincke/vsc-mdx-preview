@@ -15,15 +15,6 @@ vi.mock(
   })
 );
 
-vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
-  createTaggedLogger: () => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  }),
-}));
-
 import {
   TailwindCompiler,
   clearPostCSSCache,

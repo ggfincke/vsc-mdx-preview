@@ -1,21 +1,5 @@
 // packages/extension/utils/createFileWatcher.ts
 // standalone file watcher factory w/ error wrapping & optional debouncing
-//
-// extracted from BaseWatcher for reuse in standalone watchers that don't
-// need full BaseWatcher lifecycle management
-//
-// USAGE
-// ```typescript
-// import { createFileWatcher } from '../utils/createFileWatcher';
-//
-// const watcher = createFileWatcher({
-//   pattern: '**/tsconfig.json',
-//   onChange: (uri) => { console.log('Changed:', uri.fsPath); },
-//   logTag: LogTags.TS_CONFIG,
-//   optional debounce change events
-//   debounceMs: 100,
-// });
-// ```
 
 import debounce from 'lodash.debounce';
 import * as vscode from 'vscode';

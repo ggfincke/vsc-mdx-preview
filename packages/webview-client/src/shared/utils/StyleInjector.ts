@@ -131,9 +131,7 @@ class StyleInjectorImpl {
     document.documentElement.removeAttribute(name);
   }
 
-  // clear styles matching a pattern
-  // - 'modules': clears all module CSS via cached references (O(k))
-  // - CSS selector string: clears matching elements via querySelectorAll
+  // clear styles matching a pattern ('modules' or CSS selector string)
   clear(selector?: 'modules' | string): void {
     if (selector === 'modules') {
       // clear all module-injected styles using cached references

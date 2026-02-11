@@ -30,13 +30,6 @@ interface CacheEntry<V> {
 }
 
 // generic LRU cache w/ optional TTL, memory-based eviction, & entry protection
-// example
-// ```typescript
-// const cache = new LRUCache<string, string>({ maxEntries: 100, ttlMs: 60000 });
-// cache.set('key', 'value');
-// get value or null if expired or evicted
-// const value = cache.get('key');
-// ```
 export class LRUCache<K, V> {
   private cache = new Map<K, CacheEntry<V>>();
   private _maxEntries: number;

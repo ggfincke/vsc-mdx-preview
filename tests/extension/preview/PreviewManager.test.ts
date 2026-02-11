@@ -3,19 +3,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
 vi.mock('../../../packages/extension-host/src/app/services', () => ({}));
 
 // mock preview-commands to avoid pulling in heavy deps

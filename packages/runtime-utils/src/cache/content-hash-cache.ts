@@ -21,17 +21,6 @@ export interface ContentHashCacheOptions<V> extends Omit<
 }
 
 // LRU cache that validates entries by content hash before returning
-// example
-// ```typescript
-// const cache = new ContentHashCache<string[]>({ maxEntries: 50, ttlMs: 300000 });
-//
-// store w/ content hash
-// cache.setWithHash('/path/to/file', contentHash, ['class1', 'class2']);
-//
-// retrieve only if hash matches current content
-// const classes = cache.getIfHashMatches('/path/to/file', currentHash);
-// return null if file has changed (hash mismatch)
-// ```
 export class ContentHashCache<V> {
   private cache: LRUCache<string, HashValidatedEntry<V>>;
 

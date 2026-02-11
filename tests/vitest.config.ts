@@ -74,5 +74,6 @@ export default defineConfig({
   },
   resolve: {
     alias: aliases,
+    dedupe: ['mdx-forge'],
   },
 });

@@ -1,7 +1,6 @@
 // packages/runtime-utils/src/module-id/module-id.ts
 // utilities for working w/ npm:// module IDs used by the webview module system
-// module ID format: npm://<package>@<version> or npm://<package>/<subpath>@<version>
-// examples: npm://react@18, npm://react/jsx-runtime@18, npm://@mdx-js/react@3
+// format: npm://<package>@<version> or npm://<package>/<subpath>@<version>
 
 // module ID prefix for npm packages
 export const NPM_MODULE_PREFIX = 'npm://';
@@ -32,12 +31,7 @@ export interface ParsedNpmModuleId {
   version?: string;
 }
 
-// parse an npm:// module ID into its components
-// examples
-// - 'npm://react@18' -> { package: 'react', version: '18' }
-// - 'npm://react/jsx-runtime@18' -> { package: 'react', subpath: '/jsx-runtime', version: '18' }
-// - 'npm://@mdx-js/react@3' -> { package: '@mdx-js/react', version: '3' }
-// return parsed components or null if not valid npm module ID
+// parse an npm:// module ID into its components (or null if invalid)
 export function parseNpmModuleId(id: string): ParsedNpmModuleId | null {
   if (!isNpmModuleId(id)) {
     return null;
@@ -141,8 +135,6 @@ export function createNpmModuleId(
 }
 
 // URL scheme pattern for module ID validation
-// match: http://, https://, npm://, file://, etc
-// (side comment removed - pattern is self-explanatory)
 export const URL_SCHEME_PATTERN = /^[a-z]+:\/\//i;
 
 // check if a string looks like a URL (has a scheme)
@@ -151,10 +143,6 @@ export function hasUrlScheme(str: string): boolean {
 }
 
 // validate a module fetch request for security
-// return true if request is safe to process
-// security checks
-// - no null bytes (potential injection)
-// - only npm:// scheme allowed (not http://, file://, etc.)
 export function isValidModuleRequest(request: string): boolean {
   // reject null bytes (potential injection)
   if (request.includes('\0')) {

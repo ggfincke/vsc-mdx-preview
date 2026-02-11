@@ -61,19 +61,6 @@ vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getErrorReporter: () => mockErrorReporter,
 }));
 
-vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: () => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  }),
-}));
-
 import { fetchLocal } from '../../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal';
 
 describe('fetchLocal timeout delegation', () => {

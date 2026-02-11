@@ -1,11 +1,5 @@
 // packages/webview-app/src/utils/createResourceLoader.ts
 // factory for creating idempotent async resource loaders w/ state machine
-//
-// implement the loader state machine pattern
-// - null: not started
-// - Promise<void>: loading in progress (deduplicates concurrent calls)
-// - true: loaded successfully
-// - false: failed (allow retry if allowRetry is true)
 
 import { LogTags } from '@mdx-preview/contracts';
 import { createTaggedLogger } from './createTaggedLogger';
@@ -36,15 +30,6 @@ export interface ResourceLoader {
 type LoaderState = null | Promise<void> | boolean;
 
 // create an idempotent resource loader w/ state machine
-// example
-//   const katexLoader = createResourceLoader(
-//     async () => { await import('katex/dist/katex.min.css'); },
-//     { name: 'KaTeX CSS' }
-//   );
-//   run multiple calls to deduplicate loading
-//   await Promise.all([katexLoader.load(), katexLoader.load()]);
-//   call again to return immediately after success
-//   await katexLoader.load();
 export function createResourceLoader(
   loadFn: () => Promise<void>,
   options: ResourceLoaderOptions

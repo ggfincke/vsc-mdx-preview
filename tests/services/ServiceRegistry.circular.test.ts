@@ -6,20 +6,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // Mock vscode module
 vi.mock('vscode', () => ({}));
 
-// Mock logging
-vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
-  error: vi.fn(),
-  warn: vi.fn(),
-  debug: vi.fn(),
-  info: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
 // Import after mocks
 import { ServiceRegistry } from '../../packages/extension-host/src/app/services/ServiceRegistry';
 import { CircularDependencyError } from '../../packages/extension-host/src/shared/errors';

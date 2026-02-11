@@ -8,8 +8,6 @@ export class DependencyTracker {
   private resolutionMap: Map<string, string> = new Map();
 
   // reverse indexes for O(k) cleanup
-  // - parentToResolutionKeys: moduleId -> Set of resolution keys where moduleId is parent
-  // - targetToResolutionKeys: moduleId -> Set of resolution keys where moduleId is target (value)
   private parentToResolutionKeys: Map<string, Set<string>> = new Map();
   private targetToResolutionKeys: Map<string, Set<string>> = new Map();
 

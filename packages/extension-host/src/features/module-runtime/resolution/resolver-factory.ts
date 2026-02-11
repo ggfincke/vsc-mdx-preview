@@ -21,8 +21,6 @@ const log = createTaggedLogger(LogTags.RESOLVER);
 export const cachedFs = new CachedInputFileSystem(fs, RESOLVER_CACHE_TTL_MS);
 
 // resolver mode determines the resolution strategy
-// - 'browser': prioritizes browser-compatible exports for webview module loading
-// - 'node': prioritizes Node.js exports for extension-side plugin loading
 type ResolverMode = 'browser' | 'node';
 
 // mode-specific configuration
@@ -52,8 +50,6 @@ const MODE_CONFIGS: Record<ResolverMode, ModeConfig> = {
 };
 
 // create a module resolver optimized for the specified mode
-// - 'browser' for webview module loading (browser conditions)
-// - 'node' for plugin loading (node conditions)
 function createResolver(mode: ResolverMode): Resolver {
   const config = MODE_CONFIGS[mode];
 

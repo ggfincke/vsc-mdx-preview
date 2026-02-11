@@ -46,20 +46,6 @@ vi.mock('../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
 }));
 
-// Mock logging
-vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
-  error: vi.fn(),
-  warn: vi.fn(),
-  debug: vi.fn(),
-  info: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
 // Import after mocks are set up
 import {
   TrustManager,

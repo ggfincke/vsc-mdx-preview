@@ -31,19 +31,6 @@ vi.mock(
   })
 );
 
-vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
 vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getTailwindProcessor: () => mockTailwindProcessor,
   getConfigManager: () => mockConfigManager,

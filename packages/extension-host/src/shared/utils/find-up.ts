@@ -1,12 +1,5 @@
 // packages/extension/utils/find-up.ts
 // unified upward directory traversal for config file discovery
-//
-// consolidate repeated "find up" patterns from
-// - ConfigResolver.ts (find .mdx-previewrc.json)
-// - TypeScriptConfigResolver.ts (find tsconfig.json)
-// - FrameworkDetector.ts (find package.json)
-// - MetaResolver.ts (find _meta.json)
-// - TailwindDetector.ts (find tailwind.config.*)
 
 import * as path from 'path';
 import { pathExists } from './file-utils';
@@ -20,45 +13,15 @@ export interface FindUpOptions {
   // directory to start searching from
   startDir: string;
 
-  // stop searching at these boundaries (exclusive)
-  // - string: stop when reaching this directory
-  // - string[]: stop when reaching any of these directories
-  // - function: stop when predicate returns true
-  // - undefined: search to filesystem root
+  // stop boundary (string, array, predicate, or undefined for filesystem root)
   stopAt?: string | string[] | ((dir: string) => boolean);
 
-  // return type
-  // - 'file': returns full path to found file (default)
-  // - 'directory': returns directory containing the file
+  // return full file path (default) or containing directory
   returnType?: 'file' | 'directory';
 }
 
 // search upward from startDir for a file matching filename(s)
 // stop at workspace boundary, custom boundary, or filesystem root
-// return found path or undefined if not found
-// example
-// find .mdx-previewrc.json, stop at workspace root
-// findUp({
-//   filename: ['.mdx-previewrc.json', '.mdx-previewrc'],
-//   startDir: documentDir,
-//   stopAt: createWorkspaceStopPredicate(),
-// });
-//
-// example
-// find tsconfig.json, search to filesystem root
-// findUp({
-//   filename: 'tsconfig.json',
-//   startDir: directory
-// })
-//
-// example
-// find package.json, return containing directory
-// findUp({
-//   filename: 'package.json',
-//   startDir: documentDir,
-//   stopAt: workspaceRoot,
-//   returnType: 'directory'
-// })
 export function findUp(options: FindUpOptions): string | undefined {
   const { filename, startDir, stopAt, returnType = 'file' } = options;
 
@@ -118,12 +81,6 @@ function buildStopPredicate(
 }
 
 // create a stop predicate that stops at any VS Code workspace root
-// example
-// findUp({
-//   filename: 'config.json',
-//   startDir: docDir,
-//   stopAt: createWorkspaceStopPredicate(),
-// });
 export function createWorkspaceStopPredicate(): (dir: string) => boolean {
   // dynamic import to avoid issues in non-VS Code environments (e.g., tests)
   const vscode = require('vscode') as typeof import('vscode');
@@ -136,14 +93,6 @@ export function createWorkspaceStopPredicate(): (dir: string) => boolean {
 }
 
 // create a stop predicate that stops when leaving a parent directory
-// (uses startsWith to check containment w/ Windows case normalization)
-// example
-// stop when outside workspace root
-// findUp({
-//   filename: '_meta.json',
-//   startDir: docDir,
-//   stopAt: createContainmentStopPredicate(workspaceRoot),
-// });
 export function createContainmentStopPredicate(
   parentDir: string
 ): (dir: string) => boolean {

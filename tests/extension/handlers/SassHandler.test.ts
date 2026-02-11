@@ -20,15 +20,6 @@ vi.mock(
   })
 );
 
-vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
 vi.mock(
   '../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory',
   () => ({

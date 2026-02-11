@@ -1,33 +1,5 @@
 // packages/extension/services/service-locator.ts
 // type-safe service access helpers for ServiceRegistry
-//
-// PREFERRED ACCESS PATTERN FOR SERVICES
-//
-// provide the RECOMMENDED way to access services throughout
-// the extension. Use these typed getter functions instead of
-// - Direct getInstance() calls (use only within the service class itself)
-// - ServiceRegistry.get() (use only for dynamic/advanced access patterns)
-//
-// USAGE
-// ```typescript
-// import { getConfigManager, getTrustManager } from './services';
-//
-// const config = getConfigManager();
-// const updateMode = config.get('preview.updateMode');
-//
-// const trustState = getTrustManager().getState();
-// proceed w/ trusted operation
-// if (trustState.canExecute) {
-// }
-// ```
-//
-// WHY USE SERVICE LOCATOR FUNCTIONS
-// 1. Type safety - each getter returns the correct service type
-// 2. Lazy initialization - services created on first access
-// 3. Decoupling - consuming code doesn't depend on service implementation
-// 4. Testability - services can be mocked via ServiceRegistry
-//
-// for more details, see: packages/extension/services/ARCHITECTURE.md
 
 import { ServiceRegistry } from './ServiceRegistry';
 import { ServiceNames, type ServiceName } from './service-names';
