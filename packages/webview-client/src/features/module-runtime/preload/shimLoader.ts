@@ -11,7 +11,7 @@ import {
   SHIM_LOAD_MAX_RETRIES,
   SHIM_LOAD_RETRY_DELAY_MS,
 } from '../../../app/constants';
-import type { ModuleRegistry } from '../registry/ModuleRegistry';
+import type { ModuleRegistry } from 'mdx-forge/browser/registry';
 import type { Framework } from '@mdx-preview/contracts';
 
 // module-level tagged logger (avoids per-call allocation)

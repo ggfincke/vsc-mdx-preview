@@ -1,7 +1,7 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
 // Source: packages/mdx-forge/src/components/registry/registry-data.ts
 
-import type { ModuleRegistry } from '../../features/module-runtime/registry/ModuleRegistry';
+import type { ModuleRegistry } from 'mdx-forge/browser/registry';
 import {
   createBarrelModule,
   createComponentModule,

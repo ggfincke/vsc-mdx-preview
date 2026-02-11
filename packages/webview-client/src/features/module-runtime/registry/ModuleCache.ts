@@ -3,7 +3,7 @@
 // use shared LRUCache w/ isProtected for preloaded module protection
 
 import { LRUCache } from '@mdx-preview/runtime-utils';
-import type { Module } from '../types';
+import type { Module } from 'mdx-forge/browser';
 
 // lru configuration defaults
 const DEFAULT_MAX_MODULES = 500;

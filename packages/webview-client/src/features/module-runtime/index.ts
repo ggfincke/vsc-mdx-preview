@@ -2,9 +2,9 @@
 // main entry point - exports & high-level API for Trusted Mode module loading
 
 import { ComponentType } from 'react';
-import { registry } from './registry/ModuleRegistry';
-import { clearInjectedStyles } from './styles/injectStyles';
-import { loadModule } from './loader/loadModule';
+import { registry } from 'mdx-forge/browser';
+import { clearInjectedStyles } from 'mdx-forge/browser';
+import { loadModule } from 'mdx-forge/browser';
 import {
   initPreloadedModules,
   fallbackLayoutModule,
@@ -13,14 +13,14 @@ import {
   ensureGenericShims,
 } from './preload';
 import type { Framework } from '@mdx-preview/contracts';
-import type { FetchResult } from './types';
+import type { FetchResult } from 'mdx-forge/browser';
 import { ExtensionHandle } from '../../platform/rpc/webview-rpc-client';
 
 // re-exports for external use
-export { registry } from './registry/ModuleRegistry';
-export { clearInjectedStyles } from './styles/injectStyles';
-export { loadModule } from './loader/loadModule';
-export type { FetchResult, Module, ModuleRuntime } from './types';
+export { registry } from 'mdx-forge/browser';
+export { clearInjectedStyles } from 'mdx-forge/browser';
+export { loadModule } from 'mdx-forge/browser';
+export type { FetchResult, Module, ModuleRuntime } from 'mdx-forge/browser';
 
 // state
 let preloadedModulesInitialized = false;
