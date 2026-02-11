@@ -1,11 +1,10 @@
 // packages/webview-app/src/components/GraphvizRenderer/GraphvizRenderer.tsx
 // lazy Graphviz renderer w/ client-side DOT to SVG conversion
 
-import DOMPurify from 'dompurify';
 import { LogTags } from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
-import { DOMPURIFY_CONFIG } from '../../../preview/safe/security/allowlist';
+import { sanitizeSvg } from '../../utils/sanitizeSvg';
 import './GraphvizRenderer.css';
 
 type VizModule = typeof import('@viz-js/viz');
@@ -25,11 +24,6 @@ function getVizInstance(): Promise<VizInstance> {
     vizInstancePromise = import('@viz-js/viz').then((mod) => mod.instance());
   }
   return vizInstancePromise;
-}
-
-// sanitize rendered SVG before inserting into DOM
-function sanitizeSvg(svg: string): string {
-  return DOMPurify.sanitize(svg, DOMPURIFY_CONFIG) as string;
 }
 
 // render a single Graphviz diagram w/ error handling

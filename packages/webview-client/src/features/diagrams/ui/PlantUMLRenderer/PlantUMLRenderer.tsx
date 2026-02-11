@@ -1,22 +1,16 @@
 // packages/webview-app/src/components/PlantUMLRenderer/PlantUMLRenderer.tsx
 // PlantUML renderer - render via extension host proxy to avoid CORS
 
-import DOMPurify from 'dompurify';
 import { LogTags } from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
 import { ExtensionHandle } from '../../../../platform/rpc/webview-rpc-client';
-import { DOMPURIFY_CONFIG } from '../../../preview/safe/security/allowlist';
+import { sanitizeSvg } from '../../utils/sanitizeSvg';
 import './PlantUMLRenderer.css';
 
 interface PlantUMLProps {
   code: string;
   id: string;
-}
-
-// sanitize rendered SVG before inserting into DOM
-function sanitizeSvg(svg: string): string {
-  return DOMPurify.sanitize(svg, DOMPURIFY_CONFIG) as string;
 }
 
 // render a single PlantUML diagram w/ error handling

@@ -1,8 +1,8 @@
 // packages/webview-app/src/rpc/handler-factory.ts
 // factory functions for creating RPC handler methods w/ consistent patterns
 
-import type { TaggedLogger } from '../../shared/utils/debug';
 import type {
+  TaggedLogger,
   NextraPageMeta,
   PreviewError,
   TrustState,

@@ -8,9 +8,6 @@ import {
   type GraphvizDiagramInfo,
 } from '../utils/findGraphvizContainers';
 
-// timing mode for Graphviz scanning
-export type GraphvizScanMode = 'after-paint' | 'before-paint';
-
 // hook for Graphviz detection & portal rendering
 export const useGraphvizRendering = createDiagramRendering<GraphvizDiagramInfo>(
   {
