@@ -15,9 +15,9 @@ export function isNpmModuleId(id: string): boolean {
 // bare imports are typically node_modules packages like 'react' or 'lodash/merge'
 export function isBareImport(specifier: string): boolean {
   return (
+    !specifier.startsWith('.') &&
     !specifier.startsWith('/') &&
-    !specifier.startsWith('./') &&
-    !specifier.startsWith('../') &&
+    !/^[a-zA-Z]:[\\/]/.test(specifier) &&
     !specifier.startsWith(NPM_MODULE_PREFIX)
   );
 }

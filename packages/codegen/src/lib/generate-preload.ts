@@ -9,6 +9,8 @@ import {
   type ComponentRegistryEntry,
   type FrameworkId,
 } from 'mdx-forge/components/registry';
+import { isBareImport } from '@mdx-preview/runtime-utils';
+import { normalizeImportPath } from './codegen-utils';
 
 const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT
 // Source: packages/mdx-forge/src/components/registry/registry-data.ts
@@ -35,14 +37,6 @@ function isComponentEntry(
   return entry.kind === 'component';
 }
 
-function normalizeImportPath(filePath: string): string {
-  const withSlashes = filePath.replace(/\\/g, '/');
-  if (withSlashes.startsWith('.')) {
-    return withSlashes;
-  }
-  return `./${withSlashes}`;
-}
-
 function getRelativeWebviewImport(
   entry: ComponentRegistryEntry,
   options: GeneratePreloadOptions
@@ -53,11 +47,7 @@ function getRelativeWebviewImport(
   }
 
   // bare package imports should pass through untouched
-  const isBareSpecifier =
-    !entry.webviewImport.startsWith('.') &&
-    !entry.webviewImport.startsWith('/') &&
-    !/^[a-zA-Z]:[\\/]/.test(entry.webviewImport);
-  if (isBareSpecifier) {
+  if (isBareImport(entry.webviewImport)) {
     return entry.webviewImport;
   }
 
@@ -273,15 +263,7 @@ export function generatePreloadTs(options: GeneratePreloadOptions): string {
   const grouped = groupEntriesByFramework(REGISTRY_ENTRIES);
   const { aliases: shimAliases } = buildShimAliases();
   const aliasesByPreloadId = buildAliasesByPreloadId(shimAliases);
-  const moduleRegistryImport = normalizeImportPath(
-    path.relative(
-      options.outputDir,
-      path.resolve(
-        options.webviewSrcDir,
-        'features/module-runtime/registry/ModuleRegistry'
-      )
-    )
-  );
+  const moduleRegistryImport = 'mdx-forge/browser/registry';
   const preloadCoreImport = normalizeImportPath(
     path.relative(
       options.outputDir,

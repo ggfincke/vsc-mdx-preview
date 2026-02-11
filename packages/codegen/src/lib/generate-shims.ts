@@ -6,6 +6,8 @@ import {
   FRAMEWORK_CSS_CONFIG,
   SHIM_BARREL_CONFIG,
 } from 'mdx-forge/components/registry';
+import { isBareImport } from '@mdx-preview/runtime-utils';
+import { normalizeImportPath } from './codegen-utils';
 
 const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT\n// Source: packages/mdx-forge/src/components/registry/shim-config.ts\n`;
 
@@ -16,14 +18,6 @@ export interface GenerateShimsOptions {
 export interface GeneratedFile {
   outputPath: string;
   content: string;
-}
-
-function normalizeImportPath(filePath: string): string {
-  const withSlashes = filePath.replace(/\\/g, '/');
-  if (withSlashes.startsWith('.')) {
-    return withSlashes;
-  }
-  return `./${withSlashes}`;
 }
 
 function buildRelativeImport(fromDir: string, targetPath: string): string {
@@ -111,11 +105,6 @@ export function generateFrameworkCssLoaderTs(
     outputDir,
     path.resolve(options.webviewSrcDir, 'shared/utils/createResourceLoader')
   );
-  const isBareSpecifier = (specifier: string): boolean =>
-    !specifier.startsWith('.') &&
-    !specifier.startsWith('/') &&
-    !/^[a-zA-Z]:[\\/]/.test(specifier);
-
   const loaderLines: string[] = [];
   loaderLines.push(GENERATED_HEADER.trimEnd());
   loaderLines.push(
@@ -139,7 +128,7 @@ export function generateFrameworkCssLoaderTs(
     const loaderName = `${entry.framework}-css`;
 
     if (entry.cssImport) {
-      const cssImport = isBareSpecifier(entry.cssImport)
+      const cssImport = isBareImport(entry.cssImport)
         ? entry.cssImport
         : buildRelativeImport(
             outputDir,
