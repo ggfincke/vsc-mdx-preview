@@ -144,23 +144,3 @@ export function createFileWatcher(
 
   return watcher;
 }
-
-// create multiple file watchers for different patterns
-// convenience function when watching multiple patterns w/ similar handlers
-export function createFileWatchers(
-  configs: FileWatcherConfig[]
-): vscode.FileSystemWatcher[] {
-  return configs.map(createFileWatcher);
-}
-
-// create a watcher & add it to a disposables array
-// convenience function for the common pattern of creating a watcher &
-// adding it to a disposables collection
-export function createManagedFileWatcher(
-  config: FileWatcherConfig,
-  disposables: vscode.Disposable[]
-): vscode.FileSystemWatcher {
-  const watcher = createFileWatcher(config);
-  disposables.push(watcher);
-  return watcher;
-}

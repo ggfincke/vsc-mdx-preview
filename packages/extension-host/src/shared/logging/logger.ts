@@ -136,15 +136,6 @@ export function debug(message: string, data?: unknown): void {
   log(LogLevel.Debug, message, data);
 }
 
-// log debug message w/ lazy evaluation (message function only called when debug is enabled)
-// use for hot paths where string construction overhead matters
-export function debugLazy(messageFn: () => string, data?: unknown): void {
-  if (!debugEnabled) {
-    return;
-  }
-  log(LogLevel.Debug, messageFn(), data);
-}
-
 // log info message
 export function info(message: string, data?: unknown): void {
   log(LogLevel.Info, message, data);

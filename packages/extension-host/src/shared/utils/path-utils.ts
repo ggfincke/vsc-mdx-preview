@@ -22,22 +22,6 @@ export function toAbsolutePath(inputPath: string, baseDir: string): string {
   return path.resolve(baseDir, inputPath);
 }
 
-// convert an absolute path to a relative import path (w/ forward slashes)
-export function toRelativeImportPath(
-  absolutePath: string,
-  fromDir: string
-): string {
-  let relativePath = path.relative(fromDir, absolutePath);
-
-  // ensure path starts w/ ./ or ../ for valid import specifier
-  if (!relativePath.startsWith('.') && !relativePath.startsWith('/')) {
-    relativePath = './' + relativePath;
-  }
-
-  // normalize to forward slashes for import compatibility
-  return normalizePathSeparators(relativePath);
-}
-
 // options for path resolution w/ fallbacks
 export interface ResolvePathOptions {
   // path to resolve
@@ -153,24 +137,4 @@ export async function isPathInsideAsync(
 
   const relative = path.relative(normParent, normChild);
   return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
-}
-
-// join path segments & normalize to forward slashes
-export function joinAsImportPath(...segments: string[]): string {
-  return normalizePathSeparators(path.join(...segments));
-}
-
-// get the directory containing a file path
-export function getDirectory(filePath: string): string {
-  return path.dirname(filePath);
-}
-
-// get the file extension including the leading dot
-export function getExtension(filePath: string): string {
-  return path.extname(filePath);
-}
-
-// get the base name w/o extension
-export function getBaseName(filePath: string): string {
-  return path.basename(filePath, path.extname(filePath));
 }

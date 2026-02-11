@@ -11,10 +11,6 @@ export const MDX_EXTENSIONS = ['.mdx', '.md'] as const;
 export const JSON_EXTENSIONS = ['.json'] as const;
 export const CSS_EXTENSIONS = ['.css'] as const;
 export const SASS_EXTENSIONS = ['.scss', '.sass'] as const;
-export const STYLE_EXTENSIONS = [
-  ...CSS_EXTENSIONS,
-  ...SASS_EXTENSIONS,
-] as const;
 export const IMAGE_EXTENSIONS = [
   '.gif',
   '.png',
@@ -81,23 +77,3 @@ export const FILE_PROBE_INDEX_FILES = [
   'index.js',
   'index.jsx',
 ] as const;
-
-// type helpers
-export type ScriptExtension = (typeof SCRIPT_EXTENSIONS)[number];
-export type StyleExtension = (typeof STYLE_EXTENSIONS)[number];
-export type ImageExtension = (typeof IMAGE_EXTENSIONS)[number];
-
-// extension checking utilities
-
-export function isTypeScriptExtension(ext: string): boolean {
-  const lower = ext.toLowerCase();
-  return lower === '.ts' || lower === '.tsx';
-}
-
-export function isScriptExtension(ext: string): boolean {
-  return (SCRIPT_EXTENSIONS as readonly string[]).includes(ext.toLowerCase());
-}
-
-export function isMdxExtension(ext: string): boolean {
-  return (MDX_EXTENSIONS as readonly string[]).includes(ext.toLowerCase());
-}

@@ -16,8 +16,6 @@ export {
   type ReportOptions,
 } from './ErrorReporter';
 
-export { ErrorCode } from './error-codes';
-
 // re-export shared module error types for convenience
 export { ModuleError, type ModuleErrorCode, type ModuleErrorData };
 

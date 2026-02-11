@@ -10,6 +10,7 @@
 
 import * as path from 'path';
 import { pathExists } from './file-utils';
+import { normalizePathForComparison } from './path-utils';
 
 // options for findUp
 export interface FindUpOptions {
@@ -96,14 +97,6 @@ export function findUp(options: FindUpOptions): string | undefined {
   return undefined;
 }
 
-// normalize path for comparison (handles Windows case-insensitivity)
-function normalizePath(p: string): string {
-  if (process.platform === 'win32') {
-    return p.toLowerCase();
-  }
-  return p;
-}
-
 // build a stop condition predicate from various input types
 function buildStopPredicate(
   stopAt: FindUpOptions['stopAt']
@@ -119,8 +112,9 @@ function buildStopPredicate(
 
   // normalize to array & normalize paths for comparison
   const stops = Array.isArray(stopAt) ? stopAt : [stopAt];
-  const normalizedStops = stops.map(normalizePath);
-  return (dir: string) => normalizedStops.includes(normalizePath(dir));
+  const normalizedStops = stops.map(normalizePathForComparison);
+  return (dir: string) =>
+    normalizedStops.includes(normalizePathForComparison(dir));
 }
 
 // create a stop predicate that stops at any VS Code workspace root
@@ -135,9 +129,10 @@ export function createWorkspaceStopPredicate(): (dir: string) => boolean {
   const vscode = require('vscode') as typeof import('vscode');
   const workspaceFolders = vscode.workspace.workspaceFolders;
   const workspaceRoots = workspaceFolders?.map((f) => f.uri.fsPath) ?? [];
-  const normalizedRoots = workspaceRoots.map(normalizePath);
+  const normalizedRoots = workspaceRoots.map(normalizePathForComparison);
 
-  return (dir: string) => normalizedRoots.includes(normalizePath(dir));
+  return (dir: string) =>
+    normalizedRoots.includes(normalizePathForComparison(dir));
 }
 
 // create a stop predicate that stops when leaving a parent directory
@@ -152,6 +147,7 @@ export function createWorkspaceStopPredicate(): (dir: string) => boolean {
 export function createContainmentStopPredicate(
   parentDir: string
 ): (dir: string) => boolean {
-  const normalizedParent = normalizePath(parentDir);
-  return (dir: string) => !normalizePath(dir).startsWith(normalizedParent);
+  const normalizedParent = normalizePathForComparison(parentDir);
+  return (dir: string) =>
+    !normalizePathForComparison(dir).startsWith(normalizedParent);
 }

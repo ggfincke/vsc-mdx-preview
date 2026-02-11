@@ -1,5 +1,6 @@
 // packages/runtime-utils/src/validation/validation.ts
-// pure validation utilities w/o logging dependencies
+// pure type guards for use in both extension-host & webview-client
+// no logging, no side effects - just boolean type narrowing
 
 // validate value is a string, optionally non-empty
 export function isString(value: unknown): value is string {

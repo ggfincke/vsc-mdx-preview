@@ -92,26 +92,6 @@ export function pathExists(filePath: string): boolean {
   return fs.existsSync(filePath);
 }
 
-// check if a path exists & is a regular file (not a directory)
-export function fileExistsAsFile(filePath: string): boolean {
-  try {
-    const stat = fs.statSync(filePath);
-    return stat.isFile();
-  } catch {
-    return false;
-  }
-}
-
-// check if a path exists & is a directory
-export function directoryExists(dirPath: string): boolean {
-  try {
-    const stat = fs.statSync(dirPath);
-    return stat.isDirectory();
-  } catch {
-    return false;
-  }
-}
-
 // asynchronous file operations
 
 // safely read a file asynchronously, returning null on any failure
@@ -151,47 +131,4 @@ export async function readJsonAsync<T = unknown>(
   }
 
   return parseJsonSafe<T>(content, filePath, options);
-}
-
-// check if a file exists & is readable asynchronously w/ optional size validation
-export async function statFileAsync(
-  filePath: string,
-  maxBytes?: number
-): Promise<{ exists: true; isFile: boolean; size: number } | null> {
-  try {
-    const stat = await fs.promises.stat(filePath);
-    if (maxBytes !== undefined && stat.size > maxBytes) {
-      return null;
-    }
-    return {
-      exists: true,
-      isFile: stat.isFile(),
-      size: stat.size,
-    };
-  } catch {
-    return null;
-  }
-}
-
-// read file content only if it meets size requirements
-export async function readFileIfUnderSize(
-  filePath: string,
-  maxBytes: number,
-  options?: FileOptions
-): Promise<string | null> {
-  try {
-    const stat = await fs.promises.stat(filePath);
-    if (stat.size > maxBytes) {
-      if (options?.logOnError) {
-        const log = options.logger ?? defaultLog;
-        log.debug(
-          `Skipping large file: ${filePath} (${stat.size} > ${maxBytes})`
-        );
-      }
-      return null;
-    }
-    return await fs.promises.readFile(filePath, 'utf-8');
-  } catch (err) {
-    return handleFileError(err, filePath, 'read', options);
-  }
 }
