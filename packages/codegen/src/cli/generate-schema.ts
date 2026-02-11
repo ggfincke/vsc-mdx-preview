@@ -2,13 +2,10 @@
 // script entry point for generating mdx-previewrc.schema.json
 
 import * as path from 'path';
-import { fileURLToPath } from 'node:url';
 import { generateConfigSchemaJson } from '../lib/generate-config-schema';
-import { writeGeneratedFile } from './cli-utils';
+import { writeGeneratedFile, getRootDir } from './cli-utils';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, '../../../..');
+const ROOT_DIR = getRootDir(import.meta.url);
 const SCHEMA_PATH = path.join(ROOT_DIR, 'schemas/mdx-previewrc.schema.json');
 
 function main(): void {

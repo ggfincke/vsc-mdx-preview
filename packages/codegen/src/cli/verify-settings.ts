@@ -4,38 +4,12 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'node:url';
-import {
-  PREVIEW_THEMES,
-  CODE_BLOCK_THEMES,
-  MERMAID_THEMES,
-  FRAMEWORK_SETTINGS,
-  TAILWIND_ENABLED_VALUES,
-  UNKNOWN_BEHAVIOR_VALUES,
-  UPDATE_MODE_VALUES,
-  SECURITY_POLICY_VALUES,
-  SETTINGS_DEFAULTS,
-} from '@mdx-preview/contracts';
+import { SETTINGS_DEFAULTS } from '@mdx-preview/contracts';
+import { type PackageJson, SETTINGS_ENUM_MAP } from '../lib/codegen-utils';
+import { getRootDir } from './cli-utils';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, '../../../..');
+const ROOT_DIR = getRootDir(import.meta.url);
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, 'package.json');
-
-interface PackageJson {
-  contributes?: {
-    configuration?: {
-      properties?: Record<
-        string,
-        {
-          enum?: string[];
-          enumDescriptions?: string[];
-          default?: unknown;
-        }
-      >;
-    };
-  };
-}
 
 function arraysEqual(a: readonly string[], b: readonly string[]): boolean {
   if (a.length !== b.length) {
@@ -96,69 +70,17 @@ function main(): void {
   const properties = packageJson.contributes?.configuration?.properties ?? {};
   const errors: string[] = [];
 
-  // verify preview theme enum
-  verifyEnum(
-    'mdx-preview.preview.previewTheme',
-    properties['mdx-preview.preview.previewTheme']?.enum,
-    PREVIEW_THEMES,
-    errors
-  );
-
-  // verify code block theme enum
-  verifyEnum(
-    'mdx-preview.preview.codeBlockTheme',
-    properties['mdx-preview.preview.codeBlockTheme']?.enum,
-    CODE_BLOCK_THEMES,
-    errors
-  );
-
-  // verify mermaid theme enum
-  verifyEnum(
-    'mdx-preview.preview.mermaidTheme',
-    properties['mdx-preview.preview.mermaidTheme']?.enum,
-    MERMAID_THEMES,
-    errors
-  );
-
-  // verify framework setting enum
-  verifyEnum(
-    'mdx-preview.framework',
-    properties['mdx-preview.framework']?.enum,
-    FRAMEWORK_SETTINGS,
-    errors
-  );
-
-  // verify tailwind.enabled enum
-  verifyEnum(
-    'mdx-preview.tailwind.enabled',
-    properties['mdx-preview.tailwind.enabled']?.enum,
-    TAILWIND_ENABLED_VALUES,
-    errors
-  );
-
-  // verify unknownBehavior enum
-  verifyEnum(
-    'mdx-preview.components.unknownBehavior',
-    properties['mdx-preview.components.unknownBehavior']?.enum,
-    UNKNOWN_BEHAVIOR_VALUES,
-    errors
-  );
-
-  // verify updateMode enum
-  verifyEnum(
-    'mdx-preview.preview.updateMode',
-    properties['mdx-preview.preview.updateMode']?.enum,
-    UPDATE_MODE_VALUES,
-    errors
-  );
-
-  // verify security policy enum
-  verifyEnum(
-    'mdx-preview.preview.security',
-    properties['mdx-preview.preview.security']?.enum,
-    SECURITY_POLICY_VALUES,
-    errors
-  );
+  // verify all enum settings match canonical sources
+  for (const [settingKey, canonicalArray] of Object.entries(
+    SETTINGS_ENUM_MAP
+  )) {
+    verifyEnum(
+      settingKey,
+      properties[settingKey]?.enum,
+      canonicalArray,
+      errors
+    );
+  }
 
   // verify defaults for all settings
   for (const [key, value] of Object.entries(SETTINGS_DEFAULTS)) {
@@ -180,14 +102,9 @@ function main(): void {
 
   console.log('All settings verifications PASSED!\n');
   console.log('Checked:');
-  console.log('  - mdx-preview.preview.previewTheme');
-  console.log('  - mdx-preview.preview.codeBlockTheme');
-  console.log('  - mdx-preview.preview.mermaidTheme');
-  console.log('  - mdx-preview.framework');
-  console.log('  - mdx-preview.tailwind.enabled');
-  console.log('  - mdx-preview.components.unknownBehavior');
-  console.log('  - mdx-preview.preview.updateMode');
-  console.log('  - mdx-preview.preview.security');
+  for (const key of Object.keys(SETTINGS_ENUM_MAP)) {
+    console.log(`  - ${key}`);
+  }
   console.log('  - defaults for all mdx-preview.* settings');
 }
 

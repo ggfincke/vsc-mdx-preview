@@ -2,16 +2,13 @@
 // script entry point for generating webview preload files
 
 import * as path from 'path';
-import { fileURLToPath } from 'node:url';
 import {
   generatePreloadAliasesTs,
   generatePreloadTs,
 } from '../lib/generate-preload';
-import { ensureDir, writeGeneratedFile } from './cli-utils';
+import { ensureDir, writeGeneratedFile, getRootDir } from './cli-utils';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, '../../../..');
+const ROOT_DIR = getRootDir(import.meta.url);
 const WEBVIEW_SRC_DIR = path.join(ROOT_DIR, 'packages/webview-client/src');
 const OUTPUT_DIR = path.join(WEBVIEW_SRC_DIR, 'generated', 'preload');
 

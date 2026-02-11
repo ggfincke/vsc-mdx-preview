@@ -2,16 +2,13 @@
 // generate shim barrels & framework CSS loader
 
 import * as path from 'path';
-import { fileURLToPath } from 'node:url';
 import {
   generateFrameworkCssLoaderTs,
   generateShimBarrelFiles,
 } from '../lib/generate-shims';
-import { writeGeneratedFile } from './cli-utils';
+import { writeGeneratedFile, getRootDir } from './cli-utils';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, '../../../..');
+const ROOT_DIR = getRootDir(import.meta.url);
 const WEBVIEW_SRC_DIR = path.join(ROOT_DIR, 'packages/webview-client/src');
 
 function main(): void {

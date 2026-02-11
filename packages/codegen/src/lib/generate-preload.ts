@@ -10,11 +10,11 @@ import {
   type FrameworkId,
 } from 'mdx-forge/components/registry';
 import { isBareImport } from '@mdx-preview/runtime-utils';
-import { normalizeImportPath } from './codegen-utils';
+import { normalizeImportPath, createGeneratedHeader } from './codegen-utils';
 
-const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/mdx-forge/src/components/registry/registry-data.ts
-`;
+const GENERATED_HEADER = createGeneratedHeader(
+  'packages/mdx-forge/src/components/registry/registry-data.ts'
+);
 
 export interface GeneratePreloadOptions {
   outputDir: string;

@@ -7,9 +7,11 @@ import {
   SHIM_BARREL_CONFIG,
 } from 'mdx-forge/components/registry';
 import { isBareImport } from '@mdx-preview/runtime-utils';
-import { normalizeImportPath } from './codegen-utils';
+import { normalizeImportPath, createGeneratedHeader } from './codegen-utils';
 
-const GENERATED_HEADER = `// AUTO-GENERATED FILE - DO NOT EDIT\n// Source: packages/mdx-forge/src/components/registry/shim-config.ts\n`;
+const GENERATED_HEADER = createGeneratedHeader(
+  'packages/mdx-forge/src/components/registry/shim-config.ts'
+);
 
 export interface GenerateShimsOptions {
   webviewSrcDir: string;

@@ -3,47 +3,16 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'node:url';
+import { SETTINGS_DEFAULTS } from '@mdx-preview/contracts';
 import {
-  SETTINGS_DEFAULTS,
-  FRAMEWORK_SETTINGS,
-  TAILWIND_ENABLED_VALUES,
-  UNKNOWN_BEHAVIOR_VALUES,
-  UPDATE_MODE_VALUES,
-  SECURITY_POLICY_VALUES,
-  PREVIEW_THEMES,
-  CODE_BLOCK_THEMES,
-  MERMAID_THEMES,
-} from '@mdx-preview/contracts';
+  type PackageJson,
+  type SettingProperty,
+  SETTINGS_ENUM_MAP,
+} from '../lib/codegen-utils';
+import { getRootDir } from './cli-utils';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, '../../../..');
+const ROOT_DIR = getRootDir(import.meta.url);
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, 'package.json');
-
-interface SettingProperty {
-  default?: unknown;
-  enum?: string[];
-}
-
-interface PackageJson {
-  contributes?: {
-    configuration?: {
-      properties?: Record<string, SettingProperty>;
-    };
-  };
-}
-
-const ENUM_MAP: Record<string, readonly string[]> = {
-  'mdx-preview.preview.previewTheme': PREVIEW_THEMES,
-  'mdx-preview.preview.codeBlockTheme': CODE_BLOCK_THEMES,
-  'mdx-preview.preview.mermaidTheme': MERMAID_THEMES,
-  'mdx-preview.framework': FRAMEWORK_SETTINGS,
-  'mdx-preview.tailwind.enabled': TAILWIND_ENABLED_VALUES,
-  'mdx-preview.components.unknownBehavior': UNKNOWN_BEHAVIOR_VALUES,
-  'mdx-preview.preview.updateMode': UPDATE_MODE_VALUES,
-  'mdx-preview.preview.security': SECURITY_POLICY_VALUES,
-};
 
 function loadPackageJson(): PackageJson {
   return JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, 'utf-8')) as PackageJson;
@@ -76,7 +45,7 @@ function syncDefaults(properties: Record<string, SettingProperty>): void {
 }
 
 function syncEnums(properties: Record<string, SettingProperty>): void {
-  for (const [key, values] of Object.entries(ENUM_MAP)) {
+  for (const [key, values] of Object.entries(SETTINGS_ENUM_MAP)) {
     const property = ensureProperty(properties, key);
     property.enum = [...values];
   }
