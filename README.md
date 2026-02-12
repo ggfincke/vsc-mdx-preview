@@ -1,6 +1,6 @@
 # MDX Preview for Visual Studio Code
 
-A modern, actively maintained successor to the original [MDX Preview](https://marketplace.visualstudio.com/items?itemName=xyc.vscode-mdx-preview) by [Xiaoyi Chen](https://github.com/xyc). Built on MDX 3 with React 18, framework support, Tailwind CSS, and a two-mode security model.
+A modern, actively maintained successor to the original [MDX Preview](https://marketplace.visualstudio.com/items?itemName=xyc.vscode-mdx-preview) by [Xiaoyi Chen](https://github.com/xyc). Built on MDX 3 with React 19, framework support, Tailwind CSS, and a two-mode security model.
 
 ![MDX Preview Demo](https://raw.githubusercontent.com/ggfincke/vsc-mdx-preview/main/assets/example.gif)
 
@@ -10,9 +10,11 @@ A modern, actively maintained successor to the original [MDX Preview](https://ma
 - **React Components** - Full import and rendering support in Trusted Mode
 - **Framework Shims** - Auto-detection and built-in shims for Docusaurus, Starlight, Nextra, and Next.js
 - **Tailwind CSS** - Built-in Tailwind v4 compilation with auto-detection
-- **Syntax Highlighting** - Shiki-powered code blocks with 100+ languages and 24 themes
+- **Syntax Highlighting** - Shiki-powered code blocks with 100+ languages and 23 themes
 - **Preview Themes** - 15+ themes (GitHub, Atom, Solarized, etc.) with auto light/dark switching
 - **Mermaid Diagrams** - Flowcharts, sequence diagrams, state diagrams, and more
+- **PlantUML Diagrams** - Server-side rendering via configurable PlantUML server
+- **Graphviz Diagrams** - Client-side DOT graph rendering via WASM engine
 - **Math Expressions** - KaTeX for inline (`$...$`) and block (`$$...$$`) math
 - **GitHub Alerts** - NOTE, TIP, WARNING, CAUTION, IMPORTANT callouts
 - **Custom Plugins** - Load remark/rehype plugins from your project
@@ -121,7 +123,12 @@ See [docs/security.md](https://github.com/ggfincke/vsc-mdx-preview/blob/main/doc
 | `mdx-preview.preview.mdx.customLayoutFilePath` | `""`        | Path to custom layout file                       |
 | `mdx-preview.framework`                        | `"auto"`    | Framework detection mode                         |
 | `mdx-preview.tailwind.enabled`                 | `"enabled"` | Tailwind CSS: `auto`, `enabled`, `disabled`      |
+| `mdx-preview.preview.mermaidTheme`             | `"default"` | Mermaid diagram theme                            |
+| `mdx-preview.preview.openMdxLinksInPreview`    | `true`      | Open `.mdx` links in preview                     |
+| `mdx-preview.framework.componentShims`         | `true`      | Enable framework component shims                 |
 | `mdx-preview.components.builtins`              | `true`      | Enable built-in component shims                  |
+| `mdx-preview.components.unknownBehavior`       | `"placeholder"` | Unknown component handling: `strip`, `placeholder`, `raw` |
+| `mdx-preview.diagrams.plantUmlServer`          | `"https://kroki.io"` | PlantUML server URL                        |
 | `mdx-preview.build.useSucraseTranspiler`       | `false`     | Use Sucrase instead of Babel                     |
 
 ## Webview Limitations

@@ -26,7 +26,7 @@ npm run lint
 
 ## Architecture
 
-- **Framework**: React 18 with TypeScript
+- **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite
 - **Testing**: Vitest with React Testing Library
 

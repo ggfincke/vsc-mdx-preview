@@ -192,6 +192,51 @@ pie title Project Time Distribution
 
 ---
 
+## PlantUML Diagrams
+
+Render UML diagrams via a configurable PlantUML server (default: [Kroki](https://kroki.io)):
+
+````mdx
+```plantuml
+@startuml
+Alice -> Bob: Authentication Request
+Bob --> Alice: Authentication Response
+Alice -> Bob: Data Request
+Bob --> Alice: Data Response
+@enduml
+```
+````
+
+Configure the server URL via `mdx-preview.diagrams.plantUmlServer`.
+
+---
+
+## Graphviz Diagrams
+
+Render DOT graphs client-side using a WASM engine:
+
+````mdx
+```dot
+digraph G {
+    A -> B -> C;
+    B -> D;
+}
+```
+````
+
+You can also use the `graphviz` language tag:
+
+````mdx
+```graphviz
+digraph {
+    rankdir=LR;
+    Start -> Process -> End;
+}
+```
+````
+
+---
+
 ## Built-in Components
 
 These components are available without imports:

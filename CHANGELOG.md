@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Renamed `packages/webview-app` → `packages/webview-client` with feature-sliced internals
   - Deleted `packages/shared` — split into `@mdx-preview/contracts`, `@mdx-preview/registry`, `@mdx-preview/runtime-utils`, `@mdx-preview/codegen`
   - Created `mdx-forge` public library with subpath exports (compiler, browser, components)
-  - Added 12 dependency-cruiser boundary rules with CI enforcement
+  - Added 11 dependency-cruiser boundary rules with CI enforcement
   - Migrated 134 files from `@mdx-preview/shared` to direct package imports
 
 ## [1.0.3] - 2026-02-08
@@ -102,12 +102,12 @@ This release represents a complete rewrite of the MDX Preview extension, introdu
 - **Two-Mode Rendering System**: Safe Mode (static HTML, no JS) for untrusted workspaces; Trusted Mode (full React evaluation) for trusted workspaces
 - **Workspace Trust Integration**: Respects VS Code's workspace trust model with explicit opt-in for script execution
 - **Preview Themes**: 15+ preview themes (GitHub, Atom, Solarized, etc.) with auto light/dark switching
-- **Code Block Themes**: 24 syntax highlighting themes with configurable selection
+- **Code Block Themes**: 23 syntax highlighting themes with configurable selection
 - **Table of Contents**: Automatic TOC generation from headings with collapsible sections
 
 #### Framework Support
 
-- **Docusaurus**: Auto-detection, admonitions (:::note, :::tip, etc.), Tabs, Cards, Details components
+- **Docusaurus**: Auto-detection, admonitions (:::note, :::tip, etc.), Tabs, TabItem, CodeBlock, Details components
 - **Nextra**: Full support with Callout, Tabs, Cards, FileTree, Steps, Bleed components and `_meta.json` awareness
 - **Astro Starlight**: Component shims for Starlight documentation sites
 - **Next.js**: Image and Link component shims with MDX integration
@@ -123,7 +123,7 @@ This release represents a complete rewrite of the MDX Preview extension, introdu
 #### Tailwind CSS
 
 - **Live Compilation**: Real-time Tailwind utility class compilation in MDX previews (Trusted Mode)
-- **Version Support**: Both Tailwind v3 and v4 with automatic detection
+- **Version Support**: Tailwind v4 with automatic detection
 - **Smart Extraction**: Class extraction from MDX/JSX content and dependencies
 - **Configuration**: Per-project settings via `mdx-preview.tailwind.*` or `.mdx-previewrc.json`
 
@@ -153,7 +153,7 @@ This release represents a complete rewrite of the MDX Preview extension, introdu
 ### Changed
 
 - **MDX 3**: Upgraded from MDX 1/2 to MDX 3 with modern unified ecosystem
-- **React 18**: Upgraded from React 16/17 to React 18 with concurrent features
+- **React 19**: Upgraded from React 16/17 to React 19
 - **TypeScript**: ES2022 target with strict mode enabled
 - **Build System**: Vite-based webview build, esbuild for extension bundling
 - **Module Resolution**: Enhanced-resolve with proper `exports` field and browser condition support

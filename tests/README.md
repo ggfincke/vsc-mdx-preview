@@ -70,10 +70,20 @@ tests/
 │   ├── preview/        # Preview lifecycle & watchers
 │   ├── security/       # Path security (checkFsPath)
 │   └── tailwind/       # Tailwind detection & processing
+├── scripts/            # Codegen verification
+│   ├── check-generated-files  # Generated file location checks
+│   └── verify-codegen-idempotency  # Codegen idempotency via git diff
 ├── webview/            # Webview critical paths
+│   ├── App             # Root component rendering
+│   ├── TrustedPreview  # Trusted mode rendering
+│   ├── SafePreview     # Safe mode rendering & XSS prevention
+│   ├── evaluateModule  # Module evaluation
 │   ├── ModuleRegistry  # Module caching & dependencies
 │   ├── StyleInjector   # CSS injection
-│   └── shimLoader      # Framework shim loading
+│   ├── shimLoader      # Framework shim loading
+│   ├── rpc-webview     # Webview RPC client
+│   ├── diagrams        # Diagram container & rendering
+│   └── preload         # Preload atomic registration
 └── services/           # Service registry lifecycle & circular detection
 ```
 
