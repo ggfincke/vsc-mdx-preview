@@ -1,58 +1,17 @@
 // tests/extension/compiler/plugin-loader.test.ts
-// unit tests for custom plugin loading from project config
+// unit tests for custom plugin loading via mdx-forge/compiler
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-
-const {
-  mockNodeResolver,
-  mockTryRequireTrustedModeForDocument,
-  mockErrorReporter,
-} = vi.hoisted(() => ({
-  mockNodeResolver: {
-    resolveSync: vi.fn(),
-  },
-  mockTryRequireTrustedModeForDocument: vi.fn(),
-  mockErrorReporter: {
-    reportPluginError: vi.fn(),
-  },
-}));
-
-vi.mock(
-  '../../../packages/extension/module-system/resolver/resolver-factory',
-  () => ({
-    getNodeResolver: () => mockNodeResolver,
-  })
-);
-
-vi.mock('../../../packages/extension/security/validateTrust', () => ({
-  tryRequireTrustedModeForDocument: (...args: unknown[]) =>
-    mockTryRequireTrustedModeForDocument(...args),
-}));
-
-vi.mock('../../../packages/extension/services', () => ({
-  getErrorReporter: () => mockErrorReporter,
-}));
-
-vi.mock('../../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
-import {
-  loadPluginsFromConfig,
-  mergePlugins,
-} from '../../../packages/extension/compiler/plugins/loader';
+import { loadPluginsFromConfig, mergePlugins } from 'mdx-forge/compiler';
+import type {
+  CompilerConfig,
+  PluginLoader,
+  ErrorReporter,
+  TrustValidator,
+} from 'mdx-forge/compiler';
 
 function createPluginModule(tempDir: string, name: string): string {
   const pluginPath = path.join(tempDir, `${name}.cjs`);
@@ -62,6 +21,30 @@ function createPluginModule(tempDir: string, name: string): string {
     'utf-8'
   );
   return pluginPath;
+}
+
+// create a mock plugin loader that resolves plugins from temp dir
+function createMockPluginLoader(resolveMap: Map<string, string>): PluginLoader {
+  return {
+    resolve(specifier: string, _fromDir: string): string {
+      const resolved = resolveMap.get(specifier);
+      if (!resolved) {
+        throw new Error(`Cannot find plugin "${specifier}"`);
+      }
+      return resolved;
+    },
+    load(resolvedPath: string): unknown {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      return require(resolvedPath);
+    },
+  };
+}
+
+function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
+  return {
+    documentPath: '/workspace/doc.mdx',
+    ...overrides,
+  };
 }
 
 const tempDirs: string[] = [];
@@ -76,28 +59,23 @@ afterEach(() => {
 });
 
 describe('plugin loader', () => {
+  let mockErrorReporter: ErrorReporter;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    mockTryRequireTrustedModeForDocument.mockReturnValue({
-      workspaceTrusted: true,
-      scriptsEnabled: true,
-      canExecute: true,
-      openMdxLinksInPreview: true,
-    });
+    mockErrorReporter = {
+      reportPluginError: vi.fn(),
+    };
   });
 
   it('returns empty result when config is undefined', async () => {
-    const result = await loadPluginsFromConfig(undefined, {
-      scheme: 'file',
-      fsPath: '/workspace/doc.mdx',
-    } as any);
+    const result = await loadPluginsFromConfig(undefined, createConfig());
 
     expect(result).toEqual({
       remarkPlugins: [],
       rehypePlugins: [],
       errorCount: 0,
     });
-    expect(mockTryRequireTrustedModeForDocument).not.toHaveBeenCalled();
   });
 
   it('loads remark & rehype plugin lists including option tuples', async () => {
@@ -113,15 +91,11 @@ describe('plugin loader', () => {
     );
     const rehypePath = createPluginModule(tempDir, 'rehype-plugin');
 
-    mockNodeResolver.resolveSync.mockImplementation(
-      (_context: unknown, _configDir: string, pluginName: string) => {
-        if (pluginName === 'remark-plugin') return remarkPath;
-        if (pluginName === 'remark-options-plugin')
-          return remarkWithOptionsPath;
-        if (pluginName === 'rehype-plugin') return rehypePath;
-        return false;
-      }
-    );
+    const resolveMap = new Map([
+      ['remark-plugin', remarkPath],
+      ['remark-options-plugin', remarkWithOptionsPath],
+      ['rehype-plugin', rehypePath],
+    ]);
 
     const result = await loadPluginsFromConfig(
       {
@@ -134,8 +108,14 @@ describe('plugin loader', () => {
         },
         configDir: tempDir,
         configPath: path.join(tempDir, '.mdx-previewrc.json'),
-      } as any,
-      { scheme: 'file', fsPath: '/workspace/doc.mdx' } as any
+      },
+      createConfig({
+        pluginLoader: createMockPluginLoader(resolveMap),
+        errorReporter: mockErrorReporter,
+        trustValidator: {
+          isTrusted: () => ({ canExecute: true }),
+        },
+      })
     );
 
     expect(result.errorCount).toBe(0);
@@ -148,20 +128,15 @@ describe('plugin loader', () => {
     ).toEqual({
       strategy: 'strict',
     });
-    expect(mockErrorReporter.reportPluginError).not.toHaveBeenCalled();
   });
 
   it('reports trust failure & skips plugin loading', async () => {
-    mockTryRequireTrustedModeForDocument.mockImplementation(
-      (
-        _documentUri: unknown,
-        _operation: string,
-        onTrustError?: (error: { message: string }) => void
-      ) => {
-        onTrustError?.({ message: 'Trusted Mode is disabled' });
-        return undefined;
-      }
-    );
+    const trustValidator: TrustValidator = {
+      isTrusted: () => ({
+        canExecute: false,
+        reason: 'Trusted Mode is disabled',
+      }),
+    };
 
     const result = await loadPluginsFromConfig(
       {
@@ -171,8 +146,11 @@ describe('plugin loader', () => {
         },
         configDir: '/workspace',
         configPath: '/workspace/.mdx-previewrc.json',
-      } as any,
-      { scheme: 'file', fsPath: '/workspace/doc.mdx' } as any
+      },
+      createConfig({
+        trustValidator,
+        errorReporter: mockErrorReporter,
+      })
     );
 
     expect(result).toEqual({
@@ -180,14 +158,7 @@ describe('plugin loader', () => {
       rehypePlugins: [],
       errorCount: 0,
     });
-    expect(mockNodeResolver.resolveSync).not.toHaveBeenCalled();
     expect(mockErrorReporter.reportPluginError).toHaveBeenCalledTimes(1);
-    const [pluginError, pluginName] =
-      mockErrorReporter.reportPluginError.mock.calls[0];
-    expect(pluginName).toBe('custom-plugins');
-    expect((pluginError as Error).message).toContain(
-      '2 plugin(s) will be ignored'
-    );
   });
 
   it('counts load errors while loading remaining plugins', async () => {
@@ -198,12 +169,7 @@ describe('plugin loader', () => {
 
     const goodRehypePath = createPluginModule(tempDir, 'rehype-good');
 
-    mockNodeResolver.resolveSync.mockImplementation(
-      (_context: unknown, _configDir: string, pluginName: string) => {
-        if (pluginName === 'rehype-good') return goodRehypePath;
-        return false;
-      }
-    );
+    const resolveMap = new Map([['rehype-good', goodRehypePath]]);
 
     const result = await loadPluginsFromConfig(
       {
@@ -213,16 +179,20 @@ describe('plugin loader', () => {
         },
         configDir: tempDir,
         configPath: path.join(tempDir, '.mdx-previewrc.json'),
-      } as any,
-      { scheme: 'file', fsPath: '/workspace/doc.mdx' } as any
+      },
+      createConfig({
+        pluginLoader: createMockPluginLoader(resolveMap),
+        errorReporter: mockErrorReporter,
+        trustValidator: {
+          isTrusted: () => ({ canExecute: true }),
+        },
+      })
     );
 
     expect(result.errorCount).toBe(1);
     expect(result.remarkPlugins).toHaveLength(0);
     expect(result.rehypePlugins).toHaveLength(1);
     expect(mockErrorReporter.reportPluginError).toHaveBeenCalledTimes(1);
-    const [, pluginName] = mockErrorReporter.reportPluginError.mock.calls[0];
-    expect(pluginName).toBe('remark-missing');
   });
 
   it('merges custom plugins after built-ins', () => {

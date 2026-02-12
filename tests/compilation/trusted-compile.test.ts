@@ -1,62 +1,21 @@
 // tests/compilation/trusted-compile.test.ts
-// Unit tests for Trusted Mode MDX compilation (MDX -> JavaScript)
+// unit tests for Trusted Mode MDX compilation (MDX -> JavaScript) via mdx-forge/compiler
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { compileTrusted } from 'mdx-forge/compiler';
+import type { CompilerConfig } from 'mdx-forge/compiler';
+import { FIXTURES } from '../helpers';
 
-// Mock vscode
-vi.mock('vscode', () => ({
-  Uri: {
-    file: (path: string) => ({ scheme: 'file', fsPath: path, path }),
-  },
-}));
-
-// Mock services w/ hoisted mocks
-const { mockTrustManager } = vi.hoisted(() => ({
-  mockTrustManager: {
-    getStateForDocument: vi.fn(() => ({
-      workspaceTrusted: true,
-      scriptsEnabled: true,
-      canExecute: true,
-      openMdxLinksInPreview: true,
-    })),
-    canExecute: vi.fn(() => true),
-  },
-}));
-
-vi.mock('../../packages/extension/services', () => ({
-  getTrustManager: () => mockTrustManager,
-}));
-
-// Mock logging
-vi.mock('../../packages/extension/logging', () => ({
-  error: vi.fn(),
-  warn: vi.fn(),
-  debug: vi.fn(),
-  info: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
-// Mock plugin loader (avoid loading real plugins)
-vi.mock('../../packages/extension/compiler/plugins/loader', () => ({
-  loadPluginsFromConfig: vi.fn(async () => ({
-    remarkPlugins: [],
-    rehypePlugins: [],
-    errorCount: 0,
-  })),
-}));
-
-// Import after mocks
-import { compileTrusted } from '../../packages/extension/compiler/trusted/compile';
-import {
-  createMockPreview,
-  createMockCompilerConfigFromPreview,
-  FIXTURES,
-} from '../helpers';
+// create library-native CompilerConfig
+function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
+  return {
+    documentPath: '/workspace/test.mdx',
+    useVscodeMarkdownStyles: true,
+    componentsBuiltins: true,
+    componentsUnknownBehavior: 'placeholder',
+    ...overrides,
+  };
+}
 
 describe('compileTrusted()', () => {
   beforeEach(() => {
@@ -64,11 +23,10 @@ describe('compileTrusted()', () => {
   });
 
   it('compiles basic MDX to JavaScript with React imports', async () => {
-    const preview = createMockPreview({ content: FIXTURES.basicMdx });
     const result = await compileTrusted(
       FIXTURES.basicMdx,
       true,
-      createMockCompilerConfigFromPreview(preview)
+      createConfig()
     );
 
     expect(result.code).toContain('import React from');
@@ -77,11 +35,10 @@ describe('compileTrusted()', () => {
   });
 
   it('extracts frontmatter and returns it separately', async () => {
-    const preview = createMockPreview({ content: FIXTURES.mdxWithFrontmatter });
     const result = await compileTrusted(
       FIXTURES.mdxWithFrontmatter,
       true,
-      createMockCompilerConfigFromPreview(preview)
+      createConfig()
     );
 
     expect(result.frontmatter).toBeDefined();
@@ -90,14 +47,10 @@ describe('compileTrusted()', () => {
   });
 
   it('injects vscode-markdown-layout when no default export and useVscodeMarkdownStyles is true', async () => {
-    const preview = createMockPreview({
-      content: FIXTURES.basicMdx,
-      configuration: { useVscodeMarkdownStyles: true },
-    });
     const result = await compileTrusted(
       FIXTURES.basicMdx,
       true,
-      createMockCompilerConfigFromPreview(preview)
+      createConfig({ useVscodeMarkdownStyles: true })
     );
 
     expect(result.code).toContain('vscode-markdown-layout');
@@ -105,26 +58,21 @@ describe('compileTrusted()', () => {
   });
 
   it('preserves existing default export (no layout injection)', async () => {
-    const preview = createMockPreview({
-      content: FIXTURES.mdxWithLayout,
-      configuration: { useVscodeMarkdownStyles: true },
-    });
     const result = await compileTrusted(
       FIXTURES.mdxWithLayout,
       true,
-      createMockCompilerConfigFromPreview(preview)
+      createConfig({ useVscodeMarkdownStyles: true })
     );
 
-    // Should NOT inject vscode-markdown-layout when there's already a default export
+    // should NOT inject vscode-markdown-layout when there's already a default export
     expect(result.code).not.toContain('vscode-markdown-layout');
   });
 
   it('returns empty frontmatter when none present', async () => {
-    const preview = createMockPreview({ content: FIXTURES.basicMdx });
     const result = await compileTrusted(
       FIXTURES.basicMdx,
       true,
-      createMockCompilerConfigFromPreview(preview)
+      createConfig()
     );
 
     expect(result.frontmatter).toEqual({});

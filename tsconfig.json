@@ -20,10 +20,13 @@
     "resolveJsonModule": true,
     "types": ["node"],
     "paths": {
-      "@mdx-preview/shared": ["./packages/shared/index.ts"]
+      "@mdx-preview/contracts": ["./packages/contracts/src/index.ts"],
+      "@mdx-preview/registry": ["./packages/registry/src/index.ts"],
+      "@mdx-preview/runtime-utils": ["./packages/runtime-utils/src/index.ts"],
+      "@mdx-preview/codegen": ["./packages/codegen/src/index.ts"]
     }
   },
-  "include": ["packages/extension", "packages/shared"],
+  "include": ["packages/extension-host"],
   "exclude": [
     "node_modules",
     ".vscode-test",

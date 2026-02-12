@@ -1,0 +1,35 @@
+// AUTO-GENERATED FILE - DO NOT EDIT
+// Source: packages/mdx-forge/src/components/registry/registry-data.ts
+
+// canonical shim preload IDs (used for cache resets)
+export const PRELOADED_SHIM_IDS: string[] = [
+  'npm://@mdx-preview/shims-generic/Callout',
+  'npm://@mdx-preview/shims-generic/Collapsible',
+  'npm://@mdx-preview/shims-generic/Tabs',
+  'npm://@mdx-preview/shims-generic/TabItem',
+  'npm://@mdx-preview/shims-generic/CodeGroup',
+  'npm://@mdx-preview/shims-docusaurus/Tabs',
+  'npm://@mdx-preview/shims-docusaurus/TabItem',
+  'npm://@mdx-preview/shims-docusaurus/CodeBlock',
+  'npm://@mdx-preview/shims-docusaurus/Details',
+  'npm://@mdx-preview/shims-starlight/components',
+  'npm://@mdx-preview/shims-starlight/Card',
+  'npm://@mdx-preview/shims-starlight/CardGrid',
+  'npm://@mdx-preview/shims-starlight/LinkCard',
+  'npm://@mdx-preview/shims-starlight/Steps',
+  'npm://@mdx-preview/shims-starlight/Badge',
+  'npm://@mdx-preview/shims-starlight/Aside',
+  'npm://@mdx-preview/shims-starlight/Tabs',
+  'npm://@mdx-preview/shims-starlight/TabItem',
+  'npm://@mdx-preview/shims-starlight/FileTree',
+  'npm://@mdx-preview/shims-starlight/Code',
+  'npm://@mdx-preview/shims-nextjs/Image',
+  'npm://@mdx-preview/shims-nextjs/Link',
+  'npm://@mdx-preview/shims-nextra/components',
+  'npm://@mdx-preview/shims-nextra/Callout',
+  'npm://@mdx-preview/shims-nextra/Tabs',
+  'npm://@mdx-preview/shims-nextra/Cards',
+  'npm://@mdx-preview/shims-nextra/FileTree',
+  'npm://@mdx-preview/shims-nextra/Steps',
+  'npm://@mdx-preview/shims-nextra/Bleed',
+];

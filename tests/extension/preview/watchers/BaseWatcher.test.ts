@@ -3,30 +3,39 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('../../../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
+vi.mock(
+  '../../../../packages/extension-host/src/shared/logging/logger',
+  () => ({
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-  })),
-}));
+    createTaggedLogger: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  })
+);
 
-vi.mock('../../../../packages/extension/utils/disposable', () => ({
-  disposeCollection: vi.fn(),
-  disposeOne: vi.fn(),
-}));
+vi.mock(
+  '../../../../packages/extension-host/src/shared/utils/disposable',
+  () => ({
+    disposeCollection: vi.fn(),
+    disposeOne: vi.fn(),
+  })
+);
 
-vi.mock('../../../../packages/extension/utils/createFileWatcher', () => ({
-  createFileWatcher: vi.fn(),
-}));
+vi.mock(
+  '../../../../packages/extension-host/src/shared/utils/createFileWatcher',
+  () => ({
+    createFileWatcher: vi.fn(),
+  })
+);
 
-import { BaseWatcher } from '../../../../packages/extension/preview/watchers/BaseWatcher';
-import type { LogTag } from '@mdx-preview/shared';
+import { BaseWatcher } from '../../../../packages/extension-host/src/features/preview/watchers/BaseWatcher';
+import type { LogTag } from '@mdx-preview/contracts';
 
 // concrete test subclass w/ configurable callbacks
 class TestWatcher extends BaseWatcher {
@@ -244,6 +253,5 @@ describe('BaseWatcher', () => {
       vi.advanceTimersByTime(100);
       expect(fn).not.toHaveBeenCalled();
     });
-
   });
 });

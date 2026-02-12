@@ -1,13 +1,13 @@
 // tests/shared/plantuml-server.test.ts
-// unit tests for shared PlantUML server URL helpers
+// unit tests for PlantUML server constant & runtime URL helpers
 
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_PLANTUML_SERVER } from '@mdx-preview/contracts';
 import {
-  DEFAULT_PLANTUML_SERVER,
   normalizePlantUmlServerUrl,
   getPlantUmlServerOrigin,
   getPlantUmlRenderEndpoints,
-} from '../../packages/shared/diagrams/plantuml-server';
+} from '@mdx-preview/runtime-utils';
 
 describe('PlantUML server helpers', () => {
   it('normalizes empty input to default server', () => {
@@ -45,8 +45,8 @@ describe('PlantUML server helpers', () => {
   });
 
   it('uses direct endpoint when server already points to /svg', () => {
-    expect(getPlantUmlRenderEndpoints('https://example.com/custom/svg')).toEqual([
-      'https://example.com/custom/svg',
-    ]);
+    expect(
+      getPlantUmlRenderEndpoints('https://example.com/custom/svg')
+    ).toEqual(['https://example.com/custom/svg']);
   });
 });

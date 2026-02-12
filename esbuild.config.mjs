@@ -10,14 +10,14 @@ const watch = process.argv.includes('--watch');
 
 // @type {esbuild.BuildOptions}
 const buildOptions = {
-  entryPoints: ['packages/extension/extension.ts'],
+  entryPoints: ['packages/extension-host/src/entry/activate.ts'],
   bundle: true,
   outfile: 'build/extension/extension.js',
-  // vscode is provided by VS Code at runtime
+  // exclude vscode (provided by VS Code at runtime)
   // @babel/preset-typescript/package.json is dynamically required by @babel/core
   // for module type detection (optional, not used in this project)
   // sass is loaded from workspace's node_modules at runtime (not bundled)
-  // typescript is replaced with tsconfck + Sucrase (not bundled)
+  // typescript is replaced w/ tsconfck + Sucrase (not bundled)
   external: ['vscode', '@babel/preset-typescript/package.json', 'sass', 'typescript'],
   // VS Code extension host requires CommonJS
   format: 'cjs',

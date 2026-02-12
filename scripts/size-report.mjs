@@ -27,7 +27,7 @@ function getDirectorySize(dir) {
           const fullPath = join(entry.parentPath || entry.path, entry.name);
           size += statSync(fullPath).size;
         } catch {
-          // Skip files that can't be read
+          // skip files that can't be read
         }
       }
     }
@@ -61,12 +61,12 @@ function getFilesInDirectory(dir, filter = () => true) {
       }
     }
   } catch {
-    // Directory doesn't exist
+    // directory doesn't exist
   }
   return files.sort((a, b) => b.size - a.size);
 }
 
-// Calculate sizes
+// calculate sizes
 const extensionJsPath = join(ROOT, 'build/extension/extension.js');
 const sourceMapPath = join(ROOT, 'build/extension/extension.js.map');
 const webviewDir = join(ROOT, 'build/webview-app');
@@ -77,14 +77,14 @@ const sourceMapSize = getFileSize(sourceMapPath);
 const webviewSize = getDirectorySize(webviewDir);
 const totalBuildSize = getDirectorySize(buildDir);
 
-// Header
+// header
 console.log('');
 console.log('======================================================================');
 console.log('              MDX Preview Bundle Size Report                          ');
 console.log('======================================================================');
 console.log('');
 
-// Main metrics
+// main metrics
 console.log('Build Summary');
 console.log('---------------------------------------------');
 console.log(`  Extension JS:      ${formatSize(extensionSize).padStart(12)}`);
@@ -96,7 +96,7 @@ console.log('---------------------------------------------');
 console.log(`  Total Build:       ${formatSize(totalBuildSize).padStart(12)}`);
 console.log('');
 
-// Webview breakdown
+// webview breakdown
 const webviewFiles = getFilesInDirectory(webviewDir, (f) => f.endsWith('.js') || f.endsWith('.css'));
 if (webviewFiles.length > 0) {
   console.log('Webview Chunks (JS/CSS)');
@@ -111,12 +111,14 @@ if (webviewFiles.length > 0) {
   console.log('');
 }
 
-// Thresholds and warnings
+// thresholds & warnings
 console.log('Status');
 console.log('---------------------------------------------');
 
-const extensionThreshold = 20 * 1024 * 1024; // 20MB
-const totalThreshold = 100 * 1024 * 1024; // 100MB
+// set extension bundle threshold (20MB)
+const extensionThreshold = 20 * 1024 * 1024;
+// set total build threshold (100MB)
+const totalThreshold = 100 * 1024 * 1024;
 
 if (extensionSize > extensionThreshold) {
   console.log(`  [!] Extension bundle exceeds ${formatSize(extensionThreshold)} threshold`);
@@ -134,7 +136,7 @@ if (totalBuildSize > totalThreshold) {
 
 console.log('');
 
-// Exit with error code if thresholds exceeded
+// exit w/ error code if thresholds exceeded
 if (extensionSize > extensionThreshold || totalBuildSize > totalThreshold) {
   process.exit(1);
 }

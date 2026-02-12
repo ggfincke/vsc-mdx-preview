@@ -12,36 +12,32 @@ const mockPreviewManager = {
   clearAllWebviewCaches: vi.fn(async () => {}),
 };
 
-vi.mock('../../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory',
+  () => ({
+    clearResolverCache: (...args: any[]) => mockClearResolverCache(...args),
+  })
+);
 
-vi.mock('../../../packages/extension/module-system/resolver/resolver-factory', () => ({
-  clearResolverCache: (...args: any[]) => mockClearResolverCache(...args),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/module-runtime/handlers',
+  () => ({
+    clearSassCache: (...args: any[]) => mockClearSassCache(...args),
+  })
+);
 
-vi.mock('../../../packages/extension/module-system/handlers', () => ({
-  clearSassCache: (...args: any[]) => mockClearSassCache(...args),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/app/lifecycle/cache-subsystem',
+  () => ({
+    clearUnmanagedCaches: (...args: any[]) => mockClearUnmanagedCaches(...args),
+  })
+);
 
-vi.mock('../../../packages/extension/cache-subsystem', () => ({
-  clearUnmanagedCaches: (...args: any[]) => mockClearUnmanagedCaches(...args),
-}));
-
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getPreviewManager: () => mockPreviewManager,
 }));
 
-import { commands } from '../../../packages/extension/commands/cache';
+import { commands } from '../../../packages/extension-host/src/features/commands/cache';
 
 describe('cache commands', () => {
   const handler = commands.find(
@@ -75,8 +71,6 @@ describe('cache commands', () => {
   it('shows confirmation message', async () => {
     const spy = vi.spyOn(vscode.window, 'showInformationMessage');
     await handler();
-    expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining('caches cleared')
-    );
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('caches cleared'));
   });
 });

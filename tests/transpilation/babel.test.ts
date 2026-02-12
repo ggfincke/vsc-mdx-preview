@@ -2,7 +2,7 @@
 // Unit tests for Babel transpilation
 
 import { describe, it, expect } from 'vitest';
-import { transformAsync } from '../../packages/extension/module-system/transform/babel';
+import { transformAsync } from '../../packages/extension-host/src/features/module-runtime/transform/babel';
 
 describe('transformAsync()', () => {
   it('transforms JSX to React.createElement calls', async () => {

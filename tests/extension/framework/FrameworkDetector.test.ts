@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { FrameworkDetector } from '../../../packages/extension/framework/FrameworkDetector';
+import { FrameworkDetector } from '../../../packages/extension-host/src/features/framework/FrameworkDetector';
 import { Uri } from 'vscode';
 
 const { mockConfigManager } = vi.hoisted(() => ({
@@ -15,19 +15,9 @@ const { mockConfigManager } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
   getErrorReporter: () => ({ reportSilent: vi.fn() }),
-}));
-
-vi.mock('../../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
 }));
 
 const tempDirs: string[] = [];
@@ -52,7 +42,9 @@ describe('FrameworkDetector', () => {
   });
 
   it('detects Docusaurus before other frameworks', () => {
-    const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-fw-'));
+    const workspaceRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-fw-')
+    );
     tempDirs.push(workspaceRoot);
 
     fs.writeFileSync(
@@ -74,7 +66,9 @@ describe('FrameworkDetector', () => {
   });
 
   it('detects Nextra before Next.js when both are present', () => {
-    const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-fw-'));
+    const workspaceRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-fw-')
+    );
     tempDirs.push(workspaceRoot);
 
     fs.writeFileSync(
@@ -96,7 +90,9 @@ describe('FrameworkDetector', () => {
   });
 
   it('requires secondary dependency for Next.js detection', () => {
-    const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-fw-'));
+    const workspaceRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-fw-')
+    );
     tempDirs.push(workspaceRoot);
 
     fs.writeFileSync(
@@ -112,7 +108,9 @@ describe('FrameworkDetector', () => {
   });
 
   it('detects Next.js when secondary dependency is present', () => {
-    const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-fw-'));
+    const workspaceRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-fw-')
+    );
     tempDirs.push(workspaceRoot);
 
     fs.writeFileSync(

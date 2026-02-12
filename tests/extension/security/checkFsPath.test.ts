@@ -18,8 +18,8 @@ vi.mock('vscode', () => ({
 import {
   checkFsPathAsync,
   handleDidChangeWorkspaceFolders,
-} from '../../../packages/extension/module-system/security/checkFsPath';
-import { normalizePathForComparison } from '../../../packages/extension/utils/path-utils';
+} from '../../../packages/extension-host/src/features/module-runtime/security/checkFsPath';
+import { normalizePathForComparison } from '../../../packages/extension-host/src/shared/utils/path-utils';
 
 describe('checkFsPathAsync', () => {
   beforeEach(() => {
@@ -45,11 +45,14 @@ describe('checkFsPathAsync', () => {
         createWorkspaceFolder('/workspace'),
       ]);
 
-      expect(await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')).toBe(
-        true
-      );
       expect(
-        await checkFsPathAsync('/workspace/src', '/workspace/src/components/Button.tsx')
+        await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')
+      ).toBe(true);
+      expect(
+        await checkFsPathAsync(
+          '/workspace/src',
+          '/workspace/src/components/Button.tsx'
+        )
       ).toBe(true);
     });
 
@@ -58,24 +61,28 @@ describe('checkFsPathAsync', () => {
         createWorkspaceFolder('/workspace'),
       ]);
 
-      expect(await checkFsPathAsync('/workspace/src', '/other/file.ts')).toBe(false);
-      expect(await checkFsPathAsync('/workspace/src', '/etc/passwd')).toBe(false);
+      expect(await checkFsPathAsync('/workspace/src', '/other/file.ts')).toBe(
+        false
+      );
+      expect(await checkFsPathAsync('/workspace/src', '/etc/passwd')).toBe(
+        false
+      );
     });
 
     it('should return false when no workspace folders exist', async () => {
       mockWorkspaceFolders.mockReturnValue(undefined);
 
-      expect(await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')).toBe(
-        false
-      );
+      expect(
+        await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')
+      ).toBe(false);
     });
 
     it('should return false when workspace folders array is empty', async () => {
       mockWorkspaceFolders.mockReturnValue([]);
 
-      expect(await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')).toBe(
-        false
-      );
+      expect(
+        await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')
+      ).toBe(false);
     });
   });
 
@@ -87,12 +94,12 @@ describe('checkFsPathAsync', () => {
       ]);
 
       // entry dir in workspace1
-      expect(await checkFsPathAsync('/workspace1/src', '/workspace1/src/file.ts')).toBe(
-        true
-      );
-      expect(await checkFsPathAsync('/workspace1/src', '/workspace2/src/file.ts')).toBe(
-        false
-      );
+      expect(
+        await checkFsPathAsync('/workspace1/src', '/workspace1/src/file.ts')
+      ).toBe(true);
+      expect(
+        await checkFsPathAsync('/workspace1/src', '/workspace2/src/file.ts')
+      ).toBe(false);
     });
 
     it('should pick the most specific (shortest path) workspace folder', async () => {
@@ -103,11 +110,17 @@ describe('checkFsPathAsync', () => {
 
       // entry dir in /workspace/project & path inside that workspace
       expect(
-        await checkFsPathAsync('/workspace/project/src', '/workspace/project/src/file.ts')
+        await checkFsPathAsync(
+          '/workspace/project/src',
+          '/workspace/project/src/file.ts'
+        )
       ).toBe(true);
       // path in parent /workspace allowed since it's a workspace folder (shorter path wins in sort)
       expect(
-        await checkFsPathAsync('/workspace/project/src', '/workspace/other/file.ts')
+        await checkFsPathAsync(
+          '/workspace/project/src',
+          '/workspace/other/file.ts'
+        )
       ).toBe(true);
     });
 
@@ -118,7 +131,10 @@ describe('checkFsPathAsync', () => {
 
       // entry dir outside all workspace folders
       expect(
-        await checkFsPathAsync('/other/project/src', '/other/project/src/file.ts')
+        await checkFsPathAsync(
+          '/other/project/src',
+          '/other/project/src/file.ts'
+        )
       ).toBe(false);
     });
   });
@@ -132,22 +148,30 @@ describe('checkFsPathAsync', () => {
 
     it('should block simple parent directory traversal', async () => {
       expect(
-        await checkFsPathAsync('/workspace/src', '/workspace/src/../config/secret.ts')
+        await checkFsPathAsync(
+          '/workspace/src',
+          '/workspace/src/../config/secret.ts'
+        )
       ).toBe(true);
       // traversal outside workspace is blocked
-      expect(await checkFsPathAsync('/workspace/src', '/workspace/../etc/passwd')).toBe(
-        false
-      );
+      expect(
+        await checkFsPathAsync('/workspace/src', '/workspace/../etc/passwd')
+      ).toBe(false);
     });
 
     it('should block deep parent traversal', async () => {
       expect(
-        await checkFsPathAsync('/workspace/src', '/workspace/src/../../../../etc/passwd')
+        await checkFsPathAsync(
+          '/workspace/src',
+          '/workspace/src/../../../../etc/passwd'
+        )
       ).toBe(false);
     });
 
     it('should block traversal that escapes workspace root', async () => {
-      expect(await checkFsPathAsync('/workspace/src', '../../../etc/passwd')).toBe(false);
+      expect(
+        await checkFsPathAsync('/workspace/src', '../../../etc/passwd')
+      ).toBe(false);
     });
 
     it('should allow valid paths with normalized traversal within workspace', async () => {
@@ -167,7 +191,10 @@ describe('checkFsPathAsync', () => {
       await checkFsPathAsync('/workspace/src', '/workspace/src/file1.ts');
 
       // second call w/ same entry dir uses cache
-      const result = await checkFsPathAsync('/workspace/src', '/workspace/src/file2.ts');
+      const result = await checkFsPathAsync(
+        '/workspace/src',
+        '/workspace/src/file2.ts'
+      );
       expect(result).toBe(true);
     });
 
@@ -189,11 +216,14 @@ describe('checkFsPathAsync', () => {
 
       // now use new workspace
       expect(
-        await checkFsPathAsync('/new-workspace/src', '/new-workspace/src/file.ts')
+        await checkFsPathAsync(
+          '/new-workspace/src',
+          '/new-workspace/src/file.ts'
+        )
       ).toBe(true);
-      expect(await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')).toBe(
-        false
-      );
+      expect(
+        await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')
+      ).toBe(false);
     });
   });
 
@@ -206,9 +236,9 @@ describe('checkFsPathAsync', () => {
       ]);
 
       // on Unix these are regular paths, on Windows normalization converts backslashes
-      expect(await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')).toBe(
-        true
-      );
+      expect(
+        await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')
+      ).toBe(true);
     });
   });
 
@@ -216,8 +246,12 @@ describe('checkFsPathAsync', () => {
     it('should handle root as workspace folder', async () => {
       mockWorkspaceFolders.mockReturnValue([createWorkspaceFolder('/')]);
 
-      expect(await checkFsPathAsync('/project/src', '/project/src/file.ts')).toBe(true);
-      expect(await checkFsPathAsync('/project/src', '/other/file.ts')).toBe(true);
+      expect(
+        await checkFsPathAsync('/project/src', '/project/src/file.ts')
+      ).toBe(true);
+      expect(await checkFsPathAsync('/project/src', '/other/file.ts')).toBe(
+        true
+      );
     });
 
     it('should handle entry directory at workspace root', async () => {
@@ -226,7 +260,9 @@ describe('checkFsPathAsync', () => {
       ]);
 
       // entry at workspace root: isPathInside returns false (entry must be strictly INSIDE)
-      expect(await checkFsPathAsync('/workspace', '/workspace/file.ts')).toBe(false);
+      expect(await checkFsPathAsync('/workspace', '/workspace/file.ts')).toBe(
+        false
+      );
     });
 
     it('should allow paths when entry directory is inside workspace', async () => {
@@ -235,9 +271,9 @@ describe('checkFsPathAsync', () => {
       ]);
 
       // Entry directory is inside workspace
-      expect(await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')).toBe(
-        true
-      );
+      expect(
+        await checkFsPathAsync('/workspace/src', '/workspace/src/file.ts')
+      ).toBe(true);
     });
 
     it('should handle deeply nested entry directories', async () => {
@@ -246,11 +282,15 @@ describe('checkFsPathAsync', () => {
       ]);
 
       const deepEntryDir = '/workspace/a/b/c/d/e';
-      expect(await checkFsPathAsync(deepEntryDir, '/workspace/a/b/c/d/e/file.ts')).toBe(
-        true
+      expect(
+        await checkFsPathAsync(deepEntryDir, '/workspace/a/b/c/d/e/file.ts')
+      ).toBe(true);
+      expect(
+        await checkFsPathAsync(deepEntryDir, '/workspace/a/b/c/file.ts')
+      ).toBe(true);
+      expect(await checkFsPathAsync(deepEntryDir, '/other/file.ts')).toBe(
+        false
       );
-      expect(await checkFsPathAsync(deepEntryDir, '/workspace/a/b/c/file.ts')).toBe(true);
-      expect(await checkFsPathAsync(deepEntryDir, '/other/file.ts')).toBe(false);
     });
 
     it('should handle paths with special characters', async () => {
@@ -259,13 +299,19 @@ describe('checkFsPathAsync', () => {
       ]);
 
       expect(
-        await checkFsPathAsync('/workspace/src', '/workspace/src/file with spaces.ts')
+        await checkFsPathAsync(
+          '/workspace/src',
+          '/workspace/src/file with spaces.ts'
+        )
       ).toBe(true);
-      expect(await checkFsPathAsync('/workspace/src', '/workspace/src/file-dash.ts')).toBe(
-        true
-      );
       expect(
-        await checkFsPathAsync('/workspace/src', '/workspace/src/file_underscore.ts')
+        await checkFsPathAsync('/workspace/src', '/workspace/src/file-dash.ts')
+      ).toBe(true);
+      expect(
+        await checkFsPathAsync(
+          '/workspace/src',
+          '/workspace/src/file_underscore.ts'
+        )
       ).toBe(true);
     });
 
@@ -274,12 +320,12 @@ describe('checkFsPathAsync', () => {
         createWorkspaceFolder('/workspace'),
       ]);
 
-      expect(await checkFsPathAsync('/workspace/src', '/workspace/src/file.test.ts')).toBe(
-        true
-      );
-      expect(await checkFsPathAsync('/workspace/src', '/workspace/src/.hidden')).toBe(
-        true
-      );
+      expect(
+        await checkFsPathAsync('/workspace/src', '/workspace/src/file.test.ts')
+      ).toBe(true);
+      expect(
+        await checkFsPathAsync('/workspace/src', '/workspace/src/.hidden')
+      ).toBe(true);
     });
   });
 
@@ -291,23 +337,32 @@ describe('checkFsPathAsync', () => {
     });
 
     it('should prevent access to system files', async () => {
-      expect(await checkFsPathAsync('/workspace/src', '/etc/passwd')).toBe(false);
-      expect(await checkFsPathAsync('/workspace/src', '/etc/shadow')).toBe(false);
+      expect(await checkFsPathAsync('/workspace/src', '/etc/passwd')).toBe(
+        false
+      );
+      expect(await checkFsPathAsync('/workspace/src', '/etc/shadow')).toBe(
+        false
+      );
     });
 
     it('should prevent access to user home directories', async () => {
-      expect(await checkFsPathAsync('/workspace/src', '/home/user/.ssh/id_rsa')).toBe(
-        false
-      );
       expect(
-        await checkFsPathAsync('/workspace/src', '/Users/admin/.aws/credentials')
+        await checkFsPathAsync('/workspace/src', '/home/user/.ssh/id_rsa')
+      ).toBe(false);
+      expect(
+        await checkFsPathAsync(
+          '/workspace/src',
+          '/Users/admin/.aws/credentials'
+        )
       ).toBe(false);
     });
 
     it('should prevent node_modules escape attacks', async () => {
       // attacker tries to use node_modules path to escape
       const maliciousPath = '/workspace/node_modules/../../../etc/passwd';
-      expect(await checkFsPathAsync('/workspace/src', maliciousPath)).toBe(false);
+      expect(await checkFsPathAsync('/workspace/src', maliciousPath)).toBe(
+        false
+      );
     });
 
     it('should not be fooled by URL-encoded paths', async () => {
@@ -322,9 +377,9 @@ describe('checkFsPathAsync', () => {
       expect(
         await checkFsPathAsync('/workspace/src', '/workspace-malicious/file.ts')
       ).toBe(false);
-      expect(await checkFsPathAsync('/workspace/src', '/workspaceExtra/file.ts')).toBe(
-        false
-      );
+      expect(
+        await checkFsPathAsync('/workspace/src', '/workspaceExtra/file.ts')
+      ).toBe(false);
     });
   });
 });
@@ -340,7 +395,7 @@ describe('normalizePathForComparison', () => {
   it('should lowercase paths on Windows', () => {
     Object.defineProperty(process, 'platform', { value: 'win32' });
     const result = normalizePathForComparison('C:\\Users\\Test\\File.ts');
-    expect(result).toBe('c:\\users\\test\\file.ts');
+    expect(result).toBe('c:/users/test/file.ts');
   });
 
   it('should preserve case on Unix', () => {

@@ -8,13 +8,13 @@ MDX Preview automatically detects your MDX framework and provides compatible com
 
 MDX Preview supports the following frameworks out of the box:
 
-| Framework | Detection | Component Shims |
-|-----------|-----------|-----------------|
-| **Docusaurus** | `@docusaurus/core` or `@docusaurus/preset-classic` | `@theme/Tabs`, `@theme/TabItem`, `@theme/CodeBlock`, `@theme/Details` |
-| **Starlight** | `@astrojs/starlight` | `Card`, `CardGrid`, `LinkCard`, `Steps`, `Badge`, `Aside`, `Tabs`, `TabItem`, `FileTree`, `Code` |
-| **Nextra** | `nextra` | `Callout`, `Tabs`, `Cards`, `FileTree`, `Steps`, `Bleed` |
-| **Next.js** | `next` + MDX package | `next/image`, `next/link` |
-| **Generic** | (fallback) | `Callout`, `Collapsible`, `Tabs`, `TabItem`, `CodeGroup` |
+| Framework      | Detection                                          | Component Shims                                                                                  |
+| -------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Docusaurus** | `@docusaurus/core` or `@docusaurus/preset-classic` | `@theme/Tabs`, `@theme/TabItem`, `@theme/CodeBlock`, `@theme/Details`                            |
+| **Starlight**  | `@astrojs/starlight`                               | `Card`, `CardGrid`, `LinkCard`, `Steps`, `Badge`, `Aside`, `Tabs`, `TabItem`, `FileTree`, `Code` |
+| **Nextra**     | `nextra`                                           | `Callout`, `Tabs`, `Cards`, `FileTree`, `Steps`, `Bleed`                                         |
+| **Next.js**    | `next` + MDX package                               | `next/image`, `next/link`                                                                        |
+| **Generic**    | (fallback)                                         | `Callout`, `Collapsible`, `Tabs`, `TabItem`, `CodeGroup`                                         |
 
 When a framework is detected, imports like `@theme/Tabs` are automatically resolved to built-in preview shims that render compatible UI.
 
@@ -28,32 +28,28 @@ When a framework is detected, imports like `@theme/Tabs` are automatically resol
 
 **Supported Imports:**
 
-| Import | Component | Description |
-|--------|-----------|-------------|
-| `@theme/Tabs` | Tabs | Tabbed interface for code examples |
-| `@theme/TabItem` | TabItem | Individual tab content |
-| `@theme/CodeBlock` | CodeBlock | Syntax-highlighted code block |
-| `@theme/Details` | Details | Expandable/collapsible section |
+| Import             | Component | Description                        |
+| ------------------ | --------- | ---------------------------------- |
+| `@theme/Tabs`      | Tabs      | Tabbed interface for code examples |
+| `@theme/TabItem`   | TabItem   | Individual tab content             |
+| `@theme/CodeBlock` | CodeBlock | Syntax-highlighted code block      |
+| `@theme/Details`   | Details   | Expandable/collapsible section     |
 
 **Example Usage:**
 
-```mdx
+````mdx
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 <Tabs>
   <TabItem value="js" label="JavaScript">
-    ```js
-    console.log('Hello');
-    ```
+    ```js console.log('Hello'); ```
   </TabItem>
   <TabItem value="py" label="Python">
-    ```python
-    print('Hello')
-    ```
+    ```python print('Hello') ```
   </TabItem>
 </Tabs>
-```
+````
 
 > [!NOTE]
 > Docusaurus admonitions are rendered using the built-in callout styles. Import paths like `@theme/Admonition` resolve to the generic Callout shim.
@@ -69,21 +65,27 @@ import TabItem from '@theme/TabItem';
 Starlight components are available as named exports from the barrel import:
 
 ```mdx
-import { Card, CardGrid, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import {
+  Card,
+  CardGrid,
+  Aside,
+  Tabs,
+  TabItem,
+} from '@astrojs/starlight/components';
 ```
 
-| Component | Description |
-|-----------|-------------|
-| `Card` | Content card with title and icon |
-| `CardGrid` | Grid layout for cards |
-| `LinkCard` | Card that links to a URL |
-| `Steps` | Numbered step-by-step instructions |
-| `Badge` | Status badge with variants |
-| `Aside` | Callout/admonition box |
-| `Tabs` | Tabbed content sections |
-| `TabItem` | Individual tab pane |
-| `FileTree` | Directory structure display |
-| `Code` | Syntax-highlighted code block |
+| Component  | Description                        |
+| ---------- | ---------------------------------- |
+| `Card`     | Content card with title and icon   |
+| `CardGrid` | Grid layout for cards              |
+| `LinkCard` | Card that links to a URL           |
+| `Steps`    | Numbered step-by-step instructions |
+| `Badge`    | Status badge with variants         |
+| `Aside`    | Callout/admonition box             |
+| `Tabs`     | Tabbed content sections            |
+| `TabItem`  | Individual tab pane                |
+| `FileTree` | Directory structure display        |
+| `Code`     | Syntax-highlighted code block      |
 
 **Example Usage:**
 
@@ -127,23 +129,21 @@ Nextra components are available as named exports:
 import { Callout, Tabs, Cards, FileTree, Steps } from 'nextra/components';
 ```
 
-| Component | Description |
-|-----------|-------------|
-| `Callout` | Alert/admonition box with type variants |
-| `Tabs` | Tabbed content sections |
-| `Cards` | Card grid for navigation |
-| `FileTree` | Directory structure display |
-| `Steps` | Numbered step-by-step guide |
-| `Bleed` | Full-width content that bleeds to edges |
+| Component  | Description                             |
+| ---------- | --------------------------------------- |
+| `Callout`  | Alert/admonition box with type variants |
+| `Tabs`     | Tabbed content sections                 |
+| `Cards`    | Card grid for navigation                |
+| `FileTree` | Directory structure display             |
+| `Steps`    | Numbered step-by-step guide             |
+| `Bleed`    | Full-width content that bleeds to edges |
 
 **Example Usage:**
 
 ```mdx
 import { Callout, Tabs } from 'nextra/components';
 
-<Callout type="info">
-  This is an informational callout.
-</Callout>
+<Callout type="info">This is an informational callout.</Callout>
 
 <Tabs items={['npm', 'yarn', 'pnpm']}>
   <Tabs.Tab>npm install mdx-preview</Tabs.Tab>
@@ -168,10 +168,10 @@ import Callout from 'nextra/components/Callout';
 
 **Supported Imports:**
 
-| Import | Component | Description |
-|--------|-----------|-------------|
-| `next/image` | Image | Optimized image component |
-| `next/link` | Link | Client-side navigation link |
+| Import       | Component | Description                 |
+| ------------ | --------- | --------------------------- |
+| `next/image` | Image     | Optimized image component   |
+| `next/link`  | Link      | Client-side navigation link |
 
 **Example Usage:**
 
@@ -181,9 +181,7 @@ import Link from 'next/link';
 
 <Image src="/logo.png" alt="Logo" width={200} height={100} />
 
-<Link href="/docs/getting-started">
-  Get Started
-</Link>
+<Link href="/docs/getting-started">Get Started</Link>
 ```
 
 > [!IMPORTANT]
@@ -197,26 +195,22 @@ When no specific framework is detected, MDX Preview provides generic component s
 
 **Built-in Components:**
 
-| Component | Aliases | Description |
-|-----------|---------|-------------|
-| `Callout` | `Alert`, `Admonition` | Alert/info box with type variants |
-| `Collapsible` | `Accordion`, `Details` | Expandable section |
-| `Tabs` | - | Tabbed content |
-| `TabItem` | `Tab` | Individual tab pane |
-| `CodeGroup` | - | Grouped code blocks with tabs |
+| Component     | Aliases                | Description                       |
+| ------------- | ---------------------- | --------------------------------- |
+| `Callout`     | `Alert`, `Admonition`  | Alert/info box with type variants |
+| `Collapsible` | `Accordion`, `Details` | Expandable section                |
+| `Tabs`        | -                      | Tabbed content                    |
+| `TabItem`     | `Tab`                  | Individual tab pane               |
+| `CodeGroup`   | -                      | Grouped code blocks with tabs     |
 
 **Usage:**
 
 Generic components can be used without imports when `components.builtins` is enabled (default):
 
 ```mdx
-<Callout type="warning">
-  This is a warning callout.
-</Callout>
+<Callout type="warning">This is a warning callout.</Callout>
 
-<Collapsible title="Click to expand">
-  Hidden content here.
-</Collapsible>
+<Collapsible title="Click to expand">Hidden content here.</Collapsible>
 
 <Tabs>
   <TabItem label="First">Content 1</TabItem>
@@ -226,14 +220,14 @@ Generic components can be used without imports when `components.builtins` is ena
 
 **Callout Types:**
 
-| Type | Description |
-|------|-------------|
-| `note` | Neutral note (default) |
-| `info` | Informational |
-| `tip` | Helpful tip |
-| `warning` | Warning/caution |
-| `danger` | Error/danger |
-| `success` | Success message |
+| Type      | Description            |
+| --------- | ---------------------- |
+| `note`    | Neutral note (default) |
+| `info`    | Informational          |
+| `tip`     | Helpful tip            |
+| `warning` | Warning/caution        |
+| `danger`  | Error/danger           |
+| `success` | Success message        |
 
 ---
 
@@ -320,26 +314,31 @@ sequenceDiagram
 
 **Example Resolution Chain:**
 
-| Import | Framework | Shim Path | Preload ID |
-|--------|-----------|-----------|------------|
-| `@theme/Tabs` | Docusaurus | `@mdx-preview/shims/docusaurus/Tabs` | `npm://@mdx-preview/shims-docusaurus/Tabs` |
-| `@astrojs/starlight/components` | Starlight | `@mdx-preview/shims/starlight` | `npm://@mdx-preview/shims-starlight/components` |
-| `nextra/components` | Nextra | `@mdx-preview/shims/nextra` | `npm://@mdx-preview/shims-nextra/components` |
-| `next/image` | Next.js | `@mdx-preview/shims/nextjs/Image` | `npm://@mdx-preview/shims-nextjs/Image` |
+| Import                          | Framework  | Shim Path                            | Preload ID                                      |
+| ------------------------------- | ---------- | ------------------------------------ | ----------------------------------------------- |
+| `@theme/Tabs`                   | Docusaurus | `@mdx-preview/shims/docusaurus/Tabs` | `npm://@mdx-preview/shims-docusaurus/Tabs`      |
+| `@astrojs/starlight/components` | Starlight  | `@mdx-preview/shims/starlight`       | `npm://@mdx-preview/shims-starlight/components` |
+| `nextra/components`             | Nextra     | `@mdx-preview/shims/nextra`          | `npm://@mdx-preview/shims-nextra/components`    |
+| `next/image`                    | Next.js    | `@mdx-preview/shims/nextjs/Image`    | `npm://@mdx-preview/shims-nextjs/Image`         |
 
 ---
 
 ## Component Registry
 
-The extension maintains a central component registry that maps framework imports to shim implementations.
+MDX Preview uses a central component registry to map framework imports to shim implementations.
 
 ### Registry Architecture
 
+Component registry data lives in the `mdx-forge` npm package
+(`src/components/registry/`) & is consumed via the stable
+`mdx-forge/components/registry` export:
+
 ```
-packages/shared/registry/
-├── types.ts           # Type definitions
+mdx-forge/src/components/registry/   # inside the mdx-forge npm package
 ├── registry-data.ts   # COMPONENT_REGISTRY constant
 ├── queries.ts         # Query functions
+├── shim-config.ts     # Framework shim configurations
+├── types.ts           # Type definitions
 └── index.ts           # Barrel exports
 ```
 
@@ -352,14 +351,14 @@ import {
   isGenericComponent,
   getCanonicalComponentName,
   getFrameworkShimPath,
-} from '@mdx-preview/shared';
+} from 'mdx-forge/components/registry';
 
 // Check if a name is a generic component or alias
-isGenericComponent('Callout');  // true
-isGenericComponent('Alert');    // true (alias of Callout)
+isGenericComponent('Callout'); // true
+isGenericComponent('Alert'); // true (alias of Callout)
 
 // Resolve alias to canonical name
-getCanonicalComponentName('Alert');  // 'Callout'
+getCanonicalComponentName('Alert'); // 'Callout'
 
 // Get shim path for framework component
 getFrameworkShimPath('docusaurus', 'Tabs');
@@ -368,7 +367,7 @@ getFrameworkShimPath('docusaurus', 'Tabs');
 
 ---
 
-## Nextra _meta.json Support
+## Nextra \_meta.json Support
 
 For Nextra projects, MDX Preview reads `_meta.json` files to extract page-level settings.
 
@@ -402,19 +401,19 @@ The `_meta.json` file supports per-page configuration:
 }
 ```
 
-| Setting | Type | Description |
-|---------|------|-------------|
-| `title` | string | Page title for navigation |
-| `theme.layout` | string | Layout mode: `"default"`, `"full"`, `"raw"` |
-| `theme.toc` | boolean | Show table of contents |
+| Setting        | Type    | Description                                 |
+| -------------- | ------- | ------------------------------------------- |
+| `title`        | string  | Page title for navigation                   |
+| `theme.layout` | string  | Layout mode: `"default"`, `"full"`, `"raw"` |
+| `theme.toc`    | boolean | Show table of contents                      |
 
 ### Layout Modes
 
-| Layout | Description |
-|--------|-------------|
+| Layout    | Description                          |
+| --------- | ------------------------------------ |
 | `default` | Standard layout with sidebar and TOC |
-| `full` | Full-width content, no sidebar |
-| `raw` | Minimal layout, just content |
+| `full`    | Full-width content, no sidebar       |
+| `raw`     | Minimal layout, just content         |
 
 ### Merging with Frontmatter
 
@@ -426,7 +425,7 @@ title: Custom Title
 layout: raw
 ---
 
-Content here uses the frontmatter settings, overriding _meta.json.
+Content here uses the frontmatter settings, overriding \_meta.json.
 ```
 
 **Precedence:** Frontmatter > `_meta.json` > Defaults

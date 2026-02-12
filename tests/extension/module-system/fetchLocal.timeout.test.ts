@@ -5,8 +5,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ErrorContext } from '../../../packages/extension/errors';
-import { MODULE_FETCH_TIMEOUT_MS } from '../../../packages/extension/constants';
+import { ErrorContext } from '../../../packages/extension-host/src/shared/errors';
+import { MODULE_FETCH_TIMEOUT_MS } from '../../../packages/extension-host/src/shared/constants';
 
 const {
   mockCheckFsPathAsync,
@@ -31,40 +31,37 @@ const {
   },
 }));
 
-vi.mock('../../../packages/extension/module-system/security/checkFsPath', () => ({
-  checkFsPathAsync: mockCheckFsPathAsync,
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/module-runtime/security/checkFsPath',
+  () => ({
+    checkFsPathAsync: mockCheckFsPathAsync,
+  })
+);
 
-vi.mock('../../../packages/extension/utils/file-utils', () => ({
+vi.mock('../../../packages/extension-host/src/shared/utils/file-utils', () => ({
   readFileAsync: mockReadFileAsync,
 }));
 
-vi.mock('../../../packages/extension/module-system/handlers', () => ({
-  handleByExtension: mockHandleByExtension,
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/module-runtime/handlers',
+  () => ({
+    handleByExtension: mockHandleByExtension,
+  })
+);
 
 vi.mock(
-  '../../../packages/extension/module-system/resolver/UnifiedResolver',
+  '../../../packages/extension-host/src/features/module-runtime/resolution/UnifiedResolver',
   () => ({
     getUnifiedResolver: () => mockResolver,
   })
 );
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getFrameworkDetector: () => mockFrameworkDetector,
   getErrorReporter: () => mockErrorReporter,
 }));
 
-vi.mock('../../../packages/extension/logging', () => ({
-  createTaggedLogger: () => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  }),
-}));
-
-import { fetchLocal } from '../../../packages/extension/module-system/fetcher/fetchLocal';
+import { fetchLocal } from '../../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal';
 
 describe('fetchLocal timeout delegation', () => {
   let tempDir: string;
@@ -73,7 +70,9 @@ describe('fetchLocal timeout delegation', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-fetch-local-'));
+    tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-fetch-local-')
+    );
     modulePath = path.join(tempDir, 'module.js');
     await fs.promises.writeFile(modulePath, 'export const value = 1;', 'utf-8');
 

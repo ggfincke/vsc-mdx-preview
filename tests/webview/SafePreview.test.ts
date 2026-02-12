@@ -1,14 +1,14 @@
-// tests/webview/SafePreview.test.ts
+// tests/webview/features/preview/safe/SafePreview.test.ts
 // XSS prevention tests for Safe Mode DOMPurify configuration
 //
 // verify DOMPurify allowlist configuration used by SafePreview
-// includes both config validation & actual payload injection tests
+// include both config validation & actual payload injection tests
 //
 // @vitest-environment jsdom
 
 import { describe, it, expect } from 'vitest';
 import DOMPurify from 'dompurify';
-import { DOMPURIFY_CONFIG } from '../../packages/webview-app/src/security/allowlist';
+import { DOMPURIFY_CONFIG } from '../../packages/webview-client/src/features/preview/safe/security/allowlist';
 
 describe('DOMPurify Configuration', () => {
   describe('ALLOWED_TAGS', () => {
@@ -631,7 +631,8 @@ describe('XSS Payload Injection Tests', () => {
   describe('Encoded/obfuscated payloads', () => {
     it('handles HTML entity encoded event handlers', () => {
       // &#111;&#110;&#101;&#114;&#114;&#111;&#114; = onerror
-      const malicious = '<img src=x &#111;&#110;&#101;&#114;&#114;&#111;&#114;="alert(1)">';
+      const malicious =
+        '<img src=x &#111;&#110;&#101;&#114;&#114;&#111;&#114;="alert(1)">';
       const result = DOMPurify.sanitize(malicious, DOMPURIFY_CONFIG);
       expect(result).not.toContain('onerror');
     });

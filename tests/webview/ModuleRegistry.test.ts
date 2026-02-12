@@ -5,9 +5,8 @@ import { describe, it, expect, vi } from 'vitest';
 
 async function createRegistry() {
   vi.resetModules();
-  const module = await import(
-    '../../packages/webview-app/src/module-system/registry/ModuleRegistry'
-  );
+  const module =
+    await import('mdx-forge/browser/registry');
   return new module.ModuleRegistry();
 }
 
@@ -105,7 +104,11 @@ describe('ModuleRegistry', () => {
       registry.setResolution('/parent.js', './child1', '/child1.js');
       registry.setResolution('/parent.js', './child2', '/child2.js');
       registry.setResolution('/other.js', './other', '/other.js');
-      registry.set('/parent.js', { id: '/parent.js', exports: {}, loaded: true });
+      registry.set('/parent.js', {
+        id: '/parent.js',
+        exports: {},
+        loaded: true,
+      });
 
       registry.invalidate('/parent.js');
 
@@ -119,7 +122,11 @@ describe('ModuleRegistry', () => {
 
       registry.setResolution('/parent1.js', './target', '/target.js');
       registry.setResolution('/parent2.js', './target', '/target.js');
-      registry.set('/target.js', { id: '/target.js', exports: {}, loaded: true });
+      registry.set('/target.js', {
+        id: '/target.js',
+        exports: {},
+        loaded: true,
+      });
 
       registry.invalidate('/target.js');
 

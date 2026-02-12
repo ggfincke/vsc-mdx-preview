@@ -1,0 +1,10 @@
+/* VS Code theme adapter layer for mdx-tools design tokens */
+/* mdx-tools already supports prefers-color-scheme; this keeps VS Code class parity */
+
+.vscode-dark {
+  --mdx-border-color: #333;
+  --mdx-bg-primary: #1e1e1e;
+  --mdx-bg-secondary: #252526;
+  --mdx-bg-tertiary: #252526;
+  --mdx-alpha-subtle: var(--mdx-alpha-subtle-dark, 0.15);
+}

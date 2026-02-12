@@ -2,19 +2,9 @@
 // unit tests for component code actions
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  ComponentCodeActionsProvider,
-} from '../../../packages/extension/diagnostics/ComponentCodeActions';
-import {
-  DIAGNOSTIC_CODES,
-} from '../../../packages/extension/diagnostics/ComponentDiagnostics';
-import {
-  Diagnostic,
-  DiagnosticSeverity,
-  Range,
-  Uri,
-  workspace,
-} from 'vscode';
+import { ComponentCodeActionsProvider } from '../../../packages/extension-host/src/features/diagnostics/ComponentCodeActions';
+import { DIAGNOSTIC_CODES } from '../../../packages/extension-host/src/features/diagnostics/ComponentDiagnostics';
+import { Diagnostic, DiagnosticSeverity, Range, Uri, workspace } from 'vscode';
 
 const provider = new ComponentCodeActionsProvider();
 
@@ -58,7 +48,9 @@ describe('ComponentCodeActionsProvider', () => {
       action.title.includes('Learn about component mapping')
     );
 
-    expect(addAction?.command?.command).toBe('mdx-preview.addComponentToConfig');
+    expect(addAction?.command?.command).toBe(
+      'mdx-preview.addComponentToConfig'
+    );
     expect(builtinAction?.edit?.edits[0]?.newText).toBe('Callout');
     expect(learnAction?.command?.command).toBe('vscode.open');
   });

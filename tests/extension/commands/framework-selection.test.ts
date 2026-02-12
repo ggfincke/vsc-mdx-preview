@@ -18,26 +18,13 @@ const mockFrameworkDetector = {
   getFrameworkDisplayName: vi.fn((id: string) => id),
 };
 
-vi.mock('../../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
   getPreviewManager: () => mockPreviewManager,
   getFrameworkDetector: () => mockFrameworkDetector,
 }));
 
-import { commands } from '../../../packages/extension/commands/framework-selection';
+import { commands } from '../../../packages/extension-host/src/features/commands/framework-selection';
 
 describe('framework-selection commands', () => {
   const handler = commands.find(
@@ -110,9 +97,7 @@ describe('framework-selection commands', () => {
       vscode.ConfigurationTarget.Workspace
     );
     expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalled();
-    expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Docusaurus')
-    );
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('Docusaurus'));
   });
 
   it('cancel → no changes', async () => {

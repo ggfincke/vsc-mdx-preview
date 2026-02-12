@@ -8,24 +8,11 @@ const mockConfigManager = {
   set: vi.fn(async () => {}),
 };
 
-vi.mock('../../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
 }));
 
-import { commands } from '../../../packages/extension/commands/config-toggles';
+import { commands } from '../../../packages/extension-host/src/features/commands/config-toggles';
 
 describe('config-toggles commands', () => {
   beforeEach(() => {

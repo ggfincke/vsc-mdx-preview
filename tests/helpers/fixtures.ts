@@ -1,8 +1,8 @@
 // tests/helpers/fixtures.ts
-// Reusable MDX content fixtures for tests
+// shared test fixtures for MDX compilation & preview tests
 
 export const FIXTURES = {
-  // Basic MDX
+  // basic MDX
   basicMdx: '# Hello\n\nWorld',
 
   // MDX w/ frontmatter
@@ -11,9 +11,26 @@ title: Test Document
 author: Test Author
 ---
 
+# Content
+
+Some text here.`,
+
+  // MDX w/ code block
+  mdxWithCodeBlock: `# Code Example
+
+\`\`\`javascript
+const x = 1;
+const y = 2;
+\`\`\``,
+
+  // MDX w/ default export (layout)
+  mdxWithLayout: `export default function Layout({ children }) {
+  return <div className="layout">{children}</div>
+}
+
 # Hello
 
-Content here.`,
+Content w/ layout.`,
 
   // MDX w/ JSX component
   mdxWithJsx: `# Hello
@@ -22,34 +39,40 @@ Content here.`,
   Child content
 </CustomComponent>`,
 
-  // MDX w/ imports
-  mdxWithImports: `import Button from './Button'
-import { Card } from './Card'
+  // MDX w/ inline JSX
+  mdxWithInlineJsx: `# Hello
 
-# Hello
-
-<Button>Click me</Button>`,
-
-  // MDX w/ default export (layout)
-  mdxWithLayout: `export default function Layout({ children }) {
-  return <div className="layout">{children}</div>
-}
-
-# Hello`,
+This is <InlineComponent /> inline.`,
 
   // MDX w/ JavaScript expression
   mdxWithExpression: `# Hello
 
-The answer is {40 + 2}.`,
+The answer is {21 + 21}.`,
+
+  // MDX w/ imports
+  mdxWithImports: `import Foo from './Foo'
+
+# Hello
+
+Some content.`,
+
+  // invalid MDX (for error testing)
+  invalidMdx: `# Hello
+
+<div>
+  <span>unclosed
+
+{invalid expression`,
 
   // Docusaurus-style imports
   docusaurusTabs: `import Tabs from '@theme/Tabs'
 import TabItem from '@theme/TabItem'
 
+# Tabs Example
+
 <Tabs>
-  <TabItem value="js" label="JavaScript">
-    JavaScript content
-  </TabItem>
+  <TabItem value="a" label="Tab A">Content A</TabItem>
+  <TabItem value="b" label="Tab B">Content B</TabItem>
 </Tabs>`,
 
   // Starlight-style imports
@@ -61,6 +84,8 @@ import TabItem from '@theme/TabItem'
 
   // Nextra-style imports
   nextraCallout: `import { Callout } from 'nextra/components'
+
+# Nextra Example
 
 <Callout type="info">
   Important information
@@ -74,22 +99,4 @@ import TabItem from '@theme/TabItem'
 </UnknownComponent>
 
 <AnotherUnknown />`,
-
-  // Invalid MDX (for error testing)
-  invalidMdx: `# Hello
-
-<Unclosed`,
-
-  // MDX w/ inline JSX
-  mdxWithInlineJsx: `# Hello
-
-This has an <InlineComponent /> inline.`,
-
-  // MDX w/ code block
-  mdxWithCodeBlock: `# Code Example
-
-\`\`\`javascript
-const x = 1;
-console.log(x);
-\`\`\``,
 } as const;

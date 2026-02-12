@@ -2,8 +2,8 @@
 // Unit tests for evaluateModule error handling w/ stack preservation
 
 import { describe, it, expect, vi } from 'vitest';
-import { evaluateModule } from '../../packages/webview-app/src/module-system/eval/evaluateModule';
-import type { ModuleRuntime } from '../../packages/webview-app/src/module-system/types';
+import { evaluateModule } from 'mdx-forge/browser';
+import type { ModuleRuntime } from 'mdx-forge/browser';
 
 function createMockRuntime(): ModuleRuntime {
   return {
@@ -57,7 +57,9 @@ describe('evaluateModule', () => {
       } catch (error: unknown) {
         const err = error as Error & { cause?: Error };
 
-        expect(err.message).toContain('Error evaluating module "error-test.js"');
+        expect(err.message).toContain(
+          'Error evaluating module "error-test.js"'
+        );
         expect(err.message).toContain('original error message');
         expect(err.cause).toBeInstanceOf(Error);
         expect(err.cause?.message).toBe('original error message');
@@ -103,7 +105,9 @@ describe('evaluateModule', () => {
       } catch (error: unknown) {
         const err = error as Error & { cause?: Error };
 
-        expect(err.message).toContain('Error evaluating module "syntax-error.js"');
+        expect(err.message).toContain(
+          'Error evaluating module "syntax-error.js"'
+        );
         expect(err.cause).toBeDefined();
       }
     });

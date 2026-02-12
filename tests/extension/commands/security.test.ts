@@ -19,36 +19,26 @@ const mockErrorReporter = {
   reportWithActions: vi.fn(async () => {}),
 };
 
-vi.mock('../../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/security/security',
+  () => ({
+    selectSecurityPolicy: (...args: any[]) => mockSelectSecurityPolicy(...args),
+  })
+);
 
-vi.mock('../../../packages/extension/security/security', () => ({
-  selectSecurityPolicy: (...args: any[]) => mockSelectSecurityPolicy(...args),
-}));
-
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => mockConfigManager,
   getTrustManager: () => mockTrustManager,
   getErrorReporter: () => mockErrorReporter,
 }));
 
-vi.mock('../../../packages/extension/errors', () => ({
+vi.mock('../../../packages/extension-host/src/shared/errors', () => ({
   ErrorContext: {
     Security: 'security',
   },
 }));
 
-import { commands } from '../../../packages/extension/commands/security';
+import { commands } from '../../../packages/extension-host/src/features/commands/security';
 
 describe('security commands', () => {
   beforeEach(() => {
@@ -98,9 +88,7 @@ describe('security commands', () => {
         false,
         vscode.ConfigurationTarget.Workspace
       );
-      expect(infoSpy).toHaveBeenCalledWith(
-        expect.stringContaining('disabled')
-      );
+      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('disabled'));
     });
 
     it('trusted + disabled → sets true w/ Workspace scope & shows info', async () => {
@@ -115,9 +103,7 @@ describe('security commands', () => {
         true,
         vscode.ConfigurationTarget.Workspace
       );
-      expect(infoSpy).toHaveBeenCalledWith(
-        expect.stringContaining('enabled')
-      );
+      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('enabled'));
     });
 
     it('Manage Trust action executes trust management command', async () => {

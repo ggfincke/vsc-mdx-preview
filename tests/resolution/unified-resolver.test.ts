@@ -6,20 +6,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock vscode
 vi.mock('vscode', () => ({}));
 
-// Mock logging
-vi.mock('../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  error: vi.fn(),
-  warn: vi.fn(),
-  info: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
 // Mock strategies for controlled testing
 const mockTypeScriptStrategy = {
   name: 'TypeScript',
@@ -36,11 +22,14 @@ const mockFileProbeStrategy = {
   resolveAsync: vi.fn(),
 };
 
-vi.mock('../../packages/extension/module-system/resolver/strategies', () => ({
-  getTypeScriptPathStrategy: () => mockTypeScriptStrategy,
-  getEnhancedResolveStrategy: () => mockEnhancedResolveStrategy,
-  getFileProbeStrategy: () => mockFileProbeStrategy,
-}));
+vi.mock(
+  '../../packages/extension-host/src/features/module-runtime/resolution/strategies',
+  () => ({
+    getTypeScriptPathStrategy: () => mockTypeScriptStrategy,
+    getEnhancedResolveStrategy: () => mockEnhancedResolveStrategy,
+    getFileProbeStrategy: () => mockFileProbeStrategy,
+  })
+);
 
 // Import after mocks
 import {
@@ -48,8 +37,8 @@ import {
   getUnifiedResolver,
   resetUnifiedResolver,
   resolveFrameworkAliasStep,
-} from '../../packages/extension/module-system/resolver/UnifiedResolver';
-import { ResolutionStrategy } from '../../packages/extension/types';
+} from '../../packages/extension-host/src/features/module-runtime/resolution/UnifiedResolver';
+import { ResolutionStrategy } from '../../packages/extension-host/src/types';
 
 describe('UnifiedResolver', () => {
   let resolver: UnifiedResolver;

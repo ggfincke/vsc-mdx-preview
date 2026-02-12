@@ -1,28 +1,21 @@
 // tests/compilation/safe-compile.test.ts
-// Unit tests for Safe Mode MDX compilation (MDX -> HTML)
+// unit tests for Safe Mode MDX compilation (MDX -> HTML) via mdx-forge/compiler
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { compileSafe } from 'mdx-forge/compiler';
+import type { CompilerConfig } from 'mdx-forge/compiler';
+import { FIXTURES } from '../helpers';
 
-// Mock vscode
-vi.mock('vscode', () => ({}));
-
-// Mock logging
-vi.mock('../../packages/extension/logging', () => ({
-  error: vi.fn(),
-  warn: vi.fn(),
-  debug: vi.fn(),
-  info: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
-// Import after mocks
-import { compileSafe } from '../../packages/extension/compiler/safe/compile';
-import { FIXTURES, createMockCompilerConfig } from '../helpers';
+// create library-native CompilerConfig
+function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
+  return {
+    documentPath: '/workspace/test.mdx',
+    useVscodeMarkdownStyles: true,
+    componentsBuiltins: true,
+    componentsUnknownBehavior: 'placeholder',
+    ...overrides,
+  };
+}
 
 describe('compileSafe()', () => {
   beforeEach(() => {
@@ -30,10 +23,7 @@ describe('compileSafe()', () => {
   });
 
   it('compiles basic MDX to HTML', async () => {
-    const result = await compileSafe(
-      FIXTURES.basicMdx,
-      createMockCompilerConfig()
-    );
+    const result = await compileSafe(FIXTURES.basicMdx, createConfig());
 
     expect(result.html).toContain('<h1');
     expect(result.html).toContain('Hello');
@@ -44,22 +34,19 @@ describe('compileSafe()', () => {
   it('extracts frontmatter and returns it separately', async () => {
     const result = await compileSafe(
       FIXTURES.mdxWithFrontmatter,
-      createMockCompilerConfig()
+      createConfig()
     );
 
     expect(result.frontmatter).toBeDefined();
     expect(result.frontmatter.title).toBe('Test Document');
     expect(result.frontmatter.author).toBe('Test Author');
-    // Frontmatter should not appear in HTML
+    // frontmatter should not appear in HTML
     expect(result.html).not.toContain('Test Document');
     expect(result.html).not.toContain('author:');
   });
 
   it('creates placeholder for unknown JSX components (default behavior)', async () => {
-    const result = await compileSafe(
-      FIXTURES.mdxWithJsx,
-      createMockCompilerConfig()
-    );
+    const result = await compileSafe(FIXTURES.mdxWithJsx, createConfig());
 
     expect(result.html).toContain('mdx-unknown-component-placeholder');
     expect(result.html).toContain('CustomComponent');
@@ -68,7 +55,7 @@ describe('compileSafe()', () => {
   it('strips unknown components when unknownBehavior is "strip"', async () => {
     const result = await compileSafe(
       FIXTURES.mdxWithJsx,
-      createMockCompilerConfig({ componentsUnknownBehavior: 'strip' })
+      createConfig({ componentsUnknownBehavior: 'strip' })
     );
 
     expect(result.html).not.toContain('CustomComponent');
@@ -78,20 +65,17 @@ describe('compileSafe()', () => {
   it('replaces JSX expressions with placeholder', async () => {
     const result = await compileSafe(
       FIXTURES.mdxWithExpression,
-      createMockCompilerConfig()
+      createConfig()
     );
 
     expect(result.html).toContain('mdx-expression-placeholder');
     expect(result.html).toContain('{...}');
-    // Should not evaluate the expression
+    // should not evaluate the expression
     expect(result.html).not.toContain('42');
   });
 
   it('handles code blocks correctly', async () => {
-    const result = await compileSafe(
-      FIXTURES.mdxWithCodeBlock,
-      createMockCompilerConfig()
-    );
+    const result = await compileSafe(FIXTURES.mdxWithCodeBlock, createConfig());
 
     expect(result.html).toContain('<pre');
     expect(result.html).toContain('<code');
@@ -105,7 +89,7 @@ describe('compileSafe()', () => {
 Alice -> Bob: Hi
 @enduml
 \`\`\``,
-      createMockCompilerConfig()
+      createConfig()
     );
 
     expect(result.html).toContain('plantuml-container');
@@ -117,7 +101,7 @@ Alice -> Bob: Hi
       `\`\`\`dot
 digraph G { A -> B }
 \`\`\``,
-      createMockCompilerConfig()
+      createConfig()
     );
 
     expect(result.html).toContain('graphviz-container');
@@ -125,10 +109,7 @@ digraph G { A -> B }
   });
 
   it('returns empty frontmatter when none present', async () => {
-    const result = await compileSafe(
-      FIXTURES.basicMdx,
-      createMockCompilerConfig()
-    );
+    const result = await compileSafe(FIXTURES.basicMdx, createConfig());
 
     expect(result.frontmatter).toEqual({});
   });

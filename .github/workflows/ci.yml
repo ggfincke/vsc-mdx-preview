@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -28,6 +28,12 @@ jobs:
 
       - name: Run linting
         run: npm run lint
+
+      - name: Check dependency boundaries
+        run: npm run deps:check
+
+      - name: Check generated file locations
+        run: npm run check:generated
 
       - name: Check formatting
         run: npm run format:check
@@ -49,7 +55,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies

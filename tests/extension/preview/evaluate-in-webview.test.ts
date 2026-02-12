@@ -1,0 +1,267 @@
+// tests/extension/preview/evaluate-in-webview.test.ts
+// unit tests for Tailwind profile routing in evaluate-in-webview
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const {
+  mockStatusBarMessage,
+  mockTrustManager,
+  mockTailwindProcessor,
+  mockFrameworkDetector,
+  mockErrorReporter,
+  mockEngine,
+  mockBuildEffectivePreviewConfig,
+  mockToCompilerConfig,
+} = vi.hoisted(() => ({
+  mockStatusBarMessage: vi.fn(),
+  mockTrustManager: {
+    getStateForDocument: vi.fn(),
+  },
+  mockTailwindProcessor: {
+    detectProfile: vi.fn(),
+  },
+  mockFrameworkDetector: {
+    getFramework: vi.fn(() => ({ framework: 'generic' })),
+  },
+  mockErrorReporter: {
+    report: vi.fn(),
+  },
+  mockEngine: {
+    evaluateTrusted: vi.fn(),
+    evaluateSafe: vi.fn(),
+    processTailwindAsync: vi.fn(),
+  },
+  mockBuildEffectivePreviewConfig: vi.fn(),
+  mockToCompilerConfig: vi.fn(() => ({ some: 'compiler-config' })),
+}));
+
+vi.mock('vscode', () => ({
+  window: {
+    setStatusBarMessage: mockStatusBarMessage,
+  },
+  workspace: {
+    getWorkspaceFolder: vi.fn(() => undefined),
+  },
+}));
+
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
+  getTrustManager: () => mockTrustManager,
+  getErrorReporter: () => mockErrorReporter,
+  getFrameworkDetector: () => mockFrameworkDetector,
+  getTailwindProcessor: () => mockTailwindProcessor,
+}));
+
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/EvaluationEngine',
+  () => ({
+    getEvaluationEngine: () => mockEngine,
+  })
+);
+
+vi.mock(
+  '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig',
+  () => ({
+    buildEffectivePreviewConfig: (...args: unknown[]) =>
+      mockBuildEffectivePreviewConfig(...args),
+    toCompilerConfig: (...args: unknown[]) => mockToCompilerConfig(...args),
+  })
+);
+
+vi.mock(
+  '../../../packages/extension-host/src/features/diagnostics/ComponentDetector',
+  () => ({
+    detectComponents: vi.fn(),
+    getUsedGenericComponents: vi.fn(() => []),
+  })
+);
+
+vi.mock(
+  '../../../packages/extension-host/src/features/framework/nextra/MetaResolver',
+  () => ({
+    resolveNextraMeta: vi.fn(() => ({})),
+    mergeNextraMeta: vi.fn(() => ({})),
+  })
+);
+
+vi.mock('mdx-forge/compiler', () => ({
+  extractNextraFrontmatter: vi.fn(() => ({})),
+}));
+
+import evaluateInWebview from '../../../packages/extension-host/src/features/preview/evaluate-in-webview';
+
+type MockPreview = ReturnType<typeof createPreview>;
+
+function createPreview(): {
+  doc: { uri: { scheme: string; fsPath: string; toString: () => string } };
+  webviewHandle: {
+    setTailwindBrowserCss: ReturnType<typeof vi.fn>;
+    setTailwindCss: ReturnType<typeof vi.fn>;
+    setTrustState: ReturnType<typeof vi.fn>;
+    setFramework: ReturnType<typeof vi.fn>;
+    updatePreviewSafe: ReturnType<typeof vi.fn>;
+    updatePreview: ReturnType<typeof vi.fn>;
+    setUsedComponents: ReturnType<typeof vi.fn>;
+    setNextraMeta: ReturnType<typeof vi.fn>;
+  };
+  webviewHandshakePromise: Promise<void>;
+  onWebviewReady: ReturnType<typeof vi.fn>;
+  pushThemeState: ReturnType<typeof vi.fn>;
+  updateDependencies: ReturnType<typeof vi.fn>;
+  updateTailwindWatchFiles: ReturnType<typeof vi.fn>;
+  nextTailwindRequestId: ReturnType<typeof vi.fn>;
+  isTailwindRequestCurrent: ReturnType<typeof vi.fn>;
+  markTailwindFallbackReason: ReturnType<typeof vi.fn>;
+  clearTailwindFallbackReason: ReturnType<typeof vi.fn>;
+  setTailwindBrowserRuntimeEnabled: ReturnType<typeof vi.fn>;
+  refreshWebview: ReturnType<typeof vi.fn>;
+  entryFsDirectory: string;
+  mdxPreviewConfig: undefined;
+} {
+  return {
+    doc: {
+      uri: {
+        scheme: 'file',
+        fsPath: '/workspace/doc.mdx',
+        toString: () => 'file:///workspace/doc.mdx',
+      },
+    },
+    webviewHandle: {
+      setTailwindBrowserCss: vi.fn(),
+      setTailwindCss: vi.fn(),
+      setTrustState: vi.fn(),
+      setFramework: vi.fn(),
+      updatePreviewSafe: vi.fn(),
+      updatePreview: vi.fn(),
+      setUsedComponents: vi.fn(),
+      setNextraMeta: vi.fn(),
+    },
+    webviewHandshakePromise: Promise.resolve(),
+    onWebviewReady: vi.fn(),
+    pushThemeState: vi.fn(),
+    updateDependencies: vi.fn(),
+    updateTailwindWatchFiles: vi.fn(),
+    nextTailwindRequestId: vi.fn(() => 1),
+    isTailwindRequestCurrent: vi.fn(() => true),
+    markTailwindFallbackReason: vi.fn(() => true),
+    clearTailwindFallbackReason: vi.fn(),
+    setTailwindBrowserRuntimeEnabled: vi.fn(() => false),
+    refreshWebview: vi.fn(async () => {}),
+    entryFsDirectory: '/workspace',
+    mdxPreviewConfig: undefined,
+  };
+}
+
+function mockTrustedState(): void {
+  mockTrustManager.getStateForDocument.mockReturnValue({
+    workspaceTrusted: true,
+    scriptsEnabled: true,
+    canExecute: true,
+    openMdxLinksInPreview: true,
+  });
+}
+
+function mockSafeState(): void {
+  mockTrustManager.getStateForDocument.mockReturnValue({
+    workspaceTrusted: true,
+    scriptsEnabled: true,
+    canExecute: false,
+    openMdxLinksInPreview: true,
+  });
+}
+
+function mockTailwindEnabledConfig(): void {
+  mockBuildEffectivePreviewConfig.mockReturnValue({
+    enableScripts: true,
+    tailwind: {
+      enabled: 'enabled',
+      maxFileSizeBytes: 1024 * 1024,
+      maxCssFilesToSearch: 50,
+      cacheMaxEntries: 10,
+      cacheTtlSeconds: 60,
+      compilationTimeout: 1000,
+    },
+  });
+}
+
+describe('evaluate-in-webview Tailwind routing', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockTailwindEnabledConfig();
+    mockEngine.evaluateSafe.mockResolvedValue({
+      html: '<p>safe</p>',
+      frontmatter: undefined,
+    });
+  });
+
+  it('refreshes webview when browser runtime toggle changes', async () => {
+    mockTrustedState();
+
+    const preview = createPreview();
+    preview.setTailwindBrowserRuntimeEnabled.mockReturnValue(true);
+    mockTailwindProcessor.detectProfile.mockResolvedValue({
+      profile: 'browser',
+      reason: 'No tailwind.config.* or plugin directives detected',
+      workspaceRoot: '/workspace',
+      configPath: null,
+      entryCssPath: '/workspace/tailwind.css',
+      hasTailwindInput: true,
+      inlineTailwindStyles: [],
+    });
+
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# doc',
+      '/workspace/doc.mdx'
+    );
+
+    expect(mockTailwindProcessor.detectProfile).toHaveBeenCalledTimes(1);
+    expect(preview.setTailwindBrowserRuntimeEnabled).toHaveBeenCalledWith(true);
+    expect(preview.refreshWebview).toHaveBeenCalledTimes(1);
+    expect(preview.webviewHandle.setTrustState).not.toHaveBeenCalled();
+    expect(mockEngine.evaluateTrusted).not.toHaveBeenCalled();
+    expect(mockEngine.evaluateSafe).not.toHaveBeenCalled();
+  });
+
+  it('warns once for advanced profile in Safe Mode and clears Tailwind CSS channels', async () => {
+    mockSafeState();
+
+    const preview = createPreview();
+    preview.markTailwindFallbackReason
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(false);
+    mockTailwindProcessor.detectProfile.mockResolvedValue({
+      profile: 'advanced',
+      reason: 'tailwind.config.* detected at /workspace/tailwind.config.ts',
+      workspaceRoot: '/workspace',
+      configPath: '/workspace/tailwind.config.ts',
+      entryCssPath: '/workspace/tailwind.css',
+      hasTailwindInput: true,
+      inlineTailwindStyles: [],
+    });
+
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# doc',
+      '/workspace/doc.mdx'
+    );
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# doc',
+      '/workspace/doc.mdx'
+    );
+
+    expect(mockStatusBarMessage).toHaveBeenCalledTimes(1);
+    expect(mockStatusBarMessage).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'advanced config detected (tailwind.config.* detected at /workspace/tailwind.config.ts)'
+      ),
+      10000
+    );
+
+    expect(preview.webviewHandle.setTailwindBrowserCss).toHaveBeenCalledWith(
+      ''
+    );
+    expect(preview.webviewHandle.setTailwindCss).toHaveBeenCalledWith('');
+    expect(mockEngine.evaluateSafe).toHaveBeenCalledTimes(2);
+  });
+});

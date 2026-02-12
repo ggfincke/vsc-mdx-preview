@@ -37,7 +37,10 @@ class MockHTMLElement {
     this.children.push(child);
   }
 
-  insertBefore(child: MockHTMLStyleElement, ref: MockHTMLStyleElement | null): void {
+  insertBefore(
+    child: MockHTMLStyleElement,
+    ref: MockHTMLStyleElement | null
+  ): void {
     child.parentNode = this;
     if (ref) {
       const index = this.children.indexOf(ref);
@@ -72,14 +75,18 @@ beforeEach(() => {
       if (match) {
         const moduleId = match[1];
         return (
-          mockHead.children.find((el) => el.getAttribute('data-module-id') === moduleId) ?? null
+          mockHead.children.find(
+            (el) => el.getAttribute('data-module-id') === moduleId
+          ) ?? null
         );
       }
       return null;
     }),
     querySelectorAll: vi.fn((selector: string) => {
       if (selector === 'style[data-module-id]') {
-        return mockHead.children.filter((el) => el.getAttribute('data-module-id'));
+        return mockHead.children.filter((el) =>
+          el.getAttribute('data-module-id')
+        );
       }
       return [];
     }),
@@ -97,11 +104,30 @@ afterEach(() => {
 
 async function getStyleInjector() {
   vi.resetModules();
-  const module = await import('../../packages/webview-app/src/utils/StyleInjector');
+  const module =
+    await import('../../packages/webview-client/src/shared/utils/StyleInjector');
   return module.StyleInjector;
 }
 
 describe('StyleInjector', () => {
+  describe('inject', () => {
+    it('applies custom attributes to style elements', async () => {
+      const StyleInjector = await getStyleInjector();
+
+      StyleInjector.inject('tailwind-browser-style', '@import "tailwindcss";', {
+        attributes: {
+          type: 'text/tailwindcss',
+        },
+      });
+
+      expect(mockHead.children.length).toBe(1);
+      expect(mockHead.children[0].id).toBe('tailwind-browser-style');
+      expect(mockHead.children[0].getAttribute('type')).toBe(
+        'text/tailwindcss'
+      );
+    });
+  });
+
   describe('injectModuleCss', () => {
     it('should create a style element in document.head', async () => {
       const StyleInjector = await getStyleInjector();
@@ -109,7 +135,9 @@ describe('StyleInjector', () => {
       StyleInjector.injectModuleCss('module-1', '.test { color: red; }');
 
       expect(mockHead.children.length).toBe(1);
-      expect(mockHead.children[0].getAttribute('data-module-id')).toBe('module-1');
+      expect(mockHead.children[0].getAttribute('data-module-id')).toBe(
+        'module-1'
+      );
       expect(mockHead.children[0].textContent).toBe('.test { color: red; }');
     });
 
@@ -132,7 +160,9 @@ describe('StyleInjector', () => {
       StyleInjector.removeModuleCss('module-1');
 
       expect(mockHead.children.length).toBe(1);
-      expect(mockHead.children[0].getAttribute('data-module-id')).toBe('module-2');
+      expect(mockHead.children[0].getAttribute('data-module-id')).toBe(
+        'module-2'
+      );
     });
 
     it('should handle removal of non-existent module gracefully', async () => {

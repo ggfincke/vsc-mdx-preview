@@ -30,6 +30,8 @@ const mocks = vi.hoisted(() => {
     setTheme: vi.fn(),
     setStale: vi.fn(),
     setCustomCss: vi.fn(),
+    setTailwindCss: vi.fn(),
+    setTailwindBrowserCss: vi.fn(),
     invalidate: vi.fn(async () => {}),
     clearAllCaches: vi.fn(async () => {}),
   };
@@ -49,129 +51,134 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('../../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/webview-manager',
+  () => ({
+    refreshPanel: (...args: any[]) => mocks.mockRefreshPanel(...args),
+  })
+);
 
-vi.mock('../../../packages/extension/preview/webview-manager', () => ({
-  refreshPanel: (...args: any[]) => mocks.mockRefreshPanel(...args),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/evaluate-in-webview',
+  () => ({
+    default: (...args: any[]) => mocks.mockEvaluateInWebview(...args),
+  })
+);
 
-vi.mock('../../../packages/extension/preview/evaluate-in-webview', () => ({
-  default: (...args: any[]) => mocks.mockEvaluateInWebview(...args),
-}));
-
-vi.mock('../../../packages/extension/utils/file-utils', () => ({
+vi.mock('../../../packages/extension-host/src/shared/utils/file-utils', () => ({
   readFileAsync: (...args: any[]) => mocks.mockReadFileAsync(...args),
 }));
 
-vi.mock('../../../packages/extension/preview/PreviewInitializer', () => ({
-  PreviewInitializer: class MockPreviewInitializer {
-    cancelHandshakeTimeout = vi.fn();
-    createHandshake = vi.fn(() => ({
-      promise: Promise.resolve(),
-      resolve: mocks.mockResolveHandshake,
-    }));
-    createWatchers = vi.fn(() => mocks.mockWatcherManager);
-    startWatchers = vi.fn(async () => {});
-    setupConfigWatcher = vi.fn();
-    setupTailwindConfigWatcher = vi.fn();
-    setupCustomCssWatcher = vi.fn();
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/PreviewInitializer',
+  () => ({
+    PreviewInitializer: class MockPreviewInitializer {
+      cancelHandshakeTimeout = vi.fn();
+      createHandshake = vi.fn(() => ({
+        promise: Promise.resolve(),
+        resolve: mocks.mockResolveHandshake,
+      }));
+      createWatchers = vi.fn(() => mocks.mockWatcherManager);
+      startWatchers = vi.fn(async () => {});
+      setupConfigWatcher = vi.fn();
+      setupTailwindConfigWatcher = vi.fn();
+      setupCustomCssWatcher = vi.fn();
 
-    constructor() {
-      mocks.initializerInstances.push(this);
-    }
-  },
-}));
+      constructor() {
+        mocks.initializerInstances.push(this);
+      }
+    },
+  })
+);
 
-vi.mock('../../../packages/extension/preview/PreviewDocumentHandler', () => ({
-  PreviewDocumentHandler: class MockPreviewDocumentHandler {
-    private _doc: any;
-    editingDoc = undefined;
-    dependentFsPaths = new Set<string>();
-    fsPath = '';
-    text = '';
-    entryFsDirectory: string | null = '/workspace';
-    typescriptConfiguration = undefined;
-    mdxPreviewConfig = undefined;
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/PreviewDocumentHandler',
+  () => ({
+    PreviewDocumentHandler: class MockPreviewDocumentHandler {
+      private _doc: any;
+      editingDoc = undefined;
+      dependentFsPaths = new Set<string>();
+      fsPath = '';
+      text = '';
+      entryFsDirectory: string | null = '/workspace';
+      typescriptConfiguration = undefined;
+      mdxPreviewConfig = undefined;
 
-    setDoc = vi.fn((doc: any) => {
-      this._doc = doc;
-      this.fsPath = doc.uri.fsPath;
-      this.text = doc.getText();
-      this.dependentFsPaths = new Set([doc.uri.fsPath]);
-    });
+      setDoc = vi.fn((doc: any) => {
+        this._doc = doc;
+        this.fsPath = doc.uri.fsPath;
+        this.text = doc.getText();
+        this.dependentFsPaths = new Set([doc.uri.fsPath]);
+      });
 
-    setActions = vi.fn();
-    reloadMdxConfig = vi.fn();
-    resetRenderedVersion = vi.fn();
-    markStale = vi.fn();
-    updateDependencies = vi.fn();
-    handleDidChangeTextDocument = vi.fn(async () => {});
-    handleDidSaveTextDocument = vi.fn(async () => {});
+      setActions = vi.fn();
+      reloadMdxConfig = vi.fn();
+      resetRenderedVersion = vi.fn();
+      markStale = vi.fn();
+      updateDependencies = vi.fn();
+      handleDidChangeTextDocument = vi.fn(async () => {});
+      handleDidSaveTextDocument = vi.fn(async () => {});
 
-    get doc() {
-      return this._doc;
-    }
+      get doc() {
+        return this._doc;
+      }
 
-    constructor() {
-      mocks.documentHandlerInstances.push(this);
-    }
-  },
-}));
+      constructor() {
+        mocks.documentHandlerInstances.push(this);
+      }
+    },
+  })
+);
 
-vi.mock('../../../packages/extension/preview/PreviewConfiguration', () => ({
-  PreviewConfiguration: class MockPreviewConfiguration {
-    configuration = {
-      updateMode: 'onType',
-      customCss: '/workspace/custom.css',
-    } as any;
-    styleConfiguration = {
-      useVscodeMarkdownStyles: true,
-      useWhiteBackground: false,
-    };
-    securityConfiguration = { securityPolicy: 'strict' };
-    debouncedUpdateWebview = vi.fn();
-    updateConfiguration = vi.fn(() => ({
-      needsWebviewRefresh: false,
-      needsDebounceRecreate: false,
-      needsCssWatcherUpdate: false,
-      oldCssPath: '/workspace/custom.css',
-    }));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/PreviewConfiguration',
+  () => ({
+    PreviewConfiguration: class MockPreviewConfiguration {
+      configuration = {
+        updateMode: 'onType',
+        customCss: '/workspace/custom.css',
+      } as any;
+      styleConfiguration = {
+        useVscodeMarkdownStyles: true,
+        useWhiteBackground: false,
+      };
+      securityConfiguration = { securityPolicy: 'strict' };
+      debouncedUpdateWebview = vi.fn();
+      updateConfiguration = vi.fn(() => ({
+        needsWebviewRefresh: false,
+        needsDebounceRecreate: false,
+        needsCssWatcherUpdate: false,
+        oldCssPath: '/workspace/custom.css',
+      }));
 
-    constructor(_docUri: any, _updateWebviewFn: () => void) {
-      mocks.configInstances.push(this);
-    }
-  },
-}));
+      constructor(_docUri: any, _updateWebviewFn: () => void) {
+        mocks.configInstances.push(this);
+      }
+    },
+  })
+);
 
-vi.mock('../../../packages/extension/preview/PreviewWebviewBridge', () => ({
-  PreviewWebviewBridge: class MockPreviewWebviewBridge {
-    setWebview = vi.fn();
-    setWebviewHandle = vi.fn();
-    onWebviewReady = vi.fn();
-    pushThemeState = vi.fn();
-    clearAllCaches = vi.fn(async () => {});
-    invalidate = vi.fn(async () => {});
-    getWebviewUri = vi.fn((fsPath: string) => `webview://${fsPath}`);
-    getHandle = vi.fn(() => mocks.mockWebviewHandle);
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/PreviewWebviewBridge',
+  () => ({
+    PreviewWebviewBridge: class MockPreviewWebviewBridge {
+      setWebview = vi.fn();
+      setWebviewHandle = vi.fn();
+      onWebviewReady = vi.fn();
+      pushThemeState = vi.fn();
+      clearAllCaches = vi.fn(async () => {});
+      invalidate = vi.fn(async () => {});
+      getWebviewUri = vi.fn((fsPath: string) => `webview://${fsPath}`);
+      getHandle = vi.fn(() => mocks.mockWebviewHandle);
 
-    constructor() {
-      mocks.webviewBridgeInstances.push(this);
-    }
-  },
-}));
+      constructor() {
+        mocks.webviewBridgeInstances.push(this);
+      }
+    },
+  })
+);
 
-import { Preview } from '../../../packages/extension/preview/Preview';
+import { Preview } from '../../../packages/extension-host/src/features/preview/Preview';
 
 function createDoc(overrides: Partial<any> = {}): any {
   return {
@@ -371,6 +378,31 @@ describe('Preview', () => {
     const id2 = preview.nextTailwindRequestId();
     expect(preview.isTailwindRequestCurrent(id)).toBe(false);
     expect(preview.isTailwindRequestCurrent(id2)).toBe(true);
+  });
+
+  it('setTailwindBrowserRuntimeEnabled reports changes only on transitions', () => {
+    const preview = new Preview(createDoc());
+
+    expect(preview.setTailwindBrowserRuntimeEnabled(true)).toBe(true);
+    expect(preview.isTailwindBrowserRuntimeEnabled()).toBe(true);
+    expect(preview.setTailwindBrowserRuntimeEnabled(true)).toBe(false);
+    expect(preview.setTailwindBrowserRuntimeEnabled(false)).toBe(true);
+    expect(preview.isTailwindBrowserRuntimeEnabled()).toBe(false);
+  });
+
+  it('markTailwindFallbackReason coalesces duplicate reasons', () => {
+    const preview = new Preview(createDoc());
+
+    expect(
+      preview.markTailwindFallbackReason('tailwind.config.js detected')
+    ).toBe(true);
+    expect(
+      preview.markTailwindFallbackReason('tailwind.config.js detected')
+    ).toBe(false);
+    preview.clearTailwindFallbackReason();
+    expect(
+      preview.markTailwindFallbackReason('tailwind.config.js detected')
+    ).toBe(true);
   });
 
   it('dispose releases watcher manager resources', () => {

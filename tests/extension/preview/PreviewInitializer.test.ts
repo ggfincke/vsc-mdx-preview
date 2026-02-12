@@ -2,46 +2,41 @@
 // unit tests for preview initialization & watcher orchestration
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { PreviewInitializer } from '../../../packages/extension/preview/PreviewInitializer';
-import { WatcherManager } from '../../../packages/extension/preview/watchers/WatcherManager';
-import { WEBVIEW_HANDSHAKE_TIMEOUT_MS } from '../../../packages/extension/constants';
-import type { ResolvedConfig } from '../../../packages/extension/types';
+import { PreviewInitializer } from '../../../packages/extension-host/src/features/preview/PreviewInitializer';
+import { WatcherManager } from '../../../packages/extension-host/src/features/preview/watchers/WatcherManager';
+import { WEBVIEW_HANDSHAKE_TIMEOUT_MS } from '../../../packages/extension-host/src/shared/constants';
+import type { ResolvedConfig } from '../../../packages/extension-host/src/types';
 
-const { configHandlers, mockTailwindProcessor, mockConfigManager } = vi.hoisted(() => ({
-  configHandlers: [] as Array<(event: { configPath: string }) => void>,
-  mockTailwindProcessor: {
-    invalidateVersionCache: vi.fn(),
-    invalidateDetectionCaches: vi.fn(),
-    invalidateScanCache: vi.fn(),
-  },
-  mockConfigManager: {
-    get: vi.fn(() => 200),
-  },
-}));
+const { configHandlers, mockTailwindProcessor, mockConfigManager } = vi.hoisted(
+  () => ({
+    configHandlers: [] as Array<(event: { configPath: string }) => void>,
+    mockTailwindProcessor: {
+      invalidateVersionCache: vi.fn(),
+      invalidateDetectionCaches: vi.fn(),
+      invalidateScanCache: vi.fn(),
+    },
+    mockConfigManager: {
+      get: vi.fn(() => 200),
+    },
+  })
+);
 
-vi.mock('../../../packages/extension/preview/config', () => ({
-  onConfigChange: (handler: (event: { configPath: string }) => void) => {
-    configHandlers.push(handler);
-    return { dispose: vi.fn() };
-  },
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/configuration',
+  () => ({
+    onConfigChange: (handler: (event: { configPath: string }) => void) => {
+      configHandlers.push(handler);
+      return { dispose: vi.fn() };
+    },
+  })
+);
 
-vi.mock('../../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getTailwindProcessor: () => mockTailwindProcessor,
   getConfigManager: () => mockConfigManager,
+  getConfigCache: () => ({
+    subscribe: vi.fn(() => ({ dispose: vi.fn() })),
+  }),
 }));
 
 describe('PreviewInitializer', () => {
@@ -83,7 +78,12 @@ describe('PreviewInitializer', () => {
 
     const names = watcherManager.getNames();
     expect(names).toEqual(
-      expect.arrayContaining(['document', 'dependency', 'customCss', 'packageJson'])
+      expect.arrayContaining([
+        'document',
+        'dependency',
+        'customCss',
+        'packageJson',
+      ])
     );
   });
 

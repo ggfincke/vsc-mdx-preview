@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Infrastructure
+
+- **Architecture Refresh**: Completed 10-phase monorepo restructuring
+  - Renamed `packages/extension` → `packages/extension-host` with feature-sliced internals
+  - Renamed `packages/webview-app` → `packages/webview-client` with feature-sliced internals
+  - Deleted `packages/shared` — split into `@mdx-preview/contracts`, `@mdx-preview/registry`, `@mdx-preview/runtime-utils`, `@mdx-preview/codegen`
+  - Created `mdx-forge` public library with subpath exports (compiler, browser, components)
+  - Added 12 dependency-cruiser boundary rules with CI enforcement
+  - Migrated 134 files from `@mdx-preview/shared` to direct package imports
+
 ## [1.0.3] - 2026-02-08
 
 ### Added

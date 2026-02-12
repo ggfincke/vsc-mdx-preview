@@ -2,8 +2,8 @@
 // unit tests for image file handler
 
 import { describe, it, expect } from 'vitest';
-import { ImageHandler } from '../../../packages/extension/module-system/handlers/ImageHandler';
-import type { Preview } from '../../../packages/extension/preview/preview-manager';
+import { ImageHandler } from '../../../packages/extension-host/src/features/module-runtime/handlers/ImageHandler';
+import type { Preview } from '../../../packages/extension-host/src/features/preview/preview-manager';
 
 function createPreview(uri: string | undefined): Preview {
   return {

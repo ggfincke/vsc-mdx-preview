@@ -1,0 +1,102 @@
+// packages/extension/utils/find-up.ts
+// unified upward directory traversal for config file discovery
+
+import * as path from 'path';
+import { pathExists } from './file-utils';
+import { normalizePathForComparison } from './path-utils';
+
+// options for findUp
+export interface FindUpOptions {
+  // file name(s) to search for (can be string or array)
+  filename: string | string[];
+
+  // directory to start searching from
+  startDir: string;
+
+  // stop boundary (string, array, predicate, or undefined for filesystem root)
+  stopAt?: string | string[] | ((dir: string) => boolean);
+
+  // return full file path (default) or containing directory
+  returnType?: 'file' | 'directory';
+}
+
+// search upward from startDir for a file matching filename(s)
+// stop at workspace boundary, custom boundary, or filesystem root
+export function findUp(options: FindUpOptions): string | undefined {
+  const { filename, startDir, stopAt, returnType = 'file' } = options;
+
+  const filenames = Array.isArray(filename) ? filename : [filename];
+  let currentDir = startDir;
+
+  // build stop predicate
+  const shouldStop = buildStopPredicate(stopAt);
+
+  while (currentDir) {
+    // check each filename in order (first match wins)
+    for (const name of filenames) {
+      const candidate = path.join(currentDir, name);
+      if (pathExists(candidate)) {
+        return returnType === 'directory' ? currentDir : candidate;
+      }
+    }
+
+    // check stop conditions AFTER checking for file
+    // (so we still find files AT the stop boundary)
+    if (shouldStop(currentDir)) {
+      break;
+    }
+
+    // move up to parent directory
+    const parentDir = path.dirname(currentDir);
+
+    // detect filesystem root (path.dirname returns same path at root)
+    if (parentDir === currentDir) {
+      break;
+    }
+
+    currentDir = parentDir;
+  }
+
+  return undefined;
+}
+
+// build a stop condition predicate from various input types
+function buildStopPredicate(
+  stopAt: FindUpOptions['stopAt']
+): (dir: string) => boolean {
+  if (!stopAt) {
+    // no stop condition - only stops at filesystem root
+    return () => false;
+  }
+
+  if (typeof stopAt === 'function') {
+    return stopAt;
+  }
+
+  // normalize to array & normalize paths for comparison
+  const stops = Array.isArray(stopAt) ? stopAt : [stopAt];
+  const normalizedStops = stops.map(normalizePathForComparison);
+  return (dir: string) =>
+    normalizedStops.includes(normalizePathForComparison(dir));
+}
+
+// create a stop predicate that stops at any VS Code workspace root
+export function createWorkspaceStopPredicate(): (dir: string) => boolean {
+  // dynamic import to avoid issues in non-VS Code environments (e.g., tests)
+  const vscode = require('vscode') as typeof import('vscode');
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  const workspaceRoots = workspaceFolders?.map((f) => f.uri.fsPath) ?? [];
+  const normalizedRoots = workspaceRoots.map(normalizePathForComparison);
+
+  return (dir: string) =>
+    normalizedRoots.includes(normalizePathForComparison(dir));
+}
+
+// create a stop predicate that stops when leaving a parent directory
+export function createContainmentStopPredicate(
+  parentDir: string
+): (dir: string) => boolean {
+  const normalizedParent = normalizePathForComparison(parentDir);
+  return (dir: string) =>
+    !normalizePathForComparison(dir).startsWith(normalizedParent);
+}

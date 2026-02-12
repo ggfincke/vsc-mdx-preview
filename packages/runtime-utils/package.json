@@ -1,0 +1,16 @@
+{
+  "name": "@mdx-preview/runtime-utils",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "exports": {
+    ".": "./src/index.ts",
+    "./cache": "./src/cache/index.ts",
+    "./async": "./src/async/index.ts",
+    "./diagrams": "./src/diagrams/index.ts",
+    "./errors": "./src/errors/index.ts",
+    "./module-id": "./src/module-id/index.ts",
+    "./validation": "./src/validation/index.ts"
+  }
+}

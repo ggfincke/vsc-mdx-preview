@@ -3,35 +3,28 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
-vi.mock('../../../packages/extension/services', () => ({}));
+vi.mock('../../../packages/extension-host/src/app/services', () => ({}));
 
 // mock preview-commands to avoid pulling in heavy deps
-vi.mock('../../../packages/extension/preview/preview-commands', () => ({
-  openPreview: vi.fn(),
-  refreshPreview: vi.fn(),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/preview-commands',
+  () => ({
+    openPreview: vi.fn(),
+    refreshPreview: vi.fn(),
+  })
+);
 
 // mock Preview module to avoid transitive dep chain
 // (Preview → EvaluationEngine → transform → sucrase)
-vi.mock('../../../packages/extension/preview/Preview', () => ({
-  Preview: vi.fn(),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/Preview',
+  () => ({
+    Preview: vi.fn(),
+  })
+);
 
-import { PreviewManager } from '../../../packages/extension/preview/preview-manager';
-import type { Preview } from '../../../packages/extension/preview/Preview';
+import { PreviewManager } from '../../../packages/extension-host/src/features/preview/preview-manager';
+import type { Preview } from '../../../packages/extension-host/src/features/preview/Preview';
 
 function createMockPreview(opts?: { active?: boolean }): Preview {
   return {
@@ -81,7 +74,6 @@ describe('PreviewManager', () => {
       const mgr = PreviewManager.getInstance();
       await mgr.refreshAllPreviews();
     });
-
   });
 
   // clearAllWebviewCaches
@@ -105,7 +97,6 @@ describe('PreviewManager', () => {
       // should not throw
       await mgr.clearAllWebviewCaches();
     });
-
   });
 
   // panel lifecycle

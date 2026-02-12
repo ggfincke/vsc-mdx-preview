@@ -2,29 +2,23 @@
 // unit tests for TailwindCompiler module loading flow
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { TailwindError } from '../../../packages/extension/errors';
+import { TailwindError } from '../../../packages/extension-host/src/shared/errors';
 
 const { mockLoadModuleWithEsmFallback } = vi.hoisted(() => ({
   mockLoadModuleWithEsmFallback: vi.fn(),
 }));
 
-vi.mock('../../../packages/extension/utils/lazy-import', () => ({
-  loadModuleWithEsmFallback: mockLoadModuleWithEsmFallback,
-}));
-
-vi.mock('../../../packages/extension/logging', () => ({
-  createTaggedLogger: () => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  }),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/shared/utils/lazy-import',
+  () => ({
+    loadModuleWithEsmFallback: mockLoadModuleWithEsmFallback,
+  })
+);
 
 import {
   TailwindCompiler,
   clearPostCSSCache,
-} from '../../../packages/extension/tailwind/TailwindCompiler';
+} from '../../../packages/extension-host/src/features/tailwind/TailwindCompiler';
 
 describe('TailwindCompiler', () => {
   beforeEach(() => {

@@ -1,9 +1,6 @@
 import React from 'react';
 
-/**
- * A simple button component demonstrating MDX Preview's
- * ability to render custom React components.
- */
+// render a simple button component to demonstrate custom React component support
 export default function MyComponent() {
   const [count, setCount] = React.useState(0);
 

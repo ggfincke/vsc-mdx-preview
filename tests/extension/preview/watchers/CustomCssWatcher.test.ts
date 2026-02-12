@@ -18,49 +18,61 @@ const { mockReadFileAsync, mockResolvePathWithFallbacks, createdWatchers } =
     >(),
   }));
 
-vi.mock('../../../../packages/extension/logging', () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
+vi.mock(
+  '../../../../packages/extension-host/src/shared/logging/logger',
+  () => ({
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-  })),
-}));
+    createTaggedLogger: vi.fn(() => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+  })
+);
 
-vi.mock('../../../../packages/extension/utils/file-utils', () => ({
-  readFileAsync: (...args: any[]) => mockReadFileAsync(...args),
-}));
+vi.mock(
+  '../../../../packages/extension-host/src/shared/utils/file-utils',
+  () => ({
+    readFileAsync: (...args: any[]) => mockReadFileAsync(...args),
+  })
+);
 
-vi.mock('../../../../packages/extension/utils/path-utils', () => ({
-  resolvePathWithFallbacks: (...args: any[]) =>
-    mockResolvePathWithFallbacks(...args),
-}));
+vi.mock(
+  '../../../../packages/extension-host/src/shared/utils/path-utils',
+  () => ({
+    resolvePathWithFallbacks: (...args: any[]) =>
+      mockResolvePathWithFallbacks(...args),
+  })
+);
 
-vi.mock('../../../../packages/extension/utils/createFileWatcher', () => ({
-  createFileWatcher: vi.fn((config: any) => {
-    const fsPath = String(config.pattern);
-    const watcher = {
-      dispose: vi.fn(),
-      triggerChange: () => {
-        config.onChange?.({ fsPath });
-      },
-      triggerCreate: () => {
-        config.onCreate?.({ fsPath });
-      },
-      triggerDelete: () => {
-        config.onDelete?.({ fsPath });
-      },
-    };
-    createdWatchers.set(fsPath, watcher);
-    return watcher;
-  }),
-}));
+vi.mock(
+  '../../../../packages/extension-host/src/shared/utils/createFileWatcher',
+  () => ({
+    createFileWatcher: vi.fn((config: any) => {
+      const fsPath = String(config.pattern);
+      const watcher = {
+        dispose: vi.fn(),
+        triggerChange: () => {
+          config.onChange?.({ fsPath });
+        },
+        triggerCreate: () => {
+          config.onCreate?.({ fsPath });
+        },
+        triggerDelete: () => {
+          config.onDelete?.({ fsPath });
+        },
+      };
+      createdWatchers.set(fsPath, watcher);
+      return watcher;
+    }),
+  })
+);
 
-import { CustomCssWatcher } from '../../../../packages/extension/preview/watchers/CustomCssWatcher';
+import { CustomCssWatcher } from '../../../../packages/extension-host/src/features/preview/watchers/CustomCssWatcher';
 
 describe('CustomCssWatcher', () => {
   beforeEach(() => {
@@ -88,9 +100,7 @@ describe('CustomCssWatcher', () => {
       'utf-8',
       expect.objectContaining({ logOnError: true })
     );
-    expect(notifier.setCustomCss).toHaveBeenCalledWith(
-      'body { color: red; }'
-    );
+    expect(notifier.setCustomCss).toHaveBeenCalledWith('body { color: red; }');
   });
 
   it('reloads CSS on change and create events', async () => {

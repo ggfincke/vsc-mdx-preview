@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 import globals from 'globals';
 
 // Local custom rules for mdx-preview
-import localRules from './packages/extension/eslint-rules/index.js';
+import localRules from './packages/extension-host/eslint-rules/index.js';
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -41,6 +41,25 @@ export default tseslint.config(
       // some dynamic requires are intentional
       '@typescript-eslint/no-require-imports': 'off',
 
+      // Cross-package boundary enforcement
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/webview-client/**'],
+              message:
+                'Extension/shared code must not import from webview-client.',
+            },
+            {
+              group: ['@mdx-preview/shared', '@mdx-preview/shared/*'],
+              message:
+                'packages/shared was removed. Import from @mdx-preview/contracts, @mdx-preview/registry, or @mdx-preview/runtime-utils.',
+            },
+          ],
+        },
+      ],
+
       // Custom local rules
       // Enforce ConfigManager usage for VS Code configuration access
       'local/no-direct-vscode-config': 'error',
@@ -57,15 +76,17 @@ export default tseslint.config(
       'examples/**',
       '.vscode-test/**',
       // has its own eslint.config.mjs
-      'packages/webview-app/**',
+      'packages/webview-client/**',
       // plain JS files not in tsconfig
       '**/*.mjs',
+      // package-local vitest configs are outside main tsconfig scopes
+      '**/vitest.config.ts',
       // local eslint rules (plain JS)
-      'packages/extension/eslint-rules/**',
+      'packages/extension-host/eslint-rules/**',
       // test files (not in main tsconfig, tests currently disabled)
       '**/*.test.ts',
       '**/*.integration.test.ts',
-      'packages/extension/test/**',
+      'packages/extension-host/test/**',
     ],
   }
 );

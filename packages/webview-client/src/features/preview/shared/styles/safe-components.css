@@ -1,0 +1,354 @@
+/* packages/webview-app/src/styles/safe-components.css */
+/* Safe Mode styles for transformed generic components */
+/* These styles apply to Callout, Collapsible, Tabs, etc. when rendered in Safe Mode */
+/* CSS naming convention: mdx-safe-* */
+
+/* ==================== Callout ==================== */
+.mdx-safe-callout {
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  border-left: 4px solid;
+  border-radius: 0 8px 8px 0;
+  background-color: var(--callout-bg, rgba(128, 128, 128, 0.1));
+}
+
+.mdx-safe-callout-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.025em;
+}
+
+.mdx-safe-callout-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mdx-safe-callout-icon svg {
+  width: 1.25em;
+  height: 1.25em;
+}
+
+.mdx-safe-callout-content > :first-child {
+  margin-top: 0;
+}
+
+.mdx-safe-callout-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* Callout variants */
+.mdx-safe-callout-note {
+  --callout-color: #4285f4;
+  --callout-bg: rgba(66, 133, 244, 0.1);
+  border-color: var(--callout-color);
+}
+
+.mdx-safe-callout-note .mdx-safe-callout-header {
+  color: var(--callout-color);
+}
+
+.mdx-safe-callout-info {
+  --callout-color: #4285f4;
+  --callout-bg: rgba(66, 133, 244, 0.1);
+  border-color: var(--callout-color);
+}
+
+.mdx-safe-callout-info .mdx-safe-callout-header {
+  color: var(--callout-color);
+}
+
+.mdx-safe-callout-tip {
+  --callout-color: #34a853;
+  --callout-bg: rgba(52, 168, 83, 0.1);
+  border-color: var(--callout-color);
+}
+
+.mdx-safe-callout-tip .mdx-safe-callout-header {
+  color: var(--callout-color);
+}
+
+.mdx-safe-callout-warning {
+  --callout-color: #f59e0b;
+  --callout-bg: rgba(245, 158, 11, 0.1);
+  border-color: var(--callout-color);
+}
+
+.mdx-safe-callout-warning .mdx-safe-callout-header {
+  color: var(--callout-color);
+}
+
+.mdx-safe-callout-caution {
+  --callout-color: #f59e0b;
+  --callout-bg: rgba(245, 158, 11, 0.1);
+  border-color: var(--callout-color);
+}
+
+.mdx-safe-callout-caution .mdx-safe-callout-header {
+  color: var(--callout-color);
+}
+
+.mdx-safe-callout-danger {
+  --callout-color: #ef4444;
+  --callout-bg: rgba(239, 68, 68, 0.1);
+  border-color: var(--callout-color);
+}
+
+.mdx-safe-callout-danger .mdx-safe-callout-header {
+  color: var(--callout-color);
+}
+
+.mdx-safe-callout-important {
+  --callout-color: #8b5cf6;
+  --callout-bg: rgba(139, 92, 246, 0.1);
+  border-color: var(--callout-color);
+}
+
+.mdx-safe-callout-important .mdx-safe-callout-header {
+  color: var(--callout-color);
+}
+
+/* ==================== Collapsible ==================== */
+.mdx-safe-collapsible {
+  margin: 1rem 0;
+  border: 1px solid var(--vscode-panel-border, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mdx-safe-collapsible-summary {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background-color: var(--vscode-editor-background, #f5f5f5);
+  font-weight: 500;
+  list-style: none;
+  user-select: none;
+}
+
+.mdx-safe-collapsible-summary::-webkit-details-marker {
+  display: none;
+}
+
+.mdx-safe-collapsible-summary:hover {
+  background-color: var(--vscode-list-hoverBackground, rgba(0, 0, 0, 0.05));
+}
+
+.mdx-safe-collapsible-summary::before {
+  /* right triangle */
+  content: '\25B6';
+  display: inline-block;
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
+.mdx-safe-collapsible[open] .mdx-safe-collapsible-summary::before {
+  transform: rotate(90deg);
+}
+
+.mdx-safe-collapsible-content {
+  padding: 1rem;
+  border-top: 1px solid var(--vscode-panel-border, #e0e0e0);
+}
+
+.mdx-safe-collapsible-content > :first-child {
+  margin-top: 0;
+}
+
+.mdx-safe-collapsible-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* ==================== Tabs (stacked in Safe Mode) ==================== */
+.mdx-safe-tabs {
+  margin: 1rem 0;
+  border: 1px solid var(--vscode-panel-border, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mdx-safe-tabs-notice {
+  padding: 0.5rem 1rem;
+  background-color: var(--vscode-editorGroupHeader-tabsBackground, #f3f3f3);
+  border-bottom: 1px solid var(--vscode-panel-border, #e0e0e0);
+  font-size: 0.85rem;
+  color: var(--vscode-descriptionForeground, #666);
+  font-style: italic;
+}
+
+.mdx-safe-tabs-content {
+  padding: 1rem;
+}
+
+.mdx-safe-tab-panel {
+  margin-bottom: 1rem;
+  border: 1px solid var(--vscode-panel-border, #e0e0e0);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mdx-safe-tab-panel:last-child {
+  margin-bottom: 0;
+}
+
+.mdx-safe-tab-panel-header {
+  padding: 0.5rem 1rem;
+  background-color: var(--vscode-editorGroupHeader-tabsBackground, #f3f3f3);
+  border-bottom: 1px solid var(--vscode-panel-border, #e0e0e0);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.mdx-safe-tab-panel-content {
+  padding: 1rem;
+}
+
+.mdx-safe-tab-panel-content > :first-child {
+  margin-top: 0;
+}
+
+.mdx-safe-tab-panel-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* ==================== CodeGroup ==================== */
+.mdx-safe-code-group {
+  margin: 1rem 0;
+  border: 1px solid var(--vscode-panel-border, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mdx-safe-code-group-notice {
+  padding: 0.5rem 1rem;
+  background-color: var(--vscode-editorGroupHeader-tabsBackground, #252526);
+  border-bottom: 1px solid var(--vscode-panel-border, #e0e0e0);
+  font-size: 0.85rem;
+  color: var(--vscode-descriptionForeground, #999);
+  font-style: italic;
+}
+
+.mdx-safe-code-group-content pre {
+  margin: 0;
+  border-radius: 0;
+}
+
+.mdx-safe-code-group-content pre + pre {
+  border-top: 1px solid var(--vscode-panel-border, #333);
+}
+
+/* ==================== Unknown Component Placeholder ==================== */
+.mdx-unknown-component-placeholder {
+  margin: 1rem 0;
+  border: 1px dashed var(--vscode-panel-border, #999);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--vscode-editor-background, #f5f5f5);
+}
+
+.mdx-unknown-component-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: rgba(128, 128, 128, 0.1);
+  border-bottom: 1px dashed var(--vscode-panel-border, #999);
+  font-size: 0.85rem;
+}
+
+.mdx-unknown-icon {
+  font-size: 1rem;
+  color: var(--vscode-editorWarning-foreground, #f59e0b);
+}
+
+.mdx-unknown-component-header code {
+  font-family: var(--vscode-editor-font-family, monospace);
+  color: var(--vscode-symbolIcon-classForeground, #ee9d28);
+}
+
+.mdx-unknown-hint {
+  color: var(--vscode-descriptionForeground, #666);
+  font-style: italic;
+}
+
+.mdx-unknown-component-content {
+  padding: 1rem;
+}
+
+.mdx-unknown-component-content > :first-child {
+  margin-top: 0;
+}
+
+.mdx-unknown-component-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* ==================== Dark Mode ==================== */
+.vscode-dark .mdx-safe-callout-note,
+.vscode-dark .mdx-safe-callout-info {
+  --callout-bg: rgba(66, 133, 244, 0.15);
+}
+
+.vscode-dark .mdx-safe-callout-tip {
+  --callout-bg: rgba(52, 168, 83, 0.15);
+}
+
+.vscode-dark .mdx-safe-callout-warning,
+.vscode-dark .mdx-safe-callout-caution {
+  --callout-bg: rgba(245, 158, 11, 0.15);
+}
+
+.vscode-dark .mdx-safe-callout-danger {
+  --callout-bg: rgba(239, 68, 68, 0.15);
+}
+
+.vscode-dark .mdx-safe-callout-important {
+  --callout-bg: rgba(139, 92, 246, 0.15);
+}
+
+.vscode-dark .mdx-safe-collapsible {
+  border-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .mdx-safe-collapsible-summary {
+  background-color: var(--vscode-editor-background, #1e1e1e);
+}
+
+.vscode-dark .mdx-safe-collapsible-content {
+  border-top-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .mdx-safe-tabs {
+  border-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .mdx-safe-tabs-notice {
+  background-color: var(--vscode-editorGroupHeader-tabsBackground, #252526);
+  border-bottom-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .mdx-safe-tab-panel {
+  border-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .mdx-safe-tab-panel-header {
+  background-color: var(--vscode-editorGroupHeader-tabsBackground, #252526);
+  border-bottom-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .mdx-safe-code-group {
+  border-color: var(--vscode-panel-border, #333);
+}
+
+.vscode-dark .mdx-unknown-component-placeholder {
+  border-color: var(--vscode-panel-border, #555);
+  background-color: var(--vscode-editor-background, #1e1e1e);
+}
+
+.vscode-dark .mdx-unknown-component-header {
+  border-bottom-color: var(--vscode-panel-border, #555);
+}

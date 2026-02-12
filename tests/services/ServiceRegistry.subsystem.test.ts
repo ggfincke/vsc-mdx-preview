@@ -6,23 +6,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // Mock vscode module
 vi.mock('vscode', () => ({}));
 
-// Mock logging
-vi.mock('../../packages/extension/logging', () => ({
-  error: vi.fn(),
-  warn: vi.fn(),
-  debug: vi.fn(),
-  info: vi.fn(),
-  createTaggedLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  })),
-}));
-
 // Import after mocks
-import { ServiceRegistry } from '../../packages/extension/services/ServiceRegistry';
-import { ServiceError } from '../../packages/extension/errors';
+import { ServiceRegistry } from '../../packages/extension-host/src/app/services/ServiceRegistry';
+import { ServiceError } from '../../packages/extension-host/src/shared/errors';
 
 describe('ServiceRegistry subsystem registration', () => {
   let registry: ServiceRegistry;

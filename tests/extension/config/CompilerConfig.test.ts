@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   EffectivePreviewConfig,
   ResolvedConfig,
-} from '../../../packages/extension/types';
+} from '../../../packages/extension-host/src/types';
 
 const { mockGetAll, mockExtractThemeFromFrontmatter, mockResolveConfig } =
   vi.hoisted(() => ({
@@ -14,7 +14,7 @@ const { mockGetAll, mockExtractThemeFromFrontmatter, mockResolveConfig } =
     mockResolveConfig: vi.fn(),
   }));
 
-vi.mock('../../../packages/extension/services', () => ({
+vi.mock('../../../packages/extension-host/src/app/services', () => ({
   getConfigManager: () => ({
     getAll: mockGetAll,
   }),
@@ -23,14 +23,17 @@ vi.mock('../../../packages/extension/services', () => ({
   }),
 }));
 
-vi.mock('../../../packages/extension/preview/config/ConfigResolver', () => ({
-  resolveConfig: mockResolveConfig,
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/configuration/ConfigResolver',
+  () => ({
+    resolveConfig: mockResolveConfig,
+  })
+);
 
 import {
   buildCompilerConfig,
   toCompilerConfig,
-} from '../../../packages/extension/config/EffectivePreviewConfig';
+} from '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig';
 
 const DOC_URI = {
   scheme: 'file',

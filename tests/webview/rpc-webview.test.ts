@@ -1,4 +1,4 @@
-// tests/webview/rpc-webview.test.ts
+// tests/webview/platform/rpc/webview-rpc-client.test.ts
 // unit tests for RPC webview handler factory & message patterns
 //
 // rpc-webview.ts cannot be imported directly in tests because it calls
@@ -10,15 +10,15 @@ import {
   type WebviewStateHandlers,
   type PendingMessage,
   type QueuedMessageType,
-} from '../../packages/webview-app/src/rpc/handler-factory';
-import type { TrustState, PreviewError } from '@mdx-preview/shared';
+} from '../../packages/webview-client/src/platform/rpc/handler-factory';
+import type { PreviewError, TrustState } from '@mdx-preview/contracts';
 import {
   SET_TRUST_STATE_CONFIG,
   UPDATE_PREVIEW_CONFIG,
   UPDATE_PREVIEW_SAFE_CONFIG,
   SHOW_PREVIEW_ERROR_CONFIG,
   SET_STALE_CONFIG,
-} from '../../packages/webview-app/src/rpc/handler-configs';
+} from '../../packages/webview-client/src/platform/rpc/handler-configs';
 
 // create mock tagged logger matching the interface
 function createMockLogger() {
@@ -283,7 +283,9 @@ describe('message queue architecture (P0-3)', () => {
       queue.set('trust', { type: 'trust', payload: { canExecute: true } });
 
       expect(queue.size).toBe(1);
-      expect((queue.get('trust')?.payload as { canExecute: boolean }).canExecute).toBe(true);
+      expect(
+        (queue.get('trust')?.payload as { canExecute: boolean }).canExecute
+      ).toBe(true);
     });
 
     it('different message types are preserved', () => {
