@@ -38,14 +38,21 @@ const aliases = [
 // mdx-forge doesn't fail w/ __vite-optional-peer-dep virtual modules
 function resolveReactPeerDeps(): Plugin {
   const reactPaths: Record<string, string> = {};
+  // webview workspace first so react 19 takes priority over root react 18
+  const resolvePaths = [
+    path.resolve(__dirname, '../packages/webview-client/node_modules'),
+    path.resolve(__dirname, '../node_modules'),
+  ];
   for (const subpath of [
     'react',
     'react/jsx-runtime',
     'react/jsx-dev-runtime',
     'react-dom',
+    'react-dom/client',
+    'react-dom/server',
   ]) {
     try {
-      reactPaths[subpath] = require.resolve(subpath);
+      reactPaths[subpath] = require.resolve(subpath, { paths: resolvePaths });
     } catch {
       // skip if not installed
     }
