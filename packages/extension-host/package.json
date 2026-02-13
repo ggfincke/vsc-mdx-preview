@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@mdx-preview/contracts": "*",
-    "@mdx-preview/registry": "*",
     "@mdx-preview/runtime-utils": "*",
     "mdx-forge": "0.1.5"
   }

@@ -2,7 +2,6 @@
   "files": [],
   "references": [
     { "path": "packages/contracts" },
-    { "path": "packages/registry" },
     { "path": "packages/runtime-utils" },
     { "path": "packages/codegen" }
   ]

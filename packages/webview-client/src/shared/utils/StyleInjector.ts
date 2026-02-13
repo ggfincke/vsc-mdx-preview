@@ -1,12 +1,12 @@
-// packages/webview-app/src/utils/StyleInjector.ts
+// packages/webview-client/src/shared/utils/StyleInjector.ts
 // unified CSS injection utility for webview
 //
 // ARCHITECTURE NOTE
 // StyleInjector is a pure DOM manipulation layer - the authoritative source
-// of truth for which styles have been injected is ModuleRegistry (in
-// module-system/registry/ModuleRegistry.ts), which has reference counting
-// & LRU eviction - callers should check ModuleRegistry before calling
-// injectModuleCss() to avoid duplicate injection
+// of truth for which styles have been injected is ModuleRegistry (from
+// mdx-forge/browser), which has reference counting & LRU eviction -
+// callers should check ModuleRegistry before calling injectModuleCss()
+// to avoid duplicate injection
 
 export interface StyleInjectorOptions {
   // deduplication flag

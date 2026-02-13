@@ -1,5 +1,7 @@
 // packages/runtime-utils/src/async/semaphore.ts
 // concurrency control primitives shared across packages
+// ! cross-repo duplicate: mdx-forge/src/browser/internal/semaphore.ts
+// ! changes here must be mirrored (GPL licensing prevents shared dependency)
 
 // concurrency limiting semaphore for async operations
 // prevent resource exhaustion from unbounded parallelism

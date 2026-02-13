@@ -17,13 +17,3 @@ export {
   SHIM_LOAD_MAX_RETRIES,
   SHIM_LOAD_RETRY_DELAY_MS,
 } from '@mdx-preview/contracts';
-
-// module loading limits (security & DoS prevention)
-
-// max module loading depth
-// prevent stack overflow from deep dependency chains
-export const MAX_MODULE_LOAD_DEPTH = 100;
-
-// max concurrent fetches
-// prevent resource exhaustion from unbounded parallelism
-export const MAX_CONCURRENT_FETCHES = 10;
