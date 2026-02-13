@@ -16,12 +16,9 @@ import {
   getErrorReporter,
   getFrameworkDetector,
   getTailwindProcessor,
+  getMetaResolver,
 } from '../../app/services';
 import { getEvaluationEngine } from './EvaluationEngine';
-import {
-  resolveNextraMeta,
-  mergeNextraMeta,
-} from '../framework/nextra/MetaResolver';
 import { extractNextraFrontmatter } from 'mdx-forge/compiler';
 import {
   buildEffectivePreviewConfig,
@@ -284,13 +281,19 @@ function sendNextraMetaIfNeeded(
     }
 
     // resolve metadata from _meta.json
-    const metaFromJson = resolveNextraMeta(fsPath, workspaceFolder.uri.fsPath);
+    const metaFromJson = getMetaResolver().resolveNextraMeta(
+      fsPath,
+      workspaceFolder.uri.fsPath
+    );
 
     // extract Nextra-specific frontmatter
     const metaFromFrontmatter = extractNextraFrontmatter(frontmatter ?? {});
 
     // merge (frontmatter overrides _meta.json)
-    const mergedMeta = mergeNextraMeta(metaFromJson, metaFromFrontmatter);
+    const mergedMeta = getMetaResolver().mergeNextraMeta(
+      metaFromJson,
+      metaFromFrontmatter
+    );
 
     // only send if we have meaningful metadata
     if (Object.keys(mergedMeta).length > 0) {

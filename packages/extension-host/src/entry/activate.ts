@@ -18,6 +18,7 @@ import {
   isDebugEnabled,
 } from '../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
+import { SETTINGS } from '../shared/config/ConfigManager';
 
 const log = createTaggedLogger(LogTags.ACTIVATE);
 const themeLog = createTaggedLogger(LogTags.THEME);
@@ -109,7 +110,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
 
       if (selection === 'Enable Scripts') {
         await getConfigManager().set(
-          'preview.enableScripts',
+          SETTINGS.ENABLE_SCRIPTS,
           true,
           vscode.ConfigurationTarget.Workspace
         );

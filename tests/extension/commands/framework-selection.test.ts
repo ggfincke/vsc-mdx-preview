@@ -3,26 +3,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as vscode from 'vscode';
-
-const mockConfigManager = {
-  get: vi.fn(),
-  set: vi.fn(async () => {}),
-};
-
-const mockPreviewManager = {
-  refreshAllPreviews: vi.fn(async () => {}),
-};
-
-const mockFrameworkDetector = {
-  getFramework: vi.fn(() => ({ framework: 'generic', detected: false })),
-  getFrameworkDisplayName: vi.fn((id: string) => id),
-};
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getConfigManager: () => mockConfigManager,
-  getPreviewManager: () => mockPreviewManager,
-  getFrameworkDetector: () => mockFrameworkDetector,
-}));
+import {
+  mockConfigManager,
+  mockPreviewManager,
+  mockFrameworkDetector,
+} from '../../helpers/mock-services';
 
 import { commands } from '../../../packages/extension-host/src/features/commands/framework-selection';
 

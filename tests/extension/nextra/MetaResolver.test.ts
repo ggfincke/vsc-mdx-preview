@@ -5,11 +5,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import {
-  MetaResolver,
-  resolveNextraMeta,
-  mergeNextraMeta,
-} from '../../../packages/extension-host/src/features/framework/nextra/MetaResolver';
+import { MetaResolver } from '../../../packages/extension-host/src/features/framework/nextra/MetaResolver';
 
 const tempDirs: string[] = [];
 
@@ -50,7 +46,8 @@ describe('MetaResolver', () => {
     const mdxPath = path.join(workspaceRoot, 'getting-started.mdx');
     writeFile(mdxPath, '# Getting Started');
 
-    const result = resolveNextraMeta(mdxPath, workspaceRoot);
+    const resolver = MetaResolver.getInstance();
+    const result = resolver.resolveNextraMeta(mdxPath, workspaceRoot);
 
     expect(result).toEqual({ title: 'Getting Started' });
   });
@@ -75,7 +72,8 @@ describe('MetaResolver', () => {
     const mdxPath = path.join(workspaceRoot, 'advanced.mdx');
     writeFile(mdxPath, '# Advanced');
 
-    const result = resolveNextraMeta(mdxPath, workspaceRoot);
+    const resolver = MetaResolver.getInstance();
+    const result = resolver.resolveNextraMeta(mdxPath, workspaceRoot);
 
     expect(result).toEqual({ title: 'Advanced', layout: 'full', toc: false });
   });
@@ -84,7 +82,8 @@ describe('MetaResolver', () => {
     const meta = { title: 'Doc', layout: 'default', toc: true };
     const frontmatter = { layout: 'raw', toc: false };
 
-    const merged = mergeNextraMeta(meta, frontmatter);
+    const resolver = MetaResolver.getInstance();
+    const merged = resolver.mergeNextraMeta(meta, frontmatter);
 
     expect(merged).toEqual({ title: 'Doc', layout: 'raw', toc: false });
   });

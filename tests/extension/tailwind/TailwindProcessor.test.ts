@@ -9,21 +9,7 @@ import { TailwindProcessor } from '../../../packages/extension-host/src/features
 import type { TailwindConfig } from '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig';
 import type { TrustState } from '@mdx-preview/contracts';
 import { createMockPreview } from '../../helpers/mock-preview';
-
-const { mockFrameworkDetector, mockErrorReporter } = vi.hoisted(() => ({
-  mockFrameworkDetector: {
-    getFramework: vi.fn(() => ({ framework: 'generic', detected: true })),
-    areShimsEnabled: vi.fn(() => true),
-  },
-  mockErrorReporter: {
-    report: vi.fn(),
-  },
-}));
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getFrameworkDetector: () => mockFrameworkDetector,
-  getErrorReporter: () => mockErrorReporter,
-}));
+import { mockFrameworkDetector, mockErrorReporter } from '../../helpers/mock-services';
 
 function createTailwindConfig(
   overrides: Partial<TailwindConfig> = {}

@@ -36,7 +36,6 @@ interface PreloadState {
   lastShimLoadResult: ShimLoadResult | null;
   // generic shim tracking
   loadedGenericShims: Set<string>;
-  allGenericsLoaded: boolean;
   genericShimsLoadPromise: Promise<void> | null;
   lastGenericLoadResult: { loaded: string[]; failed: string[] } | null;
 }
@@ -47,25 +46,12 @@ function createInitialState(): PreloadState {
     frameworkLoadPromise: null,
     lastShimLoadResult: null,
     loadedGenericShims: new Set<string>(),
-    allGenericsLoaded: false,
     genericShimsLoadPromise: null,
     lastGenericLoadResult: null,
   };
 }
 
-let state = createInitialState();
-
-// expose shim load results for diagnostics
-export function getLastShimLoadResult(): ShimLoadResult | null {
-  return state.lastShimLoadResult;
-}
-
-export function getLastGenericLoadResult(): {
-  loaded: string[];
-  failed: string[];
-} | null {
-  return state.lastGenericLoadResult;
-}
+const state = createInitialState();
 
 // initialize preloaded modules in the registry
 // load only core modules synchronously - generic & framework shims are lazy-loaded
@@ -150,12 +136,6 @@ export async function ensureGenericShims(
   registry: ModuleRegistry,
   componentNames: string[]
 ): Promise<void> {
-  // if all generics already loaded, nothing to do
-  if (state.allGenericsLoaded) {
-    log.debug('All generic shims already loaded');
-    return;
-  }
-
   // wait for any in-progress load to complete
   if (state.genericShimsLoadPromise) {
     await state.genericShimsLoadPromise;
@@ -201,9 +181,4 @@ export async function ensureGenericShims(
 // get list of all IDs that should be preserved during module reset
 export function getPreservedIds(): string[] {
   return [...Object.values(PRELOADED_MODULE_IDS), ...PRELOADED_SHIM_IDS];
-}
-
-// reset all preload state (for testing)
-export function resetPreloadState(): void {
-  state = createInitialState();
 }

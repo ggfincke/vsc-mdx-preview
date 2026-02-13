@@ -1,10 +1,11 @@
 // tests/helpers/mock-preview.ts
-// Factory for creating mock Preview objects for tests
+// factory for creating mock Preview objects for tests
 
+import { vi } from 'vitest';
 import type { MockDocument } from './mock-document';
 import { createMockDocument } from './mock-document';
 
-// Minimal configuration state needed by compile functions
+// minimal configuration state needed by compile functions
 export interface MockConfigurationState {
   updateMode: 'onChange' | 'onSave';
   debounceDelay: number;
@@ -17,7 +18,7 @@ export interface MockConfigurationState {
   tailwindEnabled: 'auto' | 'enabled' | 'disabled';
 }
 
-// Minimal Preview interface needed by compile functions
+// minimal Preview interface needed by compile functions
 export interface MockPreview {
   doc: MockDocument;
   fsPath: string;
@@ -26,6 +27,16 @@ export interface MockPreview {
   configuration: MockConfigurationState;
   mdxPreviewConfig: MockResolvedConfig | undefined;
   typescriptConfiguration: MockTypeScriptConfig | undefined;
+  // optional lifecycle & webview fields (present when tests need them)
+  active?: boolean;
+  refreshWebview?: ReturnType<typeof vi.fn>;
+  dispose?: ReturnType<typeof vi.fn>;
+  pushThemeState?: ReturnType<typeof vi.fn>;
+  clearAllCaches?: ReturnType<typeof vi.fn>;
+  completeHandshake?: ReturnType<typeof vi.fn>;
+  evaluationDuration?: number;
+  isTailwindRequestCurrent?: ReturnType<typeof vi.fn>;
+  updateTailwindWatchFiles?: ReturnType<typeof vi.fn>;
 }
 
 export interface MockResolvedConfig {
@@ -53,6 +64,16 @@ export interface MockPreviewOptions {
   configuration?: Partial<MockConfigurationState>;
   mdxPreviewConfig?: MockResolvedConfig;
   typescriptConfiguration?: MockTypeScriptConfig;
+  // optional lifecycle & webview fields
+  active?: boolean;
+  refreshWebview?: ReturnType<typeof vi.fn>;
+  dispose?: ReturnType<typeof vi.fn>;
+  pushThemeState?: ReturnType<typeof vi.fn>;
+  clearAllCaches?: ReturnType<typeof vi.fn>;
+  completeHandshake?: ReturnType<typeof vi.fn>;
+  evaluationDuration?: number;
+  isTailwindRequestCurrent?: ReturnType<typeof vi.fn>;
+  updateTailwindWatchFiles?: ReturnType<typeof vi.fn>;
 }
 
 const DEFAULT_CONFIGURATION: MockConfigurationState = {
@@ -77,11 +98,20 @@ export function createMockPreview(
     configuration = {},
     mdxPreviewConfig,
     typescriptConfiguration,
+    active,
+    refreshWebview,
+    dispose,
+    pushThemeState,
+    clearAllCaches,
+    completeHandshake,
+    evaluationDuration,
+    isTailwindRequestCurrent,
+    updateTailwindWatchFiles,
   } = options;
 
   const doc = createMockDocument(content, { fsPath, languageId });
 
-  return {
+  const preview: MockPreview = {
     doc,
     fsPath,
     entryFsDirectory: fsPath.substring(0, fsPath.lastIndexOf('/')),
@@ -90,4 +120,35 @@ export function createMockPreview(
     mdxPreviewConfig,
     typescriptConfiguration,
   };
+
+  // attach optional fields only when provided
+  if (active !== undefined) {
+    preview.active = active;
+  }
+  if (refreshWebview) {
+    preview.refreshWebview = refreshWebview;
+  }
+  if (dispose) {
+    preview.dispose = dispose;
+  }
+  if (pushThemeState) {
+    preview.pushThemeState = pushThemeState;
+  }
+  if (clearAllCaches) {
+    preview.clearAllCaches = clearAllCaches;
+  }
+  if (completeHandshake) {
+    preview.completeHandshake = completeHandshake;
+  }
+  if (evaluationDuration !== undefined) {
+    preview.evaluationDuration = evaluationDuration;
+  }
+  if (isTailwindRequestCurrent) {
+    preview.isTailwindRequestCurrent = isTailwindRequestCurrent;
+  }
+  if (updateTailwindWatchFiles) {
+    preview.updateTailwindWatchFiles = updateTailwindWatchFiles;
+  }
+
+  return preview;
 }

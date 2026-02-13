@@ -3,12 +3,8 @@
 
 import * as vscode from 'vscode';
 import { DEP_WATCHER_MAX_ENTRIES } from '../../../shared/constants';
-import { createTaggedLogger } from '../../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { LRUCache } from '@mdx-preview/runtime-utils';
-
-// module-level tagged logger
-const log = createTaggedLogger(LogTags.DEP_WATCHER);
 import { getUnifiedResolver } from '../../module-runtime/resolution/UnifiedResolver';
 import type { ResolutionContext } from '../../types';
 import { BaseWatcher } from './BaseWatcher';
@@ -28,7 +24,7 @@ export class DependencyWatcher extends BaseWatcher {
     this.watchers = new LRUCache({
       maxEntries: DEP_WATCHER_MAX_ENTRIES,
       onEvict: (fsPath, watcher) => {
-        log.debug(`Disposing watcher: ${fsPath}`);
+        this.log.debug(`Disposing watcher: ${fsPath}`);
         watcher.dispose();
       },
     });
@@ -83,7 +79,7 @@ export class DependencyWatcher extends BaseWatcher {
       }
     }
     for (const fsPath of pathsToRemove) {
-      log.debug(`Removing watcher (no longer imported): ${fsPath}`);
+      this.log.debug(`Removing watcher (no longer imported): ${fsPath}`);
       // onEvict disposes watcher
       this.watchers.delete(fsPath);
     }
@@ -99,14 +95,14 @@ export class DependencyWatcher extends BaseWatcher {
     // step 3: add watchers for new paths (LRU auto-evicts oldest when exceeded)
     for (const fsPath of newPaths) {
       if (!this.watchers.has(fsPath)) {
-        log.debug(`Adding watcher: ${fsPath}`);
+        this.log.debug(`Adding watcher: ${fsPath}`);
         const watcher = this.createFileWatcher(fsPath, {
           onChange: () => {
-            log.debug(`File changed: ${fsPath}`);
+            this.log.debug(`File changed: ${fsPath}`);
             this.onChangeCallback(fsPath);
           },
           onDelete: () => {
-            log.debug(`File deleted: ${fsPath}`);
+            this.log.debug(`File deleted: ${fsPath}`);
             // onEvict disposes watcher
             this.watchers.delete(fsPath);
             this.onChangeCallback(fsPath);
@@ -118,7 +114,7 @@ export class DependencyWatcher extends BaseWatcher {
       }
     }
 
-    log.debug(`Watching ${this.watchers.size} local dependencies`);
+    this.log.debug(`Watching ${this.watchers.size} local dependencies`);
   }
 
   // clear all dependencies & dispose watchers

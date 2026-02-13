@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
 import { LRUCache } from '@mdx-preview/runtime-utils';
+import { PATH_CACHE_MAX_ENTRIES } from '../../../shared/constants/runtime';
 
 // re-export PathAccessDeniedError from centralized errors module
 export { PathAccessDeniedError } from '../../../shared/errors';
@@ -16,9 +17,6 @@ import {
   resolveRealPath,
   normalizePathForComparison,
 } from '../../../shared/utils/path-utils';
-
-// max entries for path security caches
-const PATH_CACHE_MAX_ENTRIES = 200;
 
 // cache for resolved workspace roots by entry directory
 const asyncRootDirectoryCache = new LRUCache<string, string>({

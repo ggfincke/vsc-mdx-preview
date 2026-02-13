@@ -25,8 +25,6 @@ import {
   type WebviewStateHandlers,
   type PendingMessage,
   type QueuedMessageType,
-} from './handler-factory';
-import {
   SET_TRUST_STATE_CONFIG,
   UPDATE_PREVIEW_CONFIG,
   UPDATE_PREVIEW_SAFE_CONFIG,
@@ -34,7 +32,7 @@ import {
   SET_STALE_CONFIG,
   SET_THEME_CONFIG,
   SET_NEXTRA_META_CONFIG,
-} from './handler-configs';
+} from './handler-factory';
 
 // create tagged logger for this module
 const log = createTaggedLogger(LogTags.RPC_WEBVIEW);

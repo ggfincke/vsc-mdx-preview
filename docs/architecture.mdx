@@ -55,7 +55,6 @@ The project uses npm workspaces w/ six packages plus one external npm dependency
 | `packages/extension-host` | Node.js              | VS Code extension host - handles compilation, resolution, security    |
 | `packages/webview-client` | Browser              | React 19 app rendered in VS Code webview iframe                       |
 | `packages/contracts`      | Both                 | Shared types, constants, enums, & lightweight behavioral abstractions |
-| `packages/registry`       | Both                 | Metadata registry (callout types, icon definitions, theme data)       |
 | `packages/runtime-utils`  | Both                 | Cross-runtime utilities (LRU cache, validation, error handling)       |
 | `packages/codegen`        | Build-time           | Code generation scripts & libraries                                   |
 | `mdx-forge` (npm)         | External npm package | Unified library (compiler, browser modules, component shims)          |
@@ -507,10 +506,10 @@ The handler registry dispatches to specialized handlers based on file extension:
 | Handler         | Extensions                                  | Behavior                               |
 | --------------- | ------------------------------------------- | -------------------------------------- |
 | `ScriptHandler` | `.js`, `.ts`, `.jsx`, `.tsx`, `.mdx`, `.md` | Transpile, extract dependencies        |
-| `CssHandler`    | `.css`                                      | Return CSS for injection               |
+| CSS (factory)   | `.css`                                      | Return CSS for injection               |
 | `SassHandler`   | `.scss`, `.sass`                            | Compile via workspace sass, return CSS |
-| `JsonHandler`   | `.json`                                     | Wrap as `module.exports = {...}`       |
-| `ImageHandler`  | `.png`, `.jpg`, `.svg`, `.gif`, `.webp`     | Convert to webview URIs                |
+| JSON (factory)  | `.json`                                     | Wrap as `module.exports = {...}`       |
+| `ImageHandler`  | `.png`, `.jpg`, `.svg`, `.gif`, `.webp`     | Convert to webview URI                 |
 
 **Handler Interface:**
 
@@ -1620,7 +1619,6 @@ All parallel operations use a custom `Semaphore` utility to prevent resource exh
 | Package                      | Purpose                                                         |
 | ---------------------------- | --------------------------------------------------------------- |
 | `@mdx-preview/contracts`     | Types, enums, constants, logging, themes, RPC contracts, errors |
-| `@mdx-preview/registry`      | Callout types, icon definitions, theme metadata                 |
 | `@mdx-preview/runtime-utils` | LRU cache, validation, error handling, Semaphore, module ID     |
 | `@mdx-preview/codegen`       | Code generation scripts & libraries                             |
 

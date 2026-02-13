@@ -5,7 +5,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { SETTINGS_DEFAULTS } from '@mdx-preview/contracts';
-import { type PackageJson, SETTINGS_ENUM_MAP } from '../lib/codegen-utils';
+import {
+  type PackageJson,
+  type SettingProperty,
+  SETTINGS_ENUM_MAP,
+} from '../lib/codegen-utils';
 import { getRootDir } from './cli-utils';
 
 const ROOT_DIR = getRootDir(import.meta.url);
@@ -36,6 +40,28 @@ function verifyEnum(
       `Enum mismatch for ${settingKey}:\n` +
         `  package.json: [${packageEnum.join(', ')}]\n` +
         `  canonical:    [${canonicalArray.join(', ')}]`
+    );
+  }
+}
+
+function verifyEnumDescriptions(
+  settingKey: string,
+  property: SettingProperty | undefined,
+  errors: string[]
+): void {
+  if (!property?.enum) {
+    return;
+  }
+  // only check settings that have enumDescriptions defined
+  // (not all enum settings use descriptions)
+  if (!property.enumDescriptions) {
+    return;
+  }
+  if (property.enum.length !== property.enumDescriptions.length) {
+    errors.push(
+      `enumDescriptions length mismatch for ${settingKey}:\n` +
+        `  enum has ${property.enum.length} values\n` +
+        `  enumDescriptions has ${property.enumDescriptions.length} descriptions`
     );
   }
 }
@@ -82,6 +108,11 @@ function main(): void {
     );
   }
 
+  // verify enumDescriptions parity (count must match enum array)
+  for (const settingKey of Object.keys(SETTINGS_ENUM_MAP)) {
+    verifyEnumDescriptions(settingKey, properties[settingKey], errors);
+  }
+
   // verify defaults for all settings
   for (const [key, value] of Object.entries(SETTINGS_DEFAULTS)) {
     const propertyKey = `mdx-preview.${key}`;
@@ -106,6 +137,7 @@ function main(): void {
     console.log(`  - ${key}`);
   }
   console.log('  - defaults for all mdx-preview.* settings');
+  console.log('  - enumDescriptions parity for all enum settings');
 }
 
 main();

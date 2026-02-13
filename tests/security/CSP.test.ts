@@ -14,7 +14,7 @@ import {
   generateCSP,
   getCSP,
 } from '../../packages/extension-host/src/features/security/CSP';
-import { SecurityPolicy } from '../../packages/extension-host/src/features/security/security';
+import { SecurityPolicy } from '../../packages/extension-host/src/features/security/SecurityPolicy';
 import type { TrustState } from '../../packages/extension-host/src/features/security/TrustManager';
 
 // Mock webview for testing

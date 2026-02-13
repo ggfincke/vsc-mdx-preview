@@ -18,10 +18,6 @@ const aliases = [
     replacement: path.resolve(__dirname, '../packages/contracts/src/index.ts'),
   },
   {
-    find: '@mdx-preview/registry',
-    replacement: path.resolve(__dirname, '../packages/registry/src/index.ts'),
-  },
-  {
     find: '@mdx-preview/runtime-utils',
     replacement: path.resolve(
       __dirname,

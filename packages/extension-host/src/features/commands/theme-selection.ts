@@ -16,6 +16,7 @@ import {
   type CodeBlockTheme,
   type MermaidTheme,
 } from '../themes';
+import { SETTINGS } from '../../shared/config/ConfigManager';
 import type { SettingKey } from '../../shared/config/ConfigManager';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
@@ -67,7 +68,7 @@ export const commands: CommandDefinition[] = [
   {
     id: CommandNames.SELECT_PREVIEW_THEME,
     handler: createThemeSelector<PreviewTheme>({
-      configKey: 'preview.previewTheme',
+      configKey: SETTINGS.PREVIEW_THEME,
       themes: PREVIEW_THEMES,
       labels: PREVIEW_THEME_LABELS,
       placeHolder: 'Select preview theme',
@@ -77,7 +78,7 @@ export const commands: CommandDefinition[] = [
   {
     id: CommandNames.SELECT_CODE_BLOCK_THEME,
     handler: createThemeSelector<CodeBlockTheme>({
-      configKey: 'preview.codeBlockTheme',
+      configKey: SETTINGS.CODE_BLOCK_THEME,
       themes: CODE_BLOCK_THEMES,
       labels: CODE_BLOCK_THEME_LABELS,
       placeHolder: 'Select code block theme',
@@ -87,7 +88,7 @@ export const commands: CommandDefinition[] = [
   {
     id: CommandNames.SELECT_MERMAID_THEME,
     handler: createThemeSelector<MermaidTheme>({
-      configKey: 'preview.mermaidTheme',
+      configKey: SETTINGS.MERMAID_THEME,
       themes: MERMAID_THEMES,
       labels: MERMAID_THEME_LABELS,
       placeHolder: 'Select Mermaid diagram theme',

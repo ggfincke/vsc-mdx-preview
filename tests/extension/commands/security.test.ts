@@ -3,21 +3,13 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as vscode from 'vscode';
+import {
+  mockConfigManager,
+  mockTrustManager,
+  mockErrorReporter,
+} from '../../helpers/mock-services';
 
 const mockSelectSecurityPolicy = vi.fn();
-
-const mockConfigManager = {
-  get: vi.fn(),
-  set: vi.fn(async () => {}),
-};
-
-const mockTrustManager = {
-  getState: vi.fn(),
-};
-
-const mockErrorReporter = {
-  reportWithActions: vi.fn(async () => {}),
-};
 
 vi.mock(
   '../../../packages/extension-host/src/features/security/security',
@@ -25,12 +17,6 @@ vi.mock(
     selectSecurityPolicy: (...args: any[]) => mockSelectSecurityPolicy(...args),
   })
 );
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getConfigManager: () => mockConfigManager,
-  getTrustManager: () => mockTrustManager,
-  getErrorReporter: () => mockErrorReporter,
-}));
 
 vi.mock('../../../packages/extension-host/src/shared/errors', () => ({
   ErrorContext: {

@@ -11,6 +11,7 @@ import {
   getConfigManager,
 } from '../../app/services';
 import { tryRequireTrustedModeForDocument } from '../../features/security/validateTrust';
+import { SETTINGS } from '../../shared/config/ConfigManager';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import {
@@ -317,7 +318,7 @@ class ExtensionHandle implements ExtensionRPC {
       return undefined;
     }
 
-    const serverUrl = getConfigManager().get('diagrams.plantUmlServer');
+    const serverUrl = getConfigManager().get(SETTINGS.PLANTUML_SERVER);
     const endpoints = getPlantUmlRenderEndpoints(serverUrl);
     let lastError: unknown = null;
 

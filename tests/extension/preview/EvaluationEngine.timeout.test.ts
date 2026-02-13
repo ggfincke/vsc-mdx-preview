@@ -7,22 +7,19 @@ import { ErrorContext } from '../../../packages/extension-host/src/shared/errors
 import { MDX_COMPILATION_TIMEOUT_MS } from '../../../packages/extension-host/src/shared/constants';
 import { DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS } from '@mdx-preview/contracts';
 
+import {
+  mockTailwindProcessor,
+  mockErrorReporter,
+} from '../../helpers/mock-services';
+
 const {
   mockRaceTimeout,
   mockTransformEntry,
   mockExtractImportSpecifiers,
-  mockTailwindProcessor,
-  mockErrorReporter,
 } = vi.hoisted(() => ({
   mockRaceTimeout: vi.fn(),
   mockTransformEntry: vi.fn(),
   mockExtractImportSpecifiers: vi.fn(),
-  mockTailwindProcessor: {
-    process: vi.fn(),
-  },
-  mockErrorReporter: {
-    report: vi.fn(),
-  },
 }));
 
 vi.mock(
@@ -45,11 +42,6 @@ vi.mock(
     extractImportSpecifiers: mockExtractImportSpecifiers,
   })
 );
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getTailwindProcessor: () => mockTailwindProcessor,
-  getErrorReporter: () => mockErrorReporter,
-}));
 
 import { EvaluationEngine } from '../../../packages/extension-host/src/features/preview/EvaluationEngine';
 

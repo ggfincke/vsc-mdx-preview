@@ -26,8 +26,6 @@ vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
   })),
 }));
 
-vi.mock('../../../packages/extension-host/src/app/services', () => ({}));
-
 import {
   ErrorReporter,
   ErrorSeverity,

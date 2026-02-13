@@ -2,17 +2,14 @@
 // watch package.json & lock files to invalidate resolver cache
 
 import * as vscode from 'vscode';
-import { createTaggedLogger } from '../../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { BaseWatcher } from '../../preview/watchers/BaseWatcher';
 import { getConfigManager } from '../../../app/services';
-
-// module-level tagged logger for package.json watcher
-const log = createTaggedLogger(LogTags.PKG_JSON);
+import { SETTINGS } from '../../../shared/config/ConfigManager';
 
 // get configurable debounce value from ConfigManager
 function getWatcherDebounce(): number {
-  return getConfigManager().get('advanced.watcherDebounceMs');
+  return getConfigManager().get(SETTINGS.WATCHER_DEBOUNCE_MS);
 }
 
 // watch for package.json & lock file changes to trigger resolver cache invalidation
@@ -31,7 +28,7 @@ export class PackageJsonWatcher extends BaseWatcher {
     super();
     // create debounced invalidation handler
     this._debouncedInvalidate = this.createDebouncedHandler(() => {
-      log.debug('Triggering cache invalidation');
+      this.log.debug('Triggering cache invalidation');
       onInvalidate?.();
     }, getWatcherDebounce());
   }
@@ -56,7 +53,7 @@ export class PackageJsonWatcher extends BaseWatcher {
       }
     );
 
-    log.debug('Started watching package files');
+    this.log.debug('Started watching package files');
     this.markReady();
   }
 
@@ -69,7 +66,7 @@ export class PackageJsonWatcher extends BaseWatcher {
 
   // handle file change event w/ debouncing
   private handleChange(uri: vscode.Uri, fileType: string): void {
-    log.debug(`${fileType} changed: ${uri.fsPath}`);
+    this.log.debug(`${fileType} changed: ${uri.fsPath}`);
     this._debouncedInvalidate();
   }
 }

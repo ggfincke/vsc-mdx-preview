@@ -9,6 +9,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { WithSubscribers } from '../../app/services/SingletonService';
 import type { ResolvedConfig } from '../types';
 import { PathCache } from '../utils/cache';
+import { CONFIG_CACHE_MAX_ENTRIES } from '../constants/runtime';
 
 const log = createTaggedLogger(LogTags.CONFIG_CACHE);
 
@@ -18,9 +19,6 @@ export type { ConfigChangeEvent, ConfigChangeCallback } from '../types';
 
 import { ConfigChangeType } from '../types';
 import type { ConfigChangeEvent } from '../types';
-
-// max entries before LRU eviction kicks in
-const CONFIG_CACHE_MAX_ENTRIES = 100;
 
 // wrapper to distinguish "not cached" from "cached as null"
 interface CacheWrapper {

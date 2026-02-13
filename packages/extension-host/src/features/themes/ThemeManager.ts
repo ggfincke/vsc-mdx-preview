@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { WithSubscribers } from '../../app/services/SingletonService';
 import { getConfigManager } from '../../app/services';
 import { LogTags } from '@mdx-preview/contracts';
-import { THEME_KEYS } from '../../shared/config';
+import { SETTINGS, THEME_KEYS } from '../../shared/config';
 import type {
   PreviewTheme,
   CodeBlockTheme,
@@ -44,19 +44,19 @@ export class ThemeManager extends WithSubscribers<
     const configManager = getConfigManager();
     return {
       previewTheme: configManager.get(
-        'preview.previewTheme',
+        SETTINGS.PREVIEW_THEME,
         docUri
       ) as PreviewTheme,
       codeBlockTheme: configManager.get(
-        'preview.codeBlockTheme',
+        SETTINGS.CODE_BLOCK_THEME,
         docUri
       ) as CodeBlockTheme,
       mermaidTheme: configManager.get(
-        'preview.mermaidTheme',
+        SETTINGS.MERMAID_THEME,
         docUri
       ) as MermaidTheme,
-      autoTheme: configManager.get('preview.autoTheme', docUri),
-      plantUmlServer: configManager.get('diagrams.plantUmlServer', docUri),
+      autoTheme: configManager.get(SETTINGS.AUTO_THEME, docUri),
+      plantUmlServer: configManager.get(SETTINGS.PLANTUML_SERVER, docUri),
     };
   }
 
@@ -160,7 +160,7 @@ export class ThemeManager extends WithSubscribers<
   // update theme setting
   async setPreviewTheme(theme: PreviewTheme, global = true): Promise<void> {
     await getConfigManager().set(
-      'preview.previewTheme',
+      SETTINGS.PREVIEW_THEME,
       theme,
       global
         ? vscode.ConfigurationTarget.Global
@@ -171,7 +171,7 @@ export class ThemeManager extends WithSubscribers<
   // update code block theme setting
   async setCodeBlockTheme(theme: CodeBlockTheme, global = true): Promise<void> {
     await getConfigManager().set(
-      'preview.codeBlockTheme',
+      SETTINGS.CODE_BLOCK_THEME,
       theme,
       global
         ? vscode.ConfigurationTarget.Global

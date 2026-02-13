@@ -150,9 +150,3 @@ export class PreviewManager extends WithSubscribers<PreviewManager, void> {
     this.currentPreview = undefined;
   }
 }
-
-// get current preview through manager
-export function getCurrentPreview(): Preview | undefined {
-  log.debug('getCurrentPreview called');
-  return PreviewManager.getInstance().getCurrentPreview();
-}

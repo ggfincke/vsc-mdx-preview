@@ -120,10 +120,9 @@ The extension runs in VS Code's extension host (Node.js environment):
 
 ### Shared Packages
 
-Shared concerns are split across 4 packages used by both extension & webview:
+Shared concerns are split across 3 packages used by both extension & webview:
 
 - **`@mdx-preview/contracts`** (`packages/contracts/`): Types, enums, constants, error classes, logger factory
-- **`@mdx-preview/registry`** (`packages/registry/`): Callout types, icon definitions, pure queries
 - **`@mdx-preview/runtime-utils`** (`packages/runtime-utils/`): LRU cache, Semaphore, validation, error handling, module ID
 - **`@mdx-preview/codegen`** (`packages/codegen/`): Code generation scripts & libraries
 

@@ -3,20 +3,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as vscode from 'vscode';
-
-const mockConfigManager = {
-  get: vi.fn(),
-  set: vi.fn(async () => {}),
-};
-
-const mockPreviewManager = {
-  refreshAllPreviews: vi.fn(async () => {}),
-};
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getConfigManager: () => mockConfigManager,
-  getPreviewManager: () => mockPreviewManager,
-}));
+import {
+  mockConfigManager,
+  mockPreviewManager,
+} from '../../helpers/mock-services';
 
 import { commands } from '../../../packages/extension-host/src/features/commands/theme-selection';
 

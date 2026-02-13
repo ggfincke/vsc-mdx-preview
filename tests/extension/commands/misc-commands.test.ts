@@ -3,11 +3,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as vscode from 'vscode';
-
-const mockConfigManager = {
-  get: vi.fn(),
-  set: vi.fn(async () => {}),
-};
+import { mockConfigManager } from '../../helpers/mock-services';
+import { SETTINGS } from '../../../packages/extension-host/src/shared/config/ConfigManager';
 
 const mockShowOutput = vi.fn();
 const mockDoOpenPreview = vi.fn();
@@ -25,14 +22,6 @@ vi.mock('../../../packages/extension-host/src/shared/logging/logger', () => ({
     warn: vi.fn(),
     error: vi.fn(),
   })),
-}));
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getConfigManager: () => mockConfigManager,
-  getPreviewManager: vi.fn(),
-  getTrustManager: vi.fn(),
-  getFrameworkDetector: vi.fn(),
-  getErrorReporter: vi.fn(),
 }));
 
 // mock commands that pull in heavy deps
@@ -112,7 +101,7 @@ describe('debug commands', () => {
     const handler = await getDebugHandler();
     await handler();
     expect(mockConfigManager.set).toHaveBeenCalledWith(
-      'advanced.debugOutput',
+      SETTINGS.DEBUG_OUTPUT,
       true
     );
     expect(mockShowOutput).toHaveBeenCalled();
@@ -125,7 +114,7 @@ describe('debug commands', () => {
     const handler = await getDebugHandler();
     await handler();
     expect(mockConfigManager.set).toHaveBeenCalledWith(
-      'advanced.debugOutput',
+      SETTINGS.DEBUG_OUTPUT,
       false
     );
     expect(mockShowOutput).not.toHaveBeenCalled();

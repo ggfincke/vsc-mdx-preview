@@ -1,5 +1,6 @@
 // tests/compilation/safe-compile.test.ts
-// unit tests for Safe Mode MDX compilation (MDX -> HTML) via mdx-forge/compiler
+// consumer smoke tests for Safe Mode MDX compilation via mdx-forge/compiler
+// canonical tests live in mdx-forge — these verify the integration boundary
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { compileSafe } from 'mdx-forge/compiler';
@@ -17,7 +18,7 @@ function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
   };
 }
 
-describe('compileSafe()', () => {
+describe('compileSafe() [consumer smoke]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -50,67 +51,5 @@ describe('compileSafe()', () => {
 
     expect(result.html).toContain('mdx-unknown-component-placeholder');
     expect(result.html).toContain('CustomComponent');
-  });
-
-  it('strips unknown components when unknownBehavior is "strip"', async () => {
-    const result = await compileSafe(
-      FIXTURES.mdxWithJsx,
-      createConfig({ componentsUnknownBehavior: 'strip' })
-    );
-
-    expect(result.html).not.toContain('CustomComponent');
-    expect(result.html).not.toContain('mdx-unknown-component');
-  });
-
-  it('replaces JSX expressions with placeholder', async () => {
-    const result = await compileSafe(
-      FIXTURES.mdxWithExpression,
-      createConfig()
-    );
-
-    expect(result.html).toContain('mdx-expression-placeholder');
-    expect(result.html).toContain('{...}');
-    // should not evaluate the expression
-    expect(result.html).not.toContain('42');
-  });
-
-  it('handles code blocks correctly', async () => {
-    const result = await compileSafe(FIXTURES.mdxWithCodeBlock, createConfig());
-
-    expect(result.html).toContain('<pre');
-    expect(result.html).toContain('<code');
-    expect(result.html).toContain('const');
-  });
-
-  it('converts PlantUML code blocks into placeholders', async () => {
-    const result = await compileSafe(
-      `\`\`\`plantuml
-@startuml
-Alice -> Bob: Hi
-@enduml
-\`\`\``,
-      createConfig()
-    );
-
-    expect(result.html).toContain('plantuml-container');
-    expect(result.html).toContain('data-plantuml-code');
-  });
-
-  it('converts Graphviz code blocks into placeholders', async () => {
-    const result = await compileSafe(
-      `\`\`\`dot
-digraph G { A -> B }
-\`\`\``,
-      createConfig()
-    );
-
-    expect(result.html).toContain('graphviz-container');
-    expect(result.html).toContain('data-graphviz-code');
-  });
-
-  it('returns empty frontmatter when none present', async () => {
-    const result = await compileSafe(FIXTURES.basicMdx, createConfig());
-
-    expect(result.frontmatter).toEqual({});
   });
 });

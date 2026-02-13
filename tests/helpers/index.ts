@@ -1,5 +1,5 @@
 // tests/helpers/index.ts
-// Re-export all test helpers
+// re-export all test helpers
 
 export { FIXTURES } from './fixtures';
 export {
@@ -19,3 +19,17 @@ export {
   createMockCompilerConfig,
   createMockCompilerConfigFromPreview,
 } from './mock-compiler-config';
+export {
+  mockConfigManager,
+  mockTrustManager,
+  mockFrameworkDetector,
+  mockErrorReporter,
+  mockPreviewManager,
+  mockThemeManager,
+  mockConfigCache,
+  mockTailwindProcessor,
+  mockStatusBarManager,
+  mockMetaResolver,
+  mockOutputChannel,
+  configureTrustState,
+} from './mock-services';

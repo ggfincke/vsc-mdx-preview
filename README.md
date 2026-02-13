@@ -109,27 +109,27 @@ See [docs/security.md](https://github.com/ggfincke/vsc-mdx-preview/blob/main/doc
 
 ## Extension Settings
 
-| Setting                                        | Default     | Description                                      |
-| ---------------------------------------------- | ----------- | ------------------------------------------------ |
-| `mdx-preview.preview.enableScripts`            | `false`     | Enable JS execution (requires trusted workspace) |
-| `mdx-preview.preview.updateMode`               | `"onType"`  | When to update: `onType`, `onSave`, `manual`     |
-| `mdx-preview.preview.previewTheme`             | `"none"`    | Preview theme (github-light, atom-dark, etc.)    |
-| `mdx-preview.preview.codeBlockTheme`           | `"auto"`    | Code syntax theme (`auto` matches preview)       |
-| `mdx-preview.preview.autoTheme`                | `true`      | Auto light/dark switching with VS Code           |
-| `mdx-preview.preview.security`                 | `"strict"`  | CSP policy: `strict` or `disabled`               |
-| `mdx-preview.preview.useVscodeMarkdownStyles`  | `true`      | Use VS Code Markdown styles                      |
-| `mdx-preview.preview.useWhiteBackground`       | `false`     | Force white background                           |
-| `mdx-preview.preview.customCss`                | `""`        | Path to custom CSS file                          |
-| `mdx-preview.preview.mdx.customLayoutFilePath` | `""`        | Path to custom layout file                       |
-| `mdx-preview.framework`                        | `"auto"`    | Framework detection mode                         |
-| `mdx-preview.tailwind.enabled`                 | `"enabled"` | Tailwind CSS: `auto`, `enabled`, `disabled`      |
-| `mdx-preview.preview.mermaidTheme`             | `"default"` | Mermaid diagram theme                            |
-| `mdx-preview.preview.openMdxLinksInPreview`    | `true`      | Open `.mdx` links in preview                     |
-| `mdx-preview.framework.componentShims`         | `true`      | Enable framework component shims                 |
-| `mdx-preview.components.builtins`              | `true`      | Enable built-in component shims                  |
-| `mdx-preview.components.unknownBehavior`       | `"placeholder"` | Unknown component handling: `strip`, `placeholder`, `raw` |
-| `mdx-preview.diagrams.plantUmlServer`          | `"https://kroki.io"` | PlantUML server URL                        |
-| `mdx-preview.build.useSucraseTranspiler`       | `false`     | Use Sucrase instead of Babel                     |
+| Setting                                        | Default              | Description                                               |
+| ---------------------------------------------- | -------------------- | --------------------------------------------------------- |
+| `mdx-preview.preview.enableScripts`            | `false`              | Enable JS execution (requires trusted workspace)          |
+| `mdx-preview.preview.updateMode`               | `"onType"`           | When to update: `onType`, `onSave`, `manual`              |
+| `mdx-preview.preview.previewTheme`             | `"none"`             | Preview theme (github-light, atom-dark, etc.)             |
+| `mdx-preview.preview.codeBlockTheme`           | `"auto"`             | Code syntax theme (`auto` matches preview)                |
+| `mdx-preview.preview.autoTheme`                | `true`               | Auto light/dark switching with VS Code                    |
+| `mdx-preview.preview.security`                 | `"strict"`           | CSP policy: `strict` or `disabled`                        |
+| `mdx-preview.preview.useVscodeMarkdownStyles`  | `true`               | Use VS Code Markdown styles                               |
+| `mdx-preview.preview.useWhiteBackground`       | `false`              | Force white background                                    |
+| `mdx-preview.preview.customCss`                | `""`                 | Path to custom CSS file                                   |
+| `mdx-preview.preview.mdx.customLayoutFilePath` | `""`                 | Path to custom layout file                                |
+| `mdx-preview.framework`                        | `"auto"`             | Framework detection mode                                  |
+| `mdx-preview.tailwind.enabled`                 | `"enabled"`          | Tailwind CSS: `auto`, `enabled`, `disabled`               |
+| `mdx-preview.preview.mermaidTheme`             | `"default"`          | Mermaid diagram theme                                     |
+| `mdx-preview.preview.openMdxLinksInPreview`    | `true`               | Open `.mdx` links in preview                              |
+| `mdx-preview.framework.componentShims`         | `true`               | Enable framework component shims                          |
+| `mdx-preview.components.builtins`              | `true`               | Enable built-in component shims                           |
+| `mdx-preview.components.unknownBehavior`       | `"placeholder"`      | Unknown component handling: `strip`, `placeholder`, `raw` |
+| `mdx-preview.diagrams.plantUmlServer`          | `"https://kroki.io"` | PlantUML server URL                                       |
+| `mdx-preview.build.useSucraseTranspiler`       | `false`              | Use Sucrase instead of Babel                              |
 
 ## Webview Limitations
 

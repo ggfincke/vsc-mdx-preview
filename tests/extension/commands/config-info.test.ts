@@ -3,32 +3,19 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as vscode from 'vscode';
-
-const {
-  mockResolveConfig,
-  mockBuildEffectivePreviewConfig,
-  mockExtractFrontmatter,
+import {
   mockConfigManager,
   mockFrameworkDetector,
   mockTrustManager,
   mockErrorReporter,
-} = vi.hoisted(() => ({
-  mockResolveConfig: vi.fn(),
-  mockBuildEffectivePreviewConfig: vi.fn(),
-  mockExtractFrontmatter: vi.fn(),
-  mockConfigManager: {
-    inspect: vi.fn(),
-  },
-  mockFrameworkDetector: {
-    getFramework: vi.fn(),
-  },
-  mockTrustManager: {
-    getStateForDocument: vi.fn(),
-  },
-  mockErrorReporter: {
-    reportToUser: vi.fn(),
-  },
-}));
+} from '../../helpers/mock-services';
+
+const { mockResolveConfig, mockBuildEffectivePreviewConfig, mockExtractFrontmatter } =
+  vi.hoisted(() => ({
+    mockResolveConfig: vi.fn(),
+    mockBuildEffectivePreviewConfig: vi.fn(),
+    mockExtractFrontmatter: vi.fn(),
+  }));
 
 vi.mock(
   '../../../packages/extension-host/src/features/preview/configuration/ConfigResolver',
@@ -47,13 +34,6 @@ vi.mock(
 
 vi.mock('mdx-forge/compiler', () => ({
   extractFrontmatter: (...args: any[]) => mockExtractFrontmatter(...args),
-}));
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getConfigManager: () => mockConfigManager,
-  getFrameworkDetector: () => mockFrameworkDetector,
-  getTrustManager: () => mockTrustManager,
-  getErrorReporter: () => mockErrorReporter,
 }));
 
 import { commands } from '../../../packages/extension-host/src/features/commands/config-info';

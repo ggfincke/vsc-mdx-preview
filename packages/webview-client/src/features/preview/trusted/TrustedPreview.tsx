@@ -102,11 +102,12 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   // evaluate code when content changes
   useAsyncEffect(
     async () => {
-      return evaluateModuleToComponent(
+      const component = await evaluateModuleToComponent(
         content.code,
         content.entryFilePath,
         content.dependencies
       );
+      return component as ComponentType;
     },
     [content.code, content.entryFilePath, content.dependencies],
     {

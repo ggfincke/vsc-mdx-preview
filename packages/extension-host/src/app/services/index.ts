@@ -18,5 +18,6 @@ export {
   getTailwindProcessor,
   getErrorReporter,
   getStatusBarManager,
+  getMetaResolver,
   getOutputChannel,
 } from './service-locator';

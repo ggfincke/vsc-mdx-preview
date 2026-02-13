@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { WithSubscribers } from '../../app/services/SingletonService';
 import { getConfigManager } from '../../app/services';
+import { SETTINGS } from '../../shared/config/ConfigManager';
 import { type TrustState, LogTags } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.TRUST_MANAGER);
@@ -49,7 +50,7 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
 
     // listen for configuration changes via centralized dispatcher
     this.addDisposable(
-      getConfigManager().onDidChangeKey('preview.enableScripts', () => {
+      getConfigManager().onDidChangeKey(SETTINGS.ENABLE_SCRIPTS, () => {
         this.notifyTrustStateChange();
       })
     );
@@ -59,9 +60,9 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
   getState(): TrustState {
     // fresh read every time (don't rely on cached values)
     const workspaceTrusted = vscode.workspace.isTrusted;
-    const scriptsEnabled = getConfigManager().get('preview.enableScripts');
+    const scriptsEnabled = getConfigManager().get(SETTINGS.ENABLE_SCRIPTS);
     const openMdxLinksInPreview = getConfigManager().get(
-      'preview.openMdxLinksInPreview'
+      SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW
     );
 
     return {
@@ -94,7 +95,7 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
     }
 
     // rule 2: scripts must be enabled
-    const scriptsEnabled = getConfigManager().get('preview.enableScripts');
+    const scriptsEnabled = getConfigManager().get(SETTINGS.ENABLE_SCRIPTS);
     if (!scriptsEnabled) {
       return {
         allowed: false,
