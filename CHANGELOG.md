@@ -7,15 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-02-13
+
 ### Infrastructure
 
 - **Architecture Refresh**: Completed 10-phase monorepo restructuring
   - Renamed `packages/extension` → `packages/extension-host` with feature-sliced internals
   - Renamed `packages/webview-app` → `packages/webview-client` with feature-sliced internals
-  - Deleted `packages/shared` — split into `@mdx-preview/contracts`, `@mdx-preview/registry`, `@mdx-preview/runtime-utils`, `@mdx-preview/codegen`
-  - Created `mdx-forge` public library with subpath exports (compiler, browser, components)
+  - Deleted `packages/shared` — split into `@mdx-preview/contracts`, `@mdx-preview/runtime-utils`, `@mdx-preview/codegen`
+  - Created [`mdx-forge`](https://github.com/ggfincke/mdx-forge) public library with subpath exports (compiler, browser, components)
   - Added 11 dependency-cruiser boundary rules with CI enforcement
   - Migrated 134 files from `@mdx-preview/shared` to direct package imports
+- **Runtime Cleanup**: Consolidated runtime layer onto `mdx-forge/browser`
+  - Deleted `@mdx-preview/registry` package (ModuleCache, StyleCache, DependencyTracker replaced by mdx-forge)
+  - Merged RPC handler-configs into handler-factory
+  - Centralized cache/timeout constants, complete SETTINGS constant coverage (27/27 keys)
+  - Added cross-repo parity tests with mdx-forge and shared test mock factories
+
+### Changed
+
+- **React 19**: Upgraded from React 18 to React 19
+- **Shiki 3**: Upgraded from Shiki 1 to Shiki 3
+- **mdx-forge 0.1.6**: Updated from 0.1.3 to 0.1.6
+- **CI**: Bumped `actions/checkout` from v4 to v6
+
+### Documentation
+
+- Fixed 37 documentation inaccuracies across public-facing docs
 
 ## [1.0.3] - 2026-02-08
 
@@ -153,7 +171,7 @@ This release represents a complete rewrite of the MDX Preview extension, introdu
 ### Changed
 
 - **MDX 3**: Upgraded from MDX 1/2 to MDX 3 with modern unified ecosystem
-- **React 19**: Upgraded from React 16/17 to React 19
+- **React 18**: Upgraded from React 16/17 to React 18
 - **TypeScript**: ES2022 target with strict mode enabled
 - **Build System**: Vite-based webview build, esbuild for extension bundling
 - **Module Resolution**: Enhanced-resolve with proper `exports` field and browser condition support
