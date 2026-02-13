@@ -6,6 +6,7 @@ import * as path from 'path';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { WithSubscribers } from '../../app/services/SingletonService';
 import { getConfigManager, getErrorReporter } from '../../app/services';
+import { SETTINGS } from '../../shared/config/ConfigManager';
 import { ErrorContext } from '../../shared/errors';
 import { type FrameworkId, LogTags } from '@mdx-preview/contracts';
 import { normalizeError } from '@mdx-preview/runtime-utils';
@@ -84,7 +85,7 @@ export class FrameworkDetector extends WithSubscribers<
 
     // watch for framework setting changes via centralized dispatcher
     this.addDisposable(
-      getConfigManager().onDidChangeKey('framework', () => {
+      getConfigManager().onDidChangeKey(SETTINGS.FRAMEWORK, () => {
         this.invalidateAllCaches();
       })
     );
@@ -187,7 +188,10 @@ export class FrameworkDetector extends WithSubscribers<
     this.ensureFileWatcher();
 
     // check manual override setting first
-    const manualFramework = getConfigManager().get('framework', documentUri);
+    const manualFramework = getConfigManager().get(
+      SETTINGS.FRAMEWORK,
+      documentUri
+    );
 
     if (manualFramework !== 'auto') {
       return {
@@ -242,7 +246,7 @@ export class FrameworkDetector extends WithSubscribers<
 
   // check if component shims are enabled
   areShimsEnabled(documentUri: vscode.Uri): boolean {
-    return getConfigManager().get('framework.componentShims', documentUri);
+    return getConfigManager().get(SETTINGS.FRAMEWORK_SHIMS, documentUri);
   }
 
   // find mdx-components.tsx file (for Next.js)

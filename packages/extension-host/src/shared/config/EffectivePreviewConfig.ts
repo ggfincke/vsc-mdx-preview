@@ -11,6 +11,7 @@
 import { getConfigManager, getThemeManager } from '../../app/services';
 import { resolveConfig } from '../../features/preview/configuration/ConfigResolver';
 import { mapSettingsToPreviewConfiguration } from './preview-settings';
+import { SETTINGS } from './ConfigManager';
 import type { PreviewTheme, CodeBlockTheme } from '../../features/themes/types';
 
 // import consolidated types from centralized types
@@ -51,8 +52,8 @@ export function buildEffectivePreviewConfig(
     enableScripts:
       fileConfig?.enableScripts === false
         ? false
-        : settings['preview.enableScripts'],
-    openMdxLinksInPreview: settings['preview.openMdxLinksInPreview'],
+        : settings[SETTINGS.ENABLE_SCRIPTS],
+    openMdxLinksInPreview: settings[SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW],
     securityPolicy: previewConfig.securityPolicy,
     useVscodeMarkdownStyles: previewConfig.useVscodeMarkdownStyles,
     useWhiteBackground: previewConfig.useWhiteBackground,
@@ -62,29 +63,30 @@ export function buildEffectivePreviewConfig(
 
     // themes w/ frontmatter override (frontmatter > VS Code settings)
     previewTheme: (frontmatterTheme.previewTheme ??
-      settings['preview.previewTheme']) as PreviewTheme,
+      settings[SETTINGS.PREVIEW_THEME]) as PreviewTheme,
     codeBlockTheme: (frontmatterTheme.codeBlockTheme ??
-      settings['preview.codeBlockTheme']) as CodeBlockTheme,
-    autoTheme: settings['preview.autoTheme'],
+      settings[SETTINGS.CODE_BLOCK_THEME]) as CodeBlockTheme,
+    autoTheme: settings[SETTINGS.AUTO_THEME],
     plantUmlServer: previewConfig.plantUmlServer,
 
     // Tailwind (config file can override enabled & provide configPath)
     tailwind: {
       enabled: fileConfig?.tailwind?.enabled ?? previewConfig.tailwindEnabled,
-      maxFileSizeBytes: settings['tailwind.maxFileSizeBytes'],
-      maxCssFilesToSearch: settings['tailwind.maxCssFilesToSearch'],
-      cacheMaxEntries: settings['tailwind.cacheMaxEntries'],
-      cacheTtlSeconds: settings['tailwind.cacheTtlSeconds'],
-      compilationTimeout: settings['tailwind.compilationTimeout'],
+      maxFileSizeBytes: settings[SETTINGS.TAILWIND_MAX_FILE_SIZE],
+      maxCssFilesToSearch: settings[SETTINGS.TAILWIND_MAX_CSS_FILES],
+      cacheMaxEntries: settings[SETTINGS.TAILWIND_CACHE_MAX_ENTRIES],
+      cacheTtlSeconds: settings[SETTINGS.TAILWIND_CACHE_TTL],
+      compilationTimeout: settings[SETTINGS.TAILWIND_COMPILATION_TIMEOUT],
       configPath: fileConfig?.tailwind?.configPath,
     },
 
     // framework (config file can override detection)
-    framework: fileConfig?.framework ?? settings['framework'],
-    frameworkComponentShims: settings['framework.componentShims'],
-    componentsBuiltins: settings['components.builtins'],
+    framework: fileConfig?.framework ?? settings[SETTINGS.FRAMEWORK],
+    frameworkComponentShims: settings[SETTINGS.FRAMEWORK_SHIMS],
+    componentsBuiltins: settings[SETTINGS.COMPONENTS_BUILTINS],
     componentsUnknownBehavior:
-      fileConfig?.unknownBehavior ?? settings['components.unknownBehavior'],
+      fileConfig?.unknownBehavior ??
+      settings[SETTINGS.COMPONENTS_UNKNOWN_BEHAVIOR],
 
     // config file additions (plugins, components, etc)
     remarkPlugins: fileConfig?.remarkPlugins,

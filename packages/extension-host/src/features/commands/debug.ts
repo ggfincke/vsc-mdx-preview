@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { createTaggedLogger, showOutput } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { getConfigManager } from '../../app/services';
+import { SETTINGS } from '../../shared/config/ConfigManager';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 
@@ -14,8 +15,8 @@ const toggleDebugOutput = async (): Promise<void> => {
   log.debug('toggleDebugOutput command triggered');
 
   const config = getConfigManager();
-  const current = config.get('advanced.debugOutput');
-  await config.set('advanced.debugOutput', !current);
+  const current = config.get(SETTINGS.DEBUG_OUTPUT);
+  await config.set(SETTINGS.DEBUG_OUTPUT, !current);
 
   if (!current) {
     // show output channel when enabling debug

@@ -17,6 +17,7 @@ import type { ResolvedConfig, EffectivePreviewConfig } from '../types';
 import { extractFrontmatter } from 'mdx-forge/compiler';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
+import { SETTINGS } from '../../shared/config/ConfigManager';
 import type { SettingKey } from '../../shared/config/ConfigManager';
 
 const log = createTaggedLogger(LogTags.CMD);
@@ -64,15 +65,15 @@ function getSettingSource(
 ): ConfigSource {
   // define frontmatter keys that can override settings
   const frontmatterKeys: Record<string, string> = {
-    'preview.previewTheme': 'previewTheme',
-    'preview.codeBlockTheme': 'codeBlockTheme',
+    [SETTINGS.PREVIEW_THEME]: 'previewTheme',
+    [SETTINGS.CODE_BLOCK_THEME]: 'codeBlockTheme',
   };
 
   // define config file keys that can override settings
   const configFileKeys: Record<string, string> = {
-    framework: 'framework',
-    'tailwind.enabled': 'tailwind',
-    'components.unknownBehavior': 'unknownBehavior',
+    [SETTINGS.FRAMEWORK]: 'framework',
+    [SETTINGS.TAILWIND_ENABLED]: 'tailwind',
+    [SETTINGS.COMPONENTS_UNKNOWN_BEHAVIOR]: 'unknownBehavior',
   };
 
   // check frontmatter first (highest priority)
@@ -123,24 +124,24 @@ function buildSourcesMap(
 
   // settings to track
   const settingsToTrack: SettingKey[] = [
-    'preview.updateMode',
-    'preview.debounceDelay',
-    'preview.enableScripts',
-    'preview.openMdxLinksInPreview',
-    'preview.security',
-    'preview.useVscodeMarkdownStyles',
-    'preview.useWhiteBackground',
-    'preview.customCss',
-    'preview.previewTheme',
-    'preview.codeBlockTheme',
-    'preview.autoTheme',
-    'diagrams.plantUmlServer',
-    'build.useSucraseTranspiler',
-    'tailwind.enabled',
-    'framework',
-    'framework.componentShims',
-    'components.builtins',
-    'components.unknownBehavior',
+    SETTINGS.UPDATE_MODE,
+    SETTINGS.DEBOUNCE_DELAY,
+    SETTINGS.ENABLE_SCRIPTS,
+    SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW,
+    SETTINGS.SECURITY,
+    SETTINGS.USE_VSCODE_MARKDOWN_STYLES,
+    SETTINGS.USE_WHITE_BACKGROUND,
+    SETTINGS.CUSTOM_CSS,
+    SETTINGS.PREVIEW_THEME,
+    SETTINGS.CODE_BLOCK_THEME,
+    SETTINGS.AUTO_THEME,
+    SETTINGS.PLANTUML_SERVER,
+    SETTINGS.USE_SUCRASE,
+    SETTINGS.TAILWIND_ENABLED,
+    SETTINGS.FRAMEWORK,
+    SETTINGS.FRAMEWORK_SHIMS,
+    SETTINGS.COMPONENTS_BUILTINS,
+    SETTINGS.COMPONENTS_UNKNOWN_BEHAVIOR,
   ];
 
   for (const key of settingsToTrack) {

@@ -8,6 +8,8 @@ import {
   LogTags,
   createTaggedLoggerFactory,
 } from '@mdx-preview/contracts';
+// import SETTINGS directly (not via services barrel) to avoid circular deps
+import { SETTINGS } from '../config/ConfigManager';
 
 // debug logging state (mutable for reactive updates)
 let debugEnabled = false;
@@ -45,13 +47,13 @@ export function initLogging(): vscode.Disposable {
   const configManager = getConfigManager();
 
   // read initial value from setting
-  debugEnabled = configManager.get('advanced.debugOutput');
+  debugEnabled = configManager.get(SETTINGS.DEBUG_OUTPUT);
 
   // subscribe to setting changes
   const subscription = configManager.onDidChangeKey(
-    'advanced.debugOutput',
+    SETTINGS.DEBUG_OUTPUT,
     () => {
-      debugEnabled = configManager.get('advanced.debugOutput');
+      debugEnabled = configManager.get(SETTINGS.DEBUG_OUTPUT);
 
       if (debugEnabled) {
         createTaggedLogger(LogTags.LOGGING).info(

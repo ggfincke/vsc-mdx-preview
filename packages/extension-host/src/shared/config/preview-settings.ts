@@ -2,6 +2,7 @@
 // shared helpers for preview settings mapping
 
 import type * as vscode from 'vscode';
+import { SETTINGS } from './ConfigManager';
 import type { ConfigManager, SettingTypes } from './ConfigManager';
 import type { ConfigurationState } from '../types';
 
@@ -10,16 +11,16 @@ export function mapSettingsToPreviewConfiguration(
   settings: SettingTypes
 ): ConfigurationState {
   return {
-    updateMode: settings['preview.updateMode'],
-    debounceDelay: settings['preview.debounceDelay'],
-    useVscodeMarkdownStyles: settings['preview.useVscodeMarkdownStyles'],
-    useWhiteBackground: settings['preview.useWhiteBackground'],
-    customLayoutFilePath: settings['preview.mdx.customLayoutFilePath'],
-    customCss: settings['preview.customCss'],
-    plantUmlServer: settings['diagrams.plantUmlServer'],
-    useSucraseTranspiler: settings['build.useSucraseTranspiler'],
-    securityPolicy: settings['preview.security'],
-    tailwindEnabled: settings['tailwind.enabled'],
+    updateMode: settings[SETTINGS.UPDATE_MODE],
+    debounceDelay: settings[SETTINGS.DEBOUNCE_DELAY],
+    useVscodeMarkdownStyles: settings[SETTINGS.USE_VSCODE_MARKDOWN_STYLES],
+    useWhiteBackground: settings[SETTINGS.USE_WHITE_BACKGROUND],
+    customLayoutFilePath: settings[SETTINGS.CUSTOM_LAYOUT_PATH],
+    customCss: settings[SETTINGS.CUSTOM_CSS],
+    plantUmlServer: settings[SETTINGS.PLANTUML_SERVER],
+    useSucraseTranspiler: settings[SETTINGS.USE_SUCRASE],
+    securityPolicy: settings[SETTINGS.SECURITY],
+    tailwindEnabled: settings[SETTINGS.TAILWIND_ENABLED],
   };
 }
 

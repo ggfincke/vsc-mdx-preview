@@ -11,6 +11,7 @@ import {
   getErrorReporter,
 } from '../../app/services';
 import { ErrorContext } from '../../shared/errors';
+import { SETTINGS } from '../../shared/config/ConfigManager';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 
@@ -44,10 +45,10 @@ const toggleScripts = async (): Promise<void> => {
 
   // toggle scripts setting for trusted workspace
   const configManager = getConfigManager();
-  const scriptsEnabled = configManager.get('preview.enableScripts');
+  const scriptsEnabled = configManager.get(SETTINGS.ENABLE_SCRIPTS);
 
   await configManager.set(
-    'preview.enableScripts',
+    SETTINGS.ENABLE_SCRIPTS,
     !scriptsEnabled,
     vscode.ConfigurationTarget.Workspace
   );

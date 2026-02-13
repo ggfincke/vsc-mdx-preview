@@ -10,6 +10,7 @@ import {
   getPreviewManager,
 } from '../../app/services';
 import type { FrameworkId, FrameworkSetting } from '@mdx-preview/contracts';
+import { SETTINGS } from '../../shared/config/ConfigManager';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 
@@ -19,7 +20,7 @@ const selectFramework = async (): Promise<void> => {
   log.debug('selectFramework command triggered');
 
   const configManager = getConfigManager();
-  const currentSetting = configManager.get('framework');
+  const currentSetting = configManager.get(SETTINGS.FRAMEWORK);
   const frameworkDetector = getFrameworkDetector();
 
   // detect framework from active editor
@@ -79,7 +80,7 @@ const selectFramework = async (): Promise<void> => {
 
   if (selected) {
     await configManager.set(
-      'framework',
+      SETTINGS.FRAMEWORK,
       selected.value as FrameworkSetting,
       vscode.ConfigurationTarget.Workspace
     );
