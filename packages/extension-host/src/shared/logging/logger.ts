@@ -8,8 +8,8 @@ import {
   LogTags,
   createTaggedLoggerFactory,
 } from '@mdx-preview/contracts';
-// import SETTINGS directly (not via services barrel) to avoid circular deps
-import { SETTINGS } from '../config/ConfigManager';
+// import from setting-keys (not ConfigManager) to avoid circular deps
+import { SETTINGS } from '../config/setting-keys';
 
 // debug logging state (mutable for reactive updates)
 let debugEnabled = false;
