@@ -173,24 +173,3 @@ export class MetaResolver extends SingletonService<MetaResolver> {
     log.debug('Disposed');
   }
 }
-
-// backward-compatible function exports (delegate to singleton service instance)
-
-// resolve _meta.json settings from a specific MDX file
-export function resolveNextraMeta(
-  mdxFilePath: string,
-  workspaceRoot: string
-): NextraPageMeta | null {
-  return MetaResolver.getInstance().resolveNextraMeta(
-    mdxFilePath,
-    workspaceRoot
-  );
-}
-
-// merge _meta.json settings w/ frontmatter (frontmatter wins)
-export function mergeNextraMeta(
-  metaJson: NextraPageMeta | null,
-  frontmatter: Partial<NextraPageMeta>
-): NextraPageMeta {
-  return MetaResolver.getInstance().mergeNextraMeta(metaJson, frontmatter);
-}
