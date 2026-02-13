@@ -1,11 +1,12 @@
 // packages/webview-app/src/rpc/handler-factory.ts
-// factory functions for creating RPC handler methods w/ consistent patterns
+// factory functions & declarative configurations for RPC handler methods
 
 import type {
   TaggedLogger,
   NextraPageMeta,
   PreviewError,
   TrustState,
+  WebviewRPC,
   WebviewThemeState,
 } from '@mdx-preview/contracts';
 
@@ -144,3 +145,157 @@ export function createHandlerFactories(
     createOptionalHandler,
   };
 }
+
+// queued handler configurations
+
+// factory for creating simple pass-through queued configs
+// use for handlers where the payload is passed directly w/o transformation
+function createSimpleQueuedConfig<T>(
+  methodName: string,
+  messageType: QueuedMessageType,
+  handlerKey: keyof RequiredStateHandlers,
+  debugFormat?: (...args: unknown[]) => string
+): QueuedHandlerConfig<T, [T]> {
+  return {
+    methodName,
+    messageType,
+    handlerKey,
+    toPayload: (value: unknown) => value as T,
+    toHandlerArgs: (payload) => [payload],
+    debugFormat,
+  };
+}
+
+// configuration for setTrustState handler
+export const SET_TRUST_STATE_CONFIG = createSimpleQueuedConfig<TrustState>(
+  'setTrustState',
+  'trust',
+  'setTrustState'
+);
+
+// payload type for updatePreview
+interface TrustedPayload {
+  code: string;
+  entryFilePath: string;
+  dependencies: string[];
+}
+
+// configuration for updatePreview handler (Trusted Mode w/ compiled code)
+export const UPDATE_PREVIEW_CONFIG: QueuedHandlerConfig<
+  TrustedPayload,
+  [string, string, string[]]
+> = {
+  methodName: 'updatePreview',
+  messageType: 'trusted',
+  handlerKey: 'setTrustedContent',
+  toPayload: (
+    code: unknown,
+    entryFilePath: unknown,
+    entryFileDependencies: unknown
+  ) => ({
+    code: code as string,
+    entryFilePath: entryFilePath as string,
+    dependencies: entryFileDependencies as string[],
+  }),
+  toHandlerArgs: (payload) => [
+    payload.code,
+    payload.entryFilePath,
+    payload.dependencies,
+  ],
+  debugFormat: (code: unknown, entryFilePath: unknown) =>
+    `updatePreview called, code length: ${(code as string).length}, path: ${entryFilePath}`,
+};
+
+// payload type for updatePreviewSafe
+interface SafePayload {
+  html: string;
+}
+
+// configuration for updatePreviewSafe handler (Safe Mode w/ sanitized HTML)
+export const UPDATE_PREVIEW_SAFE_CONFIG: QueuedHandlerConfig<
+  SafePayload,
+  [string]
+> = {
+  methodName: 'updatePreviewSafe',
+  messageType: 'safe',
+  handlerKey: 'setSafeContent',
+  toPayload: (html: unknown) => ({ html: html as string }),
+  toHandlerArgs: (payload) => [payload.html],
+  debugFormat: (html: unknown) =>
+    `updatePreviewSafe called, html length: ${(html as string).length}`,
+};
+
+// configuration for showPreviewError handler
+export const SHOW_PREVIEW_ERROR_CONFIG = createSimpleQueuedConfig<PreviewError>(
+  'showPreviewError',
+  'error',
+  'setError'
+);
+
+// configuration for setStale handler
+export const SET_STALE_CONFIG = createSimpleQueuedConfig<boolean>(
+  'setStale',
+  'stale',
+  'setStale',
+  (isStale: unknown) => `setStale called: ${isStale}`
+);
+
+// optional handler configurations
+
+// configuration for setTheme handler
+export const SET_THEME_CONFIG: OptionalHandlerConfig = {
+  methodName: 'setTheme',
+  handlerKey: 'setTheme',
+};
+
+// configuration for setNextraMeta handler
+export const SET_NEXTRA_META_CONFIG: OptionalHandlerConfig = {
+  methodName: 'setNextraMeta',
+  handlerKey: 'setNextraMeta',
+};
+
+// config collections (for iteration/documentation)
+
+// all QUEUED handler configurations
+export const QUEUED_CONFIGS = {
+  setTrustState: SET_TRUST_STATE_CONFIG,
+  updatePreview: UPDATE_PREVIEW_CONFIG,
+  updatePreviewSafe: UPDATE_PREVIEW_SAFE_CONFIG,
+  showPreviewError: SHOW_PREVIEW_ERROR_CONFIG,
+  setStale: SET_STALE_CONFIG,
+} as const;
+
+// all OPTIONAL handler configurations
+export const OPTIONAL_CONFIGS = {
+  setTheme: SET_THEME_CONFIG,
+  setNextraMeta: SET_NEXTRA_META_CONFIG,
+} as const;
+
+// compile-time type safety
+// these types are derived from the configs above to ensure compile-time errors
+// if handler configs & rpc-webview.ts get out of sync
+
+// method names for QUEUED handlers (derived from QUEUED_CONFIGS keys)
+export type QueuedMethodNames = keyof typeof QUEUED_CONFIGS;
+
+// method names for OPTIONAL handlers (derived from OPTIONAL_CONFIGS keys)
+export type OptionalMethodNames = keyof typeof OPTIONAL_CONFIGS;
+
+// all configured RPC method names (queued & optional)
+// does NOT include direct handlers (setCustomCss, setTailwindCss, etc.)
+export type ConfiguredMethodNames = QueuedMethodNames | OptionalMethodNames;
+
+// compile-time validation that all configured methods exist in WebviewRPC
+type ValidateMethodExists<T extends string> = T extends keyof WebviewRPC
+  ? true
+  : never;
+
+// force TypeScript to evaluate the validation
+type _ValidateQueued = {
+  [K in QueuedMethodNames]: ValidateMethodExists<K>;
+};
+type _ValidateOptional = {
+  [K in OptionalMethodNames]: ValidateMethodExists<K>;
+};
+
+export type { _ValidateQueued, _ValidateOptional };
