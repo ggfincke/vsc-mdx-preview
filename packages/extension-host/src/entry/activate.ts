@@ -76,7 +76,7 @@ async function showSafeModeNotificationIfNeeded(
   } else if (selection === 'Learn More') {
     await vscode.commands.executeCommand(
       'workbench.action.openWalkthrough',
-      'ggfincke.vscode-mdx-preview#mdx-preview.gettingStarted'
+      'ggfincke.vsc-mdx-preview#mdx-preview.gettingStarted'
     );
   }
 
