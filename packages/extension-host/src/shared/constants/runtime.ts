@@ -62,3 +62,18 @@ export const VITE_MANIFEST_DIR = '.vite';
 
 // Vite manifest filename
 export const VITE_MANIFEST_FILE = 'manifest.json';
+
+// cache sizing
+
+// file prober stat cache - short TTL for file system stat results (5s)
+export const STAT_CACHE_TTL_MS = 5000;
+export const STAT_CACHE_MAX_ENTRIES = 1000;
+
+// path security cache - validated workspace paths
+export const PATH_CACHE_MAX_ENTRIES = 200;
+
+// config file cache - resolved .mdx-previewrc.json configs
+export const CONFIG_CACHE_MAX_ENTRIES = 100;
+
+// component detection cache - parsed JSX component results
+export const COMPONENT_CACHE_MAX_ENTRIES = 50;

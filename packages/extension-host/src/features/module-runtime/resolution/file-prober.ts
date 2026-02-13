@@ -10,6 +10,8 @@ import {
   TS_INDEX_FILES,
   FILE_PROBE_EXTENSIONS,
   FILE_PROBE_INDEX_FILES,
+  STAT_CACHE_TTL_MS,
+  STAT_CACHE_MAX_ENTRIES,
 } from '../../../shared/constants';
 import type { StatResult, FileProbingOptions } from '../../types';
 
@@ -17,10 +19,6 @@ import type { StatResult, FileProbingOptions } from '../../types';
 export type { StatResult, FileProbingOptions } from '../../types';
 
 // stat cache (LRU w/ TTL for file stat results)
-
-// stat cache TTL (5 seconds)
-const STAT_CACHE_TTL_MS = 5000;
-const STAT_CACHE_MAX_ENTRIES = 1000;
 
 // internal stat cache using LRUCache
 const statCache = new LRUCache<string, StatResult>({

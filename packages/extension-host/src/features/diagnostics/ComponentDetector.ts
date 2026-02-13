@@ -22,6 +22,7 @@ import type {
   MdxJsxElement,
 } from '../types';
 import { createTaggedLogger } from '../../shared/logging/logger';
+import { COMPONENT_CACHE_MAX_ENTRIES } from '../../shared/constants/runtime';
 
 // use shared component registry as single source of truth
 import {
@@ -33,9 +34,6 @@ import {
 const log = createTaggedLogger(LogTags.COMPONENT_DETECTOR);
 
 // caching for parse results
-
-// max cache entries for component detection
-const COMPONENT_CACHE_MAX_ENTRIES = 50;
 
 // cache for component detection results w/ content-hash validation
 const parseCache = new ContentHashCache<ComponentDetectionResult>({
