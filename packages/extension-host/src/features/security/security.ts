@@ -3,16 +3,15 @@
 
 import * as vscode from 'vscode';
 import { getConfigManager } from '../../app/services';
+import { SETTINGS } from '../../shared/config/ConfigManager';
+import { SecurityPolicy } from './SecurityPolicy';
 
-export const enum SecurityPolicy {
-  Strict = 'strict',
-  Disabled = 'disabled',
-}
+export { SecurityPolicy } from './SecurityPolicy';
 
 // select security policy via Quick Pick
 const selectSecurityPolicy = async () => {
   const configManager = getConfigManager();
-  const securityPolicy = configManager.get('preview.security');
+  const securityPolicy = configManager.get(SETTINGS.SECURITY);
 
   const pickItems = [
     {
@@ -37,10 +36,7 @@ const selectSecurityPolicy = async () => {
   const selectedSecurityPolicyItem =
     await vscode.window.showQuickPick(pickItems);
   if (selectedSecurityPolicyItem) {
-    await configManager.set(
-      'preview.security',
-      selectedSecurityPolicyItem.type
-    );
+    await configManager.set(SETTINGS.SECURITY, selectedSecurityPolicyItem.type);
   }
 };
 

@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import debounce from 'lodash.debounce';
 import { getConfigManager } from '../../app/services';
-import { SecurityPolicy } from '../security/security';
+import { SecurityPolicy } from '../security/SecurityPolicy';
 import { readPreviewConfigurationState } from '../../shared/config/preview-settings';
 import type {
   StyleConfiguration,

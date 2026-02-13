@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import type { TrustState } from './TrustManager';
-import { SecurityPolicy } from './security';
+import { SecurityPolicy } from './SecurityPolicy';
 
 // generate cryptographically secure nonce
 export function generateNonce(): string {
