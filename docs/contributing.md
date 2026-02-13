@@ -16,7 +16,7 @@ Thank you for your interest in contributing to MDX Preview!
 
    ```bash
    git clone https://github.com/ggfincke/vsc-mdx-preview.git
-   cd vscode-mdx-preview
+   cd vsc-mdx-preview
    ```
 
 2. Install dependencies:
@@ -36,7 +36,7 @@ Thank you for your interest in contributing to MDX Preview!
 ## Project Structure
 
 ```
-vscode-mdx-preview/
+vsc-mdx-preview/
 ├── packages/
 │   ├── extension-host/          # VS Code extension (Node.js)
 │   │   └── src/
@@ -71,13 +71,7 @@ vscode-mdx-preview/
 │   ├── contracts/               # Types, enums, constants, RPC contracts
 │   ├── registry/                # Callout types, icon definitions
 │   ├── runtime-utils/           # LRU cache, validation, Semaphore
-│   ├── codegen/                 # Code generation scripts & libraries
-│   └── mdx-forge/              # Unified library (compiler, browser, components)
-│       └── src/
-│           ├── compiler/        # MDX compilation pipeline
-│           ├── browser/         # Browser module loading & eval
-│           ├── components/      # React component shims & registry
-│           └── internal/        # Shared utilities (callout, icons, errors)
+│   └── codegen/                 # Code generation scripts & libraries
 ├── tests/                       # All tests (extension, webview, security, etc.)
 ├── examples/                    # Example MDX projects
 └── assets/                      # Icons and images
@@ -134,7 +128,7 @@ Shared concerns are split across 3 packages used by both extension & webview:
 
 ### Webview Side (`packages/webview-client`)
 
-The webview is a React 18 app running in an isolated iframe:
+The webview is a React 19 app running in an isolated iframe:
 
 - **app/App.tsx**: Main component, switches between Safe/Trusted mode
 - **features/preview/safe/**: Renders sanitized HTML (Safe Mode)
@@ -171,7 +165,7 @@ Requires:
 1. `vscode.workspace.isTrusted === true`
 2. `mdx-preview.preview.enableScripts === true`
 3. Local workspace (not remote)
-4. `file:` scheme documents
+4. `file:` or `untitled:` scheme documents
 
 When enabled:
 

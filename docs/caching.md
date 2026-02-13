@@ -16,7 +16,7 @@ describes all caches, their invalidation triggers, and troubleshooting guidance.
 | MDX Preview Config | ConfigCache.ts | PathCache | - | 100 | .mdx-previewrc.json watcher |
 | Babel Options | babel.ts | Singleton | - | 1 | Never (extension lifetime) |
 | Sass Module | SassHandler.ts | Map | - | - | PackageJsonWatcher, manual command |
-| Tailwind CSS | TailwindCache.ts | LRUCache | 5m | 20 | Auto-expires, manual command |
+| Tailwind CSS | TailwindProcessor.ts | ContentHashCache | 5m | 50 | Auto-expires, manual command |
 | Tailwind Scan | TailwindProcessor.ts (scanCache field) | ContentHashCache | 5m | 200 | DependencyWatcher, auto-expires |
 | Framework | FrameworkDetector.ts | PathCache | - | - | PackageJsonWatcher |
 | Root Directory | checkFsPath.ts | Map | - | - | Workspace folder changes |
@@ -48,7 +48,7 @@ describes all caches, their invalidation triggers, and troubleshooting guidance.
 The Tailwind CSS cache key is a SHA-1 hash of:
 
 - `schemaVersion`: Cache schema version (bump on breaking changes)
-- `version`: Tailwind version ('v3' or 'v4')
+- `version`: Tailwind version ('v4')
 - `content`: Extracted class tokens from MDX and dependencies
 - `configPath`: Absolute path to tailwind.config.js
 - `configStamp`: mtime of config file

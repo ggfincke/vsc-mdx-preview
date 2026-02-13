@@ -50,10 +50,11 @@ MDX Preview requires **both** factors to be true for Trusted Mode:
 
 ```typescript
 interface TrustState {
-  workspaceTrusted: boolean;  // VS Code workspace.isTrusted
-  scriptsEnabled: boolean;    // mdx-preview.preview.enableScripts setting
-  canExecute: boolean;        // workspaceTrusted && scriptsEnabled
-  reason?: string;            // Explanation when canExecute is false
+  workspaceTrusted: boolean;       // VS Code workspace.isTrusted
+  scriptsEnabled: boolean;         // mdx-preview.preview.enableScripts setting
+  canExecute: boolean;             // workspaceTrusted && scriptsEnabled
+  reason?: string;                 // Explanation when canExecute is false
+  openMdxLinksInPreview: boolean;  // Setting for .mdx link handling
 }
 ```
 
@@ -175,7 +176,8 @@ Safe Mode uses strict CSP without `unsafe-eval`:
 default-src 'none';
 img-src ${webviewSource} https: data:;
 style-src ${webviewSource} 'unsafe-inline';
-script-src ${webviewSource} 'nonce-${nonce}';
+script-src ${webviewSource} 'nonce-${nonce}' 'wasm-unsafe-eval';
+connect-src ${webviewSource};
 font-src ${webviewSource};
 ```
 
@@ -207,7 +209,8 @@ Even in Trusted Mode, security measures are in place:
 default-src 'none';
 img-src ${webviewSource} https: data:;
 style-src ${webviewSource} 'unsafe-inline';
-script-src ${webviewSource} 'nonce-${nonce}' 'unsafe-eval';
+script-src ${webviewSource} 'nonce-${nonce}' 'unsafe-eval' 'wasm-unsafe-eval';
+connect-src ${webviewSource};
 font-src ${webviewSource};
 ```
 
@@ -277,6 +280,7 @@ function getCSP(
     `img-src ${webview.cspSource} https: data:`,
     `style-src ${webview.cspSource} 'unsafe-inline'`,
     `script-src ${scriptSrc}`,
+    `connect-src ${webview.cspSource}`,
     `font-src ${webview.cspSource}`,
   ].join('; ');
 }
@@ -287,9 +291,10 @@ function getCSP(
 | Directive | Safe Mode | Trusted Mode | Purpose |
 |-----------|-----------|--------------|---------|
 | `default-src` | `'none'` | `'none'` | Block all by default |
-| `script-src` | nonce only | nonce + unsafe-eval | Control script execution |
+| `script-src` | nonce + wasm-unsafe-eval | nonce + unsafe-eval + wasm-unsafe-eval | Control script execution |
 | `style-src` | unsafe-inline | unsafe-inline | Allow inline styles |
 | `img-src` | webview + https + data | webview + https + data | Allow images |
+| `connect-src` | webview | webview | Allow fetch/XHR connections |
 | `font-src` | webview | webview | Allow bundled fonts |
 
 ### Nonce Generation

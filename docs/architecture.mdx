@@ -53,7 +53,7 @@ The project uses npm workspaces w/ six packages plus one external npm dependency
 | Package                   | Environment          | Purpose                                                               |
 | ------------------------- | -------------------- | --------------------------------------------------------------------- |
 | `packages/extension-host` | Node.js              | VS Code extension host - handles compilation, resolution, security    |
-| `packages/webview-client` | Browser              | React 18 app rendered in VS Code webview iframe                       |
+| `packages/webview-client` | Browser              | React 19 app rendered in VS Code webview iframe                       |
 | `packages/contracts`      | Both                 | Shared types, constants, enums, & lightweight behavioral abstractions |
 | `packages/runtime-utils`  | Both                 | Cross-runtime utilities (LRU cache, validation, error handling)       |
 | `packages/codegen`        | Build-time           | Code generation scripts & libraries                                   |
@@ -162,11 +162,13 @@ CSP headers are dynamically generated based on trust state:
 default-src 'none';
 img-src ${webviewSource} https: data:;
 style-src ${webviewSource} 'unsafe-inline';
-script-src ${webviewSource} 'nonce-${nonce}';
+script-src ${webviewSource} 'nonce-${nonce}' 'wasm-unsafe-eval';
+connect-src ${webviewSource};
 font-src ${webviewSource};
 
 // Trusted Mode - Includes unsafe-eval
-script-src ${webviewSource} 'nonce-${nonce}' 'unsafe-eval';
+script-src ${webviewSource} 'nonce-${nonce}' 'unsafe-eval' 'wasm-unsafe-eval';
+connect-src ${webviewSource};
 ```
 
 ---
@@ -185,7 +187,7 @@ sequenceDiagram
     participant Preview as PreviewManager
 
     VSCode->>Extension: activate()
-    Extension->>Registry: Register 12 services + 2 subsystems
+    Extension->>Registry: Register services + subsystems
     Extension->>Extension: initWebviewAppHTMLResourcesAsync() [background]
     Extension->>Extension: setupTrustHandlers()
     Extension->>Extension: registerAllCommands()
@@ -207,7 +209,7 @@ sequenceDiagram
 
 **Activation Flow (`activate.ts`):**
 
-1. **Service Registration** - Register 12 services + 2 subsystems in dependency order
+1. **Service Registration** - Register services + subsystems in dependency order
 2. **Background Resource Loading** - Load Vite manifest asynchronously (non-blocking)
 3. **Event Handlers** - Trust events, settings changes, theme changes
 4. **Commands** - Register all preview/config/theme/debug commands
@@ -326,8 +328,6 @@ Each `Preview` instance is composed of specialized modules:
 | `PreviewDocumentHandler` | Document tracking and version management                     |
 | `PreviewInitializer`     | Initial setup and handshake                                  |
 | `WatcherManager`         | Dependency and config file watchers                          |
-| `PreviewState`           | Evaluation results and Tailwind tracking                     |
-| `PreviewEvaluator`       | Document reading and evaluation orchestration                |
 | `EvaluationEngine`       | MDX compilation (safe/trusted) and async Tailwind processing |
 
 **Handshake Protocol:**
@@ -360,7 +360,7 @@ The extension calls methods on the webview via `WebviewHandle`:
 interface WebviewRPC {
   // State management
   setTrustState(state: TrustState): void;
-  setFramework(framework: FrameworkType): void;
+  setFramework(framework: Framework): void;
   setUsedComponents(components: string[]): void;
   updatePreview(
     code: string,
@@ -378,6 +378,7 @@ interface WebviewRPC {
   // Styling
   setCustomCss(css: string): void;
   setTailwindCss(css: string): void;
+  setTailwindBrowserCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
 
   // Nextra support
@@ -416,6 +417,7 @@ interface ExtensionRPC {
     column?: number
   ): Promise<void>;
   openPreview(relativePath: string): Promise<void>;
+  renderPlantUml(code: string): Promise<string | undefined>;
 }
 ```
 
@@ -511,7 +513,7 @@ The handler registry dispatches to specialized handlers based on file extension:
 
 **Handler Interface:**
 
-```typescript title="packages/extension-host/src/features/module-runtime/handlers/index.ts"
+```typescript title="packages/extension-host/src/features/module-runtime/types/handlers.ts"
 interface FileTypeHandler {
   extensions: string[];
   handle(code: string, fsPath: string, preview: Preview): Promise<FetchResult>;
@@ -532,13 +534,11 @@ Entry file transformation (MDX documents) follows these steps:
 | 4. Transpilation        | Convert to CommonJS via Babel or Sucrase      |
 
 ```typescript title="packages/extension-host/src/features/module-runtime/transform/selector.ts"
-async function transformEntryFile(
+// transpile code w/ automatic fallback from Sucrase to Babel
+async function transpileWithFallback(
   code: string,
-  fsPath: string,
-  preview: Preview
-): Promise<TransformResult> {
-  // Returns: { code, esmCode, frontmatter }
-}
+  options: TranspileOptions
+): Promise<string>;
 ```
 
 #### Dependency Transformation
@@ -552,13 +552,7 @@ Dependency transformation (imported files) follows these steps:
 | 3. ESM Capture          | For dependency extraction                                                                                                     |
 | 4. Smart Transpilation  | Skip if in `node_modules` and not a module; use Sucrase for `node_modules` (faster); use Babel for local code (full features) |
 
-```typescript title="packages/extension-host/src/features/module-runtime/transform/selector.ts"
-async function transformDependency(
-  code: string,
-  fsPath: string,
-  useSucrase: boolean
-): Promise<{ code: string; esmCode: string }>;
-```
+The `transpileWithFallback()` function in `selector.ts` handles both entry files and dependencies, attempting Sucrase first when configured and falling back to Babel on failure.
 
 **Transpiler Selection:**
 
@@ -577,7 +571,7 @@ Imports are extracted from ESM code using `es-module-lexer`:
 ```typescript title="packages/extension-host/src/features/module-runtime/dependencies/import-extractor.ts"
 // Fast pre-check regex
 const IMPORT_PATTERN =
-  /\b(import\s|require\s*\(|export\s+\*\s+from|export\s+\{[^}]*\}\s+from)\b/;
+  /\b(import\s|import\s*\(|require\s*\(|export\s+[*{]|export\s+type\s+\{|from\s+['"`])/;
 
 async function extractImportSpecifiers(code: string): Promise<string[]> {
   // 1. Fast pre-check - skip parsing if no import patterns
@@ -600,7 +594,7 @@ async function extractImportSpecifiers(code: string): Promise<string[]> {
 
 ## Webview Application
 
-The webview is a React 18 application built with Vite, rendered in a VS Code webview iframe.
+The webview is a React 19 application built with Vite, rendered in a VS Code webview iframe.
 
 ### Application Structure
 
@@ -850,14 +844,12 @@ Messages received before React mounts are buffered and flushed when handlers reg
 // Message types that get queued
 type QueuedMessageType = 'trust' | 'safe' | 'trusted' | 'error' | 'stale';
 
-// Flush order matters!
-const FLUSH_ORDER: QueuedMessageType[] = [
-  'trust', // Must come first (sets rendering mode)
-  'safe', // Content (mutually exclusive with trusted)
-  'trusted',
-  'error', // Overlays
-  'stale',
-];
+// Flush order (implicit in handler registration):
+// 1. trust   - Must come first (sets rendering mode)
+// 2. safe    - Content (mutually exclusive with trusted)
+// 3. trusted
+// 4. error   - Overlays
+// 5. stale
 ```
 
 ---
@@ -869,13 +861,13 @@ The extension auto-detects MDX frameworks and provides compatible component shim
 ### Framework Detection
 
 ```typescript title="packages/extension-host/src/features/framework/FrameworkDetector.ts"
-// Detection priority (checked in order)
-const FRAMEWORK_PRIORITY = [
-  'docusaurus', // @docusaurus/core
-  'starlight', // @astrojs/starlight
-  'nextra', // nextra
-  'nextjs', // next + MDX
-  'generic', // fallback
+// Detection rules (checked in priority order)
+const FRAMEWORK_RULES = [
+  { id: 'docusaurus', packages: ['@docusaurus/core', '@docusaurus/preset-classic'] },
+  { id: 'starlight',  packages: ['@astrojs/starlight'] },
+  { id: 'nextra',     packages: ['nextra', 'nextra-theme-docs', 'nextra-theme-blog'] },
+  { id: 'nextjs',     packages: ['next'], secondaryDeps: ['@next/mdx', 'next-mdx-remote', '@mdx-js/react'] },
+  // fallback: 'generic'
 ];
 ```
 
@@ -994,9 +986,8 @@ buildCacheKey(
 
 | Version | Status        | Plugin                 |
 | ------- | ------------- | ---------------------- |
-| v1, v2  | Not Supported | -                      |
-| v3      | Deprecated    | `tailwindcss`          |
-| v4      | Recommended   | `@tailwindcss/postcss` |
+| v1-v3   | Not Supported | -                      |
+| v4      | Supported     | `@tailwindcss/postcss` |
 
 ---
 
@@ -1024,11 +1015,11 @@ flowchart LR
 | `mdx-preview.preview.enableScripts`      | boolean | false          | Enable Trusted Mode       |
 | `mdx-preview.preview.updateMode`         | string  | "onType"       | When to update preview    |
 | `mdx-preview.preview.debounceDelay`      | number  | 300            | Debounce delay (ms)       |
-| `mdx-preview.preview.previewTheme`       | string  | "github-light" | Preview theme             |
+| `mdx-preview.preview.previewTheme`       | string  | "none"         | Preview theme             |
 | `mdx-preview.preview.codeBlockTheme`     | string  | "auto"         | Code block theme          |
 | `mdx-preview.preview.autoTheme`          | boolean | true           | Auto light/dark switching |
 | `mdx-preview.framework`                  | string  | "auto"         | MDX framework             |
-| `mdx-preview.tailwind.enabled`           | string  | "auto"         | Tailwind processing       |
+| `mdx-preview.tailwind.enabled`           | string  | "enabled"      | Tailwind processing       |
 | `mdx-preview.build.useSucraseTranspiler` | boolean | false          | Use Sucrase over Babel    |
 
 ### Project Configuration File
@@ -1076,19 +1067,22 @@ The extension supports configurable preview and code block themes.
 
 ### Preview Themes
 
-16 themes from Markdown Preview Enhanced:
+16 themes from Markdown Preview Enhanced (including `none` for minimal styling):
 
 | Light Themes    | Dark Themes    |
 | --------------- | -------------- |
 | github-light    | github-dark    |
-| vue             | atom-dark      |
+| atom-light      | atom-dark      |
+| one-light       | one-dark       |
 | solarized-light | solarized-dark |
+| vue             | atom-material  |
 | newsprint       | gothic         |
 | medium          | night          |
+| none (minimal)  | monokai        |
 
 ### Code Block Themes
 
-24 syntax highlighting themes (plus `auto` and `default`) via Shiki with CSS variables:
+23 syntax highlighting themes (21 themes plus `auto` and `default`) via Shiki with CSS variables:
 
 ```typescript title="packages/extension-host/src/features/themes/types.ts"
 type CodeBlockTheme =
@@ -1127,7 +1121,7 @@ sequenceDiagram
 
 ## Commands
 
-The extension provides 17 VS Code commands organized by category.
+The extension provides 14 VS Code commands organized by category.
 
 ### Preview Commands
 
@@ -1234,13 +1228,18 @@ npm run test:all
 
 ```
 packages/extension-host/test/
-├── __mocks__/
-│   └── vscode.ts        # VS Code API mock
-├── fixtures/
-│   ├── basic.mdx        # Basic MDX samples
-│   ├── components.mdx   # Component imports
-│   └── security.mdx     # XSS edge cases
-└── InMemoryDocument.ts  # Test document utility
+└── __mocks__/
+    └── vscode.ts        # VS Code API mock
+
+tests/
+├── helpers/
+│   └── fixtures.ts      # Shared test fixtures & utilities
+├── security/            # Trust, CSP, path validation tests
+├── compilation/         # MDX compilation tests
+├── resolution/          # Module resolution tests
+├── extension/           # Extension-specific tests
+├── webview/             # Webview component tests
+└── services/            # Service registry tests
 ```
 
 ### Key Testing Patterns
@@ -1498,7 +1497,7 @@ guide to all caches, invalidation triggers, and troubleshooting, see the
 | Babel Config     | babel.ts               | 1             | Forever   | Avoid preset recreation   |
 | Sass Module      | SassHandler.ts         | Per-workspace | Forever   | Lazy workspace sass       |
 | Module Cache     | ModuleCache.ts         | 500/50MB      | Forever   | Webview module caching    |
-| Tailwind CSS     | TailwindCache.ts       | 20            | 5min      | Avoid recompilation       |
+| Tailwind CSS     | TailwindProcessor.ts   | 50            | 5min      | Avoid recompilation       |
 
 **Automatic Cache Invalidation:**
 

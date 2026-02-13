@@ -114,21 +114,21 @@ See [Theme Configuration](#theme-configuration) for available themes.
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `components.builtins` | boolean | `true` | Enable built-in components (Callout, Tabs, etc.) |
-| `components.unknownBehavior` | string | `"placeholder"` | How to handle unknown components: `"placeholder"`, `"ignore"`, or `"error"` |
+| `components.unknownBehavior` | string | `"placeholder"` | How to handle unknown components: `"strip"`, `"placeholder"`, or `"raw"` |
 
 #### Unknown Component Behavior
 
 | Value | Behavior |
 |-------|----------|
-| `"placeholder"` | Show placeholder box with component name |
-| `"ignore"` | Silently skip unknown components |
-| `"error"` | Show error for unknown components |
+| `"strip"` | Remove the component entirely |
+| `"placeholder"` | Show placeholder box with component name and children |
+| `"raw"` | Remove the wrapper but render children inline |
 
 ### Advanced Settings
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `advanced.watcherDebounceMs` | number | `300` | Debounce delay for file watchers |
+| `advanced.watcherDebounceMs` | number | `500` | Debounce delay for file watchers |
 
 ---
 
@@ -287,7 +287,7 @@ How to handle unknown JSX components in Safe Mode.
 }
 ```
 
-Valid values: `"placeholder"`, `"ignore"`, `"error"`
+Valid values: `"strip"`, `"placeholder"`, `"raw"`
 
 ---
 
@@ -345,7 +345,7 @@ theme: github-dark
 
 ### Code Block Themes
 
-24 syntax highlighting themes for code blocks:
+23 syntax highlighting themes for code blocks (including `auto` and `default`):
 
 | Theme | Theme | Theme |
 |-------|-------|-------|
