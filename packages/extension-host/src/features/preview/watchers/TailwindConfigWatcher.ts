@@ -2,12 +2,8 @@
 // watch Tailwind config & entry CSS files for changes
 
 import * as vscode from 'vscode';
-import { createTaggedLogger } from '../../../shared/logging/logger';
 import { BaseWatcher } from './BaseWatcher';
 import { LogTags, STANDARD_DEBOUNCE_MS } from '@mdx-preview/contracts';
-
-// module-level tagged logger
-const log = createTaggedLogger(LogTags.TAILWIND_WATCHER);
 
 export class TailwindConfigWatcher extends BaseWatcher {
   protected readonly logTag = LogTags.TAILWIND_WATCHER;
@@ -46,26 +42,26 @@ export class TailwindConfigWatcher extends BaseWatcher {
 
   protected onStart(): void {
     for (const file of this.watchFiles) {
-      log.debug(`Creating watcher for: ${file}`);
+      this.log.debug(`Creating watcher for: ${file}`);
       // use createFileWatcher from base class w/ error wrapping
       const watcher = this.createFileWatcher(file, {
         onChange: (uri) => {
-          log.debug(`File changed: ${uri.fsPath}`);
+          this.log.debug(`File changed: ${uri.fsPath}`);
           this.queueChange(uri.fsPath);
         },
         onCreate: (uri) => {
-          log.debug(`File created: ${uri.fsPath}`);
+          this.log.debug(`File created: ${uri.fsPath}`);
           this.queueChange(uri.fsPath);
         },
         onDelete: (uri) => {
-          log.debug(`File deleted: ${uri.fsPath}`);
+          this.log.debug(`File deleted: ${uri.fsPath}`);
           this.queueChange(uri.fsPath);
         },
         wrapErrors: true,
       });
       this.watchers.push(watcher);
     }
-    log.debug(`Watching ${this.watchFiles.length} file(s)`);
+    this.log.debug(`Watching ${this.watchFiles.length} file(s)`);
   }
 
   protected onStop(): void {

@@ -29,7 +29,7 @@ export abstract class BaseWatcher implements IWatcher {
 
   // lazy-initialized tagged logger (uses subclass logTag)
   private _log?: TaggedLogger;
-  private get log(): TaggedLogger {
+  protected get log(): TaggedLogger {
     return (this._log ??= createTaggedLogger(this.logTag));
   }
 
