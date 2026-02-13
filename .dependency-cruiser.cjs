@@ -6,7 +6,7 @@ module.exports = {
       severity: 'error',
       comment:
         'No circular dependencies in new packages. Pre-existing cycles in extension/webview are tracked separately.',
-      from: { path: '^packages/(contracts|registry|runtime-utils|codegen)/' },
+      from: { path: '^packages/(contracts|runtime-utils|codegen)/' },
       to: { circular: true },
     },
     {
@@ -44,15 +44,6 @@ module.exports = {
       comment: 'contracts must not depend on any other internal package',
       from: { path: '^packages/contracts/' },
       to: {
-        path: '^packages/(registry|runtime-utils|codegen|extension-host|webview-client)/',
-      },
-    },
-    {
-      name: 'registry-allowed-deps',
-      severity: 'error',
-      comment: 'registry may only depend on contracts',
-      from: { path: '^packages/registry/' },
-      to: {
         path: '^packages/(runtime-utils|codegen|extension-host|webview-client)/',
       },
     },
@@ -62,14 +53,14 @@ module.exports = {
       comment: 'runtime-utils may only depend on contracts',
       from: { path: '^packages/runtime-utils/' },
       to: {
-        path: '^packages/(registry|codegen|extension-host|webview-client)/',
+        path: '^packages/(codegen|extension-host|webview-client)/',
       },
     },
     {
       name: 'codegen-allowed-deps',
       severity: 'error',
       comment:
-        'codegen may only depend on contracts, registry, runtime-utils, & mdx-forge',
+        'codegen may only depend on contracts, runtime-utils, & mdx-forge',
       from: { path: '^packages/codegen/' },
       to: { path: '^packages/(extension-host|webview-client)/' },
     },

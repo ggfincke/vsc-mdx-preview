@@ -54,7 +54,7 @@ export default tseslint.config(
             {
               group: ['@mdx-preview/shared', '@mdx-preview/shared/*'],
               message:
-                'packages/shared was removed. Import from @mdx-preview/contracts, @mdx-preview/registry, or @mdx-preview/runtime-utils.',
+                'packages/shared was removed. Import from @mdx-preview/contracts or @mdx-preview/runtime-utils.',
             },
           ],
         },
