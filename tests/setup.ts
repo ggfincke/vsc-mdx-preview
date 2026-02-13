@@ -17,33 +17,12 @@ vi.mock('../packages/extension-host/src/shared/logging/logger', () => ({
   })),
 }));
 
-// mock services w/ sensible defaults (tests can override as needed)
-vi.mock('../packages/extension-host/src/app/services', () => ({
-  getConfigManager: vi.fn(() => ({
-    get: vi.fn((key: string) => {
-      const defaults: Record<string, unknown> = {
-        'preview.enableScripts': true,
-        'components.builtins': true,
-        'components.unknownBehavior': 'placeholder',
-        'build.useSucraseTranspiler': false,
-      };
-      return defaults[key];
-    }),
-    onDidChangeConfiguration: vi.fn(() => ({ dispose: vi.fn() })),
-    onDidChangeKey: vi.fn(() => ({ dispose: vi.fn() })),
-  })),
-  getTrustManager: vi.fn(() => ({
-    getState: vi.fn(() => ({ canExecute: false })),
-    subscribe: vi.fn(() => ({ dispose: () => {} })),
-  })),
-  getFrameworkDetector: vi.fn(() => ({
-    getFramework: vi.fn(() => ({ framework: 'generic', confidence: 1 })),
-    areShimsEnabled: vi.fn(() => true),
-  })),
-  getErrorReporter: vi.fn(() => ({
-    report: vi.fn(),
-  })),
-}));
+// mock services w/ stable singletons from mock-services helper
+// tests import & configure these singletons directly instead of overriding
+vi.mock('../packages/extension-host/src/app/services', async () => {
+  const { getServicesMockModule } = await import('./helpers/mock-services');
+  return getServicesMockModule();
+});
 
 beforeEach(() => {
   vi.clearAllMocks();

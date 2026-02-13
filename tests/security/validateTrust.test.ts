@@ -2,31 +2,7 @@
 // Unit tests for trust validation utilities
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// Define hoisted mocks
-const { mockTrustManager } = vi.hoisted(() => ({
-  mockTrustManager: {
-    canExecute: vi.fn(() => true),
-    getMode: vi.fn(() => 'trusted'),
-    getState: vi.fn(() => ({
-      workspaceTrusted: true,
-      scriptsEnabled: true,
-      canExecute: true,
-      openMdxLinksInPreview: true,
-    })),
-    getStateForDocument: vi.fn(() => ({
-      workspaceTrusted: true,
-      scriptsEnabled: true,
-      canExecute: true,
-      openMdxLinksInPreview: true,
-    })),
-  },
-}));
-
-// Mock services
-vi.mock('../../packages/extension-host/src/app/services', () => ({
-  getTrustManager: () => mockTrustManager,
-}));
+import { mockTrustManager } from '../helpers/mock-services';
 
 // Mock vscode (minimal - just Uri for document tests)
 vi.mock('vscode', () => ({

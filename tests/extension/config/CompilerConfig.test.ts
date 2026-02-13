@@ -6,21 +6,10 @@ import type {
   EffectivePreviewConfig,
   ResolvedConfig,
 } from '../../../packages/extension-host/src/types';
+import { mockConfigManager, mockThemeManager } from '../../helpers/mock-services';
 
-const { mockGetAll, mockExtractThemeFromFrontmatter, mockResolveConfig } =
-  vi.hoisted(() => ({
-    mockGetAll: vi.fn(),
-    mockExtractThemeFromFrontmatter: vi.fn(() => ({})),
-    mockResolveConfig: vi.fn(),
-  }));
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getConfigManager: () => ({
-    getAll: mockGetAll,
-  }),
-  getThemeManager: () => ({
-    extractThemeFromFrontmatter: mockExtractThemeFromFrontmatter,
-  }),
+const { mockResolveConfig } = vi.hoisted(() => ({
+  mockResolveConfig: vi.fn(),
 }));
 
 vi.mock(
@@ -110,8 +99,8 @@ function createEffectiveConfig(): EffectivePreviewConfig {
 describe('CompilerConfig helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetAll.mockReturnValue(BASE_SETTINGS);
-    mockExtractThemeFromFrontmatter.mockReturnValue({});
+    mockConfigManager.getAll.mockReturnValue(BASE_SETTINGS);
+    mockThemeManager.extractThemeFromFrontmatter.mockReturnValue({});
     mockResolveConfig.mockReturnValue(null);
   });
 

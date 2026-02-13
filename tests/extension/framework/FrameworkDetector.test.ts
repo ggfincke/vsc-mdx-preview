@@ -7,18 +7,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { FrameworkDetector } from '../../../packages/extension-host/src/features/framework/FrameworkDetector';
 import { Uri } from 'vscode';
-
-const { mockConfigManager } = vi.hoisted(() => ({
-  mockConfigManager: {
-    get: vi.fn(() => 'auto'),
-    onDidChangeKey: vi.fn(() => ({ dispose: vi.fn() })),
-  },
-}));
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getConfigManager: () => mockConfigManager,
-  getErrorReporter: () => ({ reportSilent: vi.fn() }),
-}));
+import { mockConfigManager } from '../../helpers/mock-services';
 
 const tempDirs: string[] = [];
 

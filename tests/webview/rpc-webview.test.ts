@@ -10,15 +10,13 @@ import {
   type WebviewStateHandlers,
   type PendingMessage,
   type QueuedMessageType,
-} from '../../packages/webview-client/src/platform/rpc/handler-factory';
-import type { PreviewError, TrustState } from '@mdx-preview/contracts';
-import {
   SET_TRUST_STATE_CONFIG,
   UPDATE_PREVIEW_CONFIG,
   UPDATE_PREVIEW_SAFE_CONFIG,
   SHOW_PREVIEW_ERROR_CONFIG,
   SET_STALE_CONFIG,
-} from '../../packages/webview-client/src/platform/rpc/handler-configs';
+} from '../../packages/webview-client/src/platform/rpc/handler-factory';
+import type { PreviewError, TrustState } from '@mdx-preview/contracts';
 
 // create mock tagged logger matching the interface
 function createMockLogger() {

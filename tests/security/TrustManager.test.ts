@@ -3,8 +3,11 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+import { mockConfigManager } from '../helpers/mock-services';
+import { SETTINGS } from '../../packages/extension-host/src/shared/config/ConfigManager';
+
 // Define hoisted mocks BEFORE vi.mock() calls
-const { mockWorkspace, mockEnv, mockConfigManager } = vi.hoisted(() => ({
+const { mockWorkspace, mockEnv } = vi.hoisted(() => ({
   mockWorkspace: {
     isTrusted: true,
     onDidChangeWorkspaceTrust: vi.fn(() => ({ dispose: vi.fn() })),
@@ -13,14 +16,6 @@ const { mockWorkspace, mockEnv, mockConfigManager } = vi.hoisted(() => ({
   },
   mockEnv: {
     remoteName: undefined as string | undefined,
-  },
-  mockConfigManager: {
-    get: vi.fn((key: string) => {
-      if (key === 'preview.enableScripts') return true;
-      if (key === 'preview.openMdxLinksInPreview') return true;
-      return undefined;
-    }),
-    onDidChangeKey: vi.fn(() => ({ dispose: vi.fn() })),
   },
 }));
 
@@ -41,11 +36,6 @@ vi.mock('vscode', () => ({
   },
 }));
 
-// Mock services
-vi.mock('../../packages/extension-host/src/app/services', () => ({
-  getConfigManager: () => mockConfigManager,
-}));
-
 // Import after mocks are set up
 import {
   TrustManager,
@@ -62,8 +52,8 @@ describe('TrustManager', () => {
     mockWorkspace.isTrusted = true;
     mockEnv.remoteName = undefined;
     mockConfigManager.get.mockImplementation((key: string) => {
-      if (key === 'preview.enableScripts') return true;
-      if (key === 'preview.openMdxLinksInPreview') return true;
+      if (key === SETTINGS.ENABLE_SCRIPTS) return true;
+      if (key === SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW) return true;
       return undefined;
     });
 

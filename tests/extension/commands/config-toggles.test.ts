@@ -2,15 +2,7 @@
 // unit tests for simple configuration toggle commands
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-const mockConfigManager = {
-  get: vi.fn(),
-  set: vi.fn(async () => {}),
-};
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getConfigManager: () => mockConfigManager,
-}));
+import { mockConfigManager } from '../../helpers/mock-services';
 
 import { commands } from '../../../packages/extension-host/src/features/commands/config-toggles';
 

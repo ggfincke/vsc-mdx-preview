@@ -3,8 +3,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../../packages/extension-host/src/app/services', () => ({}));
-
 // mock preview-commands to avoid pulling in heavy deps
 vi.mock(
   '../../../packages/extension-host/src/features/preview/preview-commands',

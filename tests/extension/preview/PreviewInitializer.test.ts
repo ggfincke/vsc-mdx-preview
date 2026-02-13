@@ -6,20 +6,11 @@ import { PreviewInitializer } from '../../../packages/extension-host/src/feature
 import { WatcherManager } from '../../../packages/extension-host/src/features/preview/watchers/WatcherManager';
 import { WEBVIEW_HANDSHAKE_TIMEOUT_MS } from '../../../packages/extension-host/src/shared/constants';
 import type { ResolvedConfig } from '../../../packages/extension-host/src/types';
+import { mockTailwindProcessor, mockConfigManager, mockConfigCache } from '../../helpers/mock-services';
 
-const { configHandlers, mockTailwindProcessor, mockConfigManager } = vi.hoisted(
-  () => ({
-    configHandlers: [] as Array<(event: { configPath: string }) => void>,
-    mockTailwindProcessor: {
-      invalidateVersionCache: vi.fn(),
-      invalidateDetectionCaches: vi.fn(),
-      invalidateScanCache: vi.fn(),
-    },
-    mockConfigManager: {
-      get: vi.fn(() => 200),
-    },
-  })
-);
+const { configHandlers } = vi.hoisted(() => ({
+  configHandlers: [] as Array<(event: { configPath: string }) => void>,
+}));
 
 vi.mock(
   '../../../packages/extension-host/src/features/preview/configuration',
@@ -30,14 +21,6 @@ vi.mock(
     },
   })
 );
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getTailwindProcessor: () => mockTailwindProcessor,
-  getConfigManager: () => mockConfigManager,
-  getConfigCache: () => ({
-    subscribe: vi.fn(() => ({ dispose: vi.fn() })),
-  }),
-}));
 
 describe('PreviewInitializer', () => {
   beforeEach(() => {

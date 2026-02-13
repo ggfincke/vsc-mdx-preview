@@ -1,5 +1,6 @@
 // tests/compilation/trusted-compile.test.ts
-// unit tests for Trusted Mode MDX compilation (MDX -> JavaScript) via mdx-forge/compiler
+// consumer smoke tests for Trusted Mode MDX compilation via mdx-forge/compiler
+// canonical tests live in mdx-forge — these verify the integration boundary
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { compileTrusted } from 'mdx-forge/compiler';
@@ -17,7 +18,7 @@ function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
   };
 }
 
-describe('compileTrusted()', () => {
+describe('compileTrusted() [consumer smoke]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -34,18 +35,6 @@ describe('compileTrusted()', () => {
     expect(result.code).toContain('export default');
   });
 
-  it('extracts frontmatter and returns it separately', async () => {
-    const result = await compileTrusted(
-      FIXTURES.mdxWithFrontmatter,
-      true,
-      createConfig()
-    );
-
-    expect(result.frontmatter).toBeDefined();
-    expect(result.frontmatter.title).toBe('Test Document');
-    expect(result.frontmatter.author).toBe('Test Author');
-  });
-
   it('injects vscode-markdown-layout when no default export and useVscodeMarkdownStyles is true', async () => {
     const result = await compileTrusted(
       FIXTURES.basicMdx,
@@ -55,26 +44,5 @@ describe('compileTrusted()', () => {
 
     expect(result.code).toContain('vscode-markdown-layout');
     expect(result.code).toContain('createLayout');
-  });
-
-  it('preserves existing default export (no layout injection)', async () => {
-    const result = await compileTrusted(
-      FIXTURES.mdxWithLayout,
-      true,
-      createConfig({ useVscodeMarkdownStyles: true })
-    );
-
-    // should NOT inject vscode-markdown-layout when there's already a default export
-    expect(result.code).not.toContain('vscode-markdown-layout');
-  });
-
-  it('returns empty frontmatter when none present', async () => {
-    const result = await compileTrusted(
-      FIXTURES.basicMdx,
-      true,
-      createConfig()
-    );
-
-    expect(result.frontmatter).toEqual({});
   });
 });

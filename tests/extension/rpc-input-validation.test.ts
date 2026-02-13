@@ -2,6 +2,7 @@
 // security boundary tests for RPC input validation
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { mockTrustManager, mockErrorReporter } from '../helpers/mock-services';
 
 // mock vscode w/ hoisted mocks
 const { mockVscode } = vi.hoisted(() => ({
@@ -39,34 +40,6 @@ const { mockVscode } = vi.hoisted(() => ({
 }));
 
 vi.mock('vscode', () => mockVscode);
-
-// mock services w/ hoisted mocks
-const { mockTrustManager, mockErrorReporter } = vi.hoisted(() => ({
-  mockTrustManager: {
-    getState: vi.fn(() => ({
-      workspaceTrusted: true,
-      scriptsEnabled: true,
-      canExecute: true,
-      openMdxLinksInPreview: true,
-    })),
-    getStateForDocument: vi.fn(() => ({
-      workspaceTrusted: true,
-      scriptsEnabled: true,
-      canExecute: true,
-      openMdxLinksInPreview: true,
-    })),
-  },
-  mockErrorReporter: {
-    reportToUser: vi.fn(),
-    report: vi.fn(),
-    reportSilent: vi.fn(),
-  },
-}));
-
-vi.mock('../../packages/extension-host/src/app/services', () => ({
-  getTrustManager: () => mockTrustManager,
-  getErrorReporter: () => mockErrorReporter,
-}));
 
 // mock performance API for reportPerformance tests
 vi.mock('perf_hooks', () => ({

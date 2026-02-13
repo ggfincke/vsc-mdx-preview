@@ -4,13 +4,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as vscode from 'vscode';
 
+import { mockPreviewManager } from '../../helpers/mock-services';
+
 const mockClearResolverCache = vi.fn();
 const mockClearSassCache = vi.fn();
 const mockClearUnmanagedCaches = vi.fn();
-
-const mockPreviewManager = {
-  clearAllWebviewCaches: vi.fn(async () => {}),
-};
 
 vi.mock(
   '../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory',
@@ -32,10 +30,6 @@ vi.mock(
     clearUnmanagedCaches: (...args: any[]) => mockClearUnmanagedCaches(...args),
   })
 );
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getPreviewManager: () => mockPreviewManager,
-}));
 
 import { commands } from '../../../packages/extension-host/src/features/commands/cache';
 

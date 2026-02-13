@@ -2,30 +2,20 @@
 // unit tests for Tailwind profile routing in evaluate-in-webview
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-const {
-  mockStatusBarMessage,
+import {
   mockTrustManager,
   mockTailwindProcessor,
   mockFrameworkDetector,
   mockErrorReporter,
+} from '../../helpers/mock-services';
+
+const {
+  mockStatusBarMessage,
   mockEngine,
   mockBuildEffectivePreviewConfig,
   mockToCompilerConfig,
 } = vi.hoisted(() => ({
   mockStatusBarMessage: vi.fn(),
-  mockTrustManager: {
-    getStateForDocument: vi.fn(),
-  },
-  mockTailwindProcessor: {
-    detectProfile: vi.fn(),
-  },
-  mockFrameworkDetector: {
-    getFramework: vi.fn(() => ({ framework: 'generic' })),
-  },
-  mockErrorReporter: {
-    report: vi.fn(),
-  },
   mockEngine: {
     evaluateTrusted: vi.fn(),
     evaluateSafe: vi.fn(),
@@ -42,13 +32,6 @@ vi.mock('vscode', () => ({
   workspace: {
     getWorkspaceFolder: vi.fn(() => undefined),
   },
-}));
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getTrustManager: () => mockTrustManager,
-  getErrorReporter: () => mockErrorReporter,
-  getFrameworkDetector: () => mockFrameworkDetector,
-  getTailwindProcessor: () => mockTailwindProcessor,
 }));
 
 vi.mock(

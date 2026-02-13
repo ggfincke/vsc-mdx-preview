@@ -8,26 +8,19 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ErrorContext } from '../../../packages/extension-host/src/shared/errors';
 import { MODULE_FETCH_TIMEOUT_MS } from '../../../packages/extension-host/src/shared/constants';
 
+import { mockFrameworkDetector, mockErrorReporter } from '../../helpers/mock-services';
+
 const {
   mockCheckFsPathAsync,
   mockReadFileAsync,
   mockHandleByExtension,
   mockResolver,
-  mockFrameworkDetector,
-  mockErrorReporter,
 } = vi.hoisted(() => ({
   mockCheckFsPathAsync: vi.fn(),
   mockReadFileAsync: vi.fn(),
   mockHandleByExtension: vi.fn(),
   mockResolver: {
     resolveSync: vi.fn(),
-  },
-  mockFrameworkDetector: {
-    getFramework: vi.fn(() => ({ framework: 'generic', detected: true })),
-    areShimsEnabled: vi.fn(() => true),
-  },
-  mockErrorReporter: {
-    report: vi.fn(),
   },
 }));
 
@@ -55,11 +48,6 @@ vi.mock(
     getUnifiedResolver: () => mockResolver,
   })
 );
-
-vi.mock('../../../packages/extension-host/src/app/services', () => ({
-  getFrameworkDetector: () => mockFrameworkDetector,
-  getErrorReporter: () => mockErrorReporter,
-}));
 
 import { fetchLocal } from '../../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal';
 
