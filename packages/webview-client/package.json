@@ -23,7 +23,7 @@
     "mermaid": "^11.4.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-error-boundary": "^6.1.0"
+    "react-error-boundary": "^6.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
