@@ -67,6 +67,9 @@ export {
   CODE_BLOCK_THEMES,
   THEME_PAIRS,
   getOppositeTheme,
+  PREVIEW_THEME_LABELS,
+  CODE_BLOCK_THEME_LABELS,
+  MERMAID_THEME_LABELS,
 } from './themes';
 
 // RPC interface contracts

@@ -1,5 +1,5 @@
-// tests/extension/handlers/JsonHandler.test.ts
-// unit tests for JSON file handler
+// tests/extension/handlers/json-handler.test.ts
+// unit tests for JSON file handler (factory-based)
 
 import { describe, it, expect } from 'vitest';
 import {

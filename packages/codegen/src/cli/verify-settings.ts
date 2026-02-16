@@ -4,7 +4,15 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { SETTINGS_DEFAULTS } from '@mdx-preview/contracts';
+import {
+  SETTINGS_DEFAULTS,
+  PREVIEW_THEMES,
+  CODE_BLOCK_THEMES,
+  MERMAID_THEMES,
+  PREVIEW_THEME_LABELS,
+  CODE_BLOCK_THEME_LABELS,
+  MERMAID_THEME_LABELS,
+} from '@mdx-preview/contracts';
 import {
   type PackageJson,
   type SettingProperty,
@@ -66,6 +74,46 @@ function verifyEnumDescriptions(
   }
 }
 
+// verify all enum settings in SETTINGS_ENUM_MAP have enumDescriptions
+function verifyEnumDescriptionsExist(
+  properties: Record<string, SettingProperty>,
+  errors: string[]
+): void {
+  for (const settingKey of Object.keys(SETTINGS_ENUM_MAP)) {
+    const property = properties[settingKey];
+    if (property?.enum && !property.enumDescriptions) {
+      errors.push(
+        `Missing enumDescriptions for enum setting: ${settingKey}\n` +
+          `  enum has ${property.enum.length} values but no descriptions`
+      );
+    }
+  }
+}
+
+// verify theme label record keys match the corresponding theme array
+function verifyThemeLabelKeys(
+  labelName: string,
+  labels: Record<string, string>,
+  themeArray: readonly string[],
+  errors: string[]
+): void {
+  const labelKeys = Object.keys(labels);
+  const arraySet = new Set(themeArray);
+  const labelSet = new Set(labelKeys);
+
+  for (const theme of themeArray) {
+    if (!labelSet.has(theme)) {
+      errors.push(`${labelName} missing key for theme: "${theme}"`);
+    }
+  }
+
+  for (const key of labelKeys) {
+    if (!arraySet.has(key)) {
+      errors.push(`${labelName} has extra key not in theme array: "${key}"`);
+    }
+  }
+}
+
 function verifyDefault(
   settingKey: string,
   packageDefault: unknown,
@@ -113,6 +161,29 @@ function main(): void {
     verifyEnumDescriptions(settingKey, properties[settingKey], errors);
   }
 
+  // verify all enum settings have enumDescriptions defined
+  verifyEnumDescriptionsExist(properties, errors);
+
+  // verify theme label keys match theme arrays
+  verifyThemeLabelKeys(
+    'PREVIEW_THEME_LABELS',
+    PREVIEW_THEME_LABELS,
+    PREVIEW_THEMES,
+    errors
+  );
+  verifyThemeLabelKeys(
+    'CODE_BLOCK_THEME_LABELS',
+    CODE_BLOCK_THEME_LABELS,
+    CODE_BLOCK_THEMES,
+    errors
+  );
+  verifyThemeLabelKeys(
+    'MERMAID_THEME_LABELS',
+    MERMAID_THEME_LABELS,
+    MERMAID_THEMES,
+    errors
+  );
+
   // verify defaults for all settings
   for (const [key, value] of Object.entries(SETTINGS_DEFAULTS)) {
     const propertyKey = `mdx-preview.${key}`;
@@ -121,11 +192,11 @@ function main(): void {
   }
 
   if (errors.length > 0) {
-    console.error('Enum verification FAILED:\n');
+    console.error('Settings verification FAILED:\n');
     errors.forEach((error) => console.error(`  ${error}\n`));
     console.error(
       '\nTo fix: update package.json enums to match the canonical sources in:\n' +
-        '  - packages/contracts/src/themes/data.ts (theme arrays)\n' +
+        '  - packages/contracts/src/themes/data.ts (theme arrays & labels)\n' +
         '  - packages/contracts/src/config/enums.ts (config enums)\n'
     );
     process.exit(1);
@@ -138,6 +209,8 @@ function main(): void {
   }
   console.log('  - defaults for all mdx-preview.* settings');
   console.log('  - enumDescriptions parity for all enum settings');
+  console.log('  - enumDescriptions required for all enum settings');
+  console.log('  - theme label keys match theme arrays');
 }
 
 main();

@@ -1,5 +1,5 @@
-// tests/extension/handlers/CssHandler.test.ts
-// focused tests for CSS handler critical behavior
+// tests/extension/handlers/css-handler.test.ts
+// focused tests for CSS handler (factory-based) critical behavior
 
 import { describe, it, expect } from 'vitest';
 import {

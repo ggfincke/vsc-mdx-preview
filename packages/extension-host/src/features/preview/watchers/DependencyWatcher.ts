@@ -98,11 +98,9 @@ export class DependencyWatcher extends BaseWatcher {
         this.log.debug(`Adding watcher: ${fsPath}`);
         const watcher = this.createFileWatcher(fsPath, {
           onChange: () => {
-            this.log.debug(`File changed: ${fsPath}`);
             this.onChangeCallback(fsPath);
           },
           onDelete: () => {
-            this.log.debug(`File deleted: ${fsPath}`);
             // onEvict disposes watcher
             this.watchers.delete(fsPath);
             this.onChangeCallback(fsPath);

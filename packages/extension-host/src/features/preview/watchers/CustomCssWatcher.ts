@@ -54,19 +54,16 @@ export class CustomCssWatcher extends BaseWatcher {
     // use createFileWatcher from base class w/ error wrapping
     this.watcher = this.createFileWatcher(this.resolvedPath, {
       onChange: () => {
-        this.log.debug('Custom CSS file changed');
         if (this.resolvedPath) {
           this.loadAndSendCss(this.resolvedPath);
         }
       },
       onCreate: () => {
-        this.log.debug('Custom CSS file created');
         if (this.resolvedPath) {
           this.loadAndSendCss(this.resolvedPath);
         }
       },
       onDelete: () => {
-        this.log.debug('Custom CSS file deleted');
         this.notifier?.setCustomCss?.('');
       },
       wrapErrors: true,

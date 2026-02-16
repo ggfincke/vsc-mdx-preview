@@ -241,6 +241,7 @@ export abstract class BaseWatcher implements IWatcher {
     return createFileWatcherUtil({
       pattern,
       logTag: this.logTag,
+      enableEventLogging: true,
       ...options,
     });
   }
