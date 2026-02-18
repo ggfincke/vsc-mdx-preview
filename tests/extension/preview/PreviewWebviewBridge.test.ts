@@ -93,6 +93,22 @@ describe('PreviewWebviewBridge', () => {
     });
   });
 
+  describe('onWebviewReady()', () => {
+    it('pushes theme state to webview on handshake completion', () => {
+      const handle = createMockHandle();
+      const wm = createWatcherManager();
+      bridge.setWebviewHandle(handle as any, wm as any);
+
+      bridge.onWebviewReady(mockDocUri as any);
+
+      expect(mockThemeManager.getWebviewThemeState).toHaveBeenCalled();
+      expect(handle.setTheme).toHaveBeenCalledWith({
+        previewTheme: 'github-light',
+        codeBlockTheme: 'auto',
+      });
+    });
+  });
+
   describe('pushThemeState()', () => {
     it('returns early when no webview handle', () => {
       bridge.pushThemeState(mockDocUri as any);

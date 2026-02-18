@@ -17,6 +17,15 @@ export const CACHE_DEFAULT_MAX_ENTRIES = 20;
 // higher than CSS cache since we cache per-file instead of per-document
 export const SCAN_CACHE_DEFAULT_MAX_ENTRIES = 200;
 
+// TailwindDetector config path cache limit (LRU eviction)
+export const DETECTOR_CONFIG_CACHE_MAX_ENTRIES = 20;
+
+// TailwindDetector entry CSS path cache limit (LRU eviction)
+export const DETECTOR_ENTRY_CSS_CACHE_MAX_ENTRIES = 20;
+
+// TailwindDetector version info cache limit (LRU eviction)
+export const DETECTOR_VERSION_CACHE_MAX_ENTRIES = 10;
+
 // cache schema version - bump when cache key structure or compilation behavior changes
 export const TAILWIND_CACHE_SCHEMA_VERSION = 1;
 

@@ -46,15 +46,12 @@ export class TailwindConfigWatcher extends BaseWatcher {
       // use createFileWatcher from base class w/ error wrapping
       const watcher = this.createFileWatcher(file, {
         onChange: (uri) => {
-          this.log.debug(`File changed: ${uri.fsPath}`);
           this.queueChange(uri.fsPath);
         },
         onCreate: (uri) => {
-          this.log.debug(`File created: ${uri.fsPath}`);
           this.queueChange(uri.fsPath);
         },
         onDelete: (uri) => {
-          this.log.debug(`File deleted: ${uri.fsPath}`);
           this.queueChange(uri.fsPath);
         },
         wrapErrors: true,

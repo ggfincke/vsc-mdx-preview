@@ -15,13 +15,13 @@ import {
 import { toAbsolutePath } from '../../shared/utils/path-utils';
 import { findUp } from '../../shared/utils/find-up';
 import { PathCache } from '../../shared/utils/cache';
+import {
+  DETECTOR_CONFIG_CACHE_MAX_ENTRIES,
+  DETECTOR_ENTRY_CSS_CACHE_MAX_ENTRIES,
+  DETECTOR_VERSION_CACHE_MAX_ENTRIES,
+} from './constants';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
-
-// cache limits for Tailwind detection (prevent unbounded memory growth)
-const CONFIG_CACHE_MAX_ENTRIES = 20;
-const ENTRY_CSS_CACHE_MAX_ENTRIES = 20;
-const VERSION_CACHE_MAX_ENTRIES = 10;
 
 const CONFIG_FILES = [
   'tailwind.config.js',
@@ -99,15 +99,15 @@ export class TailwindDetector {
   // use LRUCache to prevent unbounded memory growth in large workspaces
   private configCache = new PathCache<string | null>({
     logTag: LogTags.TAILWIND,
-    maxEntries: CONFIG_CACHE_MAX_ENTRIES,
+    maxEntries: DETECTOR_CONFIG_CACHE_MAX_ENTRIES,
   });
   private entryCssCache = new PathCache<string | null>({
     logTag: LogTags.TAILWIND,
-    maxEntries: ENTRY_CSS_CACHE_MAX_ENTRIES,
+    maxEntries: DETECTOR_ENTRY_CSS_CACHE_MAX_ENTRIES,
   });
   // version cache has both TTL & max entries
   private versionCache = new LRUCache<string, TailwindVersionInfo>({
-    maxEntries: VERSION_CACHE_MAX_ENTRIES,
+    maxEntries: DETECTOR_VERSION_CACHE_MAX_ENTRIES,
     ttlMs: STANDARD_CACHE_TTL_MS,
   });
 

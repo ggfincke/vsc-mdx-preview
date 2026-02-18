@@ -331,6 +331,11 @@
             "enabled",
             "disabled"
           ],
+          "enumDescriptions": [
+            "Auto-detect based on workspace dependencies",
+            "Always enable Tailwind CSS compilation",
+            "Disable Tailwind CSS compilation"
+          ],
           "default": "enabled",
           "description": "Enable Tailwind CSS compilation in MDX previews. Requires a trusted workspace with scripts enabled.",
           "scope": "resource"

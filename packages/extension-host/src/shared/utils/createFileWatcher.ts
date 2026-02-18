@@ -24,6 +24,8 @@ export interface FileWatcherConfig {
   ignoreDeleteEvents?: boolean;
   // wrap handlers in try-catch w/ error logging (default: true)
   wrapErrors?: boolean;
+  // auto-log file events before calling handlers (default: false)
+  enableEventLogging?: boolean;
   // use log tag for debug logging (e.g., LogTags.TS_CONFIG, LogTags.CSS) required if wrapErrors is true
   logTag?: LogTag;
   // debounce ms
@@ -48,6 +50,7 @@ export function createFileWatcher(
   const {
     pattern,
     wrapErrors = true,
+    enableEventLogging = false,
     logTag,
     ignoreCreateEvents = false,
     ignoreChangeEvents = false,
@@ -68,7 +71,7 @@ export function createFileWatcher(
   // track debounced functions for cleanup
   const debouncedFns: ReturnType<typeof debounce>[] = [];
 
-  // helper to wrap handler w/ error handling & optional debounce
+  // helper to wrap handler w/ event logging, error handling, & optional debounce
   const wrapHandler = (
     handler: ((uri: vscode.Uri) => void) | undefined,
     eventType: string,
@@ -78,15 +81,23 @@ export function createFileWatcher(
       return undefined;
     }
 
-    // wrap w/ error handling
+    // wrap w/ optional event logging & error handling
     let wrappedHandler: (uri: vscode.Uri) => void;
     if (wrapErrors) {
       wrappedHandler = (uri: vscode.Uri) => {
         try {
+          if (enableEventLogging) {
+            logger.debug(`File ${eventType}: ${uri.fsPath}`);
+          }
           handler(uri);
         } catch (error: unknown) {
-          logger.debug(`Error in ${eventType} handler: ${error}`);
+          logger.debug(`Error in file ${eventType} handler: ${error}`);
         }
+      };
+    } else if (enableEventLogging) {
+      wrappedHandler = (uri: vscode.Uri) => {
+        logger.debug(`File ${eventType}: ${uri.fsPath}`);
+        handler(uri);
       };
     } else {
       wrappedHandler = handler;
@@ -103,9 +114,9 @@ export function createFileWatcher(
   };
 
   // only debounce change events (create/delete are typically one-time events)
-  const onChange = wrapHandler(config.onChange, 'change', true);
-  const onCreate = wrapHandler(config.onCreate, 'create', false);
-  const onDelete = wrapHandler(config.onDelete, 'delete', false);
+  const onChange = wrapHandler(config.onChange, 'changed', true);
+  const onCreate = wrapHandler(config.onCreate, 'created', false);
+  const onDelete = wrapHandler(config.onDelete, 'deleted', false);
 
   if (onChange) {
     watcher.onDidChange(onChange);

@@ -41,6 +41,7 @@ export class PackageJsonWatcher extends BaseWatcher {
       ignoreCreateEvents: true,
       ignoreDeleteEvents: true,
       onChange: (uri) => this.handleChange(uri, 'package.json'),
+      enableEventLogging: false,
     });
 
     // watch lock files (npm, yarn, pnpm)
@@ -50,6 +51,7 @@ export class PackageJsonWatcher extends BaseWatcher {
         ignoreCreateEvents: true,
         ignoreDeleteEvents: true,
         onChange: (uri) => this.handleChange(uri, 'lock file'),
+        enableEventLogging: false,
       }
     );
 

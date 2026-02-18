@@ -116,6 +116,42 @@ describe('PreviewConfiguration', () => {
       expect(result.oldCssPath).toBe('');
     });
 
+    it('detects customLayoutFilePath change -> needsWebviewRefresh: true', () => {
+      mockReadState.mockReturnValueOnce(createConfigState());
+      const config = new PreviewConfiguration(mockDocUri as any, vi.fn());
+
+      mockReadState.mockReturnValueOnce(
+        createConfigState({ customLayoutFilePath: '/workspace/layout.tsx' })
+      );
+      const result = config.updateConfiguration(mockDocUri as any, vi.fn());
+
+      expect(result.needsWebviewRefresh).toBe(true);
+    });
+
+    it('detects plantUmlServer change -> needsWebviewRefresh: true', () => {
+      mockReadState.mockReturnValueOnce(createConfigState());
+      const config = new PreviewConfiguration(mockDocUri as any, vi.fn());
+
+      mockReadState.mockReturnValueOnce(
+        createConfigState({ plantUmlServer: 'http://localhost:8080' })
+      );
+      const result = config.updateConfiguration(mockDocUri as any, vi.fn());
+
+      expect(result.needsWebviewRefresh).toBe(true);
+    });
+
+    it('detects tailwindEnabled change -> needsWebviewRefresh: true', () => {
+      mockReadState.mockReturnValueOnce(createConfigState());
+      const config = new PreviewConfiguration(mockDocUri as any, vi.fn());
+
+      mockReadState.mockReturnValueOnce(
+        createConfigState({ tailwindEnabled: 'enabled' })
+      );
+      const result = config.updateConfiguration(mockDocUri as any, vi.fn());
+
+      expect(result.needsWebviewRefresh).toBe(true);
+    });
+
     it('returns no changes when config is identical', () => {
       mockReadState.mockReturnValue(createConfigState());
       const config = new PreviewConfiguration(mockDocUri as any, vi.fn());
