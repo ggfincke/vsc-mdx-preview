@@ -28,6 +28,7 @@ vi.mock(
       handleImageClick: vi.fn(),
       renderPortals: () => null,
       scan: vi.fn(),
+      extractHeadings: vi.fn(),
     }),
   })
 );

@@ -3,6 +3,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  mockConfigManager,
   mockTrustManager,
   mockTailwindProcessor,
   mockFrameworkDetector,
@@ -85,6 +86,8 @@ function createPreview(): {
     updatePreview: ReturnType<typeof vi.fn>;
     setUsedComponents: ReturnType<typeof vi.fn>;
     setNextraMeta: ReturnType<typeof vi.fn>;
+    setFrontmatter: ReturnType<typeof vi.fn>;
+    setShowToc: ReturnType<typeof vi.fn>;
   };
   webviewHandshakePromise: Promise<void>;
   onWebviewReady: ReturnType<typeof vi.fn>;
@@ -117,6 +120,8 @@ function createPreview(): {
       updatePreview: vi.fn(),
       setUsedComponents: vi.fn(),
       setNextraMeta: vi.fn(),
+      setFrontmatter: vi.fn(),
+      setShowToc: vi.fn(),
     },
     webviewHandshakePromise: Promise.resolve(),
     onWebviewReady: vi.fn(),
@@ -170,6 +175,30 @@ describe('evaluate-in-webview Tailwind routing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockTailwindEnabledConfig();
+    mockConfigManager.get.mockImplementation((key: string) => {
+      if (key === 'preview.showFrontmatter') {
+        return false;
+      }
+      if (key === 'preview.showToc') {
+        return false;
+      }
+      return undefined;
+    });
+    mockTailwindProcessor.detectProfile.mockResolvedValue({
+      profile: 'browser',
+      reason: 'inline classes only',
+      workspaceRoot: '/workspace',
+      configPath: null,
+      entryCssPath: '/workspace/tailwind.css',
+      hasTailwindInput: true,
+      inlineTailwindStyles: [],
+    });
+    mockEngine.evaluateTrusted.mockResolvedValue({
+      code: 'export default function Demo() { return null; }',
+      entryFilePath: '/workspace/doc.mdx',
+      dependencies: [],
+      frontmatter: undefined,
+    });
     mockEngine.evaluateSafe.mockResolvedValue({
       html: '<p>safe</p>',
       frontmatter: undefined,
@@ -246,5 +275,70 @@ describe('evaluate-in-webview Tailwind routing', () => {
     );
     expect(preview.webviewHandle.setTailwindCss).toHaveBeenCalledWith('');
     expect(mockEngine.evaluateSafe).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears frontmatter in webview state when frontmatter panel is disabled', async () => {
+    mockSafeState();
+    const preview = createPreview();
+
+    mockConfigManager.get.mockImplementation((key: string) => {
+      if (key === 'preview.showFrontmatter') {
+        return false;
+      }
+      if (key === 'preview.showToc') {
+        return false;
+      }
+      return undefined;
+    });
+    mockEngine.evaluateSafe.mockResolvedValueOnce({
+      html: '<p>safe</p>',
+      frontmatter: {
+        title: 'Should Not Render',
+      },
+    });
+
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# doc',
+      '/workspace/doc.mdx'
+    );
+
+    expect(preview.webviewHandle.setFrontmatter).toHaveBeenCalledWith({});
+  });
+
+  it('sends frontmatter when panel is enabled', async () => {
+    mockTrustedState();
+    const preview = createPreview();
+
+    mockConfigManager.get.mockImplementation((key: string) => {
+      if (key === 'preview.showFrontmatter') {
+        return true;
+      }
+      if (key === 'preview.showToc') {
+        return true;
+      }
+      return undefined;
+    });
+    mockEngine.evaluateTrusted.mockResolvedValueOnce({
+      code: 'export default function Demo() { return null; }',
+      entryFilePath: '/workspace/doc.mdx',
+      dependencies: [],
+      frontmatter: {
+        title: 'Hello',
+        tags: ['mdx', 'preview'],
+      },
+    });
+
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# doc',
+      '/workspace/doc.mdx'
+    );
+
+    expect(preview.webviewHandle.setFrontmatter).toHaveBeenCalledWith({
+      title: 'Hello',
+      tags: ['mdx', 'preview'],
+    });
+    expect(preview.webviewHandle.setShowToc).toHaveBeenCalledWith(true);
   });
 });

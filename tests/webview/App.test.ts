@@ -23,6 +23,13 @@ const {
     isLoading: false,
     isStale: false,
     nextraMeta: null as any,
+    frontmatter: null as Record<string, unknown> | null,
+    tocHeadings: null as Array<{
+      id: string;
+      text: string;
+      level: number;
+    }> | null,
+    showToc: false,
     previewTheme: 'none',
   },
   mockSetError: vi.fn(),
@@ -63,6 +70,15 @@ vi.mock('../../packages/webview-client/src/app/state', () => ({
   useNextra: () => ({
     nextraMeta: appState.nextraMeta,
   }),
+  useFrontmatter: () => ({
+    frontmatter: appState.frontmatter,
+  }),
+  useToc: () => ({
+    headings: appState.tocHeadings,
+    showToc: appState.showToc,
+    activeHeadingId: null,
+    setActiveHeadingId: vi.fn(),
+  }),
 }));
 
 vi.mock('../../packages/webview-client/src/features/theme/runtime', () => ({
@@ -92,6 +108,20 @@ vi.mock(
   () => ({
     TrustBanner: () =>
       createElement('div', { 'data-testid': 'trust-banner' }, 'trust'),
+  })
+);
+
+vi.mock(
+  '../../packages/webview-client/src/features/preview/shared/ui/FrontmatterPanel/FrontmatterPanel',
+  () => ({
+    FrontmatterPanel: () => null,
+  })
+);
+
+vi.mock(
+  '../../packages/webview-client/src/features/preview/shared/ui/TableOfContents/TableOfContents',
+  () => ({
+    TableOfContents: () => null,
   })
 );
 
@@ -180,6 +210,9 @@ describe('App', () => {
     appState.isLoading = false;
     appState.isStale = false;
     appState.nextraMeta = null;
+    appState.frontmatter = null;
+    appState.tocHeadings = null;
+    appState.showToc = false;
     appState.previewTheme = 'none';
   });
 
@@ -263,6 +296,31 @@ describe('App', () => {
     const html = renderAppToString();
 
     expect(html).toContain('data-mpe-theme-active="true"');
+  });
+
+  it('adds side rail layout class when frontmatter panel is visible', () => {
+    appState.content = {
+      mode: 'safe',
+      html: '<p>safe</p>',
+    };
+    appState.frontmatter = { title: 'Doc' };
+
+    const html = renderAppToString();
+
+    expect(html).toContain('has-side-rail');
+  });
+
+  it('adds side rail layout class when TOC is visible', () => {
+    appState.content = {
+      mode: 'safe',
+      html: '<p>safe</p>',
+    };
+    appState.showToc = true;
+    appState.tocHeadings = [{ id: 'intro', text: 'Intro', level: 1 }];
+
+    const html = renderAppToString();
+
+    expect(html).toContain('has-side-rail');
   });
 
   it('opens external links on Ctrl/Cmd+click', () => {
