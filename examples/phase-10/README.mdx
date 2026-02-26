@@ -1,0 +1,282 @@
+---
+title: Phase 10 — UX Polish
+description: Showcases the three features from Phase 10
+tags: [explorer, error-navigation, shim-styling]
+version: "1.1.2"
+published: true
+priority: 2
+---
+
+# Phase 10 — UX Polish
+
+This file demonstrates the three features introduced in Phase 10.
+
+---
+
+## 10.1 — Crossnote-Inspired Formatting
+
+Preview styling adopts crossnote-inspired formatting with Material Design
+elevation, graduated heading scales, and refined typography.
+
+### Typography Changes
+
+The base font-size is now **16px** (up from 14px) with a **1.6** line-height
+for improved readability. Headings follow a graduated scale:
+
+# H1 — 2.25em
+## H2 — 1.75em
+### H3 — 1.5em
+#### H4 — 1.25em
+##### H5 — 1em
+###### H6 — 1em (muted color)
+
+H1 and H2 no longer have `border-bottom` lines — the heading scale alone
+provides enough visual hierarchy.
+
+### Blockquotes
+
+Blockquotes now have a background color for better visual distinction:
+
+> "The best way to predict the future is to invent it."
+>
+> — Alan Kay
+
+### Horizontal Rules
+
+HRs are thicker (4px) with more breathing room (32px margin):
+
+---
+
+### Lists
+
+Nested lists use distinct markers at each level:
+
+- First level (disc)
+  - Second level (circle)
+    - Third level (square)
+
+1. First level (decimal)
+   1. Second level (lower-roman)
+      1. Third level (lower-alpha)
+
+### Tables
+
+Table cells have wider padding (6px 13px) with explicit borders:
+
+| Feature | Before | After |
+|---------|--------|-------|
+| Font size | 14px | 16px |
+| Line height | 22px | 1.6 |
+| H1 size | 2em | 2.25em |
+| HR height | 1px | 4px |
+| Cell padding | 5px 10px | 6px 13px |
+
+### Inline Code & Keyboard Elements
+
+Inline `code` is now `0.85em` with slightly more padding. New `kbd` element
+styling is also supported:
+
+Press <kbd>Cmd</kbd> + <kbd>K</kbd> then <kbd>X</kbd> to open preview.
+
+### Definition Lists
+
+<dl>
+  <dt>Crossnote</dt>
+  <dd>The rendering engine behind Markdown Preview Enhanced, known for its publication-quality styling.</dd>
+
+  <dt>Material Design Elevation</dt>
+  <dd>A shadow system that gives callouts a sense of depth and importance.</dd>
+</dl>
+
+### Callouts — Material Design elevation
+
+Callouts now feature Material Design box-shadow, `.4rem` left border,
+`.2rem` border-radius, and a colored title bar with 10% opacity background.
+
+<Callout type="note">
+  Callouts have Material Design elevation shadows and a colored title bar
+  that extends edge-to-edge.
+</Callout>
+
+<Callout type="tip">
+  Hover over the callout — transitions are scoped to `background-color` and
+  `border-color` only, so resizing the window never causes a flash.
+</Callout>
+
+<Callout type="warning">
+  All callout types got the Material Design treatment. Try switching VS Code
+  between light and dark mode — contrast is always correct.
+</Callout>
+
+<Callout type="danger">
+  The `focus-within` outline is new too — keyboard-navigate into any callout
+  and you'll see a colored ring matching the callout accent.
+</Callout>
+
+### New Callout Types
+
+Ten new crossnote-inspired callout types are now supported:
+
+<Callout type="summary">
+  **Summary** — for abstracts and TL;DR sections (cyan).
+</Callout>
+
+<Callout type="success">
+  **Success** — for confirming positive outcomes (green).
+</Callout>
+
+<Callout type="question">
+  **Question** — for FAQs and open questions (lime).
+</Callout>
+
+<Callout type="failure">
+  **Failure** — for known issues and broken states (red).
+</Callout>
+
+<Callout type="bug">
+  **Bug** — for documenting known bugs and defects (dark red).
+</Callout>
+
+<Callout type="example">
+  **Example** — for code examples and demonstrations (cyan).
+</Callout>
+
+<Callout type="quote">
+  **Quote** — "The only way to do great work is to love what you do." — Steve Jobs
+</Callout>
+
+<Callout type="todo">
+  **Todo** — work-in-progress items that need attention (light blue).
+</Callout>
+
+### GitHub Alerts — Material Design
+
+GitHub alerts also received Material Design elevation:
+
+> [!NOTE]
+> GitHub alerts now have `box-shadow`, `.4rem` border, and `font-weight: 700`
+> titles — matching the crossnote look.
+
+> [!TIP]
+> All five GitHub alert types render with the same Material Design treatment.
+
+### Directive Syntax — New Types
+
+The `:::` directive syntax supports all the new types too:
+
+:::summary[TL;DR]
+This phase adopts crossnote formatting: Material Design elevation, 16px base
+font, graduated heading scale, 10 new callout types, and refined element
+styling throughout.
+:::
+
+:::question[Is this backward compatible?]
+Yes. All existing admonition types still work. The new types are additive.
+Aliases like `:::abstract`, `:::tldr`, `:::check`, `:::done`, `:::help`,
+`:::faq`, `:::fail`, `:::missing`, `:::snippet`, and `:::cite` map to their
+canonical types.
+:::
+
+:::bug[Known Issue]
+The `metadata-parity.test.ts` test will fail until mdx-forge is published
+with the new callout types. This is expected during the Wave 2 → Wave 3
+transition.
+:::
+
+### Tabs — no layout jank on hover
+
+<Tabs>
+  <TabItem label="Before">
+    Previously used `transition: all` which animated width, height, and padding
+    on every hover — causing layout recalculations.
+  </TabItem>
+  <TabItem label="After">
+    Now transitions only `color`, `border-color`, and `background-color`. Hover
+    between tabs rapidly — no jank.
+  </TabItem>
+  <TabItem label="Dark mode">
+    Tab panels also gained a subtle fade-in. Switch to VS Code dark theme and
+    check the active tab indicator colour — it now uses `--vscode-focusBorder`.
+  </TabItem>
+</Tabs>
+
+### Collapsible — smooth hover transition
+
+<Collapsible title="Click to expand — hover the header first">
+  The summary element now transitions `background-color` on hover, giving clear
+  interactive feedback before you click.
+
+  Nested content:
+
+  <Callout type="info">
+    Nesting works fine. The collapsible max-height animation uses the CSS `[open]`
+    attribute selector for a smooth reveal.
+  </Callout>
+</Collapsible>
+
+### CodeGroup — depth shadow
+
+<CodeGroup>
+```ts title="extract.ts"
+export function extractHeadings(container: HTMLDivElement) {
+  return container.querySelectorAll('h1[id],h2[id],h3[id]');
+}
+```
+```css title="panel.css"
+.mdx-toc-panel {
+  position: fixed;
+  right: 0;
+  width: 220px;
+}
+```
+</CodeGroup>
+
+The CodeGroup now has a `box-shadow` to visually separate it from surrounding
+prose — useful when the background colors are similar.
+
+---
+
+## 10.2 — Error "Open in Editor"
+
+Trigger a runtime error and navigable stack frames become **clickable**. Hover
+over a user-code frame — it gets a pointer cursor and a highlight. Click it and
+VS Code jumps to that exact file and line.
+
+To test this, temporarily introduce an error in a trusted MDX file:
+
+```mdx
+import { doesNotExist } from './missing-module';
+
+# My Doc
+
+<doesNotExist />
+```
+
+User-code frames (your workspace files) are clickable. Node internals and
+bundler frames are not — they render as plain text.
+
+**Keyboard accessible**: Tab to a navigable frame and press Enter or Space.
+
+---
+
+## 10.3 — Explorer Context Menu
+
+Right-click any `.mdx` or `.md` file in the **Explorer** panel — you'll see
+**"Open MDX Preview"** in the context menu. This opens the preview for that
+file even if it isn't the active editor.
+
+The same entry appears when right-clicking an editor tab.
+
+> [!NOTE]
+> The existing keyboard shortcut (`Cmd+K X` / `Ctrl+K X`) still works
+> unchanged — it opens a preview for the currently active editor.
+
+---
+
+## Summary
+
+| # | Feature | How to see it |
+|---|---------|---------------|
+| 10.1 | Crossnote formatting | Always active — note the typography, elevation shadows, and new callout types |
+| 10.2 | Error navigation | Trigger a runtime error, click a user-code frame |
+| 10.3 | Explorer menu | Right-click any `.mdx` / `.md` in the Explorer panel |

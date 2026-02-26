@@ -9,7 +9,7 @@ MDX Preview supports Docusaurus/Starlight-style admonition directives using the 
 
 ---
 
-## Basic Admonitions
+## Standard Admonitions
 
 ### Note
 
@@ -69,6 +69,127 @@ This is an important admonition. Important callouts highlight critical informati
 
 ---
 
+## Extended Admonition Types (Crossnote)
+
+These additional types follow the crossnote/Material Design conventions used by Markdown Preview Enhanced and similar tools.
+
+### Summary
+
+Use summary for abstracts and TL;DR sections:
+
+:::summary
+This is a summary admonition. Great for executive summaries, abstracts, or TL;DR sections at the top of a document.
+:::
+
+### Hint
+
+Use hint for subtle suggestions:
+
+:::hint
+This is a hint admonition. Hints are softer than tips — useful for nudging the reader toward a solution without being prescriptive.
+:::
+
+### Success
+
+Use success for confirming positive outcomes:
+
+:::success
+This is a success admonition. Use it to confirm that a step completed correctly or that a configuration is valid.
+:::
+
+### Question
+
+Use question for FAQs and open questions:
+
+:::question
+This is a question admonition. Perfect for FAQ sections, design questions, or prompting the reader to think about something.
+:::
+
+### Failure
+
+Use failure for known issues and broken states:
+
+:::failure
+This is a failure admonition. Highlights known failure modes, broken configurations, or things that won't work as expected.
+:::
+
+### Bug
+
+Use bug for known bugs and defects:
+
+:::bug
+This is a bug admonition. Document known bugs, unexpected behavior, or issues that are being tracked for a fix.
+:::
+
+### Example
+
+Use example for code examples and demonstrations:
+
+:::example
+This is an example admonition. Wrap worked examples, sample configurations, or demonstration code in this type for visual distinction.
+:::
+
+### Quote
+
+Use quote for citations and attributions:
+
+:::quote
+"The best way to predict the future is to invent it."
+— Alan Kay
+:::
+
+### Todo
+
+Use todo for work-in-progress items:
+
+:::todo
+This section is incomplete. Add documentation for the new authentication flow before the v3.0 release.
+:::
+
+### Attention
+
+Use attention for things that need focus:
+
+:::attention
+This is an attention admonition. Similar to warning, but emphasizes that the reader should pay close attention to what follows.
+:::
+
+---
+
+## Alias Types
+
+Several aliases map to canonical types:
+
+:::abstract
+`:::abstract` is an alias for `:::summary`. Both render the same cyan style.
+:::
+
+:::tldr
+`:::tldr` is also an alias for `:::summary`.
+:::
+
+:::check
+`:::check` is an alias for `:::success`. So are `:::done`.
+:::
+
+:::help
+`:::help` is an alias for `:::question`. So is `:::faq`.
+:::
+
+:::fail
+`:::fail` is an alias for `:::failure`. So is `:::missing`.
+:::
+
+:::snippet
+`:::snippet` is an alias for `:::example`.
+:::
+
+:::cite
+`:::cite` is an alias for `:::quote`.
+:::
+
+---
+
 ## Custom Titles
 
 Override the default title using `[Title]` syntax after the type:
@@ -91,6 +212,14 @@ Always sanitize user input before processing. Never trust client-side data witho
 
 :::important[Read Before Proceeding]
 Make sure you have completed the prerequisites before starting this tutorial.
+:::
+
+:::summary[TL;DR]
+The new version adds 10 extra admonition types with Material Design styling: summary, hint, success, question, failure, bug, example, quote, todo, and attention.
+:::
+
+:::question[FAQ: What about aliases?]
+Aliases like `:::abstract`, `:::tldr`, `:::check`, `:::done`, `:::help`, `:::faq`, `:::fail`, `:::missing`, `:::snippet`, and `:::cite` all map to their canonical types.
 :::
 
 ---
@@ -225,7 +354,8 @@ This uses the `:::type` syntax from Docusaurus/Starlight.
 
 - Supports custom titles via `[Title]`
 - Works in both Safe and Trusted Mode
-- More flexible styling
+- 17 types + 12 aliases for comprehensive callout coverage
+- Material Design elevation styling
 :::
 
 ### GitHub Alert Syntax (> [!TYPE])
@@ -250,7 +380,7 @@ This is a note using directive syntax.
 > [!NOTE]
 > This is a note using GitHub alert syntax.
 
-Both syntaxes are supported and will render similarly!
+Both syntaxes are supported and will render with Material Design elevation!
 
 ---
 
@@ -338,104 +468,77 @@ We've added several new features:
 - **Improved search** - Faster and more accurate results
 :::
 
+### Documentation Workflow
+
+:::example[Complete Documentation Page]
+Here's a typical MDX documentation page structure:
+
+```mdx
+---
+title: Getting Started
 ---
 
-## Empty Admonitions
+# Getting Started
 
-Admonitions can be empty (though not recommended):
-
-:::note
+:::summary
+Install the package, configure it, and start building.
 :::
 
-:::tip[Empty Tip]
+## Installation
+
+:::tip
+Use your preferred package manager.
 :::
 
----
+## Configuration
 
-## Long Content
+:::warning
+Some options are required — check the table below.
+:::
 
-Admonitions handle long content gracefully:
+## FAQ
 
-:::note[Comprehensive Guide to Error Handling]
-Error handling is a critical aspect of building robust applications. This guide covers best practices for handling errors in JavaScript and TypeScript applications.
-
-## Types of Errors
-
-There are several categories of errors you'll encounter:
-
-1. **Syntax Errors** - These occur when the code doesn't follow the language's grammar rules.
-
-2. **Runtime Errors** - These happen during program execution, such as:
-   - `TypeError` - Wrong type used
-   - `ReferenceError` - Undefined variable accessed
-   - `RangeError` - Value out of range
-
-3. **Logic Errors** - The code runs but produces incorrect results.
-
-## Best Practices
-
-### Use Try-Catch Blocks
-
-```javascript
-async function fetchData(url) {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Fetch failed:', error.message);
-    throw error; // Re-throw for calling code to handle
-  }
-}
+:::question[How do I upgrade?]
+Run `npm update` to get the latest version.
+:::
 ```
-
-### Create Custom Error Classes
-
-```javascript
-class ValidationError extends Error {
-  constructor(field, message) {
-    super(message);
-    this.name = 'ValidationError';
-    this.field = field;
-  }
-}
-
-// Usage
-throw new ValidationError('email', 'Invalid email format');
-```
-
-### Handle Errors at Boundaries
-
-- Catch errors at API boundaries
-- Log errors with sufficient context
-- Provide meaningful error messages to users
-- Never expose stack traces in production
-
-## Error Monitoring
-
-Consider using error monitoring services like:
-
-- Sentry
-- Bugsnag
-- LogRocket
-
-These tools help you track and debug errors in production.
 :::
 
 ---
 
-## Syntax Reference
+## All Types at a Glance
 
-| Syntax | Description |
-|--------|-------------|
-| `:::note` | Note admonition |
-| `:::tip` | Tip admonition |
-| `:::info` | Info admonition |
-| `:::warning` | Warning admonition |
-| `:::danger` | Danger admonition |
-| `:::caution` | Caution admonition |
-| `:::important` | Important admonition |
-| `:::note[Custom Title]` | Admonition with custom title |
-| `::::` (4 colons) | Nested admonition delimiter |
+| Syntax | Color | Use Case |
+|--------|-------|----------|
+| `:::note` | Blue | General context |
+| `:::tip` | Green | Best practices |
+| `:::info` | Blue | Informational |
+| `:::warning` | Amber | Potential issues |
+| `:::danger` | Red | Critical warnings |
+| `:::caution` | Amber | Proceed with care |
+| `:::important` | Purple | Key information |
+| `:::summary` | Cyan | Abstracts, TL;DR |
+| `:::hint` | Teal | Subtle suggestions |
+| `:::success` | Green | Positive outcomes |
+| `:::question` | Lime | FAQs, open questions |
+| `:::failure` | Red | Known issues |
+| `:::bug` | Dark red | Bugs, defects |
+| `:::example` | Cyan | Code examples |
+| `:::quote` | Gray | Citations |
+| `:::todo` | Light blue | Work in progress |
+| `:::attention` | Amber | Focus required |
+
+### Alias Reference
+
+| Alias | Maps To |
+|-------|---------|
+| `:::abstract` | `:::summary` |
+| `:::tldr` | `:::summary` |
+| `:::check` | `:::success` |
+| `:::done` | `:::success` |
+| `:::help` | `:::question` |
+| `:::faq` | `:::question` |
+| `:::fail` | `:::failure` |
+| `:::missing` | `:::failure` |
+| `:::snippet` | `:::example` |
+| `:::cite` | `:::quote` |
