@@ -38,7 +38,9 @@ export type SettingKey =
   | 'components.builtins'
   | 'components.unknownBehavior'
   | 'advanced.watcherDebounceMs'
-  | 'advanced.debugOutput';
+  | 'advanced.debugOutput'
+  | 'preview.showFrontmatter'
+  | 'preview.showToc';
 
 // type mapping for settings
 // enum types imported from @mdx-preview/shared (canonical source)
@@ -70,6 +72,8 @@ export interface SettingTypes {
   'components.unknownBehavior': UnknownBehaviorValue;
   'advanced.watcherDebounceMs': number;
   'advanced.debugOutput': boolean;
+  'preview.showFrontmatter': boolean;
+  'preview.showToc': boolean;
 }
 
 // map shared defaults to extension setting types
@@ -114,6 +118,8 @@ function mapDefaults(): SettingTypes {
     'advanced.watcherDebounceMs':
       SETTINGS_DEFAULTS['advanced.watcherDebounceMs'],
     'advanced.debugOutput': SETTINGS_DEFAULTS['advanced.debugOutput'],
+    'preview.showFrontmatter': SETTINGS_DEFAULTS['preview.showFrontmatter'],
+    'preview.showToc': SETTINGS_DEFAULTS['preview.showToc'],
   };
 }
 

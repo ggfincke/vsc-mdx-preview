@@ -117,6 +117,12 @@
         }
       },
       {
+        "command": "mdx-preview.commands.openPreviewFromExplorer",
+        "title": "Open MDX Preview",
+        "category": "MDX",
+        "icon": "$(open-preview)"
+      },
+      {
         "command": "mdx-preview.commands.toggleUseVscodeMarkdownStyles",
         "title": "Toggle VSCode Markdown Styles",
         "category": "MDX"
@@ -203,6 +209,20 @@
         {
           "command": "mdx-preview.commands.refreshPreview",
           "when": "mdxPreviewFocus",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "mdx-preview.commands.openPreviewFromExplorer",
+          "when": "resourceLangId == mdx || resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "mdx-preview.commands.openPreviewFromExplorer",
+          "when": "resourceLangId == mdx || resourceLangId == markdown",
           "group": "navigation"
         }
       ],
@@ -567,6 +587,18 @@
           "default": false,
           "markdownDescription": "Enable debug output in the MDX Preview output channel. Useful for troubleshooting issues.",
           "scope": "window"
+        },
+        "mdx-preview.preview.showFrontmatter": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show a collapsible frontmatter panel in the preview.",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.showToc": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show a floating table of contents sidebar extracted from document headings.",
+          "scope": "resource"
         }
       }
     },

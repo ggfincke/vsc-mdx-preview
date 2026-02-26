@@ -32,6 +32,8 @@ import {
   SET_STALE_CONFIG,
   SET_THEME_CONFIG,
   SET_NEXTRA_META_CONFIG,
+  SET_FRONTMATTER_CONFIG,
+  SET_SHOW_TOC_CONFIG,
 } from './handler-factory';
 
 // create tagged logger for this module
@@ -221,6 +223,8 @@ class RPCWebviewHandle implements WebviewRPC {
   // optional handlers - call if handler present, no queuing
   setTheme = createOptionalHandler(SET_THEME_CONFIG, log);
   setNextraMeta = createOptionalHandler(SET_NEXTRA_META_CONFIG, log);
+  setFrontmatter = createOptionalHandler(SET_FRONTMATTER_CONFIG, log);
+  setShowToc = createOptionalHandler(SET_SHOW_TOC_CONFIG, log);
 
   // direct handlers - immediate DOM/style injection (kept manual for simplicity)
   setCustomCss(css: string): void {

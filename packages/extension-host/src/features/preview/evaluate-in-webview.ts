@@ -17,6 +17,7 @@ import {
   getFrameworkDetector,
   getTailwindProcessor,
   getMetaResolver,
+  getConfigManager,
 } from '../../app/services';
 import { getEvaluationEngine } from './EvaluationEngine';
 import { extractNextraFrontmatter } from 'mdx-forge/compiler';
@@ -41,6 +42,14 @@ function applyFrontmatterAndMeta(
   if (frontmatter) {
     preview.pushThemeState(frontmatter);
   }
+
+  // send frontmatter payload to webview (empty object clears stale state)
+  const showFrontmatter = getConfigManager().get('preview.showFrontmatter');
+  const frontmatterPayload =
+    showFrontmatter && frontmatter && Object.keys(frontmatter).length > 0
+      ? frontmatter
+      : {};
+  webviewHandle.setFrontmatter(frontmatterPayload);
 
   // for Nextra projects, resolve & send page metadata
   sendNextraMetaIfNeeded(preview, webviewHandle, fsPath, frontmatter);
@@ -149,6 +158,9 @@ export default async function evaluateInWebview(
     // send trust state to webview
     log.debug('Sending trust state to webview');
     webviewHandle.setTrustState(trustState);
+
+    // push TOC visibility setting
+    webviewHandle.setShowToc(getConfigManager().get('preview.showToc'));
 
     // send framework info so webview can lazy-load the right shims
     const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);

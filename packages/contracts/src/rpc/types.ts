@@ -53,4 +53,6 @@ export interface WebviewRPC {
   setTailwindBrowserCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
   setNextraMeta(meta: NextraPageMeta): void;
+  setFrontmatter(data: Record<string, unknown>): void;
+  setShowToc(show: boolean): void;
 }

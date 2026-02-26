@@ -6,6 +6,8 @@ import { TrustProvider, useTrust } from '../state/TrustContext';
 import { PreviewProvider, usePreview } from '../state/PreviewContext';
 import { LoadingProvider, useLoading } from '../state/LoadingContext';
 import { NextraProvider, useNextra } from '../state/NextraContext';
+import { FrontmatterProvider, useFrontmatter } from '../state/FrontmatterContext';
+import { TocProvider, useToc } from '../state/TocContext';
 import { useTheme } from '../../features/theme/runtime';
 import { registerWebviewHandlers } from '../../platform/rpc/webview-rpc-client';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
@@ -35,6 +37,8 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
   const { setSafeContent, setTrustedContent, setError } = usePreview();
   const { setStale, setIsLoading } = useLoading();
   const { setNextraMeta } = useNextra();
+  const { setFrontmatter } = useFrontmatter();
+  const { setShowToc } = useToc();
   const { setPreviewThemeState } = useTheme();
 
   const initializedRef = useRef(false);
@@ -58,6 +62,8 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
       setStale,
       setTheme: setPreviewThemeState,
       setNextraMeta,
+      setFrontmatter,
+      setShowToc,
     });
     log.debug('Handlers registered');
   }, [
@@ -69,6 +75,8 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
     setIsLoading,
     setPreviewThemeState,
     setNextraMeta,
+    setFrontmatter,
+    setShowToc,
   ]);
 
   return <>{children}</>;
@@ -86,7 +94,11 @@ export function WebviewStateProvider({ children }: WebviewStateProviderProps) {
       <PreviewProvider>
         <LoadingProvider>
           <NextraProvider>
-            <HandlerRegistrar>{children}</HandlerRegistrar>
+            <FrontmatterProvider>
+              <TocProvider>
+                <HandlerRegistrar>{children}</HandlerRegistrar>
+              </TocProvider>
+            </FrontmatterProvider>
           </NextraProvider>
         </LoadingProvider>
       </PreviewProvider>

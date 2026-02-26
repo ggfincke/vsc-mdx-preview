@@ -6,6 +6,7 @@ import { useMermaidRendering } from '../../../diagrams/hooks/useMermaidRendering
 import { usePlantUMLRendering } from '../../../diagrams/hooks/usePlantUMLRendering';
 import { useGraphvizRendering } from '../../../diagrams/hooks/useGraphvizRendering';
 import { useImageLightbox } from '../../../lightbox/hooks/useImageLightbox';
+import { useTocExtraction } from './useTocExtraction';
 
 export type DiagramScanMode = 'after-paint' | 'before-paint';
 
@@ -25,6 +26,8 @@ interface PreviewSetupResult {
   renderPortals: () => ReactNode;
   // manually trigger diagram scans
   scan: () => void;
+  // extract headings from DOM for TOC sidebar
+  extractHeadings: () => void;
 }
 
 // shared preview setup - provide container ref, diagram rendering & lightbox
@@ -34,6 +37,7 @@ export function usePreviewSetup(
 ): PreviewSetupResult {
   const containerRef = useRef<HTMLDivElement>(null);
   const { handleImageClick } = useImageLightbox();
+  const extractHeadings = useTocExtraction(containerRef);
   const mermaid = useMermaidRendering(containerRef, {
     mode: options.diagramMode,
     filterStale: options.filterStale,
@@ -59,5 +63,11 @@ export function usePreviewSetup(
     graphviz.scan();
   };
 
-  return { containerRef, handleImageClick, renderPortals, scan };
+  return {
+    containerRef,
+    handleImageClick,
+    renderPortals,
+    scan,
+    extractHeadings,
+  };
 }

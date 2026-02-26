@@ -7,6 +7,7 @@ export const CommandNames = {
   // preview commands
   OPEN_PREVIEW: 'mdx-preview.commands.openPreview',
   REFRESH_PREVIEW: 'mdx-preview.commands.refreshPreview',
+  OPEN_PREVIEW_FROM_EXPLORER: 'mdx-preview.commands.openPreviewFromExplorer',
 
   // config toggle commands
   TOGGLE_VSCODE_MARKDOWN_STYLES:

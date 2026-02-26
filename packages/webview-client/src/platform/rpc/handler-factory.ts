@@ -35,6 +35,8 @@ export interface RequiredStateHandlers {
 export interface OptionalStateHandlers {
   setTheme?: (state: WebviewThemeState) => void;
   setNextraMeta?: (meta: NextraPageMeta) => void;
+  setFrontmatter?: (data: Record<string, unknown>) => void;
+  setShowToc?: (show: boolean) => void;
 }
 
 // combined state handlers interface (required + optional)
@@ -254,6 +256,18 @@ export const SET_NEXTRA_META_CONFIG: OptionalHandlerConfig = {
   handlerKey: 'setNextraMeta',
 };
 
+// configuration for setFrontmatter handler
+export const SET_FRONTMATTER_CONFIG: OptionalHandlerConfig = {
+  methodName: 'setFrontmatter',
+  handlerKey: 'setFrontmatter',
+};
+
+// configuration for setShowToc handler
+export const SET_SHOW_TOC_CONFIG: OptionalHandlerConfig = {
+  methodName: 'setShowToc',
+  handlerKey: 'setShowToc',
+};
+
 // config collections (for iteration/documentation)
 
 // all QUEUED handler configurations
@@ -269,6 +283,8 @@ export const QUEUED_CONFIGS = {
 export const OPTIONAL_CONFIGS = {
   setTheme: SET_THEME_CONFIG,
   setNextraMeta: SET_NEXTRA_META_CONFIG,
+  setFrontmatter: SET_FRONTMATTER_CONFIG,
+  setShowToc: SET_SHOW_TOC_CONFIG,
 } as const;
 
 // compile-time type safety

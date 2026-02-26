@@ -46,6 +46,10 @@ export const DEFAULT_COMPONENTS_UNKNOWN_BEHAVIOR = 'placeholder' as const;
 export const DEFAULT_WATCHER_DEBOUNCE_MS = STANDARD_WATCHER_DEBOUNCE_MS;
 export const DEFAULT_DEBUG_OUTPUT = false;
 
+// UX panel defaults
+export const DEFAULT_SHOW_FRONTMATTER = false;
+export const DEFAULT_SHOW_TOC = false;
+
 // default map for all settings (keys match ConfigManager SettingKey)
 export const SETTINGS_DEFAULTS = {
   'preview.updateMode': DEFAULT_PREVIEW_UPDATE_MODE,
@@ -75,4 +79,6 @@ export const SETTINGS_DEFAULTS = {
   'components.unknownBehavior': DEFAULT_COMPONENTS_UNKNOWN_BEHAVIOR,
   'advanced.watcherDebounceMs': DEFAULT_WATCHER_DEBOUNCE_MS,
   'advanced.debugOutput': DEFAULT_DEBUG_OUTPUT,
+  'preview.showFrontmatter': DEFAULT_SHOW_FRONTMATTER,
+  'preview.showToc': DEFAULT_SHOW_TOC,
 } as const;
