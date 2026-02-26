@@ -2,6 +2,7 @@
 /* MDX Preview App styles */
 
 .mdx-preview-container {
+  --mdx-side-rail-width: 292px;
   min-height: 100vh;
   position: relative;
 }
@@ -11,6 +12,43 @@
   padding-top: 1em;
   /* prevent horizontal scroll from Bleed components */
   overflow-x: hidden;
+  transition: padding-right 0.2s ease;
+}
+
+.mdx-preview-container.has-side-rail .mdx-preview-content {
+  padding-right: calc(var(--mdx-side-rail-width) + 46px);
+}
+
+.mdx-preview-side-rail {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: var(--mdx-side-rail-width);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 120;
+  pointer-events: none;
+}
+
+.mdx-preview-side-rail > * {
+  pointer-events: auto;
+}
+
+@media (max-width: 1200px) {
+  .mdx-preview-container.has-side-rail .mdx-preview-content {
+    padding-right: 26px;
+  }
+
+  .mdx-preview-side-rail {
+    position: static;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    margin: 0 26px 20px;
+    pointer-events: auto;
+  }
 }
 
 /* Error Display */
@@ -128,7 +166,7 @@
   min-height: 100px;
 }
 
-/* Markdown Body Styles (mirrors VS Code markdown preview) */
+/* Markdown Body Styles (crossnote-inspired, VS Code theme integrated) */
 .markdown-body {
   color: var(--vscode-editor-foreground);
   font-family: var(
@@ -145,10 +183,10 @@
       sans-serif
     )
   );
-  font-size: var(--vscode-markdown-font-size, var(--markdown-font-size, 14px));
+  font-size: var(--vscode-markdown-font-size, var(--markdown-font-size, 16px));
   line-height: var(
     --vscode-markdown-line-height,
-    var(--markdown-line-height, 22px)
+    var(--markdown-line-height, 1.6)
   );
   word-wrap: break-word;
 }
@@ -179,15 +217,14 @@
 .markdown-body h5,
 .markdown-body h6 {
   font-weight: 600;
-  margin-top: 24px;
+  margin-top: 1em;
   margin-bottom: 16px;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 body.scrollBeyondLastLine .markdown-body {
   margin-bottom: calc(100vh - 22px);
 }
-
 
 /* Prevent `sub` & `sup` elements from affecting line height */
 .markdown-body sub,
@@ -216,6 +253,11 @@ body.scrollBeyondLastLine .markdown-body {
   text-decoration: underline;
 }
 
+.markdown-body a:not([href]) {
+  color: inherit;
+  text-decoration: none;
+}
+
 .markdown-body a:focus,
 .markdown-body input:focus,
 .markdown-body select:focus,
@@ -224,57 +266,108 @@ body.scrollBeyondLastLine .markdown-body {
   outline-offset: -1px;
 }
 
+.markdown-body strong {
+  color: var(--vscode-editor-foreground);
+}
+
 .markdown-body p {
   margin-bottom: 16px;
 }
 
 .markdown-body li p {
-  margin-bottom: 0.7em;
+  margin-bottom: 0.45em;
 }
 
+/* List nesting: disc/circle/square for ul, decimal/lower-roman/lower-alpha for ol */
 .markdown-body ul,
 .markdown-body ol {
-  margin-bottom: 0.7em;
-  padding-left: 2em;
+  margin: 0.55em 0 0.95em;
+  padding-left: 1.55em;
 }
 
+.markdown-body li {
+  margin: 0.28em 0;
+  padding-left: 0.2em;
+}
+
+.markdown-body li::marker {
+  color: var(--vscode-descriptionForeground, rgba(127, 127, 127, 0.8));
+}
+
+.markdown-body li > ul,
+.markdown-body li > ol {
+  margin-top: 0.32em;
+  margin-bottom: 0.35em;
+}
+
+.markdown-body ul {
+  list-style-type: disc;
+}
+
+.markdown-body ul ul {
+  list-style-type: circle;
+}
+
+.markdown-body ul ul ul {
+  list-style-type: square;
+}
+
+.markdown-body ol {
+  list-style-type: decimal;
+  padding-left: 1.75em;
+}
+
+.markdown-body ol li::marker {
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown-body ol ol {
+  list-style-type: lower-roman;
+}
+
+.markdown-body ol ol ol {
+  list-style-type: lower-alpha;
+}
+
+/* Horizontal rule */
 .markdown-body hr {
   border: 0;
-  height: 1px;
-  border-bottom: 1px solid;
+  height: 4px;
+  margin: 32px 0;
+  padding: 0;
+  background-color: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
 }
 
+/* Headings */
 .markdown-body h1 {
-  font-size: 2em;
+  font-size: 2.25em;
   margin-top: 0;
   padding-bottom: 0.3em;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
 }
 
 .markdown-body h2 {
-  font-size: 1.5em;
+  font-size: 1.75em;
   padding-bottom: 0.3em;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
 }
 
 .markdown-body h3 {
-  font-size: 1.25em;
+  font-size: 1.5em;
 }
 
 .markdown-body h4 {
-  font-size: 1em;
+  font-size: 1.25em;
 }
 
 .markdown-body h5 {
-  font-size: 0.875em;
+  font-size: 1em;
 }
 
 .markdown-body h6 {
-  font-size: 0.85em;
+  font-size: 1em;
+  color: var(--vscode-descriptionForeground, #888);
 }
 
+/* Tables */
 .markdown-body table {
   border-collapse: collapse;
   margin-bottom: 0.7em;
@@ -285,14 +378,15 @@ body.scrollBeyondLastLine .markdown-body {
 }
 
 .markdown-body th {
+  font-weight: 600;
   text-align: left;
-  border-bottom: 1px solid;
-  border-bottom-color: var(--vscode-panel-border, currentColor);
+  border: 1px solid var(--vscode-panel-border, currentColor);
 }
 
 .markdown-body th,
 .markdown-body td {
-  padding: 5px 10px;
+  padding: 6px 13px;
+  border: 1px solid var(--vscode-panel-border, currentColor);
 }
 
 .markdown-body table > tbody > tr + tr > td {
@@ -300,17 +394,22 @@ body.scrollBeyondLastLine .markdown-body {
   border-top-color: var(--vscode-panel-border, currentColor);
 }
 
+/* Blockquote */
 .markdown-body blockquote {
-  margin: 0;
+  margin: 16px 0;
   padding: 0 16px 0 10px;
-  border-left-width: 5px;
+  border-left-width: 4px;
   border-left-style: solid;
   border-radius: 2px;
   color: var(--vscode-textBlockQuote-foreground, inherit);
   border-left-color: var(--vscode-textBlockQuote-border, currentColor);
-  background-color: transparent;
+  background-color: var(
+    --vscode-textBlockQuote-background,
+    rgba(127, 127, 127, 0.1)
+  );
 }
 
+/* Inline code */
 .markdown-body code {
   font-family: var(
     --vscode-editor-font-family,
@@ -324,12 +423,12 @@ body.scrollBeyondLastLine .markdown-body {
     'Courier New',
     monospace
   );
-  font-size: 1em;
+  font-size: 0.85em;
   line-height: 1.5;
 }
 
 .markdown-body :not(pre) > code {
-  padding: 0.1em 0.3em;
+  padding: 0.2em 0.4em;
   border-radius: 3px;
   background-color: var(
     --vscode-textPreformat-background,
@@ -338,15 +437,23 @@ body.scrollBeyondLastLine .markdown-body {
   color: var(--vscode-textPreformat-foreground, inherit);
 }
 
+.markdown-body :not(pre) > code::before,
+.markdown-body :not(pre) > code::after {
+  content: '\00a0';
+  letter-spacing: -0.2em;
+}
+
 body.wordWrap .markdown-body pre {
   white-space: pre-wrap;
 }
 
+/* Code blocks */
 .markdown-body pre:not(.hljs),
 .markdown-body pre.hljs code > div {
-  padding: 16px;
+  padding: 1em;
   border-radius: 3px;
   overflow: auto;
+  line-height: 1.45;
 }
 
 .markdown-body pre code {
@@ -361,6 +468,43 @@ body.wordWrap .markdown-body pre {
   border: 1px solid var(--vscode-widget-border);
 }
 
+/* Definition lists */
+.markdown-body dl {
+  padding: 0;
+}
+
+.markdown-body dt {
+  padding: 0;
+  margin-top: 14px;
+  font-weight: 600;
+  color: var(--vscode-editor-foreground);
+}
+
+.markdown-body dd {
+  margin: 4px 0 12px 1.25rem;
+  padding: 0;
+  color: var(--vscode-descriptionForeground, var(--vscode-editor-foreground));
+}
+
+/* Keyboard element */
+.markdown-body kbd {
+  display: inline-block;
+  padding: 3px 5px;
+  font-size: 0.85em;
+  line-height: 1;
+  color: var(--vscode-editor-foreground);
+  vertical-align: middle;
+  background-color: var(
+    --vscode-textCodeBlock-background,
+    rgba(127, 127, 127, 0.12)
+  );
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  border-radius: 3px;
+  box-shadow: inset 0 -1px 0
+    var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+/* Theme-specific table borders */
 .vscode-high-contrast .markdown-body h1 {
   border-color: rgb(0, 0, 0);
 }
@@ -373,18 +517,33 @@ body.wordWrap .markdown-body pre {
   border-color: var(--vscode-panel-border, rgba(255, 255, 255, 0.69));
 }
 
-.vscode-light .markdown-body h1,
-.vscode-light .markdown-body h2,
 .vscode-light .markdown-body hr,
 .vscode-light .markdown-body td {
   border-color: var(--vscode-panel-border, rgba(0, 0, 0, 0.18));
 }
 
-.vscode-dark .markdown-body h1,
-.vscode-dark .markdown-body h2,
 .vscode-dark .markdown-body hr,
 .vscode-dark .markdown-body td {
   border-color: var(--vscode-panel-border, rgba(255, 255, 255, 0.18));
+}
+
+/* Print styles */
+@media print {
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4,
+  .markdown-body h5,
+  .markdown-body h6 {
+    page-break-after: avoid;
+  }
+
+  .markdown-body pre,
+  .markdown-body blockquote,
+  .markdown-body table,
+  .markdown-body img {
+    page-break-inside: avoid;
+  }
 }
 
 /* Phase 2.4: Heading anchor links */
@@ -428,24 +587,17 @@ body.wordWrap .markdown-body pre {
   text-decoration: underline;
 }
 
-/* Adjust content when TOC is visible */
-.mdx-preview-container.has-toc .mdx-preview-content {
-  /* TOC width + margin */
-  padding-right: 236px;
-}
-
-.mdx-preview-container.has-toc.toc-collapsed .mdx-preview-content {
-  /* collapsed TOC width + margin */
-  padding-right: 48px;
-}
-
-/* Phase 3.4: GitHub-style alerts/callouts */
+/* Phase 3.4: GitHub-style alerts/callouts (Material Design) */
 .github-alert {
   padding: 12px 16px;
   margin: 16px 0;
-  border-left: 4px solid;
-  border-radius: 4px;
+  border-left: 0.4rem solid;
+  border-radius: 0.2rem;
   background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
+  box-shadow:
+    0 2px 2px 0 rgba(0, 0, 0, 0.14),
+    0 1px 5px 0 rgba(0, 0, 0, 0.12),
+    0 3px 1px -2px rgba(0, 0, 0, 0.2);
 }
 
 .github-alert-note {
@@ -492,7 +644,7 @@ body.wordWrap .markdown-body pre {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0 0 8px 0;
   font-size: 14px;
 }
@@ -535,4 +687,14 @@ body.wordWrap .markdown-body pre {
 [data-mpe-theme-active='true'] .mdx-preview-content {
   padding: 0;
   background: transparent;
+}
+
+[data-mpe-theme-active='true'].has-side-rail .mdx-preview-content {
+  padding-right: calc(var(--mdx-side-rail-width) + 20px);
+}
+
+@media (max-width: 1200px) {
+  [data-mpe-theme-active='true'].has-side-rail .mdx-preview-content {
+    padding-right: 0;
+  }
 }
