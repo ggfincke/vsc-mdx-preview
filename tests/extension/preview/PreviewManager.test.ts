@@ -13,7 +13,7 @@ vi.mock(
 );
 
 // mock Preview module to avoid transitive dep chain
-// (Preview → EvaluationEngine → transform → sucrase)
+// (Preview -> EvaluationEngine -> transform -> sucrase)
 vi.mock(
   '../../../packages/extension-host/src/features/preview/Preview',
   () => ({
@@ -60,7 +60,7 @@ describe('PreviewManager', () => {
   // refreshAllPreviews
 
   describe('refreshAllPreviews', () => {
-    it('active preview → calls refreshWebview', async () => {
+    it('active preview -> calls refreshWebview', async () => {
       const mgr = PreviewManager.getInstance();
       const preview = createMockPreview({ active: true });
       mgr.setCurrentPreview(preview);
@@ -68,7 +68,7 @@ describe('PreviewManager', () => {
       expect(preview.refreshWebview).toHaveBeenCalled();
     });
 
-    it('no preview → no-op', async () => {
+    it('no preview -> no-op', async () => {
       const mgr = PreviewManager.getInstance();
       await mgr.refreshAllPreviews();
     });
@@ -77,7 +77,7 @@ describe('PreviewManager', () => {
   // clearAllWebviewCaches
 
   describe('clearAllWebviewCaches', () => {
-    it('active → calls clearAllCaches', async () => {
+    it('active -> calls clearAllCaches', async () => {
       const mgr = PreviewManager.getInstance();
       const preview = createMockPreview({ active: true });
       mgr.setCurrentPreview(preview);

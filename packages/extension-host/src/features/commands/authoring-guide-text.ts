@@ -439,7 +439,7 @@ Layout options: \`default\` (centered), \`full\` (full-width), \`raw\` (no styli
 ### Accessibility
 
 - Always provide alt text for images
-- Use semantic heading hierarchy (h1 → h2 → h3)
+- Use semantic heading hierarchy (h1 -> h2 -> h3)
 - Don't rely solely on color to convey meaning
 - Provide text alternatives for visual content
 

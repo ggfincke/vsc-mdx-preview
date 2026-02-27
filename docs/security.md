@@ -564,7 +564,7 @@ MDX Preview maintains awareness of dependency vulnerabilities via `npm audit`. T
 
 ### lodash-es Prototype Pollution (GHSA-xxjr-mmjv-4gpg)
 
-**Path:** `mermaid → @mermaid-js/parser → langium → chevrotain → lodash-es`
+**Path:** `mermaid -> @mermaid-js/parser -> langium -> chevrotain -> lodash-es`
 
 **Assessment:** Low risk
 - lodash-es is an internal dependency of Mermaid's parser
@@ -576,7 +576,7 @@ MDX Preview maintains awareness of dependency vulnerabilities via `npm audit`. T
 
 ### esbuild Request Forgery (GHSA-67mh-4wv8-2f99)
 
-**Path:** `vitest → vite → esbuild`
+**Path:** `vitest -> vite -> esbuild`
 
 **Assessment:** No production risk
 - Development dependency only

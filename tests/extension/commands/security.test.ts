@@ -47,7 +47,7 @@ describe('security commands', () => {
       (c) => c.id === 'mdx-preview.commands.toggleScripts'
     )!.handler;
 
-    it('untrusted workspace → reportWithActions w/ Manage Trust & Cancel', async () => {
+    it('untrusted workspace -> reportWithActions w/ Manage Trust & Cancel', async () => {
       mockTrustManager.getState.mockReturnValue({
         workspaceTrusted: false,
       });
@@ -62,7 +62,7 @@ describe('security commands', () => {
       );
     });
 
-    it('trusted + enabled → sets false w/ Workspace scope & shows info', async () => {
+    it('trusted + enabled -> sets false w/ Workspace scope & shows info', async () => {
       mockTrustManager.getState.mockReturnValue({
         workspaceTrusted: true,
       });
@@ -77,7 +77,7 @@ describe('security commands', () => {
       expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('disabled'));
     });
 
-    it('trusted + disabled → sets true w/ Workspace scope & shows info', async () => {
+    it('trusted + disabled -> sets true w/ Workspace scope & shows info', async () => {
       mockTrustManager.getState.mockReturnValue({
         workspaceTrusted: true,
       });

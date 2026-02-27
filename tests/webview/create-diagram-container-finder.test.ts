@@ -124,7 +124,7 @@ describe('createDiagramContainerFinder', () => {
       <div class="ver-container" data-ver-code="x" data-ver-id="v1"></div>
     `;
 
-    // missing data-ver-version → extract returns null → skipped
+    // missing data-ver-version -> extract returns null -> skipped
     expect(finder(document.body)).toHaveLength(0);
   });
 });

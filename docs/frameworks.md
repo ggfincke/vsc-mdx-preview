@@ -298,7 +298,7 @@ sequenceDiagram
     MDX->>Ext: import Tabs from '@theme/Tabs'
     Ext->>Ext: Detect framework (docusaurus)
     Ext->>Ext: Resolve alias to shim path
-    Note over Ext: @theme/Tabs → @mdx-preview/shims/docusaurus/Tabs
+    Note over Ext: @theme/Tabs -> @mdx-preview/shims/docusaurus/Tabs
     Ext->>WV: Return shim module ID
     Note over WV: npm://@mdx-preview/shims-docusaurus/Tabs
     WV->>WV: Load preloaded shim component

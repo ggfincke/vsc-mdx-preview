@@ -164,7 +164,7 @@ describe('WatcherManager', () => {
       expect(w2.waitForReady).toHaveBeenCalled();
     });
 
-    it('getReadyState returns Map of name → boolean', () => {
+    it('getReadyState returns Map of name -> boolean', () => {
       const w1 = createMockWatcher({ ready: true });
       const w2 = createMockWatcher({ ready: false });
       manager.register('w1', w1);
