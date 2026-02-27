@@ -239,6 +239,8 @@ export const DOMPURIFY_CONFIG: Config = {
     'data-graphviz-language',
     // admonition data attributes
     'data-admonition-type',
+    // source mapping for preview hover highlighting
+    'data-source-line',
   ],
   ADD_ATTR: ['target', 'rel'],
   ALLOW_UNKNOWN_PROTOCOLS: false,

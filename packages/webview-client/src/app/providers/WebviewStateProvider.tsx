@@ -38,7 +38,12 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
   const { setStale, setIsLoading } = useLoading();
   const { setNextraMeta } = useNextra();
   const { setFrontmatter } = useFrontmatter();
-  const { setShowToc } = useToc();
+  const {
+    setShowToc,
+    setSourceLineHighlight,
+    setSourceLineHighlightColor,
+    setShimSideRail,
+  } = useToc();
   const { setPreviewThemeState } = useTheme();
 
   const initializedRef = useRef(false);
@@ -64,6 +69,9 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
       setNextraMeta,
       setFrontmatter,
       setShowToc,
+      setSourceLineHighlight,
+      setSourceLineHighlightColor,
+      setShimSideRail,
     });
     log.debug('Handlers registered');
   }, [
@@ -77,6 +85,9 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
     setNextraMeta,
     setFrontmatter,
     setShowToc,
+    setSourceLineHighlight,
+    setSourceLineHighlightColor,
+    setShimSideRail,
   ]);
 
   return <>{children}</>;

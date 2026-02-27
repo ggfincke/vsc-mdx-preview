@@ -62,7 +62,12 @@ function App() {
     setEvaluatedComponent(null);
   }, [content]);
   const { nextraMeta } = useNextra();
-  const { headings, showToc } = useToc();
+  const {
+    headings,
+    showToc,
+    shimSideRailEnabled,
+    sourceLineHighlightColorMode,
+  } = useToc();
   const { frontmatter } = useFrontmatter();
 
   // get theme context for MPE preview themes
@@ -156,6 +161,8 @@ function App() {
       className={`mdx-preview-container ${nextraLayoutClass} ${hasSideRailClass}`.trim()}
       onClick={handleLinkClick}
       data-mpe-theme-active={previewTheme !== 'none' ? 'true' : undefined}
+      data-shim-side-rail={shimSideRailEnabled ? 'on' : 'off'}
+      data-source-line-highlight-color={sourceLineHighlightColorMode}
     >
       <StaleIndicator isStale={isStale} />
       {!trustState.canExecute && <TrustBanner trustState={trustState} />}

@@ -13,12 +13,14 @@ import {
 } from 'react';
 import { evaluateModuleToComponent } from '../../module-runtime';
 import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
+import { useSourceLineHighlight } from '../shared/hooks/useSourceLineHighlight';
 import { useAsyncEffect } from '../../../shared/hooks/useAsyncEffect';
 import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
 import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnhancement';
 import { PreviewContainer } from '../shared/ui/PreviewContainer/PreviewContainer';
 import type { TrustedPreviewContent, PreviewError } from '../../../app/types';
 import { extractErrorInfo } from '@mdx-preview/runtime-utils';
+import { useToc } from '../../../app/state';
 import {
   shallowArrayEquals,
   createFieldComparator,
@@ -86,6 +88,8 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   onComponentReady,
   onError,
 }: TrustedPreviewRendererProps) {
+  const { sourceLineHighlightEnabled } = useToc();
+
   // local loading state tracks webview-side module evaluation (distinct from global
   // isLoading which tracks extension-side compilation). This separation is intentional -
   // the global loading state controls the LoadingBar overlay, while isEvaluating controls
@@ -134,6 +138,13 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
 
   // enhance Shiki code blocks w/ copy buttons & language badges
   useCodeBlockEnhancement({ containerRef, trigger: evaluatedComponent });
+
+  // bind MPE-style source-line hover highlights once rendered content is ready
+  useSourceLineHighlight({
+    containerRef,
+    trigger: evaluatedComponent,
+    enabled: sourceLineHighlightEnabled,
+  });
 
   // show loading state while evaluating
   if (isEvaluating || !evaluatedComponent) {

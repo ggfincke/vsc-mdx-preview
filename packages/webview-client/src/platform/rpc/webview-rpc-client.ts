@@ -1,7 +1,8 @@
 // packages/webview-app/src/rpc-webview.ts
 // RPC webview side - bidirectional communication between webview & extension via Comlink
-// message queue buffers messages until React mounts (queued: trust, safe, trusted, error, stale)
-// direct handlers (theme, CSS, Tailwind) update DOM immediately w/o queueing
+// queued message map buffers content/state updates until React mounts (trust/safe/trusted/error/stale)
+// optional config handlers are also buffered w/ last-write-wins coalescing by handler key
+// direct handlers (CSS, Tailwind, module invalidation) execute immediately
 
 import * as comlink from 'comlink';
 import type { Endpoint } from 'comlink';
@@ -22,6 +23,8 @@ import {
 } from '@mdx-preview/contracts';
 import {
   createHandlerFactories,
+  type OptionalStateHandlers,
+  type PendingOptionalMessage,
   type WebviewStateHandlers,
   type PendingMessage,
   type QueuedMessageType,
@@ -34,6 +37,9 @@ import {
   SET_NEXTRA_META_CONFIG,
   SET_FRONTMATTER_CONFIG,
   SET_SHOW_TOC_CONFIG,
+  SET_SOURCE_LINE_HIGHLIGHT_CONFIG,
+  SET_SOURCE_LINE_HIGHLIGHT_COLOR_CONFIG,
+  SET_SHIM_SIDE_RAIL_CONFIG,
 } from './handler-factory';
 
 // create tagged logger for this module
@@ -92,6 +98,10 @@ function getModuleSystem(): Promise<
 // use Map to coalesce by message type - last message of each type wins
 // this prevents stale messages from replaying out of order when React mounts slowly
 const pendingMessages = new Map<QueuedMessageType, PendingMessage>();
+const pendingOptionalMessages = new Map<
+  keyof OptionalStateHandlers,
+  PendingOptionalMessage
+>();
 
 // track current trust state for content validation
 let currentTrustState: TrustState | null = null;
@@ -103,6 +113,17 @@ function enqueueMessage(message: PendingMessage): void {
   );
   // coalesce: newer message of same type replaces older
   pendingMessages.set(message.type, message);
+}
+
+function enqueueOptionalMessage(message: PendingOptionalMessage): void {
+  const hadPrevious = pendingOptionalMessages.has(message.handlerKey);
+  log.debug(
+    `Enqueueing optional message: ${String(message.handlerKey)}${
+      hadPrevious ? ' (replacing previous)' : ''
+    }`
+  );
+  // coalesce by optional handler key - last config value wins
+  pendingOptionalMessages.set(message.handlerKey, message);
 }
 
 // validate content mode matches trust state (return true if content should be processed)
@@ -205,10 +226,32 @@ function flushPendingMessages(): void {
   }
 }
 
+function flushPendingOptionalMessages(): void {
+  log.debug(
+    `flushPendingOptionalMessages: ${pendingOptionalMessages.size} pending`
+  );
+  if (!stateHandlers || pendingOptionalMessages.size === 0) {
+    return;
+  }
+
+  const messages = new Map(pendingOptionalMessages);
+  pendingOptionalMessages.clear();
+
+  for (const [handlerKey, message] of messages) {
+    const handler = stateHandlers[handlerKey];
+    if (typeof handler !== 'function') {
+      continue;
+    }
+
+    (handler as (...args: unknown[]) => void)(...message.args);
+  }
+}
+
 // create handler factories bound to module state
 const { createQueuedHandler, createOptionalHandler } = createHandlerFactories(
   () => stateHandlers,
-  enqueueMessage
+  enqueueMessage,
+  enqueueOptionalMessage
 );
 
 // RPC handle exposed to extension (route calls to React state handlers)
@@ -220,11 +263,20 @@ class RPCWebviewHandle implements WebviewRPC {
   showPreviewError = createQueuedHandler(SHOW_PREVIEW_ERROR_CONFIG, log);
   setStale = createQueuedHandler(SET_STALE_CONFIG, log);
 
-  // optional handlers - call if handler present, no queuing
+  // optional handlers - call directly when mounted, else enqueue latest config value
   setTheme = createOptionalHandler(SET_THEME_CONFIG, log);
   setNextraMeta = createOptionalHandler(SET_NEXTRA_META_CONFIG, log);
   setFrontmatter = createOptionalHandler(SET_FRONTMATTER_CONFIG, log);
   setShowToc = createOptionalHandler(SET_SHOW_TOC_CONFIG, log);
+  setSourceLineHighlight = createOptionalHandler(
+    SET_SOURCE_LINE_HIGHLIGHT_CONFIG,
+    log
+  );
+  setSourceLineHighlightColor = createOptionalHandler(
+    SET_SOURCE_LINE_HIGHLIGHT_COLOR_CONFIG,
+    log
+  );
+  setShimSideRail = createOptionalHandler(SET_SHIM_SIDE_RAIL_CONFIG, log);
 
   // direct handlers - immediate DOM/style injection (kept manual for simplicity)
   setCustomCss(css: string): void {
@@ -349,6 +401,7 @@ function attemptRegistration(
     }
 
     flushPendingMessages();
+    flushPendingOptionalMessages();
     registrationInProgress = false;
     log.debug('registerWebviewHandlers complete');
   } catch (e) {

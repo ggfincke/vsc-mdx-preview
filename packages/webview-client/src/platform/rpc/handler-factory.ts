@@ -5,6 +5,7 @@ import type {
   TaggedLogger,
   NextraPageMeta,
   PreviewError,
+  SourceLineHighlightColorValue,
   TrustState,
   WebviewRPC,
   WebviewThemeState,
@@ -37,6 +38,9 @@ export interface OptionalStateHandlers {
   setNextraMeta?: (meta: NextraPageMeta) => void;
   setFrontmatter?: (data: Record<string, unknown>) => void;
   setShowToc?: (show: boolean) => void;
+  setSourceLineHighlight?: (enabled: boolean) => void;
+  setSourceLineHighlightColor?: (mode: SourceLineHighlightColorValue) => void;
+  setShimSideRail?: (enabled: boolean) => void;
 }
 
 // combined state handlers interface (required + optional)
@@ -67,6 +71,12 @@ export interface OptionalHandlerConfig {
   handlerKey: keyof OptionalStateHandlers;
 }
 
+// pending optional message (buffer latest optional config until handlers mount)
+export interface PendingOptionalMessage {
+  handlerKey: keyof OptionalStateHandlers;
+  args: unknown[];
+}
+
 // pending message structure for the queue (discriminated union)
 export type PendingMessage =
   | { type: 'trust'; payload: unknown }
@@ -78,7 +88,8 @@ export type PendingMessage =
 // create factory context bound to module-level state
 export function createHandlerFactories(
   getHandlers: () => WebviewStateHandlers | null,
-  enqueueFn: (msg: PendingMessage) => void
+  enqueueFn: (msg: PendingMessage) => void,
+  enqueueOptionalFn?: (msg: PendingOptionalMessage) => void
 ) {
   // create QUEUED pattern handler
   function createQueuedHandler<TPayload, THandlerArgs extends unknown[]>(
@@ -138,7 +149,12 @@ export function createHandlerFactories(
       const handler = handlers?.[handlerKey];
       if (typeof handler === 'function') {
         (handler as (...a: TArgs) => void)(...args);
+        return;
       }
+
+      // optional handlers can arrive before React state handlers mount.
+      // buffer latest args so caller can replay after registration.
+      enqueueOptionalFn?.({ handlerKey, args: [...args] });
     };
   }
 
@@ -268,6 +284,24 @@ export const SET_SHOW_TOC_CONFIG: OptionalHandlerConfig = {
   handlerKey: 'setShowToc',
 };
 
+// configuration for setSourceLineHighlight handler
+export const SET_SOURCE_LINE_HIGHLIGHT_CONFIG: OptionalHandlerConfig = {
+  methodName: 'setSourceLineHighlight',
+  handlerKey: 'setSourceLineHighlight',
+};
+
+// configuration for setSourceLineHighlightColor handler
+export const SET_SOURCE_LINE_HIGHLIGHT_COLOR_CONFIG: OptionalHandlerConfig = {
+  methodName: 'setSourceLineHighlightColor',
+  handlerKey: 'setSourceLineHighlightColor',
+};
+
+// configuration for setShimSideRail handler
+export const SET_SHIM_SIDE_RAIL_CONFIG: OptionalHandlerConfig = {
+  methodName: 'setShimSideRail',
+  handlerKey: 'setShimSideRail',
+};
+
 // config collections (for iteration/documentation)
 
 // all QUEUED handler configurations
@@ -285,6 +319,9 @@ export const OPTIONAL_CONFIGS = {
   setNextraMeta: SET_NEXTRA_META_CONFIG,
   setFrontmatter: SET_FRONTMATTER_CONFIG,
   setShowToc: SET_SHOW_TOC_CONFIG,
+  setSourceLineHighlight: SET_SOURCE_LINE_HIGHLIGHT_CONFIG,
+  setSourceLineHighlightColor: SET_SOURCE_LINE_HIGHLIGHT_COLOR_CONFIG,
+  setShimSideRail: SET_SHIM_SIDE_RAIL_CONFIG,
 } as const;
 
 // compile-time type safety

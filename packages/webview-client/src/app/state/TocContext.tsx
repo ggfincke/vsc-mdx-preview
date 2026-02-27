@@ -3,7 +3,10 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
-import { LogTags } from '@mdx-preview/contracts';
+import {
+  LogTags,
+  type SourceLineHighlightColorValue,
+} from '@mdx-preview/contracts';
 import { createContextProvider } from '../providers/createContextProvider';
 
 // heading entry extracted from rendered DOM
@@ -16,9 +19,15 @@ export interface TocHeading {
 interface TocContextValue {
   headings: TocHeading[] | null;
   showToc: boolean;
+  sourceLineHighlightEnabled: boolean;
+  sourceLineHighlightColorMode: SourceLineHighlightColorValue;
+  shimSideRailEnabled: boolean;
   activeHeadingId: string | null;
   setHeadings: (headings: TocHeading[] | null) => void;
   setShowToc: (show: boolean) => void;
+  setSourceLineHighlight: (enabled: boolean) => void;
+  setSourceLineHighlightColor: (mode: SourceLineHighlightColorValue) => void;
+  setShimSideRail: (enabled: boolean) => void;
   setActiveHeadingId: (headingId: string | null) => void;
 }
 
@@ -29,6 +38,11 @@ const log = createTaggedLogger(LogTags.APP);
 function useTocProviderValue(): TocContextValue {
   const [headings, setHeadingsState] = useState<TocHeading[] | null>(null);
   const [showToc, setShowTocState] = useState(false);
+  const [sourceLineHighlightEnabled, setSourceLineHighlightEnabledState] =
+    useState(true);
+  const [sourceLineHighlightColorMode, setSourceLineHighlightColorModeState] =
+    useState<SourceLineHighlightColorValue>('dependent');
+  const [shimSideRailEnabled, setShimSideRailEnabledState] = useState(true);
   const [activeHeadingId, setActiveHeadingIdState] = useState<string | null>(
     null
   );
@@ -57,6 +71,24 @@ function useTocProviderValue(): TocContextValue {
     }
   }, []);
 
+  const setSourceLineHighlight = useCallback((enabled: boolean) => {
+    log.debug('setSourceLineHighlight called', enabled);
+    setSourceLineHighlightEnabledState(enabled);
+  }, []);
+
+  const setSourceLineHighlightColor = useCallback(
+    (mode: SourceLineHighlightColorValue) => {
+      log.debug('setSourceLineHighlightColor called', mode);
+      setSourceLineHighlightColorModeState(mode);
+    },
+    []
+  );
+
+  const setShimSideRail = useCallback((enabled: boolean) => {
+    log.debug('setShimSideRail called', enabled);
+    setShimSideRailEnabledState(enabled);
+  }, []);
+
   const setActiveHeadingId = useCallback((headingId: string | null) => {
     setActiveHeadingIdState((prev) => (prev === headingId ? prev : headingId));
   }, []);
@@ -65,17 +97,29 @@ function useTocProviderValue(): TocContextValue {
     () => ({
       headings,
       showToc,
+      sourceLineHighlightEnabled,
+      sourceLineHighlightColorMode,
+      shimSideRailEnabled,
       activeHeadingId,
       setHeadings,
       setShowToc,
+      setSourceLineHighlight,
+      setSourceLineHighlightColor,
+      setShimSideRail,
       setActiveHeadingId,
     }),
     [
       headings,
       showToc,
+      sourceLineHighlightEnabled,
+      sourceLineHighlightColorMode,
+      shimSideRailEnabled,
       activeHeadingId,
       setHeadings,
       setShowToc,
+      setSourceLineHighlight,
+      setSourceLineHighlightColor,
+      setShimSideRail,
       setActiveHeadingId,
     ]
   );

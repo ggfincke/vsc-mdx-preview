@@ -3,8 +3,29 @@
 
 .mdx-preview-container {
   --mdx-side-rail-width: 292px;
+  --mdx-source-line-base-color: var(--vscode-editorInfo-foreground, #95c258);
   min-height: 100vh;
   position: relative;
+}
+
+.mdx-preview-container[data-source-line-highlight-color='white'] {
+  --mdx-source-line-force-color: #fff;
+}
+
+.mdx-preview-container[data-source-line-highlight-color='black'] {
+  --mdx-source-line-force-color: #000;
+}
+
+.vscode-dark .mdx-preview-container[data-source-line-highlight-color='auto'],
+.vscode-high-contrast
+  .mdx-preview-container[data-source-line-highlight-color='auto'] {
+  --mdx-source-line-force-color: #fff;
+}
+
+.vscode-light .mdx-preview-container[data-source-line-highlight-color='auto'],
+.vscode-high-contrast-light
+  .mdx-preview-container[data-source-line-highlight-color='auto'] {
+  --mdx-source-line-force-color: #000;
 }
 
 .mdx-preview-content {
@@ -232,6 +253,176 @@ body.scrollBeyondLastLine .markdown-body {
   line-height: 0;
 }
 
+/* MPE-style source mapping hover highlight (Safe + Trusted) */
+.mdx-safe-preview .highlight-line,
+.mdx-trusted-preview .highlight-line,
+.markdown-body .highlight-line {
+  position: relative;
+  --mdx-source-line-offset: -8px;
+  --mdx-source-line-width: 4px;
+  --mdx-source-line-color: var(
+    --mdx-source-line-force-color,
+    var(--mdx-source-line-base-color)
+  );
+}
+
+.mdx-safe-preview li.highlight-line,
+.mdx-trusted-preview li.highlight-line,
+.markdown-body li.highlight-line {
+  /* place the bar directly before list markers (numbers/bullets) */
+  --mdx-source-line-offset: -26px;
+}
+
+.mdx-safe-preview .highlight-line::before,
+.mdx-trusted-preview .highlight-line::before,
+.markdown-body .highlight-line::before {
+  content: '';
+  position: absolute;
+  left: var(--mdx-source-line-offset);
+  top: 0;
+  bottom: 0;
+  width: var(--mdx-source-line-width);
+  border-radius: 0;
+  background-color: var(--mdx-source-line-color);
+  pointer-events: none;
+  transition:
+    background-color 120ms ease,
+    width 120ms ease;
+}
+
+.mdx-safe-preview .highlight-line.highlight-active,
+.mdx-trusted-preview .highlight-line.highlight-active,
+.markdown-body .highlight-line.highlight-active {
+}
+
+.mdx-safe-preview .highlight-line.highlight-active::before,
+.mdx-trusted-preview .highlight-line.highlight-active::before,
+.markdown-body .highlight-line.highlight-active::before {
+  width: var(--mdx-source-line-width);
+  background-color: var(--mdx-source-line-color);
+}
+
+/* use semantic callout colors for shim/admonition highlights */
+.mdx-safe-preview .highlight-line:is(
+    .mdx-safe-callout,
+    .mdx-preview-admonition,
+    .github-alert,
+    .mdx-preview-starlight-aside,
+    [data-callout-type],
+    .mdx-preview-nextra-callout,
+    .mdx-preview-nextra-callout-wrapper
+  ),
+.mdx-trusted-preview .highlight-line:is(
+    .mdx-safe-callout,
+    .mdx-preview-admonition,
+    .github-alert,
+    .mdx-preview-starlight-aside,
+    [data-callout-type],
+    .mdx-preview-nextra-callout,
+    .mdx-preview-nextra-callout-wrapper
+  ),
+.markdown-body .highlight-line:is(
+    .mdx-safe-callout,
+    .mdx-preview-admonition,
+    .github-alert,
+    .mdx-preview-starlight-aside,
+    [data-callout-type],
+    .mdx-preview-nextra-callout,
+    .mdx-preview-nextra-callout-wrapper
+  ) {
+  --mdx-source-line-offset: -14px;
+  --mdx-source-line-color: var(
+    --mdx-source-line-force-color,
+    var(--mdx-shim-source-line-color, var(--mdx-source-line-base-color))
+  );
+}
+
+.highlight-line.mdx-safe-callout,
+.highlight-line.mdx-preview-starlight-aside,
+.highlight-line[data-callout-type] {
+  --mdx-shim-source-line-color: var(
+    --callout-color,
+    var(--aside-color, var(--vscode-editorInfo-foreground, #95c258))
+  );
+}
+
+.highlight-line.mdx-preview-admonition {
+  --mdx-shim-source-line-color: var(
+    --admonition-color,
+    var(--vscode-editorInfo-foreground, #95c258)
+  );
+}
+
+.highlight-line.github-alert {
+  --mdx-shim-source-line-color: var(--vscode-editorInfo-foreground, #3794ff);
+}
+
+.highlight-line.github-alert-note {
+  --mdx-shim-source-line-color: var(--vscode-editorInfo-foreground, #3794ff);
+}
+
+.highlight-line.github-alert-tip {
+  --mdx-shim-source-line-color: var(--vscode-testing-iconPassed, #73c991);
+}
+
+.highlight-line.github-alert-important {
+  --mdx-shim-source-line-color: #9d4edd;
+}
+
+.highlight-line.github-alert-warning {
+  --mdx-shim-source-line-color: var(--vscode-editorWarning-foreground, #cca700);
+}
+
+.highlight-line.github-alert-caution {
+  --mdx-shim-source-line-color: var(--vscode-errorForeground, #f48771);
+}
+
+.highlight-line.mdx-preview-nextra-callout-default {
+  --mdx-shim-source-line-color: #22c55e;
+}
+
+.highlight-line.mdx-preview-nextra-callout-info {
+  --mdx-shim-source-line-color: #3b82f6;
+}
+
+.highlight-line.mdx-preview-nextra-callout-warning {
+  --mdx-shim-source-line-color: #f59e0b;
+}
+
+.highlight-line.mdx-preview-nextra-callout-error {
+  --mdx-shim-source-line-color: #ef4444;
+}
+
+.highlight-line.mdx-preview-nextra-callout-important {
+  --mdx-shim-source-line-color: #a855f7;
+}
+
+/* optional shim side rails to avoid double-line appearance with hover highlights */
+.mdx-preview-container[data-shim-side-rail='off']
+  :is(
+    .github-alert,
+    .mdx-safe-callout,
+    .mdx-preview-admonition,
+    .mdx-preview-starlight-aside,
+    [data-callout-type]
+  ) {
+  border-left-color: transparent;
+  border-inline-start-color: transparent;
+}
+
+.mdx-preview-container[data-shim-side-rail='off']
+  .highlight-line:is(
+    .github-alert,
+    .mdx-safe-callout,
+    .mdx-preview-admonition,
+    .mdx-preview-starlight-aside,
+    [data-callout-type],
+    .mdx-preview-nextra-callout,
+    .mdx-preview-nextra-callout-wrapper
+  ) {
+  --mdx-source-line-offset: -10px;
+}
+
 .markdown-body ul ul:first-child,
 .markdown-body ul ol:first-child,
 .markdown-body ol ul:first-child,
@@ -369,29 +560,70 @@ body.scrollBeyondLastLine .markdown-body {
 
 /* Tables */
 .markdown-body table {
+  --mdx-table-rail-track-width: 4px;
   border-collapse: collapse;
-  margin-bottom: 0.7em;
+  border-spacing: 0;
+  margin: 0.45em 0 1em;
   display: block;
   max-width: 100%;
   overflow-x: auto;
   width: max-content;
-}
-
-.markdown-body th {
-  font-weight: 600;
-  text-align: left;
-  border: 1px solid var(--vscode-panel-border, currentColor);
+  border-inline-start: var(--mdx-table-rail-track-width) solid transparent;
+  box-sizing: border-box;
 }
 
 .markdown-body th,
 .markdown-body td {
-  padding: 6px 13px;
-  border: 1px solid var(--vscode-panel-border, currentColor);
+  padding: 0.56em 0.92em;
+  border: 1px solid var(--vscode-panel-border, rgba(127, 127, 127, 0.45));
 }
 
-.markdown-body table > tbody > tr + tr > td {
-  border-top: 1px solid;
-  border-top-color: var(--vscode-panel-border, currentColor);
+.markdown-body th {
+  font-weight: 700;
+  text-align: left;
+}
+
+/* Consolidated no-theme polished grid style */
+.mdx-preview-container:not([data-mpe-theme-active='true']) .markdown-body table {
+  margin: 0.45em 0 1.05em;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.mdx-preview-container:not([data-mpe-theme-active='true']) .markdown-body thead th {
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  color: var(--vscode-editor-foreground, inherit);
+  background-color: var(
+    --vscode-editorGroupHeader-tabsBackground,
+    rgba(127, 127, 127, 0.08)
+  );
+  border-color: var(--vscode-panel-border, rgba(127, 127, 127, 0.55));
+  border-bottom-width: 2px;
+}
+
+.mdx-preview-container:not([data-mpe-theme-active='true']) .markdown-body tbody td {
+  border-color: var(--vscode-panel-border, rgba(127, 127, 127, 0.42));
+}
+
+.mdx-preview-container:not([data-mpe-theme-active='true'])
+  .markdown-body
+  tbody
+  > tr:nth-child(2n) {
+  background-color: var(
+    --vscode-editorInlayHint-background,
+    rgba(127, 127, 127, 0.1)
+  );
+}
+
+.mdx-preview-container:not([data-mpe-theme-active='true'])
+  .markdown-body
+  tbody
+  > tr:hover {
+  background-color: var(
+    --vscode-list-hoverBackground,
+    rgba(127, 127, 127, 0.14)
+  );
 }
 
 /* Blockquote */
