@@ -85,7 +85,7 @@ describe('framework-selection commands', () => {
     expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('Docusaurus'));
   });
 
-  it('cancel → no changes', async () => {
+  it('cancel -> no changes', async () => {
     vi.spyOn(vscode.window, 'showQuickPick').mockResolvedValue(undefined);
     await handler();
     expect(mockConfigManager.set).not.toHaveBeenCalled();

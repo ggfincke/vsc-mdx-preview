@@ -47,3 +47,14 @@ export type UpdateModeValue = (typeof UPDATE_MODE_VALUES)[number];
 // used in: package.json mdx-preview.preview.security setting
 export const SECURITY_POLICY_VALUES = ['strict', 'disabled'] as const;
 export type SecurityPolicyValue = (typeof SECURITY_POLICY_VALUES)[number];
+
+// source-line highlight color mode options
+// used in: package.json mdx-preview.preview.sourceLineHighlightColor setting
+export const SOURCE_LINE_HIGHLIGHT_COLOR_VALUES = [
+  'dependent',
+  'white',
+  'black',
+  'auto',
+] as const;
+export type SourceLineHighlightColorValue =
+  (typeof SOURCE_LINE_HIGHLIGHT_COLOR_VALUES)[number];

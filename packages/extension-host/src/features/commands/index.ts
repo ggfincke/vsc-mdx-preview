@@ -11,7 +11,10 @@ const log = createTaggedLogger(LogTags.COMMANDS);
 export { CommandNames, type CommandName } from './command-names';
 
 // import command modules
-import { commands as previewCommands } from './preview';
+import {
+  commands as previewCommands,
+  uriCommands as previewUriCommands,
+} from './preview';
 import { commands as configToggleCommands } from './config-toggles';
 import { commands as securityCommands } from './security';
 import { commands as themeSelectionCommands } from './theme-selection';
@@ -21,7 +24,7 @@ import { commands as configInfoCommands } from './config-info';
 import { commands as debugCommands } from './debug';
 import { commands as authoringGuideCommands } from './authoring-guide';
 
-import type { CommandDefinition } from '../types';
+import type { CommandDefinition, UriCommandDefinition } from './types';
 
 // aggregate all command definitions from modules
 const allCommands: CommandDefinition[] = [
@@ -36,6 +39,9 @@ const allCommands: CommandDefinition[] = [
   ...authoringGuideCommands,
 ];
 
+// aggregate all Uri command definitions (accept optional vscode.Uri from context menus)
+const allUriCommands: UriCommandDefinition[] = [...previewUriCommands];
+
 // register all MDX Preview commands w/ VS Code
 export function registerAllCommands(): vscode.Disposable[] {
   log.debug('Registering all commands...');
@@ -45,6 +51,14 @@ export function registerAllCommands(): vscode.Disposable[] {
     return vscode.commands.registerCommand(id, handler);
   });
 
-  log.debug(`Registered ${disposables.length} commands`);
-  return disposables;
+  // register Uri commands (may receive vscode.Uri from context menus)
+  const uriDisposables = allUriCommands.map(({ id, handler }) => {
+    log.debug(`Registering Uri command: ${id}`);
+    return vscode.commands.registerCommand(id, handler);
+  });
+
+  log.debug(
+    `Registered ${disposables.length + uriDisposables.length} commands`
+  );
+  return [...disposables, ...uriDisposables];
 }

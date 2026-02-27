@@ -2,8 +2,30 @@
 /* MDX Preview App styles */
 
 .mdx-preview-container {
+  --mdx-side-rail-width: 292px;
+  --mdx-source-line-base-color: var(--vscode-editorInfo-foreground, #95c258);
   min-height: 100vh;
   position: relative;
+}
+
+.mdx-preview-container[data-source-line-highlight-color='white'] {
+  --mdx-source-line-force-color: #fff;
+}
+
+.mdx-preview-container[data-source-line-highlight-color='black'] {
+  --mdx-source-line-force-color: #000;
+}
+
+.vscode-dark .mdx-preview-container[data-source-line-highlight-color='auto'],
+.vscode-high-contrast
+  .mdx-preview-container[data-source-line-highlight-color='auto'] {
+  --mdx-source-line-force-color: #fff;
+}
+
+.vscode-light .mdx-preview-container[data-source-line-highlight-color='auto'],
+.vscode-high-contrast-light
+  .mdx-preview-container[data-source-line-highlight-color='auto'] {
+  --mdx-source-line-force-color: #000;
 }
 
 .mdx-preview-content {
@@ -11,6 +33,43 @@
   padding-top: 1em;
   /* prevent horizontal scroll from Bleed components */
   overflow-x: hidden;
+  transition: padding-right 0.2s ease;
+}
+
+.mdx-preview-container.has-side-rail .mdx-preview-content {
+  padding-right: calc(var(--mdx-side-rail-width) + 46px);
+}
+
+.mdx-preview-side-rail {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: var(--mdx-side-rail-width);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 120;
+  pointer-events: none;
+}
+
+.mdx-preview-side-rail > * {
+  pointer-events: auto;
+}
+
+@media (max-width: 1200px) {
+  .mdx-preview-container.has-side-rail .mdx-preview-content {
+    padding-right: 26px;
+  }
+
+  .mdx-preview-side-rail {
+    position: static;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    margin: 0 26px 20px;
+    pointer-events: auto;
+  }
 }
 
 /* Error Display */
@@ -128,7 +187,7 @@
   min-height: 100px;
 }
 
-/* Markdown Body Styles (mirrors VS Code markdown preview) */
+/* Markdown Body Styles (crossnote-inspired, VS Code theme integrated) */
 .markdown-body {
   color: var(--vscode-editor-foreground);
   font-family: var(
@@ -145,10 +204,10 @@
       sans-serif
     )
   );
-  font-size: var(--vscode-markdown-font-size, var(--markdown-font-size, 14px));
+  font-size: var(--vscode-markdown-font-size, var(--markdown-font-size, 16px));
   line-height: var(
     --vscode-markdown-line-height,
-    var(--markdown-line-height, 22px)
+    var(--markdown-line-height, 1.6)
   );
   word-wrap: break-word;
 }
@@ -179,20 +238,189 @@
 .markdown-body h5,
 .markdown-body h6 {
   font-weight: 600;
-  margin-top: 24px;
+  margin-top: 1em;
   margin-bottom: 16px;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 body.scrollBeyondLastLine .markdown-body {
   margin-bottom: calc(100vh - 22px);
 }
 
-
 /* Prevent `sub` & `sup` elements from affecting line height */
 .markdown-body sub,
 .markdown-body sup {
   line-height: 0;
+}
+
+/* MPE-style source mapping hover highlight (Safe + Trusted) */
+.mdx-safe-preview .highlight-line,
+.mdx-trusted-preview .highlight-line,
+.markdown-body .highlight-line {
+  position: relative;
+  --mdx-source-line-offset: -8px;
+  --mdx-source-line-width: 4px;
+  --mdx-source-line-color: var(
+    --mdx-source-line-force-color,
+    var(--mdx-source-line-base-color)
+  );
+}
+
+.mdx-safe-preview li.highlight-line,
+.mdx-trusted-preview li.highlight-line,
+.markdown-body li.highlight-line {
+  /* place the bar directly before list markers (numbers/bullets) */
+  --mdx-source-line-offset: -26px;
+}
+
+.mdx-safe-preview .highlight-line::before,
+.mdx-trusted-preview .highlight-line::before,
+.markdown-body .highlight-line::before {
+  content: '';
+  position: absolute;
+  left: var(--mdx-source-line-offset);
+  top: 0;
+  bottom: 0;
+  width: var(--mdx-source-line-width);
+  border-radius: 0;
+  background-color: var(--mdx-source-line-color);
+  pointer-events: none;
+  transition:
+    background-color 120ms ease,
+    width 120ms ease;
+}
+
+.mdx-safe-preview .highlight-line.highlight-active,
+.mdx-trusted-preview .highlight-line.highlight-active,
+.markdown-body .highlight-line.highlight-active {
+}
+
+.mdx-safe-preview .highlight-line.highlight-active::before,
+.mdx-trusted-preview .highlight-line.highlight-active::before,
+.markdown-body .highlight-line.highlight-active::before {
+  width: var(--mdx-source-line-width);
+  background-color: var(--mdx-source-line-color);
+}
+
+/* use semantic callout colors for shim/admonition highlights */
+.mdx-safe-preview .highlight-line:is(
+    .mdx-safe-callout,
+    .mdx-preview-admonition,
+    .github-alert,
+    .mdx-preview-starlight-aside,
+    [data-callout-type],
+    .mdx-preview-nextra-callout,
+    .mdx-preview-nextra-callout-wrapper
+  ),
+.mdx-trusted-preview .highlight-line:is(
+    .mdx-safe-callout,
+    .mdx-preview-admonition,
+    .github-alert,
+    .mdx-preview-starlight-aside,
+    [data-callout-type],
+    .mdx-preview-nextra-callout,
+    .mdx-preview-nextra-callout-wrapper
+  ),
+.markdown-body .highlight-line:is(
+    .mdx-safe-callout,
+    .mdx-preview-admonition,
+    .github-alert,
+    .mdx-preview-starlight-aside,
+    [data-callout-type],
+    .mdx-preview-nextra-callout,
+    .mdx-preview-nextra-callout-wrapper
+  ) {
+  --mdx-source-line-offset: -14px;
+  --mdx-source-line-color: var(
+    --mdx-source-line-force-color,
+    var(--mdx-shim-source-line-color, var(--mdx-source-line-base-color))
+  );
+}
+
+.highlight-line.mdx-safe-callout,
+.highlight-line.mdx-preview-starlight-aside,
+.highlight-line[data-callout-type] {
+  --mdx-shim-source-line-color: var(
+    --callout-color,
+    var(--aside-color, var(--vscode-editorInfo-foreground, #95c258))
+  );
+}
+
+.highlight-line.mdx-preview-admonition {
+  --mdx-shim-source-line-color: var(
+    --admonition-color,
+    var(--vscode-editorInfo-foreground, #95c258)
+  );
+}
+
+.highlight-line.github-alert {
+  --mdx-shim-source-line-color: var(--vscode-editorInfo-foreground, #3794ff);
+}
+
+.highlight-line.github-alert-note {
+  --mdx-shim-source-line-color: var(--vscode-editorInfo-foreground, #3794ff);
+}
+
+.highlight-line.github-alert-tip {
+  --mdx-shim-source-line-color: var(--vscode-testing-iconPassed, #73c991);
+}
+
+.highlight-line.github-alert-important {
+  --mdx-shim-source-line-color: #9d4edd;
+}
+
+.highlight-line.github-alert-warning {
+  --mdx-shim-source-line-color: var(--vscode-editorWarning-foreground, #cca700);
+}
+
+.highlight-line.github-alert-caution {
+  --mdx-shim-source-line-color: var(--vscode-errorForeground, #f48771);
+}
+
+.highlight-line.mdx-preview-nextra-callout-default {
+  --mdx-shim-source-line-color: #22c55e;
+}
+
+.highlight-line.mdx-preview-nextra-callout-info {
+  --mdx-shim-source-line-color: #3b82f6;
+}
+
+.highlight-line.mdx-preview-nextra-callout-warning {
+  --mdx-shim-source-line-color: #f59e0b;
+}
+
+.highlight-line.mdx-preview-nextra-callout-error {
+  --mdx-shim-source-line-color: #ef4444;
+}
+
+.highlight-line.mdx-preview-nextra-callout-important {
+  --mdx-shim-source-line-color: #a855f7;
+}
+
+/* optional shim side rails to avoid double-line appearance with hover highlights */
+.mdx-preview-container[data-shim-side-rail='off']
+  :is(
+    .github-alert,
+    .mdx-safe-callout,
+    .mdx-preview-admonition,
+    .mdx-preview-starlight-aside,
+    [data-callout-type]
+  ) {
+  border-left-color: transparent;
+  border-inline-start-color: transparent;
+}
+
+.mdx-preview-container[data-shim-side-rail='off']
+  .highlight-line:is(
+    .github-alert,
+    .mdx-safe-callout,
+    .mdx-preview-admonition,
+    .mdx-preview-starlight-aside,
+    [data-callout-type],
+    .mdx-preview-nextra-callout,
+    .mdx-preview-nextra-callout-wrapper
+  ) {
+  --mdx-source-line-offset: -10px;
 }
 
 .markdown-body ul ul:first-child,
@@ -216,6 +444,11 @@ body.scrollBeyondLastLine .markdown-body {
   text-decoration: underline;
 }
 
+.markdown-body a:not([href]) {
+  color: inherit;
+  text-decoration: none;
+}
+
 .markdown-body a:focus,
 .markdown-body input:focus,
 .markdown-body select:focus,
@@ -224,93 +457,191 @@ body.scrollBeyondLastLine .markdown-body {
   outline-offset: -1px;
 }
 
+.markdown-body strong {
+  color: var(--vscode-editor-foreground);
+}
+
 .markdown-body p {
   margin-bottom: 16px;
 }
 
 .markdown-body li p {
-  margin-bottom: 0.7em;
+  margin-bottom: 0.45em;
 }
 
+/* List nesting: disc/circle/square for ul, decimal/lower-roman/lower-alpha for ol */
 .markdown-body ul,
 .markdown-body ol {
-  margin-bottom: 0.7em;
-  padding-left: 2em;
+  margin: 0.55em 0 0.95em;
+  padding-left: 1.55em;
 }
 
+.markdown-body li {
+  margin: 0.28em 0;
+  padding-left: 0.2em;
+}
+
+.markdown-body li::marker {
+  color: var(--vscode-descriptionForeground, rgba(127, 127, 127, 0.8));
+}
+
+.markdown-body li > ul,
+.markdown-body li > ol {
+  margin-top: 0.32em;
+  margin-bottom: 0.35em;
+}
+
+.markdown-body ul {
+  list-style-type: disc;
+}
+
+.markdown-body ul ul {
+  list-style-type: circle;
+}
+
+.markdown-body ul ul ul {
+  list-style-type: square;
+}
+
+.markdown-body ol {
+  list-style-type: decimal;
+  padding-left: 1.75em;
+}
+
+.markdown-body ol li::marker {
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown-body ol ol {
+  list-style-type: lower-roman;
+}
+
+.markdown-body ol ol ol {
+  list-style-type: lower-alpha;
+}
+
+/* Horizontal rule */
 .markdown-body hr {
   border: 0;
-  height: 1px;
-  border-bottom: 1px solid;
+  height: 4px;
+  margin: 32px 0;
+  padding: 0;
+  background-color: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
 }
 
+/* Headings */
 .markdown-body h1 {
-  font-size: 2em;
+  font-size: 2.25em;
   margin-top: 0;
   padding-bottom: 0.3em;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
 }
 
 .markdown-body h2 {
-  font-size: 1.5em;
+  font-size: 1.75em;
   padding-bottom: 0.3em;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
 }
 
 .markdown-body h3 {
-  font-size: 1.25em;
+  font-size: 1.5em;
 }
 
 .markdown-body h4 {
-  font-size: 1em;
+  font-size: 1.25em;
 }
 
 .markdown-body h5 {
-  font-size: 0.875em;
+  font-size: 1em;
 }
 
 .markdown-body h6 {
-  font-size: 0.85em;
+  font-size: 1em;
+  color: var(--vscode-descriptionForeground, #888);
 }
 
+/* Tables */
 .markdown-body table {
+  --mdx-table-rail-track-width: 4px;
   border-collapse: collapse;
-  margin-bottom: 0.7em;
+  border-spacing: 0;
+  margin: 0.45em 0 1em;
   display: block;
   max-width: 100%;
   overflow-x: auto;
   width: max-content;
-}
-
-.markdown-body th {
-  text-align: left;
-  border-bottom: 1px solid;
-  border-bottom-color: var(--vscode-panel-border, currentColor);
+  border-inline-start: var(--mdx-table-rail-track-width) solid transparent;
+  box-sizing: border-box;
 }
 
 .markdown-body th,
 .markdown-body td {
-  padding: 5px 10px;
+  padding: 0.56em 0.92em;
+  border: 1px solid var(--vscode-panel-border, rgba(127, 127, 127, 0.45));
 }
 
-.markdown-body table > tbody > tr + tr > td {
-  border-top: 1px solid;
-  border-top-color: var(--vscode-panel-border, currentColor);
+.markdown-body th {
+  font-weight: 700;
+  text-align: left;
 }
 
+/* Consolidated no-theme polished grid style */
+.mdx-preview-container:not([data-mpe-theme-active='true']) .markdown-body table {
+  margin: 0.45em 0 1.05em;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.mdx-preview-container:not([data-mpe-theme-active='true']) .markdown-body thead th {
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  color: var(--vscode-editor-foreground, inherit);
+  background-color: var(
+    --vscode-editorGroupHeader-tabsBackground,
+    rgba(127, 127, 127, 0.08)
+  );
+  border-color: var(--vscode-panel-border, rgba(127, 127, 127, 0.55));
+  border-bottom-width: 2px;
+}
+
+.mdx-preview-container:not([data-mpe-theme-active='true']) .markdown-body tbody td {
+  border-color: var(--vscode-panel-border, rgba(127, 127, 127, 0.42));
+}
+
+.mdx-preview-container:not([data-mpe-theme-active='true'])
+  .markdown-body
+  tbody
+  > tr:nth-child(2n) {
+  background-color: var(
+    --vscode-editorInlayHint-background,
+    rgba(127, 127, 127, 0.1)
+  );
+}
+
+.mdx-preview-container:not([data-mpe-theme-active='true'])
+  .markdown-body
+  tbody
+  > tr:hover {
+  background-color: var(
+    --vscode-list-hoverBackground,
+    rgba(127, 127, 127, 0.14)
+  );
+}
+
+/* Blockquote */
 .markdown-body blockquote {
-  margin: 0;
+  margin: 16px 0;
   padding: 0 16px 0 10px;
-  border-left-width: 5px;
+  border-left-width: 4px;
   border-left-style: solid;
   border-radius: 2px;
   color: var(--vscode-textBlockQuote-foreground, inherit);
   border-left-color: var(--vscode-textBlockQuote-border, currentColor);
-  background-color: transparent;
+  background-color: var(
+    --vscode-textBlockQuote-background,
+    rgba(127, 127, 127, 0.1)
+  );
 }
 
+/* Inline code */
 .markdown-body code {
   font-family: var(
     --vscode-editor-font-family,
@@ -324,12 +655,12 @@ body.scrollBeyondLastLine .markdown-body {
     'Courier New',
     monospace
   );
-  font-size: 1em;
+  font-size: 0.85em;
   line-height: 1.5;
 }
 
 .markdown-body :not(pre) > code {
-  padding: 0.1em 0.3em;
+  padding: 0.2em 0.4em;
   border-radius: 3px;
   background-color: var(
     --vscode-textPreformat-background,
@@ -338,15 +669,23 @@ body.scrollBeyondLastLine .markdown-body {
   color: var(--vscode-textPreformat-foreground, inherit);
 }
 
+.markdown-body :not(pre) > code::before,
+.markdown-body :not(pre) > code::after {
+  content: '\00a0';
+  letter-spacing: -0.2em;
+}
+
 body.wordWrap .markdown-body pre {
   white-space: pre-wrap;
 }
 
+/* Code blocks */
 .markdown-body pre:not(.hljs),
 .markdown-body pre.hljs code > div {
-  padding: 16px;
+  padding: 1em;
   border-radius: 3px;
   overflow: auto;
+  line-height: 1.45;
 }
 
 .markdown-body pre code {
@@ -361,6 +700,43 @@ body.wordWrap .markdown-body pre {
   border: 1px solid var(--vscode-widget-border);
 }
 
+/* Definition lists */
+.markdown-body dl {
+  padding: 0;
+}
+
+.markdown-body dt {
+  padding: 0;
+  margin-top: 14px;
+  font-weight: 600;
+  color: var(--vscode-editor-foreground);
+}
+
+.markdown-body dd {
+  margin: 4px 0 12px 1.25rem;
+  padding: 0;
+  color: var(--vscode-descriptionForeground, var(--vscode-editor-foreground));
+}
+
+/* Keyboard element */
+.markdown-body kbd {
+  display: inline-block;
+  padding: 3px 5px;
+  font-size: 0.85em;
+  line-height: 1;
+  color: var(--vscode-editor-foreground);
+  vertical-align: middle;
+  background-color: var(
+    --vscode-textCodeBlock-background,
+    rgba(127, 127, 127, 0.12)
+  );
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  border-radius: 3px;
+  box-shadow: inset 0 -1px 0
+    var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+/* Theme-specific table borders */
 .vscode-high-contrast .markdown-body h1 {
   border-color: rgb(0, 0, 0);
 }
@@ -373,18 +749,33 @@ body.wordWrap .markdown-body pre {
   border-color: var(--vscode-panel-border, rgba(255, 255, 255, 0.69));
 }
 
-.vscode-light .markdown-body h1,
-.vscode-light .markdown-body h2,
 .vscode-light .markdown-body hr,
 .vscode-light .markdown-body td {
   border-color: var(--vscode-panel-border, rgba(0, 0, 0, 0.18));
 }
 
-.vscode-dark .markdown-body h1,
-.vscode-dark .markdown-body h2,
 .vscode-dark .markdown-body hr,
 .vscode-dark .markdown-body td {
   border-color: var(--vscode-panel-border, rgba(255, 255, 255, 0.18));
+}
+
+/* Print styles */
+@media print {
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4,
+  .markdown-body h5,
+  .markdown-body h6 {
+    page-break-after: avoid;
+  }
+
+  .markdown-body pre,
+  .markdown-body blockquote,
+  .markdown-body table,
+  .markdown-body img {
+    page-break-inside: avoid;
+  }
 }
 
 /* Phase 2.4: Heading anchor links */
@@ -428,24 +819,17 @@ body.wordWrap .markdown-body pre {
   text-decoration: underline;
 }
 
-/* Adjust content when TOC is visible */
-.mdx-preview-container.has-toc .mdx-preview-content {
-  /* TOC width + margin */
-  padding-right: 236px;
-}
-
-.mdx-preview-container.has-toc.toc-collapsed .mdx-preview-content {
-  /* collapsed TOC width + margin */
-  padding-right: 48px;
-}
-
-/* Phase 3.4: GitHub-style alerts/callouts */
+/* Phase 3.4: GitHub-style alerts/callouts (Material Design) */
 .github-alert {
   padding: 12px 16px;
   margin: 16px 0;
-  border-left: 4px solid;
-  border-radius: 4px;
+  border-left: 0.4rem solid;
+  border-radius: 0.2rem;
   background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
+  box-shadow:
+    0 2px 2px 0 rgba(0, 0, 0, 0.14),
+    0 1px 5px 0 rgba(0, 0, 0, 0.12),
+    0 3px 1px -2px rgba(0, 0, 0, 0.2);
 }
 
 .github-alert-note {
@@ -492,7 +876,7 @@ body.wordWrap .markdown-body pre {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0 0 8px 0;
   font-size: 14px;
 }
@@ -535,4 +919,14 @@ body.wordWrap .markdown-body pre {
 [data-mpe-theme-active='true'] .mdx-preview-content {
   padding: 0;
   background: transparent;
+}
+
+[data-mpe-theme-active='true'].has-side-rail .mdx-preview-content {
+  padding-right: calc(var(--mdx-side-rail-width) + 20px);
+}
+
+@media (max-width: 1200px) {
+  [data-mpe-theme-active='true'].has-side-rail .mdx-preview-content {
+    padding-right: 0;
+  }
 }

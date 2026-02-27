@@ -33,6 +33,15 @@ vi.mock(
   })
 );
 
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/preview-commands',
+  () => ({
+    openPreview: (...args: any[]) => mockDoOpenPreview(...args),
+    refreshPreview: (...args: any[]) => mockDoRefreshPreview(...args),
+    openPreviewFromUri: vi.fn(),
+  })
+);
+
 // mock authoring guide text
 vi.mock(
   '../../../packages/extension-host/src/features/commands/authoring-guide-text',

@@ -18,8 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Infrastructure
 
 - **Architecture Refresh**: Completed 10-phase monorepo restructuring
-  - Renamed `packages/extension` → `packages/extension-host` with feature-sliced internals
-  - Renamed `packages/webview-app` → `packages/webview-client` with feature-sliced internals
+  - Renamed `packages/extension` -> `packages/extension-host` with feature-sliced internals
+  - Renamed `packages/webview-app` -> `packages/webview-client` with feature-sliced internals
   - Deleted `packages/shared` — split into `@mdx-preview/contracts`, `@mdx-preview/runtime-utils`, `@mdx-preview/codegen`
   - Created [`mdx-forge`](https://github.com/ggfincke/mdx-forge) public library with subpath exports (compiler, browser, components)
   - Added 11 dependency-cruiser boundary rules with CI enforcement
@@ -138,7 +138,7 @@ This release represents a complete rewrite of the MDX Preview extension, introdu
 
 #### Rich Content
 
-- **Syntax Highlighting**: Shiki-based highlighting with language aliases (js→javascript, ts→typescript, etc.)
+- **Syntax Highlighting**: Shiki-based highlighting with language aliases (js->javascript, ts->typescript, etc.)
 - **Mermaid Diagrams**: Client-side rendering of flowcharts, sequence diagrams, state diagrams, and more
 - **Math Expressions**: KaTeX integration for inline and block math expressions
 - **GitHub Alerts**: Support for NOTE, TIP, WARNING, CAUTION, IMPORTANT callouts
@@ -303,7 +303,7 @@ This release represents a complete rewrite of the MDX Preview extension, introdu
 ### Added
 
 - **Nextra Framework Support**: Full Nextra support with component shims (Callout, Tabs, Cards, FileTree, Steps, Bleed), `_meta.json` awareness, and frontmatter extensions
-- **Language Aliases**: Code block language aliases (`js`→`javascript`, `ts`→`typescript`, `sh`→`bash`, etc.)
+- **Language Aliases**: Code block language aliases (`js`->`javascript`, `ts`->`typescript`, `sh`->`bash`, etc.)
 - **Mermaid Theme Setting**: Configurable Mermaid diagram theme via `mdx-preview.preview.mermaidTheme`
 - **MDX Link Navigation**: New `openMdxLinksInPreview` setting for in-preview navigation
 - **Monorepo Architecture**: Restructured into `@mdx-preview/shared`, `compiler`, and `module-system` packages

@@ -1,10 +1,100 @@
-/* VS Code theme adapter layer for mdx-tools design tokens */
-/* mdx-tools already supports prefers-color-scheme; this keeps VS Code class parity */
+/* VS Code theme adapter layer for mdx-forge component tokens */
+
+:root {
+  --mdx-border-color: var(--vscode-panel-border, #d0d7de);
+  --mdx-bg-primary: var(--vscode-editor-background, #ffffff);
+  --mdx-bg-secondary: var(--vscode-editorWidget-background, #f6f8fa);
+  --mdx-bg-tertiary: var(--vscode-editorGroupHeader-tabsBackground, #f0f2f5);
+  --mdx-text-primary: var(--vscode-editor-foreground, #1f2328);
+  --mdx-text-secondary: var(--vscode-descriptionForeground, #57606a);
+  --mdx-text-muted: var(--vscode-disabledForeground, #6e7781);
+  --mdx-link-color: var(--vscode-textLink-foreground, #0969da);
+  --mdx-alpha-subtle: 0.09;
+  --mdx-alpha-hover: 0.06;
+  --mdx-alpha-border: 0.28;
+  --mdx-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.05);
+  --mdx-shadow-md:
+    0 4px 12px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
+  --mdx-shadow-elevation: var(--mdx-shadow-md);
+}
+
+.vscode-light {
+  --mdx-alpha-subtle: 0.08;
+  --mdx-alpha-hover: 0.05;
+}
 
 .vscode-dark {
-  --mdx-border-color: #333;
-  --mdx-bg-primary: #1e1e1e;
-  --mdx-bg-secondary: #252526;
-  --mdx-bg-tertiary: #252526;
-  --mdx-alpha-subtle: var(--mdx-alpha-subtle-dark, 0.15);
+  --mdx-border-color: var(--vscode-panel-border, #3b434b);
+  --mdx-bg-primary: var(--vscode-editor-background, #1f2328);
+  --mdx-bg-secondary: var(--vscode-editorWidget-background, #252b33);
+  --mdx-bg-tertiary: var(--vscode-editorGroupHeader-tabsBackground, #2b313a);
+  --mdx-text-primary: var(--vscode-editor-foreground, #d1d7e0);
+  --mdx-text-secondary: var(--vscode-descriptionForeground, #9da7b3);
+  --mdx-text-muted: var(--vscode-disabledForeground, #768390);
+  --mdx-link-color: var(--vscode-textLink-foreground, #58a6ff);
+  --mdx-alpha-subtle: var(--mdx-alpha-subtle-dark, 0.16);
+  --mdx-alpha-hover: 0.1;
+  --mdx-alpha-border: 0.34;
+  --mdx-shadow-sm:
+    0 2px 4px rgba(0, 0, 0, 0.28), 0 8px 18px rgba(0, 0, 0, 0.16);
+  --mdx-shadow-md:
+    0 6px 18px rgba(0, 0, 0, 0.36), 0 14px 34px rgba(0, 0, 0, 0.22);
+  --mdx-shadow-elevation: var(--mdx-shadow-md);
+}
+
+.vscode-high-contrast,
+.vscode-high-contrast-light {
+  --mdx-alpha-subtle: 0.2;
+  --mdx-alpha-hover: 0.2;
+  --mdx-alpha-border: 0.9;
+  --mdx-border-color: var(--vscode-contrastBorder, var(--vscode-panel-border));
+  --mdx-link-color: var(--vscode-textLink-foreground, #4daafc);
+  --mdx-shadow-sm: none;
+  --mdx-shadow-md: none;
+  --mdx-shadow-elevation: none;
+}
+
+.mdx-preview-container [data-component='tabs'],
+.mdx-preview-container [data-component='collapsible'],
+.mdx-preview-container .mdx-preview-generic-code-group {
+  border-radius: 10px;
+  box-shadow: var(--mdx-shadow-sm);
+}
+
+.mdx-preview-container [data-component='tabs']:hover,
+.mdx-preview-container [data-component='collapsible']:hover,
+.mdx-preview-container .mdx-preview-generic-code-group:hover {
+  box-shadow: var(--mdx-shadow-md);
+}
+
+.mdx-preview-container [data-component='tabs'] [role='tab'],
+.mdx-preview-container .mdx-preview-generic-code-group-button {
+  transition:
+    border-color 0.18s ease,
+    color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.mdx-preview-container .mdx-preview-starlight-card,
+.mdx-preview-container .mdx-preview-starlight-link-card,
+.mdx-preview-container .mdx-preview-nextra-card {
+  border-radius: 10px;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.mdx-preview-container .mdx-preview-starlight-card:hover,
+.mdx-preview-container .mdx-preview-starlight-link-card:hover,
+.mdx-preview-container a.mdx-preview-nextra-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--mdx-shadow-md);
+}
+
+.mdx-preview-container .mdx-preview-starlight-file-tree,
+.mdx-preview-container .mdx-preview-nextra-callout,
+.mdx-preview-container .docusaurus-codeblock,
+.mdx-preview-container .docusaurus-details {
+  border-radius: 10px;
 }

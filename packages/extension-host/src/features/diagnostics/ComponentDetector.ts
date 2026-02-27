@@ -386,7 +386,7 @@ export function getUnknownComponents(
 }
 
 // extract list of generic component names used in the MDX
-// return canonical names (e.g., Alert → Callout) for conditional shim preloading
+// return canonical names (e.g., Alert -> Callout) for conditional shim preloading
 export function getUsedGenericComponents(
   result: ComponentDetectionResult
 ): string[] {
@@ -396,7 +396,7 @@ export function getUsedGenericComponents(
   for (const component of result.components) {
     // check if this component name is a generic component (including aliases)
     if (genericNames.has(component.name)) {
-      // resolve to canonical name (e.g., Alert → Callout, Accordion → Collapsible)
+      // resolve to canonical name (e.g., Alert -> Callout, Accordion -> Collapsible)
       const canonical = getCanonicalComponentName(component.name);
       if (canonical) {
         used.add(canonical);

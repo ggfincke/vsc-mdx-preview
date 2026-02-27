@@ -21,6 +21,16 @@ describe('mdx-forge metadata contract', () => {
         'info',
         'caution',
         'important',
+        'summary',
+        'hint',
+        'success',
+        'question',
+        'failure',
+        'bug',
+        'example',
+        'quote',
+        'todo',
+        'attention',
       ];
       expect(Object.keys(CALLOUT_TITLES).sort()).toEqual(
         [...expected].sort()
@@ -36,13 +46,23 @@ describe('mdx-forge metadata contract', () => {
         info: 'Info',
         caution: 'Caution',
         important: 'Important',
+        summary: 'Summary',
+        hint: 'Hint',
+        success: 'Success',
+        question: 'Question',
+        failure: 'Failure',
+        bug: 'Bug',
+        example: 'Example',
+        quote: 'Quote',
+        todo: 'Todo',
+        attention: 'Attention',
       });
     });
   });
 
   describe('callout alias contract', () => {
-    it('success resolves to tip', () => {
-      expect(normalizeCalloutType('success')).toBe('tip');
+    it('abstract resolves to summary', () => {
+      expect(normalizeCalloutType('abstract')).toBe('summary');
     });
 
     it('error resolves to danger', () => {
@@ -53,8 +73,12 @@ describe('mdx-forge metadata contract', () => {
       expect(normalizeCalloutType('warn')).toBe('warning');
     });
 
-    it('hint resolves to tip', () => {
-      expect(normalizeCalloutType('hint')).toBe('tip');
+    it('check resolves to success', () => {
+      expect(normalizeCalloutType('check')).toBe('success');
+    });
+
+    it('cite resolves to quote', () => {
+      expect(normalizeCalloutType('cite')).toBe('quote');
     });
 
     it('unknown types default to note', () => {

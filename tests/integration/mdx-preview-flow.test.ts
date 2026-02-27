@@ -17,7 +17,7 @@ function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
   };
 }
 
-describe('MDX → Preview Flow', () => {
+describe('MDX -> Preview Flow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

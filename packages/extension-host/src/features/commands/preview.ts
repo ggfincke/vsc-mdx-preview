@@ -6,9 +6,10 @@ import { LogTags } from '@mdx-preview/contracts';
 import {
   openPreview as doOpenPreview,
   refreshPreview as doRefreshPreview,
-} from '../preview/preview-manager';
+  openPreviewFromUri as doOpenPreviewFromUri,
+} from '../preview/preview-commands';
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from '../types';
+import type { CommandDefinition, UriCommandDefinition } from './types';
 
 const log = createTaggedLogger(LogTags.CMD);
 
@@ -25,4 +26,11 @@ const refreshPreview = (): void => {
 export const commands: CommandDefinition[] = [
   { id: CommandNames.OPEN_PREVIEW, handler: openPreview },
   { id: CommandNames.REFRESH_PREVIEW, handler: refreshPreview },
+];
+
+export const uriCommands: UriCommandDefinition[] = [
+  {
+    id: CommandNames.OPEN_PREVIEW_FROM_EXPLORER,
+    handler: doOpenPreviewFromUri,
+  },
 ];

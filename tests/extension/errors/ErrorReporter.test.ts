@@ -213,7 +213,7 @@ describe('ErrorReporter', () => {
       // Debug severity doesn't match Warning/Error/Critical in showNotification
       // but shouldNotify returns true due to explicit override
       // however, showNotification dispatches based on severity
-      // Debug is not handled by showNotification → no call
+      // Debug is not handled by showNotification -> no call
       // Actually check the code: shouldNotify returns true but
       // showNotification switch only handles Warning/Error/Critical
       expect(errSpy).not.toHaveBeenCalled();
@@ -240,7 +240,7 @@ describe('ErrorReporter', () => {
   // severity inference
 
   describe('severity inference', () => {
-    it('ExtensionError PATH_TRAVERSAL → Critical', () => {
+    it('ExtensionError PATH_TRAVERSAL -> Critical', () => {
       const spy = vi.spyOn(vscode.window, 'showErrorMessage');
       const reporter = ErrorReporter.getInstance();
       reporter.report(new ExtensionError('traversal', 'PATH_TRAVERSAL'), {
@@ -250,7 +250,7 @@ describe('ErrorReporter', () => {
       expect(spy).toHaveBeenCalledWith(expect.any(String), 'Show Output');
     });
 
-    it('ExtensionError TRUST_VIOLATION → Warning', () => {
+    it('ExtensionError TRUST_VIOLATION -> Warning', () => {
       const spy = vi.spyOn(vscode.window, 'showWarningMessage');
       const reporter = ErrorReporter.getInstance();
       reporter.report(new ExtensionError('trust', 'TRUST_VIOLATION'), {
@@ -259,7 +259,7 @@ describe('ErrorReporter', () => {
       expect(spy).toHaveBeenCalled();
     });
 
-    it('Context Security → Critical', () => {
+    it('Context Security -> Critical', () => {
       const spy = vi.spyOn(vscode.window, 'showErrorMessage');
       const reporter = ErrorReporter.getInstance();
       reporter.report(new Error('sec'), {
@@ -268,7 +268,7 @@ describe('ErrorReporter', () => {
       expect(spy).toHaveBeenCalledWith(expect.any(String), 'Show Output');
     });
 
-    it('Context ModuleFetch → Error', () => {
+    it('Context ModuleFetch -> Error', () => {
       const spy = vi.spyOn(vscode.window, 'showErrorMessage');
       const reporter = ErrorReporter.getInstance();
       reporter.report(new Error('mod'), {
@@ -277,7 +277,7 @@ describe('ErrorReporter', () => {
       expect(spy).toHaveBeenCalledWith(expect.stringContaining('mod'));
     });
 
-    it('Context Transpile → Error', () => {
+    it('Context Transpile -> Error', () => {
       const spy = vi.spyOn(vscode.window, 'showErrorMessage');
       const reporter = ErrorReporter.getInstance();
       reporter.report(new Error('trs'), {
@@ -286,7 +286,7 @@ describe('ErrorReporter', () => {
       expect(spy).toHaveBeenCalledWith(expect.stringContaining('trs'));
     });
 
-    it('Context Config → Warning', () => {
+    it('Context Config -> Warning', () => {
       const spy = vi.spyOn(vscode.window, 'showWarningMessage');
       const reporter = ErrorReporter.getInstance();
       reporter.report(new Error('cfg'), {
@@ -295,7 +295,7 @@ describe('ErrorReporter', () => {
       expect(spy).toHaveBeenCalled();
     });
 
-    it('Context Plugin → Warning', () => {
+    it('Context Plugin -> Warning', () => {
       const spy = vi.spyOn(vscode.window, 'showWarningMessage');
       const reporter = ErrorReporter.getInstance();
       reporter.report(new Error('plg'), {
@@ -304,7 +304,7 @@ describe('ErrorReporter', () => {
       expect(spy).toHaveBeenCalled();
     });
 
-    it('Context Tailwind → Warning', () => {
+    it('Context Tailwind -> Warning', () => {
       const spy = vi.spyOn(vscode.window, 'showWarningMessage');
       const reporter = ErrorReporter.getInstance();
       reporter.report(new Error('tw'), {
@@ -313,7 +313,7 @@ describe('ErrorReporter', () => {
       expect(spy).toHaveBeenCalled();
     });
 
-    it('Context Webview → Error', () => {
+    it('Context Webview -> Error', () => {
       const spy = vi.spyOn(vscode.window, 'showErrorMessage');
       const reporter = ErrorReporter.getInstance();
       reporter.report(new Error('wv'), {
@@ -322,7 +322,7 @@ describe('ErrorReporter', () => {
       expect(spy).toHaveBeenCalledWith(expect.stringContaining('wv'));
     });
 
-    it('Context Extension → Error', () => {
+    it('Context Extension -> Error', () => {
       const spy = vi.spyOn(vscode.window, 'showErrorMessage');
       const reporter = ErrorReporter.getInstance();
       reporter.report(new Error('ext'), {

@@ -192,7 +192,7 @@ describe('BaseWatcher', () => {
   // update & restart
 
   describe('update & restart', () => {
-    it('updateAndRestartSync: was active → stops, runs fn, restarts', async () => {
+    it('updateAndRestartSync: was active -> stops, runs fn, restarts', async () => {
       await watcher.start();
       const fn = vi.fn();
       watcher.callUpdateAndRestartSync(fn);
@@ -207,7 +207,7 @@ describe('BaseWatcher', () => {
       });
     });
 
-    it('updateAndRestartSync: was inactive → runs fn only', () => {
+    it('updateAndRestartSync: was inactive -> runs fn only', () => {
       const fn = vi.fn();
       watcher.callUpdateAndRestartSync(fn);
       expect(fn).toHaveBeenCalled();

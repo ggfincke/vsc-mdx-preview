@@ -15,6 +15,8 @@ import {
 } from '../shared/ui/error-boundary/ErrorBoundary';
 import { TrustBanner } from '../features/preview/shared/ui/TrustBanner/TrustBanner';
 import { StaleIndicator } from '../features/preview/shared/ui/StaleIndicator/StaleIndicator';
+import { FrontmatterPanel } from '../features/preview/shared/ui/FrontmatterPanel/FrontmatterPanel';
+import { TableOfContents } from '../features/preview/shared/ui/TableOfContents/TableOfContents';
 import { SafePreviewRenderer } from '../features/preview/safe/SafePreview';
 import { TrustedPreviewRenderer } from '../features/preview/trusted/TrustedPreview';
 import { ExtensionHandle } from '../platform/rpc/webview-rpc-client';
@@ -23,7 +25,14 @@ import { LogTags } from '@mdx-preview/contracts';
 import { classifyLink } from '../shared/utils/linkHandler';
 import type { TrustedPreviewContent } from './types';
 import { useTheme } from '../features/theme/runtime';
-import { useTrust, usePreview, useLoading, useNextra } from './state';
+import {
+  useTrust,
+  usePreview,
+  useLoading,
+  useNextra,
+  useToc,
+  useFrontmatter,
+} from './state';
 import './styles/App.css';
 import '../features/preview/shared/styles/admonitions.css';
 // base generic shim styles from extracted doc-components library
@@ -53,6 +62,13 @@ function App() {
     setEvaluatedComponent(null);
   }, [content]);
   const { nextraMeta } = useNextra();
+  const {
+    headings,
+    showToc,
+    shimSideRailEnabled,
+    sourceLineHighlightColorMode,
+  } = useToc();
+  const { frontmatter } = useFrontmatter();
 
   // get theme context for MPE preview themes
   const { previewTheme } = useTheme();
@@ -97,6 +113,10 @@ function App() {
         ? 'nextra-layout-raw'
         : '';
 
+  const hasFrontmatter = !!frontmatter && Object.keys(frontmatter).length > 0;
+  const hasToc = showToc && !!headings && headings.length > 0;
+  const hasSideRailClass = hasFrontmatter || hasToc ? 'has-side-rail' : '';
+
   // render loading state during initial load
   if (isLoading && !content && !error) {
     log.debug('Rendering LoadingBar (initial loading)');
@@ -138,9 +158,11 @@ function App() {
 
   return (
     <div
-      className={`mdx-preview-container ${nextraLayoutClass}`.trim()}
+      className={`mdx-preview-container ${nextraLayoutClass} ${hasSideRailClass}`.trim()}
       onClick={handleLinkClick}
       data-mpe-theme-active={previewTheme !== 'none' ? 'true' : undefined}
+      data-shim-side-rail={shimSideRailEnabled ? 'on' : 'off'}
+      data-source-line-highlight-color={sourceLineHighlightColorMode}
     >
       <StaleIndicator isStale={isStale} />
       {!trustState.canExecute && <TrustBanner trustState={trustState} />}
@@ -163,6 +185,15 @@ function App() {
           )}
         </div>
       </MDXErrorBoundary>
+      {(hasFrontmatter || hasToc) && (
+        <aside
+          className="mdx-preview-side-rail"
+          aria-label="Preview side panels"
+        >
+          <FrontmatterPanel />
+          <TableOfContents />
+        </aside>
+      )}
     </div>
   );
 }

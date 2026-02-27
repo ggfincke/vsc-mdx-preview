@@ -8,6 +8,7 @@ import type {
   PreviewError,
   NextraPageMeta,
 } from '../preview';
+import type { SourceLineHighlightColorValue } from '../config';
 import type { WebviewThemeState } from '../themes';
 
 // extension-exposed RPC methods
@@ -53,4 +54,9 @@ export interface WebviewRPC {
   setTailwindBrowserCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
   setNextraMeta(meta: NextraPageMeta): void;
+  setFrontmatter(data: Record<string, unknown>): void;
+  setShowToc(show: boolean): void;
+  setSourceLineHighlight(enabled: boolean): void;
+  setSourceLineHighlightColor(mode: SourceLineHighlightColorValue): void;
+  setShimSideRail(enabled: boolean): void;
 }

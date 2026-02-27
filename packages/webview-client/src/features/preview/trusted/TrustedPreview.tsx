@@ -13,12 +13,14 @@ import {
 } from 'react';
 import { evaluateModuleToComponent } from '../../module-runtime';
 import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
+import { useSourceLineHighlight } from '../shared/hooks/useSourceLineHighlight';
 import { useAsyncEffect } from '../../../shared/hooks/useAsyncEffect';
 import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
 import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnhancement';
 import { PreviewContainer } from '../shared/ui/PreviewContainer/PreviewContainer';
 import type { TrustedPreviewContent, PreviewError } from '../../../app/types';
 import { extractErrorInfo } from '@mdx-preview/runtime-utils';
+import { useToc } from '../../../app/state';
 import {
   shallowArrayEquals,
   createFieldComparator,
@@ -86,6 +88,8 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   onComponentReady,
   onError,
 }: TrustedPreviewRendererProps) {
+  const { sourceLineHighlightEnabled } = useToc();
+
   // local loading state tracks webview-side module evaluation (distinct from global
   // isLoading which tracks extension-side compilation). This separation is intentional -
   // the global loading state controls the LoadingBar overlay, while isEvaluating controls
@@ -93,7 +97,7 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   // shared preview setup (container ref, diagram rendering, image lightbox)
-  const { containerRef, handleImageClick, renderPortals, scan } =
+  const { containerRef, handleImageClick, renderPortals, scan, extractHeadings } =
     usePreviewSetup({
       diagramMode: 'before-paint',
       filterStale: true,
@@ -120,19 +124,27 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
     }
   );
 
-  // trigger diagram scan when component becomes available
+  // trigger diagram scan & TOC extraction when component becomes available
   // (hook's initial scan runs before container is rendered during loading state)
   useLayoutEffect(() => {
     if (evaluatedComponent && containerRef.current) {
       scan();
+      extractHeadings();
     }
-  }, [containerRef, evaluatedComponent, scan]);
+  }, [containerRef, evaluatedComponent, scan, extractHeadings]);
 
   // lazy-load KaTeX CSS when math content is detected (DOM-based detection)
   useKatexDetection({ containerRef, trigger: evaluatedComponent });
 
   // enhance Shiki code blocks w/ copy buttons & language badges
   useCodeBlockEnhancement({ containerRef, trigger: evaluatedComponent });
+
+  // bind MPE-style source-line hover highlights once rendered content is ready
+  useSourceLineHighlight({
+    containerRef,
+    trigger: evaluatedComponent,
+    enabled: sourceLineHighlightEnabled,
+  });
 
   // show loading state while evaluating
   if (isEvaluating || !evaluatedComponent) {

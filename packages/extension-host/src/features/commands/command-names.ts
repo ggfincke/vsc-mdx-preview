@@ -7,6 +7,7 @@ export const CommandNames = {
   // preview commands
   OPEN_PREVIEW: 'mdx-preview.commands.openPreview',
   REFRESH_PREVIEW: 'mdx-preview.commands.refreshPreview',
+  OPEN_PREVIEW_FROM_EXPLORER: 'mdx-preview.commands.openPreviewFromExplorer',
 
   // config toggle commands
   TOGGLE_VSCODE_MARKDOWN_STYLES:
@@ -21,6 +22,8 @@ export const CommandNames = {
   SELECT_PREVIEW_THEME: 'mdx-preview.commands.selectPreviewTheme',
   SELECT_CODE_BLOCK_THEME: 'mdx-preview.commands.selectCodeBlockTheme',
   SELECT_MERMAID_THEME: 'mdx-preview.commands.selectMermaidTheme',
+  SELECT_SOURCE_LINE_HIGHLIGHT_COLOR:
+    'mdx-preview.commands.selectSourceLineHighlightColor',
 
   // framework commands
   SELECT_FRAMEWORK: 'mdx-preview.commands.selectFramework',

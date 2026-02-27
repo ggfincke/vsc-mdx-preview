@@ -1,7 +1,7 @@
 // packages/webview-app/src/utils/stackTraceParser.ts
 // parse error stack traces to extract file locations for navigation
 
-interface StackFrame {
+export interface StackFrame {
   // original line
   raw: string;
   // function name

@@ -1,13 +1,13 @@
 /* packages/webview-app/src/styles/admonitions.css */
 /* Admonition styles for :::note, :::warning, etc. directive syntax */
-/* Compatible w/ Docusaurus & Starlight admonition styling */
+/* Material Design elevation & crossnote-inspired formatting */
 /* CSS naming convention: mdx-preview-admonition-* */
 
 .mdx-preview-admonition {
-  padding: 1rem 1.25rem;
-  margin: 1rem 0;
-  border-left: 4px solid;
-  border-radius: 0 4px 4px 0;
+  padding: 0.95rem 1.2rem;
+  margin: 1.3em 0;
+  border-left: 0.34rem solid;
+  border-radius: 0 0.5rem 0.5rem 0;
   background-color: var(--admonition-bg, rgba(128, 128, 128, 0.1));
 }
 
@@ -15,11 +15,11 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.025em;
+  font-weight: 650;
+  margin: 0 0 0.55rem 0;
+  padding: 0;
+  font-size: 0.86rem;
+  letter-spacing: 0.01em;
 }
 
 .mdx-preview-admonition-icon {
@@ -36,6 +36,7 @@
 
 .mdx-preview-admonition-content {
   font-size: 0.95rem;
+  padding: 0;
 }
 
 .mdx-preview-admonition-content > :first-child {
@@ -48,8 +49,9 @@
 
 /* Note - blue */
 .mdx-preview-admonition-note {
-  --admonition-color: #4285f4;
-  --admonition-bg: rgba(66, 133, 244, 0.1);
+  --admonition-color: #448aff;
+  --admonition-bg: rgba(68, 138, 255, 0.1);
+  --admonition-title-bg: rgba(68, 138, 255, 0.1);
   border-color: var(--admonition-color);
   background-color: var(--admonition-bg);
 }
@@ -64,8 +66,9 @@
 
 /* Info - blue (same as note) */
 .mdx-preview-admonition-info {
-  --admonition-color: #4285f4;
-  --admonition-bg: rgba(66, 133, 244, 0.1);
+  --admonition-color: #448aff;
+  --admonition-bg: rgba(68, 138, 255, 0.1);
+  --admonition-title-bg: rgba(68, 138, 255, 0.1);
   border-color: var(--admonition-color);
   background-color: var(--admonition-bg);
 }
@@ -80,8 +83,9 @@
 
 /* Tip - green */
 .mdx-preview-admonition-tip {
-  --admonition-color: #34a853;
-  --admonition-bg: rgba(52, 168, 83, 0.1);
+  --admonition-color: #00c853;
+  --admonition-bg: rgba(0, 200, 83, 0.1);
+  --admonition-title-bg: rgba(0, 200, 83, 0.1);
   border-color: var(--admonition-color);
   background-color: var(--admonition-bg);
 }
@@ -98,6 +102,7 @@
 .mdx-preview-admonition-important {
   --admonition-color: #a855f7;
   --admonition-bg: rgba(168, 85, 247, 0.1);
+  --admonition-title-bg: rgba(168, 85, 247, 0.1);
   border-color: var(--admonition-color);
   background-color: var(--admonition-bg);
 }
@@ -110,10 +115,11 @@
   color: var(--admonition-color);
 }
 
-/* Warning - yellow/amber */
+/* Warning - amber */
 .mdx-preview-admonition-warning {
-  --admonition-color: #f59e0b;
-  --admonition-bg: rgba(245, 158, 11, 0.1);
+  --admonition-color: #ff9100;
+  --admonition-bg: rgba(255, 145, 0, 0.1);
+  --admonition-title-bg: rgba(255, 145, 0, 0.1);
   border-color: var(--admonition-color);
   background-color: var(--admonition-bg);
 }
@@ -128,8 +134,9 @@
 
 /* Caution - orange */
 .mdx-preview-admonition-caution {
-  --admonition-color: #f97316;
-  --admonition-bg: rgba(249, 115, 22, 0.1);
+  --admonition-color: #ff9100;
+  --admonition-bg: rgba(255, 145, 0, 0.1);
+  --admonition-title-bg: rgba(255, 145, 0, 0.1);
   border-color: var(--admonition-color);
   background-color: var(--admonition-bg);
 }
@@ -144,8 +151,9 @@
 
 /* Danger - red */
 .mdx-preview-admonition-danger {
-  --admonition-color: #ef4444;
-  --admonition-bg: rgba(239, 68, 68, 0.1);
+  --admonition-color: #ff1744;
+  --admonition-bg: rgba(255, 23, 68, 0.1);
+  --admonition-title-bg: rgba(255, 23, 68, 0.1);
   border-color: var(--admonition-color);
   background-color: var(--admonition-bg);
 }
@@ -158,71 +166,365 @@
   color: var(--admonition-color);
 }
 
+/* Summary / Abstract / TL;DR - cyan */
+.mdx-preview-admonition-summary {
+  --admonition-color: #00b0ff;
+  --admonition-bg: rgba(0, 176, 255, 0.1);
+  --admonition-title-bg: rgba(0, 176, 255, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.mdx-preview-admonition-summary .mdx-preview-admonition-header {
+  color: var(--admonition-color);
+}
+
+.mdx-preview-admonition-summary .mdx-preview-admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Hint - teal */
+.mdx-preview-admonition-hint {
+  --admonition-color: #00bfa5;
+  --admonition-bg: rgba(0, 191, 165, 0.1);
+  --admonition-title-bg: rgba(0, 191, 165, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.mdx-preview-admonition-hint .mdx-preview-admonition-header {
+  color: var(--admonition-color);
+}
+
+.mdx-preview-admonition-hint .mdx-preview-admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Success / Check / Done - green */
+.mdx-preview-admonition-success {
+  --admonition-color: #00c853;
+  --admonition-bg: rgba(0, 200, 83, 0.1);
+  --admonition-title-bg: rgba(0, 200, 83, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.mdx-preview-admonition-success .mdx-preview-admonition-header {
+  color: var(--admonition-color);
+}
+
+.mdx-preview-admonition-success .mdx-preview-admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Question / Help / FAQ - lime */
+.mdx-preview-admonition-question {
+  --admonition-color: #64dd17;
+  --admonition-bg: rgba(100, 221, 23, 0.1);
+  --admonition-title-bg: rgba(100, 221, 23, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.mdx-preview-admonition-question .mdx-preview-admonition-header {
+  color: var(--admonition-color);
+}
+
+.mdx-preview-admonition-question .mdx-preview-admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Failure / Fail / Missing - red */
+.mdx-preview-admonition-failure {
+  --admonition-color: #ff5252;
+  --admonition-bg: rgba(255, 82, 82, 0.1);
+  --admonition-title-bg: rgba(255, 82, 82, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.mdx-preview-admonition-failure .mdx-preview-admonition-header {
+  color: var(--admonition-color);
+}
+
+.mdx-preview-admonition-failure .mdx-preview-admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Bug - dark red */
+.mdx-preview-admonition-bug {
+  --admonition-color: #ff1744;
+  --admonition-bg: rgba(255, 23, 68, 0.1);
+  --admonition-title-bg: rgba(255, 23, 68, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.mdx-preview-admonition-bug .mdx-preview-admonition-header {
+  color: var(--admonition-color);
+}
+
+.mdx-preview-admonition-bug .mdx-preview-admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Example / Snippet - cyan */
+.mdx-preview-admonition-example {
+  --admonition-color: #00b8d4;
+  --admonition-bg: rgba(0, 184, 212, 0.1);
+  --admonition-title-bg: rgba(0, 184, 212, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.mdx-preview-admonition-example .mdx-preview-admonition-header {
+  color: var(--admonition-color);
+}
+
+.mdx-preview-admonition-example .mdx-preview-admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Quote / Cite - gray */
+.mdx-preview-admonition-quote {
+  --admonition-color: #9e9e9e;
+  --admonition-bg: rgba(158, 158, 158, 0.1);
+  --admonition-title-bg: rgba(158, 158, 158, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.mdx-preview-admonition-quote .mdx-preview-admonition-header {
+  color: var(--admonition-color);
+}
+
+.mdx-preview-admonition-quote .mdx-preview-admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Todo - light blue */
+.mdx-preview-admonition-todo {
+  --admonition-color: #00b8d4;
+  --admonition-bg: rgba(0, 184, 212, 0.1);
+  --admonition-title-bg: rgba(0, 184, 212, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.mdx-preview-admonition-todo .mdx-preview-admonition-header {
+  color: var(--admonition-color);
+}
+
+.mdx-preview-admonition-todo .mdx-preview-admonition-icon {
+  color: var(--admonition-color);
+}
+
+/* Attention - amber (same as warning) */
+.mdx-preview-admonition-attention {
+  --admonition-color: #ff9100;
+  --admonition-bg: rgba(255, 145, 0, 0.1);
+  --admonition-title-bg: rgba(255, 145, 0, 0.1);
+  border-color: var(--admonition-color);
+  background-color: var(--admonition-bg);
+}
+
+.mdx-preview-admonition-attention .mdx-preview-admonition-header {
+  color: var(--admonition-color);
+}
+
+.mdx-preview-admonition-attention .mdx-preview-admonition-icon {
+  color: var(--admonition-color);
+}
+
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
   .mdx-preview-admonition-note {
-    --admonition-bg: rgba(66, 133, 244, 0.15);
+    --admonition-bg: rgba(68, 138, 255, 0.15);
+    --admonition-title-bg: rgba(68, 138, 255, 0.15);
   }
 
   .mdx-preview-admonition-info {
-    --admonition-bg: rgba(66, 133, 244, 0.15);
+    --admonition-bg: rgba(68, 138, 255, 0.15);
+    --admonition-title-bg: rgba(68, 138, 255, 0.15);
   }
 
   .mdx-preview-admonition-tip {
-    --admonition-bg: rgba(52, 168, 83, 0.15);
+    --admonition-bg: rgba(0, 200, 83, 0.15);
+    --admonition-title-bg: rgba(0, 200, 83, 0.15);
   }
 
   .mdx-preview-admonition-important {
     --admonition-bg: rgba(168, 85, 247, 0.15);
+    --admonition-title-bg: rgba(168, 85, 247, 0.15);
   }
 
   .mdx-preview-admonition-warning {
-    --admonition-bg: rgba(245, 158, 11, 0.15);
+    --admonition-bg: rgba(255, 145, 0, 0.15);
+    --admonition-title-bg: rgba(255, 145, 0, 0.15);
   }
 
   .mdx-preview-admonition-caution {
-    --admonition-bg: rgba(249, 115, 22, 0.15);
+    --admonition-bg: rgba(255, 145, 0, 0.15);
+    --admonition-title-bg: rgba(255, 145, 0, 0.15);
   }
 
   .mdx-preview-admonition-danger {
-    --admonition-bg: rgba(239, 68, 68, 0.15);
+    --admonition-bg: rgba(255, 23, 68, 0.15);
+    --admonition-title-bg: rgba(255, 23, 68, 0.15);
+  }
+
+  .mdx-preview-admonition-summary {
+    --admonition-bg: rgba(0, 176, 255, 0.15);
+    --admonition-title-bg: rgba(0, 176, 255, 0.15);
+  }
+
+  .mdx-preview-admonition-hint {
+    --admonition-bg: rgba(0, 191, 165, 0.15);
+    --admonition-title-bg: rgba(0, 191, 165, 0.15);
+  }
+
+  .mdx-preview-admonition-success {
+    --admonition-bg: rgba(0, 200, 83, 0.15);
+    --admonition-title-bg: rgba(0, 200, 83, 0.15);
+  }
+
+  .mdx-preview-admonition-question {
+    --admonition-bg: rgba(100, 221, 23, 0.15);
+    --admonition-title-bg: rgba(100, 221, 23, 0.15);
+  }
+
+  .mdx-preview-admonition-failure {
+    --admonition-bg: rgba(255, 82, 82, 0.15);
+    --admonition-title-bg: rgba(255, 82, 82, 0.15);
+  }
+
+  .mdx-preview-admonition-bug {
+    --admonition-bg: rgba(255, 23, 68, 0.15);
+    --admonition-title-bg: rgba(255, 23, 68, 0.15);
+  }
+
+  .mdx-preview-admonition-example {
+    --admonition-bg: rgba(0, 184, 212, 0.15);
+    --admonition-title-bg: rgba(0, 184, 212, 0.15);
+  }
+
+  .mdx-preview-admonition-quote {
+    --admonition-bg: rgba(158, 158, 158, 0.15);
+    --admonition-title-bg: rgba(158, 158, 158, 0.15);
+  }
+
+  .mdx-preview-admonition-todo {
+    --admonition-bg: rgba(0, 184, 212, 0.15);
+    --admonition-title-bg: rgba(0, 184, 212, 0.15);
+  }
+
+  .mdx-preview-admonition-attention {
+    --admonition-bg: rgba(255, 145, 0, 0.15);
+    --admonition-title-bg: rgba(255, 145, 0, 0.15);
   }
 }
 
 /* VS Code dark theme support */
 .vscode-dark .mdx-preview-admonition-note,
 .vscode-high-contrast .mdx-preview-admonition-note {
-  --admonition-bg: rgba(66, 133, 244, 0.15);
+  --admonition-bg: rgba(68, 138, 255, 0.15);
+  --admonition-title-bg: rgba(68, 138, 255, 0.15);
 }
 
 .vscode-dark .mdx-preview-admonition-info,
 .vscode-high-contrast .mdx-preview-admonition-info {
-  --admonition-bg: rgba(66, 133, 244, 0.15);
+  --admonition-bg: rgba(68, 138, 255, 0.15);
+  --admonition-title-bg: rgba(68, 138, 255, 0.15);
 }
 
 .vscode-dark .mdx-preview-admonition-tip,
 .vscode-high-contrast .mdx-preview-admonition-tip {
-  --admonition-bg: rgba(52, 168, 83, 0.15);
+  --admonition-bg: rgba(0, 200, 83, 0.15);
+  --admonition-title-bg: rgba(0, 200, 83, 0.15);
 }
 
 .vscode-dark .mdx-preview-admonition-important,
 .vscode-high-contrast .mdx-preview-admonition-important {
   --admonition-bg: rgba(168, 85, 247, 0.15);
+  --admonition-title-bg: rgba(168, 85, 247, 0.15);
 }
 
 .vscode-dark .mdx-preview-admonition-warning,
 .vscode-high-contrast .mdx-preview-admonition-warning {
-  --admonition-bg: rgba(245, 158, 11, 0.15);
+  --admonition-bg: rgba(255, 145, 0, 0.15);
+  --admonition-title-bg: rgba(255, 145, 0, 0.15);
 }
 
 .vscode-dark .mdx-preview-admonition-caution,
 .vscode-high-contrast .mdx-preview-admonition-caution {
-  --admonition-bg: rgba(249, 115, 22, 0.15);
+  --admonition-bg: rgba(255, 145, 0, 0.15);
+  --admonition-title-bg: rgba(255, 145, 0, 0.15);
 }
 
 .vscode-dark .mdx-preview-admonition-danger,
 .vscode-high-contrast .mdx-preview-admonition-danger {
-  --admonition-bg: rgba(239, 68, 68, 0.15);
+  --admonition-bg: rgba(255, 23, 68, 0.15);
+  --admonition-title-bg: rgba(255, 23, 68, 0.15);
+}
+
+.vscode-dark .mdx-preview-admonition-summary,
+.vscode-high-contrast .mdx-preview-admonition-summary {
+  --admonition-bg: rgba(0, 176, 255, 0.15);
+  --admonition-title-bg: rgba(0, 176, 255, 0.15);
+}
+
+.vscode-dark .mdx-preview-admonition-hint,
+.vscode-high-contrast .mdx-preview-admonition-hint {
+  --admonition-bg: rgba(0, 191, 165, 0.15);
+  --admonition-title-bg: rgba(0, 191, 165, 0.15);
+}
+
+.vscode-dark .mdx-preview-admonition-success,
+.vscode-high-contrast .mdx-preview-admonition-success {
+  --admonition-bg: rgba(0, 200, 83, 0.15);
+  --admonition-title-bg: rgba(0, 200, 83, 0.15);
+}
+
+.vscode-dark .mdx-preview-admonition-question,
+.vscode-high-contrast .mdx-preview-admonition-question {
+  --admonition-bg: rgba(100, 221, 23, 0.15);
+  --admonition-title-bg: rgba(100, 221, 23, 0.15);
+}
+
+.vscode-dark .mdx-preview-admonition-failure,
+.vscode-high-contrast .mdx-preview-admonition-failure {
+  --admonition-bg: rgba(255, 82, 82, 0.15);
+  --admonition-title-bg: rgba(255, 82, 82, 0.15);
+}
+
+.vscode-dark .mdx-preview-admonition-bug,
+.vscode-high-contrast .mdx-preview-admonition-bug {
+  --admonition-bg: rgba(255, 23, 68, 0.15);
+  --admonition-title-bg: rgba(255, 23, 68, 0.15);
+}
+
+.vscode-dark .mdx-preview-admonition-example,
+.vscode-high-contrast .mdx-preview-admonition-example {
+  --admonition-bg: rgba(0, 184, 212, 0.15);
+  --admonition-title-bg: rgba(0, 184, 212, 0.15);
+}
+
+.vscode-dark .mdx-preview-admonition-quote,
+.vscode-high-contrast .mdx-preview-admonition-quote {
+  --admonition-bg: rgba(158, 158, 158, 0.15);
+  --admonition-title-bg: rgba(158, 158, 158, 0.15);
+}
+
+.vscode-dark .mdx-preview-admonition-todo,
+.vscode-high-contrast .mdx-preview-admonition-todo {
+  --admonition-bg: rgba(0, 184, 212, 0.15);
+  --admonition-title-bg: rgba(0, 184, 212, 0.15);
+}
+
+.vscode-dark .mdx-preview-admonition-attention,
+.vscode-high-contrast .mdx-preview-admonition-attention {
+  --admonition-bg: rgba(255, 145, 0, 0.15);
+  --admonition-title-bg: rgba(255, 145, 0, 0.15);
 }
 
 /* Nested content styling */

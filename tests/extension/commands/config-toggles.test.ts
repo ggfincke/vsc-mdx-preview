@@ -16,7 +16,7 @@ describe('config-toggles commands', () => {
       (c) => c.id === 'mdx-preview.commands.toggleUseVscodeMarkdownStyles'
     )!.handler;
 
-    it('true → false', async () => {
+    it('true -> false', async () => {
       mockConfigManager.get.mockReturnValue(true);
       await handler();
       expect(mockConfigManager.set).toHaveBeenCalledWith(
@@ -25,7 +25,7 @@ describe('config-toggles commands', () => {
       );
     });
 
-    it('false → true', async () => {
+    it('false -> true', async () => {
       mockConfigManager.get.mockReturnValue(false);
       await handler();
       expect(mockConfigManager.set).toHaveBeenCalledWith(
@@ -40,7 +40,7 @@ describe('config-toggles commands', () => {
       (c) => c.id === 'mdx-preview.commands.toggleUseWhiteBackground'
     )!.handler;
 
-    it('true → false', async () => {
+    it('true -> false', async () => {
       mockConfigManager.get.mockReturnValue(true);
       await handler();
       expect(mockConfigManager.set).toHaveBeenCalledWith(
@@ -49,7 +49,7 @@ describe('config-toggles commands', () => {
       );
     });
 
-    it('false → true', async () => {
+    it('false -> true', async () => {
       mockConfigManager.get.mockReturnValue(false);
       await handler();
       expect(mockConfigManager.set).toHaveBeenCalledWith(

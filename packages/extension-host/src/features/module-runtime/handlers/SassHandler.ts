@@ -76,7 +76,7 @@ function buildSassNotInstalledResult(fsPath: string): FetchResult {
      # or
      pnpm add -D sass
 
-   After installing, refresh the MDX preview (Cmd/Ctrl+Shift+P → "MDX: Refresh Preview")
+   After installing, refresh the MDX preview (Cmd/Ctrl+Shift+P -> "MDX: Refresh Preview")
 
    ════════════════════════════════════════════════════════════════════════════ */
 `;

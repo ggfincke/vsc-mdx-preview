@@ -31,7 +31,7 @@ export type { TransformEntryResult, TransformResult } from '../../types';
 
 import type { TransformEntryResult, TransformResult } from '../../types';
 
-// transform entry file (MDX → TS → Babel/Sucrase)
+// transform entry file (MDX -> TS -> Babel/Sucrase)
 // I.1: return both esmCode (for import extraction) & code (for webview)
 async function transformEntry(
   code: string,
@@ -79,7 +79,7 @@ async function transformEntry(
   return { code, esmCode, frontmatter };
 }
 
-// transform dependency file (MDX → TS → Babel/Sucrase, skip node_modules unless ESM)
+// transform dependency file (MDX -> TS -> Babel/Sucrase, skip node_modules unless ESM)
 // I.1: return both esmCode (for import extraction) & code (for webview)
 async function transform(
   code: string,
