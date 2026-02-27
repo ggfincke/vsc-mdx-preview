@@ -3,6 +3,7 @@
 
 import type * as vscode from 'vscode';
 import type {
+  SourceLineHighlightColorValue,
   TailwindEnabledValue,
   UpdateModeValue,
 } from '@mdx-preview/contracts';
@@ -29,6 +30,9 @@ export interface ConfigurationState {
   useWhiteBackground: boolean;
   customLayoutFilePath: string;
   customCss: string;
+  sourceLineHighlight: boolean;
+  sourceLineHighlightColor: SourceLineHighlightColorValue;
+  shimSideRail: boolean;
   plantUmlServer: string;
   useSucraseTranspiler: boolean;
   securityPolicy: SecurityPolicy;

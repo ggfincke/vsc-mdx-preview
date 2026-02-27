@@ -10,6 +10,7 @@ import {
   UNKNOWN_BEHAVIOR_VALUES,
   UPDATE_MODE_VALUES,
   SECURITY_POLICY_VALUES,
+  SOURCE_LINE_HIGHLIGHT_COLOR_VALUES,
 } from '@mdx-preview/contracts';
 
 // normalize a file path to a valid import path (forward slashes, relative prefix)
@@ -53,4 +54,6 @@ export const SETTINGS_ENUM_MAP: Record<string, readonly string[]> = {
   'mdx-preview.components.unknownBehavior': UNKNOWN_BEHAVIOR_VALUES,
   'mdx-preview.preview.updateMode': UPDATE_MODE_VALUES,
   'mdx-preview.preview.security': SECURITY_POLICY_VALUES,
+  'mdx-preview.preview.sourceLineHighlightColor':
+    SOURCE_LINE_HIGHLIGHT_COLOR_VALUES,
 };

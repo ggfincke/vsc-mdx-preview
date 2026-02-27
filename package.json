@@ -159,6 +159,11 @@
         "category": "MDX"
       },
       {
+        "command": "mdx-preview.commands.selectSourceLineHighlightColor",
+        "title": "Select Source-Line Highlight Color",
+        "category": "MDX"
+      },
+      {
         "command": "mdx-preview.commands.selectFramework",
         "title": "Select Framework",
         "category": "MDX"
@@ -598,6 +603,36 @@
           "type": "boolean",
           "default": false,
           "description": "Show a floating table of contents sidebar extracted from document headings.",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.sourceLineHighlight": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show source-line hover highlight bars in the preview.",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.sourceLineHighlightColor": {
+          "type": "string",
+          "enum": [
+            "dependent",
+            "white",
+            "black",
+            "auto"
+          ],
+          "enumDescriptions": [
+            "Use VS Code theme token color (editorInfo foreground) with semantic callout highlight accents",
+            "Force all source-line highlight bars to white",
+            "Force all source-line highlight bars to black",
+            "Automatically use white in dark/high-contrast themes and black in light themes"
+          ],
+          "default": "dependent",
+          "description": "Color mode for source-line highlight bars in the preview.",
+          "scope": "resource"
+        },
+        "mdx-preview.preview.shimSideRail": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show side accent rails on callout and admonition shim blocks.",
           "scope": "resource"
         }
       }

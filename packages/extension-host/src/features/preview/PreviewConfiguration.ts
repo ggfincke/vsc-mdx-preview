@@ -67,6 +67,11 @@ export class PreviewConfiguration {
       newConfig.useWhiteBackground !== this._configuration.useWhiteBackground ||
       newConfig.customLayoutFilePath !==
         this._configuration.customLayoutFilePath ||
+      newConfig.sourceLineHighlight !==
+        this._configuration.sourceLineHighlight ||
+      newConfig.sourceLineHighlightColor !==
+        this._configuration.sourceLineHighlightColor ||
+      newConfig.shimSideRail !== this._configuration.shimSideRail ||
       newConfig.plantUmlServer !== this._configuration.plantUmlServer ||
       newConfig.securityPolicy !== this._configuration.securityPolicy ||
       newConfig.tailwindEnabled !== this._configuration.tailwindEnabled;

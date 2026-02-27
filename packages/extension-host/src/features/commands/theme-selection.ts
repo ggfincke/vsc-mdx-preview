@@ -3,7 +3,11 @@
 
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
+import {
+  LogTags,
+  SOURCE_LINE_HIGHLIGHT_COLOR_VALUES,
+  type SourceLineHighlightColorValue,
+} from '@mdx-preview/contracts';
 import { getConfigManager, getPreviewManager } from '../../app/services';
 import {
   PREVIEW_THEMES,
@@ -31,6 +35,16 @@ interface ThemeSelectorOptions<T extends string> {
   placeHolder: string;
   logMessage: string;
 }
+
+const SOURCE_LINE_HIGHLIGHT_COLOR_LABELS: Record<
+  SourceLineHighlightColorValue,
+  string
+> = {
+  dependent: 'Dependent (VS Code Theme)',
+  white: 'White',
+  black: 'Black',
+  auto: 'Auto (White/Black by Theme)',
+};
 
 // create QuickPick handler for a theme setting
 function createThemeSelector<T extends string>(
@@ -93,6 +107,16 @@ export const commands: CommandDefinition[] = [
       labels: MERMAID_THEME_LABELS,
       placeHolder: 'Select Mermaid diagram theme',
       logMessage: 'selectMermaidTheme command triggered',
+    }),
+  },
+  {
+    id: CommandNames.SELECT_SOURCE_LINE_HIGHLIGHT_COLOR,
+    handler: createThemeSelector<SourceLineHighlightColorValue>({
+      configKey: SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR,
+      themes: SOURCE_LINE_HIGHLIGHT_COLOR_VALUES,
+      labels: SOURCE_LINE_HIGHLIGHT_COLOR_LABELS,
+      placeHolder: 'Select source-line highlight color mode',
+      logMessage: 'selectSourceLineHighlightColor command triggered',
     }),
   },
 ];

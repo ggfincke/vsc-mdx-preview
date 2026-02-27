@@ -22,6 +22,8 @@ export const CommandNames = {
   SELECT_PREVIEW_THEME: 'mdx-preview.commands.selectPreviewTheme',
   SELECT_CODE_BLOCK_THEME: 'mdx-preview.commands.selectCodeBlockTheme',
   SELECT_MERMAID_THEME: 'mdx-preview.commands.selectMermaidTheme',
+  SELECT_SOURCE_LINE_HIGHLIGHT_COLOR:
+    'mdx-preview.commands.selectSourceLineHighlightColor',
 
   // framework commands
   SELECT_FRAMEWORK: 'mdx-preview.commands.selectFramework',

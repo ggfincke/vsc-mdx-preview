@@ -161,6 +161,15 @@ export default async function evaluateInWebview(
 
     // push TOC visibility setting
     webviewHandle.setShowToc(getConfigManager().get('preview.showToc'));
+    webviewHandle.setSourceLineHighlight(
+      getConfigManager().get('preview.sourceLineHighlight')
+    );
+    webviewHandle.setSourceLineHighlightColor(
+      getConfigManager().get('preview.sourceLineHighlightColor')
+    );
+    webviewHandle.setShimSideRail(
+      getConfigManager().get('preview.shimSideRail')
+    );
 
     // send framework info so webview can lazy-load the right shims
     const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);

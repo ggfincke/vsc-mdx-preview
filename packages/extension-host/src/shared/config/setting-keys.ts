@@ -4,6 +4,7 @@
 import { SecurityPolicy } from '../../features/security/SecurityPolicy';
 import {
   type FrameworkSetting,
+  type SourceLineHighlightColorValue,
   type TailwindEnabledValue,
   type UnknownBehaviorValue,
   type UpdateModeValue,
@@ -25,6 +26,9 @@ export type SettingKey =
   | 'preview.codeBlockTheme'
   | 'preview.mermaidTheme'
   | 'preview.autoTheme'
+  | 'preview.sourceLineHighlight'
+  | 'preview.sourceLineHighlightColor'
+  | 'preview.shimSideRail'
   | 'diagrams.plantUmlServer'
   | 'build.useSucraseTranspiler'
   | 'tailwind.enabled'
@@ -58,6 +62,9 @@ export interface SettingTypes {
   'preview.codeBlockTheme': string;
   'preview.mermaidTheme': string;
   'preview.autoTheme': boolean;
+  'preview.sourceLineHighlight': boolean;
+  'preview.sourceLineHighlightColor': SourceLineHighlightColorValue;
+  'preview.shimSideRail': boolean;
   'diagrams.plantUmlServer': string;
   'build.useSucraseTranspiler': boolean;
   'tailwind.enabled': TailwindEnabledValue;
@@ -99,6 +106,11 @@ function mapDefaults(): SettingTypes {
     'preview.codeBlockTheme': SETTINGS_DEFAULTS['preview.codeBlockTheme'],
     'preview.mermaidTheme': SETTINGS_DEFAULTS['preview.mermaidTheme'],
     'preview.autoTheme': SETTINGS_DEFAULTS['preview.autoTheme'],
+    'preview.sourceLineHighlight':
+      SETTINGS_DEFAULTS['preview.sourceLineHighlight'],
+    'preview.sourceLineHighlightColor':
+      SETTINGS_DEFAULTS['preview.sourceLineHighlightColor'],
+    'preview.shimSideRail': SETTINGS_DEFAULTS['preview.shimSideRail'],
     'diagrams.plantUmlServer': SETTINGS_DEFAULTS['diagrams.plantUmlServer'],
     'build.useSucraseTranspiler':
       SETTINGS_DEFAULTS['build.useSucraseTranspiler'],
@@ -137,6 +149,9 @@ export const SETTINGS = {
   CODE_BLOCK_THEME: 'preview.codeBlockTheme' as const,
   MERMAID_THEME: 'preview.mermaidTheme' as const,
   AUTO_THEME: 'preview.autoTheme' as const,
+  SOURCE_LINE_HIGHLIGHT: 'preview.sourceLineHighlight' as const,
+  SOURCE_LINE_HIGHLIGHT_COLOR: 'preview.sourceLineHighlightColor' as const,
+  SHIM_SIDE_RAIL: 'preview.shimSideRail' as const,
   USE_VSCODE_MARKDOWN_STYLES: 'preview.useVscodeMarkdownStyles' as const,
   USE_WHITE_BACKGROUND: 'preview.useWhiteBackground' as const,
   CUSTOM_CSS: 'preview.customCss' as const,
@@ -175,6 +190,9 @@ export const PREVIEW_CONFIG_KEYS: readonly SettingKey[] = [
   SETTINGS.CUSTOM_CSS,
   SETTINGS.CUSTOM_LAYOUT_PATH,
   SETTINGS.SECURITY,
+  SETTINGS.SOURCE_LINE_HIGHLIGHT,
+  SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR,
+  SETTINGS.SHIM_SIDE_RAIL,
   SETTINGS.PLANTUML_SERVER,
   SETTINGS.TAILWIND_ENABLED,
   SETTINGS.USE_SUCRASE,
