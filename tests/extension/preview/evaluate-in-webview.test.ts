@@ -88,6 +88,9 @@ function createPreview(): {
     setNextraMeta: ReturnType<typeof vi.fn>;
     setFrontmatter: ReturnType<typeof vi.fn>;
     setShowToc: ReturnType<typeof vi.fn>;
+    setSourceLineHighlight: ReturnType<typeof vi.fn>;
+    setSourceLineHighlightColor: ReturnType<typeof vi.fn>;
+    setShimSideRail: ReturnType<typeof vi.fn>;
   };
   webviewHandshakePromise: Promise<void>;
   onWebviewReady: ReturnType<typeof vi.fn>;
@@ -122,6 +125,9 @@ function createPreview(): {
       setNextraMeta: vi.fn(),
       setFrontmatter: vi.fn(),
       setShowToc: vi.fn(),
+      setSourceLineHighlight: vi.fn(),
+      setSourceLineHighlightColor: vi.fn(),
+      setShimSideRail: vi.fn(),
     },
     webviewHandshakePromise: Promise.resolve(),
     onWebviewReady: vi.fn(),
@@ -181,6 +187,15 @@ describe('evaluate-in-webview Tailwind routing', () => {
       }
       if (key === 'preview.showToc') {
         return false;
+      }
+      if (key === 'preview.sourceLineHighlight') {
+        return true;
+      }
+      if (key === 'preview.sourceLineHighlightColor') {
+        return 'dependent';
+      }
+      if (key === 'preview.shimSideRail') {
+        return true;
       }
       return undefined;
     });
@@ -288,6 +303,15 @@ describe('evaluate-in-webview Tailwind routing', () => {
       if (key === 'preview.showToc') {
         return false;
       }
+      if (key === 'preview.sourceLineHighlight') {
+        return true;
+      }
+      if (key === 'preview.sourceLineHighlightColor') {
+        return 'dependent';
+      }
+      if (key === 'preview.shimSideRail') {
+        return true;
+      }
       return undefined;
     });
     mockEngine.evaluateSafe.mockResolvedValueOnce({
@@ -317,6 +341,15 @@ describe('evaluate-in-webview Tailwind routing', () => {
       if (key === 'preview.showToc') {
         return true;
       }
+      if (key === 'preview.sourceLineHighlight') {
+        return true;
+      }
+      if (key === 'preview.sourceLineHighlightColor') {
+        return 'dependent';
+      }
+      if (key === 'preview.shimSideRail') {
+        return true;
+      }
       return undefined;
     });
     mockEngine.evaluateTrusted.mockResolvedValueOnce({
@@ -340,5 +373,12 @@ describe('evaluate-in-webview Tailwind routing', () => {
       tags: ['mdx', 'preview'],
     });
     expect(preview.webviewHandle.setShowToc).toHaveBeenCalledWith(true);
+    expect(preview.webviewHandle.setSourceLineHighlight).toHaveBeenCalledWith(
+      true
+    );
+    expect(
+      preview.webviewHandle.setSourceLineHighlightColor
+    ).toHaveBeenCalledWith('dependent');
+    expect(preview.webviewHandle.setShimSideRail).toHaveBeenCalledWith(true);
   });
 });

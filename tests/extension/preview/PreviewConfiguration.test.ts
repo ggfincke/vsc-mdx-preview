@@ -30,6 +30,9 @@ function createConfigState(overrides: Record<string, unknown> = {}) {
     useWhiteBackground: false,
     customLayoutFilePath: '',
     customCss: '',
+    sourceLineHighlight: true,
+    sourceLineHighlightColor: 'dependent',
+    shimSideRail: true,
     plantUmlServer: '',
     useSucraseTranspiler: false,
     securityPolicy: 'strict',
@@ -146,6 +149,30 @@ describe('PreviewConfiguration', () => {
 
       mockReadState.mockReturnValueOnce(
         createConfigState({ tailwindEnabled: 'enabled' })
+      );
+      const result = config.updateConfiguration(mockDocUri as any, vi.fn());
+
+      expect(result.needsWebviewRefresh).toBe(true);
+    });
+
+    it('detects shimSideRail change -> needsWebviewRefresh: true', () => {
+      mockReadState.mockReturnValueOnce(createConfigState());
+      const config = new PreviewConfiguration(mockDocUri as any, vi.fn());
+
+      mockReadState.mockReturnValueOnce(
+        createConfigState({ shimSideRail: false })
+      );
+      const result = config.updateConfiguration(mockDocUri as any, vi.fn());
+
+      expect(result.needsWebviewRefresh).toBe(true);
+    });
+
+    it('detects sourceLineHighlightColor change -> needsWebviewRefresh: true', () => {
+      mockReadState.mockReturnValueOnce(createConfigState());
+      const config = new PreviewConfiguration(mockDocUri as any, vi.fn());
+
+      mockReadState.mockReturnValueOnce(
+        createConfigState({ sourceLineHighlightColor: 'white' })
       );
       const result = config.updateConfiguration(mockDocUri as any, vi.fn());
 

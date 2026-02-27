@@ -62,7 +62,7 @@ describe('theme-selection commands', () => {
       expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalled();
     });
 
-    it('user cancels → no config change, no refresh', async () => {
+    it('user cancels -> no config change, no refresh', async () => {
       vi.spyOn(vscode.window, 'showQuickPick').mockResolvedValue(undefined);
       await handler();
       expect(mockConfigManager.set).not.toHaveBeenCalled();
@@ -129,6 +129,47 @@ describe('theme-selection commands', () => {
         'auto',
         vscode.ConfigurationTarget.Global
       );
+    });
+  });
+
+  describe('selectSourceLineHighlightColor', () => {
+    const handler = commands.find(
+      (c) => c.id === 'mdx-preview.commands.selectSourceLineHighlightColor'
+    )!.handler;
+
+    it('shows QuickPick w/ source-line highlight color modes', async () => {
+      const spy = vi
+        .spyOn(vscode.window, 'showQuickPick')
+        .mockResolvedValue(undefined);
+      await handler();
+
+      const items = spy.mock.calls[0][0] as Array<{
+        label: string;
+        theme: string;
+      }>;
+      const values = items.map((i) => i.theme);
+      expect(values).toEqual(['dependent', 'white', 'black', 'auto']);
+      expect(spy).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.objectContaining({
+          placeHolder: 'Select source-line highlight color mode',
+          matchOnDescription: true,
+        })
+      );
+    });
+
+    it('selection sets sourceLineHighlightColor config', async () => {
+      vi.spyOn(vscode.window, 'showQuickPick').mockResolvedValue({
+        label: 'Auto (White/Black by Theme)',
+        theme: 'auto',
+      } as any);
+      await handler();
+      expect(mockConfigManager.set).toHaveBeenCalledWith(
+        'preview.sourceLineHighlightColor',
+        'auto',
+        vscode.ConfigurationTarget.Global
+      );
+      expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalled();
     });
   });
 });

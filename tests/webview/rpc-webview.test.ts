@@ -7,6 +7,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   createHandlerFactories,
+  type OptionalStateHandlers,
+  type PendingOptionalMessage,
   type WebviewStateHandlers,
   type PendingMessage,
   type QueuedMessageType,
@@ -38,6 +40,10 @@ function createMockHandlers(): WebviewStateHandlers {
     setStale: vi.fn(),
     setTheme: vi.fn(),
     setNextraMeta: vi.fn(),
+    setShowToc: vi.fn(),
+    setSourceLineHighlight: vi.fn(),
+    setSourceLineHighlightColor: vi.fn(),
+    setShimSideRail: vi.fn(),
   };
 }
 
@@ -187,9 +193,33 @@ describe('handler-factory', () => {
 
   describe('createOptionalHandler', () => {
     let handlers: WebviewStateHandlers | null;
+    let pendingOptionalMessages: Map<
+      keyof OptionalStateHandlers,
+      PendingOptionalMessage
+    >;
+
+    function enqueueOptionalMessage(message: PendingOptionalMessage): void {
+      pendingOptionalMessages.set(message.handlerKey, message);
+    }
+
+    function flushPendingOptionalMessages(): void {
+      if (!handlers) {
+        return;
+      }
+
+      const messages = new Map(pendingOptionalMessages);
+      pendingOptionalMessages.clear();
+      for (const [handlerKey, message] of messages) {
+        const handler = handlers[handlerKey];
+        if (typeof handler === 'function') {
+          (handler as (...args: unknown[]) => void)(...message.args);
+        }
+      }
+    }
 
     beforeEach(() => {
       handlers = null;
+      pendingOptionalMessages = new Map();
     });
 
     it('should call handler when present', () => {
@@ -197,7 +227,8 @@ describe('handler-factory', () => {
       const getHandlers = () => handlers;
       const { createOptionalHandler } = createHandlerFactories(
         getHandlers,
-        () => {}
+        () => {},
+        enqueueOptionalMessage
       );
       const log = createMockLogger();
 
@@ -223,7 +254,8 @@ describe('handler-factory', () => {
       const getHandlers = () => handlers;
       const { createOptionalHandler } = createHandlerFactories(
         getHandlers,
-        () => {}
+        () => {},
+        enqueueOptionalMessage
       );
       const log = createMockLogger();
 
@@ -247,7 +279,8 @@ describe('handler-factory', () => {
       const getHandlers = () => handlers;
       const { createOptionalHandler } = createHandlerFactories(
         getHandlers,
-        () => {}
+        () => {},
+        enqueueOptionalMessage
       );
       const log = createMockLogger();
 
@@ -265,6 +298,212 @@ describe('handler-factory', () => {
           plantUmlServer: 'https://kroki.io',
         })
       ).not.toThrow();
+    });
+
+    it('should call setShimSideRail optional handler when present', () => {
+      handlers = createMockHandlers();
+      const getHandlers = () => handlers;
+      const { createOptionalHandler } = createHandlerFactories(
+        getHandlers,
+        () => {},
+        enqueueOptionalMessage
+      );
+      const log = createMockLogger();
+
+      const setShimSideRail = createOptionalHandler(
+        { methodName: 'setShimSideRail', handlerKey: 'setShimSideRail' },
+        log
+      );
+
+      setShimSideRail(true);
+
+      expect(handlers!.setShimSideRail).toHaveBeenCalledWith(true);
+    });
+
+    it('should ignore setShimSideRail when optional handler is missing', () => {
+      handlers = createMockHandlers();
+      delete handlers.setShimSideRail;
+      const getHandlers = () => handlers;
+      const { createOptionalHandler } = createHandlerFactories(
+        getHandlers,
+        () => {},
+        enqueueOptionalMessage
+      );
+      const log = createMockLogger();
+
+      const setShimSideRail = createOptionalHandler(
+        { methodName: 'setShimSideRail', handlerKey: 'setShimSideRail' },
+        log
+      );
+
+      expect(() => setShimSideRail(false)).not.toThrow();
+    });
+
+    it('should call setSourceLineHighlight optional handler when present', () => {
+      handlers = createMockHandlers();
+      const getHandlers = () => handlers;
+      const { createOptionalHandler } = createHandlerFactories(
+        getHandlers,
+        () => {},
+        enqueueOptionalMessage
+      );
+      const log = createMockLogger();
+
+      const setSourceLineHighlight = createOptionalHandler(
+        {
+          methodName: 'setSourceLineHighlight',
+          handlerKey: 'setSourceLineHighlight',
+        },
+        log
+      );
+
+      setSourceLineHighlight(false);
+
+      expect(handlers!.setSourceLineHighlight).toHaveBeenCalledWith(false);
+    });
+
+    it('should ignore setSourceLineHighlight when optional handler is missing', () => {
+      handlers = createMockHandlers();
+      delete handlers.setSourceLineHighlight;
+      const getHandlers = () => handlers;
+      const { createOptionalHandler } = createHandlerFactories(
+        getHandlers,
+        () => {},
+        enqueueOptionalMessage
+      );
+      const log = createMockLogger();
+
+      const setSourceLineHighlight = createOptionalHandler(
+        {
+          methodName: 'setSourceLineHighlight',
+          handlerKey: 'setSourceLineHighlight',
+        },
+        log
+      );
+
+      expect(() => setSourceLineHighlight(true)).not.toThrow();
+    });
+
+    it('should call setSourceLineHighlightColor optional handler when present', () => {
+      handlers = createMockHandlers();
+      const getHandlers = () => handlers;
+      const { createOptionalHandler } = createHandlerFactories(
+        getHandlers,
+        () => {},
+        enqueueOptionalMessage
+      );
+      const log = createMockLogger();
+
+      const setSourceLineHighlightColor = createOptionalHandler(
+        {
+          methodName: 'setSourceLineHighlightColor',
+          handlerKey: 'setSourceLineHighlightColor',
+        },
+        log
+      );
+
+      setSourceLineHighlightColor('auto');
+
+      expect(handlers!.setSourceLineHighlightColor).toHaveBeenCalledWith(
+        'auto'
+      );
+    });
+
+    it('should ignore setSourceLineHighlightColor when optional handler is missing', () => {
+      handlers = createMockHandlers();
+      delete handlers.setSourceLineHighlightColor;
+      const getHandlers = () => handlers;
+      const { createOptionalHandler } = createHandlerFactories(
+        getHandlers,
+        () => {},
+        enqueueOptionalMessage
+      );
+      const log = createMockLogger();
+
+      const setSourceLineHighlightColor = createOptionalHandler(
+        {
+          methodName: 'setSourceLineHighlightColor',
+          handlerKey: 'setSourceLineHighlightColor',
+        },
+        log
+      );
+
+      expect(() => setSourceLineHighlightColor('white')).not.toThrow();
+    });
+
+    it('buffers optional calls when handlers are not registered', () => {
+      const getHandlers = () => handlers;
+      const { createOptionalHandler } = createHandlerFactories(
+        getHandlers,
+        () => {},
+        enqueueOptionalMessage
+      );
+      const log = createMockLogger();
+
+      const setShimSideRail = createOptionalHandler(
+        { methodName: 'setShimSideRail', handlerKey: 'setShimSideRail' },
+        log
+      );
+
+      setShimSideRail(false);
+
+      expect(pendingOptionalMessages.size).toBe(1);
+      expect(pendingOptionalMessages.get('setShimSideRail')?.args).toEqual([
+        false,
+      ]);
+    });
+
+    it('replays buffered optional calls after handlers register', () => {
+      const getHandlers = () => handlers;
+      const { createOptionalHandler } = createHandlerFactories(
+        getHandlers,
+        () => {},
+        enqueueOptionalMessage
+      );
+      const log = createMockLogger();
+
+      const setShimSideRail = createOptionalHandler(
+        { methodName: 'setShimSideRail', handlerKey: 'setShimSideRail' },
+        log
+      );
+
+      setShimSideRail(true);
+      handlers = createMockHandlers();
+
+      flushPendingOptionalMessages();
+
+      expect(handlers.setShimSideRail).toHaveBeenCalledWith(true);
+      expect(pendingOptionalMessages.size).toBe(0);
+    });
+
+    it('coalesces buffered optional calls by handler key', () => {
+      const getHandlers = () => handlers;
+      const { createOptionalHandler } = createHandlerFactories(
+        getHandlers,
+        () => {},
+        enqueueOptionalMessage
+      );
+      const log = createMockLogger();
+
+      const setShimSideRail = createOptionalHandler(
+        { methodName: 'setShimSideRail', handlerKey: 'setShimSideRail' },
+        log
+      );
+      const setShowToc = createOptionalHandler(
+        { methodName: 'setShowToc', handlerKey: 'setShowToc' },
+        log
+      );
+
+      setShimSideRail(true);
+      setShimSideRail(false);
+      setShowToc(true);
+      setShowToc(false);
+
+      expect(pendingOptionalMessages.size).toBe(2);
+      expect(pendingOptionalMessages.get('setShimSideRail')?.args).toEqual([
+        false,
+      ]);
+      expect(pendingOptionalMessages.get('setShowToc')?.args).toEqual([false]);
     });
   });
 });
