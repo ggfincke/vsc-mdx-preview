@@ -1,7 +1,7 @@
 // packages/webview-app/src/components/TrustBanner/TrustBanner.tsx
 // banner displayed in Safe Mode to inform user & provide actions to enable Trusted Mode
 
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useEffect } from 'react';
 import type { TrustState } from '../../../../../app/types';
 import { ExtensionHandle } from '../../../../../platform/rpc/webview-rpc-client';
 import './TrustBanner.css';
@@ -10,6 +10,46 @@ interface TrustBannerProps {
   trustState: TrustState;
   // dismissible
   dismissible?: boolean;
+}
+
+const DISMISSED_BANNER_KEY_STORAGE = 'mdx-preview.trust-banner.dismissed';
+
+function readDismissedBannerKey(): string | null {
+  try {
+    return window.localStorage.getItem(DISMISSED_BANNER_KEY_STORAGE);
+  } catch {
+    return null;
+  }
+}
+
+function writeDismissedBannerKey(key: string | null): void {
+  try {
+    if (key === null) {
+      window.localStorage.removeItem(DISMISSED_BANNER_KEY_STORAGE);
+      return;
+    }
+    window.localStorage.setItem(DISMISSED_BANNER_KEY_STORAGE, key);
+  } catch {
+    // ignore storage failures in restricted webview contexts
+  }
+}
+
+function getBannerKey(trustState: TrustState): string | null {
+  if (trustState.canExecute) {
+    return null;
+  }
+
+  if (!trustState.workspaceTrusted) {
+    return 'workspace-untrusted';
+  }
+
+  if (!trustState.scriptsEnabled) {
+    return 'scripts-disabled';
+  }
+
+  return trustState.reason
+    ? `restricted:${trustState.reason}`
+    : 'restricted:unknown';
 }
 
 // trust banner component - display warning banner in Safe Mode w/ actions to enable Trusted Mode
@@ -22,7 +62,10 @@ interface TrustBannerProps {
 // wrapped w/ React.memo to prevent re-renders when parent updates but trust state unchanged
 export const TrustBanner = memo(
   function TrustBanner({ trustState, dismissible = true }: TrustBannerProps) {
-    const [isDismissed, setIsDismissed] = useState(false);
+    const [dismissedBannerKey, setDismissedBannerKey] = useState<
+      string | null
+    >(() => readDismissedBannerKey());
+    const currentBannerKey = getBannerKey(trustState);
 
     const handleManageTrust = useCallback(() => {
       ExtensionHandle.manageTrust();
@@ -33,11 +76,27 @@ export const TrustBanner = memo(
     }, []);
 
     const handleDismiss = useCallback(() => {
-      setIsDismissed(true);
-    }, []);
+      if (!currentBannerKey) {
+        return;
+      }
+      setDismissedBannerKey(currentBannerKey);
+      writeDismissedBannerKey(currentBannerKey);
+    }, [currentBannerKey]);
+
+    useEffect(() => {
+      if (trustState.canExecute && dismissedBannerKey !== null) {
+        setDismissedBannerKey(null);
+        writeDismissedBannerKey(null);
+      }
+    }, [trustState.canExecute, dismissedBannerKey]);
+
+    const isDismissed =
+      dismissible &&
+      currentBannerKey !== null &&
+      dismissedBannerKey === currentBannerKey;
 
     // don't show banner if in Trusted Mode or dismissed
-    if (trustState.canExecute || isDismissed) {
+    if (currentBannerKey === null || isDismissed) {
       return null;
     }
 
