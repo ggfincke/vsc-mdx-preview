@@ -253,8 +253,7 @@
           "group": "navigation"
         },
         {
-          "command": "mdx-preview.commands.toggleScripts",
-          "when": "editorLangId == mdx || editorLangId == markdown"
+          "command": "mdx-preview.commands.toggleScripts"
         }
       ]
     },

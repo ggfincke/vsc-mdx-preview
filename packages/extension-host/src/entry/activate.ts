@@ -33,9 +33,10 @@ import {
   getStatusBarManager,
   getConfigManager,
   getTrustManager,
+  getErrorReporter,
 } from '../app/services';
 import { TailwindProcessor } from '../features/tailwind/TailwindProcessor';
-import { ErrorReporter } from '../shared/errors';
+import { ErrorReporter, ErrorContext, ErrorSeverity } from '../shared/errors';
 import { PackageJsonWatcher } from '../features/module-runtime/resolution/PackageJsonWatcher';
 import { clearResolverCache } from '../features/module-runtime/resolution/resolver-factory';
 import { clearSassCache } from '../features/module-runtime/handlers';
@@ -86,6 +87,31 @@ async function showSafeModeNotificationIfNeeded(
     'mdx-preview.shownSafeModeNotification',
     true
   );
+}
+
+// log unhandled rejections to output without interrupting the user w/ popups
+export function reportUnhandledPromiseRejection(reason: unknown): void {
+  const message =
+    reason instanceof Error ? reason.message : String(reason ?? 'Unknown');
+  const error = new Error(`Unhandled promise rejection: ${message}`);
+
+  if (reason instanceof Error && reason.stack) {
+    error.stack = reason.stack;
+  }
+
+  try {
+    getErrorReporter().report(error, {
+      context: ErrorContext.Extension,
+      severity: ErrorSeverity.Error,
+      showNotification: false,
+      metadata:
+        reason instanceof Error
+          ? { rejectionName: reason.name }
+          : { rejectionValueType: typeof reason },
+    });
+  } catch (reportError: unknown) {
+    log.error('Failed to report unhandled promise rejection', reportError);
+  }
 }
 
 // set up workspace trust event handlers for trust grant & revoke
@@ -154,11 +180,7 @@ export async function activate(
 
   // handle unhandled promise rejections
   process.on('unhandledRejection', (reason: unknown) => {
-    const { getErrorReporter } = require('../app/services');
-    getErrorReporter().report(
-      new Error(`Unhandled promise rejection: ${reason}`),
-      { context: 'extension', severity: 'error' }
-    );
+    reportUnhandledPromiseRejection(reason);
   });
 
   // register services w/ centralized registry before using service locators
