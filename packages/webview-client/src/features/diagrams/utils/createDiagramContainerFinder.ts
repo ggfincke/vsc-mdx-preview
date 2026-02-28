@@ -1,4 +1,4 @@
-// packages/webview-app/src/utils/createDiagramContainerFinder.ts
+// packages/webview-client/src/features/diagrams/utils/createDiagramContainerFinder.ts
 // factory for creating diagram container DOM discovery functions
 
 // base diagram info shared by all diagram types

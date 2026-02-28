@@ -1,4 +1,4 @@
-// packages/webview-app/src/utils/findMermaidContainers.ts
+// packages/webview-client/src/features/diagrams/utils/findMermaidContainers.ts
 // extract mermaid diagram info from DOM containers
 
 import {

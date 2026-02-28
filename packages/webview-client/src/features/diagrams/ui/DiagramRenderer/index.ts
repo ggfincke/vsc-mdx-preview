@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/DiagramRenderer/index.ts
+// packages/webview-client/src/features/diagrams/ui/DiagramRenderer/index.ts
 // exports for diagram renderer factory
 
 export { createDiagramRenderer } from './createDiagramRenderer';

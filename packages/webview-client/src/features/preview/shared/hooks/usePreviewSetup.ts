@@ -1,10 +1,9 @@
-// packages/webview-app/src/hooks/usePreviewSetup.ts
+// packages/webview-client/src/features/preview/shared/hooks/usePreviewSetup.ts
 // shared preview setup hook - consolidate diagram rendering, lightbox & container ref
 
 import { useRef, type RefObject, type ReactNode } from 'react';
-import { useMermaidRendering } from '../../../diagrams/hooks/useMermaidRendering';
-import { usePlantUMLRendering } from '../../../diagrams/hooks/usePlantUMLRendering';
-import { useGraphvizRendering } from '../../../diagrams/hooks/useGraphvizRendering';
+import { DIAGRAM_SCAN_ADAPTERS } from '../../../diagrams/hooks/diagramAdapters';
+import { useDiagramScanCoordinator } from '../../../diagrams/hooks/useDiagramScanCoordinator';
 import { useImageLightbox } from '../../../lightbox/hooks/useImageLightbox';
 import { useTocExtraction } from './useTocExtraction';
 
@@ -38,36 +37,17 @@ export function usePreviewSetup(
   const containerRef = useRef<HTMLDivElement>(null);
   const { handleImageClick } = useImageLightbox();
   const extractHeadings = useTocExtraction(containerRef);
-  const mermaid = useMermaidRendering(containerRef, {
+  const diagrams = useDiagramScanCoordinator(containerRef, {
     mode: options.diagramMode,
     filterStale: options.filterStale,
+    adapters: DIAGRAM_SCAN_ADAPTERS,
   });
-  const plantUml = usePlantUMLRendering(containerRef, {
-    mode: options.diagramMode,
-    filterStale: options.filterStale,
-  });
-  const graphviz = useGraphvizRendering(containerRef, {
-    mode: options.diagramMode,
-    filterStale: options.filterStale,
-  });
-
-  const renderPortals = (): ReactNode => [
-    ...mermaid.renderPortals(),
-    ...plantUml.renderPortals(),
-    ...graphviz.renderPortals(),
-  ];
-
-  const scan = (): void => {
-    mermaid.scan();
-    plantUml.scan();
-    graphviz.scan();
-  };
 
   return {
     containerRef,
     handleImageClick,
-    renderPortals,
-    scan,
+    renderPortals: diagrams.renderPortals,
+    scan: diagrams.scan,
     extractHeadings,
   };
 }

@@ -1,4 +1,4 @@
-// packages/webview-app/src/utils/findGraphvizContainers.ts
+// packages/webview-client/src/features/diagrams/utils/findGraphvizContainers.ts
 // extract Graphviz diagram info from DOM containers
 
 import {
