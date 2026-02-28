@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/PlantUMLRenderer/PlantUMLRenderer.tsx
+// packages/webview-client/src/features/diagrams/ui/PlantUMLRenderer/PlantUMLRenderer.tsx
 // PlantUML renderer - render via extension host proxy to avoid CORS
 
 import { LogTags } from '@mdx-preview/contracts';

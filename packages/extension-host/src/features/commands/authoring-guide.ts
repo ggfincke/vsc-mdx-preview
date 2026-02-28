@@ -1,4 +1,4 @@
-// packages/extension/commands/authoring-guide.ts
+// packages/extension-host/src/features/commands/authoring-guide.ts
 // copy MDX authoring guide to clipboard
 
 import * as vscode from 'vscode';

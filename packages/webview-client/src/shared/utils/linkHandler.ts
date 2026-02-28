@@ -1,4 +1,4 @@
-// packages/webview-app/src/utils/linkHandler.ts
+// packages/webview-client/src/shared/utils/linkHandler.ts
 // link classification & handling utilities for webview
 
 export type LinkType = 'anchor' | 'external' | 'relative-file' | 'unknown';

@@ -1,4 +1,4 @@
-// packages/extension/preview/watchers/BaseWatcher.ts
+// packages/extension-host/src/features/preview/watchers/BaseWatcher.ts
 // abstract base class for all watchers w/ common lifecycle management
 
 import debounce from 'lodash.debounce';

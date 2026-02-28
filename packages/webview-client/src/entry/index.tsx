@@ -1,4 +1,4 @@
-// packages/webview-app/src/index.tsx
+// packages/webview-client/src/entry/index.tsx
 // webview entry point - initializes RPC & renders React app
 
 import { createRoot } from 'react-dom/client';

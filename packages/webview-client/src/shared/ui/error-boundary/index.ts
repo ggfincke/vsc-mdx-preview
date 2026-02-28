@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/ErrorBoundary/index.ts
+// packages/webview-client/src/shared/ui/error-boundary/index.ts
 // barrel export for ErrorBoundary component
 
 export {

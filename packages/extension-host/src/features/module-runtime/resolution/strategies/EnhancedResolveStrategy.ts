@@ -1,4 +1,4 @@
-// packages/extension/module-system/resolver/strategies/EnhancedResolveStrategy.ts
+// packages/extension-host/src/features/module-runtime/resolution/strategies/EnhancedResolveStrategy.ts
 // node.js-style resolution using enhanced-resolve
 
 import type { Resolver } from 'enhanced-resolve';

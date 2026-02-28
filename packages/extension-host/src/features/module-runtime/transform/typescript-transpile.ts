@@ -1,4 +1,4 @@
-// packages/extension/module-system/transform/typescript-transpile.ts
+// packages/extension-host/src/features/module-runtime/transform/typescript-transpile.ts
 // unified TypeScript transpilation helper using Sucrase (lightweight)
 
 import { sucraseTransform } from './sucrase';

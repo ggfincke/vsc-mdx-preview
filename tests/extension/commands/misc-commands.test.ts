@@ -79,9 +79,12 @@ vi.mock(
   })
 );
 
-vi.mock('../../../packages/extension/module-system/handlers', () => ({
-  clearSassCache: vi.fn(),
-}));
+vi.mock(
+  '../../../packages/extension-host/src/features/module-runtime/handlers',
+  () => ({
+    clearSassCache: vi.fn(),
+  })
+);
 
 vi.mock(
   '../../../packages/extension-host/src/app/lifecycle/cache-subsystem',

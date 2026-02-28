@@ -1,4 +1,4 @@
-// packages/extension/types/security/index.ts
+// packages/extension-host/src/features/security/types.ts
 // type definitions for security & trust management
 
 import type { TrustState } from '@mdx-preview/contracts';

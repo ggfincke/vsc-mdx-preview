@@ -1,4 +1,4 @@
-// packages/extension/types/core/config.ts
+// packages/extension-host/src/shared/config/types.ts
 // type definitions for configuration management
 // note: SettingKey & SettingTypes are defined in ConfigManager.ts (canonical source)
 // & imported directly from there - they are NOT re-exported here to avoid duplication
@@ -9,6 +9,7 @@ import type {
   FrameworkId,
   PreviewTheme,
   SecurityPolicyValue,
+  SourceLineHighlightColorValue,
   TailwindEnabledValue,
   UnknownBehaviorValue,
   UpdateModeValue,
@@ -81,6 +82,14 @@ export interface ResolvedConfig {
   configPath: string;
   // config directory
   configDir: string;
+}
+
+export interface PreviewRuntimeConfig {
+  showFrontmatter: boolean;
+  showToc: boolean;
+  sourceLineHighlight: boolean;
+  sourceLineHighlightColor: SourceLineHighlightColorValue;
+  shimSideRail: boolean;
 }
 
 // unified effective preview configuration

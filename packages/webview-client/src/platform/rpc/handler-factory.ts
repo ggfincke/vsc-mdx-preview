@@ -1,4 +1,4 @@
-// packages/webview-app/src/rpc/handler-factory.ts
+// packages/webview-client/src/platform/rpc/handler-factory.ts
 // factory functions & declarative configurations for RPC handler methods
 
 import type {
@@ -152,8 +152,8 @@ export function createHandlerFactories(
         return;
       }
 
-      // optional handlers can arrive before React state handlers mount.
-      // buffer latest args so caller can replay after registration.
+      // optional handlers can arrive before React state handlers mount
+      // buffer latest args so caller can replay after registration
       enqueueOptionalFn?.({ handlerKey, args: [...args] });
     };
   }

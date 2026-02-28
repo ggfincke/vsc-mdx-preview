@@ -1,4 +1,4 @@
-// packages/extension/themes/types.ts
+// packages/extension-host/src/features/themes/types.ts
 // MPE-style theme type definitions
 
 // re-export shared types & utilities from @mdx-preview/contracts

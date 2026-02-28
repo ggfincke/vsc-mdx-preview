@@ -1,4 +1,4 @@
-// packages/extension/services/service-names.ts
+// packages/extension-host/src/app/services/service-names.ts
 // constants for service identifiers used in the registry
 
 // service name constants for type-safe registry access

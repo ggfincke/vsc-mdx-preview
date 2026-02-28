@@ -1,3 +1,4 @@
+// tests/webview/SafePreview.test.ts
 // tests/webview/features/preview/safe/SafePreview.test.ts
 // XSS prevention tests for Safe Mode DOMPurify configuration
 //

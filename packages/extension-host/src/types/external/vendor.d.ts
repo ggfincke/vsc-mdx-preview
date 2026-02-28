@@ -1,4 +1,4 @@
-// packages/extension/vendor-types.d.ts
+// packages/extension-host/src/types/external/vendor.d.ts
 // type declarations for modules w/o @types packages
 
 declare module 'is-module' {

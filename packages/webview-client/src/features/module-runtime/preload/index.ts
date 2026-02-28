@@ -1,4 +1,4 @@
-// packages/webview-app/src/module-system/preload/index.ts
+// packages/webview-client/src/features/module-runtime/preload/index.ts
 // preload orchestration for core modules & shim registry
 
 import {

@@ -1,4 +1,4 @@
-// packages/extension/utils/validation/collections.ts
+// packages/extension-host/src/shared/utils/validation/collections.ts
 // collection validators (array, object, record)
 
 import {

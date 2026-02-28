@@ -1,4 +1,4 @@
-// packages/webview-app/src/utils/katexLoader.ts
+// packages/webview-client/src/features/code-block/utils/katexLoader.ts
 // lazy-load KaTeX CSS only when math content is detected
 //
 // use createResourceLoader for idempotent loading w/ state machine

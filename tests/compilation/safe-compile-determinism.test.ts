@@ -1,3 +1,5 @@
+// tests/compilation/safe-compile-determinism.test.ts
+// safe compile determinism test coverage
 import { describe, expect, it } from 'vitest';
 import { compileSafe, type CompilerConfig } from 'mdx-forge/compiler';
 

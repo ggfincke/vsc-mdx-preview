@@ -137,15 +137,28 @@ vi.mock(
       configuration = {
         updateMode: 'onType',
         customCss: '/workspace/custom.css',
+        showFrontmatter: false,
+        showToc: false,
+        sourceLineHighlight: true,
+        sourceLineHighlightColor: 'dependent',
+        shimSideRail: true,
       } as any;
       styleConfiguration = {
         useVscodeMarkdownStyles: true,
         useWhiteBackground: false,
       };
       securityConfiguration = { securityPolicy: 'strict' };
+      runtimeConfiguration = {
+        showFrontmatter: false,
+        showToc: false,
+        sourceLineHighlight: true,
+        sourceLineHighlightColor: 'dependent',
+        shimSideRail: true,
+      };
       debouncedUpdateWebview = vi.fn();
       updateConfiguration = vi.fn(() => ({
         needsWebviewRefresh: false,
+        needsRuntimeConfigPush: false,
         needsDebounceRecreate: false,
         needsCssWatcherUpdate: false,
         oldCssPath: '/workspace/custom.css',
@@ -166,6 +179,7 @@ vi.mock(
       setWebviewHandle = vi.fn();
       onWebviewReady = vi.fn();
       pushThemeState = vi.fn();
+      pushRuntimeConfiguration = vi.fn();
       clearAllCaches = vi.fn(async () => {});
       invalidate = vi.fn(async () => {});
       getWebviewUri = vi.fn((fsPath: string) => `webview://${fsPath}`);
@@ -310,6 +324,7 @@ describe('Preview', () => {
 
     config.updateConfiguration.mockReturnValue({
       needsWebviewRefresh: false,
+      needsRuntimeConfigPush: false,
       needsDebounceRecreate: false,
       needsCssWatcherUpdate: true,
       oldCssPath: '/workspace/old.css',
@@ -324,6 +339,35 @@ describe('Preview', () => {
       mocks.mockWebviewHandle
     );
     expect(mocks.mockRefreshPanel).not.toHaveBeenCalled();
+  });
+
+  it('updateConfiguration pushes runtime settings when runtime flags change', () => {
+    const preview = new Preview(createDoc());
+    const bridge = last(mocks.webviewBridgeInstances);
+    const config = last(mocks.configInstances);
+
+    config.runtimeConfiguration = {
+      showFrontmatter: true,
+      showToc: true,
+      sourceLineHighlight: false,
+      sourceLineHighlightColor: 'white',
+      shimSideRail: false,
+    };
+    config.updateConfiguration.mockReturnValue({
+      needsWebviewRefresh: false,
+      needsRuntimeConfigPush: true,
+      needsDebounceRecreate: false,
+      needsCssWatcherUpdate: false,
+      oldCssPath: '/workspace/custom.css',
+    });
+
+    preview.setFrontmatterState({ title: 'Cached Frontmatter' });
+    preview.updateConfiguration();
+
+    expect(bridge.pushRuntimeConfiguration).toHaveBeenCalledWith(
+      config.runtimeConfiguration,
+      { title: 'Cached Frontmatter' }
+    );
   });
 
   it('handleDidChangeTextDocument passes args to document handler', async () => {

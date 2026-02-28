@@ -1,4 +1,4 @@
-// packages/webview-app/src/features/preview/shared/ui/FrontmatterPanel/FrontmatterPanel.tsx
+// packages/webview-client/src/features/preview/shared/ui/FrontmatterPanel/FrontmatterPanel.tsx
 // collapsible fixed sidebar panel displaying parsed frontmatter key-value pairs
 
 import { memo, useState, useCallback } from 'react';

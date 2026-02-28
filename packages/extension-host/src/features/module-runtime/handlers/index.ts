@@ -1,4 +1,4 @@
-// packages/extension/module-system/handlers/index.ts
+// packages/extension-host/src/features/module-runtime/handlers/index.ts
 // file type handler registry & dispatch for module fetching
 
 import type { FetchResult } from '@mdx-preview/contracts';

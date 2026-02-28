@@ -1,13 +1,13 @@
-// packages/extension/types/vscode/preview.ts
+// packages/extension-host/src/features/preview/types/preview.ts
 // type definitions for preview system
 
 import type * as vscode from 'vscode';
 import type {
-  SourceLineHighlightColorValue,
   TailwindEnabledValue,
   UpdateModeValue,
 } from '@mdx-preview/contracts';
 import type { SecurityPolicy } from '../../security/types/csp';
+import type { PreviewRuntimeConfig } from '../../../shared/config/types';
 
 // webview app URIs (loaded from Vite manifest)
 export interface WebviewAppUris {
@@ -23,16 +23,13 @@ export interface StyleConfiguration {
 }
 
 // complete preview configuration state
-export interface ConfigurationState {
+export interface ConfigurationState extends PreviewRuntimeConfig {
   updateMode: UpdateModeValue;
   debounceDelay: number;
   useVscodeMarkdownStyles: boolean;
   useWhiteBackground: boolean;
   customLayoutFilePath: string;
   customCss: string;
-  sourceLineHighlight: boolean;
-  sourceLineHighlightColor: SourceLineHighlightColorValue;
-  shimSideRail: boolean;
   plantUmlServer: string;
   useSucraseTranspiler: boolean;
   securityPolicy: SecurityPolicy;
@@ -42,6 +39,7 @@ export interface ConfigurationState {
 // result of configuration change detection
 export interface ConfigChangeResult {
   needsWebviewRefresh: boolean;
+  needsRuntimeConfigPush: boolean;
   needsDebounceRecreate: boolean;
   needsCssWatcherUpdate: boolean;
   oldCssPath: string;

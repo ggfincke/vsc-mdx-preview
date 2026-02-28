@@ -1,4 +1,4 @@
-// packages/extension/tailwind/scanning/DependencyScanner.ts
+// packages/extension-host/src/features/tailwind/scanning/DependencyScanner.ts
 // scan imported dependencies for Tailwind classes
 
 import * as path from 'path';

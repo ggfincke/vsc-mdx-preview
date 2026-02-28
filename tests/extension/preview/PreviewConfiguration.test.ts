@@ -33,6 +33,8 @@ function createConfigState(overrides: Record<string, unknown> = {}) {
     sourceLineHighlight: true,
     sourceLineHighlightColor: 'dependent',
     shimSideRail: true,
+    showFrontmatter: false,
+    showToc: false,
     plantUmlServer: '',
     useSucraseTranspiler: false,
     securityPolicy: 'strict',
@@ -155,7 +157,7 @@ describe('PreviewConfiguration', () => {
       expect(result.needsWebviewRefresh).toBe(true);
     });
 
-    it('detects shimSideRail change -> needsWebviewRefresh: true', () => {
+    it('detects shimSideRail change -> needsRuntimeConfigPush: true', () => {
       mockReadState.mockReturnValueOnce(createConfigState());
       const config = new PreviewConfiguration(mockDocUri as any, vi.fn());
 
@@ -164,10 +166,11 @@ describe('PreviewConfiguration', () => {
       );
       const result = config.updateConfiguration(mockDocUri as any, vi.fn());
 
-      expect(result.needsWebviewRefresh).toBe(true);
+      expect(result.needsWebviewRefresh).toBe(false);
+      expect(result.needsRuntimeConfigPush).toBe(true);
     });
 
-    it('detects sourceLineHighlightColor change -> needsWebviewRefresh: true', () => {
+    it('detects sourceLineHighlightColor change -> needsRuntimeConfigPush: true', () => {
       mockReadState.mockReturnValueOnce(createConfigState());
       const config = new PreviewConfiguration(mockDocUri as any, vi.fn());
 
@@ -176,7 +179,32 @@ describe('PreviewConfiguration', () => {
       );
       const result = config.updateConfiguration(mockDocUri as any, vi.fn());
 
-      expect(result.needsWebviewRefresh).toBe(true);
+      expect(result.needsWebviewRefresh).toBe(false);
+      expect(result.needsRuntimeConfigPush).toBe(true);
+    });
+
+    it('detects showToc change -> needsRuntimeConfigPush: true', () => {
+      mockReadState.mockReturnValueOnce(createConfigState());
+      const config = new PreviewConfiguration(mockDocUri as any, vi.fn());
+
+      mockReadState.mockReturnValueOnce(createConfigState({ showToc: true }));
+      const result = config.updateConfiguration(mockDocUri as any, vi.fn());
+
+      expect(result.needsRuntimeConfigPush).toBe(true);
+      expect(result.needsWebviewRefresh).toBe(false);
+    });
+
+    it('detects showFrontmatter change -> needsRuntimeConfigPush: true', () => {
+      mockReadState.mockReturnValueOnce(createConfigState());
+      const config = new PreviewConfiguration(mockDocUri as any, vi.fn());
+
+      mockReadState.mockReturnValueOnce(
+        createConfigState({ showFrontmatter: true })
+      );
+      const result = config.updateConfiguration(mockDocUri as any, vi.fn());
+
+      expect(result.needsRuntimeConfigPush).toBe(true);
+      expect(result.needsWebviewRefresh).toBe(false);
     });
 
     it('returns no changes when config is identical', () => {
@@ -186,6 +214,7 @@ describe('PreviewConfiguration', () => {
       const result = config.updateConfiguration(mockDocUri as any, vi.fn());
 
       expect(result.needsWebviewRefresh).toBe(false);
+      expect(result.needsRuntimeConfigPush).toBe(false);
       expect(result.needsDebounceRecreate).toBe(false);
       expect(result.needsCssWatcherUpdate).toBe(false);
     });

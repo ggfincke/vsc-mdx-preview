@@ -3,12 +3,12 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  mockConfigManager,
   mockTrustManager,
   mockTailwindProcessor,
   mockFrameworkDetector,
   mockErrorReporter,
 } from '../../helpers/mock-services';
+import type { PreviewRuntimeConfig } from '../../../packages/extension-host/src/types';
 
 const {
   mockStatusBarMessage,
@@ -92,9 +92,12 @@ function createPreview(): {
     setSourceLineHighlightColor: ReturnType<typeof vi.fn>;
     setShimSideRail: ReturnType<typeof vi.fn>;
   };
+  runtimeConfiguration: PreviewRuntimeConfig;
   webviewHandshakePromise: Promise<void>;
   onWebviewReady: ReturnType<typeof vi.fn>;
   pushThemeState: ReturnType<typeof vi.fn>;
+  setFrontmatterState: ReturnType<typeof vi.fn>;
+  pushRuntimeConfiguration: ReturnType<typeof vi.fn>;
   updateDependencies: ReturnType<typeof vi.fn>;
   updateTailwindWatchFiles: ReturnType<typeof vi.fn>;
   nextTailwindRequestId: ReturnType<typeof vi.fn>;
@@ -106,7 +109,48 @@ function createPreview(): {
   entryFsDirectory: string;
   mdxPreviewConfig: undefined;
 } {
-  return {
+  const runtimeConfiguration: PreviewRuntimeConfig = {
+    showFrontmatter: false,
+    showToc: false,
+    sourceLineHighlight: true,
+    sourceLineHighlightColor: 'dependent',
+    shimSideRail: true,
+  };
+  let currentFrontmatter: Record<string, unknown> = {};
+  const setFrontmatterState = vi.fn((frontmatter?: Record<string, unknown>) => {
+    currentFrontmatter =
+      frontmatter && Object.keys(frontmatter).length > 0 ? frontmatter : {};
+  });
+  const webviewHandle = {
+    setTailwindBrowserCss: vi.fn(),
+    setTailwindCss: vi.fn(),
+    setTrustState: vi.fn(),
+    setFramework: vi.fn(),
+    updatePreviewSafe: vi.fn(),
+    updatePreview: vi.fn(),
+    setUsedComponents: vi.fn(),
+    setNextraMeta: vi.fn(),
+    setFrontmatter: vi.fn(),
+    setShowToc: vi.fn(),
+    setSourceLineHighlight: vi.fn(),
+    setSourceLineHighlightColor: vi.fn(),
+    setShimSideRail: vi.fn(),
+  };
+  const pushRuntimeConfiguration = vi.fn(() => {
+    webviewHandle.setShowToc(runtimeConfiguration.showToc);
+    webviewHandle.setSourceLineHighlight(
+      runtimeConfiguration.sourceLineHighlight
+    );
+    webviewHandle.setSourceLineHighlightColor(
+      runtimeConfiguration.sourceLineHighlightColor
+    );
+    webviewHandle.setShimSideRail(runtimeConfiguration.shimSideRail);
+    webviewHandle.setFrontmatter(
+      runtimeConfiguration.showFrontmatter ? currentFrontmatter : {}
+    );
+  });
+
+  const preview = {
     doc: {
       uri: {
         scheme: 'file',
@@ -114,24 +158,13 @@ function createPreview(): {
         toString: () => 'file:///workspace/doc.mdx',
       },
     },
-    webviewHandle: {
-      setTailwindBrowserCss: vi.fn(),
-      setTailwindCss: vi.fn(),
-      setTrustState: vi.fn(),
-      setFramework: vi.fn(),
-      updatePreviewSafe: vi.fn(),
-      updatePreview: vi.fn(),
-      setUsedComponents: vi.fn(),
-      setNextraMeta: vi.fn(),
-      setFrontmatter: vi.fn(),
-      setShowToc: vi.fn(),
-      setSourceLineHighlight: vi.fn(),
-      setSourceLineHighlightColor: vi.fn(),
-      setShimSideRail: vi.fn(),
-    },
+    webviewHandle,
+    runtimeConfiguration,
     webviewHandshakePromise: Promise.resolve(),
     onWebviewReady: vi.fn(),
     pushThemeState: vi.fn(),
+    setFrontmatterState,
+    pushRuntimeConfiguration,
     updateDependencies: vi.fn(),
     updateTailwindWatchFiles: vi.fn(),
     nextTailwindRequestId: vi.fn(() => 1),
@@ -143,6 +176,8 @@ function createPreview(): {
     entryFsDirectory: '/workspace',
     mdxPreviewConfig: undefined,
   };
+
+  return preview;
 }
 
 function mockTrustedState(): void {
@@ -181,24 +216,6 @@ describe('evaluate-in-webview Tailwind routing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockTailwindEnabledConfig();
-    mockConfigManager.get.mockImplementation((key: string) => {
-      if (key === 'preview.showFrontmatter') {
-        return false;
-      }
-      if (key === 'preview.showToc') {
-        return false;
-      }
-      if (key === 'preview.sourceLineHighlight') {
-        return true;
-      }
-      if (key === 'preview.sourceLineHighlightColor') {
-        return 'dependent';
-      }
-      if (key === 'preview.shimSideRail') {
-        return true;
-      }
-      return undefined;
-    });
     mockTailwindProcessor.detectProfile.mockResolvedValue({
       profile: 'browser',
       reason: 'inline classes only',
@@ -296,24 +313,7 @@ describe('evaluate-in-webview Tailwind routing', () => {
     mockSafeState();
     const preview = createPreview();
 
-    mockConfigManager.get.mockImplementation((key: string) => {
-      if (key === 'preview.showFrontmatter') {
-        return false;
-      }
-      if (key === 'preview.showToc') {
-        return false;
-      }
-      if (key === 'preview.sourceLineHighlight') {
-        return true;
-      }
-      if (key === 'preview.sourceLineHighlightColor') {
-        return 'dependent';
-      }
-      if (key === 'preview.shimSideRail') {
-        return true;
-      }
-      return undefined;
-    });
+    preview.runtimeConfiguration.showFrontmatter = false;
     mockEngine.evaluateSafe.mockResolvedValueOnce({
       html: '<p>safe</p>',
       frontmatter: {
@@ -334,24 +334,8 @@ describe('evaluate-in-webview Tailwind routing', () => {
     mockTrustedState();
     const preview = createPreview();
 
-    mockConfigManager.get.mockImplementation((key: string) => {
-      if (key === 'preview.showFrontmatter') {
-        return true;
-      }
-      if (key === 'preview.showToc') {
-        return true;
-      }
-      if (key === 'preview.sourceLineHighlight') {
-        return true;
-      }
-      if (key === 'preview.sourceLineHighlightColor') {
-        return 'dependent';
-      }
-      if (key === 'preview.shimSideRail') {
-        return true;
-      }
-      return undefined;
-    });
+    preview.runtimeConfiguration.showFrontmatter = true;
+    preview.runtimeConfiguration.showToc = true;
     mockEngine.evaluateTrusted.mockResolvedValueOnce({
       code: 'export default function Demo() { return null; }',
       entryFilePath: '/workspace/doc.mdx',
@@ -372,6 +356,11 @@ describe('evaluate-in-webview Tailwind routing', () => {
       title: 'Hello',
       tags: ['mdx', 'preview'],
     });
+    expect(preview.setFrontmatterState).toHaveBeenCalledWith({
+      title: 'Hello',
+      tags: ['mdx', 'preview'],
+    });
+    expect(preview.pushRuntimeConfiguration).toHaveBeenCalled();
     expect(preview.webviewHandle.setShowToc).toHaveBeenCalledWith(true);
     expect(preview.webviewHandle.setSourceLineHighlight).toHaveBeenCalledWith(
       true

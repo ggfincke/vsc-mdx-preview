@@ -1,4 +1,4 @@
-// packages/extension/constants/runtime.ts
+// packages/extension-host/src/shared/constants/runtime.ts
 // runtime constants for the extension package (timeouts, limits, cache settings)
 
 // timeouts

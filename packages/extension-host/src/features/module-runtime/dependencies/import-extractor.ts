@@ -1,4 +1,4 @@
-// packages/extension/module-system/deps/import-extractor.ts
+// packages/extension-host/src/features/module-runtime/dependencies/import-extractor.ts
 // consolidated import/export specifier extraction from JavaScript/TypeScript code
 
 import { init as initLexer, parse as parseImports } from 'es-module-lexer';

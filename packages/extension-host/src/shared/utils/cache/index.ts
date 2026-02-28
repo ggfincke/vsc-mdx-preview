@@ -1,4 +1,4 @@
-// packages/extension/utils/cache/index.ts
+// packages/extension-host/src/shared/utils/cache/index.ts
 // cache helpers for watcher-aware caches
 
 export { WatchableCache } from './WatchableCache';

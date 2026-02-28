@@ -1,4 +1,4 @@
-// packages/extension/utils/file-utils.ts
+// packages/extension-host/src/shared/utils/file-utils.ts
 // centralized file I/O utilities w/ consistent error handling
 //
 // error handling strategy

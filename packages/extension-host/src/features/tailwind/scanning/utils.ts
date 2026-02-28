@@ -1,4 +1,4 @@
-// packages/extension/tailwind/scanning/utils.ts
+// packages/extension-host/src/features/tailwind/scanning/utils.ts
 // shared utilities for Tailwind class extraction
 
 import { CLASS_TOKEN_RE } from '../constants';

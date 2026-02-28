@@ -8,6 +8,11 @@ export {
 } from './cache/content-hash-cache';
 export { Semaphore } from './async/semaphore';
 export {
+  createLazyValueLoader,
+  type LazyValueLoader,
+  type LazyValueLoaderOptions,
+} from './async/lazy-value-loader';
+export {
   normalizePlantUmlServerUrl,
   getPlantUmlServerOrigin,
   getPlantUmlRenderEndpoints,

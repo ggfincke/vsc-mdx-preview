@@ -1,4 +1,4 @@
-// packages/extension/commands/debug.ts
+// packages/extension-host/src/features/commands/debug.ts
 // debug output toggle command
 
 import * as vscode from 'vscode';

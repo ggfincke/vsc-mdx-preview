@@ -1,4 +1,4 @@
-// packages/extension/utils/path-utils.ts
+// packages/extension-host/src/shared/utils/path-utils.ts
 // centralized path manipulation utilities for cross-platform compatibility
 //
 // key conventions

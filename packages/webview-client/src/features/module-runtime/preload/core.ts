@@ -1,4 +1,4 @@
-// packages/webview-app/src/module-system/preload/core.ts
+// packages/webview-client/src/features/module-runtime/preload/core.ts
 // core module preloads & shim module helpers
 
 import React from 'react';

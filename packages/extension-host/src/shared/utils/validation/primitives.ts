@@ -1,4 +1,4 @@
-// packages/extension/utils/validation/primitives.ts
+// packages/extension-host/src/shared/utils/validation/primitives.ts
 // primitive type validators (string, boolean, number, function)
 
 import { createTaggedLogger } from '../../logging/logger';

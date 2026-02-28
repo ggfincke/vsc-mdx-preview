@@ -1,4 +1,4 @@
-// packages/extension/preview/watchers/index.ts
+// packages/extension-host/src/features/preview/watchers/index.ts
 // barrel export for watcher modules
 
 export { BaseWatcher } from './BaseWatcher';

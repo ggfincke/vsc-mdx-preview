@@ -1,3 +1,4 @@
+// packages/extension-host/src/shared/types.ts
 // shared cross-layer type barrel
 
 export * from './config/types';

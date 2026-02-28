@@ -1,4 +1,4 @@
-// packages/extension/diagnostics/ComponentDiagnostics.ts
+// packages/extension-host/src/features/diagnostics/ComponentDiagnostics.ts
 // manage VS Code diagnostics for unknown MDX components
 
 import * as vscode from 'vscode';

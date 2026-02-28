@@ -1,4 +1,4 @@
-// packages/webview-app/src/utils/findPlantUMLContainers.ts
+// packages/webview-client/src/features/diagrams/utils/findPlantUMLContainers.ts
 // extract PlantUML diagram info from DOM containers
 
 import {

@@ -1,4 +1,4 @@
-// packages/extension/diagnostics/ComponentDetector.ts
+// packages/extension-host/src/features/diagnostics/ComponentDetector.ts
 // detect JSX components in MDX files for diagnostics
 
 import * as vscode from 'vscode';

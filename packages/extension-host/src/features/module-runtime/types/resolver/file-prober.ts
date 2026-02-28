@@ -1,4 +1,4 @@
-// packages/extension/types/resolver/file-prober.ts
+// packages/extension-host/src/features/module-runtime/types/resolver/file-prober.ts
 // type definitions for file probing
 
 // cached stat result containing file existence & type info

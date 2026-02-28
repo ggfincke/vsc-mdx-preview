@@ -1,4 +1,4 @@
-// packages/webview-app/src/module-system/errors.ts
+// packages/webview-client/src/features/module-runtime/errors.ts
 // provide webview-specific module error helpers w/ user-friendly messages
 
 import type {

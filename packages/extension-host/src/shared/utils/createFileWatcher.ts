@@ -1,4 +1,4 @@
-// packages/extension/utils/createFileWatcher.ts
+// packages/extension-host/src/shared/utils/createFileWatcher.ts
 // standalone file watcher factory w/ error wrapping & optional debouncing
 
 import debounce from 'lodash.debounce';

@@ -1,4 +1,4 @@
-// packages/extension/services/service-locator.ts
+// packages/extension-host/src/app/services/service-locator.ts
 // type-safe service access helpers for ServiceRegistry
 
 import { ServiceRegistry } from './ServiceRegistry';
@@ -52,7 +52,7 @@ function createServiceGetter<T extends IService>(name: ServiceName): () => T {
 // typed service getters (preferred)
 // these provide better IntelliSense & type checking than generic getService()
 // import & use these in your code
-// import { getConfigManager, getTrustManager } from './services';
+// import { getConfigManager, getTrustManager } from './services'
 
 // get the ConfigManager service - manages VS Code configuration settings for the extension
 export const getConfigManager = createServiceGetter<ConfigManager>(

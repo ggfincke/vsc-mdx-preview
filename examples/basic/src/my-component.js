@@ -1,3 +1,5 @@
+// examples/basic/src/my-component.js
+// example React component
 import React from 'react';
 
 // render a simple button component to demonstrate custom React component support

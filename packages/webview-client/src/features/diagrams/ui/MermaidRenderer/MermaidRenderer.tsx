@@ -1,20 +1,11 @@
-// packages/webview-app/src/components/MermaidRenderer/MermaidRenderer.tsx
+// packages/webview-client/src/features/diagrams/ui/MermaidRenderer/MermaidRenderer.tsx
 // lazy-loaded mermaid diagram renderer w/ error handling & source toggle
 
 import { LogTags } from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
+import { loadMermaid } from '../../utils/mermaidLoader';
 import './MermaidRenderer.css';
-
-// lazy-load mermaid (heavy ~2MB, only load when needed)
-let mermaidPromise: Promise<typeof import('mermaid')> | null = null;
-
-function getMermaid() {
-  if (!mermaidPromise) {
-    mermaidPromise = import('mermaid');
-  }
-  return mermaidPromise;
-}
 
 // check if mermaid theme is dark (needs dark background)
 function isDarkMermaidTheme(theme: string): boolean {
@@ -42,7 +33,7 @@ export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
     const { code, id } = _props;
     const isDark = isDarkMermaidTheme(mermaidTheme);
 
-    const mermaid = await getMermaid();
+    const mermaid = await loadMermaid();
 
     // only re-initialize if theme or dark state changed (perf optimization)
     const needsReinit =

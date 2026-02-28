@@ -1,3 +1,5 @@
+// tests/scripts/verify-codegen-idempotency.test.ts
+// verify codegen idempotency test coverage
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';

@@ -1,4 +1,4 @@
-// packages/extension/module-system/fetcher/utils.ts
+// packages/extension-host/src/features/module-runtime/fetch/utils.ts
 // shared utilities for module fetching & resolution
 
 import { createTaggedLogger } from '../../../shared/logging/logger';

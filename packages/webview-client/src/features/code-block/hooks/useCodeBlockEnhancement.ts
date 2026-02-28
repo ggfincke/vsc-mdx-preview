@@ -1,4 +1,4 @@
-// packages/webview-app/src/hooks/useCodeBlockEnhancement.ts
+// packages/webview-client/src/features/code-block/hooks/useCodeBlockEnhancement.ts
 // enhance Shiki code blocks w/ copy buttons & language badges
 
 import { useLayoutEffect, type RefObject } from 'react';

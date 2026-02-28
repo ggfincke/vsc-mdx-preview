@@ -1,4 +1,4 @@
-// packages/extension/utils/find-up.ts
+// packages/extension-host/src/shared/utils/find-up.ts
 // unified upward directory traversal for config file discovery
 
 import * as path from 'path';

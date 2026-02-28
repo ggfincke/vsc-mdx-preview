@@ -1,4 +1,4 @@
-// packages/extension/types/resolver/strategies.ts
+// packages/extension-host/src/features/module-runtime/types/resolver/strategies.ts
 // type definitions for resolution strategies
 
 import type {

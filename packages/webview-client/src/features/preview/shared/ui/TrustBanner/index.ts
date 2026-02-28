@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/TrustBanner/index.ts
+// packages/webview-client/src/features/preview/shared/ui/TrustBanner/index.ts
 // barrel export for TrustBanner component
 
 export { TrustBanner, default } from './TrustBanner';

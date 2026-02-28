@@ -1,4 +1,4 @@
-// packages/extension/types/tailwind/scanning.ts
+// packages/extension-host/src/features/tailwind/types/scanning.ts
 // type definitions for the Tailwind scanning subsystem
 
 // options for scanning Tailwind classes

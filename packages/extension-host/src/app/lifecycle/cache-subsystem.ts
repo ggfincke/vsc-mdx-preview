@@ -1,4 +1,4 @@
-// packages/extension/cache-subsystem.ts
+// packages/extension-host/src/app/lifecycle/cache-subsystem.ts
 // cache subsystem registration for unified lifecycle management
 
 import { ServiceRegistry } from '../services';

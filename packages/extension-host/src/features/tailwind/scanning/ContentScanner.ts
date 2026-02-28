@@ -1,4 +1,4 @@
-// packages/extension/tailwind/scanning/ContentScanner.ts
+// packages/extension-host/src/features/tailwind/scanning/ContentScanner.ts
 // extract Tailwind classes from dynamic expressions (className={...}, clsx(), cva())
 
 import { createTaggedLogger } from '../../../shared/logging/logger';

@@ -1,4 +1,4 @@
-// packages/extension/diagnostics/index.ts
+// packages/extension-host/src/features/diagnostics/index.ts
 // barrel exports for diagnostics module
 
 export { ComponentDiagnostics, DIAGNOSTIC_CODES } from './ComponentDiagnostics';

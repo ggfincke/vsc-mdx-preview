@@ -1,4 +1,4 @@
-// packages/webview-app/src/utils/memoCompare.ts
+// packages/webview-client/src/shared/utils/memoCompare.ts
 // utilities for React.memo comparison functions
 
 // shallow comparison of two arrays

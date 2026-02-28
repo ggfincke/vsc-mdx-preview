@@ -1,4 +1,4 @@
-// packages/extension/tailwind/FileScanValidator.ts
+// packages/extension-host/src/features/tailwind/FileScanValidator.ts
 // file validation utilities for Tailwind scanning - handle file size, token, & parallel read validation
 
 import * as fs from 'fs';

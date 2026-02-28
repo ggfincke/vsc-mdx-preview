@@ -1,4 +1,4 @@
-// packages/extension/nextra/MetaResolver.ts
+// packages/extension-host/src/features/framework/nextra/MetaResolver.ts
 // resolve Nextra _meta.json files for page-level settings
 
 import * as path from 'path';

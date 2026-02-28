@@ -1,4 +1,4 @@
-// packages/extension/services/index.ts
+// packages/extension-host/src/app/services/index.ts
 // public exports for the service registry system
 
 export { ServiceRegistry } from './ServiceRegistry';

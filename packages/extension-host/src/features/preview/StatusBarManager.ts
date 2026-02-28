@@ -1,4 +1,4 @@
-// packages/extension/preview/StatusBarManager.ts
+// packages/extension-host/src/features/preview/StatusBarManager.ts
 // manage MDX Preview status bar items for trust state & framework display
 
 import * as vscode from 'vscode';

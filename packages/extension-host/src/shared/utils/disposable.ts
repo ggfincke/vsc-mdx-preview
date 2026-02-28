@@ -1,4 +1,4 @@
-// packages/extension/utils/disposable.ts
+// packages/extension-host/src/shared/utils/disposable.ts
 // utility functions for disposing VS Code disposables from collections
 
 import type { Disposable } from 'vscode';

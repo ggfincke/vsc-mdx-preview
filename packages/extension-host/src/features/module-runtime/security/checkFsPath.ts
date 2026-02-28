@@ -1,4 +1,4 @@
-// packages/extension/module-system/security/checkFsPath.ts
+// packages/extension-host/src/features/module-runtime/security/checkFsPath.ts
 // ! validate file paths are inside workspace folders (prevents path traversal attacks)
 
 import * as vscode from 'vscode';

@@ -1,5 +1,5 @@
 // tests/webview/source-line-highlight.test.ts
-// regression tests for source-line hover behavior in lists and tables
+// regression tests for source-line hover behavior in lists & tables
 //
 // @vitest-environment jsdom
 
@@ -427,6 +427,77 @@ describe('useSourceLineHighlight regressions', () => {
     unmountHarness(root);
   });
 
+  it('highlights trusted shim roots even when the root lacks data-source-line', () => {
+    const html = `
+      <details
+        id="trusted-collapsible"
+        class="docusaurus-details"
+        data-component="collapsible"
+      >
+        <summary>Expand details</summary>
+        <div class="details-content">
+          <p data-source-line="50">Rendered content</p>
+        </div>
+      </details>
+      <div id="trusted-tabs" class="docusaurus-tabs" data-component="tabs">
+        <div class="mdx-preview-tabs-header">
+          <button type="button">Tab 1</button>
+        </div>
+        <div class="mdx-preview-tabs-content">
+          <div class="mdx-preview-tabs-panel">
+            <p data-source-line="51">Tab panel content</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const { container, root } = mountHarness({ html });
+    const collapsible = container.querySelector('#trusted-collapsible');
+    const tabs = container.querySelector('#trusted-tabs');
+
+    expect(collapsible).toBeTruthy();
+    expect(tabs).toBeTruthy();
+
+    mouseEnter(collapsible!);
+    expect(collapsible!.classList.contains('highlight-line')).toBe(true);
+    expect(tabs!.classList.contains('highlight-line')).toBe(false);
+
+    mouseEnter(tabs!);
+    expect(collapsible!.classList.contains('highlight-line')).toBe(false);
+    expect(tabs!.classList.contains('highlight-line')).toBe(true);
+
+    unmountHarness(root);
+  });
+
+  it('highlights top-level custom component roots without source-line descendants', () => {
+    const html = `
+      <div id="custom-widget">
+        <button type="button">Increment</button>
+        <span>42</span>
+      </div>
+      <div id="second-widget">
+        <button type="button">Decrement</button>
+      </div>
+    `;
+
+    const { container, root } = mountHarness({ html });
+    const customWidget = container.querySelector('#custom-widget');
+    const secondWidget = container.querySelector('#second-widget');
+
+    expect(customWidget).toBeTruthy();
+    expect(secondWidget).toBeTruthy();
+
+    mouseEnter(customWidget!);
+    expect(customWidget!.classList.contains('highlight-line')).toBe(true);
+    expect(secondWidget!.classList.contains('highlight-line')).toBe(false);
+
+    mouseEnter(secondWidget!);
+    expect(customWidget!.classList.contains('highlight-line')).toBe(false);
+    expect(secondWidget!.classList.contains('highlight-line')).toBe(true);
+
+    unmountHarness(root);
+  });
+
   it('defines a list-specific offset for highlighted list items', () => {
     const cssPath = path.join(
       process.cwd(),
@@ -476,8 +547,8 @@ describe('useSourceLineHighlight regressions', () => {
     expect(css).not.toContain("data-table-style='minimal'");
     expect(css).not.toContain("data-table-style='grid'");
     expect(css).not.toContain("data-table-style='legacy'");
-    expect(css).toContain(
-      ".mdx-preview-container:not([data-mpe-theme-active='true']) .markdown-body table"
+    expect(css).toMatch(
+      /\.mdx-preview-container:not\(\[data-mpe-theme-active='true'\]\)\s+\.markdown-body\s+table/
     );
     expect(css).toContain('border-bottom-width: 2px;');
     expect(css).toContain('tr:nth-child(2n)');

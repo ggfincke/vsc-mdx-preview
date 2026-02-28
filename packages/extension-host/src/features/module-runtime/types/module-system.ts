@@ -1,4 +1,4 @@
-// packages/extension/types/core/module-system.ts
+// packages/extension-host/src/features/module-runtime/types/module-system.ts
 // type definitions for the module system
 
 import type { FetchResult, FrameworkId } from '@mdx-preview/contracts';

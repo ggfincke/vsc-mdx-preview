@@ -1,4 +1,4 @@
-// packages/webview-app/src/TrustedPreview.tsx
+// packages/webview-client/src/features/preview/trusted/TrustedPreview.tsx
 // render MDX content in Trusted Mode (evaluates transpiled code & renders React component)
 
 import {
@@ -97,11 +97,16 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   // shared preview setup (container ref, diagram rendering, image lightbox)
-  const { containerRef, handleImageClick, renderPortals, scan, extractHeadings } =
-    usePreviewSetup({
-      diagramMode: 'before-paint',
-      filterStale: true,
-    });
+  const {
+    containerRef,
+    handleImageClick,
+    renderPortals,
+    scan,
+    extractHeadings,
+  } = usePreviewSetup({
+    diagramMode: 'before-paint',
+    filterStale: true,
+  });
 
   // evaluate code when content changes
   useAsyncEffect(

@@ -1,4 +1,4 @@
-// packages/extension/security/SecurityPolicy.ts
+// packages/extension-host/src/features/security/SecurityPolicy.ts
 // security policy enum for CSP configuration
 
 export const enum SecurityPolicy {

@@ -1,4 +1,4 @@
-// packages/extension/preview/preview-commands.ts
+// packages/extension-host/src/features/preview/preview-commands.ts
 // preview command handlers for opening & refreshing previews
 
 import * as vscode from 'vscode';

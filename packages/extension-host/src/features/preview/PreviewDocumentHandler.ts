@@ -1,4 +1,4 @@
-// packages/extension/preview/PreviewDocumentHandler.ts
+// packages/extension-host/src/features/preview/PreviewDocumentHandler.ts
 // document state management & change handling for preview instances
 
 import * as vscode from 'vscode';

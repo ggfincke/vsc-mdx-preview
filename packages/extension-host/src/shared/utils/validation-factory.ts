@@ -1,4 +1,4 @@
-// packages/extension/utils/validation-factory.ts
+// packages/extension-host/src/shared/utils/validation-factory.ts
 // factory utilities for creating type validators w/ consistent boilerplate handling
 
 import { createTaggedLogger } from '../logging/logger';

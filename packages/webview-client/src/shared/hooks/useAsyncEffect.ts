@@ -1,4 +1,4 @@
-// packages/webview-app/src/hooks/useAsyncEffect.ts
+// packages/webview-client/src/shared/hooks/useAsyncEffect.ts
 // hook for running async operations in useEffect w/ automatic cancellation
 
 import { useEffect, useRef, DependencyList } from 'react';

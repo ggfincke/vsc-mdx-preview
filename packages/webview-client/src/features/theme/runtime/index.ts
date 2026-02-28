@@ -1,4 +1,4 @@
-// packages/webview-app/src/theme/index.ts
+// packages/webview-client/src/features/theme/runtime/index.ts
 // barrel exports for theme module (context, hooks, utilities)
 // NOTE: for raw CSS theme data, see themes/ (sibling directory)
 

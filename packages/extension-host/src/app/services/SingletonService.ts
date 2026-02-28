@@ -1,4 +1,4 @@
-// packages/extension/services/SingletonService.ts
+// packages/extension-host/src/app/services/SingletonService.ts
 // abstract base class for singleton services w/ automatic lifecycle management
 
 import * as vscode from 'vscode';

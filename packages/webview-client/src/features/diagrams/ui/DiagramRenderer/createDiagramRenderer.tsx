@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/DiagramRenderer/createDiagramRenderer.tsx
+// packages/webview-client/src/features/diagrams/ui/DiagramRenderer/createDiagramRenderer.tsx
 // factory for creating diagram renderer components w/ shared state & JSX
 
 import { useRef, useState, useCallback } from 'react';

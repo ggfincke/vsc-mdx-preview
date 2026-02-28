@@ -1,3 +1,4 @@
+// tests/webview/TableOfContents.test.ts
 // tests/webview/features/preview/shared/ui/TableOfContents.test.ts
 // unit tests for TOC rendering, active state, & heading navigation
 //

@@ -1,4 +1,4 @@
-// packages/extension/preview/watchers/DocumentTracker.ts
+// packages/extension-host/src/features/preview/watchers/DocumentTracker.ts
 // track document versions & stale state for preview updates
 
 import type { WebviewRPC } from '@mdx-preview/contracts';

@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/StaleIndicator/StaleIndicator.tsx
+// packages/webview-client/src/features/preview/shared/ui/StaleIndicator/StaleIndicator.tsx
 // display a non-blocking badge when preview content is stale
 
 import { memo } from 'react';

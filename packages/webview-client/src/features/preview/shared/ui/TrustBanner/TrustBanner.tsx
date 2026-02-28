@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/TrustBanner/TrustBanner.tsx
+// packages/webview-client/src/features/preview/shared/ui/TrustBanner/TrustBanner.tsx
 // banner displayed in Safe Mode to inform user & provide actions to enable Trusted Mode
 
 import { memo, useState, useCallback, useEffect } from 'react';
@@ -62,9 +62,9 @@ function getBannerKey(trustState: TrustState): string | null {
 // wrapped w/ React.memo to prevent re-renders when parent updates but trust state unchanged
 export const TrustBanner = memo(
   function TrustBanner({ trustState, dismissible = true }: TrustBannerProps) {
-    const [dismissedBannerKey, setDismissedBannerKey] = useState<
-      string | null
-    >(() => readDismissedBannerKey());
+    const [dismissedBannerKey, setDismissedBannerKey] = useState<string | null>(
+      () => readDismissedBannerKey()
+    );
     const currentBannerKey = getBannerKey(trustState);
 
     const handleManageTrust = useCallback(() => {

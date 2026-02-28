@@ -1,4 +1,4 @@
-// packages/extension/config/EffectivePreviewConfig.ts
+// packages/extension-host/src/shared/config/EffectivePreviewConfig.ts
 // unified config object merging VS Code settings + config file + frontmatter
 // precedence: frontmatter > config file > VS Code settings
 //

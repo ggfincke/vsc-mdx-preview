@@ -1,4 +1,4 @@
-// packages/extension/utils/cache/WatchableCache.ts
+// packages/extension-host/src/shared/utils/cache/WatchableCache.ts
 // manage LRU cache entries w/ optional path watchers
 
 import type * as vscode from 'vscode';

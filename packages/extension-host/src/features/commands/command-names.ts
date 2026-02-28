@@ -1,4 +1,4 @@
-// packages/extension/commands/command-names.ts
+// packages/extension-host/src/features/commands/command-names.ts
 // command ID constants for type-safe registration
 
 // define command IDs as constants to prevent typos & enable refactoring

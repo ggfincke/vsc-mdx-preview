@@ -1,4 +1,4 @@
-// packages/extension/module-system/resolver/alias-resolver.ts
+// packages/extension-host/src/features/module-runtime/resolution/alias-resolver.ts
 // resolve framework-specific import aliases (@theme/*, @astrojs/starlight/components, etc.)
 
 import * as path from 'path';

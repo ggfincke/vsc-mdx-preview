@@ -1,4 +1,4 @@
-// packages/extension/security/validateTrust.ts
+// packages/extension-host/src/features/security/validateTrust.ts
 // centralized trust validation utilities for trust-gated operations
 
 import * as vscode from 'vscode';

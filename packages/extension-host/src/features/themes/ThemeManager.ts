@@ -1,4 +1,4 @@
-// packages/extension/themes/ThemeManager.ts
+// packages/extension-host/src/features/themes/ThemeManager.ts
 // * ThemeManager - manage MPE-style preview & code block themes
 
 import * as vscode from 'vscode';

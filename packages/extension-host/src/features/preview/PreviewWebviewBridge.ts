@@ -1,4 +1,4 @@
-// packages/extension/preview/PreviewWebviewBridge.ts
+// packages/extension-host/src/features/preview/PreviewWebviewBridge.ts
 // webview communication & theme management for preview instances
 
 import * as vscode from 'vscode';
@@ -10,6 +10,7 @@ const log = createTaggedLogger(LogTags.PREVIEW);
 import { getThemeManager } from '../../app/services';
 import { DocumentTracker, CustomCssWatcher, WatcherManager } from './watchers';
 import type { WebviewHandleType } from '../../platform/rpc/extension-endpoint';
+import type { PreviewRuntimeConfig } from '../types';
 
 export type WebviewHandle = WebviewHandleType;
 
@@ -85,6 +86,30 @@ export class PreviewWebviewBridge {
 
     log.debug('pushThemeState - pushing theme state', themeState);
     this.webviewHandle.setTheme(themeState);
+  }
+
+  pushRuntimeConfiguration(
+    runtimeConfig: PreviewRuntimeConfig,
+    frontmatter: Record<string, unknown>
+  ): void {
+    if (!this.webviewHandle) {
+      return;
+    }
+
+    this.webviewHandle.setShowToc(runtimeConfig.showToc);
+    this.webviewHandle.setSourceLineHighlight(
+      runtimeConfig.sourceLineHighlight
+    );
+    this.webviewHandle.setSourceLineHighlightColor(
+      runtimeConfig.sourceLineHighlightColor
+    );
+    this.webviewHandle.setShimSideRail(runtimeConfig.shimSideRail);
+
+    const frontmatterPayload =
+      runtimeConfig.showFrontmatter && Object.keys(frontmatter).length > 0
+        ? frontmatter
+        : {};
+    this.webviewHandle.setFrontmatter(frontmatterPayload);
   }
 
   // invalidate a module in the webview cache

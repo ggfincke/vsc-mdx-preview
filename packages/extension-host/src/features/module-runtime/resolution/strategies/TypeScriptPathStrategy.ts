@@ -1,4 +1,4 @@
-// packages/extension/module-system/resolver/strategies/TypeScriptPathStrategy.ts
+// packages/extension-host/src/features/module-runtime/resolution/strategies/TypeScriptPathStrategy.ts
 // TypeScript path alias resolution using compiled pattern index for O(1) exact matches
 
 import * as path from 'path';

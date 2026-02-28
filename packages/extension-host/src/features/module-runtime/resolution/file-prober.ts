@@ -1,4 +1,4 @@
-// packages/extension/module-system/resolver/file-prober.ts
+// packages/extension-host/src/features/module-runtime/resolution/file-prober.ts
 // shared file probing utility for module resolution strategies
 // provide sync & async probing w/ stat caching
 

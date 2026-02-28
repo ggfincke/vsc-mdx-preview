@@ -1,4 +1,4 @@
-// packages/extension/config/ConfigCache.ts
+// packages/extension-host/src/shared/config/ConfigCache.ts
 // encapsulate config cache state for proper lifecycle management
 // use LRUCache for automatic eviction while preserving the distinction
 // between "not cached" (undefined) & "cached as no config" (null)

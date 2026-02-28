@@ -1,4 +1,4 @@
-// packages/extension/errors/ErrorReporter.ts
+// packages/extension-host/src/shared/errors/ErrorReporter.ts
 // centralized error reporting service for consistent error handling
 
 import * as vscode from 'vscode';

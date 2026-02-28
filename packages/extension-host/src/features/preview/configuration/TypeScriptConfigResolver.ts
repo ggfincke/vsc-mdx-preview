@@ -1,4 +1,4 @@
-// packages/extension/preview/config/TypeScriptConfigResolver.ts
+// packages/extension-host/src/features/preview/configuration/TypeScriptConfigResolver.ts
 // resolve TypeScript configuration from tsconfig.json using tsconfck (lightweight)
 
 import * as path from 'path';

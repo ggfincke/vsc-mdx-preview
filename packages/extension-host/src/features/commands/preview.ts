@@ -1,4 +1,4 @@
-// packages/extension/commands/preview.ts
+// packages/extension-host/src/features/commands/preview.ts
 // preview lifecycle commands
 
 import { createTaggedLogger } from '../../shared/logging/logger';

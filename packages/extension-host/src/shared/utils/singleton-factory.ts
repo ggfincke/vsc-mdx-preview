@@ -1,4 +1,4 @@
-// packages/extension/utils/singleton-factory.ts
+// packages/extension-host/src/shared/utils/singleton-factory.ts
 // generic singleton factory utility to eliminate duplicated lazy singleton patterns
 
 // singleton configuration options

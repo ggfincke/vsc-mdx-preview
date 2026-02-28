@@ -1,4 +1,4 @@
-// packages/extension/types/vscode/commands.ts
+// packages/extension-host/src/features/commands/types.ts
 // type definitions for command handlers
 
 import type * as vscode from 'vscode';

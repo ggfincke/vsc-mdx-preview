@@ -1,4 +1,4 @@
-// packages/extension/tailwind/scanning/PatternScanner.ts
+// packages/extension-host/src/features/tailwind/scanning/PatternScanner.ts
 // extract Tailwind classes from static patterns (className="...", @apply, @layer)
 
 import { CLASS_TOKEN_RE } from '../constants';

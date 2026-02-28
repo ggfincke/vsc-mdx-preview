@@ -1,4 +1,4 @@
-// packages/extension/security/TrustManager.ts
+// packages/extension-host/src/features/security/TrustManager.ts
 // * manage trust state for MDX preview (Safe Mode: static HTML | Trusted Mode: full MDX w/ React)
 
 import * as vscode from 'vscode';

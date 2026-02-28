@@ -1,4 +1,4 @@
-// packages/extension/tailwind/index.ts
+// packages/extension-host/src/features/tailwind/index.ts
 // barrel exports for the Tailwind module
 
 // primary API - TailwindProcessor is the main entry point for Tailwind compilation

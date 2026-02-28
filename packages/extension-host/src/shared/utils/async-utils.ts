@@ -1,4 +1,4 @@
-// packages/extension/utils/async-utils.ts
+// packages/extension-host/src/shared/utils/async-utils.ts
 // async utilities for common patterns
 
 interface RaceTimeoutOptionsBase {

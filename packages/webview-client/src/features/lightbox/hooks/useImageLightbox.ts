@@ -1,4 +1,4 @@
-// packages/webview-app/src/hooks/useImageLightbox.ts
+// packages/webview-client/src/features/lightbox/hooks/useImageLightbox.ts
 // shared hook for handling image clicks to open lightbox
 
 import { useCallback, type MouseEvent as ReactMouseEvent } from 'react';

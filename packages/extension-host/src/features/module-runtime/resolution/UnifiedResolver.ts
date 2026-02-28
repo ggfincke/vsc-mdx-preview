@@ -1,4 +1,4 @@
-// packages/extension/module-system/resolver/UnifiedResolver.ts
+// packages/extension-host/src/features/module-runtime/resolution/UnifiedResolver.ts
 // unified module resolution combining framework aliases, TypeScript paths, & enhanced-resolve
 
 import { resolveAlias, isBuiltInShim } from './alias-resolver';

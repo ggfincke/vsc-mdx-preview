@@ -1,4 +1,4 @@
-// packages/extension/preview/PreviewInitializer.ts
+// packages/extension-host/src/features/preview/PreviewInitializer.ts
 // initialization logic for preview instances (watchers, handshake)
 
 import * as vscode from 'vscode';

@@ -1,4 +1,4 @@
-// packages/extension/config/setting-keys.ts
+// packages/extension-host/src/shared/config/setting-keys.ts
 // setting key constants & types, extracted to avoid circular deps w/ logger
 
 import { SecurityPolicy } from '../../features/security/SecurityPolicy';
@@ -164,6 +164,8 @@ export const SETTINGS = {
   COMPONENTS_UNKNOWN_BEHAVIOR: 'components.unknownBehavior' as const,
   PLANTUML_SERVER: 'diagrams.plantUmlServer' as const,
   OPEN_MDX_LINKS_IN_PREVIEW: 'preview.openMdxLinksInPreview' as const,
+  SHOW_FRONTMATTER: 'preview.showFrontmatter' as const,
+  SHOW_TOC: 'preview.showToc' as const,
   DEBUG_OUTPUT: 'advanced.debugOutput' as const,
   WATCHER_DEBOUNCE_MS: 'advanced.watcherDebounceMs' as const,
   TAILWIND_MAX_FILE_SIZE: 'tailwind.maxFileSizeBytes' as const,
@@ -182,6 +184,14 @@ export const THEME_KEYS: readonly SettingKey[] = [
   SETTINGS.PLANTUML_SERVER,
 ] as const;
 
+export const PREVIEW_RUNTIME_CONFIG_KEYS: readonly SettingKey[] = [
+  SETTINGS.SHOW_FRONTMATTER,
+  SETTINGS.SHOW_TOC,
+  SETTINGS.SOURCE_LINE_HIGHLIGHT,
+  SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR,
+  SETTINGS.SHIM_SIDE_RAIL,
+] as const;
+
 export const PREVIEW_CONFIG_KEYS: readonly SettingKey[] = [
   SETTINGS.UPDATE_MODE,
   SETTINGS.DEBOUNCE_DELAY,
@@ -190,12 +200,10 @@ export const PREVIEW_CONFIG_KEYS: readonly SettingKey[] = [
   SETTINGS.CUSTOM_CSS,
   SETTINGS.CUSTOM_LAYOUT_PATH,
   SETTINGS.SECURITY,
-  SETTINGS.SOURCE_LINE_HIGHLIGHT,
-  SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR,
-  SETTINGS.SHIM_SIDE_RAIL,
   SETTINGS.PLANTUML_SERVER,
   SETTINGS.TAILWIND_ENABLED,
   SETTINGS.USE_SUCRASE,
+  ...PREVIEW_RUNTIME_CONFIG_KEYS,
 ] as const;
 
 export const TAILWIND_KEYS: readonly SettingKey[] = [

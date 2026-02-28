@@ -1,4 +1,4 @@
-// packages/extension/preview/watchers/DependencyWatcher.ts
+// packages/extension-host/src/features/preview/watchers/DependencyWatcher.ts
 // watch local file dependencies for changes & trigger preview refresh
 
 import * as vscode from 'vscode';

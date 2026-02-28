@@ -1,4 +1,4 @@
-// packages/extension/rpc-extension.ts
+// packages/extension-host/src/platform/rpc/extension-endpoint.ts
 // RPC communication between extension & webview via Comlink
 
 import * as comlink from 'comlink';

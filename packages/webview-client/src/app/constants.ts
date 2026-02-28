@@ -1,4 +1,4 @@
-// packages/webview-app/src/constants.ts
+// packages/webview-client/src/app/constants.ts
 // centralized constants for the webview app (consolidates magic numbers)
 
 // ui feedback

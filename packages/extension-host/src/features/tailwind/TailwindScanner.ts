@@ -1,4 +1,4 @@
-// packages/extension/tailwind/TailwindScanner.ts
+// packages/extension-host/src/features/tailwind/TailwindScanner.ts
 // coordinator for extracting Tailwind class candidates from MDX/JSX content
 
 import { PatternScanner, ContentScanner, DependencyScanner } from './scanning';

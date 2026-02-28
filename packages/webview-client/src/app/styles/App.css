@@ -1,4 +1,3 @@
-/* packages/webview-app/src/App.css */
 /* MDX Preview App styles */
 
 .mdx-preview-container {
@@ -303,7 +302,8 @@ body.scrollBeyondLastLine .markdown-body {
 }
 
 /* use semantic callout colors for shim/admonition highlights */
-.mdx-safe-preview .highlight-line:is(
+.mdx-safe-preview
+  .highlight-line:is(
     .mdx-safe-callout,
     .mdx-preview-admonition,
     .github-alert,
@@ -312,7 +312,8 @@ body.scrollBeyondLastLine .markdown-body {
     .mdx-preview-nextra-callout,
     .mdx-preview-nextra-callout-wrapper
   ),
-.mdx-trusted-preview .highlight-line:is(
+.mdx-trusted-preview
+  .highlight-line:is(
     .mdx-safe-callout,
     .mdx-preview-admonition,
     .github-alert,
@@ -321,7 +322,8 @@ body.scrollBeyondLastLine .markdown-body {
     .mdx-preview-nextra-callout,
     .mdx-preview-nextra-callout-wrapper
   ),
-.markdown-body .highlight-line:is(
+.markdown-body
+  .highlight-line:is(
     .mdx-safe-callout,
     .mdx-preview-admonition,
     .github-alert,
@@ -584,13 +586,18 @@ body.scrollBeyondLastLine .markdown-body {
 }
 
 /* Consolidated no-theme polished grid style */
-.mdx-preview-container:not([data-mpe-theme-active='true']) .markdown-body table {
+.mdx-preview-container:not([data-mpe-theme-active='true'])
+  .markdown-body
+  table {
   margin: 0.45em 0 1.05em;
   border-collapse: collapse;
   border-spacing: 0;
 }
 
-.mdx-preview-container:not([data-mpe-theme-active='true']) .markdown-body thead th {
+.mdx-preview-container:not([data-mpe-theme-active='true'])
+  .markdown-body
+  thead
+  th {
   font-weight: 750;
   letter-spacing: 0.01em;
   color: var(--vscode-editor-foreground, inherit);
@@ -602,7 +609,10 @@ body.scrollBeyondLastLine .markdown-body {
   border-bottom-width: 2px;
 }
 
-.mdx-preview-container:not([data-mpe-theme-active='true']) .markdown-body tbody td {
+.mdx-preview-container:not([data-mpe-theme-active='true'])
+  .markdown-body
+  tbody
+  td {
   border-color: var(--vscode-panel-border, rgba(127, 127, 127, 0.42));
 }
 

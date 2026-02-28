@@ -1,4 +1,4 @@
-// packages/extension/preview/watchers/CustomCssWatcher.ts
+// packages/extension-host/src/features/preview/watchers/CustomCssWatcher.ts
 // watch custom CSS file for changes & notify webview
 
 import * as vscode from 'vscode';

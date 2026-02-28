@@ -1,4 +1,4 @@
-// packages/extension/eslint-rules/no-raw-log-tag.js
+// packages/extension-host/eslint-rules/no-raw-log-tag.js
 // disallow raw log tag literals in log calls & logTag configs
 
 const LOG_FN_NAMES = new Set([

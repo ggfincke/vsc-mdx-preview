@@ -1,4 +1,4 @@
-// packages/extension/rpc-extension-handle.ts
+// packages/extension-host/src/platform/rpc/extension-rpc-handler.ts
 // RPC handle exposed to webview (called via Comlink)
 
 import { performance } from 'perf_hooks';

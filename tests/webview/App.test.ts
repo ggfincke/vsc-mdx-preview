@@ -1,3 +1,4 @@
+// tests/webview/App.test.ts
 // tests/webview/app/App.test.ts
 // integration-style unit tests for App rendering paths & link handling
 //
