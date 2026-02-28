@@ -1,3 +1,4 @@
+// tests/webview/TrustedPreview.test.ts
 // tests/webview/features/preview/trusted/TrustedPreview.test.ts
 // unit tests for trusted preview rendering & export resolution
 //
@@ -24,7 +25,7 @@ vi.mock(
   '../../packages/webview-client/src/features/preview/shared/hooks/usePreviewSetup',
   () => ({
     usePreviewSetup: () => ({
-      containerRef: { current: {} },
+      containerRef: { current: document.createElement('div') },
       handleImageClick: vi.fn(),
       renderPortals: () => null,
       scan: vi.fn(),
@@ -32,6 +33,12 @@ vi.mock(
     }),
   })
 );
+
+vi.mock('../../packages/webview-client/src/app/state', () => ({
+  useToc: () => ({
+    sourceLineHighlightEnabled: true,
+  }),
+}));
 
 vi.mock(
   '../../packages/webview-client/src/shared/hooks/useAsyncEffect',
@@ -57,6 +64,13 @@ vi.mock(
   '../../packages/webview-client/src/features/code-block/hooks/useCodeBlockEnhancement',
   () => ({
     useCodeBlockEnhancement: vi.fn(),
+  })
+);
+
+vi.mock(
+  '../../packages/webview-client/src/features/preview/shared/hooks/useSourceLineHighlight',
+  () => ({
+    useSourceLineHighlight: vi.fn(),
   })
 );
 

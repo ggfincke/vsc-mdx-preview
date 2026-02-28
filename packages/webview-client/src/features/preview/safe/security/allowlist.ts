@@ -1,4 +1,4 @@
-// packages/webview-app/src/security/allowlist.ts
+// packages/webview-client/src/features/preview/safe/security/allowlist.ts
 // DOMPurify allowlist configuration for Safe Mode HTML sanitization
 
 import type { Config } from 'dompurify';

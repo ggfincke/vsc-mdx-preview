@@ -1,4 +1,4 @@
-// packages/webview-app/src/hooks/useSafeModeProcessing.ts
+// packages/webview-client/src/features/preview/safe/hooks/useSafeModeProcessing.ts
 // encapsulates Safe Mode HTML post-processing (sanitization, link/image processing, code block enhancement)
 
 import { useEffect, type RefObject } from 'react';

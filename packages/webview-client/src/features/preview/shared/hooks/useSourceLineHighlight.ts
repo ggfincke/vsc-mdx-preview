@@ -1,4 +1,4 @@
-// packages/webview-app/src/hooks/useSourceLineHighlight.ts
+// packages/webview-client/src/features/preview/shared/hooks/useSourceLineHighlight.ts
 // MPE-style hover highlight binding using data-source-line annotations
 
 import { useEffect, type RefObject } from 'react';
@@ -13,6 +13,12 @@ const CALLOUT_OWNER_SELECTOR = [
   '[data-callout-type]',
   '.mdx-preview-nextra-callout',
   '.mdx-preview-nextra-callout-wrapper',
+].join(', ');
+const TRUSTED_SHIM_OWNER_SELECTOR = [
+  '[data-callout-type]',
+  '[data-component="collapsible"]',
+  '[data-component="tabs"]',
+  '.mdx-preview-generic-code-group',
 ].join(', ');
 
 function getDataSourceLine(element: Element): number | null {
@@ -31,9 +37,7 @@ interface UseSourceLineHighlightOptions {
 }
 
 interface SourceLineEntry {
-  sourceLineElement: Element;
   highlightElement: Element;
-  dataSourceLine: number;
 }
 
 function resolveCalloutOwner(
@@ -92,11 +96,20 @@ function collectSourceLineEntries(container: HTMLElement): SourceLineEntry[] {
   const sourceLineElements = Array.from(
     container.querySelectorAll(SOURCE_LINE_SELECTOR)
   );
-  const seenLinesByOwner = new Map<Element, Set<number>>();
+  const seenHighlightElements = new Set<Element>();
   const entries: SourceLineEntry[] = [];
 
+  const registerHighlightElement = (highlightElement: Element): void => {
+    if (seenHighlightElements.has(highlightElement)) {
+      return;
+    }
+
+    seenHighlightElements.add(highlightElement);
+    entries.push({ highlightElement });
+  };
+
   sourceLineElements.forEach((sourceLineElement) => {
-    // avoid interfering with inline links
+    // avoid overlap w/ inline links
     if (sourceLineElement.tagName === 'A') {
       return;
     }
@@ -114,19 +127,31 @@ function collectSourceLineEntries(container: HTMLElement): SourceLineEntry[] {
       return;
     }
 
-    const seenLines =
-      seenLinesByOwner.get(highlightElement) ?? new Set<number>();
-    if (seenLines.has(dataSourceLine)) {
+    registerHighlightElement(highlightElement);
+  });
+
+  // Trusted-mode shim components often render root DOM nodes w/o forwarding
+  // data-source-line, so bind directly to their semantic roots
+  const trustedShimOwners = Array.from(
+    container.querySelectorAll(TRUSTED_SHIM_OWNER_SELECTOR)
+  );
+  trustedShimOwners.forEach((owner) => {
+    registerHighlightElement(owner);
+  });
+
+  // Imported/custom React components can render top-level DOM w/o
+  // data-source-line anywhere in the subtree
+  // highlight the root block so hover affordance still works in Trusted Mode
+  Array.from(container.children).forEach((child) => {
+    if (child.hasAttribute('data-source-line')) {
       return;
     }
-    seenLines.add(dataSourceLine);
-    seenLinesByOwner.set(highlightElement, seenLines);
 
-    entries.push({
-      sourceLineElement,
-      highlightElement,
-      dataSourceLine,
-    });
+    if (child.querySelector(SOURCE_LINE_SELECTOR)) {
+      return;
+    }
+
+    registerHighlightElement(child);
   });
 
   return entries;

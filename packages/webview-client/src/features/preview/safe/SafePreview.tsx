@@ -1,4 +1,4 @@
-// packages/webview-app/src/SafePreview.tsx
+// packages/webview-client/src/features/preview/safe/SafePreview.tsx
 // render pre-sanitized HTML in Safe Mode (no JavaScript execution)
 
 import { memo, useEffect } from 'react';
