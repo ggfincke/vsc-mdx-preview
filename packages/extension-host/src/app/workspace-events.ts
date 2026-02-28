@@ -1,4 +1,4 @@
-// packages/extension/workspace-manager.ts
+// packages/extension-host/src/app/workspace-events.ts
 // initialize workspace event handlers for preview updates & folder changes
 
 import { workspace, ExtensionContext } from 'vscode';

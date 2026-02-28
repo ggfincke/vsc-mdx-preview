@@ -1,4 +1,4 @@
-// packages/extension/config/ConfigManager.ts
+// packages/extension-host/src/shared/config/ConfigManager.ts
 // centralized configuration management for MDX Preview extension
 
 import * as vscode from 'vscode';
@@ -11,6 +11,7 @@ import { DEFAULTS, type SettingKey, type SettingTypes } from './setting-keys';
 export {
   SETTINGS,
   THEME_KEYS,
+  PREVIEW_RUNTIME_CONFIG_KEYS,
   PREVIEW_CONFIG_KEYS,
   TAILWIND_KEYS,
   ADVANCED_KEYS,

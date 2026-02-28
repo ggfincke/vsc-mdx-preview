@@ -1,4 +1,4 @@
-// packages/extension/preview/PreviewConfiguration.ts
+// packages/extension-host/src/features/preview/PreviewConfiguration.ts
 // configuration management for preview instances
 
 import * as vscode from 'vscode';
@@ -9,6 +9,7 @@ import { readPreviewConfigurationState } from '../../shared/config/preview-setti
 import type {
   StyleConfiguration,
   ConfigurationState,
+  PreviewRuntimeConfig,
   ConfigChangeResult,
 } from '../types';
 
@@ -16,8 +17,34 @@ import type {
 export type {
   StyleConfiguration,
   ConfigurationState,
+  PreviewRuntimeConfig,
   ConfigChangeResult,
 } from '../types';
+
+function projectRuntimeConfiguration(
+  configuration: ConfigurationState
+): PreviewRuntimeConfig {
+  return {
+    showFrontmatter: configuration.showFrontmatter,
+    showToc: configuration.showToc,
+    sourceLineHighlight: configuration.sourceLineHighlight,
+    sourceLineHighlightColor: configuration.sourceLineHighlightColor,
+    shimSideRail: configuration.shimSideRail,
+  };
+}
+
+function hasRuntimeConfigChanges(
+  previous: PreviewRuntimeConfig,
+  next: PreviewRuntimeConfig
+): boolean {
+  return (
+    previous.showFrontmatter !== next.showFrontmatter ||
+    previous.showToc !== next.showToc ||
+    previous.sourceLineHighlight !== next.sourceLineHighlight ||
+    previous.sourceLineHighlightColor !== next.sourceLineHighlightColor ||
+    previous.shimSideRail !== next.shimSideRail
+  );
+}
 
 // manage preview configuration state & updates
 // read from VS Code settings & track changes that require preview refresh
@@ -49,6 +76,10 @@ export class PreviewConfiguration {
     return { securityPolicy: this._configuration.securityPolicy };
   }
 
+  get runtimeConfiguration(): PreviewRuntimeConfig {
+    return projectRuntimeConfiguration(this._configuration);
+  }
+
   get debouncedUpdateWebview(): ReturnType<typeof debounce> {
     return this._debouncedUpdateWebview;
   }
@@ -60,6 +91,8 @@ export class PreviewConfiguration {
   ): ConfigChangeResult {
     const configManager = getConfigManager();
     const newConfig = readPreviewConfigurationState(configManager, docUri);
+    const previousRuntimeConfig = this.runtimeConfiguration;
+    const nextRuntimeConfig = projectRuntimeConfiguration(newConfig);
 
     const needsWebviewRefresh =
       newConfig.useVscodeMarkdownStyles !==
@@ -67,14 +100,13 @@ export class PreviewConfiguration {
       newConfig.useWhiteBackground !== this._configuration.useWhiteBackground ||
       newConfig.customLayoutFilePath !==
         this._configuration.customLayoutFilePath ||
-      newConfig.sourceLineHighlight !==
-        this._configuration.sourceLineHighlight ||
-      newConfig.sourceLineHighlightColor !==
-        this._configuration.sourceLineHighlightColor ||
-      newConfig.shimSideRail !== this._configuration.shimSideRail ||
       newConfig.plantUmlServer !== this._configuration.plantUmlServer ||
       newConfig.securityPolicy !== this._configuration.securityPolicy ||
       newConfig.tailwindEnabled !== this._configuration.tailwindEnabled;
+    const needsRuntimeConfigPush = hasRuntimeConfigChanges(
+      previousRuntimeConfig,
+      nextRuntimeConfig
+    );
 
     const needsDebounceRecreate =
       newConfig.debounceDelay !== this._configuration.debounceDelay;
@@ -94,6 +126,7 @@ export class PreviewConfiguration {
 
     return {
       needsWebviewRefresh,
+      needsRuntimeConfigPush,
       needsDebounceRecreate,
       needsCssWatcherUpdate,
       oldCssPath,

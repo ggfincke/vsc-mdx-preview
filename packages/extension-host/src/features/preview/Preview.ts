@@ -1,4 +1,4 @@
-// packages/extension/preview/Preview.ts
+// packages/extension-host/src/features/preview/Preview.ts
 // individual preview instance w/ stale detection & custom CSS support
 
 import * as vscode from 'vscode';
@@ -13,18 +13,17 @@ import { LogTags } from '@mdx-preview/contracts';
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.PREVIEW);
 
-import { TextDecoder } from 'util';
 import { refreshPanel } from './webview-manager';
 import evaluateInWebview from './evaluate-in-webview';
 import type { ResolvedConfig, TypeScriptConfiguration } from '../types';
 import type { WatcherManager, DocumentTracker } from './watchers';
-import { readFileAsync } from '../../shared/utils/file-utils';
 
 // extracted modules
 import {
   PreviewConfiguration,
   type StyleConfiguration,
   type ConfigurationState,
+  type PreviewRuntimeConfig,
 } from './PreviewConfiguration';
 import {
   PreviewWebviewBridge,
@@ -33,6 +32,8 @@ import {
 import { PreviewDocumentHandler } from './PreviewDocumentHandler';
 import { PreviewInitializer } from './PreviewInitializer';
 import { getPreviewManager } from '../../app/services/service-locator';
+import { runPreviewUpdateFlow } from './preview-update-flow';
+import { runPreviewRefreshFlow } from './preview-refresh-flow';
 
 // re-export types for consumers
 export type { StyleConfiguration, WebviewHandle };
@@ -66,6 +67,7 @@ export class Preview {
   private tailwindRequestId = 0;
   private tailwindBrowserRuntimeEnabled = false;
   private tailwindFallbackReason: string | null = null;
+  private latestFrontmatter: Record<string, unknown> = {};
 
   // performance tracking (development only)
   private _performanceObserver?: PerformanceObserver;
@@ -141,6 +143,10 @@ export class Preview {
 
   get securityConfiguration() {
     return this.configManager.securityConfiguration;
+  }
+
+  get runtimeConfiguration(): PreviewRuntimeConfig {
+    return this.configManager.runtimeConfiguration;
   }
 
   get webviewHandle(): WebviewHandle {
@@ -302,6 +308,22 @@ export class Preview {
     this.webviewBridge.pushThemeState(this.doc.uri, frontmatter);
   }
 
+  setFrontmatterState(frontmatter?: Record<string, unknown>): void {
+    if (!frontmatter || Object.keys(frontmatter).length === 0) {
+      this.latestFrontmatter = {};
+      return;
+    }
+
+    this.latestFrontmatter = { ...frontmatter };
+  }
+
+  pushRuntimeConfiguration(): void {
+    this.webviewBridge.pushRuntimeConfiguration(
+      this.runtimeConfiguration,
+      this.latestFrontmatter
+    );
+  }
+
   // clear all caches in the webview (for manual cache refresh command)
   async clearAllCaches(): Promise<void> {
     await this.webviewBridge.clearAllCaches();
@@ -317,76 +339,25 @@ export class Preview {
 
   // update webview w/ current document content (force bypasses version tracking)
   async updateWebview(force = false): Promise<void> {
-    log.debug('updateWebview called');
-    const { uri } = this.doc;
-    const { scheme, fsPath } = uri;
-    log.debug(`updateWebview scheme=${scheme}, fsPath=${fsPath}`);
-
-    const currentVersion = this.doc.version;
-    const docTracker = this.watcherManager.get<DocumentTracker>('document');
-
-    // skip if we've already rendered this version (unless forced)
-    if (!force && docTracker?.hasRenderedVersion(currentVersion)) {
-      log.debug('Skipping update - same version');
-      return;
-    }
-
-    switch (scheme) {
-      case 'untitled': {
-        log.debug('updateWebview: untitled scheme');
-        await evaluateInWebview(this, this.text, this.entryFsDirectory ?? '');
-        break;
-      }
-      case 'file': {
-        log.debug('updateWebview: file scheme');
-        if (this.configuration.updateMode === 'onType') {
-          await evaluateInWebview(this, this.text, fsPath);
-        } else {
-          // onSave or manual mode: read from disk
-          let readError: unknown;
-          const savedText = await readFileAsync(fsPath, 'utf8', {
-            onError: (error) => {
-              readError = error;
-            },
-          });
-
-          if (savedText === null) {
-            throw readError instanceof Error
-              ? readError
-              : new Error(`Failed to read file: ${fsPath}`);
-          }
-          await evaluateInWebview(this, savedText, fsPath);
-        }
-        break;
-      }
-      default: {
-        // vscode-remote, vscode-vfs, etc
-        log.debug(`updateWebview: default scheme (${scheme})`);
-        let text = this.text;
-        if (this.configuration.updateMode !== 'onType') {
-          try {
-            const bytes = await vscode.workspace.fs.readFile(uri);
-            text = new TextDecoder().decode(bytes);
-          } catch {
-            text = this.text;
-          }
-        }
-        await evaluateInWebview(this, text, fsPath);
-        break;
-      }
-    }
-
-    // update tracking after successful render
-    docTracker?.markRendered(currentVersion);
+    await runPreviewUpdateFlow({
+      force,
+      doc: this.doc,
+      text: this.text,
+      entryFsDirectory: this.entryFsDirectory,
+      updateMode: this.configuration.updateMode,
+      getDocumentTracker: () =>
+        this.watcherManager.get<DocumentTracker>('document'),
+      evaluate: (content, targetFsPath) =>
+        evaluateInWebview(this, content, targetFsPath),
+    });
   }
 
   async refreshWebview(): Promise<void> {
-    log.debug('refreshWebview called');
-    const currentPreview = getPreviewManager().getCurrentPreview();
-    if (currentPreview) {
-      refreshPanel(currentPreview);
-      await this.updateWebview(true);
-    }
+    await runPreviewRefreshFlow({
+      getCurrentPreview: () => getPreviewManager().getCurrentPreview(),
+      refreshPanel,
+      updateWebviewForce: () => this.updateWebview(true),
+    });
   }
 
   async handleDidChangeTextDocument(
@@ -413,6 +384,10 @@ export class Preview {
     const result = this.configManager.updateConfiguration(this.doc.uri, () =>
       this.updateWebview()
     );
+
+    if (result.needsRuntimeConfigPush) {
+      this.pushRuntimeConfiguration();
+    }
 
     if (result.needsCssWatcherUpdate) {
       // setup custom CSS watcher directly via initializer (coordinator was removed)

@@ -20,6 +20,11 @@ import { PreviewWebviewBridge } from '../../../packages/extension-host/src/featu
 function createMockHandle() {
   return {
     setTheme: vi.fn(),
+    setShowToc: vi.fn(),
+    setSourceLineHighlight: vi.fn(),
+    setSourceLineHighlightColor: vi.fn(),
+    setShimSideRail: vi.fn(),
+    setFrontmatter: vi.fn(),
     invalidate: vi.fn(async () => {}),
     clearAllCaches: vi.fn(async () => {}),
   };
@@ -190,6 +195,67 @@ describe('PreviewWebviewBridge', () => {
       await bridge.clearAllCaches();
 
       expect(handle.clearAllCaches).toHaveBeenCalled();
+    });
+  });
+
+  describe('pushRuntimeConfiguration()', () => {
+    it('returns early when no handle is set', () => {
+      bridge.pushRuntimeConfiguration(
+        {
+          showFrontmatter: true,
+          showToc: true,
+          sourceLineHighlight: true,
+          sourceLineHighlightColor: 'dependent',
+          shimSideRail: true,
+        },
+        { title: 'Doc' }
+      );
+
+      expect(mockThemeManager.getWebviewThemeState).not.toHaveBeenCalled();
+    });
+
+    it('pushes runtime flags & frontmatter when enabled', () => {
+      const handle = createMockHandle();
+      const wm = createWatcherManager();
+      bridge.setWebviewHandle(handle as any, wm as any);
+
+      bridge.pushRuntimeConfiguration(
+        {
+          showFrontmatter: true,
+          showToc: true,
+          sourceLineHighlight: false,
+          sourceLineHighlightColor: 'white',
+          shimSideRail: false,
+        },
+        { title: 'Runtime Title' }
+      );
+
+      expect(handle.setShowToc).toHaveBeenCalledWith(true);
+      expect(handle.setSourceLineHighlight).toHaveBeenCalledWith(false);
+      expect(handle.setSourceLineHighlightColor).toHaveBeenCalledWith('white');
+      expect(handle.setShimSideRail).toHaveBeenCalledWith(false);
+      expect(handle.setFrontmatter).toHaveBeenCalledWith({
+        title: 'Runtime Title',
+      });
+    });
+
+    it('clears frontmatter when panel is disabled', () => {
+      const handle = createMockHandle();
+      const wm = createWatcherManager();
+      bridge.setWebviewHandle(handle as any, wm as any);
+
+      bridge.pushRuntimeConfiguration(
+        {
+          showFrontmatter: false,
+          showToc: true,
+          sourceLineHighlight: true,
+          sourceLineHighlightColor: 'dependent',
+          shimSideRail: true,
+        },
+        { title: 'Runtime Title' }
+      );
+
+      expect(handle.setFrontmatter).toHaveBeenCalledWith({});
     });
   });
 });
