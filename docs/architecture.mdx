@@ -348,6 +348,41 @@ sequenceDiagram
     Note over Extension,Webview: Preview ready for updates
 ```
 
+### Preview Update & Refresh Orchestration
+
+`Preview.ts` now delegates update/refresh routing to explicit flow modules:
+
+- `runPreviewUpdateFlow(...)` (`preview-update-flow.ts`)
+  - rendered-version skip gate (unless forced)
+  - scheme routing (`untitled`, `file`, default remote/vfs)
+  - source selection by update mode (`onType` vs disk/fs read)
+  - `evaluateInWebview(...)` invocation
+  - mark-rendered only after successful evaluation
+- `runPreviewRefreshFlow(...)` (`preview-refresh-flow.ts`)
+  - panel refresh via `refreshPanel(...)`
+  - forced update pass (`updateWebview(true)`)
+
+### Stage-Based Evaluation Pipeline
+
+`evaluate-in-webview.ts` is now a composition root over explicit stage modules:
+
+1. `prepareEvaluationContext(...)`
+   - resolve trust state, effective config, compiler config, and effective `canExecute`
+   - run Tailwind profile detection and fallback-warning dedupe
+   - compute browser-runtime toggle and return `{ kind: 'refresh-required' }` when it flips
+2. Handshake + base-state push
+   - await webview handshake
+   - push trust state, runtime config, and framework metadata
+3. Mode stage
+   - trusted: `evaluateTrustedStage(...)`
+   - safe: `evaluateSafeStage(...)`
+4. Post-push artifacts: `postPushArtifacts(...)`
+   - shared frontmatter/runtime/meta push
+   - trusted branch: dependency updates, optional component detection, `updatePreview`, async Tailwind process
+   - safe branch: Tailwind channel clear + `updatePreviewSafe`
+
+Tailwind channel clearing/reset behavior is centralized in `tailwind-channel-utils.ts`.
+
 ### RPC Communication
 
 Extension and webview communicate using Comlink for type-safe RPC over VS Code's webview messaging API.
@@ -627,29 +662,62 @@ graph TD
 
 #### SafePreviewRenderer
 
-Renders pre-sanitized HTML without JavaScript execution.
+Renders HTML in Safe Mode without JavaScript execution.
 
 ```typescript title="packages/webview-client/src/features/preview/safe/SafePreview.tsx"
-function SafePreviewRenderer({ content }: Props) {
-  const { containerRef, renderPortals } = usePreviewSetup({ mode: 'after-paint' });
+function SafePreviewRenderer({ html }: { html: string }) {
+  const { sourceLineHighlightEnabled } = useToc();
+  const { containerRef, handleImageClick, renderPortals, extractHeadings } =
+    usePreviewSetup({ diagramMode: 'after-paint' });
 
-  // Sanitize with DOMPurify, post-process links/images
-  const processedHtml = useSafeModeProcessing(content.html);
+  // Run Safe Mode processing imperatively on the container DOM
+  useSafeModeProcessing(containerRef, html);
+  useSourceLineHighlight({
+    containerRef,
+    trigger: html,
+    enabled: sourceLineHighlightEnabled,
+  });
+  useKatexDetection({ html });
 
-  // Lazy-load KaTeX CSS when math detected
-  useKatexDetection(containerRef);
+  useEffect(() => {
+    extractHeadings();
+  }, [html, extractHeadings]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.addEventListener('click', handleImageClick);
+    return () => container.removeEventListener('click', handleImageClick);
+  }, [containerRef, handleImageClick]);
 
   return (
-    <div
-      ref={containerRef}
+    <PreviewContainer
+      containerRef={containerRef}
+      mode="safe"
+      diagramPortals={renderPortals()}
       className="markdown-body"
-      dangerouslySetInnerHTML={{ __html: processedHtml }}
     />
   );
 }
 ```
 
-**Processing Pipeline:** DOMPurify sanitization, link post-processing (add target="\_blank"), image path resolution, code block enhancement (copy button), and Mermaid diagram rendering.
+**Processing Pipeline:** DOMPurify sanitization, external-link hardening (`target="_blank"` + `rel="noopener noreferrer"`), image enhancement (`cursor: zoom-in`), single-fragment DOM append, Safe Mode placeholder style injection, code-block enhancement, and diagram handling via `usePreviewSetup`.
+
+### Diagram Scan Coordinator
+
+Diagram discovery/rendering is coordinated by one canonical hook per preview container:
+
+- `usePreviewSetup(...)` delegates diagram work to `useDiagramScanCoordinator(...)`.
+- The coordinator creates exactly one `MutationObserver` for that preview container.
+- DOM mutation bursts are RAF-coalesced into one scan batch.
+- `diagramMode` controls effect timing path:
+  - `before-paint` uses `useLayoutEffect`
+  - `after-paint` uses `useEffect`
+- Each scan runs adapter-based extraction in stable order:
+  1. Mermaid
+  2. PlantUML
+  3. Graphviz
+- Adapters pair extraction with rendering (`find*Containers` + renderer component), and portals use adapter-scoped keys (`${adapter.key}:${diagram.id}`) to avoid cross-type key collisions.
 
 #### TrustedPreviewRenderer
 
@@ -836,21 +904,19 @@ Framework-specific components are loaded on-demand:
 'npm://@mdx-preview/shims-starlight/Aside';
 ```
 
-### RPC Message Queue
+### Webview RPC Orchestrator Modules
 
-Messages received before React mounts are buffered and flushed when handlers register:
+The webview RPC layer is decomposed into focused orchestration modules:
 
-```typescript title="packages/webview-client/src/platform/rpc/webview-rpc-client.ts"
-// Message types that get queued
-type QueuedMessageType = 'trust' | 'safe' | 'trusted' | 'error' | 'stale';
+| Module                   | Responsibility                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| `rpc-message-queue.ts`   | Queue/optional buffering, trust/content validation, flush ordering, coalescing  |
+| `rpc-registration.ts`    | Handler registration retry/backoff, duplicate-register guard, warning threshold |
+| `rpc-direct-handlers.ts` | Immediate DOM/style/module-system handlers (non-queued)                         |
+| `rpc-bootstrap.ts`       | Comlink endpoint bootstrap + `ExtensionRPC` wrap/expose handshake               |
+| `webview-rpc-client.ts`  | Thin composition root wiring queue/registration/direct/bootstrap                |
 
-// Flush order (implicit in handler registration):
-// 1. trust   - Must come first (sets rendering mode)
-// 2. safe    - Content (mutually exclusive with trusted)
-// 3. trusted
-// 4. error   - Overlays
-// 5. stale
-```
+`acquireVsCodeApi()` is invoked lazily inside `initRPCWebviewSide()` (via `rpc-bootstrap.ts`), not at module import time. This allows RPC modules to be imported safely in tests without a global bootstrap shim.
 
 ---
 
@@ -863,10 +929,20 @@ The extension auto-detects MDX frameworks and provides compatible component shim
 ```typescript title="packages/extension-host/src/features/framework/FrameworkDetector.ts"
 // Detection rules (checked in priority order)
 const FRAMEWORK_RULES = [
-  { id: 'docusaurus', packages: ['@docusaurus/core', '@docusaurus/preset-classic'] },
-  { id: 'starlight',  packages: ['@astrojs/starlight'] },
-  { id: 'nextra',     packages: ['nextra', 'nextra-theme-docs', 'nextra-theme-blog'] },
-  { id: 'nextjs',     packages: ['next'], secondaryDeps: ['@next/mdx', 'next-mdx-remote', '@mdx-js/react'] },
+  {
+    id: 'docusaurus',
+    packages: ['@docusaurus/core', '@docusaurus/preset-classic'],
+  },
+  { id: 'starlight', packages: ['@astrojs/starlight'] },
+  {
+    id: 'nextra',
+    packages: ['nextra', 'nextra-theme-docs', 'nextra-theme-blog'],
+  },
+  {
+    id: 'nextjs',
+    packages: ['next'],
+    secondaryDeps: ['@next/mdx', 'next-mdx-remote', '@mdx-js/react'],
+  },
   // fallback: 'generic'
 ];
 ```
@@ -1010,17 +1086,17 @@ flowchart LR
 
 ### VS Code Settings
 
-| Setting                                  | Type    | Default        | Description               |
-| ---------------------------------------- | ------- | -------------- | ------------------------- |
-| `mdx-preview.preview.enableScripts`      | boolean | false          | Enable Trusted Mode       |
-| `mdx-preview.preview.updateMode`         | string  | "onType"       | When to update preview    |
-| `mdx-preview.preview.debounceDelay`      | number  | 300            | Debounce delay (ms)       |
-| `mdx-preview.preview.previewTheme`       | string  | "none"         | Preview theme             |
-| `mdx-preview.preview.codeBlockTheme`     | string  | "auto"         | Code block theme          |
-| `mdx-preview.preview.autoTheme`          | boolean | true           | Auto light/dark switching |
-| `mdx-preview.framework`                  | string  | "auto"         | MDX framework             |
-| `mdx-preview.tailwind.enabled`           | string  | "enabled"      | Tailwind processing       |
-| `mdx-preview.build.useSucraseTranspiler` | boolean | false          | Use Sucrase over Babel    |
+| Setting                                  | Type    | Default   | Description               |
+| ---------------------------------------- | ------- | --------- | ------------------------- |
+| `mdx-preview.preview.enableScripts`      | boolean | false     | Enable Trusted Mode       |
+| `mdx-preview.preview.updateMode`         | string  | "onType"  | When to update preview    |
+| `mdx-preview.preview.debounceDelay`      | number  | 300       | Debounce delay (ms)       |
+| `mdx-preview.preview.previewTheme`       | string  | "none"    | Preview theme             |
+| `mdx-preview.preview.codeBlockTheme`     | string  | "auto"    | Code block theme          |
+| `mdx-preview.preview.autoTheme`          | boolean | true      | Auto light/dark switching |
+| `mdx-preview.framework`                  | string  | "auto"    | MDX framework             |
+| `mdx-preview.tailwind.enabled`           | string  | "enabled" | Tailwind processing       |
+| `mdx-preview.build.useSucraseTranspiler` | boolean | false     | Use Sucrase over Babel    |
 
 ### Project Configuration File
 
@@ -1363,14 +1439,16 @@ This design choice:
 
 ### RPC Message Queue & Flush Order
 
-Messages received before React mounts are buffered and flushed in a specific order:
+Messages received before React mounts are buffered in `rpc-message-queue.ts` and flushed by `registerWebviewHandlers(...)` after registration succeeds:
 
-```typescript title="packages/webview-client/src/platform/rpc/webview-rpc-client.ts"
+```typescript title="packages/webview-client/src/platform/rpc/rpc-message-queue.ts"
 // Flush order with content validation:
 // 1. Trust state (sets rendering mode - MUST be first)
 // 2. Content (safe OR trusted, validated against trust state)
 // 3. Error/stale overlays
 ```
+
+`rpc-registration.ts` owns retry/backoff and duplicate-register guards; once handlers are committed, it calls `queue.flush()`.
 
 **Content validation** ensures that trusted content is only applied when `canExecute` is true:
 
@@ -1556,10 +1634,18 @@ sequenceDiagram
 
 ### Lazy Loading
 
+- Canonical loader primitive: `@mdx-preview/runtime-utils#createLazyValueLoader`
+  - Provides deduplicated in-flight loads, cached success values, optional retry after failure, and reset support.
 - **Babel** (~2MB) - Loaded on first transform, not activation (or prewarmed in background)
 - **Sass** - Loaded from workspace `node_modules` on first .scss
 - **KaTeX CSS** - Loaded in webview only when math detected
 - **Framework Shims** - Loaded on-demand per framework
+- **Mermaid / Graphviz / module-runtime import** - Loaded through dedicated loader modules that share the same lazy-value semantics.
+
+Wrapper conventions:
+
+- Extension `createLazyImport(...)` is built on `createLazyValueLoader(..., { allowRetry: false })` to preserve fail-sticky module-load behavior.
+- Webview `createResourceLoader(...)` is built on the same primitive and keeps side-effect resource APIs (`load/isLoaded/isLoading/reset`) with configurable retry semantics.
 
 ### Parallel Operations
 

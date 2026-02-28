@@ -1,7 +1,7 @@
 // packages/contracts/src/config/enums.ts
 // canonical enum arrays for config validation & VS Code settings
 // these are the single source of truth for all enum values used in
-// - runtime validation (packages/extension/utils/validation/schema.ts)
+// - runtime validation (packages/extension-host/src/shared/utils/validation/schema.ts)
 // - VS Code settings (package.json contributes.configuration)
 // - JSON schema (schemas/mdx-previewrc.schema.json)
 

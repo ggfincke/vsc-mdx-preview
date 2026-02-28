@@ -199,10 +199,12 @@ Runs tests in a real VS Code instance using `vitest-environment-vscode`.
   - `prefer-tagged-logger` - Enforce createTaggedLogger pattern
   - `no-direct-vscode-config` - Enforce ConfigManager usage
   - `no-raw-log-tag` - Prevent raw log tag string usage
-- **Comment style** - Strictly enforced (see `dev-docs/comment-style.md`):
+- **Comment style**:
   - Single-line `//` only, no JSDoc blocks
   - Use `&` instead of "and", `w/` instead of "with"
   - Imperative tone, no end punctuation
+- **Path hygiene guardrail**:
+  - Deprecated legacy package roots (`packages/extension`, `packages/webview-app`) are blocked by `npm run check:legacy-paths` (included in `check:guardrails`).
 
 Run before committing:
 
