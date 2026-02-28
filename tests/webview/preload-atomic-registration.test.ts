@@ -1,3 +1,5 @@
+// tests/webview/preload-atomic-registration.test.ts
+// preload atomic registration test coverage
 import { beforeEach, describe, expect, it } from 'vitest';
 import { setPreloadEntries } from 'mdx-forge/browser';
 import { registry } from 'mdx-forge/browser';

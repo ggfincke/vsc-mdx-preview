@@ -1,4 +1,4 @@
-// packages/extension/framework/index.ts
+// packages/extension-host/src/features/framework/index.ts
 // re-exports for framework module
 
 export { FrameworkDetector, type FrameworkInfo } from './FrameworkDetector';

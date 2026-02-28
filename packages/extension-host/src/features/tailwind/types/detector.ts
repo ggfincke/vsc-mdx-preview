@@ -1,4 +1,4 @@
-// packages/extension/types/tailwind/detector.ts
+// packages/extension-host/src/features/tailwind/types/detector.ts
 // type definitions for Tailwind CSS detection
 
 import type * as vscode from 'vscode';

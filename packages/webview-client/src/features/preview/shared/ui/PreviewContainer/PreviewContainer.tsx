@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/PreviewContainer/PreviewContainer.tsx
+// packages/webview-client/src/features/preview/shared/ui/PreviewContainer/PreviewContainer.tsx
 // shared container component for SafePreview & TrustedPreview
 
 import type { ReactNode, RefObject, MouseEvent } from 'react';

@@ -1,4 +1,4 @@
-// packages/webview-app/src/context/LightboxContext.tsx
+// packages/webview-client/src/app/state/LightboxContext.tsx
 // React context for image lightbox functionality
 
 import { useState, useCallback, useMemo } from 'react';

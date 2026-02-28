@@ -1,4 +1,4 @@
-// packages/extension/module-system/transform/babel.ts
+// packages/extension-host/src/features/module-runtime/transform/babel.ts
 // babel configuration for transpiling user code in MDX files
 //
 // webview evaluates modules using new Function() which requires CommonJS format

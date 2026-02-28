@@ -1,4 +1,4 @@
-// packages/extension/commands/config-info.ts
+// packages/extension-host/src/features/commands/config-info.ts
 // configuration inspection command for debugging & troubleshooting
 
 import * as vscode from 'vscode';

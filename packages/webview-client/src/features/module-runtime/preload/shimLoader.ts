@@ -1,4 +1,4 @@
-// packages/webview-app/src/module-system/preload/shimLoader.ts
+// packages/webview-client/src/features/module-runtime/preload/shimLoader.ts
 // resilient shim loading w/ retry & fallback to generic shims
 
 import { createTaggedLogger } from '../../../shared/utils/createTaggedLogger';

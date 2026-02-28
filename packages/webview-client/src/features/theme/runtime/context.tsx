@@ -1,4 +1,4 @@
-// packages/webview-app/src/theme/context.tsx
+// packages/webview-client/src/features/theme/runtime/context.tsx
 // React context for theme state - consumes state pushed from extension (server-driven theming)
 
 import { useState, useEffect, useMemo, useCallback } from 'react';

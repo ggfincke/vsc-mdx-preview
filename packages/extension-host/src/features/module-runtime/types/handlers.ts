@@ -1,4 +1,4 @@
-// packages/extension/types/handlers/index.ts
+// packages/extension-host/src/features/module-runtime/types/handlers.ts
 // type definitions for file type handlers
 
 import type { FetchResult } from '@mdx-preview/contracts';

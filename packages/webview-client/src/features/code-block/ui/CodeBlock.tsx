@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/CodeBlock/CodeBlock.tsx
+// packages/webview-client/src/features/code-block/ui/CodeBlock.tsx
 // post-process code blocks to add copy button, language badge, & line highlighting
 
 import { copyWithFeedback } from '../../../shared/utils/clipboard';

@@ -1,4 +1,4 @@
-// packages/extension/preview/watchers/TailwindConfigWatcher.ts
+// packages/extension-host/src/features/preview/watchers/TailwindConfigWatcher.ts
 // watch Tailwind config & entry CSS files for changes
 
 import * as vscode from 'vscode';

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 // scripts/verify-codegen-idempotency.mjs
 // verify generated files match what generators produce
 // run AFTER generators (pretest pipeline) to catch stale committed files

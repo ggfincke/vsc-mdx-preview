@@ -1,4 +1,4 @@
-// packages/webview-app/src/features/preview/shared/ui/TableOfContents/TableOfContents.tsx
+// packages/webview-client/src/features/preview/shared/ui/TableOfContents/TableOfContents.tsx
 // floating TOC sidebar extracted from rendered DOM headings
 
 import {

@@ -1,4 +1,4 @@
-// packages/extension/preview/config/ConfigResolver.ts
+// packages/extension-host/src/features/preview/configuration/ConfigResolver.ts
 // resolve .mdx-previewrc.json configuration files for custom plugins & components
 
 import * as path from 'path';

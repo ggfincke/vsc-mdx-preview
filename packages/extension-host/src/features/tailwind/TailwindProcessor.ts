@@ -1,4 +1,4 @@
-// packages/extension/tailwind/TailwindProcessor.ts
+// packages/extension-host/src/features/tailwind/TailwindProcessor.ts
 // orchestrate Tailwind detection, scanning, compilation, & caching
 
 import * as crypto from 'crypto';

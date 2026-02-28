@@ -1,4 +1,4 @@
-// packages/webview-app/src/theme/detection.ts
+// packages/webview-client/src/features/theme/runtime/detection.ts
 // VS Code theme detection via MutationObserver on body class
 
 export type VSCodeTheme = 'light' | 'dark' | 'high-contrast';

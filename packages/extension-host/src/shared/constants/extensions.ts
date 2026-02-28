@@ -1,4 +1,4 @@
-// packages/extension/constants/extensions.ts
+// packages/extension-host/src/shared/constants/extensions.ts
 // centralized file extension constants for module resolution & file handling
 
 // base extension categories (atomic sets)

@@ -1,4 +1,4 @@
-// packages/extension/security/security.ts
+// packages/extension-host/src/features/security/security.ts
 // security policy selection for CSP (strict or disabled)
 
 import * as vscode from 'vscode';

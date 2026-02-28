@@ -1,4 +1,4 @@
-// packages/extension/utils/validation/url.ts
+// packages/extension-host/src/shared/utils/validation/url.ts
 // URL validation utilities
 
 import {

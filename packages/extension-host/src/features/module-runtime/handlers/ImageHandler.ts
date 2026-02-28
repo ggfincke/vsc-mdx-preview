@@ -1,4 +1,4 @@
-// packages/extension/module-system/handlers/ImageHandler.ts
+// packages/extension-host/src/features/module-runtime/handlers/ImageHandler.ts
 // handler for image files - convert to webview URI
 
 import type { FetchResult } from '@mdx-preview/contracts';

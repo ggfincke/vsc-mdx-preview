@@ -1,4 +1,4 @@
-// packages/extension/module-system/handlers/result-builders.ts
+// packages/extension-host/src/features/module-runtime/handlers/result-builders.ts
 // builder functions for constructing FetchResult objects consistently
 
 import type { FetchResult } from '@mdx-preview/contracts';

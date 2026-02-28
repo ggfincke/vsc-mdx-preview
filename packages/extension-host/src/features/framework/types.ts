@@ -1,4 +1,4 @@
-// packages/extension/types/framework/index.ts
+// packages/extension-host/src/features/framework/types.ts
 // type definitions for framework detection
 
 import type { FrameworkId } from '@mdx-preview/contracts';

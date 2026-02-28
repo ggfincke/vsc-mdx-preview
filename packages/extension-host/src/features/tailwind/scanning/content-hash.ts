@@ -1,4 +1,4 @@
-// packages/extension/tailwind/scanning/content-hash.ts
+// packages/extension-host/src/features/tailwind/scanning/content-hash.ts
 // compute stable content hashes for Tailwind scan caching
 
 import * as crypto from 'crypto';

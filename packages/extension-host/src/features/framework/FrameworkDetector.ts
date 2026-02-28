@@ -1,4 +1,4 @@
-// packages/extension/framework/FrameworkDetector.ts
+// packages/extension-host/src/features/framework/FrameworkDetector.ts
 // detect MDX framework from workspace package.json dependencies
 
 import * as vscode from 'vscode';

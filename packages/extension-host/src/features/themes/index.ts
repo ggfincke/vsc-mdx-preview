@@ -1,4 +1,4 @@
-// packages/extension/themes/index.ts
+// packages/extension-host/src/features/themes/index.ts
 // theme module exports
 
 export * from './types';

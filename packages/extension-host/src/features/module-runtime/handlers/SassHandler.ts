@@ -1,4 +1,4 @@
-// packages/extension/module-system/handlers/SassHandler.ts
+// packages/extension-host/src/features/module-runtime/handlers/SassHandler.ts
 // handler for SASS/SCSS files - compile to CSS using workspace's sass package
 
 import * as path from 'path';

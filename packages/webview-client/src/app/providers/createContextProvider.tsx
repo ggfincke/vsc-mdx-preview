@@ -1,4 +1,4 @@
-// packages/webview-app/src/context/createContextProvider.tsx
+// packages/webview-client/src/app/providers/createContextProvider.tsx
 // factory for creating React context w/ provider & hook (eliminates repeated boilerplate)
 
 import { createContext, useContext, type ReactNode } from 'react';

@@ -1,4 +1,4 @@
-// packages/extension/utils/pathSecurity.ts
+// packages/extension-host/src/features/security/pathSecurity.ts
 // centralized path validation utilities for security-sensitive operations
 
 import * as path from 'path';

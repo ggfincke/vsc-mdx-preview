@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/PreviewContainer/index.ts
+// packages/webview-client/src/features/preview/shared/ui/PreviewContainer/index.ts
 // barrel export for PreviewContainer component
 
 export {

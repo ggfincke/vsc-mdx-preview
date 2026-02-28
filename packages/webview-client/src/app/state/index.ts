@@ -1,4 +1,4 @@
-// packages/webview-app/src/context/index.ts
+// packages/webview-client/src/app/state/index.ts
 // barrel export for React context providers
 
 export {

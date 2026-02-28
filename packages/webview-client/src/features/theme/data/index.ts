@@ -1,4 +1,4 @@
-// packages/webview-app/src/themes/index.ts
+// packages/webview-client/src/features/theme/data/index.ts
 // MPE-style preview themes adapted from crossnote (selectors changed to ".markdown-body")
 // NOTE: this file contains raw CSS theme data - for theme context/hooks, use the theme/ module
 

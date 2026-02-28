@@ -1,4 +1,4 @@
-// packages/extension/types/transforms/transpile.ts
+// packages/extension-host/src/features/module-runtime/types/transpile.ts
 // type definitions for transpilation
 
 // result type for entry transformation (includes frontmatter)

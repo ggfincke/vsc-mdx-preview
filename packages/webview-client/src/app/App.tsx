@@ -1,4 +1,4 @@
-// packages/webview-app/src/App.tsx
+// packages/webview-client/src/app/App.tsx
 // MDX Preview App - single React root managing preview rendering (Safe & Trusted mode)
 
 import {

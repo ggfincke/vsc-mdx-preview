@@ -1,4 +1,4 @@
-// packages/webview-app/src/utils/stackTraceParser.ts
+// packages/webview-client/src/shared/utils/stackTraceParser.ts
 // parse error stack traces to extract file locations for navigation
 
 export interface StackFrame {

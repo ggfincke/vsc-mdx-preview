@@ -1,4 +1,4 @@
-// packages/extension/preview/config/index.ts
+// packages/extension-host/src/features/preview/configuration/index.ts
 // barrel export for config resolution modules
 
 export {

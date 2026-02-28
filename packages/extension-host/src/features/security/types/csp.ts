@@ -1,4 +1,4 @@
-// packages/extension/types/vscode/csp.ts
+// packages/extension-host/src/features/security/types/csp.ts
 // type exports for Content Security Policy configuration
 
 // re-export SecurityPolicy from its canonical source

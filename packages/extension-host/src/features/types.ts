@@ -1,3 +1,4 @@
+// packages/extension-host/src/features/types.ts
 // feature-level type barrel
 
 export * from './commands/types';

@@ -1,4 +1,4 @@
-// packages/webview-app/src/utils/debug.ts
+// packages/webview-client/src/shared/utils/debug.ts
 // debug logging utilities stripped in production builds (uses import.meta.env.DEV)
 
 import type { LoggerVariadic } from '@mdx-preview/contracts';

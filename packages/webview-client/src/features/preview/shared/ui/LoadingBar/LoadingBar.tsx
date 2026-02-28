@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/LoadingBar/LoadingBar.tsx
+// packages/webview-client/src/features/preview/shared/ui/LoadingBar/LoadingBar.tsx
 // show VS Code-style progress bar during loading states
 
 import React, { memo, useState, useEffect } from 'react';

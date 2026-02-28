@@ -1,4 +1,4 @@
-// packages/extension/preview/watchers/FilePathWatcher.ts
+// packages/extension-host/src/features/preview/watchers/FilePathWatcher.ts
 // wrap single-pattern file watchers w/ BaseWatcher
 
 import type * as vscode from 'vscode';

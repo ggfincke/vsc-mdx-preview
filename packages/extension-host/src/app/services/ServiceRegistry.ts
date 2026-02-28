@@ -1,4 +1,4 @@
-// packages/extension/services/ServiceRegistry.ts
+// packages/extension-host/src/app/services/ServiceRegistry.ts
 // central registry for managing service lifecycle
 
 import type { Disposable } from 'vscode';

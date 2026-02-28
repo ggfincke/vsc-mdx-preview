@@ -1,4 +1,4 @@
-// packages/extension/commands/authoring-guide-text.ts
+// packages/extension-host/src/features/commands/authoring-guide-text.ts
 // static MDX authoring guide content for clipboard export
 
 export const MDX_AUTHORING_GUIDE_TEXT = `# MDX Authoring Guide for LLM Agents

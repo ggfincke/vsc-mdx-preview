@@ -1,4 +1,4 @@
-// packages/extension/prewarm/index.ts
+// packages/extension-host/src/features/prewarm/index.ts
 // coordinate prewarming of heavy modules for improved first-render UX
 
 import * as vscode from 'vscode';

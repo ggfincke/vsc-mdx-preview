@@ -1,3 +1,5 @@
+// tests/scripts/check-generated-files.test.ts
+// check generated files test coverage
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';

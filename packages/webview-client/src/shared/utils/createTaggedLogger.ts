@@ -1,4 +1,4 @@
-// packages/webview-app/src/utils/createTaggedLogger.ts
+// packages/webview-client/src/shared/utils/createTaggedLogger.ts
 // factory for creating tagged debug loggers w/ consistent prefix
 
 import { createTaggedLoggerFactory } from '@mdx-preview/contracts';

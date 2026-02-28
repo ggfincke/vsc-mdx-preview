@@ -1,4 +1,4 @@
-// packages/extension/preview/EvaluationEngine.ts
+// packages/extension-host/src/features/preview/EvaluationEngine.ts
 // evaluation logic for MDX content, handles both Trusted & Safe modes
 
 import * as fs from 'fs';

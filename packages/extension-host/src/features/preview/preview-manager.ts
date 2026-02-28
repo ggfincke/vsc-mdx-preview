@@ -1,4 +1,4 @@
-// packages/extension/preview/preview-manager.ts
+// packages/extension-host/src/features/preview/preview-manager.ts
 // preview manager singleton for managing all preview instances
 
 import * as vscode from 'vscode';

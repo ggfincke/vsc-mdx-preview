@@ -1,4 +1,4 @@
-// packages/extension/preview/webview-manager.ts
+// packages/extension-host/src/features/preview/webview-manager.ts
 // webview panel management & HTML generation for MDX preview
 
 import * as path from 'path';

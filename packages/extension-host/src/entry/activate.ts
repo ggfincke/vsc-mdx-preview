@@ -1,4 +1,4 @@
-// packages/extension/extension.ts
+// packages/extension-host/src/entry/activate.ts
 // extension activation & deactivation w/ trust management & command registration
 
 'use strict';

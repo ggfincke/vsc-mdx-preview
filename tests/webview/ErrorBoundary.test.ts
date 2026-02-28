@@ -1,3 +1,4 @@
+// tests/webview/ErrorBoundary.test.ts
 // tests/webview/shared/ui/error-boundary/ErrorBoundary.test.tsx
 // unit tests for stack-frame navigation behavior in ErrorDisplay
 //

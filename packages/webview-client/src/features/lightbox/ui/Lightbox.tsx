@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/Lightbox/Lightbox.tsx
+// packages/webview-client/src/features/lightbox/ui/Lightbox.tsx
 // fullscreen image lightbox modal component
 
 import { useEffect, useCallback } from 'react';

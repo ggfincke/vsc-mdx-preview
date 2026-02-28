@@ -1,4 +1,4 @@
-// packages/extension/logging.ts
+// packages/extension-host/src/shared/logging/logger.ts
 // centralized logging using VS Code's OutputChannel for user-visible logs
 
 import * as vscode from 'vscode';

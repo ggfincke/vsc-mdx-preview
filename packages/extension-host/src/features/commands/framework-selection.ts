@@ -1,4 +1,4 @@
-// packages/extension/commands/framework-selection.ts
+// packages/extension-host/src/features/commands/framework-selection.ts
 // framework selection QuickPick command
 
 import * as vscode from 'vscode';

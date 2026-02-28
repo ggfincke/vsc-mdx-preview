@@ -1,4 +1,4 @@
-// packages/extension/commands/security.ts
+// packages/extension-host/src/features/commands/security.ts
 // security-related commands w/ trust checks
 
 import * as vscode from 'vscode';

@@ -1,4 +1,4 @@
-// packages/webview-app/src/context/FrontmatterContext.tsx
+// packages/webview-client/src/app/state/FrontmatterContext.tsx
 // React context for frontmatter data - show key-value pairs in collapsible panel
 
 import { useState, useCallback, useMemo } from 'react';
@@ -21,13 +21,10 @@ function useFrontmatterProviderValue(): FrontmatterContextValue {
     unknown
   > | null>(null);
 
-  const setFrontmatter = useCallback(
-    (data: Record<string, unknown> | null) => {
-      log.debug('setFrontmatter called', data ? Object.keys(data) : null);
-      setFrontmatterState(data);
-    },
-    []
-  );
+  const setFrontmatter = useCallback((data: Record<string, unknown> | null) => {
+    log.debug('setFrontmatter called', data ? Object.keys(data) : null);
+    setFrontmatterState(data);
+  }, []);
 
   return useMemo(
     () => ({ frontmatter, setFrontmatter }),

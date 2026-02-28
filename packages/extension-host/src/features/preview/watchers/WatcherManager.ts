@@ -1,4 +1,4 @@
-// packages/extension/preview/watchers/WatcherManager.ts
+// packages/extension-host/src/features/preview/watchers/WatcherManager.ts
 // coordinate all watchers w/ unified lifecycle management
 
 import type { Disposable } from 'vscode';

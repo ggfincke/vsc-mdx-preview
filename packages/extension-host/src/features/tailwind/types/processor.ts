@@ -1,4 +1,4 @@
-// packages/extension/types/tailwind/processor.ts
+// packages/extension-host/src/features/tailwind/types/processor.ts
 // type definitions for Tailwind CSS processing
 
 import type { TrustState } from '@mdx-preview/contracts';

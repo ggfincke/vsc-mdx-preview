@@ -1,4 +1,4 @@
-// packages/extension/test/__mocks__/vscode.ts
+// packages/extension-host/test/__mocks__/vscode.ts
 // provide minimal vscode API for tests
 
 type Disposable = { dispose: () => void };

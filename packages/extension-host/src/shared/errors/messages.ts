@@ -1,4 +1,4 @@
-// packages/extension/errors/messages.ts
+// packages/extension-host/src/shared/errors/messages.ts
 // user-friendly error message templates & formatting
 
 import type { ExtensionError } from './index';

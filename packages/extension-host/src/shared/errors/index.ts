@@ -1,4 +1,4 @@
-// packages/extension/errors/index.ts
+// packages/extension-host/src/shared/errors/index.ts
 // structured error classes for extension w/ error codes & context
 
 import {

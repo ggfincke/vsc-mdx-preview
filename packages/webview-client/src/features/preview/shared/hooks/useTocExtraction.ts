@@ -1,4 +1,4 @@
-// packages/webview-app/src/features/preview/shared/hooks/useTocExtraction.ts
+// packages/webview-client/src/features/preview/shared/hooks/useTocExtraction.ts
 // extract headings from rendered DOM for TOC sidebar
 
 import { useCallback, useRef, type RefObject } from 'react';

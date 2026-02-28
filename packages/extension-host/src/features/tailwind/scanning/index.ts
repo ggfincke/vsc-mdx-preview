@@ -1,4 +1,4 @@
-// packages/extension/tailwind/scanning/index.ts
+// packages/extension-host/src/features/tailwind/scanning/index.ts
 // barrel exports for the Tailwind scanning subsystem
 
 export { PatternScanner } from './PatternScanner';

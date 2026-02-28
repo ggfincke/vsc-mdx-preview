@@ -1,4 +1,4 @@
-// packages/extension/module-system/resolver/resolver-factory.ts
+// packages/extension-host/src/features/module-runtime/resolution/resolver-factory.ts
 // unified resolver factory for module resolution (browser & node modes)
 
 import * as fs from 'fs';

@@ -1,4 +1,4 @@
-// packages/webview-app/src/context/TocContext.tsx
+// packages/webview-client/src/app/state/TocContext.tsx
 // React context for floating TOC sidebar - stores headings extracted from rendered DOM
 
 import { useState, useCallback, useMemo } from 'react';

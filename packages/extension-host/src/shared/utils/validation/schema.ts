@@ -1,4 +1,4 @@
-// packages/extension/utils/validation/schema.ts
+// packages/extension-host/src/shared/utils/validation/schema.ts
 // schema & enum validators (config validation)
 
 import {

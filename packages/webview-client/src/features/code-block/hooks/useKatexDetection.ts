@@ -1,4 +1,4 @@
-// packages/webview-app/src/hooks/useKatexDetection.ts
+// packages/webview-client/src/features/code-block/hooks/useKatexDetection.ts
 // lazy-load KaTeX CSS when math content is detected
 
 import { useLayoutEffect, type RefObject } from 'react';

@@ -1,4 +1,4 @@
-// packages/extension/types/vscode/diagnostics.ts
+// packages/extension-host/src/features/diagnostics/types.ts
 // type definitions for component diagnostics system
 
 import type * as vscode from 'vscode';

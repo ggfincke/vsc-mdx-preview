@@ -1,4 +1,4 @@
-// packages/extension/module-system/transform/selector.ts
+// packages/extension-host/src/features/module-runtime/transform/selector.ts
 // unified transpiler selection w/ automatic fallback from Sucrase to Babel
 
 import { transform as sucraseTransform } from './sucrase';

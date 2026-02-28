@@ -1,4 +1,4 @@
-// packages/extension/tailwind/TailwindCompiler.ts
+// packages/extension-host/src/features/tailwind/TailwindCompiler.ts
 // compile Tailwind CSS via PostCSS w/ lazy-loading for startup performance
 
 import { createTaggedLogger } from '../../shared/logging/logger';

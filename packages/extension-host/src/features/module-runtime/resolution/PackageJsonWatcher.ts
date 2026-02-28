@@ -1,4 +1,4 @@
-// packages/extension/module-system/resolver/PackageJsonWatcher.ts
+// packages/extension-host/src/features/module-runtime/resolution/PackageJsonWatcher.ts
 // watch package.json & lock files to invalidate resolver cache
 
 import * as vscode from 'vscode';

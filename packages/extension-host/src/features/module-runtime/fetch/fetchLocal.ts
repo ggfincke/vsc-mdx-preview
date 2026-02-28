@@ -1,4 +1,4 @@
-// packages/extension/module-system/fetcher/fetchLocal.ts
+// packages/extension-host/src/features/module-runtime/fetch/fetchLocal.ts
 // browser-optimized module fetcher w/ ESM exports support & dependency resolution
 
 import * as fs from 'fs';

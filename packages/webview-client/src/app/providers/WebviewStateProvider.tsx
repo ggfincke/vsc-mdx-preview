@@ -1,4 +1,4 @@
-// packages/webview-app/src/context/WebviewStateProvider.tsx
+// packages/webview-client/src/app/providers/WebviewStateProvider.tsx
 // composite provider that wrap all state contexts & handle RPC handler registration
 
 import { useEffect, useRef, type ReactNode } from 'react';
@@ -6,7 +6,10 @@ import { TrustProvider, useTrust } from '../state/TrustContext';
 import { PreviewProvider, usePreview } from '../state/PreviewContext';
 import { LoadingProvider, useLoading } from '../state/LoadingContext';
 import { NextraProvider, useNextra } from '../state/NextraContext';
-import { FrontmatterProvider, useFrontmatter } from '../state/FrontmatterContext';
+import {
+  FrontmatterProvider,
+  useFrontmatter,
+} from '../state/FrontmatterContext';
 import { TocProvider, useToc } from '../state/TocContext';
 import { useTheme } from '../../features/theme/runtime';
 import { registerWebviewHandlers } from '../../platform/rpc/webview-rpc-client';

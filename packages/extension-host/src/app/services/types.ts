@@ -1,4 +1,4 @@
-// packages/extension/types/services/index.ts
+// packages/extension-host/src/app/services/types.ts
 // type definitions for the service registry system
 
 // interface that all managed services must implement

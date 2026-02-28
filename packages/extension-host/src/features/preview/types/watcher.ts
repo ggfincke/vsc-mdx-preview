@@ -1,4 +1,4 @@
-// packages/extension/types/vscode/watcher.ts
+// packages/extension-host/src/features/preview/types/watcher.ts
 // type definitions for file watchers & config change events
 
 import type * as vscode from 'vscode';

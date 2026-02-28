@@ -1,4 +1,4 @@
-// packages/extension/security/CSP.ts
+// packages/extension-host/src/features/security/CSP.ts
 // content security policy generation for Safe Mode (no eval) & Trusted Mode (w/ eval)
 
 import * as vscode from 'vscode';

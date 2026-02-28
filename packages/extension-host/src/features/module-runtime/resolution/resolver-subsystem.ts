@@ -1,4 +1,4 @@
-// packages/extension/module-system/resolver/resolver-subsystem.ts
+// packages/extension-host/src/features/module-runtime/resolution/resolver-subsystem.ts
 // resolver subsystem registration for unified lifecycle management
 
 import { ServiceRegistry } from '../../../app/services';

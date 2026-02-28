@@ -1,4 +1,4 @@
-// packages/extension/module-system/transform/sucrase.ts
+// packages/extension-host/src/features/module-runtime/transform/sucrase.ts
 // sucrase transform for fast JSX & TypeScript transpilation
 
 import { transform as sucraseTransformImpl } from 'sucrase';

@@ -1,4 +1,4 @@
-// packages/extension/commands/theme-selection.ts
+// packages/extension-host/src/features/commands/theme-selection.ts
 // theme selection QuickPick commands
 
 import * as vscode from 'vscode';

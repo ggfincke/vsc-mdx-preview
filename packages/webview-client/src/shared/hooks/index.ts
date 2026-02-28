@@ -1,3 +1,4 @@
+// packages/webview-client/src/shared/hooks/index.ts
 // shared hook exports for cross-feature utilities
 
 export { useAsyncEffect } from './useAsyncEffect';

@@ -1,4 +1,4 @@
-// packages/extension/tailwind/constants.ts
+// packages/extension-host/src/features/tailwind/constants.ts
 // centralized constants for the Tailwind module - consolidate magic numbers for maintainability
 
 import {

@@ -1,4 +1,4 @@
-// packages/extension/tailwind/TailwindDetector.ts
+// packages/extension-host/src/features/tailwind/TailwindDetector.ts
 // detect Tailwind config, entry CSS, & workspace version w/ silent failures on missing files
 
 import * as path from 'path';

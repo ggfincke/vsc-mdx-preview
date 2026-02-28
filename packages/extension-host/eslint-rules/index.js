@@ -1,4 +1,4 @@
-// packages/extension/eslint-rules/index.js
+// packages/extension-host/eslint-rules/index.js
 // Local ESLint plugin for mdx-preview extension rules
 
 module.exports = {

@@ -1,4 +1,4 @@
-// packages/extension/module-system/resolver/strategies/FileProbeStrategy.ts
+// packages/extension-host/src/features/module-runtime/resolution/strategies/FileProbeStrategy.ts
 // file probing strategy for relative imports w/o extensions
 
 import * as path from 'path';

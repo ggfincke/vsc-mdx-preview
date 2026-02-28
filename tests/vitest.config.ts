@@ -1,3 +1,5 @@
+// tests/vitest.config.ts
+// vitest test configuration
 import { defineConfig } from 'vitest/config';
 import { createRequire } from 'module';
 import path from 'path';

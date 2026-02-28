@@ -1,4 +1,4 @@
-// packages/webview-app/src/types.ts
+// packages/webview-client/src/app/types.ts
 // shared types for MDX Preview webview
 
 // re-export shared types from @mdx-preview/contracts

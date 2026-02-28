@@ -1,4 +1,4 @@
-// packages/extension/constants/index.ts
+// packages/extension-host/src/shared/constants/index.ts
 // barrel export for extension constants
 
 export * from './extensions';

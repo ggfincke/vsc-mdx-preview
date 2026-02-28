@@ -1,4 +1,4 @@
-// packages/extension/diagnostics/ComponentCodeActions.ts
+// packages/extension-host/src/features/diagnostics/ComponentCodeActions.ts
 // provide quick-fix code actions for component diagnostics
 
 import * as vscode from 'vscode';

@@ -1,4 +1,4 @@
-// packages/extension/commands/cache.ts
+// packages/extension-host/src/features/commands/cache.ts
 // module & webview cache management commands
 
 import * as vscode from 'vscode';

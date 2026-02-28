@@ -1,4 +1,4 @@
-// packages/extension/module-system/transform/transform.ts
+// packages/extension-host/src/features/module-runtime/transform/transform.ts
 // transpile entry & dependency files using MDX, TypeScript, Babel, or Sucrase
 
 import { Preview } from '../../preview/preview-manager';

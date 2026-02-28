@@ -1,4 +1,4 @@
-// packages/extension/eslint-rules/prefer-tagged-logger.js
+// packages/extension-host/eslint-rules/prefer-tagged-logger.js
 // detect manual LogTags interpolation in log calls & suggest createTaggedLogger
 
 const LOG_FN_NAMES = new Set([

@@ -1,4 +1,4 @@
-// packages/extension/commands/index.ts
+// packages/extension-host/src/features/commands/index.ts
 // public exports for the command registration system
 
 import * as vscode from 'vscode';

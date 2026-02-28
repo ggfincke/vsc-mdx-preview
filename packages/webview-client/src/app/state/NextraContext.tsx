@@ -1,4 +1,4 @@
-// packages/webview-app/src/context/NextraContext.tsx
+// packages/webview-client/src/app/state/NextraContext.tsx
 // React context for Nextra page metadata - manage page-level settings from _meta.json
 
 import { useState, useCallback, useMemo } from 'react';

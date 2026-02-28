@@ -1,4 +1,4 @@
-// packages/extension/commands/config-toggles.ts
+// packages/extension-host/src/features/commands/config-toggles.ts
 // simple configuration toggle commands
 
 import { CommandNames } from './command-names';

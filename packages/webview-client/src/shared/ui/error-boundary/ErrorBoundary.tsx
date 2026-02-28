@@ -1,4 +1,4 @@
-// packages/webview-app/src/components/ErrorBoundary/ErrorBoundary.tsx
+// packages/webview-client/src/shared/ui/error-boundary/ErrorBoundary.tsx
 // catch React errors & display VS Code-themed error UI (handle global errors too)
 
 import React, { useEffect, useState, useCallback } from 'react';

@@ -1,4 +1,4 @@
-// packages/webview-app/src/theme/css.ts
+// packages/webview-client/src/features/theme/runtime/css.ts
 // re-export theme CSS from themes directory
 //
 // architecture
