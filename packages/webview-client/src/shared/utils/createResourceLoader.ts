@@ -1,7 +1,8 @@
-// packages/webview-app/src/utils/createResourceLoader.ts
+// packages/webview-client/src/shared/utils/createResourceLoader.ts
 // factory for creating idempotent async resource loaders w/ state machine
 
 import { LogTags } from '@mdx-preview/contracts';
+import { createLazyValueLoader } from '@mdx-preview/runtime-utils';
 import { createTaggedLogger } from './createTaggedLogger';
 
 const log = createTaggedLogger(LogTags.RESOURCE_LOADER);
@@ -26,64 +27,49 @@ export interface ResourceLoader {
   reset(): void;
 }
 
-// state type: null | Promise | true | false
-type LoaderState = null | Promise<void> | boolean;
-
 // create an idempotent resource loader w/ state machine
 export function createResourceLoader(
   loadFn: () => Promise<void>,
   options: ResourceLoaderOptions
 ): ResourceLoader {
   const { name, allowRetry = true } = options;
+  let failed = false;
 
-  let state: LoaderState = null;
+  const loader = createLazyValueLoader(loadFn, {
+    allowRetry,
+    onLoaded: () => {
+      failed = false;
+    },
+    onFailed: (error) => {
+      failed = true;
+      log.error(`${name}: Failed to load:`, error);
+    },
+    onReset: () => {
+      failed = false;
+    },
+  });
 
   function load(): Promise<void> {
-    // already loaded successfully
-    if (state === true) {
-      return Promise.resolve();
-    }
-
-    // loading in progress - return existing promise to deduplicate concurrent calls
-    if (state instanceof Promise) {
-      return state;
-    }
-
-    // failed previously & retry not allowed
-    if (state === false && !allowRetry) {
+    // preserve existing createResourceLoader semantics: after a failed load w/
+    // retries disabled, subsequent calls reject immediately w/ a descriptive error
+    if (failed && !allowRetry) {
       return Promise.reject(
         new Error(`[${name}] Loading failed & retry is disabled`)
       );
     }
-
-    // not started (null) or failed previously (false w/ allowRetry) - start loading
-    const loadPromise = loadFn()
-      .then(() => {
-        state = true;
-      })
-      .catch((error) => {
-        log.error(`${name}: Failed to load:`, error);
-        // allow retry on next call (if allowRetry is true, state becomes false)
-        // if allowRetry is false, state also becomes false but load() will reject
-        state = false;
-        // re-throw for callers who await
-        throw error;
-      });
-
-    state = loadPromise;
-    return loadPromise;
+    return loader.load();
   }
 
   function isLoaded(): boolean {
-    return state === true;
+    return loader.isLoaded();
   }
 
   function isLoading(): boolean {
-    return state instanceof Promise;
+    return loader.isLoading();
   }
 
   function reset(): void {
-    state = null;
+    loader.reset();
   }
 
   return {
