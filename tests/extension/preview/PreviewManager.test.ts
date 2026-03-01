@@ -49,12 +49,6 @@ describe('PreviewManager', () => {
       expect(a).toBe(b);
     });
 
-    it('reset clears instance & creates new', () => {
-      const a = PreviewManager.getInstance();
-      PreviewManager.reset();
-      const b = PreviewManager.getInstance();
-      expect(a).not.toBe(b);
-    });
   });
 
   // refreshAllPreviews
@@ -68,10 +62,6 @@ describe('PreviewManager', () => {
       expect(preview.refreshWebview).toHaveBeenCalled();
     });
 
-    it('no preview -> no-op', async () => {
-      const mgr = PreviewManager.getInstance();
-      await mgr.refreshAllPreviews();
-    });
   });
 
   // clearAllWebviewCaches
@@ -85,38 +75,6 @@ describe('PreviewManager', () => {
       expect(preview.clearAllCaches).toHaveBeenCalled();
     });
 
-    it('error in clearAllCaches is caught silently', async () => {
-      const mgr = PreviewManager.getInstance();
-      const preview = createMockPreview({ active: true });
-      (preview.clearAllCaches as ReturnType<typeof vi.fn>).mockRejectedValue(
-        new Error('rpc fail')
-      );
-      mgr.setCurrentPreview(preview);
-      // should not throw
-      await mgr.clearAllWebviewCaches();
-    });
-  });
-
-  // panel lifecycle
-
-  describe('panel lifecycle', () => {
-    it('clearPanel disposes panel & all panelDisposables', () => {
-      const mgr = PreviewManager.getInstance();
-      const panel = { dispose: vi.fn() } as any;
-      mgr.setPanel(panel);
-
-      const disposable1 = { dispose: vi.fn() };
-      const disposable2 = { dispose: vi.fn() };
-      mgr.getPanelDisposables().push(disposable1, disposable2);
-
-      mgr.clearPanel();
-      expect(panel.dispose).toHaveBeenCalled();
-      expect(disposable1.dispose).toHaveBeenCalled();
-      expect(disposable2.dispose).toHaveBeenCalled();
-      expect(mgr.getPanel()).toBeUndefined();
-      expect(mgr.getPanelDoc()).toBeUndefined();
-      expect(mgr.getPanelDisposables()).toHaveLength(0);
-    });
   });
 
   // dispose

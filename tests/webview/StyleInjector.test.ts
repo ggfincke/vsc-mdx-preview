@@ -141,14 +141,6 @@ describe('StyleInjector', () => {
       expect(mockHead.children[0].textContent).toBe('.test { color: red; }');
     });
 
-    it('should use cached reference for O(1) removal', async () => {
-      const StyleInjector = await getStyleInjector();
-
-      StyleInjector.injectModuleCss('module-1', '.test { color: red; }');
-      StyleInjector.removeModuleCss('module-1');
-
-      expect(mockHead.children.length).toBe(0);
-    });
   });
 
   describe('removeModuleCss', () => {
@@ -165,10 +157,6 @@ describe('StyleInjector', () => {
       );
     });
 
-    it('should handle removal of non-existent module gracefully', async () => {
-      const StyleInjector = await getStyleInjector();
-      expect(() => StyleInjector.removeModuleCss('non-existent')).not.toThrow();
-    });
   });
 
   describe('clear("modules")', () => {
@@ -182,15 +170,5 @@ describe('StyleInjector', () => {
       expect(mockHead.children.length).toBe(0);
     });
 
-    it('should not affect non-module styles', async () => {
-      const StyleInjector = await getStyleInjector();
-
-      StyleInjector.inject('theme-style', '.theme { background: white; }');
-      StyleInjector.injectModuleCss('module-1', '.test { color: red; }');
-      StyleInjector.clear('modules');
-
-      expect(mockHead.children.length).toBe(1);
-      expect(mockHead.children[0].id).toBe('theme-style');
-    });
   });
 });

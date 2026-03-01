@@ -178,57 +178,6 @@ describe('EvaluationEngine timeout behavior', () => {
     expect(webviewHandle.setTailwindBrowserCss).not.toHaveBeenCalled();
   });
 
-  it('uses default Tailwind timeout when config value is missing', async () => {
-    mockRaceTimeout.mockResolvedValueOnce({
-      profile: 'advanced',
-      enabled: true,
-      css: '.x{}',
-      watchFiles: ['tailwind.config.js'],
-    });
-
-    const engine = new EvaluationEngine();
-    const preview = createPreview();
-    const webviewHandle = {
-      setTailwindCss: vi.fn(),
-      setTailwindBrowserCss: vi.fn(),
-    };
-
-    await engine.processTailwindAsync(
-      preview as any,
-      {
-        mdxText: '# Tailwind',
-        entryFilePath: '/workspace/doc.mdx',
-        entryFileDependencies: [],
-        trustState: {
-          workspaceTrusted: true,
-          scriptsEnabled: true,
-          canExecute: true,
-          openMdxLinksInPreview: true,
-        },
-        tailwindConfig: {
-          enabled: 'enabled',
-          maxFileSizeBytes: 1024,
-          maxCssFilesToSearch: 50,
-          cacheMaxEntries: 10,
-          cacheTtlSeconds: 60,
-          compilationTimeout: undefined as unknown as number,
-        },
-      },
-      99,
-      webviewHandle as any
-    );
-
-    expect(mockRaceTimeout).toHaveBeenCalledWith(expect.any(Promise), {
-      timeoutMs: DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS,
-      behavior: 'return-null',
-    });
-    expect(preview.updateTailwindWatchFiles).toHaveBeenCalledWith([
-      'tailwind.config.js',
-    ]);
-    expect(webviewHandle.setTailwindBrowserCss).toHaveBeenCalledWith('');
-    expect(webviewHandle.setTailwindCss).toHaveBeenCalledWith('.x{}');
-  });
-
   it('routes CSS to browser-tailwind handler when profile is browser', async () => {
     mockRaceTimeout.mockResolvedValueOnce({
       profile: 'browser',

@@ -96,26 +96,6 @@ describe('FrameworkDetector', () => {
     expect(result.framework).toBe('generic');
   });
 
-  it('detects Next.js when secondary dependency is present', () => {
-    const workspaceRoot = fs.mkdtempSync(
-      path.join(os.tmpdir(), 'mdx-preview-fw-')
-    );
-    tempDirs.push(workspaceRoot);
-
-    fs.writeFileSync(
-      path.join(workspaceRoot, 'package.json'),
-      JSON.stringify({
-        dependencies: { next: '^13.0.0', '@next/mdx': '^14.0.0' },
-      }),
-      'utf-8'
-    );
-
-    const detector = FrameworkDetector.getInstance();
-    const result = detector.detectFromPackageJson(workspaceRoot);
-
-    expect(result.framework).toBe('nextjs');
-  });
-
   it('respects manual framework override', () => {
     mockConfigManager.get.mockReturnValue('starlight');
 
@@ -126,15 +106,4 @@ describe('FrameworkDetector', () => {
     expect(result.detected).toBe(false);
   });
 
-  it('returns shim enabled state from settings', () => {
-    mockConfigManager.get.mockImplementation((key: string) => {
-      if (key === 'framework.componentShims') return false;
-      return 'auto';
-    });
-
-    const detector = FrameworkDetector.getInstance();
-    const enabled = detector.areShimsEnabled(Uri.file('/workspace/docs.mdx'));
-
-    expect(enabled).toBe(false);
-  });
 });

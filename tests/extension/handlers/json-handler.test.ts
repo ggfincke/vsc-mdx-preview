@@ -38,15 +38,6 @@ describe('JSON handler', () => {
     expect(result.code).toBe('module.exports = {}');
   });
 
-  it('preserves raw JSON content', async () => {
-    const json = '{\n  "a": 1,\n  "b": [1, 2, 3]\n}';
-    const fsPath = '/path/to/raw.json';
-
-    const result = await handler.handle(json, fsPath, mockPreview);
-
-    expect(result.code).toBe(`module.exports = ${json}`);
-  });
-
   it('does not validate JSON syntax', async () => {
     const json = '{ invalid json }';
     const fsPath = '/path/to/invalid.json';

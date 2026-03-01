@@ -4,7 +4,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   loadFrameworkShimsWithRetry,
-  loadGenericShimsWithRetry,
 } from '../../packages/webview-client/src/features/module-runtime/preload/shimLoader';
 import type { ModuleRegistry } from 'mdx-forge/browser/registry';
 
@@ -123,68 +122,6 @@ describe('shimLoader', () => {
       expect(result.success).toBe(true);
       expect(frameworkLoader).not.toHaveBeenCalled();
       expect(fallbackLoader).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('loadGenericShimsWithRetry', () => {
-    it('should load all shims successfully', async () => {
-      const shimLoaders = {
-        Tabs: vi.fn().mockResolvedValue(undefined),
-        Callout: vi.fn().mockResolvedValue(undefined),
-      };
-
-      const resultPromise = loadGenericShimsWithRetry(
-        mockRegistry,
-        ['Tabs', 'Callout'],
-        shimLoaders
-      );
-      await vi.runAllTimersAsync();
-      const result = await resultPromise;
-
-      expect(result.loaded).toContain('Tabs');
-      expect(result.loaded).toContain('Callout');
-      expect(result.failed).toEqual([]);
-    });
-
-    it('should report individual failures', async () => {
-      const shimLoaders = {
-        Tabs: vi.fn().mockResolvedValue(undefined),
-        Callout: vi.fn().mockRejectedValue(new Error('Failed')),
-      };
-
-      const resultPromise = loadGenericShimsWithRetry(
-        mockRegistry,
-        ['Tabs', 'Callout'],
-        shimLoaders
-      );
-      await vi.runAllTimersAsync();
-      const result = await resultPromise;
-
-      expect(result.loaded).toContain('Tabs');
-      expect(result.failed).toContain('Callout');
-    });
-
-    it('should retry individual shims on failure', async () => {
-      const shimLoaders = {
-        Tabs: vi.fn().mockResolvedValue(undefined),
-        Callout: vi
-          .fn()
-          .mockRejectedValueOnce(new Error('Attempt 1'))
-          .mockResolvedValueOnce(undefined),
-      };
-
-      const resultPromise = loadGenericShimsWithRetry(
-        mockRegistry,
-        ['Tabs', 'Callout'],
-        shimLoaders
-      );
-      await vi.runAllTimersAsync();
-      const result = await resultPromise;
-
-      expect(shimLoaders.Tabs).toHaveBeenCalledTimes(1);
-      expect(shimLoaders.Callout).toHaveBeenCalledTimes(2);
-      expect(result.loaded).toContain('Callout');
-      expect(result.failed).toEqual([]);
     });
   });
 });

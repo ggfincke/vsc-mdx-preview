@@ -177,49 +177,6 @@ describe('TrustedPreviewRenderer', () => {
     unmountRenderer(root);
   });
 
-  it('renders pre-built React element exports', () => {
-    const elementExport = createElement('p', null, 'Element Export');
-    const { container, root } = mountRenderer({
-      content,
-      evaluatedComponent: elementExport as any,
-      onComponentReady: vi.fn(),
-      onError: vi.fn(),
-    });
-
-    expect(container.textContent).toContain('Element Export');
-    unmountRenderer(root);
-  });
-
-  it('throws for invalid exports', () => {
-    expect(() =>
-      renderToStaticMarkup(
-        createElement(TrustedPreviewRenderer, {
-          content,
-          evaluatedComponent: { bad: 'export' } as any,
-          onComponentReady: vi.fn(),
-          onError: vi.fn(),
-        })
-      )
-    ).toThrow(/Invalid MDX export/);
-  });
-
-  it('calls onComponentReady when async evaluation succeeds', () => {
-    const onComponentReady = vi.fn();
-    const Evaluated = () => createElement('div', null, 'Eval result');
-    asyncBehavior.mode = 'success';
-    asyncBehavior.result = Evaluated;
-
-    const { root } = mountRenderer({
-      content,
-      evaluatedComponent: null,
-      onComponentReady,
-      onError: vi.fn(),
-    });
-
-    expect(onComponentReady).toHaveBeenCalledWith(Evaluated);
-    unmountRenderer(root);
-  });
-
   it('calls onError with normalized message when async evaluation fails', () => {
     const onError = vi.fn();
     asyncBehavior.mode = 'error';

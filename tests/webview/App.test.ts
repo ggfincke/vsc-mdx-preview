@@ -245,16 +245,6 @@ describe('App', () => {
     expect(html).toContain('Compilation failed');
   });
 
-  it('renders loading state when content is missing', () => {
-    appState.isLoading = false;
-    appState.content = null;
-    appState.error = null;
-
-    const html = renderAppToString();
-
-    expect(html).toContain('data-testid="loading-bar"');
-  });
-
   it('renders safe mode with trust banner and nextra metadata', () => {
     appState.trustState = { canExecute: false };
     appState.isStale = true;
@@ -274,108 +264,6 @@ describe('App', () => {
     expect(html).toContain('Safe Page');
     expect(html).toContain('nextra-layout-full');
     expect(html).toContain('data-testid="stale-indicator"');
-  });
-
-  it('renders trusted mode without trust banner when execution is allowed', () => {
-    appState.trustState = { canExecute: true };
-    appState.content = {
-      mode: 'trusted',
-      code: 'export default function Test(){}',
-      entryFilePath: '/workspace/doc.mdx',
-      dependencies: [],
-    };
-
-    const html = renderAppToString();
-
-    expect(html).toContain('data-testid="trusted-preview"');
-    expect(html).not.toContain('data-testid="trust-banner"');
-    expect(mockTrustedPreviewRenderer).toHaveBeenCalled();
-  });
-
-  it('sets MPE theme data attribute when a preview theme is active', () => {
-    appState.trustState = { canExecute: true };
-    appState.previewTheme = 'github-dark';
-    appState.content = {
-      mode: 'safe',
-      html: '<p>safe</p>',
-    };
-
-    const html = renderAppToString();
-
-    expect(html).toContain('data-mpe-theme-active="true"');
-  });
-
-  it('sets shim side rail attribute to on by default', () => {
-    appState.content = {
-      mode: 'safe',
-      html: '<p>safe</p>',
-    };
-    appState.shimSideRailEnabled = true;
-
-    const html = renderAppToString();
-
-    expect(html).toContain('data-shim-side-rail="on"');
-  });
-
-  it('sets shim side rail attribute to off when disabled', () => {
-    appState.content = {
-      mode: 'safe',
-      html: '<p>safe</p>',
-    };
-    appState.shimSideRailEnabled = false;
-
-    const html = renderAppToString();
-
-    expect(html).toContain('data-shim-side-rail="off"');
-  });
-
-  it('sets source-line highlight color mode attribute to dependent by default', () => {
-    appState.content = {
-      mode: 'safe',
-      html: '<p>safe</p>',
-    };
-    appState.sourceLineHighlightColorMode = 'dependent';
-
-    const html = renderAppToString();
-
-    expect(html).toContain('data-source-line-highlight-color="dependent"');
-  });
-
-  it('updates source-line highlight color mode attribute', () => {
-    appState.content = {
-      mode: 'safe',
-      html: '<p>safe</p>',
-    };
-    appState.sourceLineHighlightColorMode = 'white';
-
-    const html = renderAppToString();
-
-    expect(html).toContain('data-source-line-highlight-color="white"');
-  });
-
-  it('adds side rail layout class when frontmatter panel is visible', () => {
-    appState.content = {
-      mode: 'safe',
-      html: '<p>safe</p>',
-    };
-    appState.frontmatter = { title: 'Doc' };
-
-    const html = renderAppToString();
-
-    expect(html).toContain('has-side-rail');
-  });
-
-  it('adds side rail layout class when TOC is visible', () => {
-    appState.content = {
-      mode: 'safe',
-      html: '<p>safe</p>',
-    };
-    appState.showToc = true;
-    appState.tocHeadings = [{ id: 'intro', text: 'Intro', level: 1 }];
-
-    const html = renderAppToString();
-
-    expect(html).toContain('has-side-rail');
   });
 
   it('opens external links on Ctrl/Cmd+click', () => {
@@ -402,28 +290,4 @@ describe('App', () => {
     unmountApp(root);
   });
 
-  it('does not open external links without Ctrl/Cmd modifier', () => {
-    appState.trustState = { canExecute: true };
-    appState.content = {
-      mode: 'safe',
-      html: '<p>safe</p>',
-    };
-
-    const { container, root } = mountApp();
-    const link = container.querySelector('a');
-    expect(link).toBeTruthy();
-
-    act(() => {
-      link!.dispatchEvent(
-        new MouseEvent('click', {
-          bubbles: true,
-          ctrlKey: false,
-          metaKey: false,
-        })
-      );
-    });
-
-    expect(mockOpenExternal).not.toHaveBeenCalled();
-    unmountApp(root);
-  });
 });

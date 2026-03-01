@@ -30,6 +30,66 @@ const aliases = [
     find: '@mdx-preview/codegen',
     replacement: path.resolve(__dirname, '../packages/codegen/src/index.ts'),
   },
+  {
+    find: 'mdx-forge/browser/registry',
+    replacement: path.resolve(
+      __dirname,
+      '../../mdx-forge/src/browser/registry/index.ts'
+    ),
+  },
+  {
+    find: 'mdx-forge/browser',
+    replacement: path.resolve(__dirname, '../../mdx-forge/src/browser/index.ts'),
+  },
+  {
+    find: 'mdx-forge/compiler',
+    replacement: path.resolve(
+      __dirname,
+      '../../mdx-forge/src/compiler/index.ts'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/registry',
+    replacement: path.resolve(
+      __dirname,
+      '../../mdx-forge/src/components/registry/index.ts'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/generic',
+    replacement: path.resolve(
+      __dirname,
+      '../../mdx-forge/src/components/generic/index.ts'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/docusaurus',
+    replacement: path.resolve(
+      __dirname,
+      '../../mdx-forge/src/components/docusaurus/index.ts'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/starlight',
+    replacement: path.resolve(
+      __dirname,
+      '../../mdx-forge/src/components/starlight/index.ts'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/nextra',
+    replacement: path.resolve(
+      __dirname,
+      '../../mdx-forge/src/components/nextra/index.ts'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/nextjs',
+    replacement: path.resolve(
+      __dirname,
+      '../../mdx-forge/src/components/nextjs/index.ts'
+    ),
+  },
 ];
 
 // resolve react peer deps from this project's node_modules so symlinked
