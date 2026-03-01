@@ -85,8 +85,6 @@ export interface ResolvedConfig {
 }
 
 export interface PreviewRuntimeConfig {
-  showFrontmatter: boolean;
-  showToc: boolean;
   sourceLineHighlight: boolean;
   sourceLineHighlightColor: SourceLineHighlightColorValue;
   shimSideRail: boolean;

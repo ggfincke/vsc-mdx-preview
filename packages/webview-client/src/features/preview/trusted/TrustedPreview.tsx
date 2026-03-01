@@ -102,7 +102,6 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
     handleImageClick,
     renderPortals,
     scan,
-    extractHeadings,
   } = usePreviewSetup({
     diagramMode: 'before-paint',
     filterStale: true,
@@ -129,14 +128,13 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
     }
   );
 
-  // trigger diagram scan & TOC extraction when component becomes available
+  // trigger diagram scan when component becomes available
   // (hook's initial scan runs before container is rendered during loading state)
   useLayoutEffect(() => {
     if (evaluatedComponent && containerRef.current) {
       scan();
-      extractHeadings();
     }
-  }, [containerRef, evaluatedComponent, scan, extractHeadings]);
+  }, [containerRef, evaluatedComponent, scan]);
 
   // lazy-load KaTeX CSS when math content is detected (DOM-based detection)
   useKatexDetection({ containerRef, trigger: evaluatedComponent });

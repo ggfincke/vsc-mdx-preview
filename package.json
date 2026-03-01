@@ -592,18 +592,6 @@
           "markdownDescription": "Enable debug output in the MDX Preview output channel. Useful for troubleshooting issues.",
           "scope": "window"
         },
-        "mdx-preview.preview.showFrontmatter": {
-          "type": "boolean",
-          "default": false,
-          "description": "Show a collapsible frontmatter panel in the preview.",
-          "scope": "resource"
-        },
-        "mdx-preview.preview.showToc": {
-          "type": "boolean",
-          "default": false,
-          "description": "Show a floating table of contents sidebar extracted from document headings.",
-          "scope": "resource"
-        },
         "mdx-preview.preview.sourceLineHighlight": {
           "type": "boolean",
           "default": true,

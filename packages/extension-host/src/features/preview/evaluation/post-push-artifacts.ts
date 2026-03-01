@@ -127,7 +127,6 @@ function applyFrontmatterAndMeta(
     preview.pushThemeState(frontmatter);
   }
 
-  preview.setFrontmatterState(frontmatter);
   preview.pushRuntimeConfiguration();
 
   sendNextraMetaIfNeeded(context, frontmatter);

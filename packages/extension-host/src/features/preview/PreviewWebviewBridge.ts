@@ -88,15 +88,11 @@ export class PreviewWebviewBridge {
     this.webviewHandle.setTheme(themeState);
   }
 
-  pushRuntimeConfiguration(
-    runtimeConfig: PreviewRuntimeConfig,
-    frontmatter: Record<string, unknown>
-  ): void {
+  pushRuntimeConfiguration(runtimeConfig: PreviewRuntimeConfig): void {
     if (!this.webviewHandle) {
       return;
     }
 
-    this.webviewHandle.setShowToc(runtimeConfig.showToc);
     this.webviewHandle.setSourceLineHighlight(
       runtimeConfig.sourceLineHighlight
     );
@@ -104,12 +100,6 @@ export class PreviewWebviewBridge {
       runtimeConfig.sourceLineHighlightColor
     );
     this.webviewHandle.setShimSideRail(runtimeConfig.shimSideRail);
-
-    const frontmatterPayload =
-      runtimeConfig.showFrontmatter && Object.keys(frontmatter).length > 0
-        ? frontmatter
-        : {};
-    this.webviewHandle.setFrontmatter(frontmatterPayload);
   }
 
   // invalidate a module in the webview cache

@@ -17,6 +17,5 @@ export { TrustProvider, useTrust } from './TrustContext';
 export { PreviewProvider, usePreview } from './PreviewContext';
 export { LoadingProvider, useLoading } from './LoadingContext';
 export { NextraProvider, useNextra } from './NextraContext';
-export { FrontmatterProvider, useFrontmatter } from './FrontmatterContext';
-export { TocProvider, useToc, type TocHeading } from './TocContext';
+export { TocProvider, useToc } from './TocContext';
 export { WebviewStateProvider } from '../providers/WebviewStateProvider';

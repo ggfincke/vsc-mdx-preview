@@ -5,7 +5,6 @@ import { useRef, type RefObject, type ReactNode } from 'react';
 import { DIAGRAM_SCAN_ADAPTERS } from '../../../diagrams/hooks/diagramAdapters';
 import { useDiagramScanCoordinator } from '../../../diagrams/hooks/useDiagramScanCoordinator';
 import { useImageLightbox } from '../../../lightbox/hooks/useImageLightbox';
-import { useTocExtraction } from './useTocExtraction';
 
 export type DiagramScanMode = 'after-paint' | 'before-paint';
 
@@ -25,8 +24,6 @@ interface PreviewSetupResult {
   renderPortals: () => ReactNode;
   // manually trigger diagram scans
   scan: () => void;
-  // extract headings from DOM for TOC sidebar
-  extractHeadings: () => void;
 }
 
 // shared preview setup - provide container ref, diagram rendering & lightbox
@@ -36,7 +33,6 @@ export function usePreviewSetup(
 ): PreviewSetupResult {
   const containerRef = useRef<HTMLDivElement>(null);
   const { handleImageClick } = useImageLightbox();
-  const extractHeadings = useTocExtraction(containerRef);
   const diagrams = useDiagramScanCoordinator(containerRef, {
     mode: options.diagramMode,
     filterStale: options.filterStale,
@@ -48,6 +44,5 @@ export function usePreviewSetup(
     handleImageClick,
     renderPortals: diagrams.renderPortals,
     scan: diagrams.scan,
-    extractHeadings,
   };
 }

@@ -15,10 +15,8 @@ import {
 import {
   createHandlerFactories,
   type WebviewStateHandlers,
-  SET_FRONTMATTER_CONFIG,
   SET_NEXTRA_META_CONFIG,
   SET_SHIM_SIDE_RAIL_CONFIG,
-  SET_SHOW_TOC_CONFIG,
   SET_SOURCE_LINE_HIGHLIGHT_COLOR_CONFIG,
   SET_SOURCE_LINE_HIGHLIGHT_CONFIG,
   SET_STALE_CONFIG,
@@ -62,8 +60,6 @@ class RPCWebviewHandle implements WebviewRPC {
 
   setTheme = createOptionalHandler(SET_THEME_CONFIG, log);
   setNextraMeta = createOptionalHandler(SET_NEXTRA_META_CONFIG, log);
-  setFrontmatter = createOptionalHandler(SET_FRONTMATTER_CONFIG, log);
-  setShowToc = createOptionalHandler(SET_SHOW_TOC_CONFIG, log);
   setSourceLineHighlight = createOptionalHandler(
     SET_SOURCE_LINE_HIGHLIGHT_CONFIG,
     log
