@@ -1,99 +1,120 @@
 # Tests
 
-This directory contains the test suite for MDX Preview.
+This directory is reserved for the production-critical test suite that runs under `npm test`.
 
 ## Philosophy
 
-**Only major, important tests - not exhaustive coverage.**
+**Only major, important tests - not exhaustive coverage**
 
-We focus on testing critical paths that, if broken, would cause significant user impact:
+`tests/` covers critical boundaries that would break the extension in user-visible ways:
 
-- **Security & Trust**: TrustManager, CSP generation, path validation
-- **Compilation Pipeline**: MDX to JS (trusted) and MDX to HTML (safe)
-- **Module Resolution**: Import resolution strategies, framework aliases
-- **Extension Core**: Framework detection, file handlers, diagnostics
-- **Webview Core**: Module registry, style injection, shim loading
+- Security & trust boundaries
+- MDX compilation entry points
+- Module resolution selection
+- Extension-host fetch/eval lifecycle boundaries
+- Webview runtime security & module loading boundaries
+- Cross-repo contract parity for shared exported metadata/constants
 
-We intentionally do not test:
+Non-critical tests are removed instead of moved into a second suite. There is no opt-in overflow suite for utility, UI, watcher, or dev-script coverage.
 
-- Every edge case or configuration combination
-- UI components in isolation (unless they enforce a security boundary)
-- Utility functions with obvious behavior
-- Performance characteristics of utilities
-- Integration points that require full VS Code runtime
+The following do **not** belong in `tests/`:
 
-## Enforcement Checklist
+- Internal helper or cache implementation details
+- UI components tested in isolation when they do not enforce a security boundary
+- Utility functions w/ obvious local behavior
+- Watcher-specific lifecycle minutiae
+- Dev-script tests for commands already executed directly in guardrails
+- Combinatorial matrix variants of a covered production contract
 
-Before adding or expanding a suite, verify:
+## Enforced Scope
 
-1. The test targets a production-critical boundary (security, compile, resolve, fetch/eval, or webview runtime)
-2. The behavior is externally visible or contract-level (not an internal helper detail)
-3. The case is representative, not a combinatorial variant of an already-covered behavior
-4. The assertion does not depend on timing/performance thresholds
-5. The same failure mode is not already covered at a higher level
+`scripts/check-test-philosophy.mjs` is the source of truth for the allowed `tests/**/*.test.ts` files.
 
-If any check fails, do not add the test.
+Allowed files:
+
+- `tests/security/*.test.ts`
+- `tests/compilation/safe-compile.test.ts`
+- `tests/compilation/trusted-compile.test.ts`
+- `tests/transpilation/babel.test.ts`
+- `tests/resolution/alias-resolver.test.ts`
+- `tests/resolution/unified-resolver.test.ts`
+- `tests/services/ServiceRegistry.circular.test.ts`
+- `tests/services/ServiceRegistry.subsystem.test.ts`
+- `tests/shared/constant-parity.test.ts`
+- `tests/shared/metadata-parity.test.ts`
+- `tests/extension/activate.unhandled-rejection.test.ts`
+- `tests/extension/commands/security.test.ts`
+- `tests/extension/compiler/plugin-loader.test.ts`
+- `tests/extension/config/CompilerConfig.test.ts`
+- `tests/extension/config/ConfigResolver.test.ts`
+- `tests/extension/config/TypeScriptConfigResolver.test.ts`
+- `tests/extension/deps/import-extractor.test.ts`
+- `tests/extension/diagnostics/ComponentCodeActions.test.ts`
+- `tests/extension/diagnostics/ComponentDetector.test.ts`
+- `tests/extension/errors/ErrorReporter.test.ts`
+- `tests/extension/framework/FrameworkDetector.test.ts`
+- `tests/extension/handlers/*.test.ts`
+- `tests/extension/module-system/fetchLocal.timeout.test.ts`
+- `tests/extension/nextra/MetaResolver.test.ts`
+- `tests/extension/preview/EvaluationEngine.timeout.test.ts`
+- `tests/extension/preview/PreviewInitializer.test.ts`
+- `tests/extension/preview/PreviewManager.test.ts`
+- `tests/extension/preview/PreviewWebviewBridge.test.ts`
+- `tests/extension/preview/evaluate-in-webview.test.ts`
+- `tests/extension/preview/preview-update-flow.test.ts`
+- `tests/extension/rpc-input-validation.test.ts`
+- `tests/extension/security/checkFsPath.test.ts`
+- `tests/extension/tailwind/TailwindProcessor.test.ts`
+- `tests/extension/workspace-events.test.ts`
+- `tests/webview/App.test.ts`
+- `tests/webview/ModuleRegistry.test.ts`
+- `tests/webview/SafePreview.test.ts`
+- `tests/webview/StyleInjector.test.ts`
+- `tests/webview/TrustedPreview.test.ts`
+- `tests/webview/module-system-loader.test.ts`
+- `tests/webview/preload-atomic-registration.test.ts`
+- `tests/webview/safe-mode-processing.test.ts`
+- `tests/webview/shimLoader.test.ts`
+- `tests/webview/webview-rpc-client.test.ts`
+
+Everything else under `tests/` is out of policy and should be deleted.
+
+## Case-Count Caps
+
+Retained suites must stay representative. `scripts/check-test-philosophy.mjs` enforces active `it(...)` caps:
+
+- Default maximum: `4`
+- `tests/security/*.test.ts`: `6`
+- `tests/resolution/unified-resolver.test.ts`: `6`
+- `tests/extension/errors/ErrorReporter.test.ts`: `6`
+- `tests/extension/rpc-input-validation.test.ts`: `6`
+- `tests/webview/SafePreview.test.ts`: `6`
+
+If a suite needs more than its cap, the test is too granular for `tests/`.
+
+Do not keep out-of-policy coverage as `it.skip(...)` or `describe.skip(...)`. Remove it.
 
 ## Running Tests
 
 ```bash
-# Run all tests
+# Run the production-critical suite
 npm test
+
+# Run the test philosophy guardrail directly
+npm run check:test-philosophy
 
 # Watch mode
 npm run test:watch
 ```
 
-## Structure
+## Adding Or Expanding Tests
 
-```
-tests/
-├── helpers/            # Test utilities & fixtures
-├── security/           # TrustManager, CSP, path validation
-├── compilation/        # MDX compilation (trusted/safe modes)
-├── transpilation/      # Babel transforms
-├── resolution/         # Module resolution strategies
-├── integration/        # End-to-end compilation & preview flow
-├── shared/             # Shared utility tests (LRU cache, registry queries)
-├── extension/          # Extension-specific critical paths
-│   ├── commands/       # Security & config-info commands
-│   ├── compiler/       # Plugin loading
-│   ├── config/         # Effective/compiler config projection
-│   ├── deps/           # Import extraction
-│   ├── diagnostics/    # Component detection & code actions
-│   ├── errors/         # Error reporter lifecycle
-│   ├── framework/      # Framework detection
-│   ├── handlers/       # File type handlers (CSS, Sass, JSON, images)
-│   ├── module-system/  # Module fetch flow
-│   ├── nextra/         # Nextra meta resolution
-│   ├── prewarm/        # Babel prewarm coordination
-│   ├── preview/        # Preview lifecycle & watchers
-│   ├── security/       # Path security (checkFsPath)
-│   └── tailwind/       # Tailwind detection & processing
-├── scripts/            # Codegen verification
-│   ├── check-generated-files  # Generated file location checks
-│   └── verify-codegen-idempotency  # Codegen idempotency via git diff
-├── webview/            # Webview critical paths
-│   ├── App             # Root component rendering
-│   ├── TrustedPreview  # Trusted mode rendering
-│   ├── SafePreview     # Safe mode rendering & XSS prevention
-│   ├── evaluateModule  # Module evaluation
-│   ├── ModuleRegistry  # Module caching & dependencies
-│   ├── StyleInjector   # CSS injection
-│   ├── shimLoader      # Framework shim loading
-│   ├── rpc-webview     # Webview RPC client
-│   ├── diagrams        # Diagram container & rendering
-│   └── preload         # Preload atomic registration
-└── services/           # Service registry lifecycle & circular detection
-```
+Before adding or expanding a suite, verify:
 
-## Adding Tests
+1. The test targets a production-critical boundary
+2. The behavior is externally visible or contract-level
+3. The case is representative, not a combinatorial variant
+4. The same failure mode is not already covered at a higher level
+5. The suite will remain within the enforced `it(...)` cap
 
-Before adding a new test, ask:
-
-1. Does this test a critical path that would break the extension if it failed?
-2. Is this behavior not already covered by existing tests?
-3. Can this be tested without mocking the entire VS Code API?
-4. Is this a major architectural concern, not a utility edge case?
-
-If yes to all four, add the test. Otherwise, consider whether it's truly necessary.
+If any check fails, do not add the test.

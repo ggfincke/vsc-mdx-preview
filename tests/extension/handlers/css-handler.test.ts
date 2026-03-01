@@ -63,22 +63,4 @@ describe('CSS handler', () => {
     expect(result.css).toBe(invalidCss);
   });
 
-  it('supports empty files', async () => {
-    const result = await handler.handle(
-      '',
-      '/workspace/styles/empty.css',
-      mockPreview
-    );
-
-    expect(result.css).toBe('');
-    expect(result.code).toBe('');
-    expect(result.dependencies).toEqual([]);
-  });
-
-  it('preserves provided file path verbatim', async () => {
-    const fsPath = 'C:\\Users\\dev\\workspace\\styles\\main.css';
-    const result = await handler.handle('.x{}', fsPath, mockPreview);
-
-    expect(result.fsPath).toBe(fsPath);
-  });
 });

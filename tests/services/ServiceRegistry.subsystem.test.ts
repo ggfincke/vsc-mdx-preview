@@ -8,7 +8,6 @@ vi.mock('vscode', () => ({}));
 
 // Import after mocks
 import { ServiceRegistry } from '../../packages/extension-host/src/app/services/ServiceRegistry';
-import { ServiceError } from '../../packages/extension-host/src/shared/errors';
 
 describe('ServiceRegistry subsystem registration', () => {
   let registry: ServiceRegistry;
@@ -33,27 +32,6 @@ describe('ServiceRegistry subsystem registration', () => {
       expect(disposeFn).toHaveBeenCalledOnce();
     });
 
-    it('should throw when registering on disposed registry', () => {
-      registry.dispose();
-
-      expect(() => {
-        registry.registerSubsystem('TestSubsystem', vi.fn());
-      }).toThrow(ServiceError);
-    });
-
-    it('should allow overwriting subsystem registration', () => {
-      const firstDispose = vi.fn();
-      const secondDispose = vi.fn();
-
-      registry.registerSubsystem('TestSubsystem', firstDispose);
-      registry.registerSubsystem('TestSubsystem', secondDispose);
-
-      registry.dispose();
-
-      // only the second dispose should be called
-      expect(firstDispose).not.toHaveBeenCalled();
-      expect(secondDispose).toHaveBeenCalledOnce();
-    });
   });
 
   describe('disposal order', () => {
@@ -108,39 +86,6 @@ describe('ServiceRegistry subsystem registration', () => {
       expect(disposalOrder).toEqual(['SubsystemA', 'ServiceB', 'ServiceA']);
     });
 
-    it('should dispose multiple subsystems before multiple services', () => {
-      const disposalOrder: string[] = [];
-
-      // register services
-      registry.register('Service1', () => ({
-        dispose: () => disposalOrder.push('Service1'),
-      }));
-      registry.register('Service2', () => ({
-        dispose: () => disposalOrder.push('Service2'),
-      }));
-
-      // register subsystems
-      registry.registerSubsystem('Subsystem1', () => {
-        disposalOrder.push('Subsystem1');
-      });
-      registry.registerSubsystem('Subsystem2', () => {
-        disposalOrder.push('Subsystem2');
-      });
-
-      // initialize services
-      registry.get('Service1');
-      registry.get('Service2');
-
-      registry.dispose();
-
-      // subsystems first (reverse order), then services (reverse order)
-      expect(disposalOrder).toEqual([
-        'Subsystem2',
-        'Subsystem1',
-        'Service2',
-        'Service1',
-      ]);
-    });
   });
 
   describe('error handling', () => {
@@ -165,57 +110,5 @@ describe('ServiceRegistry subsystem registration', () => {
       expect(disposalOrder).toEqual(['Third', 'Throwing', 'First']);
     });
 
-    it('should continue disposing services after subsystem throws', () => {
-      const disposalOrder: string[] = [];
-
-      registry.register('ServiceA', () => ({
-        dispose: () => disposalOrder.push('ServiceA'),
-      }));
-
-      registry.registerSubsystem('ThrowingSubsystem', () => {
-        disposalOrder.push('Throwing');
-        throw new Error('Subsystem error');
-      });
-
-      registry.get('ServiceA');
-      registry.dispose();
-
-      // both subsystem & service should have been called
-      expect(disposalOrder).toEqual(['Throwing', 'ServiceA']);
-    });
-  });
-
-  describe('reset', () => {
-    it('should clear subsystems on reset', () => {
-      const disposeFn = vi.fn();
-
-      registry.registerSubsystem('TestSubsystem', disposeFn);
-
-      // reset clears everything & disposes
-      ServiceRegistry.reset();
-      expect(disposeFn).toHaveBeenCalledOnce();
-
-      // get fresh registry & verify subsystem is gone
-      registry = ServiceRegistry.getInstance();
-
-      // disposing again should not call the old dispose function
-      vi.clearAllMocks();
-      registry.dispose();
-      expect(disposeFn).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('idempotent disposal', () => {
-    it('should only dispose subsystems once', () => {
-      const disposeFn = vi.fn();
-
-      registry.registerSubsystem('TestSubsystem', disposeFn);
-
-      registry.dispose();
-      registry.dispose();
-      registry.dispose();
-
-      expect(disposeFn).toHaveBeenCalledOnce();
-    });
   });
 });

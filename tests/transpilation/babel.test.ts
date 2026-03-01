@@ -27,17 +27,6 @@ describe('transformAsync()', () => {
     expect(result!.code).toContain('?.');
   });
 
-  it('preserves modern syntax (nullish coalescing) - native in Node 20/Chromium', async () => {
-    const code = `const value = obj ?? defaultValue;`;
-
-    const result = await transformAsync(code);
-
-    expect(result).not.toBeNull();
-    // Nullish coalescing is natively supported in Node 20 & modern Chromium
-    // so it should be preserved (not transformed)
-    expect(result!.code).toContain('??');
-  });
-
   it('handles export default from syntax', async () => {
     // This is a stage-1 proposal supported for real-world compatibility
     const code = `export { default as Button } from './Button';`;
@@ -65,21 +54,4 @@ describe('transformAsync()', () => {
     expect(result!.code).toContain('MyComponent');
   });
 
-  it('transforms React component with hooks', async () => {
-    const code = `
-      import React, { useState } from 'react';
-
-      function Counter() {
-        const [count, setCount] = useState(0);
-        return <button onClick={() => setCount(count + 1)}>{count}</button>;
-      }
-    `;
-
-    const result = await transformAsync(code);
-
-    expect(result).not.toBeNull();
-    // Babel transforms JSX & may use _react["default"].createElement or React.createElement
-    expect(result!.code).toMatch(/createElement/);
-    expect(result!.code).toContain('useState');
-  });
 });

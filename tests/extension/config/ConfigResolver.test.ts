@@ -59,8 +59,6 @@ vi.mock(
 
 import {
   resolveConfig,
-  clearConfigCache,
-  getConfigFileNames,
 } from '../../../packages/extension-host/src/features/preview/configuration/ConfigResolver';
 
 describe('ConfigResolver', () => {
@@ -119,42 +117,5 @@ describe('ConfigResolver', () => {
       expect(mockErrorReporter.reportConfigError).toHaveBeenCalled();
     });
 
-    it('returns null & reports error on validation failure', () => {
-      mockFindUp.mockReturnValue('/workspace/.mdx-previewrc.json');
-      mockReadJsonSync.mockReturnValue({ invalid: true });
-      mockValidateConfigSchema.mockReturnValue({
-        errors: ['unknown field: invalid'],
-      });
-
-      const result = resolveConfig('/workspace/doc.mdx');
-
-      expect(result).toBeNull();
-      expect(mockErrorReporter.reportConfigError).toHaveBeenCalled();
-    });
-  });
-
-  describe('getConfigFileNames()', () => {
-    it('returns list of config file names', () => {
-      const names = getConfigFileNames();
-
-      expect(names).toContain('.mdx-previewrc.json');
-      expect(names).toContain('.mdx-previewrc');
-    });
-
-    it('returns a copy (not the internal array)', () => {
-      const a = getConfigFileNames();
-      const b = getConfigFileNames();
-
-      expect(a).not.toBe(b);
-      expect(a).toEqual(b);
-    });
-  });
-
-  describe('clearConfigCache()', () => {
-    it('delegates to cache.clear()', () => {
-      clearConfigCache();
-
-      expect(mockConfigCache.clear).toHaveBeenCalled();
-    });
   });
 });

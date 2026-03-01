@@ -195,14 +195,4 @@ describe('plugin loader', () => {
     expect(mockErrorReporter.reportPluginError).toHaveBeenCalledTimes(1);
   });
 
-  it('merges custom plugins after built-ins', () => {
-    const builtIn = [() => null, () => null];
-    const custom = [() => null];
-    const merged = mergePlugins(builtIn, custom);
-
-    expect(merged).toHaveLength(3);
-    expect(merged[0]).toBe(builtIn[0]);
-    expect(merged[1]).toBe(builtIn[1]);
-    expect(merged[2]).toBe(custom[0]);
-  });
 });

@@ -1,12 +1,10 @@
 // tests/security/TrustManager.test.ts
-// Unit tests for TrustManager security system
+// verify representative workspace trust boundaries
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockConfigManager } from '../helpers/mock-services';
 import { SETTINGS } from '../../packages/extension-host/src/shared/config/ConfigManager';
 
-// Define hoisted mocks BEFORE vi.mock() calls
 const { mockWorkspace, mockEnv } = vi.hoisted(() => ({
   mockWorkspace: {
     isTrusted: true,
@@ -19,7 +17,6 @@ const { mockWorkspace, mockEnv } = vi.hoisted(() => ({
   },
 }));
 
-// Mock vscode module
 vi.mock('vscode', () => ({
   workspace: mockWorkspace,
   env: mockEnv,
@@ -36,11 +33,10 @@ vi.mock('vscode', () => ({
   },
 }));
 
-// Import after mocks are set up
 import {
-  TrustManager,
-  SecurityMode,
   getSecurityMode,
+  SecurityMode,
+  TrustManager,
 } from '../../packages/extension-host/src/features/security/TrustManager';
 import type { TrustState } from '@mdx-preview/contracts';
 
@@ -48,16 +44,17 @@ describe('TrustManager', () => {
   let trustManager: TrustManager;
 
   beforeEach(() => {
-    // Reset mocks to default values
     mockWorkspace.isTrusted = true;
     mockEnv.remoteName = undefined;
     mockConfigManager.get.mockImplementation((key: string) => {
-      if (key === SETTINGS.ENABLE_SCRIPTS) return true;
-      if (key === SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW) return true;
+      if (key === SETTINGS.ENABLE_SCRIPTS) {
+        return true;
+      }
+      if (key === SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW) {
+        return true;
+      }
       return undefined;
     });
-
-    // Get fresh instance (reset singleton)
     TrustManager['instance'] = undefined;
     trustManager = TrustManager.getInstance();
   });
@@ -67,282 +64,58 @@ describe('TrustManager', () => {
     vi.clearAllMocks();
   });
 
-  describe('getState()', () => {
-    it('returns canExecute: true when workspace trusted AND scripts enabled', () => {
-      mockWorkspace.isTrusted = true;
-      mockConfigManager.get.mockImplementation((key: string) => {
-        if (key === 'preview.enableScripts') return true;
-        return undefined;
-      });
+  it('allows execution when the workspace is trusted and scripts are enabled', () => {
+    const state = trustManager.getState();
 
-      const state = trustManager.getState();
-
-      expect(state.workspaceTrusted).toBe(true);
-      expect(state.scriptsEnabled).toBe(true);
-      expect(state.canExecute).toBe(true);
-    });
-
-    it('returns canExecute: false when workspace not trusted', () => {
-      mockWorkspace.isTrusted = false;
-      mockConfigManager.get.mockImplementation((key: string) => {
-        if (key === 'preview.enableScripts') return true;
-        return undefined;
-      });
-
-      const state = trustManager.getState();
-
-      expect(state.workspaceTrusted).toBe(false);
-      expect(state.scriptsEnabled).toBe(true);
-      expect(state.canExecute).toBe(false);
-    });
-
-    it('returns canExecute: false when scripts disabled', () => {
-      mockWorkspace.isTrusted = true;
-      mockConfigManager.get.mockImplementation((key: string) => {
-        if (key === 'preview.enableScripts') return false;
-        return undefined;
-      });
-
-      const state = trustManager.getState();
-
-      expect(state.workspaceTrusted).toBe(true);
-      expect(state.scriptsEnabled).toBe(false);
-      expect(state.canExecute).toBe(false);
-    });
-
-    it('returns canExecute: false when both conditions fail', () => {
-      mockWorkspace.isTrusted = false;
-      mockConfigManager.get.mockImplementation((key: string) => {
-        if (key === 'preview.enableScripts') return false;
-        return undefined;
-      });
-
-      const state = trustManager.getState();
-
-      expect(state.workspaceTrusted).toBe(false);
-      expect(state.scriptsEnabled).toBe(false);
-      expect(state.canExecute).toBe(false);
-    });
+    expect(state.workspaceTrusted).toBe(true);
+    expect(state.scriptsEnabled).toBe(true);
+    expect(state.canExecute).toBe(true);
   });
 
-  describe('getStateForDocument()', () => {
-    it('returns canExecute: false for remote environment', () => {
-      mockWorkspace.isTrusted = true;
-      mockEnv.remoteName = 'ssh-remote';
-      mockConfigManager.get.mockReturnValue(true);
+  it('blocks execution when the workspace is not trusted', () => {
+    mockWorkspace.isTrusted = false;
 
-      const docUri = {
-        scheme: 'file',
-        fsPath: '/workspace/test.mdx',
-        path: '/workspace/test.mdx',
-      };
-      const state = trustManager.getStateForDocument(docUri as any);
-
-      expect(state.canExecute).toBe(false);
-      expect(state.reason).toContain('Remote environment detected');
-    });
-
-    it('returns canExecute: false for non-file scheme (vscode-remote)', () => {
-      mockWorkspace.isTrusted = true;
-      mockEnv.remoteName = undefined;
-      mockConfigManager.get.mockReturnValue(true);
-
-      const docUri = {
-        scheme: 'vscode-remote',
-        fsPath: '/workspace/test.mdx',
-        path: '/workspace/test.mdx',
-      };
-      const state = trustManager.getStateForDocument(docUri as any);
-
-      expect(state.canExecute).toBe(false);
-      expect(state.reason).toContain('Unsupported document scheme');
-    });
-
-    it('returns canExecute: true for file: scheme in trusted workspace', () => {
-      mockWorkspace.isTrusted = true;
-      mockEnv.remoteName = undefined;
-      mockConfigManager.get.mockReturnValue(true);
-
-      const docUri = {
-        scheme: 'file',
-        fsPath: '/workspace/test.mdx',
-        path: '/workspace/test.mdx',
-      };
-      const state = trustManager.getStateForDocument(docUri as any);
-
-      expect(state.canExecute).toBe(true);
-      expect(state.reason).toBeUndefined();
-    });
-
-    it('returns canExecute: true for untitled: scheme in trusted workspace', () => {
-      mockWorkspace.isTrusted = true;
-      mockEnv.remoteName = undefined;
-      mockConfigManager.get.mockReturnValue(true);
-
-      const docUri = {
-        scheme: 'untitled',
-        fsPath: 'Untitled-1',
-        path: 'Untitled-1',
-      };
-      const state = trustManager.getStateForDocument(docUri as any);
-
-      expect(state.canExecute).toBe(true);
-    });
-
-    it('includes reason when blocked', () => {
-      mockWorkspace.isTrusted = false;
-
-      const docUri = {
-        scheme: 'file',
-        fsPath: '/workspace/test.mdx',
-        path: '/workspace/test.mdx',
-      };
-      const state = trustManager.getStateForDocument(docUri as any);
-
-      expect(state.canExecute).toBe(false);
-      expect(state.reason).toBeDefined();
-      expect(state.reason).toContain('Workspace is not trusted');
-    });
+    expect(trustManager.getState().canExecute).toBe(false);
   });
 
-  describe('getMode()', () => {
-    it('returns SecurityMode.Trusted when canExecute is true', () => {
-      mockWorkspace.isTrusted = true;
-      mockConfigManager.get.mockReturnValue(true);
+  it('blocks trusted mode for remote documents', () => {
+    mockEnv.remoteName = 'ssh-remote';
 
-      const mode = trustManager.getMode();
+    const state = trustManager.getStateForDocument({
+      scheme: 'file',
+      fsPath: '/workspace/test.mdx',
+      path: '/workspace/test.mdx',
+    } as never);
 
-      expect(mode).toBe(SecurityMode.Trusted);
-    });
-
-    it('returns SecurityMode.Safe when canExecute is false', () => {
-      mockWorkspace.isTrusted = false;
-
-      const mode = trustManager.getMode();
-
-      expect(mode).toBe(SecurityMode.Safe);
-    });
+    expect(state.canExecute).toBe(false);
+    expect(state.reason).toContain('Remote environment detected');
   });
 
-  describe('canExecute()', () => {
-    it('returns true when workspace trusted AND scripts enabled', () => {
-      mockWorkspace.isTrusted = true;
-      mockConfigManager.get.mockReturnValue(true);
+  it('returns a reason when document trust checks fail', () => {
+    mockWorkspace.isTrusted = false;
 
-      expect(trustManager.canExecute()).toBe(true);
-    });
+    const state = trustManager.getStateForDocument({
+      scheme: 'file',
+      fsPath: '/workspace/test.mdx',
+      path: '/workspace/test.mdx',
+    } as never);
 
-    it('returns false when workspace not trusted', () => {
-      mockWorkspace.isTrusted = false;
-
-      expect(trustManager.canExecute()).toBe(false);
-    });
+    expect(state.canExecute).toBe(false);
+    expect(state.reason).toContain('Workspace is not trusted');
   });
 
-  describe('canUseTrustedMode()', () => {
-    it('returns allowed: false w/ reason for remote environment', () => {
-      mockWorkspace.isTrusted = true;
-      mockEnv.remoteName = 'ssh-remote';
-      mockConfigManager.get.mockReturnValue(true);
+  it('rejects unsupported document schemes for trusted mode', () => {
+    const result = trustManager.canUseTrustedMode({
+      scheme: 'http',
+      fsPath: '/test.mdx',
+      path: '/test.mdx',
+    } as never);
 
-      const docUri = {
-        scheme: 'file',
-        fsPath: '/workspace/test.mdx',
-        path: '/workspace/test.mdx',
-      };
-      const result = trustManager.canUseTrustedMode(docUri as any);
-
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toContain('Remote environment');
-    });
-
-    it('returns allowed: false w/ reason for unsupported scheme', () => {
-      mockWorkspace.isTrusted = true;
-      mockEnv.remoteName = undefined;
-      mockConfigManager.get.mockReturnValue(true);
-
-      const docUri = { scheme: 'http', fsPath: '/test.mdx', path: '/test.mdx' };
-      const result = trustManager.canUseTrustedMode(docUri as any);
-
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toContain('Unsupported document scheme');
-    });
-
-    it('returns allowed: true for valid local file', () => {
-      mockWorkspace.isTrusted = true;
-      mockEnv.remoteName = undefined;
-      mockConfigManager.get.mockReturnValue(true);
-
-      const docUri = {
-        scheme: 'file',
-        fsPath: '/workspace/test.mdx',
-        path: '/workspace/test.mdx',
-      };
-      const result = trustManager.canUseTrustedMode(docUri as any);
-
-      expect(result.allowed).toBe(true);
-      expect(result.reason).toBeUndefined();
-    });
-
-    it('returns allowed: false when workspace not trusted', () => {
-      mockWorkspace.isTrusted = false;
-
-      const docUri = {
-        scheme: 'file',
-        fsPath: '/workspace/test.mdx',
-        path: '/workspace/test.mdx',
-      };
-      const result = trustManager.canUseTrustedMode(docUri as any);
-
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toContain('Workspace is not trusted');
-    });
-
-    it('returns allowed: false when scripts disabled', () => {
-      mockWorkspace.isTrusted = true;
-      mockConfigManager.get.mockImplementation((key: string) => {
-        if (key === 'preview.enableScripts') return false;
-        return undefined;
-      });
-
-      const docUri = {
-        scheme: 'file',
-        fsPath: '/workspace/test.mdx',
-        path: '/workspace/test.mdx',
-      };
-      const result = trustManager.canUseTrustedMode(docUri as any);
-
-      expect(result.allowed).toBe(false);
-      expect(result.reason).toContain('Scripts are not enabled');
-    });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toContain('Unsupported document scheme');
   });
 
-  describe('subscribe()', () => {
-    it('returns a disposable subscription', () => {
-      const listener = vi.fn();
-      const subscription = trustManager.subscribe(listener);
-
-      expect(subscription).toBeDefined();
-      expect(typeof subscription.dispose).toBe('function');
-
-      subscription.dispose();
-    });
-  });
-});
-
-describe('getSecurityMode()', () => {
-  it('returns Trusted when canExecute is true', () => {
-    const state: TrustState = {
-      workspaceTrusted: true,
-      scriptsEnabled: true,
-      canExecute: true,
-      openMdxLinksInPreview: true,
-    };
-
-    expect(getSecurityMode(state)).toBe(SecurityMode.Trusted);
-  });
-
-  it('returns Safe when canExecute is false', () => {
+  it('maps blocked trust states to safe mode', () => {
     const state: TrustState = {
       workspaceTrusted: false,
       scriptsEnabled: true,

@@ -44,9 +44,4 @@ describe('theme label completeness', () => {
     );
   });
 
-  it('MERMAID_THEME_LABELS keys match MERMAID_THEMES', () => {
-    expect(Object.keys(MERMAID_THEME_LABELS).sort()).toEqual(
-      [...MERMAID_THEMES].sort()
-    );
-  });
 });

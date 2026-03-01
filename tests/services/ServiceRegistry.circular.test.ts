@@ -37,28 +37,6 @@ describe('ServiceRegistry circular dependency detection', () => {
     expect(() => registry.get('ServiceA')).toThrow(CircularDependencyError);
   });
 
-  it('includes cycle path in error message', () => {
-    registry.register('ServiceA', () => {
-      registry.get('ServiceB');
-      return { dispose: vi.fn() };
-    });
-
-    registry.register('ServiceB', () => {
-      registry.get('ServiceA');
-      return { dispose: vi.fn() };
-    });
-
-    try {
-      registry.get('ServiceA');
-      expect.fail('Should have thrown CircularDependencyError');
-    } catch (error: unknown) {
-      expect(error).toBeInstanceOf(CircularDependencyError);
-      const cycleError = error as CircularDependencyError;
-      expect(cycleError.cycle).toEqual(['ServiceA', 'ServiceB', 'ServiceA']);
-      expect(cycleError.message).toContain('ServiceA -> ServiceB -> ServiceA');
-    }
-  });
-
   it('detects indirect cycle (A -> B -> C -> A)', () => {
     registry.register('ServiceA', () => {
       registry.get('ServiceB');

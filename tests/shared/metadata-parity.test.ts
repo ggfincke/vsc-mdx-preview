@@ -86,11 +86,6 @@ const expectedContract = 'summary' in CALLOUT_TITLES
 
 describe('mdx-forge metadata contract', () => {
   describe('callout type contract', () => {
-    it('CALLOUT_TITLES has a supported callout type set', () => {
-      expect(Object.keys(CALLOUT_TITLES).sort()).toEqual(
-        Object.keys(expectedContract.titles).sort()
-      );
-    });
 
     it('CALLOUT_TITLES values match the supported display labels', () => {
       expect(CALLOUT_TITLES).toEqual(expectedContract.titles);

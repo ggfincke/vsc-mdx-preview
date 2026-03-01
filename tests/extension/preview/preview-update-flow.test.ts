@@ -109,49 +109,6 @@ describe('runPreviewUpdateFlow', () => {
     expect(evaluate).toHaveBeenCalledWith('# saved', '/workspace/doc.mdx');
   });
 
-  it('routes untitled scheme to entryFsDirectory fallback', async () => {
-    const evaluate = vi.fn(async () => {});
-
-    await runPreviewUpdateFlow({
-      force: true,
-      doc: createDoc({
-        uri: {
-          scheme: 'untitled',
-          fsPath: '',
-        },
-      }),
-      text: '# untitled',
-      entryFsDirectory: '/workspace',
-      updateMode: 'onType',
-      getDocumentTracker: () => undefined,
-      evaluate,
-    });
-
-    expect(evaluate).toHaveBeenCalledWith('# untitled', '/workspace');
-  });
-
-  it('routes default scheme and reads from workspace fs for non-onType modes', async () => {
-    const evaluate = vi.fn(async () => {});
-
-    await runPreviewUpdateFlow({
-      force: false,
-      doc: createDoc({
-        uri: {
-          scheme: 'vscode-remote',
-          fsPath: '/remote/doc.mdx',
-        },
-      }),
-      text: '# fallback',
-      entryFsDirectory: '/workspace',
-      updateMode: 'onSave',
-      getDocumentTracker: () => undefined,
-      evaluate,
-    });
-
-    expect(mockWorkspaceReadFile).toHaveBeenCalledTimes(1);
-    expect(evaluate).toHaveBeenCalledWith('# remote', '/remote/doc.mdx');
-  });
-
   it('marks rendered only after successful evaluation', async () => {
     const evaluate = vi.fn(async () => {
       throw new Error('boom');

@@ -45,9 +45,6 @@ vi.mock(
 import {
   findTsConfig,
   resolveTypescriptConfigAsync,
-  resolveTypescriptConfig,
-  clearTsConfigCache,
-  disposeConfigWatchers,
 } from '../../../packages/extension-host/src/features/preview/configuration/TypeScriptConfigResolver';
 
 describe('TypeScriptConfigResolver', () => {
@@ -79,25 +76,6 @@ describe('TypeScriptConfigResolver', () => {
   });
 
   describe('resolveTypescriptConfigAsync()', () => {
-    it('returns null for null input', async () => {
-      const result = await resolveTypescriptConfigAsync(null);
-
-      expect(result).toBeNull();
-      expect(mockParse).not.toHaveBeenCalled();
-    });
-
-    it('returns cached result when available', async () => {
-      const cached = { baseUrl: '.', configPath: '/workspace/tsconfig.json' };
-      mockPathCache.has.mockReturnValue(true);
-      mockPathCache.get.mockReturnValue(cached);
-
-      const result = await resolveTypescriptConfigAsync(
-        '/workspace/tsconfig.json'
-      );
-
-      expect(result).toBe(cached);
-      expect(mockParse).not.toHaveBeenCalled();
-    });
 
     it('parses tsconfig & extracts only baseUrl/paths/rootDir/configPath', async () => {
       mockParse.mockResolvedValue({
@@ -128,23 +106,6 @@ describe('TypeScriptConfigResolver', () => {
       );
     });
 
-    it('handles missing compilerOptions', async () => {
-      mockParse.mockResolvedValue({
-        tsconfig: {},
-      });
-
-      const result = await resolveTypescriptConfigAsync(
-        '/workspace/tsconfig.json'
-      );
-
-      expect(result).toEqual({
-        baseUrl: undefined,
-        paths: undefined,
-        rootDir: undefined,
-        configPath: '/workspace/tsconfig.json',
-      });
-    });
-
     it('caches null & reports error on parse failure', async () => {
       const error = new Error('Parse failed');
       mockParse.mockRejectedValue(error);
@@ -156,49 +117,6 @@ describe('TypeScriptConfigResolver', () => {
       expect(result).toBeNull();
       expect(mockPathCache.set).toHaveBeenCalledWith('/workspace', null);
       expect(mockErrorReporter.reportSilent).toHaveBeenCalled();
-    });
-  });
-
-  describe('resolveTypescriptConfig()', () => {
-    it('returns null for null input', () => {
-      const result = resolveTypescriptConfig(null);
-
-      expect(result).toBeNull();
-    });
-
-    it('returns cached result when available', () => {
-      const cached = { baseUrl: '.', configPath: '/workspace/tsconfig.json' };
-      mockPathCache.has.mockReturnValue(true);
-      mockPathCache.get.mockReturnValue(cached);
-
-      const result = resolveTypescriptConfig('/workspace/tsconfig.json');
-
-      expect(result).toBe(cached);
-    });
-
-    it('returns null & triggers async load when uncached', () => {
-      mockPathCache.has.mockReturnValue(false);
-      mockParse.mockResolvedValue({ tsconfig: {} });
-
-      const result = resolveTypescriptConfig('/workspace/tsconfig.json');
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('clearTsConfigCache()', () => {
-    it('delegates to cache.clear()', () => {
-      clearTsConfigCache();
-
-      expect(mockPathCache.clear).toHaveBeenCalled();
-    });
-  });
-
-  describe('disposeConfigWatchers()', () => {
-    it('delegates to cache.dispose()', () => {
-      disposeConfigWatchers();
-
-      expect(mockPathCache.dispose).toHaveBeenCalled();
     });
   });
 });

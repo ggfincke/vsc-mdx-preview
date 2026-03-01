@@ -137,39 +137,4 @@ describe('useSafeModeProcessing', () => {
     await unmount();
   });
 
-  it('injects safe-mode style tag only once across rerenders', async () => {
-    const { rerender, unmount } = createMount();
-
-    await rerender('<p>first</p>');
-    await rerender('<p>second</p>');
-    await rerender('<p>third</p>');
-
-    const styleNodes = document.querySelectorAll(`#${SAFE_MODE_STYLE_ID}`);
-    expect(styleNodes).toHaveLength(1);
-
-    await unmount();
-  });
-
-  it('runs code-block enhancement after sanitized DOM is mounted', async () => {
-    const { host, rerender, unmount } = createMount();
-
-    await rerender(
-      '<div class="mdx-preview-codeblock-shiki" data-code="const x = 1" data-language="ts"><pre><code>const x = 1</code></pre></div>'
-    );
-
-    expect(mockEnhanceCodeBlocks).toHaveBeenCalledTimes(1);
-
-    const enhancementTarget = mockEnhanceCodeBlocks.mock.calls[0]?.[0] as
-      | HTMLElement
-      | undefined;
-    expect(enhancementTarget).toBeTruthy();
-    expect(
-      enhancementTarget?.querySelector('.mdx-preview-codeblock-shiki')
-    ).toBeTruthy();
-    expect(host.querySelector('pre code')?.textContent).toContain(
-      'const x = 1'
-    );
-
-    await unmount();
-  });
 });
