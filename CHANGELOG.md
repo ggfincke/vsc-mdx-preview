@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-01
+
+### Added
+
+- **Explorer Preview Command**: Added an `Open MDX Preview` command in Explorer & editor title context menus for Markdown & MDX files
+- **Preview Runtime Controls**: Added source-line highlight color and shim side-rail preview controls
+- **Source-Line Highlight Picker**: Added a command palette picker for source-line highlight color modes
+
+### Changed
+
+- **Command Palette Access**: Made the `Toggle Scripts` command available from the command palette even when a Markdown editor is not active
+- **Preview UX Polish**: Refined preview runtime state plumbing and theme-aware highlight behavior
+- **Dependencies**: Refreshed core dependencies including `@tailwindcss/postcss`, `ajv`, `katex`, `mermaid`, `react-error-boundary`, `jsdom`, & `typescript-eslint`
+
+### Fixed
+
+- **Safe Mode Trust Banner**: Persist dismissed Safe Mode banners across reloads for the same trust state & reset the dismissal after Trusted Mode becomes available
+- **Unhandled Rejection Reporting**: Route unhandled promise rejections to the output/error pipeline without showing noisy user notifications
+
+### Refactored
+
+- **Preview Pipeline**: Split preview update/refresh orchestration & evaluation into smaller flow and stage modules to reduce duplication
+- **Webview RPC**: Decomposed the webview RPC client into focused bootstrap, queue, registration, & direct-handler modules
+- **Guardrails**: Added automated checks for legacy path prefixes, comment style, & test-suite philosophy
+
+### Tests
+
+- Reworked the test suite around repository test philosophy checks & added focused regressions for preview updates, Safe Mode processing, trust-banner persistence, module-system loading, & unhandled rejection handling
+
+### Documentation
+
+- Refreshed architecture docs, examples, & authoring docs to cover the new preview UX and internal flow changes
+
 ## [1.1.1] - 2026-02-13
 
 ### Fixed
