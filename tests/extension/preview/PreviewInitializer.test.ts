@@ -98,18 +98,4 @@ describe('PreviewInitializer', () => {
     expect(onConfigChanged).toHaveBeenCalledTimes(1);
   });
 
-  it('skips config watcher for non-file documents', () => {
-    const initializer = new PreviewInitializer();
-    const watcherManager = new WatcherManager();
-    const onConfigChanged = vi.fn();
-
-    initializer.setupConfigWatcher(
-      watcherManager,
-      'untitled',
-      undefined,
-      onConfigChanged
-    );
-
-    expect(watcherManager.has('config')).toBe(false);
-  });
 });

@@ -1,11 +1,35 @@
 // tests/vitest.config.ts
 // vitest test configuration
+import fs from 'fs';
 import { defineConfig } from 'vitest/config';
 import { createRequire } from 'module';
 import path from 'path';
 import type { Plugin } from 'vite';
 
 const require = createRequire(import.meta.url);
+const installedMdxForgeRoot = path.resolve(__dirname, '../node_modules/mdx-forge');
+const siblingMdxForgeRoot = path.resolve(__dirname, '../../mdx-forge');
+
+function resolveMdxForgePath(
+  sourceRelativePath: string,
+  distRelativePath: string
+): string {
+  for (const root of [installedMdxForgeRoot, siblingMdxForgeRoot]) {
+    const sourcePath = path.resolve(root, sourceRelativePath);
+    if (fs.existsSync(sourcePath)) {
+      return sourcePath;
+    }
+  }
+
+  for (const root of [installedMdxForgeRoot, siblingMdxForgeRoot]) {
+    const distPath = path.resolve(root, distRelativePath);
+    if (fs.existsSync(distPath)) {
+      return distPath;
+    }
+  }
+
+  throw new Error(`Could not resolve mdx-forge path for ${sourceRelativePath}`);
+}
 
 const aliases = [
   {
@@ -29,6 +53,69 @@ const aliases = [
   {
     find: '@mdx-preview/codegen',
     replacement: path.resolve(__dirname, '../packages/codegen/src/index.ts'),
+  },
+  {
+    find: 'mdx-forge/browser/registry',
+    replacement: resolveMdxForgePath(
+      'src/browser/registry/index.ts',
+      'dist/esm/browser/registry/index.js'
+    ),
+  },
+  {
+    find: 'mdx-forge/browser',
+    replacement: resolveMdxForgePath(
+      'src/browser/index.ts',
+      'dist/esm/browser/index.js'
+    ),
+  },
+  {
+    find: 'mdx-forge/compiler',
+    replacement: resolveMdxForgePath(
+      'src/compiler/index.ts',
+      'dist/esm/compiler/index.js'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/registry',
+    replacement: resolveMdxForgePath(
+      'src/components/registry/index.ts',
+      'dist/esm/components/registry/index.js'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/generic',
+    replacement: resolveMdxForgePath(
+      'src/components/generic/index.ts',
+      'dist/esm/components/generic/index.js'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/docusaurus',
+    replacement: resolveMdxForgePath(
+      'src/components/docusaurus/index.ts',
+      'dist/esm/components/docusaurus/index.js'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/starlight',
+    replacement: resolveMdxForgePath(
+      'src/components/starlight/index.ts',
+      'dist/esm/components/starlight/index.js'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/nextra',
+    replacement: resolveMdxForgePath(
+      'src/components/nextra/index.ts',
+      'dist/esm/components/nextra/index.js'
+    ),
+  },
+  {
+    find: 'mdx-forge/components/nextjs',
+    replacement: resolveMdxForgePath(
+      'src/components/nextjs/index.ts',
+      'dist/esm/components/nextjs/index.js'
+    ),
   },
 ];
 

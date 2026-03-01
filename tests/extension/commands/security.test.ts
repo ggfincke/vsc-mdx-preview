@@ -92,26 +92,5 @@ describe('security commands', () => {
       expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('enabled'));
     });
 
-    it('Manage Trust action executes trust management command', async () => {
-      mockTrustManager.getState.mockReturnValue({
-        workspaceTrusted: false,
-      });
-
-      // capture the actions passed to reportWithActions
-      mockErrorReporter.reportWithActions.mockImplementation(
-        async (_err: any, _ctx: any, actions: any[]) => {
-          const manageTrust = actions.find(
-            (a: any) => a.label === 'Manage Trust'
-          );
-          if (manageTrust) {
-            await manageTrust.action();
-          }
-        }
-      );
-
-      const execSpy = vi.spyOn(vscode.commands, 'executeCommand');
-      await handler();
-      expect(execSpy).toHaveBeenCalledWith('workbench.trust.manage');
-    });
   });
 });

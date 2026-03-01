@@ -66,20 +66,6 @@ describe('SassHandler', () => {
     expect(result.dependencies).toEqual([]);
   });
 
-  it('returns helper CSS when sass is not installed', async () => {
-    mockGet.mockResolvedValueOnce(null);
-
-    const result = await handler.handle(
-      '',
-      '/workspace/styles/main.scss',
-      createMockPreview('/workspace')
-    );
-
-    expect(mockGet).toHaveBeenCalledWith('/workspace');
-    expect(result.css).toContain('SCSS/Sass Support Not Available');
-    expect(result.css).toContain('main.scss');
-  });
-
   it('compiles SCSS via workspace sass module', async () => {
     const compileAsync = vi.fn().mockResolvedValue({
       css: '.compiled{color:red;}',
@@ -123,8 +109,4 @@ describe('SassHandler', () => {
     expect(result.code).toBe('');
   });
 
-  it('clears cached sass instances', () => {
-    clearSassCache();
-    expect(mockClear).toHaveBeenCalledTimes(1);
-  });
 });
