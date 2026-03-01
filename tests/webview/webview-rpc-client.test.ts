@@ -97,7 +97,7 @@ describe('webview-rpc-client', () => {
     const exposedHandle = mockExpose.mock.calls[0][0] as {
       setTrustState: (state: unknown) => void;
       updatePreviewSafe: (html: string) => void;
-      setShowToc: (show: boolean) => void;
+      setSourceLineHighlight: (enabled: boolean) => void;
     };
 
     exposedHandle.setTrustState({
@@ -107,7 +107,7 @@ describe('webview-rpc-client', () => {
       openMdxLinksInPreview: false,
     });
     exposedHandle.updatePreviewSafe('<p>safe</p>');
-    exposedHandle.setShowToc(true);
+    exposedHandle.setSourceLineHighlight(false);
 
     const handlers = {
       setTrustState: vi.fn(),
@@ -115,13 +115,13 @@ describe('webview-rpc-client', () => {
       setTrustedContent: vi.fn(),
       setError: vi.fn(),
       setStale: vi.fn(),
-      setShowToc: vi.fn(),
+      setSourceLineHighlight: vi.fn(),
     };
 
     module.registerWebviewHandlers(handlers as any);
 
     expect(handlers.setTrustState).toHaveBeenCalledTimes(1);
     expect(handlers.setSafeContent).toHaveBeenCalledWith('<p>safe</p>');
-    expect(handlers.setShowToc).toHaveBeenCalledWith(true);
+    expect(handlers.setSourceLineHighlight).toHaveBeenCalledWith(false);
   });
 });

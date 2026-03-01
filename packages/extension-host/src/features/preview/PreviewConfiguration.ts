@@ -25,8 +25,6 @@ function projectRuntimeConfiguration(
   configuration: ConfigurationState
 ): PreviewRuntimeConfig {
   return {
-    showFrontmatter: configuration.showFrontmatter,
-    showToc: configuration.showToc,
     sourceLineHighlight: configuration.sourceLineHighlight,
     sourceLineHighlightColor: configuration.sourceLineHighlightColor,
     shimSideRail: configuration.shimSideRail,
@@ -38,8 +36,6 @@ function hasRuntimeConfigChanges(
   next: PreviewRuntimeConfig
 ): boolean {
   return (
-    previous.showFrontmatter !== next.showFrontmatter ||
-    previous.showToc !== next.showToc ||
     previous.sourceLineHighlight !== next.sourceLineHighlight ||
     previous.sourceLineHighlightColor !== next.sourceLineHighlightColor ||
     previous.shimSideRail !== next.shimSideRail

@@ -42,9 +42,7 @@ export type SettingKey =
   | 'components.builtins'
   | 'components.unknownBehavior'
   | 'advanced.watcherDebounceMs'
-  | 'advanced.debugOutput'
-  | 'preview.showFrontmatter'
-  | 'preview.showToc';
+  | 'advanced.debugOutput';
 
 // type mapping for settings
 // enum types imported from @mdx-preview/shared (canonical source)
@@ -79,8 +77,6 @@ export interface SettingTypes {
   'components.unknownBehavior': UnknownBehaviorValue;
   'advanced.watcherDebounceMs': number;
   'advanced.debugOutput': boolean;
-  'preview.showFrontmatter': boolean;
-  'preview.showToc': boolean;
 }
 
 // map shared defaults to extension setting types
@@ -130,8 +126,6 @@ function mapDefaults(): SettingTypes {
     'advanced.watcherDebounceMs':
       SETTINGS_DEFAULTS['advanced.watcherDebounceMs'],
     'advanced.debugOutput': SETTINGS_DEFAULTS['advanced.debugOutput'],
-    'preview.showFrontmatter': SETTINGS_DEFAULTS['preview.showFrontmatter'],
-    'preview.showToc': SETTINGS_DEFAULTS['preview.showToc'],
   };
 }
 
@@ -164,8 +158,6 @@ export const SETTINGS = {
   COMPONENTS_UNKNOWN_BEHAVIOR: 'components.unknownBehavior' as const,
   PLANTUML_SERVER: 'diagrams.plantUmlServer' as const,
   OPEN_MDX_LINKS_IN_PREVIEW: 'preview.openMdxLinksInPreview' as const,
-  SHOW_FRONTMATTER: 'preview.showFrontmatter' as const,
-  SHOW_TOC: 'preview.showToc' as const,
   DEBUG_OUTPUT: 'advanced.debugOutput' as const,
   WATCHER_DEBOUNCE_MS: 'advanced.watcherDebounceMs' as const,
   TAILWIND_MAX_FILE_SIZE: 'tailwind.maxFileSizeBytes' as const,
@@ -185,8 +177,6 @@ export const THEME_KEYS: readonly SettingKey[] = [
 ] as const;
 
 export const PREVIEW_RUNTIME_CONFIG_KEYS: readonly SettingKey[] = [
-  SETTINGS.SHOW_FRONTMATTER,
-  SETTINGS.SHOW_TOC,
   SETTINGS.SOURCE_LINE_HIGHLIGHT,
   SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR,
   SETTINGS.SHIM_SIDE_RAIL,

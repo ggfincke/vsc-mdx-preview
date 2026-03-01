@@ -67,7 +67,6 @@ export class Preview {
   private tailwindRequestId = 0;
   private tailwindBrowserRuntimeEnabled = false;
   private tailwindFallbackReason: string | null = null;
-  private latestFrontmatter: Record<string, unknown> = {};
 
   // performance tracking (development only)
   private _performanceObserver?: PerformanceObserver;
@@ -308,20 +307,8 @@ export class Preview {
     this.webviewBridge.pushThemeState(this.doc.uri, frontmatter);
   }
 
-  setFrontmatterState(frontmatter?: Record<string, unknown>): void {
-    if (!frontmatter || Object.keys(frontmatter).length === 0) {
-      this.latestFrontmatter = {};
-      return;
-    }
-
-    this.latestFrontmatter = { ...frontmatter };
-  }
-
   pushRuntimeConfiguration(): void {
-    this.webviewBridge.pushRuntimeConfiguration(
-      this.runtimeConfiguration,
-      this.latestFrontmatter
-    );
+    this.webviewBridge.pushRuntimeConfiguration(this.runtimeConfiguration);
   }
 
   // clear all caches in the webview (for manual cache refresh command)

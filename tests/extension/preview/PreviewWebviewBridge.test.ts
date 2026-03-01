@@ -18,11 +18,9 @@ import { PreviewWebviewBridge } from '../../../packages/extension-host/src/featu
 function createMockHandle() {
   return {
     setTheme: vi.fn(),
-    setShowToc: vi.fn(),
     setSourceLineHighlight: vi.fn(),
     setSourceLineHighlightColor: vi.fn(),
     setShimSideRail: vi.fn(),
-    setFrontmatter: vi.fn(),
     invalidate: vi.fn(async () => {}),
     clearAllCaches: vi.fn(async () => {}),
   };
@@ -100,21 +98,14 @@ describe('PreviewWebviewBridge', () => {
 
     bridge.pushRuntimeConfiguration(
       {
-        showFrontmatter: true,
-        showToc: true,
         sourceLineHighlight: false,
         sourceLineHighlightColor: 'white',
         shimSideRail: false,
-      },
-      { title: 'Runtime Title' }
+      }
     );
 
-    expect(handle.setShowToc).toHaveBeenCalledWith(true);
     expect(handle.setSourceLineHighlight).toHaveBeenCalledWith(false);
     expect(handle.setSourceLineHighlightColor).toHaveBeenCalledWith('white');
     expect(handle.setShimSideRail).toHaveBeenCalledWith(false);
-    expect(handle.setFrontmatter).toHaveBeenCalledWith({
-      title: 'Runtime Title',
-    });
   });
 });

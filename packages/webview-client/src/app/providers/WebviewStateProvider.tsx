@@ -6,10 +6,6 @@ import { TrustProvider, useTrust } from '../state/TrustContext';
 import { PreviewProvider, usePreview } from '../state/PreviewContext';
 import { LoadingProvider, useLoading } from '../state/LoadingContext';
 import { NextraProvider, useNextra } from '../state/NextraContext';
-import {
-  FrontmatterProvider,
-  useFrontmatter,
-} from '../state/FrontmatterContext';
 import { TocProvider, useToc } from '../state/TocContext';
 import { useTheme } from '../../features/theme/runtime';
 import { registerWebviewHandlers } from '../../platform/rpc/webview-rpc-client';
@@ -40,13 +36,8 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
   const { setSafeContent, setTrustedContent, setError } = usePreview();
   const { setStale, setIsLoading } = useLoading();
   const { setNextraMeta } = useNextra();
-  const { setFrontmatter } = useFrontmatter();
-  const {
-    setShowToc,
-    setSourceLineHighlight,
-    setSourceLineHighlightColor,
-    setShimSideRail,
-  } = useToc();
+  const { setSourceLineHighlight, setSourceLineHighlightColor, setShimSideRail } =
+    useToc();
   const { setPreviewThemeState } = useTheme();
 
   const initializedRef = useRef(false);
@@ -70,8 +61,6 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
       setStale,
       setTheme: setPreviewThemeState,
       setNextraMeta,
-      setFrontmatter,
-      setShowToc,
       setSourceLineHighlight,
       setSourceLineHighlightColor,
       setShimSideRail,
@@ -86,8 +75,6 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
     setIsLoading,
     setPreviewThemeState,
     setNextraMeta,
-    setFrontmatter,
-    setShowToc,
     setSourceLineHighlight,
     setSourceLineHighlightColor,
     setShimSideRail,
@@ -108,11 +95,9 @@ export function WebviewStateProvider({ children }: WebviewStateProviderProps) {
       <PreviewProvider>
         <LoadingProvider>
           <NextraProvider>
-            <FrontmatterProvider>
-              <TocProvider>
-                <HandlerRegistrar>{children}</HandlerRegistrar>
-              </TocProvider>
-            </FrontmatterProvider>
+            <TocProvider>
+              <HandlerRegistrar>{children}</HandlerRegistrar>
+            </TocProvider>
           </NextraProvider>
         </LoadingProvider>
       </PreviewProvider>

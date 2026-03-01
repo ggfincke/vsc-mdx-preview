@@ -667,8 +667,9 @@ Renders HTML in Safe Mode without JavaScript execution.
 ```typescript title="packages/webview-client/src/features/preview/safe/SafePreview.tsx"
 function SafePreviewRenderer({ html }: { html: string }) {
   const { sourceLineHighlightEnabled } = useToc();
-  const { containerRef, handleImageClick, renderPortals, extractHeadings } =
-    usePreviewSetup({ diagramMode: 'after-paint' });
+  const { containerRef, handleImageClick, renderPortals } = usePreviewSetup({
+    diagramMode: 'after-paint',
+  });
 
   // Run Safe Mode processing imperatively on the container DOM
   useSafeModeProcessing(containerRef, html);
@@ -678,10 +679,6 @@ function SafePreviewRenderer({ html }: { html: string }) {
     enabled: sourceLineHighlightEnabled,
   });
   useKatexDetection({ html });
-
-  useEffect(() => {
-    extractHeadings();
-  }, [html, extractHeadings]);
 
   useEffect(() => {
     const container = containerRef.current;

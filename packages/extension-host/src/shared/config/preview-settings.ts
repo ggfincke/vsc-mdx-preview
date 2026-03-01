@@ -31,8 +31,6 @@ export function mapSettingsToPreviewRuntimeConfig(
   settings: SettingTypes
 ): PreviewRuntimeConfig {
   return {
-    showFrontmatter: settings[SETTINGS.SHOW_FRONTMATTER],
-    showToc: settings[SETTINGS.SHOW_TOC],
     sourceLineHighlight: settings[SETTINGS.SOURCE_LINE_HIGHLIGHT],
     sourceLineHighlightColor: settings[SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR],
     shimSideRail: settings[SETTINGS.SHIM_SIDE_RAIL],

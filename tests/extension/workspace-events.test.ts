@@ -45,8 +45,6 @@ describe('workspace-events', () => {
     expect(mockConfigManager.onDidChangeKey).toHaveBeenCalledTimes(1);
     expect(mockConfigManager.onDidChangeKey).toHaveBeenCalledWith(
       expect.arrayContaining([
-        SETTINGS.SHOW_FRONTMATTER,
-        SETTINGS.SHOW_TOC,
         SETTINGS.SOURCE_LINE_HIGHLIGHT,
         SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR,
         SETTINGS.SHIM_SIDE_RAIL,

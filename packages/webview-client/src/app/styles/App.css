@@ -1,7 +1,6 @@
 /* MDX Preview App styles */
 
 .mdx-preview-container {
-  --mdx-side-rail-width: 292px;
   --mdx-source-line-base-color: var(--vscode-editorInfo-foreground, #95c258);
   min-height: 100vh;
   position: relative;
@@ -32,43 +31,6 @@
   padding-top: 1em;
   /* prevent horizontal scroll from Bleed components */
   overflow-x: hidden;
-  transition: padding-right 0.2s ease;
-}
-
-.mdx-preview-container.has-side-rail .mdx-preview-content {
-  padding-right: calc(var(--mdx-side-rail-width) + 46px);
-}
-
-.mdx-preview-side-rail {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  bottom: 12px;
-  width: var(--mdx-side-rail-width);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 120;
-  pointer-events: none;
-}
-
-.mdx-preview-side-rail > * {
-  pointer-events: auto;
-}
-
-@media (max-width: 1200px) {
-  .mdx-preview-container.has-side-rail .mdx-preview-content {
-    padding-right: 26px;
-  }
-
-  .mdx-preview-side-rail {
-    position: static;
-    width: auto;
-    max-width: 100%;
-    height: auto;
-    margin: 0 26px 20px;
-    pointer-events: auto;
-  }
 }
 
 /* Error Display */
@@ -929,14 +891,4 @@ body.wordWrap .markdown-body pre {
 [data-mpe-theme-active='true'] .mdx-preview-content {
   padding: 0;
   background: transparent;
-}
-
-[data-mpe-theme-active='true'].has-side-rail .mdx-preview-content {
-  padding-right: calc(var(--mdx-side-rail-width) + 20px);
-}
-
-@media (max-width: 1200px) {
-  [data-mpe-theme-active='true'].has-side-rail .mdx-preview-content {
-    padding-right: 0;
-  }
 }
