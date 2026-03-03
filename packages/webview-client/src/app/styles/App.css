@@ -234,6 +234,13 @@ body.scrollBeyondLastLine .markdown-body {
   --mdx-source-line-offset: -26px;
 }
 
+.mdx-safe-preview table.highlight-line,
+.mdx-trusted-preview table.highlight-line,
+.markdown-body table.highlight-line {
+  position: static;
+  border-inline-start-color: var(--mdx-source-line-color);
+}
+
 .mdx-safe-preview .highlight-line::before,
 .mdx-trusted-preview .highlight-line::before,
 .markdown-body .highlight-line::before {
@@ -249,6 +256,12 @@ body.scrollBeyondLastLine .markdown-body {
   transition:
     background-color 120ms ease,
     width 120ms ease;
+}
+
+.mdx-safe-preview table.highlight-line::before,
+.mdx-trusted-preview table.highlight-line::before,
+.markdown-body table.highlight-line::before {
+  content: none;
 }
 
 .mdx-safe-preview .highlight-line.highlight-active,
