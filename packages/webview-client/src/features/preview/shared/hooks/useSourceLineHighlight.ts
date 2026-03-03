@@ -67,8 +67,8 @@ function resolveHighlightOwner(
 ): Element | null {
   const table = sourceLineElement.closest('table');
   if (table && root.contains(table)) {
-    // table highlighting is intentionally disabled
-    return null;
+    // promote table descendants to the table root so the hover rail stays stable
+    return table;
   }
 
   const calloutOwner = resolveCalloutOwner(sourceLineElement, root);
