@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-03-03
+
+### Changed
+
+- **Rendering Parity**: Unified Safe & Trusted Mode rendering — added `markdown-body` class to TrustedPreview, extracted shared code block enhancement hook, centralized external link handling via `openExternal()` RPC, & switched Safe Mode to `useLayoutEffect` for flash-free diagram scanning
+
+## [1.2.4] - 2026-03-03
+
+### Changed
+
+- **Authoring Guide**: Updated authoring guide content
+
+## [1.2.3] - 2026-03-03
+
+### Changed
+
+- **Dependencies**: Addressed open dependency PR updates (`@tailwindcss/postcss`, `ajv`, `katex`, `mermaid`, `react-error-boundary`, `jsdom`, & `typescript-eslint`)
+
+## [1.2.2] - 2026-03-03
+
+### Fixed
+
+- **Table Rendering**: Fixed table column compression in preview
+
+## [1.2.1] - 2026-03-03
+
+### Changed
+
+- **Workspace Cleanup**: Removed stale configs (empty `.gitmodules`, unused `.nvmrc`), trimmed `launch.json` to two configs, & cleaned unrelated entries from `.vscode/settings.json`
+
 ## [1.2.0] - 2026-03-01
 
 ### Added
