@@ -1,22 +1,11 @@
 // tests/webview/safe-mode-processing.test.ts
-// unit tests for safe-mode HTML post-processing hook behavior
+// unit tests for safe-mode HTML sanitization & DOM injection
 //
 // @vitest-environment jsdom
 
 import { act, createElement, useRef, type JSX, type RefObject } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-const { mockEnhanceCodeBlocks } = vi.hoisted(() => ({
-  mockEnhanceCodeBlocks: vi.fn(),
-}));
-
-vi.mock(
-  '../../packages/webview-client/src/features/code-block/ui/CodeBlock',
-  () => ({
-    enhanceCodeBlocks: (...args: unknown[]) => mockEnhanceCodeBlocks(...args),
-  })
-);
 
 import { useSafeModeProcessing } from '../../packages/webview-client/src/features/preview/safe/hooks/useSafeModeProcessing';
 
@@ -86,38 +75,13 @@ describe('useSafeModeProcessing', () => {
       .forEach((node) => node.remove());
   });
 
-  it('adds target and rel for external links', async () => {
+  it('injects sanitized HTML into container', async () => {
     const { host, rerender, unmount } = createMount();
 
-    await rerender('<a href="https://example.com/docs">External</a>');
+    await rerender('<h1>Hello</h1><p>World</p>');
 
-    const external = host.querySelector('a');
-
-    expect(external?.getAttribute('target')).toBe('_blank');
-    expect(external?.getAttribute('rel')).toBe('noopener noreferrer');
-    await unmount();
-  });
-
-  it('leaves hash links unchanged', async () => {
-    const { host, rerender, unmount } = createMount();
-
-    await rerender('<a href="#section">Internal</a>');
-
-    const internal = host.querySelector('a');
-    expect(internal?.getAttribute('target')).toBeNull();
-    expect(internal?.getAttribute('rel')).toBeNull();
-
-    await unmount();
-  });
-
-  it('adds zoom-in cursor styling to images', async () => {
-    const { host, rerender, unmount } = createMount();
-
-    await rerender('<img src="/cat.png" alt="cat" />');
-
-    const image = host.querySelector('img');
-    expect(image).toBeTruthy();
-    expect((image as HTMLImageElement).style.cursor).toBe('zoom-in');
+    expect(host.querySelector('h1')?.textContent).toBe('Hello');
+    expect(host.querySelector('p')?.textContent).toBe('World');
 
     await unmount();
   });
@@ -137,4 +101,20 @@ describe('useSafeModeProcessing', () => {
     await unmount();
   });
 
+  it('preserves safe HTML elements & attributes', async () => {
+    const { host, rerender, unmount } = createMount();
+
+    await rerender(
+      '<a href="https://example.com">Link</a><img src="/cat.png" alt="cat" />'
+    );
+
+    const link = host.querySelector('a');
+    expect(link?.getAttribute('href')).toBe('https://example.com');
+
+    const img = host.querySelector('img');
+    expect(img?.getAttribute('src')).toBe('/cat.png');
+    expect(img?.getAttribute('alt')).toBe('cat');
+
+    await unmount();
+  });
 });

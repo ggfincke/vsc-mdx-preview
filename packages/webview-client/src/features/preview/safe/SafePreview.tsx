@@ -6,6 +6,7 @@ import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
 import { useSourceLineHighlight } from '../shared/hooks/useSourceLineHighlight';
 import { useSafeModeProcessing } from './hooks/useSafeModeProcessing';
 import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
+import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnhancement';
 import { PreviewContainer } from '../shared/ui/PreviewContainer/PreviewContainer';
 import { fastStringEquals } from '../../../shared/utils/memoCompare';
 import { useToc } from '../../../app/state';
@@ -22,11 +23,15 @@ export const SafePreviewRenderer = memo(
 
     // shared preview setup (container ref, diagram rendering, image lightbox)
     const { containerRef, handleImageClick, renderPortals } = usePreviewSetup({
-      diagramMode: 'after-paint',
+      diagramMode: 'before-paint',
+      filterStale: true,
     });
 
-    // process Safe Mode HTML (sanitize, post-process links/images, enhance code blocks)
+    // sanitize & inject Safe Mode HTML
     useSafeModeProcessing(containerRef, html);
+
+    // enhance Shiki code blocks w/ copy buttons & language badges
+    useCodeBlockEnhancement({ containerRef, trigger: html });
 
     // bind MPE-style source-line hover highlights after HTML injection
     useSourceLineHighlight({
