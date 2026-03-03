@@ -10,9 +10,5 @@
   "typescript.tsc.autoDetect": "off",
   "eslint.enable": true,
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "mdx-preview.preview.enableScripts": true,
-  "python-envs.defaultEnvManager": "ms-python.python:conda",
-  "python-envs.defaultPackageManager": "ms-python.python:conda",
-  "python-envs.pythonProjects": []
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
