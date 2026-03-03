@@ -168,6 +168,7 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
       mode="trusted"
       onImageClick={handleImageClick}
       diagramPortals={renderPortals()}
+      className="markdown-body"
     >
       {mdxNode}
     </PreviewContainer>

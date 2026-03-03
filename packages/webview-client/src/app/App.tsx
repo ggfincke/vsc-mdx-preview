@@ -68,7 +68,8 @@ function App() {
     `Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
   );
 
-  // intercept Ctrl/Cmd+clicks on external links & route to extension
+  // intercept external link clicks & route to extension
+  // (webview sandbox prevents direct navigation, so all external links go through openExternal)
   const handleLinkClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
     const anchor = target.closest('a');
@@ -83,15 +84,10 @@ function App() {
 
     const linkType = classifyLink(href);
 
-    // only handle external links w/ Ctrl/Cmd+click
+    // route all external links through extension
     if (linkType === 'external') {
-      const isModifierClick = event.metaKey || event.ctrlKey;
-      if (!isModifierClick) {
-        return;
-      }
-
       event.preventDefault();
-      log.debug(`Ctrl/Cmd+click external link: ${href}`);
+      log.debug(`Opening external link: ${href}`);
       ExtensionHandle.openExternal(href);
     }
   }, []);
