@@ -33,9 +33,7 @@ function trimTrailingSlashes(pathname: string): string {
 }
 
 // normalize server URL for runtime use
-function normalizePlantUmlServerUrl(
-  input: string | null | undefined
-): string {
+function normalizePlantUmlServerUrl(input: string | null | undefined): string {
   const parsed = typeof input === 'string' ? parseServerUrl(input) : null;
   const url = parsed ?? new URL(DEFAULT_SERVER.toString());
 

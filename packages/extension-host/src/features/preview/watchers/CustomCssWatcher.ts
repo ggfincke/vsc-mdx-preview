@@ -107,17 +107,4 @@ export class CustomCssWatcher extends BaseWatcher {
     }
     // silently fail if null - file might not exist yet
   }
-
-  // update CSS path & restart watching
-  updatePath(
-    cssPath: string,
-    workspaceFolders: readonly vscode.WorkspaceFolder[] | undefined,
-    documentDirectory: string | null
-  ): void {
-    this.dispose();
-    this.cssPath = cssPath;
-    this.workspaceFolders = workspaceFolders;
-    this.documentDirectory = documentDirectory;
-    this.start();
-  }
 }

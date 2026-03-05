@@ -45,4 +45,3 @@ export function extractErrorInfo(error: unknown): ErrorInfo {
     stack: extractErrorStack(error),
   };
 }
-

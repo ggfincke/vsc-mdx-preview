@@ -34,7 +34,6 @@ function createMockPluginLoader(resolveMap: Map<string, string>): PluginLoader {
       return resolved;
     },
     load(resolvedPath: string): unknown {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       return require(resolvedPath);
     },
   };

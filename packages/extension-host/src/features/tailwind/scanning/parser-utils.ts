@@ -173,10 +173,7 @@ export function extractFromTemplateLiteral(
         const expr = template.slice(exprStart, i - 1);
 
         // recursively extract string literals from the expression
-        const nestedLiterals = extractStringLiterals(
-          expr,
-          recursionDepth + 1
-        );
+        const nestedLiterals = extractStringLiterals(expr, recursionDepth + 1);
         results.push(...nestedLiterals);
 
         staticStart = i;
@@ -194,10 +191,7 @@ export function extractFromTemplateLiteral(
 }
 
 // extract string literals from JavaScript expression w/ recursive template literal handling
-export function extractStringLiterals(
-  expression: string,
-  depth = 0
-): string[] {
+export function extractStringLiterals(expression: string, depth = 0): string[] {
   // guard against stack overflow from pathological nested template literals
   if (depth > SCANNER_MAX_RECURSION_DEPTH) {
     log.debug(

@@ -1,6 +1,5 @@
 // packages/extension-host/src/shared/utils/validation/index.ts
 // extension-host validators w/ logging & ValidationOptions
-// for pure type guards (isString, isBoolean, etc.), use @mdx-preview/runtime-utils
 
 export {
   validateString,
