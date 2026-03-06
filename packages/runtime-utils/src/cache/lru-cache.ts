@@ -1,5 +1,7 @@
 // packages/runtime-utils/src/cache/lru-cache.ts
 // generic LRU cache w/ optional TTL, memory-based eviction, & entry protection
+// ! cross-repo duplicate: mdx-forge/src/browser/internal/lru-cache.ts
+// ! changes here must be mirrored (GPL licensing prevents shared dependency)
 // use Map insertion order for O(1) LRU tracking - oldest entries are at the
 // start of the Map, accessing an entry moves it to the end (delete + re-insert),
 // eviction removes from the start (skipping protected entries)

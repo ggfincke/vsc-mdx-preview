@@ -33,9 +33,7 @@ function trimTrailingSlashes(pathname: string): string {
 }
 
 // normalize server URL for runtime use
-export function normalizePlantUmlServerUrl(
-  input: string | null | undefined
-): string {
+function normalizePlantUmlServerUrl(input: string | null | undefined): string {
   const parsed = typeof input === 'string' ? parseServerUrl(input) : null;
   const url = parsed ?? new URL(DEFAULT_SERVER.toString());
 
@@ -43,13 +41,6 @@ export function normalizePlantUmlServerUrl(
   return normalizedPath
     ? `${url.protocol}//${url.host}${normalizedPath}`
     : `${url.protocol}//${url.host}`;
-}
-
-// extract origin for CSP connect-src
-export function getPlantUmlServerOrigin(serverUrl: string): string {
-  const normalized = normalizePlantUmlServerUrl(serverUrl);
-  const parsed = new URL(normalized);
-  return `${parsed.protocol}//${parsed.host}`;
 }
 
 // add unique endpoint while preserving order

@@ -92,6 +92,14 @@ export default tseslint.config(
       'react-refresh/only-export-components': 'off',
     },
   },
+  // useAsyncEffect forwards caller-provided deps to useEffect, which the
+  // react-hooks plugin can't statically verify (known limitation)
+  {
+    files: ['**/hooks/useAsyncEffect.ts'],
+    rules: {
+      'react-hooks/exhaustive-deps': 'off',
+    },
+  },
   {
     ignores: ['dist/**', 'node_modules/**', 'vite.config.ts'],
   }

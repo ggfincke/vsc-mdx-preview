@@ -10,7 +10,6 @@
     "./async": "./src/async/index.ts",
     "./diagrams": "./src/diagrams/index.ts",
     "./errors": "./src/errors/index.ts",
-    "./module-id": "./src/module-id/index.ts",
-    "./validation": "./src/validation/index.ts"
+    "./module-id": "./src/module-id/index.ts"
   }
 }

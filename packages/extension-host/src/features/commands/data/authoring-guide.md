@@ -1,7 +1,4 @@
-// packages/extension-host/src/features/commands/authoring-guide-text.ts
-// static MDX authoring guide content for clipboard export
-
-export const MDX_AUTHORING_GUIDE_TEXT = `# MDX Authoring Guide for LLM Agents
+# MDX Authoring Guide for LLM Agents
 
 This document describes what features you can use when creating MDX documents for the VS Code MDX Preview extension.
 
@@ -17,13 +14,13 @@ MDX Preview operates in one of two rendering modes:
 
 **Safe Mode** (default) renders MDX as static HTML with no JavaScript execution. Built-in components render as semantic HTML. Unknown components display as placeholders.
 
-**Trusted Mode** enables full React rendering with component imports, custom plugins, Tailwind CSS, and MDX transclusion. Requires: trusted workspace + \`mdx-preview.preview.enableScripts\` set to \`true\` + local files (not remote).
+**Trusted Mode** enables full React rendering with component imports, custom plugins, Tailwind CSS, and MDX transclusion. Requires: trusted workspace + `mdx-preview.preview.enableScripts` set to `true` + local files (not remote).
 
 | Feature | Safe Mode | Trusted Mode |
 |---------|-----------|--------------|
 | Markdown, math, diagrams | Yes | Yes |
 | GitHub Alerts | Yes | Yes |
-| Directive callouts (\`:::\`) | Yes | Yes |
+| Directive callouts (`:::`) | Yes | Yes |
 | Built-in components (Callout, Tabs, etc.) | Semantic HTML | Full React render |
 | Framework components (Docusaurus, Starlight, etc.) | No | Yes |
 | Custom imports | No | Yes |
@@ -38,7 +35,7 @@ MDX Preview operates in one of two rendering modes:
 
 Standard Markdown works as expected:
 
-\`\`\`mdx
+```mdx
 # Heading 1
 
 ## Heading 2
@@ -61,7 +58,7 @@ Standard Markdown works as expected:
 
 - [x] Task lists
 - [ ] Are supported
-\`\`\`
+```
 
 ---
 
@@ -69,7 +66,7 @@ Standard Markdown works as expected:
 
 Use these for callouts without importing components:
 
-\`\`\`mdx
+```mdx
 > [!NOTE]
 > Useful information that users should know.
 
@@ -84,7 +81,7 @@ Use these for callouts without importing components:
 
 > [!CAUTION]
 > Advises about risks or negative outcomes.
-\`\`\`
+```
 
 ---
 
@@ -92,7 +89,7 @@ Use these for callouts without importing components:
 
 Use triple-colon syntax for callouts without JSX. Works in both Safe and Trusted Mode:
 
-\`\`\`mdx
+```mdx
 :::note
 This is a note callout.
 :::
@@ -104,11 +101,11 @@ Be careful about this.
 :::tip[Bracket Title Syntax]
 This also works for setting titles.
 :::
-\`\`\`
+```
 
-All 17 callout types are supported with this syntax: \`note\`, \`tip\`, \`info\`, \`warning\`, \`danger\`, \`caution\`, \`important\`, \`summary\`, \`hint\`, \`success\`, \`question\`, \`failure\`, \`bug\`, \`example\`, \`quote\`, \`todo\`, \`attention\`.
+All 17 callout types are supported with this syntax: `note`, `tip`, `info`, `warning`, `danger`, `caution`, `important`, `summary`, `hint`, `success`, `question`, `failure`, `bug`, `example`, `quote`, `todo`, `attention`.
 
-Aliases also work: \`:::abstract\`, \`:::tldr\`, \`:::error\`, \`:::faq\`, \`:::check\`, etc. (see alias table under Built-in Components).
+Aliases also work: `:::abstract`, `:::tldr`, `:::error`, `:::faq`, `:::check`, etc. (see alias table under Built-in Components).
 
 ---
 
@@ -116,23 +113,23 @@ Aliases also work: \`:::abstract\`, \`:::tldr\`, \`:::error\`, \`:::faq\`, \`:::
 
 ### Basic Syntax Highlighting
 
-\`\`\`\`mdx
-\`\`\`javascript
+````mdx
+```javascript
 function greet(name) {
-  return \\\`Hello, \\\${name}!\\\`;
+  return \`Hello, \${name}!\`;
 }
-\`\`\`
-\`\`\`\`
+```
+````
 
-Supported languages include: \`javascript\`, \`typescript\`, \`python\`, \`rust\`, \`go\`, \`java\`, \`c\`, \`cpp\`, \`csharp\`, \`ruby\`, \`php\`, \`swift\`, \`kotlin\`, \`sql\`, \`html\`, \`css\`, \`scss\`, \`json\`, \`yaml\`, \`bash\`, \`shell\`, \`markdown\`, \`mdx\`, and 100+ more.
+Supported languages include: `javascript`, `typescript`, `python`, `rust`, `go`, `java`, `c`, `cpp`, `csharp`, `ruby`, `php`, `swift`, `kotlin`, `sql`, `html`, `css`, `scss`, `json`, `yaml`, `bash`, `shell`, `markdown`, `mdx`, and 100+ more.
 
 ### Code Block with Title
 
-\`\`\`\`mdx
-\`\`\`typescript title="utils.ts"
+````mdx
+```typescript title="utils.ts"
 export const formatDate = (date: Date) => date.toISOString();
-\`\`\`
-\`\`\`\`
+```
+````
 
 ---
 
@@ -140,28 +137,28 @@ export const formatDate = (date: Date) => date.toISOString();
 
 ### Inline Math
 
-\`\`\`mdx
-The quadratic formula is $x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$ for solving equations.
-\`\`\`
+```mdx
+The quadratic formula is $x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$ for solving equations.
+```
 
 ### Display Math
 
-\`\`\`mdx
+```mdx
 $$
-\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}
+\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
 $$
-\`\`\`
+```
 
 Common math expressions:
 
-- Fractions: \`\\frac{a}{b}\`
-- Exponents: \`x^2\`, \`e^{-x}\`
-- Subscripts: \`x_1\`, \`a_{n+1}\`
-- Square roots: \`\\sqrt{x}\`, \`\\sqrt[3]{x}\`
-- Summation: \`\\sum_{i=1}^{n} x_i\`
-- Integrals: \`\\int_a^b f(x)dx\`
-- Greek letters: \`\\alpha\`, \`\\beta\`, \`\\gamma\`, \`\\theta\`, \`\\pi\`
-- Matrices: \`\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}\`
+- Fractions: `\frac{a}{b}`
+- Exponents: `x^2`, `e^{-x}`
+- Subscripts: `x_1`, `a_{n+1}`
+- Square roots: `\sqrt{x}`, `\sqrt[3]{x}`
+- Summation: `\sum_{i=1}^{n} x_i`
+- Integrals: `\int_a^b f(x)dx`
+- Greek letters: `\alpha`, `\beta`, `\gamma`, `\theta`, `\pi`
+- Matrices: `\begin{pmatrix} a & b \\ c & d \end{pmatrix}`
 
 ---
 
@@ -171,21 +168,21 @@ Create diagrams with code blocks:
 
 ### Flowchart
 
-\`\`\`\`mdx
-\`\`\`mermaid
+````mdx
+```mermaid
 graph TD
     A[Start] --> B{Decision?}
     B -->|Yes| C[Do Something]
     B -->|No| D[Do Something Else]
     C --> E[End]
     D --> E
-\`\`\`
-\`\`\`\`
+```
+````
 
 ### Sequence Diagram
 
-\`\`\`\`mdx
-\`\`\`mermaid
+````mdx
+```mermaid
 sequenceDiagram
     participant User
     participant Server
@@ -195,13 +192,13 @@ sequenceDiagram
     Server->>Database: Query
     Database-->>Server: Results
     Server-->>User: Response
-\`\`\`
-\`\`\`\`
+```
+````
 
 ### Class Diagram
 
-\`\`\`\`mdx
-\`\`\`mermaid
+````mdx
+```mermaid
 classDiagram
     class Animal {
         +String name
@@ -211,13 +208,13 @@ classDiagram
         +bark()
     }
     Animal <|-- Dog
-\`\`\`
-\`\`\`\`
+```
+````
 
 ### State Diagram
 
-\`\`\`\`mdx
-\`\`\`mermaid
+````mdx
+```mermaid
 stateDiagram-v2
     [*] --> Idle
     Idle --> Processing: Start
@@ -225,20 +222,20 @@ stateDiagram-v2
     Processing --> Error: Failure
     Complete --> [*]
     Error --> Idle: Retry
-\`\`\`
-\`\`\`\`
+```
+````
 
 ### Pie Chart
 
-\`\`\`\`mdx
-\`\`\`mermaid
+````mdx
+```mermaid
 pie title Project Time Distribution
     "Development" : 45
     "Testing" : 25
     "Documentation" : 15
     "Meetings" : 15
-\`\`\`
-\`\`\`\`
+```
+````
 
 ---
 
@@ -246,18 +243,18 @@ pie title Project Time Distribution
 
 Render UML diagrams via a configurable PlantUML server (default: [Kroki](https://kroki.io)):
 
-\`\`\`\`mdx
-\`\`\`plantuml
+````mdx
+```plantuml
 @startuml
 Alice -> Bob: Authentication Request
 Bob --> Alice: Authentication Response
 Alice -> Bob: Data Request
 Bob --> Alice: Data Response
 @enduml
-\`\`\`
-\`\`\`\`
+```
+````
 
-Configure the server URL via \`mdx-preview.diagrams.plantUmlServer\`.
+Configure the server URL via `mdx-preview.diagrams.plantUmlServer`.
 
 ---
 
@@ -265,25 +262,25 @@ Configure the server URL via \`mdx-preview.diagrams.plantUmlServer\`.
 
 Render DOT graphs client-side using a WASM engine:
 
-\`\`\`\`mdx
-\`\`\`dot
+````mdx
+```dot
 digraph G {
     A -> B -> C;
     B -> D;
 }
-\`\`\`
-\`\`\`\`
+```
+````
 
-You can also use the \`graphviz\` language tag:
+You can also use the `graphviz` language tag:
 
-\`\`\`\`mdx
-\`\`\`graphviz
+````mdx
+```graphviz
 digraph {
     rankdir=LR;
     Start -> Process -> End;
 }
-\`\`\`
-\`\`\`\`
+```
+````
 
 ---
 
@@ -293,7 +290,7 @@ These components are available without imports:
 
 ### Callout / Alert / Admonition
 
-\`\`\`mdx
+```mdx
 <Callout type="note" title="Note">
   This is informational content.
 </Callout>
@@ -315,57 +312,57 @@ These components are available without imports:
 </Callout>
 
 <Callout type="info">Title is optional.</Callout>
-\`\`\`
+```
 
-**17 supported types:** \`note\`, \`tip\`, \`info\`, \`warning\`, \`danger\`, \`caution\`, \`important\`, \`summary\`, \`hint\`, \`success\`, \`question\`, \`failure\`, \`bug\`, \`example\`, \`quote\`, \`todo\`, \`attention\`
+**17 supported types:** `note`, `tip`, `info`, `warning`, `danger`, `caution`, `important`, `summary`, `hint`, `success`, `question`, `failure`, `bug`, `example`, `quote`, `todo`, `attention`
 
 **Aliases** (use either the alias or the canonical name):
 
 | Alias | Maps To |
 |-------|---------|
-| \`abstract\`, \`tldr\` | \`summary\` |
-| \`warn\` | \`warning\` |
-| \`error\` | \`danger\` |
-| \`check\`, \`done\` | \`success\` |
-| \`help\`, \`faq\` | \`question\` |
-| \`fail\`, \`missing\` | \`failure\` |
-| \`snippet\` | \`example\` |
-| \`cite\` | \`quote\` |
+| `abstract`, `tldr` | `summary` |
+| `warn` | `warning` |
+| `error` | `danger` |
+| `check`, `done` | `success` |
+| `help`, `faq` | `question` |
+| `fail`, `missing` | `failure` |
+| `snippet` | `example` |
+| `cite` | `quote` |
 
-**Component aliases:** \`<Alert>\` and \`<Admonition>\` work identically to \`<Callout>\`.
+**Component aliases:** `<Alert>` and `<Admonition>` work identically to `<Callout>`.
 
 ### Tabs
 
-\`\`\`\`mdx
+````mdx
 <Tabs>
-  <TabItem label="npm">\`\`\`bash npm install package-name \`\`\`</TabItem>
-  <TabItem label="yarn">\`\`\`bash yarn add package-name \`\`\`</TabItem>
-  <TabItem label="pnpm">\`\`\`bash pnpm add package-name \`\`\`</TabItem>
+  <TabItem label="npm">```bash npm install package-name ```</TabItem>
+  <TabItem label="yarn">```bash yarn add package-name ```</TabItem>
+  <TabItem label="pnpm">```bash pnpm add package-name ```</TabItem>
 </Tabs>
-\`\`\`\`
+````
 
 ### CodeGroup (Tabbed Code Blocks)
 
-\`\`\`\`mdx
+````mdx
 <CodeGroup>
-\`\`\`javascript title="example.js"
+```javascript title="example.js"
 const greeting = "Hello";
-\`\`\`\`
+````
 
-\`\`\`typescript title="example.ts"
+```typescript title="example.ts"
 const greeting: string = 'Hello';
-\`\`\`
+```
 
-\`\`\`python title="example.py"
+```python title="example.py"
 greeting = "Hello"
-\`\`\`
+```
 
 </CodeGroup>
-\`\`\`
+```
 
 ### Collapsible / Accordion
 
-\`\`\`mdx
+```mdx
 <Collapsible title="Click to expand">
   Hidden content that can be revealed.
 
@@ -376,17 +373,17 @@ greeting = "Hello"
 <Collapsible title="Open by default" defaultOpen>
   This starts expanded.
 </Collapsible>
-\`\`\`
+```
 
 ---
 
 ## Framework-Specific Components
 
-If the project uses a documentation framework, additional components are available. The framework is auto-detected from \`package.json\` or can be set manually via \`mdx-preview.framework\` or \`.mdx-previewrc.json\`.
+If the project uses a documentation framework, additional components are available. The framework is auto-detected from `package.json` or can be set manually via `mdx-preview.framework` or `.mdx-previewrc.json`.
 
 ### Docusaurus Projects
 
-\`\`\`mdx
+```mdx
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import CodeBlock from '@theme/CodeBlock';
@@ -402,19 +399,19 @@ import Details from '@theme/Details';
 </Tabs>
 
 <CodeBlock language="jsx" title="Component.jsx" showLineNumbers>
-  {\\\`function App() {
+  {\`function App() {
   return <div>Hello</div>;
-}\\\`}
+}\`}
 </CodeBlock>
 
 <Details summary="Click to expand">
   Collapsible content using Docusaurus Details component.
 </Details>
-\`\`\`
+```
 
 Docusaurus also supports admonition syntax:
 
-\`\`\`mdx
+```mdx
 :::note
 This renders as a Docusaurus-style admonition.
 :::
@@ -422,11 +419,11 @@ This renders as a Docusaurus-style admonition.
 :::tip Pro Tip
 Directive callouts map to Docusaurus admonitions automatically.
 :::
-\`\`\`
+```
 
 ### Starlight Projects (Astro)
 
-\`\`\`mdx
+```mdx
 import {
   Card,
   CardGrid,
@@ -477,13 +474,13 @@ import {
   <TabItem label="npm">npm install</TabItem>
   <TabItem label="pnpm">pnpm add</TabItem>
 </Tabs>
-\`\`\`
+```
 
-Icons: \`star\`, \`rocket\`, \`document\`, \`pencil\`, \`puzzle\`, \`setting\`, \`information\`, \`open-book\`, \`warning\`, \`error\`, \`check\`, \`heart\`, \`lightning\`, \`sun\`, \`moon\`, \`external\`
+Icons: `star`, `rocket`, `document`, `pencil`, `puzzle`, `setting`, `information`, `open-book`, `warning`, `error`, `check`, `heart`, `lightning`, `sun`, `moon`, `external`
 
 ### Nextra Projects (Next.js)
 
-\`\`\`mdx
+```mdx
 import { Callout, Tabs, Cards, FileTree, Steps, Bleed } from 'nextra/components';
 
 <Callout type="info" emoji="💡">
@@ -520,20 +517,20 @@ import { Callout, Tabs, Cards, FileTree, Steps, Bleed } from 'nextra/components'
 <Bleed>
   This content breaks out of the container to full width.
 </Bleed>
-\`\`\`
+```
 
 ### Next.js Projects
 
-\`\`\`mdx
+```mdx
 import Image from 'next/image';
 import Link from 'next/link';
 
 <Image src="/hero.png" alt="Hero image" width={800} height={400} />
 
 <Link href="/about">Learn more about us</Link>
-\`\`\`
+```
 
-Note: \`next/image\` renders as a standard \`<img>\` without Next.js optimization. Specify \`width\` and \`height\` for consistent sizing.
+Note: `next/image` renders as a standard `<img>` without Next.js optimization. Specify `width` and `height` for consistent sizing.
 
 ---
 
@@ -541,20 +538,20 @@ Note: \`next/image\` renders as a standard \`<img>\` without Next.js optimizatio
 
 Tailwind CSS v4 is supported with auto-detection from your project's configuration. Use utility classes directly in JSX:
 
-\`\`\`mdx
+```mdx
 <div className="flex items-center gap-4 p-6 bg-blue-100 rounded-lg">
   <h2 className="text-2xl font-bold">Styled with Tailwind</h2>
   <p className="text-gray-600">Utility classes are compiled live.</p>
 </div>
-\`\`\`
+```
 
-The extension detects Tailwind from your project's \`package.json\` dependencies and config files. Configure via \`.mdx-previewrc.json\`:
+The extension detects Tailwind from your project's `package.json` dependencies and config files. Configure via `.mdx-previewrc.json`:
 
-\`\`\`json
+```json
 { "tailwind": { "enabled": "auto" } }
-\`\`\`
+```
 
-Options: \`"auto"\` (detect from project), \`"enabled"\` (always on), \`"disabled"\` (off).
+Options: `"auto"` (detect from project), `"enabled"` (always on), `"disabled"` (off).
 
 ---
 
@@ -562,7 +559,7 @@ Options: \`"auto"\` (detect from project), \`"enabled"\` (always on), \`"disable
 
 Import other MDX or Markdown files as React components:
 
-\`\`\`mdx
+```mdx
 import Introduction from './Introduction.mdx';
 import FAQ from '../shared/FAQ.md';
 
@@ -571,7 +568,7 @@ import FAQ from '../shared/FAQ.md';
 ## Frequently Asked Questions
 
 <FAQ />
-\`\`\`
+```
 
 Imported files are watched for changes and the preview refreshes automatically when they are modified.
 
@@ -579,9 +576,9 @@ Imported files are watched for changes and the preview refreshes automatically w
 
 ## TypeScript/JSX Preview (Trusted Mode)
 
-Preview \`.tsx\` and \`.ts\` files that render to a \`#root\` element:
+Preview `.tsx` and `.ts` files that render to a `#root` element:
 
-\`\`\`tsx
+```tsx
 import ReactDOM from 'react-dom/client';
 
 function App() {
@@ -590,9 +587,9 @@ function App() {
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(<App />);
-\`\`\`
+```
 
-Open the preview with \`Ctrl+K X\` / \`Cmd+K X\` just like MDX files.
+Open the preview with `Ctrl+K X` / `Cmd+K X` just like MDX files.
 
 ---
 
@@ -600,52 +597,52 @@ Open the preview with \`Ctrl+K X\` / \`Cmd+K X\` just like MDX files.
 
 Add metadata at the top of MDX files:
 
-\`\`\`mdx
+```mdx
 ---
 title: My Page Title
 description: A brief description of this page
 ---
 
 # Content starts here
-\`\`\`
+```
 
 ### Preview-Related Frontmatter
 
-\`\`\`mdx
+```mdx
 ---
 title: My Page
 theme: github-dark
 layout: full
 ---
-\`\`\`
+```
 
 | Key | Description |
 |-----|-------------|
-| \`title\` | Document title |
-| \`description\` | Page description |
-| \`theme\` | Override preview theme for this document |
-| \`layout\` | Layout mode: \`default\`, \`full\` (full-width), or \`raw\` (no styling) |
+| `title` | Document title |
+| `description` | Page description |
+| `theme` | Override preview theme for this document |
+| `layout` | Layout mode: `default`, `full` (full-width), or `raw` (no styling) |
 
 ### Nextra-Specific Frontmatter
 
-\`\`\`mdx
+```mdx
 ---
 title: Page Title
 sidebarTitle: Short Title
 description: SEO description
 layout: default
 ---
-\`\`\`
+```
 
-Nextra also supports \`_meta.json\` files for per-page settings (title, layout, table of contents visibility). The extension walks upward from the document directory to find these files.
+Nextra also supports `_meta.json` files for per-page settings (title, layout, table of contents visibility). The extension walks upward from the document directory to find these files.
 
 ---
 
 ## Configuration (.mdx-previewrc.json)
 
-Create a \`.mdx-previewrc.json\` in your project root for per-project settings. Most options require Trusted Mode:
+Create a `.mdx-previewrc.json` in your project root for per-project settings. Most options require Trusted Mode:
 
-\`\`\`json
+```json
 {
   "remarkPlugins": ["remark-toc"],
   "rehypePlugins": [
@@ -658,19 +655,19 @@ Create a \`.mdx-previewrc.json\` in your project root for per-project settings. 
   "framework": "docusaurus",
   "tailwind": { "enabled": "auto" }
 }
-\`\`\`
+```
 
 | Field | Description |
 |-------|-------------|
-| \`remarkPlugins\` | Custom remark plugins (Trusted Mode only) |
-| \`rehypePlugins\` | Custom rehype plugins (Trusted Mode only) |
-| \`components\` | Map component names to file paths (Trusted Mode only) |
-| \`framework\` | Override framework detection: \`generic\`, \`docusaurus\`, \`starlight\`, \`nextra\`, \`nextjs\` |
-| \`frameworkOptions\` | Framework-specific options (\`enableShims\`, \`customAliases\`) |
-| \`tailwind\` | Tailwind settings (\`enabled\`, \`configPath\`) |
-| \`unknownBehavior\` | Unknown component handling: \`placeholder\` (default), \`strip\`, \`raw\` |
+| `remarkPlugins` | Custom remark plugins (Trusted Mode only) |
+| `rehypePlugins` | Custom rehype plugins (Trusted Mode only) |
+| `components` | Map component names to file paths (Trusted Mode only) |
+| `framework` | Override framework detection: `generic`, `docusaurus`, `starlight`, `nextra`, `nextjs` |
+| `frameworkOptions` | Framework-specific options (`enableShims`, `customAliases`) |
+| `tailwind` | Tailwind settings (`enabled`, `configPath`) |
+| `unknownBehavior` | Unknown component handling: `placeholder` (default), `strip`, `raw` |
 
-Plugins are resolved from your project's \`node_modules\`. Supports both \`"plugin-name"\` and \`["plugin-name", { options }]\` syntax.
+Plugins are resolved from your project's `node_modules`. Supports both `"plugin-name"` and `["plugin-name", { options }]` syntax.
 
 ---
 
@@ -678,16 +675,16 @@ Plugins are resolved from your project's \`node_modules\`. Supports both \`"plug
 
 Apply a layout wrapper by exporting a default component:
 
-\`\`\`mdx
+```mdx
 import Layout from './components/Layout';
 export default Layout;
 
 # Content
 
 This content is wrapped in your custom Layout component.
-\`\`\`
+```
 
-Or set a global layout via the \`mdx-preview.preview.mdx.customLayoutFilePath\` setting.
+Or set a global layout via the `mdx-preview.preview.mdx.customLayoutFilePath` setting.
 
 ---
 
@@ -695,17 +692,17 @@ Or set a global layout via the \`mdx-preview.preview.mdx.customLayoutFilePath\` 
 
 ### Preview Themes
 
-16 preview themes available via \`mdx-preview.preview.previewTheme\` or the Command Palette:
+16 preview themes available via `mdx-preview.preview.previewTheme` or the Command Palette:
 
 github-light, github-dark, atom-dark, atom-light, atom-material, one-dark, one-light, solarized-dark, solarized-light, gothic, medium, monokai, newsprint, night, vue, none
 
 ### Auto Theme Switching
 
-Enabled by default (\`mdx-preview.preview.autoTheme\`). The preview automatically follows your VS Code light/dark theme. Theme pairs: github-light/dark, atom-light/dark, one-light/dark, solarized-light/dark.
+Enabled by default (`mdx-preview.preview.autoTheme`). The preview automatically follows your VS Code light/dark theme. Theme pairs: github-light/dark, atom-light/dark, one-light/dark, solarized-light/dark.
 
 ### Custom CSS
 
-Point \`mdx-preview.preview.customCss\` to a CSS file for additional styling applied to the preview.
+Point `mdx-preview.preview.customCss` to a CSS file for additional styling applied to the preview.
 
 ### Image Lightbox
 
@@ -717,10 +714,10 @@ Click any image in the preview to view it fullscreen. Press Escape or click outs
 
 ### Structure
 
-1. **Start with a clear heading** - Use \`#\` for the main title
+1. **Start with a clear heading** - Use `#` for the main title
 2. **Use progressive disclosure** - Put important info first, details in collapsibles
 3. **Group related content** - Use tabs for alternatives (OS, language, etc.)
-4. **Add visual breaks** - Use \`---\` for horizontal rules between sections
+4. **Add visual breaks** - Use `---` for horizontal rules between sections
 
 ### Callout Usage
 
@@ -764,7 +761,7 @@ Click any image in the preview to view it fullscreen. Press Escape or click outs
 
 ## Example: Complete Documentation Page
 
-\`\`\`\`mdx
+````mdx
 ---
 title: Quick Start Guide
 description: Get up and running in 5 minutes
@@ -780,14 +777,14 @@ Get your project running quickly with this guide.
 ## Installation
 
 <Tabs>
-  <TabItem label="npm">\`\`\`bash npm create my-app@latest \`\`\`</TabItem>
-  <TabItem label="yarn">\`\`\`bash yarn create my-app \`\`\`</TabItem>
+  <TabItem label="npm">```bash npm create my-app@latest ```</TabItem>
+  <TabItem label="yarn">```bash yarn create my-app ```</TabItem>
 </Tabs>
 
 ## Project Structure
 
 After installation, your project will look like this:
-\`\`\`\`
+````
 
 my-app/
 ├── src/
@@ -797,7 +794,7 @@ my-app/
 ├── package.json
 └── tsconfig.json
 
-\`\`\`\`
+````
 
 ## Configuration
 
@@ -805,21 +802,21 @@ my-app/
 Configuration is optional - sensible defaults are provided.
 :::
 
-\`\`\`typescript title="config.ts"
+```typescript title="config.ts"
 export default {
   theme: 'dark',
   language: 'en',
 };
-\`\`\`\`
+````
 
 ## How It Works
 
-\`\`\`mermaid
+```mermaid
 graph LR
     A[Write MDX] --> B[Build]
     B --> C[Deploy]
     C --> D[Users]
-\`\`\`
+```
 
 ## API Overview
 
@@ -827,10 +824,10 @@ graph LR
 Here's a quick example of the API in action.
 :::
 
-\`\`\`typescript title="api.ts"
+```typescript title="api.ts"
 const response = await fetch('/api/data');
 const data = await response.json();
-\`\`\`
+```
 
 ## Next Steps
 
@@ -847,7 +844,7 @@ const data = await response.json();
 > [!NOTE]
 > Check our [FAQ](/faq) or [open an issue](https://github.com/example/repo/issues).
 
-\`\`\`\`
+````
 
 ---
 
@@ -855,19 +852,18 @@ const data = await response.json();
 
 | Feature | Syntax |
 |---------|--------|
-| GitHub Alert | \`> [!NOTE]\` / \`> [!TIP]\` / \`> [!WARNING]\` |
-| Directive callout | \`:::note\` / \`:::warning Title\` / \`:::tip[Title]\` |
-| Inline math | \`$equation$\` |
-| Block math | \`$$equation$$\` |
-| Mermaid | \` \`\`\`mermaid \` |
-| PlantUML | \` \`\`\`plantuml \` |
-| Graphviz | \` \`\`\`dot \` / \` \`\`\`graphviz \` |
-| Callout component | \`<Callout type="tip">\` (also \`<Alert>\`, \`<Admonition>\`) |
-| Tabs | \`<Tabs><TabItem label="...">\` |
-| Collapsible | \`<Collapsible title="...">\` |
-| Code group | \`<CodeGroup>\` with code blocks |
-| Tailwind CSS | \`className="flex ..."\` (Trusted Mode) |
-| MDX transclusion | \`import X from './X.mdx'; <X />\` (Trusted Mode) |
-| Custom layout | \`export default Layout\` (Trusted Mode) |
-| Config file | \`.mdx-previewrc.json\` |
-`;
+| GitHub Alert | `> [!NOTE]` / `> [!TIP]` / `> [!WARNING]` |
+| Directive callout | `:::note` / `:::warning Title` / `:::tip[Title]` |
+| Inline math | `$equation$` |
+| Block math | `$$equation$$` |
+| Mermaid | ` ```mermaid ` |
+| PlantUML | ` ```plantuml ` |
+| Graphviz | ` ```dot ` / ` ```graphviz ` |
+| Callout component | `<Callout type="tip">` (also `<Alert>`, `<Admonition>`) |
+| Tabs | `<Tabs><TabItem label="...">` |
+| Collapsible | `<Collapsible title="...">` |
+| Code group | `<CodeGroup>` with code blocks |
+| Tailwind CSS | `className="flex ..."` (Trusted Mode) |
+| MDX transclusion | `import X from './X.mdx'; <X />` (Trusted Mode) |
+| Custom layout | `export default Layout` (Trusted Mode) |
+| Config file | `.mdx-previewrc.json` |

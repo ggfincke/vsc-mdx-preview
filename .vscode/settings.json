@@ -10,5 +10,6 @@
   "typescript.tsc.autoDetect": "off",
   "eslint.enable": true,
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "mdx-preview.preview.enableScripts": true
 }

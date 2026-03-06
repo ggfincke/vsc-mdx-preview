@@ -1,8 +1,10 @@
 // packages/runtime-utils/src/errors/normalize.ts
 // cross-environment error handling utilities (works in both Node.js & browser)
+// ! cross-repo duplicate: mdx-forge/src/internal/errors.ts
+// ! changes here must be mirrored (GPL licensing prevents shared dependency)
 
 // check if value is an Error instance (type guard)
-export function isError(value: unknown): value is Error {
+function isError(value: unknown): value is Error {
   return value instanceof Error;
 }
 
@@ -15,7 +17,7 @@ export function extractErrorMessage(error: unknown): string {
 }
 
 // extract stack trace from an unknown error value
-export function extractErrorStack(error: unknown): string | undefined {
+function extractErrorStack(error: unknown): string | undefined {
   if (isError(error)) {
     return error.stack;
   }
@@ -42,30 +44,4 @@ export function extractErrorInfo(error: unknown): ErrorInfo {
     message: extractErrorMessage(error),
     stack: extractErrorStack(error),
   };
-}
-
-// extract full error chain including causes (ES2022)
-// walk the cause chain & return all errors in order
-export function extractErrorChain(error: unknown): Error[] {
-  const chain: Error[] = [];
-  let current: unknown = error;
-
-  while (current) {
-    const normalized = normalizeError(current);
-    chain.push(normalized);
-    current = (normalized as { cause?: unknown }).cause;
-  }
-
-  return chain;
-}
-
-// format error w/ full cause chain for logging/display
-export function formatErrorWithCause(error: unknown): string {
-  const chain = extractErrorChain(error);
-  return chain
-    .map((err, i) => {
-      const prefix = i === 0 ? '' : '\nCaused by: ';
-      return `${prefix}${err.message}`;
-    })
-    .join('');
 }

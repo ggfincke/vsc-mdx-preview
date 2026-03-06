@@ -34,6 +34,7 @@ const buildOptions = {
   // handle .node native modules
   loader: {
     '.node': 'copy',
+    '.md': 'text',
   },
   // log level
   logLevel: 'info',

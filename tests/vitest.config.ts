@@ -119,6 +119,21 @@ const aliases = [
   },
 ];
 
+// load .md files as raw text strings (matches esbuild's text loader)
+function rawMarkdownLoader(): Plugin {
+  return {
+    name: 'raw-markdown-loader',
+    transform(code, id) {
+      if (id.endsWith('.md')) {
+        return {
+          code: `export default ${JSON.stringify(code)};`,
+          map: null,
+        };
+      }
+    },
+  };
+}
+
 // resolve react peer deps from this project's node_modules so symlinked
 // mdx-forge doesn't fail w/ __vite-optional-peer-dep virtual modules
 function resolveReactPeerDeps(): Plugin {
@@ -155,7 +170,7 @@ function resolveReactPeerDeps(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [resolveReactPeerDeps()],
+  plugins: [rawMarkdownLoader(), resolveReactPeerDeps()],
   test: {
     include: ['tests/**/*.test.ts'],
     setupFiles: ['./tests/setup.ts'],
