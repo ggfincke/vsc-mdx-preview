@@ -1,0 +1,339 @@
+// packages/extension-host/src/features/language/MDXSymbolProvider.ts
+// provide document symbols for MDX files (headings, frontmatter, imports, exports)
+
+import * as vscode from 'vscode';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkMdx from 'remark-mdx';
+import { visit } from 'unist-util-visit';
+import type { Root } from 'mdast';
+import matter from 'gray-matter';
+import { createTaggedLogger } from '../../shared/logging/logger';
+import { LogTags } from '@mdx-preview/contracts';
+import { extractErrorMessage } from '@mdx-preview/runtime-utils';
+
+const log = createTaggedLogger(LogTags.SYMBOL_PROVIDER);
+
+// reusable parser (stateless, safe to share across calls)
+const mdxParser = unified().use(remarkParse).use(remarkMdx);
+
+// heading AST node
+interface HeadingNode {
+  type: 'heading';
+  depth: 1 | 2 | 3 | 4 | 5 | 6;
+  children: Array<{
+    type: string;
+    value?: string;
+    children?: Array<{ type: string; value?: string }>;
+  }>;
+  position?: {
+    start: { line: number; column: number };
+    end: { line: number; column: number };
+  };
+}
+
+// MDX ESM node (imports/exports)
+interface MdxjsEsmNode {
+  type: 'mdxjsEsm';
+  value: string;
+  position?: {
+    start: { line: number; column: number };
+    end: { line: number; column: number };
+  };
+}
+
+// extract text content from heading children nodes
+function extractHeadingText(
+  children: Array<{
+    type: string;
+    value?: string;
+    children?: Array<{ type: string; value?: string }>;
+  }>
+): string {
+  const parts: string[] = [];
+  for (const child of children) {
+    if (child.type === 'text' || child.type === 'inlineCode') {
+      if (child.value) {
+        parts.push(child.value);
+      }
+    } else if (child.children) {
+      // recurse into emphasis, strong, link, etc
+      parts.push(extractHeadingText(child.children));
+    }
+  }
+  return parts.join('');
+}
+
+// extract meaningful name from import/export statement
+function extractEsmName(value: string): string {
+  // import Foo from 'path'
+  const defaultMatch = value.match(/import\s+(\w+)\s+from/);
+  if (defaultMatch) {
+    return defaultMatch[1];
+  }
+
+  // import { Foo, Bar } from 'path'
+  const namedMatch = value.match(/import\s+\{([^}]+)\}\s+from/);
+  if (namedMatch) {
+    return namedMatch[1].trim();
+  }
+
+  // import * as Foo from 'path'
+  const namespaceMatch = value.match(/import\s+\*\s+as\s+(\w+)\s+from/);
+  if (namespaceMatch) {
+    return namespaceMatch[1];
+  }
+
+  // export const foo =
+  const exportMatch = value.match(
+    /export\s+(?:const|let|var|function|class)\s+(\w+)/
+  );
+  if (exportMatch) {
+    return exportMatch[1];
+  }
+
+  // export default
+  if (value.includes('export default')) {
+    return 'default';
+  }
+
+  // fallback: first line truncated
+  return value.split('\n')[0].substring(0, 40);
+}
+
+// build nested heading hierarchy from flat heading list
+function buildHeadingHierarchy(
+  headings: Array<{ depth: number; text: string; range: vscode.Range }>,
+  document: vscode.TextDocument
+): vscode.DocumentSymbol[] {
+  const root: vscode.DocumentSymbol[] = [];
+  const stack: Array<{ depth: number; symbol: vscode.DocumentSymbol }> = [];
+
+  for (let i = 0; i < headings.length; i++) {
+    const { depth, text, range } = headings[i];
+
+    // determine full range (from this heading to next heading of same/higher level or EOF)
+    // forward scan from i+1 instead of findIndex from 0 (avoids O(n²))
+    let nextSameOrHigherIdx = -1;
+    for (let j = i + 1; j < headings.length; j++) {
+      if (headings[j].depth <= depth) {
+        nextSameOrHigherIdx = j;
+        break;
+      }
+    }
+    const lastLine = document.lineCount - 1;
+    const endLine =
+      nextSameOrHigherIdx !== -1
+        ? Math.max(
+            headings[nextSameOrHigherIdx].range.start.line - 1,
+            range.start.line
+          )
+        : lastLine;
+    const endLineText = document.lineAt(Math.min(endLine, lastLine)).text;
+    const fullRange = new vscode.Range(
+      range.start,
+      new vscode.Position(endLine, endLineText.length)
+    );
+
+    const symbol = new vscode.DocumentSymbol(
+      text || '(untitled)',
+      '',
+      vscode.SymbolKind.String,
+      fullRange,
+      range
+    );
+
+    // pop stack entries at same or deeper depth
+    while (stack.length > 0 && stack[stack.length - 1].depth >= depth) {
+      stack.pop();
+    }
+
+    // add to parent or root
+    if (stack.length > 0) {
+      stack[stack.length - 1].symbol.children.push(symbol);
+    } else {
+      root.push(symbol);
+    }
+
+    stack.push({ depth, symbol });
+  }
+
+  return root;
+}
+
+// create frontmatter symbol from pre-parsed boundaries
+function createFrontmatterSymbol(
+  data: Record<string, unknown>,
+  lines: string[],
+  endLine: number
+): vscode.DocumentSymbol | null {
+  if (Object.keys(data).length === 0 || endLine === 0) {
+    return null;
+  }
+
+  const fullRange = new vscode.Range(0, 0, endLine, 3);
+  const selectionRange = new vscode.Range(0, 0, 0, 3);
+
+  const symbol = new vscode.DocumentSymbol(
+    'Frontmatter',
+    '',
+    vscode.SymbolKind.Struct,
+    fullRange,
+    selectionRange
+  );
+
+  // add individual fields as children
+  for (let i = 1; i < endLine; i++) {
+    const line = lines[i];
+    const keyMatch = line.match(/^(\w[\w-]*)\s*:/);
+    if (keyMatch) {
+      const fieldSymbol = new vscode.DocumentSymbol(
+        keyMatch[1],
+        '',
+        vscode.SymbolKind.Property,
+        new vscode.Range(i, 0, i, line.length),
+        new vscode.Range(i, 0, i, keyMatch[1].length)
+      );
+      symbol.children.push(fieldSymbol);
+    }
+  }
+
+  return symbol;
+}
+
+// create import/export symbols from ESM nodes
+function createEsmSymbols(
+  esmNodes: Array<{ value: string; range: vscode.Range }>
+): vscode.DocumentSymbol[] {
+  const symbols: vscode.DocumentSymbol[] = [];
+
+  for (const node of esmNodes) {
+    const trimmed = node.value.trimStart();
+    const isImport = trimmed.startsWith('import');
+    const isExport = trimmed.startsWith('export');
+
+    if (!isImport && !isExport) {
+      continue;
+    }
+
+    const name = extractEsmName(node.value);
+    const kind = isImport
+      ? vscode.SymbolKind.Module
+      : vscode.SymbolKind.Variable;
+
+    symbols.push(
+      new vscode.DocumentSymbol(
+        name,
+        isImport ? 'import' : 'export',
+        kind,
+        node.range,
+        node.range
+      )
+    );
+  }
+
+  return symbols;
+}
+
+// extract symbols from an MDX document (shared between provider & tree view)
+export function extractMDXSymbols(
+  document: vscode.TextDocument
+): vscode.DocumentSymbol[] {
+  const text = document.getText();
+  const matterResult = matter(text);
+  const lines = text.split('\n');
+
+  // calculate line offset for AST positions (gray-matter strips frontmatter)
+  // find the closing --- line in the original text to get exact offset
+  let frontmatterLineOffset = 0;
+  let frontmatterEndLine = 0;
+  if (matterResult.matter) {
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim() === '---') {
+        frontmatterEndLine = i;
+        frontmatterLineOffset = i + 1;
+        break;
+      }
+    }
+  }
+
+  // parse stripped content to AST
+  const tree = mdxParser.parse(matterResult.content) as Root;
+
+  const symbols: vscode.DocumentSymbol[] = [];
+
+  // frontmatter symbol
+  const fmSymbol = createFrontmatterSymbol(
+    matterResult.data,
+    lines,
+    frontmatterEndLine
+  );
+  if (fmSymbol) {
+    symbols.push(fmSymbol);
+  }
+
+  // collect ESM nodes (imports/exports)
+  const esmNodes: Array<{ value: string; range: vscode.Range }> = [];
+  visit(tree, 'mdxjsEsm', (node) => {
+    const esmNode = node as unknown as MdxjsEsmNode;
+    if (esmNode.position) {
+      const range = new vscode.Range(
+        esmNode.position.start.line - 1 + frontmatterLineOffset,
+        esmNode.position.start.column - 1,
+        esmNode.position.end.line - 1 + frontmatterLineOffset,
+        esmNode.position.end.column - 1
+      );
+      esmNodes.push({ value: esmNode.value, range });
+    }
+  });
+  symbols.push(...createEsmSymbols(esmNodes));
+
+  // collect heading nodes
+  const headings: Array<{
+    depth: number;
+    text: string;
+    range: vscode.Range;
+  }> = [];
+  visit(tree, 'heading', (node) => {
+    const heading = node as unknown as HeadingNode;
+    if (heading.position) {
+      const range = new vscode.Range(
+        heading.position.start.line - 1 + frontmatterLineOffset,
+        heading.position.start.column - 1,
+        heading.position.end.line - 1 + frontmatterLineOffset,
+        heading.position.end.column - 1
+      );
+      headings.push({
+        depth: heading.depth,
+        text: extractHeadingText(heading.children),
+        range,
+      });
+    }
+  });
+  symbols.push(...buildHeadingHierarchy(headings, document));
+
+  return symbols;
+}
+
+// * MDXSymbolProvider
+// provide document symbols for MDX headings, frontmatter & ESM statements
+export class MDXSymbolProvider implements vscode.DocumentSymbolProvider {
+  provideDocumentSymbols(
+    document: vscode.TextDocument,
+    _token: vscode.CancellationToken
+  ): vscode.DocumentSymbol[] | undefined {
+    const text = document.getText();
+    if (!text.trim()) {
+      return [];
+    }
+
+    try {
+      const symbols = extractMDXSymbols(document);
+      log.debug(`Found ${symbols.length} symbols`);
+      return symbols;
+    } catch (err) {
+      log.warn(`Parse error: ${extractErrorMessage(err)}`);
+      return undefined;
+    }
+  }
+}
