@@ -15,6 +15,7 @@ const log = createTaggedLogger(LogTags.PREVIEW);
 
 import { refreshPanel } from './webview-manager';
 import evaluateInWebview from './evaluate-in-webview';
+import { getOutlineProvider } from '../language';
 import type { ResolvedConfig, TypeScriptConfiguration } from '../types';
 import type { WatcherManager, DocumentTracker } from './watchers';
 
@@ -337,6 +338,8 @@ export class Preview {
       evaluate: (content, targetFsPath) =>
         evaluateInWebview(this, content, targetFsPath),
     });
+    // refresh outline tree view after content update
+    getOutlineProvider()?.update(this.doc);
   }
 
   async refreshWebview(): Promise<void> {
