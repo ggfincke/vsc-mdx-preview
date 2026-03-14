@@ -21,6 +21,7 @@ import {
   WEBVIEW_BUILD_DIR,
 } from '../../shared/constants';
 import { LogTags, formatTrustStateForDebug } from '@mdx-preview/contracts';
+import { getOutlineProvider } from '../language';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.WEBVIEW_MGR);
@@ -297,12 +298,16 @@ export async function createOrShowPanel(
       true
     );
 
+    // refresh outline tree view w/ initial document
+    getOutlineProvider()?.update(preview.doc);
+
     panel.onDidDispose(
       () => {
         log.debug('Panel disposed');
         preview.active = false;
         // reset rendered version to force re-render on reopen
         preview.resetRenderedVersion();
+        getOutlineProvider()?.clear();
         dispose();
       },
       null,
@@ -316,6 +321,10 @@ export async function createOrShowPanel(
           MDX_PREVIEW_FOCUS_CONTEXT_KEY,
           webviewPanel.active
         );
+        // refresh outline when preview gains focus
+        if (webviewPanel.active) {
+          getOutlineProvider()?.update(preview.doc);
+        }
       },
       null,
       disposables

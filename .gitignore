@@ -41,9 +41,3 @@ NUL
 
 # Project specific
 archive/
-dev-docs/
-.claude/
-
-# AI instructions (local only)
-AGENTS.md
-CLAUDE.md

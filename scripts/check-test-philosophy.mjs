@@ -23,6 +23,9 @@ const EXACT_ALLOWED = new Set([
   'tests/extension/deps/import-extractor.test.ts',
   'tests/extension/diagnostics/ComponentCodeActions.test.ts',
   'tests/extension/diagnostics/ComponentDetector.test.ts',
+  'tests/extension/language/MDXCompletionProvider.test.ts',
+  'tests/extension/language/MDXOutlineProvider.test.ts',
+  'tests/extension/language/MDXSymbolProvider.test.ts',
   'tests/extension/errors/ErrorReporter.test.ts',
   'tests/extension/framework/FrameworkDetector.test.ts',
   'tests/extension/module-system/fetchLocal.timeout.test.ts',
@@ -52,6 +55,9 @@ const EXACT_ALLOWED = new Set([
 const CASE_COUNT_OVERRIDES = new Map([
   ['tests/resolution/unified-resolver.test.ts', 6],
   ['tests/extension/errors/ErrorReporter.test.ts', 6],
+  ['tests/extension/language/MDXCompletionProvider.test.ts', 10],
+  ['tests/extension/language/MDXOutlineProvider.test.ts', 5],
+  ['tests/extension/language/MDXSymbolProvider.test.ts', 12],
   ['tests/extension/rpc-input-validation.test.ts', 6],
   ['tests/webview/SafePreview.test.ts', 6],
 ]);

@@ -1,4 +1,4 @@
-// packages/webview-app/src/security/processors.ts
+// packages/webview-client/src/features/preview/safe/security/processors.ts
 // post-processing functions for sanitized HTML
 
 // process links to ensure external links open safely
