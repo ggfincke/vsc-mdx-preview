@@ -1,5 +1,5 @@
 // packages/webview-client/src/platform/rpc/handler-factory.ts
-// factory functions & declarative configurations for RPC handler methods
+// factory functions for RPC handler methods (queued & optional patterns)
 
 import type {
   TaggedLogger,
@@ -7,7 +7,6 @@ import type {
   PreviewError,
   SourceLineHighlightColorValue,
   TrustState,
-  WebviewRPC,
   WebviewThemeState,
 } from '@mdx-preview/contracts';
 
@@ -104,7 +103,6 @@ export function createHandlerFactories(
     } = config;
 
     return (...args: unknown[]): void => {
-      // debug logging
       const msg = debugFormat ? debugFormat(...args) : `${methodName} called`;
       log.debug(
         msg,
@@ -113,10 +111,8 @@ export function createHandlerFactories(
 
       const handlers = getHandlers();
       if (handlers) {
-        // direct call - handlers are registered
         const payload = toPayload(...args);
         const handlerArgs = toHandlerArgs(payload);
-        // Cast through unknown to avoid TypeScript's strict function signature checks
         const handler = handlers[handlerKey] as unknown as (
           ...a: THandlerArgs
         ) => void;
@@ -124,7 +120,6 @@ export function createHandlerFactories(
         return;
       }
 
-      // enqueue - handlers not yet registered
       enqueueFn({ type: messageType, payload: toPayload(...args) });
     };
   }
@@ -137,7 +132,6 @@ export function createHandlerFactories(
     const { methodName, handlerKey } = config;
 
     return (...args: TArgs): void => {
-      // debug logging
       log.debug(
         `${methodName} called`,
         args.length === 1 ? args[0] : args.length > 1 ? args : undefined
@@ -150,189 +144,53 @@ export function createHandlerFactories(
         return;
       }
 
-      // optional handlers can arrive before React state handlers mount
-      // buffer latest args so caller can replay after registration
       enqueueOptionalFn?.({ handlerKey, args: [...args] });
     };
+  }
+
+  // batch-create simple queued handlers (pass-through payload pattern)
+  function buildSimpleQueuedHandlers(
+    configs: Array<{
+      methodName: string;
+      messageType: QueuedMessageType;
+      handlerKey: keyof RequiredStateHandlers;
+      debugFormat?: (...args: unknown[]) => string;
+    }>,
+    log: TaggedLogger
+  ): Record<string, (...args: unknown[]) => void> {
+    const handlers: Record<string, (...args: unknown[]) => void> = {};
+    for (const config of configs) {
+      handlers[config.methodName] = createQueuedHandler(
+        {
+          ...config,
+          toPayload: (value: unknown) => value,
+          toHandlerArgs: (payload) => [payload],
+        },
+        log
+      );
+    }
+    return handlers;
+  }
+
+  // batch-create optional handlers from method names
+  function buildOptionalHandlers(
+    methodNames: Array<keyof OptionalStateHandlers>,
+    log: TaggedLogger
+  ): Record<string, (...args: unknown[]) => void> {
+    const handlers: Record<string, (...args: unknown[]) => void> = {};
+    for (const name of methodNames) {
+      handlers[name] = createOptionalHandler(
+        { methodName: name, handlerKey: name },
+        log
+      );
+    }
+    return handlers;
   }
 
   return {
     createQueuedHandler,
     createOptionalHandler,
+    buildSimpleQueuedHandlers,
+    buildOptionalHandlers,
   };
 }
-
-// queued handler configurations
-
-// factory for creating simple pass-through queued configs
-// use for handlers where the payload is passed directly w/o transformation
-function createSimpleQueuedConfig<T>(
-  methodName: string,
-  messageType: QueuedMessageType,
-  handlerKey: keyof RequiredStateHandlers,
-  debugFormat?: (...args: unknown[]) => string
-): QueuedHandlerConfig<T, [T]> {
-  return {
-    methodName,
-    messageType,
-    handlerKey,
-    toPayload: (value: unknown) => value as T,
-    toHandlerArgs: (payload) => [payload],
-    debugFormat,
-  };
-}
-
-// configuration for setTrustState handler
-export const SET_TRUST_STATE_CONFIG = createSimpleQueuedConfig<TrustState>(
-  'setTrustState',
-  'trust',
-  'setTrustState'
-);
-
-// payload type for updatePreview
-interface TrustedPayload {
-  code: string;
-  entryFilePath: string;
-  dependencies: string[];
-}
-
-// configuration for updatePreview handler (Trusted Mode w/ compiled code)
-export const UPDATE_PREVIEW_CONFIG: QueuedHandlerConfig<
-  TrustedPayload,
-  [string, string, string[]]
-> = {
-  methodName: 'updatePreview',
-  messageType: 'trusted',
-  handlerKey: 'setTrustedContent',
-  toPayload: (
-    code: unknown,
-    entryFilePath: unknown,
-    entryFileDependencies: unknown
-  ) => ({
-    code: code as string,
-    entryFilePath: entryFilePath as string,
-    dependencies: entryFileDependencies as string[],
-  }),
-  toHandlerArgs: (payload) => [
-    payload.code,
-    payload.entryFilePath,
-    payload.dependencies,
-  ],
-  debugFormat: (code: unknown, entryFilePath: unknown) =>
-    `updatePreview called, code length: ${(code as string).length}, path: ${entryFilePath}`,
-};
-
-// payload type for updatePreviewSafe
-interface SafePayload {
-  html: string;
-}
-
-// configuration for updatePreviewSafe handler (Safe Mode w/ sanitized HTML)
-export const UPDATE_PREVIEW_SAFE_CONFIG: QueuedHandlerConfig<
-  SafePayload,
-  [string]
-> = {
-  methodName: 'updatePreviewSafe',
-  messageType: 'safe',
-  handlerKey: 'setSafeContent',
-  toPayload: (html: unknown) => ({ html: html as string }),
-  toHandlerArgs: (payload) => [payload.html],
-  debugFormat: (html: unknown) =>
-    `updatePreviewSafe called, html length: ${(html as string).length}`,
-};
-
-// configuration for showPreviewError handler
-export const SHOW_PREVIEW_ERROR_CONFIG = createSimpleQueuedConfig<PreviewError>(
-  'showPreviewError',
-  'error',
-  'setError'
-);
-
-// configuration for setStale handler
-export const SET_STALE_CONFIG = createSimpleQueuedConfig<boolean>(
-  'setStale',
-  'stale',
-  'setStale',
-  (isStale: unknown) => `setStale called: ${isStale}`
-);
-
-// optional handler configurations
-
-// configuration for setTheme handler
-export const SET_THEME_CONFIG: OptionalHandlerConfig = {
-  methodName: 'setTheme',
-  handlerKey: 'setTheme',
-};
-
-// configuration for setNextraMeta handler
-export const SET_NEXTRA_META_CONFIG: OptionalHandlerConfig = {
-  methodName: 'setNextraMeta',
-  handlerKey: 'setNextraMeta',
-};
-
-// configuration for setSourceLineHighlight handler
-export const SET_SOURCE_LINE_HIGHLIGHT_CONFIG: OptionalHandlerConfig = {
-  methodName: 'setSourceLineHighlight',
-  handlerKey: 'setSourceLineHighlight',
-};
-
-// configuration for setSourceLineHighlightColor handler
-export const SET_SOURCE_LINE_HIGHLIGHT_COLOR_CONFIG: OptionalHandlerConfig = {
-  methodName: 'setSourceLineHighlightColor',
-  handlerKey: 'setSourceLineHighlightColor',
-};
-
-// configuration for setShimSideRail handler
-export const SET_SHIM_SIDE_RAIL_CONFIG: OptionalHandlerConfig = {
-  methodName: 'setShimSideRail',
-  handlerKey: 'setShimSideRail',
-};
-
-// config collections (for iteration/documentation)
-
-// all QUEUED handler configurations
-export const QUEUED_CONFIGS = {
-  setTrustState: SET_TRUST_STATE_CONFIG,
-  updatePreview: UPDATE_PREVIEW_CONFIG,
-  updatePreviewSafe: UPDATE_PREVIEW_SAFE_CONFIG,
-  showPreviewError: SHOW_PREVIEW_ERROR_CONFIG,
-  setStale: SET_STALE_CONFIG,
-} as const;
-
-// all OPTIONAL handler configurations
-export const OPTIONAL_CONFIGS = {
-  setTheme: SET_THEME_CONFIG,
-  setNextraMeta: SET_NEXTRA_META_CONFIG,
-  setSourceLineHighlight: SET_SOURCE_LINE_HIGHLIGHT_CONFIG,
-  setSourceLineHighlightColor: SET_SOURCE_LINE_HIGHLIGHT_COLOR_CONFIG,
-  setShimSideRail: SET_SHIM_SIDE_RAIL_CONFIG,
-} as const;
-
-// compile-time type safety
-// these types are derived from the configs above to ensure compile-time errors
-// if handler configs & rpc-webview.ts get out of sync
-
-// method names for QUEUED handlers (derived from QUEUED_CONFIGS keys)
-export type QueuedMethodNames = keyof typeof QUEUED_CONFIGS;
-
-// method names for OPTIONAL handlers (derived from OPTIONAL_CONFIGS keys)
-export type OptionalMethodNames = keyof typeof OPTIONAL_CONFIGS;
-
-// all configured RPC method names (queued & optional)
-// does NOT include direct handlers (setCustomCss, setTailwindCss, etc.)
-export type ConfiguredMethodNames = QueuedMethodNames | OptionalMethodNames;
-
-// compile-time validation that all configured methods exist in WebviewRPC
-type ValidateMethodExists<T extends string> = T extends keyof WebviewRPC
-  ? true
-  : never;
-
-// force TypeScript to evaluate the validation
-type _ValidateQueued = {
-  [K in QueuedMethodNames]: ValidateMethodExists<K>;
-};
-type _ValidateOptional = {
-  [K in OptionalMethodNames]: ValidateMethodExists<K>;
-};
-
-export type { _ValidateQueued, _ValidateOptional };
