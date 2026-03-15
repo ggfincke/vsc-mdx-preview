@@ -19,6 +19,12 @@ export {
 export { MDX_PREVIEW_CONFIG_SCHEMA } from './schema';
 
 export {
+  FRONTMATTER_OVERRIDES,
+  FRONTMATTER_OVERRIDE_MAP,
+  type FrontmatterOverrideDescriptor,
+} from './frontmatter-overrides';
+
+export {
   DEFAULT_PREVIEW_UPDATE_MODE,
   DEFAULT_PREVIEW_DEBOUNCE_DELAY_MS,
   DEFAULT_PREVIEW_ENABLE_SCRIPTS,

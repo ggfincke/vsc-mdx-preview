@@ -1,8 +1,18 @@
 // packages/contracts/src/index.ts
 // contract types, interfaces & constants for extension & webview packages
 
-// framework type aliases
-export type { Framework, FrameworkId, FrameworkSetting } from './frameworks';
+// framework type aliases & canonical metadata
+export type {
+  Framework,
+  FrameworkId,
+  FrameworkSetting,
+  FrameworkDescriptor,
+} from './frameworks';
+export {
+  FRAMEWORK_METADATA,
+  getFrameworkDisplayName,
+  getFrameworkIcon,
+} from './frameworks';
 
 // shared timing & limit constants
 export {
@@ -135,4 +145,7 @@ export {
   type UpdateModeValue,
   type SecurityPolicyValue,
   type SourceLineHighlightColorValue,
+  FRONTMATTER_OVERRIDES,
+  FRONTMATTER_OVERRIDE_MAP,
+  type FrontmatterOverrideDescriptor,
 } from './config';
