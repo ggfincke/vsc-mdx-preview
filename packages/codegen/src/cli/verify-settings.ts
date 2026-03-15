@@ -191,6 +191,19 @@ function main(): void {
     verifyDefault(propertyKey, property?.default, value, errors);
   }
 
+  // reverse check: verify no orphaned settings in package.json
+  for (const key of Object.keys(properties)) {
+    if (!key.startsWith('mdx-preview.')) {
+      continue;
+    }
+    const settingsKey = key.replace('mdx-preview.', '');
+    if (!(settingsKey in SETTINGS_DEFAULTS)) {
+      errors.push(
+        `Orphaned setting in package.json: ${key} (not in SETTINGS_DEFAULTS)`
+      );
+    }
+  }
+
   if (errors.length > 0) {
     console.error('Settings verification FAILED:\n');
     errors.forEach((error) => console.error(`  ${error}\n`));
@@ -208,6 +221,7 @@ function main(): void {
     console.log(`  - ${key}`);
   }
   console.log('  - defaults for all mdx-preview.* settings');
+  console.log('  - no orphaned settings in package.json');
   console.log('  - enumDescriptions parity for all enum settings');
   console.log('  - enumDescriptions required for all enum settings');
   console.log('  - theme label keys match theme arrays');
