@@ -9,7 +9,7 @@ import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
 import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnhancement';
 import { PreviewContainer } from '../shared/ui/PreviewContainer/PreviewContainer';
 import { fastStringEquals } from '../../../shared/utils/memoCompare';
-import { useToc } from '../../../app/state';
+import { useUIFlags } from '../../../app/state';
 
 interface SafePreviewRendererProps {
   html: string;
@@ -19,7 +19,7 @@ interface SafePreviewRendererProps {
 // wrapped w/ React.memo to prevent unnecessary re-renders
 export const SafePreviewRenderer = memo(
   function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
-    const { sourceLineHighlightEnabled } = useToc();
+    const { sourceLineHighlightEnabled } = useUIFlags();
 
     // shared preview setup (container ref, diagram rendering, image lightbox)
     const { containerRef, handleImageClick, renderPortals } = usePreviewSetup({

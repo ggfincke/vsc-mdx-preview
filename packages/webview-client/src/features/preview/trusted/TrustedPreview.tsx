@@ -20,7 +20,7 @@ import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnha
 import { PreviewContainer } from '../shared/ui/PreviewContainer/PreviewContainer';
 import type { TrustedPreviewContent, PreviewError } from '../../../app/types';
 import { extractErrorInfo } from '@mdx-preview/runtime-utils';
-import { useToc } from '../../../app/state';
+import { useUIFlags } from '../../../app/state';
 import {
   shallowArrayEquals,
   createFieldComparator,
@@ -88,7 +88,7 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   onComponentReady,
   onError,
 }: TrustedPreviewRendererProps) {
-  const { sourceLineHighlightEnabled } = useToc();
+  const { sourceLineHighlightEnabled } = useUIFlags();
 
   // local loading state tracks webview-side module evaluation (distinct from global
   // isLoading which tracks extension-side compilation). This separation is intentional -
