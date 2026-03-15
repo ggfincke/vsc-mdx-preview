@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { WithSubscribers } from '../../app/services/SingletonService';
 import { getConfigManager } from '../../app/services';
-import { LogTags } from '@mdx-preview/contracts';
+import { LogTags, FRONTMATTER_OVERRIDE_MAP } from '@mdx-preview/contracts';
 import { SETTINGS, THEME_KEYS } from '../../shared/config';
 import type {
   PreviewTheme,
@@ -135,18 +135,24 @@ export class ThemeManager extends WithSubscribers<
     };
   }
 
-  // extract theme configuration from frontmatter
+  // extract theme configuration from frontmatter (uses canonical override metadata)
   extractThemeFromFrontmatter(
     frontmatter: Record<string, unknown>
   ): Partial<ThemeConfiguration> {
     const result: Partial<ThemeConfiguration> = {};
 
-    if (typeof frontmatter.previewTheme === 'string') {
-      result.previewTheme = frontmatter.previewTheme as PreviewTheme;
-    }
+    for (const [key, descriptor] of FRONTMATTER_OVERRIDE_MAP) {
+      const value = frontmatter[key];
+      if (typeof value !== 'string') {
+        continue;
+      }
 
-    if (typeof frontmatter.codeBlockTheme === 'string') {
-      result.codeBlockTheme = frontmatter.codeBlockTheme as CodeBlockTheme;
+      // validate against known values if descriptor provides them
+      if (descriptor.validValues && !descriptor.validValues.includes(value)) {
+        continue;
+      }
+
+      (result as Record<string, string>)[key] = value;
     }
 
     return result;

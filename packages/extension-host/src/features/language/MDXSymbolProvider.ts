@@ -2,20 +2,13 @@
 // provide document symbols for MDX files (headings, frontmatter, imports, exports)
 
 import * as vscode from 'vscode';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkMdx from 'remark-mdx';
 import { visit } from 'unist-util-visit';
-import type { Root } from 'mdast';
-import matter from 'gray-matter';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
+import { analyzeMdxDocument } from './mdx-document-analysis';
 
 const log = createTaggedLogger(LogTags.SYMBOL_PROVIDER);
-
-// reusable parser (stateless, safe to share across calls)
-const mdxParser = unified().use(remarkParse).use(remarkMdx);
 
 // heading AST node
 interface HeadingNode {
@@ -240,34 +233,18 @@ export function extractMDXSymbols(
   document: vscode.TextDocument
 ): vscode.DocumentSymbol[] {
   const text = document.getText();
-  const matterResult = matter(text);
   const lines = text.split('\n');
-
-  // calculate line offset for AST positions (gray-matter strips frontmatter)
-  // find the closing --- line in the original text to get exact offset
-  let frontmatterLineOffset = 0;
-  let frontmatterEndLine = 0;
-  if (matterResult.matter) {
-    for (let i = 1; i < lines.length; i++) {
-      if (lines[i].trim() === '---') {
-        frontmatterEndLine = i;
-        frontmatterLineOffset = i + 1;
-        break;
-      }
-    }
-  }
-
-  // parse stripped content to AST
-  const tree = mdxParser.parse(matterResult.content) as Root;
+  const {
+    ast: tree,
+    frontmatter: fmData,
+    frontmatterLineOffset,
+    frontmatterEndLine,
+  } = analyzeMdxDocument(text);
 
   const symbols: vscode.DocumentSymbol[] = [];
 
   // frontmatter symbol
-  const fmSymbol = createFrontmatterSymbol(
-    matterResult.data,
-    lines,
-    frontmatterEndLine
-  );
+  const fmSymbol = createFrontmatterSymbol(fmData, lines, frontmatterEndLine);
   if (fmSymbol) {
     symbols.push(fmSymbol);
   }

@@ -3,10 +3,23 @@
 
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
+import {
+  LogTags,
+  FRONTMATTER_OVERRIDE_MAP,
+  PREVIEW_THEMES,
+  CODE_BLOCK_THEMES,
+} from '@mdx-preview/contracts';
 import type { FrameworkId } from '@mdx-preview/contracts';
-import { COMPONENT_REGISTRY } from 'mdx-forge/components/registry';
+import {
+  COMPONENT_REGISTRY,
+  getGenericComponentSnippets,
+} from 'mdx-forge/components/registry';
+import {
+  VALID_CALLOUT_TYPES,
+  GITHUB_ALERT_TYPES as GITHUB_ALERT_TYPE_LIST,
+} from 'mdx-forge/compiler';
 import { getFrameworkDetector } from '../../app/services';
+import { isLineInFrontmatter } from './mdx-document-analysis';
 
 const log = createTaggedLogger(LogTags.COMPLETION_PROVIDER);
 
@@ -23,32 +36,6 @@ const GITHUB_ALERT_PATTERN = />\s*\[!/;
 const DIRECTIVE_PATTERN = /^:{3,}\s*\S*$/;
 const JSX_TAG_PATTERN = /<[A-Z]?[a-zA-Z]*$/;
 
-// check if line is within frontmatter region
-function isInFrontmatter(
-  document: vscode.TextDocument,
-  lineNumber: number
-): boolean {
-  if (lineNumber === 0) {
-    return false;
-  }
-
-  // frontmatter must start at line 0 w/ ---
-  if (document.lineAt(0).text.trim() !== '---') {
-    return false;
-  }
-
-  // find closing ---
-  for (let i = 1; i <= lineNumber; i++) {
-    if (document.lineAt(i).text.trim() === '---') {
-      // closing --- found before or at cursor line
-      return i > lineNumber;
-    }
-  }
-
-  // no closing --- found yet, still in frontmatter
-  return true;
-}
-
 // detect completion context from line text & cursor position
 function detectCompletionContext(
   document: vscode.TextDocument,
@@ -57,8 +44,8 @@ function detectCompletionContext(
   const line = document.lineAt(position.line).text;
   const textBeforeCursor = line.substring(0, position.character);
 
-  // check if in frontmatter (between --- delimiters)
-  if (isInFrontmatter(document, position.line)) {
+  // check if in frontmatter (between --- delimiters) via shared helper
+  if (isLineInFrontmatter(document.getText(), position.line)) {
     return 'frontmatter';
   }
 
@@ -80,25 +67,11 @@ function detectCompletionContext(
   return 'none';
 }
 
-// directive type suggestions for ::: syntax
-const DIRECTIVE_TYPES = [
-  { type: 'note', description: 'Informational note' },
-  { type: 'tip', description: 'Helpful tip or suggestion' },
-  { type: 'warning', description: 'Warning message' },
-  { type: 'danger', description: 'Danger/error alert' },
-  { type: 'caution', description: 'Caution notice' },
-  { type: 'important', description: 'Important information' },
-  { type: 'info', description: 'General information' },
-] as const;
+// directive types derived from mdx-forge callout registry
+const DIRECTIVE_TYPES = VALID_CALLOUT_TYPES.map((type) => ({ type }));
 
-// GitHub-style alert types (> [!TYPE])
-const GITHUB_ALERT_TYPES = [
-  { type: 'NOTE', description: 'Highlights information for attention' },
-  { type: 'TIP', description: 'Helpful advice for improved outcomes' },
-  { type: 'WARNING', description: 'Urgent attention needed, potential risks' },
-  { type: 'CAUTION', description: 'Advises about risks or negative outcomes' },
-  { type: 'IMPORTANT', description: 'Key information for success' },
-] as const;
+// GitHub-style alert types derived from mdx-forge
+const GITHUB_ALERT_TYPES = GITHUB_ALERT_TYPE_LIST.map((type) => ({ type }));
 
 // known frontmatter fields (common across MDX frameworks)
 const FRONTMATTER_FIELDS = [
@@ -136,105 +109,34 @@ const FRONTMATTER_FIELDS = [
   },
   {
     field: 'previewTheme',
-    description: 'MDX Preview theme override',
-    snippet: 'previewTheme: ${1|github-light,github-dark|}',
+    description:
+      FRONTMATTER_OVERRIDE_MAP.get('previewTheme')?.description ??
+      'MDX Preview theme override',
+    snippet: `previewTheme: \${1|${PREVIEW_THEMES.join(',')}|}`,
   },
   {
     field: 'codeBlockTheme',
-    description: 'Code block theme override',
-    snippet: 'codeBlockTheme: $0',
+    description:
+      FRONTMATTER_OVERRIDE_MAP.get('codeBlockTheme')?.description ??
+      'Code block theme override',
+    snippet: `codeBlockTheme: \${1|${CODE_BLOCK_THEMES.join(',')}|}`,
   },
 ] as const;
 
-// build generic component completion items w/ rich snippets
+// build generic component completion items from registry snippet data
 function buildGenericComponentItems(): vscode.CompletionItem[] {
-  const items: vscode.CompletionItem[] = [];
-
-  // Callout
-  const callout = new vscode.CompletionItem(
-    'Callout',
-    vscode.CompletionItemKind.Class
-  );
-  callout.insertText = new vscode.SnippetString(
-    'Callout type="${1|note,tip,warning,danger,info,caution,important|}">\n\t$0\n</Callout>'
-  );
-  callout.documentation = new vscode.MarkdownString(
-    'Callout/admonition component.\n\n' +
-      'Props: `type`, `title`, `icon`, `className`\n\n' +
-      'Types: note, tip, warning, danger, info, caution, important, summary, hint, success, question, failure, bug, example, quote, todo, attention\n\n' +
-      'Aliases: Alert, Admonition'
-  );
-  callout.detail = 'MDX Preview - Generic';
-  callout.sortText = '0_Callout';
-  items.push(callout);
-
-  // Tabs
-  const tabs = new vscode.CompletionItem(
-    'Tabs',
-    vscode.CompletionItemKind.Class
-  );
-  tabs.insertText = new vscode.SnippetString(
-    'Tabs>\n\t<TabItem value="${1:tab1}" label="${2:Tab 1}">\n\t\t$0\n\t</TabItem>\n\t<TabItem value="${3:tab2}" label="${4:Tab 2}">\n\t\t\n\t</TabItem>\n</Tabs>'
-  );
-  tabs.documentation = new vscode.MarkdownString(
-    'Tab container component. Use w/ `<TabItem>` children.\n\n' +
-      'Props: `defaultValue`, `values`, `groupId`, `className`'
-  );
-  tabs.detail = 'MDX Preview - Generic';
-  tabs.sortText = '0_Tabs';
-  items.push(tabs);
-
-  // TabItem
-  const tabItem = new vscode.CompletionItem(
-    'TabItem',
-    vscode.CompletionItemKind.Class
-  );
-  tabItem.insertText = new vscode.SnippetString(
-    'TabItem value="${1:value}" label="${2:Label}">\n\t$0\n</TabItem>'
-  );
-  tabItem.documentation = new vscode.MarkdownString(
-    'Tab content panel. Must be a child of `<Tabs>`.\n\n' +
-      'Props: `value`, `label`, `default`\n\n' +
-      'Aliases: Tab'
-  );
-  tabItem.detail = 'MDX Preview - Generic';
-  tabItem.sortText = '0_TabItem';
-  items.push(tabItem);
-
-  // Collapsible
-  const collapsible = new vscode.CompletionItem(
-    'Collapsible',
-    vscode.CompletionItemKind.Class
-  );
-  collapsible.insertText = new vscode.SnippetString(
-    'Collapsible title="${1:Title}">\n\t$0\n</Collapsible>'
-  );
-  collapsible.documentation = new vscode.MarkdownString(
-    'Collapsible/accordion section.\n\n' +
-      'Props: `title` (required), `defaultOpen`, `summary`\n\n' +
-      'Aliases: Accordion, Details'
-  );
-  collapsible.detail = 'MDX Preview - Generic';
-  collapsible.sortText = '0_Collapsible';
-  items.push(collapsible);
-
-  // CodeGroup
-  const codeGroup = new vscode.CompletionItem(
-    'CodeGroup',
-    vscode.CompletionItemKind.Class
-  );
-  codeGroup.insertText = new vscode.SnippetString(
-    'CodeGroup>\n$0\n</CodeGroup>'
-  );
-  codeGroup.documentation = new vscode.MarkdownString(
-    'Group multiple code blocks in tabs.\n\n' +
-      'Props: `labels` (optional, array of tab labels)'
-  );
-  codeGroup.detail = 'MDX Preview - Generic';
-  codeGroup.sortText = '0_CodeGroup';
-  items.push(codeGroup);
-
-  return items;
+  const snippets = getGenericComponentSnippets();
+  return snippets.map((snippet) => {
+    const item = new vscode.CompletionItem(
+      snippet.name,
+      vscode.CompletionItemKind.Class
+    );
+    item.insertText = new vscode.SnippetString(snippet.template);
+    item.documentation = new vscode.MarkdownString(snippet.doc);
+    item.detail = 'MDX Preview - Generic';
+    item.sortText = `0_${snippet.name}`;
+    return item;
+  });
 }
 
 // build framework-specific component completion items from registry
@@ -307,14 +209,14 @@ function buildComponentCompletions(
 
 // build directive type completions for ::: syntax
 function buildDirectiveCompletions(): vscode.CompletionItem[] {
-  return DIRECTIVE_TYPES.map(({ type, description }) => {
+  return DIRECTIVE_TYPES.map(({ type }) => {
     const item = new vscode.CompletionItem(
       type,
       vscode.CompletionItemKind.Snippet
     );
     item.insertText = new vscode.SnippetString(`${type}\n$0\n:::`);
     item.documentation = new vscode.MarkdownString(
-      `${description}\n\nInserts:\n\`\`\`\n:::${type}\nContent here\n:::\n\`\`\``
+      `:::${type} directive\n\nInserts:\n\`\`\`\n:::${type}\nContent here\n:::\n\`\`\``
     );
     item.detail = 'MDX Directive';
     item.sortText = `0_${type}`;
@@ -324,14 +226,14 @@ function buildDirectiveCompletions(): vscode.CompletionItem[] {
 
 // build GitHub alert completions for > [! syntax
 function buildGitHubAlertCompletions(): vscode.CompletionItem[] {
-  return GITHUB_ALERT_TYPES.map(({ type, description }) => {
+  return GITHUB_ALERT_TYPES.map(({ type }) => {
     const item = new vscode.CompletionItem(
       type,
       vscode.CompletionItemKind.Snippet
     );
     item.insertText = new vscode.SnippetString(`${type}]\n> $0`);
     item.documentation = new vscode.MarkdownString(
-      `${description}\n\nInserts:\n\`\`\`\n> [!${type}]\n> Content here\n\`\`\``
+      `[!${type}] alert\n\nInserts:\n\`\`\`\n> [!${type}]\n> Content here\n\`\`\``
     );
     item.detail = 'GitHub Alert';
     item.sortText = `0_${type}`;

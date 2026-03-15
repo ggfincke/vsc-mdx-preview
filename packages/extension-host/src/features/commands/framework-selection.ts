@@ -9,7 +9,11 @@ import {
   getFrameworkDetector,
   getPreviewManager,
 } from '../../app/services';
-import type { FrameworkId, FrameworkSetting } from '@mdx-preview/contracts';
+import {
+  type FrameworkId,
+  type FrameworkSetting,
+  FRAMEWORK_METADATA,
+} from '@mdx-preview/contracts';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
@@ -33,6 +37,10 @@ const selectFramework = async (): Promise<void> => {
     }
   }
 
+  const detectedDisplayName =
+    frameworkDetector.getFrameworkDisplayName(detectedFramework);
+
+  // build picker items from canonical framework metadata
   const frameworks: Array<{
     label: string;
     description?: string;
@@ -42,35 +50,17 @@ const selectFramework = async (): Promise<void> => {
       label: 'Auto-detect',
       description:
         currentSetting === 'auto'
-          ? `(current - detected: ${frameworkDetector.getFrameworkDisplayName(detectedFramework)})`
-          : `(detected: ${frameworkDetector.getFrameworkDisplayName(detectedFramework)})`,
+          ? `(current - detected: ${detectedDisplayName})`
+          : `(detected: ${detectedDisplayName})`,
       value: 'auto',
     },
-    {
-      label: 'Generic',
-      description: currentSetting === 'generic' ? '(current)' : undefined,
-      value: 'generic',
-    },
-    {
-      label: 'Docusaurus',
-      description: currentSetting === 'docusaurus' ? '(current)' : undefined,
-      value: 'docusaurus',
-    },
-    {
-      label: 'Next.js',
-      description: currentSetting === 'nextjs' ? '(current)' : undefined,
-      value: 'nextjs',
-    },
-    {
-      label: 'Astro Starlight',
-      description: currentSetting === 'starlight' ? '(current)' : undefined,
-      value: 'starlight',
-    },
-    {
-      label: 'Nextra',
-      description: currentSetting === 'nextra' ? '(current)' : undefined,
-      value: 'nextra',
-    },
+    ...(
+      ['generic', 'docusaurus', 'nextjs', 'starlight', 'nextra'] as const
+    ).map((id) => ({
+      label: FRAMEWORK_METADATA[id].pickerLabel,
+      description: currentSetting === id ? '(current)' : undefined,
+      value: id,
+    })),
   ];
 
   const selected = await vscode.window.showQuickPick(frameworks, {

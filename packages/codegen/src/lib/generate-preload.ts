@@ -11,6 +11,7 @@ import {
 } from 'mdx-forge/components/registry';
 import { isBareImport } from '@mdx-preview/runtime-utils';
 import { normalizeImportPath, createGeneratedHeader } from './codegen-utils';
+import { buildPreloadId, buildWebviewImport } from './registry-host-metadata';
 
 const GENERATED_HEADER = createGeneratedHeader(
   'packages/mdx-forge/src/components/registry/registry-data.ts'
@@ -41,20 +42,19 @@ function getRelativeWebviewImport(
   entry: ComponentRegistryEntry,
   options: GeneratePreloadOptions
 ): string {
+  const webviewImport = buildWebviewImport(entry);
+
   // framework shims now come from the extracted doc-components library
-  if (entry.webviewImport.startsWith('features/shims/')) {
+  if (webviewImport.startsWith('features/shims/')) {
     return `mdx-forge/components/${entry.framework}`;
   }
 
   // bare package imports should pass through untouched
-  if (isBareImport(entry.webviewImport)) {
-    return entry.webviewImport;
+  if (isBareImport(webviewImport)) {
+    return webviewImport;
   }
 
-  const absoluteTarget = path.resolve(
-    options.webviewSrcDir,
-    entry.webviewImport
-  );
+  const absoluteTarget = path.resolve(options.webviewSrcDir, webviewImport);
   const relative = path.relative(options.outputDir, absoluteTarget);
   return normalizeImportPath(relative);
 }
@@ -158,14 +158,14 @@ function generateGenericPreloadFunction(
     const importVar = toImportVarName(entry);
     const relativeImport = getRelativeWebviewImport(entry, options);
     importLines.push(getImportStatement(entry, importVar, relativeImport));
-    const aliases = aliasesByPreloadId[entry.preloadId] ?? [];
+    const aliases = aliasesByPreloadId[buildPreloadId(entry)] ?? [];
     const aliasesJson = JSON.stringify(aliases);
 
     if (isComponentEntry(entry)) {
       const exportNames = getComponentExportNames(entry);
       const exportNamesJson = JSON.stringify(exportNames);
       preloadLines.push(
-        `  preloadEntry(registry, { id: '${entry.preloadId}', exports: createComponentModule(${importVar}, ${exportNamesJson}), aliases: ${aliasesJson} });`
+        `  preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createComponentModule(${importVar}, ${exportNamesJson}), aliases: ${aliasesJson} });`
       );
 
       const loaderExpression = relativeImport.startsWith(
@@ -178,12 +178,12 @@ function generateGenericPreloadFunction(
       loaderEntries.push(
         `  '${entry.name}': async (registry: ModuleRegistry) => {
     const component = await ${loaderExpression};
-    preloadEntry(registry, { id: '${entry.preloadId}', exports: createComponentModule(component, ${exportNamesJson}), aliases: ${aliasesJson} });
+    preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createComponentModule(component, ${exportNamesJson}), aliases: ${aliasesJson} });
   }`
       );
     } else {
       preloadLines.push(
-        `  preloadEntry(registry, { id: '${entry.preloadId}', exports: createBarrelModule(${importVar}, ${JSON.stringify(
+        `  preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createBarrelModule(${importVar}, ${JSON.stringify(
           entry.exportNames
         )}), aliases: ${aliasesJson} });`
       );
@@ -228,19 +228,19 @@ function generateFrameworkLoader(
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
     const varName = varNames[i];
-    const aliases = aliasesByPreloadId[entry.preloadId] ?? [];
+    const aliases = aliasesByPreloadId[buildPreloadId(entry)] ?? [];
     const aliasesJson = JSON.stringify(aliases);
 
     if (isComponentEntry(entry)) {
       const exportNames = getComponentExportNames(entry);
       preloadCalls.push(
-        `  preloadEntry(registry, { id: '${entry.preloadId}', exports: createComponentModule(${varName}, ${JSON.stringify(
+        `  preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createComponentModule(${varName}, ${JSON.stringify(
           exportNames
         )}), aliases: ${aliasesJson} });`
       );
     } else {
       preloadCalls.push(
-        `  preloadEntry(registry, { id: '${entry.preloadId}', exports: createBarrelModule(${varName}, ${JSON.stringify(
+        `  preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createBarrelModule(${varName}, ${JSON.stringify(
           entry.exportNames
         )}), aliases: ${aliasesJson} });`
       );
@@ -347,22 +347,26 @@ function buildShimAliases(): {
   const seenPreloadIds = new Set<string>();
 
   for (const entry of REGISTRY_ENTRIES) {
-    if (!seenPreloadIds.has(entry.preloadId)) {
-      seenPreloadIds.add(entry.preloadId);
-      preloadIds.push(entry.preloadId);
+    if (!seenPreloadIds.has(buildPreloadId(entry))) {
+      seenPreloadIds.add(buildPreloadId(entry));
+      preloadIds.push(buildPreloadId(entry));
     }
 
     for (const specifier of entry.importSpecifiers) {
-      setAlias(aliases, specifier, entry.preloadId);
+      setAlias(aliases, specifier, buildPreloadId(entry));
     }
 
-    setAlias(aliases, entry.shimPath, entry.preloadId);
+    setAlias(aliases, entry.shimPath, buildPreloadId(entry));
 
     if (isComponentEntry(entry) && entry.exposeAsBareImport) {
-      setAlias(aliases, entry.name, entry.preloadId);
+      setAlias(aliases, entry.name, buildPreloadId(entry));
       for (const alias of entry.aliases) {
-        setAlias(aliases, alias, entry.preloadId);
-        setAlias(aliases, `${SHIM_PREFIX}/generic/${alias}`, entry.preloadId);
+        setAlias(aliases, alias, buildPreloadId(entry));
+        setAlias(
+          aliases,
+          `${SHIM_PREFIX}/generic/${alias}`,
+          buildPreloadId(entry)
+        );
       }
     }
   }

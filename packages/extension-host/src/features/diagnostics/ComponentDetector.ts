@@ -2,12 +2,8 @@
 // detect JSX components in MDX files for diagnostics
 
 import * as vscode from 'vscode';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkMdx from 'remark-mdx';
 import { visit } from 'unist-util-visit';
-import type { Root } from 'mdast';
-import matter from 'gray-matter';
+import { analyzeMdxDocument } from '../language/mdx-document-analysis';
 import { KNOWN_GENERIC_COMPONENTS } from 'mdx-forge/compiler';
 import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
 import {
@@ -296,12 +292,8 @@ export async function detectComponents(
   const errors: string[] = [];
 
   try {
-    // strip frontmatter before parsing
-    const { content } = matter(mdxText);
-
-    // parse MDX to AST
-    const processor = unified().use(remarkParse).use(remarkMdx);
-    const tree = processor.parse(content) as Root;
+    // parse MDX w/ shared helper (handles frontmatter stripping & offset)
+    const { ast: tree, frontmatterLineOffset } = analyzeMdxDocument(mdxText);
 
     // first pass: collect imports
     if (detectImports) {
@@ -340,11 +332,11 @@ export async function detectComponents(
 
       let range: vscode.Range;
       if (includePositions && jsxNode.position) {
-        // convert 1-based to 0-based line/column
+        // convert 1-based to 0-based & adjust for frontmatter offset
         range = new vscode.Range(
-          jsxNode.position.start.line - 1,
+          jsxNode.position.start.line - 1 + frontmatterLineOffset,
           jsxNode.position.start.column - 1,
-          jsxNode.position.end.line - 1,
+          jsxNode.position.end.line - 1 + frontmatterLineOffset,
           jsxNode.position.end.column - 1
         );
       } else {

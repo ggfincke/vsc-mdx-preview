@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
+import { LogTags, FRONTMATTER_OVERRIDES } from '@mdx-preview/contracts';
 import { ErrorContext } from '../../shared/errors/ErrorReporter';
 import {
   getConfigManager,
@@ -63,11 +63,10 @@ function getSettingSource(
   frontmatter: Record<string, unknown> | undefined,
   configFile: ResolvedConfig | null
 ): ConfigSource {
-  // define frontmatter keys that can override settings
-  const frontmatterKeys: Record<string, string> = {
-    [SETTINGS.PREVIEW_THEME]: 'previewTheme',
-    [SETTINGS.CODE_BLOCK_THEME]: 'codeBlockTheme',
-  };
+  // derive frontmatter override keys from canonical metadata
+  const frontmatterKeys: Record<string, string> = Object.fromEntries(
+    FRONTMATTER_OVERRIDES.map((d) => [d.settingKey, d.key])
+  );
 
   // define config file keys that can override settings
   const configFileKeys: Record<string, string> = {
