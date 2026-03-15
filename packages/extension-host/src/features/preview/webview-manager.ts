@@ -1,245 +1,34 @@
 // packages/extension-host/src/features/preview/webview-manager.ts
-// webview panel management & HTML generation for MDX preview
+// webview panel lifecycle management for MDX preview
 
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import {
-  Preview,
-  StyleConfiguration,
-  type WebviewAppUris,
-} from './preview-manager';
-import { getCSP, generateNonce } from '../security/CSP';
+import { Preview } from './preview-manager';
 import { initRPCExtensionSide } from '../../platform/rpc/extension-endpoint';
-import { getPreviewManager, getTrustManager } from '../../app/services';
+import { getPreviewManager } from '../../app/services';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { WebviewError } from '../../shared/errors';
-import {
-  CSP_DEBUG_PREVIEW_LENGTH,
-  VITE_MANIFEST_DIR,
-  VITE_MANIFEST_FILE,
-  WEBVIEW_BUILD_DIR,
-} from '../../shared/constants';
-import { LogTags, formatTrustStateForDebug } from '@mdx-preview/contracts';
+import { WEBVIEW_BUILD_DIR } from '../../shared/constants';
+import { LogTags } from '@mdx-preview/contracts';
 import { getOutlineProvider } from '../language';
+import { ensureWebviewResourcesReady } from './webview-resources';
+import { setPanelHTMLFromPreview } from './webview-html';
 
-// module-level tagged logger
+// re-export resource initialization for activation
+export {
+  initWebviewAppHTMLResourcesAsync,
+  initWebviewAppHTMLResources,
+  ensureWebviewResourcesReady,
+} from './webview-resources';
+
 const log = createTaggedLogger(LogTags.WEBVIEW_MGR);
 
 const VIEW_TYPE = 'mdx.preview';
 const MDX_PREVIEW_FOCUS_CONTEXT_KEY = 'mdxPreviewFocus';
-const TAILWIND_BROWSER_RUNTIME_PATH = 'vendor/tailwind-browser.min.js';
-
-// panel, panelDoc, disposables, & URI state moved to PreviewManager for testability
-
-// module-level promise for background resource loading
-let webviewResourcesPromise: Promise<void> | null = null;
-let webviewResourcesError: Error | null = null;
-
-// initialize webview HTML resources in background (call during activation w/out awaiting)
-export function initWebviewAppHTMLResourcesAsync(
-  context: vscode.ExtensionContext
-): void {
-  log.debug('Starting background webview resource initialization');
-  webviewResourcesPromise = initWebviewAppHTMLResources(context)
-    .then(() => {
-      log.debug('Background resource initialization complete');
-    })
-    .catch((err) => {
-      webviewResourcesError = err;
-      log.debug('Background resource initialization failed:', err);
-    });
-}
-
-// ensure webview resources are ready (only blocks when creating panel)
-export async function ensureWebviewResourcesReady(): Promise<void> {
-  if (webviewResourcesPromise) {
-    await webviewResourcesPromise;
-  }
-  if (webviewResourcesError) {
-    throw webviewResourcesError;
-  }
-}
-
-export async function initWebviewAppHTMLResources(
-  context: vscode.ExtensionContext
-): Promise<void> {
-  log.debug('initWebviewAppHTMLResources called');
-  const manager = getPreviewManager();
-  manager.setExtensionUri(context.extensionUri);
-
-  // vite manifest format - use Uri.joinPath & workspace.fs for extension resources
-  const manifestUri = vscode.Uri.joinPath(
-    context.extensionUri,
-    ...WEBVIEW_BUILD_DIR.split('/'),
-    VITE_MANIFEST_DIR,
-    VITE_MANIFEST_FILE
-  );
-
-  log.debug(`Reading manifest from: ${manifestUri.fsPath}`);
-  // use workspace.fs.readFile for extension resources (works in remote/virtual scenarios)
-  const manifestBytes = await vscode.workspace.fs.readFile(manifestUri);
-  const manifestContent = new TextDecoder().decode(manifestBytes);
-  const manifest = JSON.parse(manifestContent);
-
-  // the entry is "index.html"
-  const entry = manifest['index.html'];
-  if (!entry) {
-    throw new WebviewError(
-      'Could not find index.html entry in Vite manifest',
-      'E600',
-      'init'
-    );
-  }
-
-  const webviewAppBaseUri = vscode.Uri.joinPath(
-    context.extensionUri,
-    ...WEBVIEW_BUILD_DIR.split('/')
-  );
-  const tailwindBrowserUri = vscode.Uri.joinPath(
-    webviewAppBaseUri,
-    ...TAILWIND_BROWSER_RUNTIME_PATH.split('/')
-  );
-
-  try {
-    await vscode.workspace.fs.stat(tailwindBrowserUri);
-  } catch {
-    throw new WebviewError(
-      `Could not find Tailwind browser runtime at ${tailwindBrowserUri.fsPath}`,
-      'E600',
-      'init'
-    );
-  }
-
-  const webviewAppUris: WebviewAppUris = {
-    mainScript: vscode.Uri.joinPath(webviewAppBaseUri, entry.file),
-    mainStyle: entry.css?.[0]
-      ? vscode.Uri.joinPath(webviewAppBaseUri, entry.css[0])
-      : undefined,
-    tailwindBrowserScript: tailwindBrowserUri,
-  };
-  manager.setWebviewAppUris(webviewAppUris);
-  log.debug(`Loaded mainScript: ${webviewAppUris.mainScript.fsPath}`);
-  log.debug(`Loaded mainStyle: ${webviewAppUris.mainStyle?.fsPath ?? 'none'}`);
-  log.debug(
-    `Loaded tailwind browser runtime: ${webviewAppUris.tailwindBrowserScript?.fsPath ?? 'none'}`
-  );
-}
-
-function getWebviewAppHTML(
-  webview: vscode.Webview,
-  baseHref: string,
-  nonce: string,
-  contentSecurityPolicy: string,
-  styleConfiguration: StyleConfiguration,
-  tailwindBrowserRuntimeEnabled: boolean
-): string | undefined {
-  const webviewAppUris = getPreviewManager().getWebviewAppUris();
-  if (!webviewAppUris) {
-    log.debug('getWebviewAppHTML: webviewAppUris is undefined!');
-    return undefined;
-  }
-
-  const { useVscodeMarkdownStyles, useWhiteBackground } = styleConfiguration;
-
-  // convert extension URIs to webview URIs
-  const scriptUri = webview.asWebviewUri(webviewAppUris.mainScript);
-  const styleUri = webviewAppUris.mainStyle
-    ? webview.asWebviewUri(webviewAppUris.mainStyle)
-    : undefined;
-  const tailwindBrowserScriptUri = webviewAppUris.tailwindBrowserScript
-    ? webview.asWebviewUri(webviewAppUris.tailwindBrowserScript)
-    : undefined;
-
-  log.debug(`getWebviewAppHTML: scriptUri=${scriptUri.toString()}`);
-
-  let styleNodeHTML = '';
-  const overrideBodyStyles = useWhiteBackground
-    ? `body { color: black; background: white; }`
-    : '';
-
-  const overrideDefaultStyles = !useVscodeMarkdownStyles
-    ? `code { color: inherit; } blockquote { background: inherit; }`
-    : '';
-
-  if (overrideBodyStyles || overrideDefaultStyles) {
-    styleNodeHTML = `<style type="text/css">${overrideBodyStyles}${overrideDefaultStyles}</style>`;
-  }
-
-  const styleLink = styleUri
-    ? `<link rel="stylesheet" type="text/css" href="${styleUri}">`
-    : '';
-  const tailwindScriptTag =
-    tailwindBrowserRuntimeEnabled && tailwindBrowserScriptUri
-      ? `<script nonce="${nonce}" src="${tailwindBrowserScriptUri}"></script>`
-      : '';
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MDX Preview</title>
-    ${styleLink}
-    <meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy}">
-    <base href="${baseHref}">
-    ${styleNodeHTML}
-</head>
-<body>
-    <div id="root"></div>
-    ${tailwindScriptTag}
-    <script type="module" crossorigin nonce="${nonce}" src="${scriptUri}"></script>
-</body>
-</html>`;
-}
 
 function dispose(): void {
   log.debug('dispose called');
   getPreviewManager().clearPanel();
-}
-
-function setPanelHTMLFromPreview(preview: Preview): void {
-  log.debug('setPanelHTMLFromPreview called');
-  const panel = getPreviewManager().getPanel();
-  if (!panel) {
-    log.debug('setPanelHTMLFromPreview: no panel!');
-    return;
-  }
-
-  const { doc, styleConfiguration } = preview;
-  const previewBaseHref = panel.webview.asWebviewUri(doc.uri).toString(true);
-
-  // get current trust state (document-specific, includes remote/scheme checks)
-  const trustState = getTrustManager().getStateForDocument(doc.uri);
-  log.debug(formatTrustStateForDebug(trustState));
-
-  // generate nonce for script tags
-  const nonce = generateNonce();
-
-  // get CSP based on trust state
-  const csp = getCSP(
-    panel.webview,
-    nonce,
-    trustState,
-    preview.securityConfiguration.securityPolicy
-  );
-  log.debug(`CSP: ${csp.substring(0, CSP_DEBUG_PREVIEW_LENGTH)}...`);
-
-  const webviewAppHTML = getWebviewAppHTML(
-    panel.webview,
-    previewBaseHref,
-    nonce,
-    csp,
-    styleConfiguration,
-    preview.isTailwindBrowserRuntimeEnabled()
-  );
-
-  if (webviewAppHTML) {
-    log.debug(`Setting webview HTML (${webviewAppHTML.length} chars)`);
-    panel.webview.html = webviewAppHTML;
-  } else {
-    log.debug('webviewAppHTML is undefined!');
-  }
 }
 
 export async function createOrShowPanel(

@@ -69,15 +69,8 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   async process(
     options: TailwindProcessOptions
   ): Promise<TailwindProcessResult> {
-    const {
-      preview,
-      mdxText,
-      entryFilePath,
-      entryFileDependencies,
-      trustState,
-      tailwindConfig,
-      profileHint,
-    } = options;
+    const { preview, mdxText, trustState, tailwindConfig, profileHint } =
+      options;
 
     // update cache settings from unified config
     this.cache.updateSettings({
@@ -115,13 +108,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
         tailwindConfig,
       }));
 
-    const {
-      profile: activeProfile,
-      reason,
-      workspaceRoot,
-      configPath,
-      entryCssPath,
-    } = profile;
+    const { profile: activeProfile, reason, entryCssPath } = profile;
 
     if (tailwindConfig.enabled === 'auto' && !profile.hasTailwindInput) {
       return {
@@ -134,18 +121,45 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     }
 
     if (activeProfile === 'browser') {
-      const browserInputCss = await this.buildBrowserInputCss(
-        entryCssPath,
-        profile.inlineTailwindStyles
-      );
-      return {
-        profile: 'browser',
-        profileReason: reason,
-        css: browserInputCss,
-        watchFiles: this.buildWatchFiles(null, entryCssPath),
-        enabled: true,
-      };
+      return this.processBrowserProfile(reason, entryCssPath, profile);
     }
+
+    return this.processAdvancedProfile(profile, options);
+  }
+
+  // handle browser profile: build input CSS from entry file & inline styles
+  private async processBrowserProfile(
+    reason: string,
+    entryCssPath: string | null,
+    profile: TailwindProfileDetectionResult
+  ): Promise<TailwindProcessResult> {
+    const browserInputCss = await this.buildBrowserInputCss(
+      entryCssPath,
+      profile.inlineTailwindStyles
+    );
+    return {
+      profile: 'browser',
+      profileReason: reason,
+      css: browserInputCss,
+      watchFiles: this.buildWatchFiles(null, entryCssPath),
+      enabled: true,
+    };
+  }
+
+  // handle advanced profile: version check, scan, cache, & compile
+  private async processAdvancedProfile(
+    profile: TailwindProfileDetectionResult,
+    options: TailwindProcessOptions
+  ): Promise<TailwindProcessResult> {
+    const {
+      preview,
+      mdxText,
+      entryFilePath,
+      entryFileDependencies,
+      tailwindConfig,
+    } = options;
+
+    const { reason, workspaceRoot, configPath, entryCssPath } = profile;
 
     const versionInfo =
       this.detector.getWorkspaceTailwindVersion(workspaceRoot);
