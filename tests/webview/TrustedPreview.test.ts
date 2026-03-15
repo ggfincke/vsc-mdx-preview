@@ -34,7 +34,7 @@ vi.mock(
 );
 
 vi.mock('../../packages/webview-client/src/app/state', () => ({
-  useToc: () => ({
+  useUIFlags: () => ({
     sourceLineHighlightEnabled: true,
   }),
 }));

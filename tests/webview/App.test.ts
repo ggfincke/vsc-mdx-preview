@@ -56,6 +56,7 @@ vi.mock('../../packages/webview-client/src/app/state', () => ({
   usePreview: () => ({
     content: appState.content,
     error: appState.error,
+    nextraMeta: appState.nextraMeta,
     setError: mockSetError,
     clearError: mockClearError,
   }),
@@ -63,10 +64,7 @@ vi.mock('../../packages/webview-client/src/app/state', () => ({
     isLoading: appState.isLoading,
     isStale: appState.isStale,
   }),
-  useNextra: () => ({
-    nextraMeta: appState.nextraMeta,
-  }),
-  useToc: () => ({
+  useUIFlags: () => ({
     shimSideRailEnabled: appState.shimSideRailEnabled,
     sourceLineHighlightColorMode: appState.sourceLineHighlightColorMode,
   }),

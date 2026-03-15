@@ -11,7 +11,7 @@ import { FIXTURES } from '../helpers';
 function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
   return {
     documentPath: '/workspace/test.mdx',
-    useVscodeMarkdownStyles: true,
+    useHostMarkdownStyles: true,
     componentsBuiltins: true,
     componentsUnknownBehavior: 'placeholder',
     ...overrides,
@@ -35,11 +35,11 @@ describe('compileTrusted() [consumer smoke]', () => {
     expect(result.code).toContain('export default');
   });
 
-  it('injects vscode-markdown-layout when no default export and useVscodeMarkdownStyles is true', async () => {
+  it('injects vscode-markdown-layout when no default export and useHostMarkdownStyles is true', async () => {
     const result = await compileTrusted(
       FIXTURES.basicMdx,
       true,
-      createConfig({ useVscodeMarkdownStyles: true })
+      createConfig({ useHostMarkdownStyles: true })
     );
 
     expect(result.code).toContain('vscode-markdown-layout');
