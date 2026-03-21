@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.8] - 2026-03-21
+
+### Fixed
+
+- **CI**: Update lodash-es override from 4.17.21 to 4.17.23 to resolve `npm list` version mismatch (includes prototype pollution fix)
+- **CI**: Add `--no-dependencies` to `vsce package` to skip extraneous WASM package errors from Tailwind's `@tailwindcss/oxide-wasm32-wasi` bundleDependencies
+- **Security Docs**: Remove resolved lodash-es vulnerability entry (GHSA-xxjr-mmjv-4gpg)
+
+## [1.2.7] - 2026-03-21
+
+### Added
+
+- **Language Features**: Document symbol provider, completion provider (directives, callout types, frontmatter keys) & outline tree view for MDX files
+- **Guardrails**: Linked-deps check script, command parity verifier (`verify-commands.ts`), reverse orphan check in settings verifier
+
+### Changed
+
+- **Preview Pipeline**: Flatten evaluation pipeline to prepare/evaluate/post-push flow; remove `evaluate-mode-stage.ts` & `tailwind-channel-utils.ts`
+- **Preview**: Extract webview HTML/resources from `webview-manager.ts`, extract `PreviewTailwindState` from `Preview.ts`, split `TailwindProcessor.process()` into browser & advanced profiles
+- **Errors**: Extract severity inference & notification concerns from `ErrorReporter` into `error-severity.ts` & `error-notification.ts`
+- **Watchers**: Replace `FilePathWatcher` w/ `EventSubscriptionWatcher`, simplify `createFileWatcher`
+- **Webview RPC**: Inline direct handlers into `webview-rpc-client.ts`, add `buildSimpleQueuedHandlers()` & `buildOptionalHandlers()` batch builders
+- **Webview State**: Merge `NextraContext` into `PreviewContext`, add `UIFlagsContext`, reduce provider nesting from 5 to 4
+- **Extension**: Consume mdx-forge API changes — compute `preloadId`/`webviewImport` in codegen, use `getSemanticAlias()` & registry-driven directive/snippet data, consume canonical framework metadata & frontmatter overrides
+- **Contracts**: Canonicalize framework UI metadata, add frontmatter override descriptors, centralize preload ID constants
+
+### Removed
+
+- **Dead Code**: `FilePathWatcher`, `TocContext.tsx`, `NextraContext.tsx`, `rpc-direct-handlers.ts`, `evaluate-mode-stage.ts`, `processors.ts`, runtime-utils validation exports
+
+## [1.2.6] - 2026-03-05
+
+### Changed
+
+- **Commands**: Consolidate `authoring-guide.ts`, `authoring-guide-text.ts` & `debug.ts` into `simple-commands.ts`; replace 873-line TS template literal w/ raw `.md` file import via esbuild text loader
+- **Tailwind**: Extract parser utils (`extractBalanced`, `extractBracedExpressions`, `extractStringLiterals`, `isEscaped`) from `ContentScanner` into standalone `parser-utils.ts`
+
+### Removed
+
+- **runtime-utils**: Remove unused exports (`isError`, `extractErrorStack`, `extractErrorChain`, `formatErrorWithCause`, `NPM_MODULE_PREFIX`, `parseNpmModuleId`, `createNpmModuleId`, `hasUrlScheme`, `URL_SCHEME_PATTERN`, PlantUML URL helpers & all validation type guards); drop `./validation` subpath export
+
 ## [1.2.5] - 2026-03-03
 
 ### Changed
