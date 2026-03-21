@@ -224,8 +224,171 @@ export class FileSystemWatcher {
   }
 }
 
+export enum SymbolKind {
+  File = 0,
+  Module = 1,
+  Namespace = 2,
+  Package = 3,
+  Class = 4,
+  Method = 5,
+  Property = 6,
+  Field = 7,
+  Constructor = 8,
+  Enum = 9,
+  Interface = 10,
+  Function = 11,
+  Variable = 12,
+  Constant = 13,
+  String = 14,
+  Number = 15,
+  Boolean = 16,
+  Array = 17,
+  Object = 18,
+  Key = 19,
+  Null = 20,
+  EnumMember = 21,
+  Struct = 22,
+  Event = 23,
+  Operator = 24,
+  TypeParameter = 25,
+}
+
+export class DocumentSymbol {
+  name: string;
+  detail: string;
+  kind: SymbolKind;
+  range: Range;
+  selectionRange: Range;
+  children: DocumentSymbol[] = [];
+
+  constructor(
+    name: string,
+    detail: string,
+    kind: SymbolKind,
+    range: Range,
+    selectionRange: Range
+  ) {
+    this.name = name;
+    this.detail = detail;
+    this.kind = kind;
+    this.range = range;
+    this.selectionRange = selectionRange;
+  }
+}
+
+export enum CompletionItemKind {
+  Text = 0,
+  Method = 1,
+  Function = 2,
+  Constructor = 3,
+  Field = 4,
+  Variable = 5,
+  Class = 6,
+  Interface = 7,
+  Module = 8,
+  Property = 9,
+  Unit = 10,
+  Value = 11,
+  Enum = 12,
+  Keyword = 13,
+  Snippet = 14,
+  Color = 15,
+  File = 16,
+  Reference = 17,
+  Folder = 18,
+  EnumMember = 19,
+  Constant = 20,
+  Struct = 21,
+  Event = 22,
+  Operator = 23,
+  TypeParameter = 24,
+}
+
+export class CompletionItem {
+  label: string;
+  kind?: CompletionItemKind;
+  detail?: string;
+  documentation?: MarkdownString | string;
+  sortText?: string;
+  insertText?: string | SnippetString;
+  command?: { title: string; command: string; arguments?: unknown[] };
+
+  constructor(label: string, kind?: CompletionItemKind) {
+    this.label = label;
+    this.kind = kind;
+  }
+}
+
+export class MarkdownString {
+  value: string;
+
+  constructor(value?: string) {
+    this.value = value ?? '';
+  }
+
+  appendText(value: string): this {
+    this.value += value;
+    return this;
+  }
+
+  appendMarkdown(value: string): this {
+    this.value += value;
+    return this;
+  }
+}
+
+export class SnippetString {
+  value: string;
+
+  constructor(value?: string) {
+    this.value = value ?? '';
+  }
+}
+
+export enum TreeItemCollapsibleState {
+  None = 0,
+  Collapsed = 1,
+  Expanded = 2,
+}
+
+export class TreeItem {
+  label?: string;
+  collapsibleState?: TreeItemCollapsibleState;
+  description?: string;
+  iconPath?: ThemeIcon | Uri;
+  command?: { command: string; title: string; arguments?: unknown[] };
+  contextValue?: string;
+
+  constructor(label: string, collapsibleState?: TreeItemCollapsibleState) {
+    this.label = label;
+    this.collapsibleState = collapsibleState;
+  }
+}
+
+export class ThemeIcon {
+  id: string;
+
+  constructor(id: string) {
+    this.id = id;
+  }
+}
+
 export const languages = {
   createDiagnosticCollection: (_name: string) => new MockDiagnosticCollection(),
+  registerDocumentSymbolProvider: (
+    _selector: any,
+    _provider: any
+  ): Disposable => createDisposable(),
+  registerCompletionItemProvider: (
+    _selector: any,
+    _provider: any,
+    ..._triggerChars: string[]
+  ): Disposable => createDisposable(),
+  registerCodeActionsProvider: (
+    _selector: any,
+    _provider: any,
+    _metadata?: any
+  ): Disposable => createDisposable(),
 };
 
 export const workspace = {
@@ -289,6 +452,9 @@ export const window = {
     undefined,
   showErrorMessage: async (_msg: string, ..._items: any[]): Promise<any> =>
     undefined,
+  createTreeView: (_viewId: string, _options: any): any => ({
+    dispose: () => {},
+  }),
 };
 
 // trigger active editor change events for tests

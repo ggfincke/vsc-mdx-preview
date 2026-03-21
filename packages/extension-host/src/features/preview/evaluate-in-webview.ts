@@ -8,13 +8,9 @@ import { LogTags } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { getErrorReporter, getFrameworkDetector } from '../../app/services';
 import { getEvaluationEngine } from './EvaluationEngine';
-import {
-  evaluateSafeStage,
-  evaluateTrustedStage,
-  postPushArtifacts,
-  prepareEvaluationContext,
-  type PreparedEvaluationContext,
-} from './evaluation';
+import { postPushArtifacts } from './evaluation/post-push-artifacts';
+import { prepareEvaluationContext } from './evaluation/prepare-evaluation-context';
+import type { PreparedEvaluationContext } from './evaluation/types';
 import type { Preview } from './Preview';
 
 const log = createTaggedLogger(LogTags.EVALUATE);
@@ -46,8 +42,22 @@ export default async function evaluateInWebview(
     await waitForHandshakeAndPushBaseState(context);
 
     const stageResult = context.canExecute
-      ? await evaluateTrustedStage(context)
-      : await evaluateSafeStage(context);
+      ? {
+          kind: 'trusted' as const,
+          result: await context.engine.evaluateTrusted(
+            context.text,
+            context.fsPath,
+            context.preview,
+            context.compilerConfig
+          ),
+        }
+      : {
+          kind: 'safe' as const,
+          result: await context.engine.evaluateSafe(
+            context.text,
+            context.compilerConfig
+          ),
+        };
 
     await postPushArtifacts(context, stageResult);
 

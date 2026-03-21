@@ -8,7 +8,11 @@ import { WithSubscribers } from '../../app/services/SingletonService';
 import { getConfigManager, getErrorReporter } from '../../app/services';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { ErrorContext } from '../../shared/errors';
-import { type FrameworkId, LogTags } from '@mdx-preview/contracts';
+import {
+  type FrameworkId,
+  LogTags,
+  getFrameworkDisplayName as getDisplayName,
+} from '@mdx-preview/contracts';
 import { normalizeError } from '@mdx-preview/runtime-utils';
 import { readJsonSync, pathExists } from '../../shared/utils/file-utils';
 
@@ -227,21 +231,9 @@ export class FrameworkDetector extends WithSubscribers<
     return detected;
   }
 
-  // get framework display name for UI
+  // get framework display name for UI (delegates to canonical metadata)
   getFrameworkDisplayName(framework: FrameworkId): string {
-    switch (framework) {
-      case 'docusaurus':
-        return 'Docusaurus';
-      case 'nextjs':
-        return 'Next.js';
-      case 'starlight':
-        return 'Starlight';
-      case 'nextra':
-        return 'Nextra';
-      case 'generic':
-      default:
-        return 'Generic';
-    }
+    return getDisplayName(framework);
   }
 
   // check if component shims are enabled

@@ -5,20 +5,20 @@ import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 
-// module-level tagged loggers
+// module-level tagged logger
 const log = createTaggedLogger(LogTags.PREVIEW);
-const configSubLog = createTaggedLogger(LogTags.CONFIG_SUBSCRIPTION);
 import { WEBVIEW_HANDSHAKE_TIMEOUT_MS } from '../../shared/constants';
 import {
   DocumentTracker,
   CustomCssWatcher,
   DependencyWatcher,
+  EventSubscriptionWatcher,
   TailwindConfigWatcher,
   WatcherManager,
 } from './watchers';
 import { onConfigChange } from './configuration';
 import { PackageJsonWatcher } from '../module-runtime/resolution/PackageJsonWatcher';
-import type { IWatcher, ResolvedConfig } from '../types';
+import type { ResolvedConfig } from '../types';
 import { getTailwindProcessor } from '../../app/services';
 
 export interface HandshakeResult {
@@ -153,47 +153,16 @@ export class PreviewInitializer {
 
     const configPath = mdxPreviewConfig.configPath;
 
-    // create IWatcher adapter for config subscription (subscribe to ConfigCache events)
-    let subscription: vscode.Disposable | null = null;
-    let active = false;
-
-    const configSubscriptionWatcher: IWatcher = {
-      async start() {
-        if (active) {
-          return;
-        }
-        subscription = onConfigChange((event) => {
+    const configSubscriptionWatcher = new EventSubscriptionWatcher({
+      logTag: LogTags.CONFIG_SUBSCRIPTION,
+      subscribe: () =>
+        onConfigChange((event) => {
           if (event.configPath === configPath) {
             log.debug('MDX config file changed, reloading...');
             onConfigChanged();
           }
-        });
-        active = true;
-        configSubLog.debug(`Watching: ${configPath}`);
-      },
-      stop() {
-        if (!active) {
-          return;
-        }
-        subscription?.dispose();
-        subscription = null;
-        active = false;
-        configSubLog.debug('Stopped');
-      },
-      isActive() {
-        return active;
-      },
-      isReady() {
-        return active;
-      },
-      async waitForReady() {
-        // no async setup - ready immediately when active
-        return Promise.resolve();
-      },
-      dispose() {
-        this.stop();
-      },
-    };
+        }),
+    });
 
     watcherManager.register('config', configSubscriptionWatcher);
     configSubscriptionWatcher.start();

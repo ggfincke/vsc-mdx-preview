@@ -11,7 +11,7 @@ import {
   getUsedGenericComponents,
 } from '../../diagnostics/ComponentDetector';
 import { extractNextraFrontmatter } from 'mdx-forge/compiler';
-import { clearTailwindChannels } from './tailwind-channel-utils';
+import type { Preview } from '../Preview';
 import type {
   EvaluationStageResult,
   PreparedEvaluationContext,
@@ -172,4 +172,19 @@ function sendNextraMetaIfNeeded(
   } catch (err) {
     log.debug(`Error resolving Nextra meta: ${extractErrorMessage(err)}`);
   }
+}
+
+// clear Tailwind CSS channels when Tailwind is disabled or in Safe Mode
+function clearTailwindChannels(
+  preview: Preview,
+  webviewHandle: Preview['webviewHandle']
+): void {
+  const tailwindRequestId = preview.nextTailwindRequestId();
+  if (!preview.isTailwindRequestCurrent(tailwindRequestId)) {
+    return;
+  }
+
+  preview.updateTailwindWatchFiles([]);
+  webviewHandle.setTailwindBrowserCss('');
+  webviewHandle.setTailwindCss('');
 }

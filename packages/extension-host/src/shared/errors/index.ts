@@ -8,13 +8,21 @@ import {
   ModuleError,
 } from '@mdx-preview/contracts';
 
+export { ErrorReporter, type ReportOptions } from './ErrorReporter';
+export { ErrorSeverity, ErrorContext } from './error-severity';
+export { type WebviewErrorHandle } from './error-notification';
+
+// re-export severity & notification helpers for direct consumers
 export {
-  ErrorReporter,
-  ErrorSeverity,
-  ErrorContext,
-  type WebviewErrorHandle,
-  type ReportOptions,
-} from './ErrorReporter';
+  inferSeverity,
+  isRecoverableError,
+  getContextPrefix,
+} from './error-severity';
+export {
+  shouldNotify,
+  showNotification,
+  sendToWebview,
+} from './error-notification';
 
 // re-export shared module error types for convenience
 export { ModuleError, type ModuleErrorCode, type ModuleErrorData };

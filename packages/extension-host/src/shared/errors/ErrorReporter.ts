@@ -4,7 +4,6 @@
 import * as vscode from 'vscode';
 import { ExtensionError } from './index';
 import { formatUserError, formatLogError } from './messages';
-import type { PreviewError } from '@mdx-preview/contracts';
 import {
   error as logError,
   warn as logWarn,
@@ -21,48 +20,25 @@ import {
   LRUCache,
   normalizeError as sharedNormalizeError,
 } from '@mdx-preview/runtime-utils';
+import {
+  ErrorSeverity,
+  ErrorContext,
+  inferSeverity,
+  getContextPrefix,
+} from './error-severity';
+import {
+  type WebviewErrorHandle,
+  shouldNotify,
+  showNotification,
+  sendToWebview,
+} from './error-notification';
+
+// re-export enums, interfaces, & types for consumers
+export { ErrorSeverity, ErrorContext } from './error-severity';
+export { type WebviewErrorHandle } from './error-notification';
 
 // module-level tagged logger for error reporter
 const log = createTaggedLogger(LogTags.ERROR_REPORTER);
-
-// error severity determines handling behavior
-export enum ErrorSeverity {
-  // debug: log only, no user notification
-  Debug = 'debug',
-  // info: log only, show in output channel
-  Info = 'info',
-  // warning: log + optional notification (toast)
-  Warning = 'warning',
-  // error: log + webview error display OR notification
-  Error = 'error',
-  // critical: log + notification + may require user action
-  Critical = 'critical',
-}
-
-// context for where the error originated
-export enum ErrorContext {
-  // errors during module resolution/fetching
-  ModuleFetch = 'module-fetch',
-  // errors during MDX/TS/JS transpilation
-  Transpile = 'transpile',
-  // security-related errors
-  Security = 'security',
-  // configuration parsing errors
-  Config = 'config',
-  // webview communication errors
-  Webview = 'webview',
-  // tailwind CSS processing errors
-  Tailwind = 'tailwind',
-  // plugin loading errors
-  Plugin = 'plugin',
-  // general extension errors
-  Extension = 'extension',
-}
-
-// interface for webview error display
-export interface WebviewErrorHandle {
-  showPreviewError(error: PreviewError): void;
-}
 
 // options for reporting an error
 export interface ReportOptions {
@@ -109,7 +85,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   ): void {
     const normalizedError = this.normalizeError(error);
     const severity =
-      options.severity ?? this.inferSeverity(normalizedError, options.context);
+      options.severity ?? inferSeverity(normalizedError, options.context);
 
     // check for duplicate suppression
     if (this.isDuplicate(normalizedError, options.dedupeWindow)) {
@@ -122,13 +98,11 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
     // handle notifications based on severity & options
     if (options.showInWebview && options.webviewHandle) {
-      this.sendToWebview(
-        normalizedError,
-        options.webviewHandle,
-        options.context
-      );
-    } else if (this.shouldNotify(severity, options)) {
-      this.showNotification(normalizedError, severity, options.context);
+      sendToWebview(normalizedError, options.webviewHandle, options.context);
+    } else if (
+      shouldNotify(severity, options.showNotification, options.showInWebview)
+    ) {
+      showNotification(normalizedError, severity, options.context);
     }
   }
 
@@ -206,7 +180,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
     // show warning w/ action buttons
     const actionLabels = actions.map((a) => a.label);
-    const prefix = this.getContextPrefix(context);
+    const prefix = getContextPrefix(context);
     const selection = await vscode.window.showWarningMessage(
       `${prefix}: ${message}`,
       ...actionLabels
@@ -233,47 +207,11 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     return sharedNormalizeError(error);
   }
 
-  // infer severity from error type & context
-  private inferSeverity(
-    error: Error | ExtensionError | ModuleError,
-    context: ErrorContext
-  ): ErrorSeverity {
-    // security errors are always critical or warning
-    if (error instanceof ExtensionError) {
-      if (error.code === 'PATH_TRAVERSAL') {
-        return ErrorSeverity.Critical;
-      }
-      if (error.code === 'TRUST_VIOLATION') {
-        return ErrorSeverity.Warning;
-      }
-    }
-
-    // context-based severity mapping
-    switch (context) {
-      case ErrorContext.Security:
-        return ErrorSeverity.Critical;
-      // show in webview
-      case ErrorContext.ModuleFetch:
-      case ErrorContext.Transpile:
-        return ErrorSeverity.Error;
-      case ErrorContext.Config:
-      case ErrorContext.Plugin:
-        return ErrorSeverity.Warning;
-      // non-blocking
-      case ErrorContext.Tailwind:
-        return ErrorSeverity.Warning;
-      case ErrorContext.Webview:
-      case ErrorContext.Extension:
-      default:
-        return ErrorSeverity.Error;
-    }
-  }
-
   // log error at appropriate level
   private logError(
     error: ExtensionError | Error,
     severity: ErrorSeverity,
-    options: ReportOptions
+    options: Pick<ReportOptions, 'context' | 'metadata'>
   ): void {
     const logData =
       error instanceof ExtensionError || error instanceof ModuleError
@@ -299,133 +237,6 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
         logError(`${prefix} ${error.message}`, logData);
         break;
     }
-  }
-
-  // determine if notification should be shown
-  private shouldNotify(
-    severity: ErrorSeverity,
-    options: ReportOptions
-  ): boolean {
-    // explicit override
-    if (options.showNotification !== undefined) {
-      return options.showNotification;
-    }
-    // webview errors do not also show notifications
-    if (options.showInWebview) {
-      return false;
-    }
-    // default - notify for Warning & above
-    return (
-      severity === ErrorSeverity.Warning ||
-      severity === ErrorSeverity.Error ||
-      severity === ErrorSeverity.Critical
-    );
-  }
-
-  // show VS Code notification
-  private showNotification(
-    error: ExtensionError | ModuleError | Error,
-    severity: ErrorSeverity,
-    context: ErrorContext
-  ): void {
-    const message =
-      error instanceof ExtensionError || error instanceof ModuleError
-        ? formatUserError(error)
-        : error.message;
-
-    const prefix = this.getContextPrefix(context);
-    const fullMessage = `${prefix}: ${message}`;
-
-    switch (severity) {
-      case ErrorSeverity.Warning:
-        vscode.window.showWarningMessage(fullMessage);
-        break;
-      case ErrorSeverity.Error:
-        vscode.window.showErrorMessage(fullMessage);
-        break;
-      case ErrorSeverity.Critical:
-        vscode.window
-          .showErrorMessage(fullMessage, 'Show Output')
-          .then((selection) => {
-            if (selection === 'Show Output') {
-              vscode.commands.executeCommand(
-                'workbench.action.output.toggleOutput'
-              );
-            }
-          });
-        break;
-    }
-  }
-
-  // send error to webview w/ context & recoverable hint
-  private sendToWebview(
-    error: ExtensionError | ModuleError | Error,
-    handle: WebviewErrorHandle,
-    context?: ErrorContext
-  ): void {
-    const message =
-      error instanceof ExtensionError || error instanceof ModuleError
-        ? formatUserError(error)
-        : error.message;
-
-    const previewError: PreviewError = {
-      message,
-      code:
-        error instanceof ExtensionError || error instanceof ModuleError
-          ? error.code
-          : undefined,
-      stack: error.stack,
-      context: context,
-      recoverable: this.isRecoverableError(error),
-    };
-
-    // include module error data for ModuleError
-    if (error instanceof ModuleError) {
-      previewError.moduleError = error.toModuleErrorData();
-    }
-
-    handle.showPreviewError(previewError);
-  }
-
-  // check if error is recoverable (user can fix & retry)
-  private isRecoverableError(error: Error): boolean {
-    if (error instanceof ModuleError) {
-      return error.recoverable;
-    }
-    if (error instanceof ExtensionError) {
-      // module & transpile errors are typically recoverable by fixing the source
-      const recoverableCodes = [
-        // module error codes
-        // module not found
-        'E100',
-        // circular dependency
-        'E102',
-        // parse error
-        'E110',
-        // transform error
-        'E120',
-        // transpile codes
-        // MDX transpile
-        'E300',
-      ];
-      return recoverableCodes.includes(error.code);
-    }
-    return true;
-  }
-
-  // get user-friendly context prefix
-  private getContextPrefix(context: ErrorContext): string {
-    const prefixes: Record<ErrorContext, string> = {
-      [ErrorContext.ModuleFetch]: 'MDX Preview',
-      [ErrorContext.Transpile]: 'MDX Preview',
-      [ErrorContext.Security]: 'MDX Preview Security',
-      [ErrorContext.Config]: 'MDX Preview Config',
-      [ErrorContext.Webview]: 'MDX Preview',
-      [ErrorContext.Tailwind]: 'MDX Preview Tailwind',
-      [ErrorContext.Plugin]: 'MDX Preview Plugin',
-      [ErrorContext.Extension]: 'MDX Preview',
-    };
-    return prefixes[context];
   }
 
   // check for duplicate errors using LRU cache w/ auto-eviction

@@ -5,8 +5,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { TrustProvider, useTrust } from '../state/TrustContext';
 import { PreviewProvider, usePreview } from '../state/PreviewContext';
 import { LoadingProvider, useLoading } from '../state/LoadingContext';
-import { NextraProvider, useNextra } from '../state/NextraContext';
-import { TocProvider, useToc } from '../state/TocContext';
+import { UIFlagsProvider, useUIFlags } from '../state/UIFlagsContext';
 import { useTheme } from '../../features/theme/runtime';
 import { registerWebviewHandlers } from '../../platform/rpc/webview-rpc-client';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
@@ -33,11 +32,11 @@ function wrapWithLoadingClear<Args extends unknown[]>(
 // internal component that register RPC handlers after all contexts are mounted
 function HandlerRegistrar({ children }: HandlerRegistrarProps) {
   const { setTrustState } = useTrust();
-  const { setSafeContent, setTrustedContent, setError } = usePreview();
+  const { setSafeContent, setTrustedContent, setError, setNextraMeta } =
+    usePreview();
   const { setStale, setIsLoading } = useLoading();
-  const { setNextraMeta } = useNextra();
   const { setSourceLineHighlight, setSourceLineHighlightColor, setShimSideRail } =
-    useToc();
+    useUIFlags();
   const { setPreviewThemeState } = useTheme();
 
   const initializedRef = useRef(false);
@@ -94,11 +93,9 @@ export function WebviewStateProvider({ children }: WebviewStateProviderProps) {
     <TrustProvider>
       <PreviewProvider>
         <LoadingProvider>
-          <NextraProvider>
-            <TocProvider>
-              <HandlerRegistrar>{children}</HandlerRegistrar>
-            </TocProvider>
-          </NextraProvider>
+          <UIFlagsProvider>
+            <HandlerRegistrar>{children}</HandlerRegistrar>
+          </UIFlagsProvider>
         </LoadingProvider>
       </PreviewProvider>
     </TrustProvider>

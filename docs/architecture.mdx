@@ -373,15 +373,13 @@ sequenceDiagram
 2. Handshake + base-state push
    - await webview handshake
    - push trust state, runtime config, and framework metadata
-3. Mode stage
-   - trusted: `evaluateTrustedStage(...)`
-   - safe: `evaluateSafeStage(...)`
+3. Mode stage (inlined in `evaluate-in-webview.ts`)
+   - trusted: `engine.evaluateTrusted(...)`
+   - safe: `engine.evaluateSafe(...)`
 4. Post-push artifacts: `postPushArtifacts(...)`
    - shared frontmatter/runtime/meta push
    - trusted branch: dependency updates, optional component detection, `updatePreview`, async Tailwind process
    - safe branch: Tailwind channel clear + `updatePreviewSafe`
-
-Tailwind channel clearing/reset behavior is centralized in `tailwind-channel-utils.ts`.
 
 ### RPC Communication
 
@@ -666,7 +664,7 @@ Renders HTML in Safe Mode without JavaScript execution.
 
 ```typescript title="packages/webview-client/src/features/preview/safe/SafePreview.tsx"
 function SafePreviewRenderer({ html }: { html: string }) {
-  const { sourceLineHighlightEnabled } = useToc();
+  const { sourceLineHighlightEnabled } = useUIFlags();
   const { containerRef, handleImageClick, renderPortals } = usePreviewSetup({
     diagramMode: 'after-paint',
   });

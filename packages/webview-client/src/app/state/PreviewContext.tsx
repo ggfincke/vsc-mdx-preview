@@ -4,6 +4,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { PreviewContent, PreviewError } from '../types';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
+import type { NextraPageMeta } from '@mdx-preview/contracts';
 import { LogTags } from '@mdx-preview/contracts';
 import { createContextProvider } from '../providers/createContextProvider';
 
@@ -18,6 +19,8 @@ interface PreviewContextValue {
   ) => void;
   setError: (error: PreviewError) => void;
   clearError: () => void;
+  nextraMeta: NextraPageMeta | null;
+  setNextraMeta: (meta: NextraPageMeta | null) => void;
 }
 
 // module-level tagged logger (avoids per-render allocation)
@@ -27,6 +30,8 @@ const log = createTaggedLogger(LogTags.PREVIEW_CONTEXT);
 function usePreviewProviderValue(): PreviewContextValue {
   const [content, setContent] = useState<PreviewContent | null>(null);
   const [error, setErrorState] = useState<PreviewError | null>(null);
+  const [nextraMeta, setNextraMetaState] =
+    useState<NextraPageMeta | null>(null);
 
   const setSafeContent = useCallback((html: string) => {
     log.debug(`setSafeContent called, html length: ${html.length}`);
@@ -55,6 +60,11 @@ function usePreviewProviderValue(): PreviewContextValue {
     setErrorState(null);
   }, []);
 
+  const setNextraMeta = useCallback((meta: NextraPageMeta | null) => {
+    log.debug('setNextraMeta called', meta);
+    setNextraMetaState(meta);
+  }, []);
+
   return useMemo(
     () => ({
       content,
@@ -63,8 +73,19 @@ function usePreviewProviderValue(): PreviewContextValue {
       setTrustedContent,
       setError,
       clearError,
+      nextraMeta,
+      setNextraMeta,
     }),
-    [content, error, setSafeContent, setTrustedContent, setError, clearError]
+    [
+      content,
+      error,
+      setSafeContent,
+      setTrustedContent,
+      setError,
+      clearError,
+      nextraMeta,
+      setNextraMeta,
+    ]
   );
 }
 

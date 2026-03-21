@@ -47,6 +47,7 @@ import {
   ComponentDiagnostics,
   registerComponentCodeActions,
 } from '../features/diagnostics';
+import { registerLanguageProviders } from '../features/language';
 import { registerAllCommands } from '../features/commands';
 import { MetaResolver } from '../features/framework/nextra/MetaResolver';
 
@@ -268,6 +269,9 @@ export async function activate(
 
   // register component diagnostics code actions
   registerComponentCodeActions(context);
+
+  // register language feature providers (symbols, completions)
+  registerLanguageProviders(context);
 
   // register all commands (extracted to commands/ directory)
   context.subscriptions.push(...registerAllCommands());

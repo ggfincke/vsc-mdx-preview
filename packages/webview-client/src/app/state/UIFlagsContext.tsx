@@ -1,4 +1,4 @@
-// packages/webview-client/src/app/state/TocContext.tsx
+// packages/webview-client/src/app/state/UIFlagsContext.tsx
 // React context for preview runtime UI flags
 
 import { useState, useCallback, useMemo } from 'react';
@@ -9,7 +9,7 @@ import {
 } from '@mdx-preview/contracts';
 import { createContextProvider } from '../providers/createContextProvider';
 
-interface TocContextValue {
+interface UIFlagsContextValue {
   sourceLineHighlightEnabled: boolean;
   sourceLineHighlightColorMode: SourceLineHighlightColorValue;
   shimSideRailEnabled: boolean;
@@ -21,8 +21,8 @@ interface TocContextValue {
 // module-level tagged logger (avoids per-render allocation)
 const log = createTaggedLogger(LogTags.APP);
 
-// hook that provides the TOC context value
-function useTocProviderValue(): TocContextValue {
+// hook that provides the UI flags context value
+function useUIFlagsProviderValue(): UIFlagsContextValue {
   const [sourceLineHighlightEnabled, setSourceLineHighlightEnabledState] =
     useState(true);
   const [sourceLineHighlightColorMode, setSourceLineHighlightColorModeState] =
@@ -67,10 +67,11 @@ function useTocProviderValue(): TocContextValue {
   );
 }
 
-const { Provider, useContextValue } = createContextProvider<TocContextValue>(
-  'Toc',
-  useTocProviderValue
-);
+const { Provider, useContextValue } =
+  createContextProvider<UIFlagsContextValue>(
+    'UIFlags',
+    useUIFlagsProviderValue
+  );
 
-export const TocProvider = Provider;
-export const useToc = useContextValue;
+export const UIFlagsProvider = Provider;
+export const useUIFlags = useContextValue;

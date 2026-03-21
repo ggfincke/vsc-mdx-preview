@@ -6,10 +6,15 @@ import * as path from 'path';
 import { writeFileSync } from 'fs';
 import { DIAGNOSTIC_CODES } from './ComponentDiagnostics';
 import { KNOWN_GENERIC_COMPONENTS } from 'mdx-forge/compiler';
+import {
+  getCanonicalComponentName,
+  getSemanticAlias,
+} from 'mdx-forge/components/registry';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { ConfigError, ErrorContext } from '../../shared/errors';
 import { LogTags } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
+import { CommandNames } from '../commands/command-names';
 
 const log = createTaggedLogger(LogTags.COMPONENT_CODE_ACTIONS);
 import { getErrorReporter } from '../../app/services';
@@ -95,7 +100,7 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
     // create command to add component to config
     action.command = {
       title: 'Add component to config',
-      command: 'mdx-preview.addComponentToConfig',
+      command: CommandNames.ADD_COMPONENT_TO_CONFIG,
       arguments: [componentName, configPath],
     };
 
@@ -132,32 +137,17 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
   private findSimilarBuiltin(name: string): string | null {
     const lowerName = name.toLowerCase();
 
-    // check for common aliases
-    const aliases: Record<string, string> = {
-      note: 'Callout',
-      tip: 'Callout',
-      warning: 'Callout',
-      danger: 'Callout',
-      info: 'Callout',
-      caution: 'Callout',
-      important: 'Callout',
-      admonition: 'Callout',
-      alert: 'Callout',
-      hint: 'Callout',
-      notice: 'Callout',
-      accordion: 'Collapsible',
-      details: 'Collapsible',
-      expandable: 'Collapsible',
-      toggle: 'Collapsible',
-      tabgroup: 'Tabs',
-      tabpanel: 'TabItem',
-      tabcontent: 'TabItem',
-      codeblock: 'CodeGroup',
-      codetabs: 'CodeGroup',
-    };
+    // check registry for canonical component alias resolution
+    const canonical =
+      getCanonicalComponentName(name) ?? getCanonicalComponentName(lowerName);
+    if (canonical) {
+      return canonical;
+    }
 
-    if (aliases[lowerName]) {
-      return aliases[lowerName];
+    // semantic alias lookup from registry
+    const semanticMatch = getSemanticAlias(name);
+    if (semanticMatch) {
+      return semanticMatch;
     }
 
     // check if exact match in builtins (different case)
@@ -264,7 +254,7 @@ export function registerComponentCodeActions(
   // register command
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      'mdx-preview.addComponentToConfig',
+      CommandNames.ADD_COMPONENT_TO_CONFIG,
       addComponentToConfig
     )
   );

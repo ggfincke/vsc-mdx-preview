@@ -39,6 +39,9 @@ export const CommandNames = {
 
   // authoring guide commands
   COPY_AUTHORING_GUIDE: 'mdx-preview.commands.copyAuthoringGuide',
+
+  // code action commands (not in package.json manifest, registered by code actions)
+  ADD_COMPONENT_TO_CONFIG: 'mdx-preview.addComponentToConfig',
 } as const;
 
 export type CommandName = (typeof CommandNames)[keyof typeof CommandNames];

@@ -11,7 +11,7 @@ import { FIXTURES } from '../helpers';
 function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
   return {
     documentPath: '/workspace/test.mdx',
-    useVscodeMarkdownStyles: true,
+    useHostMarkdownStyles: true,
     componentsBuiltins: true,
     componentsUnknownBehavior: 'placeholder',
     ...overrides,

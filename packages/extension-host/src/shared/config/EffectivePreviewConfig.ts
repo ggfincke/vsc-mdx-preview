@@ -133,11 +133,8 @@ export function toMdxForgeCompilerConfig(
   return {
     documentPath: config.docFsPath,
     documentUri: docUri,
-    // keep legacy aliases populated for compatibility paths during migration
-    docFsPath: config.docFsPath,
-    docUri,
     customLayoutFilePath: config.customLayoutFilePath,
-    useVscodeMarkdownStyles: config.useVscodeMarkdownStyles,
+    useHostMarkdownStyles: config.useVscodeMarkdownStyles,
     useWhiteBackground: config.useWhiteBackground,
     componentsBuiltins: config.componentsBuiltins,
     componentsUnknownBehavior: config.componentsUnknownBehavior,

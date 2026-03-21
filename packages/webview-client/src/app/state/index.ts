@@ -16,6 +16,5 @@ export { LightboxProvider, useLightbox } from './LightboxContext';
 export { TrustProvider, useTrust } from './TrustContext';
 export { PreviewProvider, usePreview } from './PreviewContext';
 export { LoadingProvider, useLoading } from './LoadingContext';
-export { NextraProvider, useNextra } from './NextraContext';
-export { TocProvider, useToc } from './TocContext';
+export { UIFlagsProvider, useUIFlags } from './UIFlagsContext';
 export { WebviewStateProvider } from '../providers/WebviewStateProvider';

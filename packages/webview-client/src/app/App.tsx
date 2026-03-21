@@ -23,13 +23,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { classifyLink } from '../shared/utils/linkHandler';
 import type { TrustedPreviewContent } from './types';
 import { useTheme } from '../features/theme/runtime';
-import {
-  useTrust,
-  usePreview,
-  useLoading,
-  useNextra,
-  useToc,
-} from './state';
+import { useTrust, usePreview, useLoading, useUIFlags } from './state';
 import './styles/App.css';
 import '../features/preview/shared/styles/admonitions.css';
 // base generic shim styles from extracted doc-components library
@@ -47,7 +41,7 @@ function App() {
 
   // consume state from granular contexts
   const { trustState } = useTrust();
-  const { content, error, setError, clearError } = usePreview();
+  const { content, error, setError, clearError, nextraMeta } = usePreview();
   const { isLoading, isStale } = useLoading();
 
   // evaluatedComponent kept in local state (not context) to avoid React #130 issue
@@ -58,8 +52,7 @@ function App() {
   useEffect(() => {
     setEvaluatedComponent(null);
   }, [content]);
-  const { nextraMeta } = useNextra();
-  const { shimSideRailEnabled, sourceLineHighlightColorMode } = useToc();
+  const { shimSideRailEnabled, sourceLineHighlightColorMode } = useUIFlags();
 
   // get theme context for MPE preview themes
   const { previewTheme } = useTheme();

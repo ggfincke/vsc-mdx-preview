@@ -8,6 +8,8 @@ import {
   getPreviewManager,
   getFrameworkDetector,
 } from '../../app/services';
+import { getFrameworkIcon } from '@mdx-preview/contracts';
+import { CommandNames } from '../commands/command-names';
 import {
   STATUS_BAR_TRUST_PRIORITY,
   STATUS_BAR_FRAMEWORK_PRIORITY,
@@ -31,15 +33,14 @@ export class StatusBarManager extends SingletonService<StatusBarManager> {
       vscode.StatusBarAlignment.Right,
       STATUS_BAR_TRUST_PRIORITY
     );
-    this.trustStatusBarItem.command = 'mdx-preview.commands.toggleScripts';
+    this.trustStatusBarItem.command = CommandNames.TOGGLE_SCRIPTS;
 
     // create framework status bar item (lower priority than trust item)
     this.frameworkStatusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
       STATUS_BAR_FRAMEWORK_PRIORITY
     );
-    this.frameworkStatusBarItem.command =
-      'mdx-preview.commands.selectFramework';
+    this.frameworkStatusBarItem.command = CommandNames.SELECT_FRAMEWORK;
 
     // initialize status displays
     this.updateTrustDisplay(getTrustManager().getState());
@@ -113,22 +114,8 @@ export class StatusBarManager extends SingletonService<StatusBarManager> {
       info.framework
     );
 
-    // use different icon based on framework
-    let icon = '$(symbol-misc)';
-    switch (info.framework) {
-      case 'docusaurus':
-        icon = '$(book)';
-        break;
-      case 'nextjs':
-        icon = '$(server)';
-        break;
-      case 'starlight':
-        icon = '$(star)';
-        break;
-      case 'nextra':
-        icon = '$(notebook)';
-        break;
-    }
+    // use canonical icon from framework metadata
+    const icon = getFrameworkIcon(info.framework);
 
     this.frameworkStatusBarItem.text = `${icon} ${displayName}`;
     this.frameworkStatusBarItem.tooltip = info.detected

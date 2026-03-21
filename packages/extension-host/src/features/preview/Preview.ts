@@ -9,12 +9,14 @@ import {
 } from 'perf_hooks';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
+import { PreviewTailwindState } from './PreviewTailwindState';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.PREVIEW);
 
 import { refreshPanel } from './webview-manager';
 import evaluateInWebview from './evaluate-in-webview';
+import { getOutlineProvider } from '../language';
 import type { ResolvedConfig, TypeScriptConfiguration } from '../types';
 import type { WatcherManager, DocumentTracker } from './watchers';
 
@@ -63,10 +65,8 @@ export class Preview {
   // watcher manager for coordinated lifecycle management
   private watcherManager: WatcherManager;
 
-  // Tailwind request ID counter (ensure stale responses are ignored)
-  private tailwindRequestId = 0;
-  private tailwindBrowserRuntimeEnabled = false;
-  private tailwindFallbackReason: string | null = null;
+  // Tailwind request tracking (delegated to PreviewTailwindState)
+  private tailwindState = new PreviewTailwindState();
 
   // performance tracking (development only)
   private _performanceObserver?: PerformanceObserver;
@@ -250,41 +250,29 @@ export class Preview {
     );
   }
 
-  // get next Tailwind request ID (increment for each new compilation)
+  // Tailwind request tracking (delegate to PreviewTailwindState)
   nextTailwindRequestId(): number {
-    this.tailwindRequestId += 1;
-    return this.tailwindRequestId;
+    return this.tailwindState.nextRequestId();
   }
 
-  // check if Tailwind request ID is still current (not superseded)
   isTailwindRequestCurrent(requestId: number): boolean {
-    return requestId === this.tailwindRequestId;
+    return this.tailwindState.isRequestCurrent(requestId);
   }
 
-  // toggle whether the webview HTML should include the Tailwind browser runtime script
   setTailwindBrowserRuntimeEnabled(enabled: boolean): boolean {
-    if (this.tailwindBrowserRuntimeEnabled === enabled) {
-      return false;
-    }
-    this.tailwindBrowserRuntimeEnabled = enabled;
-    return true;
+    return this.tailwindState.setBrowserRuntimeEnabled(enabled);
   }
 
   isTailwindBrowserRuntimeEnabled(): boolean {
-    return this.tailwindBrowserRuntimeEnabled;
+    return this.tailwindState.isBrowserRuntimeEnabled();
   }
 
-  // return true only when the fallback reason changed (used for one-time user messaging)
   markTailwindFallbackReason(reason: string): boolean {
-    if (this.tailwindFallbackReason === reason) {
-      return false;
-    }
-    this.tailwindFallbackReason = reason;
-    return true;
+    return this.tailwindState.markFallbackReason(reason);
   }
 
   clearTailwindFallbackReason(): void {
-    this.tailwindFallbackReason = null;
+    this.tailwindState.clearFallbackReason();
   }
 
   resetRenderedVersion(): void {
@@ -337,6 +325,8 @@ export class Preview {
       evaluate: (content, targetFsPath) =>
         evaluateInWebview(this, content, targetFsPath),
     });
+    // refresh outline tree view after content update
+    getOutlineProvider()?.update(this.doc);
   }
 
   async refreshWebview(): Promise<void> {

@@ -13,7 +13,9 @@ const EXACT_ALLOWED = new Set([
   'tests/services/ServiceRegistry.circular.test.ts',
   'tests/services/ServiceRegistry.subsystem.test.ts',
   'tests/shared/constant-parity.test.ts',
+  'tests/shared/duplicate-divergence.test.ts',
   'tests/shared/metadata-parity.test.ts',
+  'tests/shared/utility-parity.test.ts',
   'tests/extension/activate.unhandled-rejection.test.ts',
   'tests/extension/commands/security.test.ts',
   'tests/extension/compiler/plugin-loader.test.ts',
@@ -23,6 +25,9 @@ const EXACT_ALLOWED = new Set([
   'tests/extension/deps/import-extractor.test.ts',
   'tests/extension/diagnostics/ComponentCodeActions.test.ts',
   'tests/extension/diagnostics/ComponentDetector.test.ts',
+  'tests/extension/language/MDXCompletionProvider.test.ts',
+  'tests/extension/language/MDXOutlineProvider.test.ts',
+  'tests/extension/language/MDXSymbolProvider.test.ts',
   'tests/extension/errors/ErrorReporter.test.ts',
   'tests/extension/framework/FrameworkDetector.test.ts',
   'tests/extension/module-system/fetchLocal.timeout.test.ts',
@@ -51,7 +56,13 @@ const EXACT_ALLOWED = new Set([
 
 const CASE_COUNT_OVERRIDES = new Map([
   ['tests/resolution/unified-resolver.test.ts', 6],
+  ['tests/shared/constant-parity.test.ts', 7],
+  ['tests/shared/duplicate-divergence.test.ts', 5],
+  ['tests/shared/utility-parity.test.ts', 6],
   ['tests/extension/errors/ErrorReporter.test.ts', 6],
+  ['tests/extension/language/MDXCompletionProvider.test.ts', 10],
+  ['tests/extension/language/MDXOutlineProvider.test.ts', 5],
+  ['tests/extension/language/MDXSymbolProvider.test.ts', 12],
   ['tests/extension/rpc-input-validation.test.ts', 6],
   ['tests/webview/SafePreview.test.ts', 6],
 ]);
@@ -84,10 +95,7 @@ function isAllowedTestFile(repoPath) {
     return true;
   }
 
-  if (
-    repoPath.startsWith('tests/security/') &&
-    repoPath.endsWith('.test.ts')
-  ) {
+  if (repoPath.startsWith('tests/security/') && repoPath.endsWith('.test.ts')) {
     return true;
   }
 
@@ -102,10 +110,7 @@ function isAllowedTestFile(repoPath) {
 }
 
 function getMaxItBlocks(repoPath) {
-  if (
-    repoPath.startsWith('tests/security/') &&
-    repoPath.endsWith('.test.ts')
-  ) {
+  if (repoPath.startsWith('tests/security/') && repoPath.endsWith('.test.ts')) {
     return 6;
   }
 

@@ -11,7 +11,7 @@ export const PRELOADED_MODULE_IDS = {
   // mdx
   mdxReact: 'npm://@mdx-js/react@3',
 
-  // layout
+  // layout (vscode-markdown-layout is the npm package name, not a VS Code API reference)
   vscodeLayout: 'npm://vscode-markdown-layout@0.1.0',
 } as const;
 

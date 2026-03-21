@@ -5,5 +5,6 @@ export { BaseWatcher } from './BaseWatcher';
 export { DocumentTracker } from './DocumentTracker';
 export { DependencyWatcher } from './DependencyWatcher';
 export { CustomCssWatcher } from './CustomCssWatcher';
+export { EventSubscriptionWatcher } from './EventSubscriptionWatcher';
 export { TailwindConfigWatcher } from './TailwindConfigWatcher';
 export { WatcherManager } from './WatcherManager';
