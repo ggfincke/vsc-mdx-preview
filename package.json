@@ -685,7 +685,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run build:extension:prod && npm run build:webview-client",
-    "vscode:package": "npm run test:all && vsce package",
+    "vscode:package": "npm run test:all && vsce package --no-dependencies",
     "generate:preload": "tsx packages/codegen/src/cli/generate-preload.ts",
     "generate:schema": "tsx packages/codegen/src/cli/generate-schema.ts",
     "generate:settings": "tsx packages/codegen/src/cli/generate-settings.ts",
@@ -789,7 +789,7 @@
   "overrides": {
     "@types/node": "^20.0.0",
     "comlink": "^4.4.1",
-    "lodash-es": "4.17.21"
+    "lodash-es": "4.17.23"
   },
   "sideEffects": false,
   "directories": {
