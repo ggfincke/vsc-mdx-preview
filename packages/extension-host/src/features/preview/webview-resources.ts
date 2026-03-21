@@ -2,7 +2,8 @@
 // webview resource initialization & Vite manifest loading
 
 import * as vscode from 'vscode';
-import { getPreviewManager, type WebviewAppUris } from './preview-manager';
+import { getPreviewManager } from '../../app/services';
+import type { WebviewAppUris } from './preview-manager';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { WebviewError } from '../../shared/errors';
 import {
