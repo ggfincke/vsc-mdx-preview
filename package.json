@@ -197,6 +197,21 @@
         "command": "mdx-preview.commands.copyAuthoringGuide",
         "title": "Copy Authoring Guide to Clipboard",
         "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.zoomIn",
+        "title": "Zoom In",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.zoomOut",
+        "title": "Zoom Out",
+        "category": "MDX"
+      },
+      {
+        "command": "mdx-preview.commands.resetZoom",
+        "title": "Reset Zoom",
+        "category": "MDX"
       }
     ],
     "menus": {
@@ -272,6 +287,24 @@
         "command": "mdx-preview.commands.openPreview",
         "key": "ctrl+k x",
         "mac": "cmd+k x"
+      },
+      {
+        "command": "mdx-preview.commands.zoomIn",
+        "key": "ctrl+=",
+        "mac": "cmd+=",
+        "when": "mdxPreviewFocus"
+      },
+      {
+        "command": "mdx-preview.commands.zoomOut",
+        "key": "ctrl+-",
+        "mac": "cmd+-",
+        "when": "mdxPreviewFocus"
+      },
+      {
+        "command": "mdx-preview.commands.resetZoom",
+        "key": "ctrl+0",
+        "mac": "cmd+0",
+        "when": "mdxPreviewFocus"
       }
     ],
     "configuration": {

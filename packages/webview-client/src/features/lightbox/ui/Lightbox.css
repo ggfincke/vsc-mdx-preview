@@ -1,4 +1,6 @@
-/* Fullscreen image lightbox styles */
+/* Fullscreen image lightbox w/ zoom, pan & gallery navigation */
+
+/* --- Overlay --- */
 
 .mdx-preview-lightbox-overlay {
   position: fixed;
@@ -15,6 +17,10 @@
   cursor: zoom-out;
 }
 
+.mdx-preview-lightbox-overlay--zoomed {
+  cursor: default;
+}
+
 @keyframes lightboxFadeIn {
   from {
     opacity: 0;
@@ -23,6 +29,8 @@
     opacity: 1;
   }
 }
+
+/* --- Close button --- */
 
 .mdx-preview-lightbox-close {
   position: absolute;
@@ -53,13 +61,32 @@
   outline-offset: 2px;
 }
 
+/* --- Image --- */
+
 .mdx-preview-lightbox-image {
   max-width: 90vw;
   max-height: 85vh;
   object-fit: contain;
-  cursor: default;
+  cursor: zoom-in;
   animation: lightboxImageIn 0.2s ease-out;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  will-change: transform;
+  transition: transform 0.15s ease-out;
+  user-select: none;
+  -webkit-user-drag: none;
+  touch-action: none;
+}
+
+.mdx-preview-lightbox-image--zoomed {
+  cursor: grab;
+}
+
+.mdx-preview-lightbox-image--dragging {
+  cursor: grabbing;
+}
+
+.mdx-preview-lightbox-image--no-transition {
+  transition: none;
 }
 
 @keyframes lightboxImageIn {
@@ -73,6 +100,64 @@
   }
 }
 
+/* --- Navigation buttons --- */
+
+.mdx-preview-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+  z-index: 10001;
+}
+
+.mdx-preview-lightbox-nav:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.mdx-preview-lightbox-nav:focus {
+  outline: 2px solid var(--vscode-focusBorder, #007acc);
+  outline-offset: 2px;
+}
+
+.mdx-preview-lightbox-nav--prev {
+  left: 16px;
+}
+
+.mdx-preview-lightbox-nav--next {
+  right: 16px;
+}
+
+/* --- Image counter --- */
+
+.mdx-preview-lightbox-counter {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10001;
+}
+
+/* --- Caption --- */
+
 .mdx-preview-lightbox-caption {
   position: absolute;
   bottom: 24px;
@@ -85,7 +170,6 @@
   font-size: 14px;
   max-width: 80vw;
   text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }

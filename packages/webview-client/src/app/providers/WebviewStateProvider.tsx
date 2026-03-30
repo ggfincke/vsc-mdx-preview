@@ -35,8 +35,12 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
   const { setSafeContent, setTrustedContent, setError, setNextraMeta } =
     usePreview();
   const { setStale, setIsLoading } = useLoading();
-  const { setSourceLineHighlight, setSourceLineHighlightColor, setShimSideRail } =
-    useUIFlags();
+  const {
+    setSourceLineHighlight,
+    setSourceLineHighlightColor,
+    setShimSideRail,
+    setZoomLevel,
+  } = useUIFlags();
   const { setPreviewThemeState } = useTheme();
 
   const initializedRef = useRef(false);
@@ -63,6 +67,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
       setSourceLineHighlight,
       setSourceLineHighlightColor,
       setShimSideRail,
+      setZoom: setZoomLevel,
     });
     log.debug('Handlers registered');
   }, [
@@ -77,6 +82,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
     setSourceLineHighlight,
     setSourceLineHighlightColor,
     setShimSideRail,
+    setZoomLevel,
   ]);
 
   return <>{children}</>;

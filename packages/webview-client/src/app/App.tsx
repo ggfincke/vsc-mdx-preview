@@ -52,7 +52,8 @@ function App() {
   useEffect(() => {
     setEvaluatedComponent(null);
   }, [content]);
-  const { shimSideRailEnabled, sourceLineHighlightColorMode } = useUIFlags();
+  const { shimSideRailEnabled, sourceLineHighlightColorMode, zoomLevel } =
+    useUIFlags();
 
   // get theme context for MPE preview themes
   const { previewTheme } = useTheme();
@@ -136,6 +137,7 @@ function App() {
     <div
       className={`mdx-preview-container ${nextraLayoutClass}`.trim()}
       onClick={handleLinkClick}
+      style={zoomLevel !== 1 ? { zoom: zoomLevel } : undefined}
       data-mpe-theme-active={previewTheme !== 'none' ? 'true' : undefined}
       data-shim-side-rail={shimSideRailEnabled ? 'on' : 'off'}
       data-source-line-highlight-color={sourceLineHighlightColorMode}

@@ -1,0 +1,22 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="800"
+  height="300"
+  viewBox="0 0 800 300"
+  role="img"
+  aria-labelledby="title"
+>
+  <title id="title">Wide Landscape</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d9488" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="300" fill="url(#bg)" />
+  <path d="M0 220 L200 120 L350 180 L500 90 L650 160 L800 100 L800 300 L0 300 Z" fill="rgba(255,255,255,0.1)" />
+  <path d="M0 260 L150 200 L300 230 L450 170 L600 210 L800 160 L800 300 L0 300 Z" fill="rgba(255,255,255,0.08)" />
+  <circle cx="680" cy="60" r="35" fill="rgba(255,255,255,0.2)" />
+  <text x="400" y="140" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="600" fill="white">800 x 300</text>
+  <text x="400" y="170" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" fill="rgba(255,255,255,0.7)">Wide Landscape</text>
+</svg>
