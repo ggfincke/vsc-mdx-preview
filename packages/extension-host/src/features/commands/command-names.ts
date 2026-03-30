@@ -40,6 +40,11 @@ export const CommandNames = {
   // authoring guide commands
   COPY_AUTHORING_GUIDE: 'mdx-preview.commands.copyAuthoringGuide',
 
+  // zoom commands
+  ZOOM_IN: 'mdx-preview.commands.zoomIn',
+  ZOOM_OUT: 'mdx-preview.commands.zoomOut',
+  RESET_ZOOM: 'mdx-preview.commands.resetZoom',
+
   // code action commands (not in package.json manifest, registered by code actions)
   ADD_COMPONENT_TO_CONFIG: 'mdx-preview.addComponentToConfig',
 } as const;

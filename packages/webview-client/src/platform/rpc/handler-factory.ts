@@ -38,6 +38,7 @@ export interface OptionalStateHandlers {
   setSourceLineHighlight?: (enabled: boolean) => void;
   setSourceLineHighlightColor?: (mode: SourceLineHighlightColorValue) => void;
   setShimSideRail?: (enabled: boolean) => void;
+  setZoom?: (level: number) => void;
 }
 
 // combined state handlers interface (required + optional)

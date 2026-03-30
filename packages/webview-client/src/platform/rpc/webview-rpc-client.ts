@@ -76,6 +76,7 @@ const optionalHandlers = buildOptionalHandlers(
     'setSourceLineHighlight',
     'setSourceLineHighlightColor',
     'setShimSideRail',
+    'setZoom',
   ],
   log
 );
@@ -130,6 +131,7 @@ class RPCWebviewHandle implements WebviewRPC {
   setSourceLineHighlight = optionalHandlers.setSourceLineHighlight;
   setSourceLineHighlightColor = optionalHandlers.setSourceLineHighlightColor;
   setShimSideRail = optionalHandlers.setShimSideRail;
+  setZoom = optionalHandlers.setZoom;
 
   // direct handlers (execute immediately, no queuing)
   setCustomCss(css: string): void {
