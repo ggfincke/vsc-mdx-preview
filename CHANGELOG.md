@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-03-30
+
+### Added
+
+- **Lightbox**: Zoom via mouse wheel & double-click toggle, drag-to-pan, and section-scoped gallery navigation w/ arrow keys & buttons
+- **Commands**: Preview-level Zoom In, Zoom Out & Zoom Reset commands w/ keybindings and localStorage persistence
+- **Webview State**: `UIFlagsContext` for preview-level UI state (zoom level)
+
+### Changed
+
+- **Dependencies**: Bump TypeScript 5 -> 6, Vite 7 -> 8, jsdom 28 -> 29, vitest 4.0 -> 4.1, dependency-cruiser, typescript-eslint & @vitejs/plugin-react
+- **Dependencies**: Replace `tsconfck` w/ `get-tsconfig` for synchronous tsconfig parsing — removes async wrapper & simplifies `TypeScriptConfigResolver`
+- **Dependencies**: Add `mdx-forge` ^0.2.4 as explicit dependency, `@types/babel__core` & `katex` dev deps
+- **Build**: Convert Vite `manualChunks` to function form (Vite 8 compat)
+
+### Fixed
+
+- **TypeScript 6**: `Error.captureStackTrace` typing, codegen `baseUrl` removal, DOM lib for runtime-utils
+
 ## [1.2.8] - 2026-03-21
 
 ### Fixed
