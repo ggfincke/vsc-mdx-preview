@@ -7,7 +7,7 @@ import type { FetchResult, FrameworkId } from '@mdx-preview/contracts';
 export type { FetchResult, FrameworkId };
 
 // typescript configuration for module resolution (extracted from tsconfig.json)
-// use lightweight tsconfck parsing instead of full TypeScript compiler
+// use lightweight get-tsconfig parsing instead of full TypeScript compiler
 export interface TypeScriptConfiguration {
   // base URL
   baseUrl?: string;

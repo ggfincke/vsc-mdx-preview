@@ -40,11 +40,19 @@ export default defineConfig({
           return 'static/media/[name][extname]';
         },
         // code splitting for heavy dependencies (M.4 optimization)
-        manualChunks: {
-          mermaid: ['mermaid'],
-          graphviz: ['@viz-js/viz'],
-          katex: ['katex'],
-          dompurify: ['dompurify'],
+        manualChunks(id) {
+          if (id.includes('node_modules/mermaid/')) {
+            return 'mermaid';
+          }
+          if (id.includes('node_modules/@viz-js/viz/')) {
+            return 'graphviz';
+          }
+          if (id.includes('node_modules/katex/')) {
+            return 'katex';
+          }
+          if (id.includes('node_modules/dompurify/')) {
+            return 'dompurify';
+          }
         },
       },
     },

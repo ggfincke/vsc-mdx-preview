@@ -1,8 +1,8 @@
 // packages/extension-host/src/features/preview/configuration/TypeScriptConfigResolver.ts
-// resolve TypeScript configuration from tsconfig.json using tsconfck (lightweight)
+// resolve TypeScript configuration from tsconfig.json using get-tsconfig (lightweight)
 
 import * as path from 'path';
-import { parse, type TSConfckParseResult } from 'tsconfck';
+import { parseTsconfig } from 'get-tsconfig';
 import { createTaggedLogger } from '../../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { getErrorReporter } from '../../../app/services';
@@ -58,9 +58,9 @@ function setupConfigWatcher(configFile: string): void {
 }
 
 // resolve TypeScript configuration from tsconfig.json (handle extends, paths, baseUrl)
-export async function resolveTypescriptConfigAsync(
+export function resolveTypescriptConfig(
   configFile: string | null
-): Promise<TypeScriptConfiguration | null> {
+): TypeScriptConfiguration | null {
   if (!configFile) {
     return null;
   }
@@ -72,12 +72,12 @@ export async function resolveTypescriptConfigAsync(
   }
 
   try {
-    const result: TSConfckParseResult = await parse(configFile);
-    const compilerOptions = result.tsconfig?.compilerOptions ?? {};
+    const result = parseTsconfig(configFile);
+    const compilerOptions = result.compilerOptions ?? {};
 
     const config: TypeScriptConfiguration = {
       baseUrl: compilerOptions.baseUrl,
-      paths: compilerOptions.paths,
+      paths: compilerOptions.paths as Record<string, string[]> | undefined,
       rootDir: compilerOptions.rootDir,
       configPath: configFile,
     };
@@ -99,27 +99,6 @@ export async function resolveTypescriptConfigAsync(
     configCache.set(cacheKey, null);
     return null;
   }
-}
-
-// sync wrapper for cached access (trigger async load if not cached, return null)
-export function resolveTypescriptConfig(
-  configFile: string | null
-): TypeScriptConfiguration | null {
-  if (!configFile) {
-    return null;
-  }
-
-  const cacheKey = path.dirname(configFile);
-  if (configCache.has(cacheKey)) {
-    return configCache.get(cacheKey) ?? null;
-  }
-
-  // not cached - trigger async parse & return null (async version populates cache)
-  resolveTypescriptConfigAsync(configFile).catch(() => {
-    // ignore - error already logged
-  });
-
-  return null;
 }
 
 // clear the config cache (for testing or when tsconfig changes)

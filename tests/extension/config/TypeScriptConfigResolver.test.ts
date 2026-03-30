@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockErrorReporter } from '../../helpers/mock-services';
 
 // hoisted mocks for external dependencies
-const mockParse = vi.hoisted(() => vi.fn());
+const mockParseTsconfig = vi.hoisted(() => vi.fn());
 const mockFindUp = vi.hoisted(() => vi.fn());
 const mockPathCache = vi.hoisted(() => ({
   has: vi.fn(() => false),
@@ -24,8 +24,8 @@ const MockPathCacheClass = vi.hoisted(() =>
   })
 );
 
-vi.mock('tsconfck', () => ({
-  parse: mockParse,
+vi.mock('get-tsconfig', () => ({
+  parseTsconfig: mockParseTsconfig,
 }));
 
 vi.mock(
@@ -44,7 +44,7 @@ vi.mock(
 
 import {
   findTsConfig,
-  resolveTypescriptConfigAsync,
+  resolveTypescriptConfig,
 } from '../../../packages/extension-host/src/features/preview/configuration/TypeScriptConfigResolver';
 
 describe('TypeScriptConfigResolver', () => {
@@ -75,24 +75,20 @@ describe('TypeScriptConfigResolver', () => {
     });
   });
 
-  describe('resolveTypescriptConfigAsync()', () => {
+  describe('resolveTypescriptConfig()', () => {
 
-    it('parses tsconfig & extracts only baseUrl/paths/rootDir/configPath', async () => {
-      mockParse.mockResolvedValue({
-        tsconfig: {
-          compilerOptions: {
-            baseUrl: '.',
-            paths: { '@/*': ['src/*'] },
-            rootDir: 'src',
-            target: 'ES2022',
-            strict: true,
-          },
+    it('parses tsconfig & extracts only baseUrl/paths/rootDir/configPath', () => {
+      mockParseTsconfig.mockReturnValue({
+        compilerOptions: {
+          baseUrl: '.',
+          paths: { '@/*': ['src/*'] },
+          rootDir: 'src',
+          target: 'ES2022',
+          strict: true,
         },
       });
 
-      const result = await resolveTypescriptConfigAsync(
-        '/workspace/tsconfig.json'
-      );
+      const result = resolveTypescriptConfig('/workspace/tsconfig.json');
 
       expect(result).toEqual({
         baseUrl: '.',
@@ -106,13 +102,12 @@ describe('TypeScriptConfigResolver', () => {
       );
     });
 
-    it('caches null & reports error on parse failure', async () => {
-      const error = new Error('Parse failed');
-      mockParse.mockRejectedValue(error);
+    it('caches null & reports error on parse failure', () => {
+      mockParseTsconfig.mockImplementation(() => {
+        throw new Error('Parse failed');
+      });
 
-      const result = await resolveTypescriptConfigAsync(
-        '/workspace/tsconfig.json'
-      );
+      const result = resolveTypescriptConfig('/workspace/tsconfig.json');
 
       expect(result).toBeNull();
       expect(mockPathCache.set).toHaveBeenCalledWith('/workspace', null);
