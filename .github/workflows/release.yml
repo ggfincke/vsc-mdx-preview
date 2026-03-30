@@ -24,11 +24,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Fix Rollup platform bindings (npm/cli#4828)
-        run: |
-          ROLLUP_VER=$(node -p "require('./node_modules/rollup/package.json').version")
-          npm install "@rollup/rollup-linux-x64-gnu@$ROLLUP_VER" --no-save
-
       - name: Run linting
         run: npm run lint
 

@@ -13,7 +13,6 @@ export { ConfigChangeType } from '../../../shared/config/ConfigCache';
 
 export {
   resolveTypescriptConfig,
-  resolveTypescriptConfigAsync,
   findTsConfig,
   clearTsConfigCache,
 } from './TypeScriptConfigResolver';

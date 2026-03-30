@@ -17,7 +17,7 @@ const buildOptions = {
   // @babel/preset-typescript/package.json is dynamically required by @babel/core
   // for module type detection (optional, not used in this project)
   // sass is loaded from workspace's node_modules at runtime (not bundled)
-  // typescript is replaced w/ tsconfck + Sucrase (not bundled)
+  // typescript is replaced w/ get-tsconfig + Sucrase (not bundled)
   external: ['vscode', '@babel/preset-typescript/package.json', 'sass', 'typescript'],
   // VS Code extension host requires CommonJS
   format: 'cjs',

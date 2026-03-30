@@ -43,8 +43,15 @@ export class ModuleError<
     }
 
     Object.setPrototypeOf(this, new.target.prototype);
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, new.target);
+    // V8-specific stack trace capture (not in ES2022 lib types)
+    const ErrorWithCapture = Error as typeof Error & {
+      captureStackTrace?: (
+        target: object,
+        ctor: abstract new (...args: never[]) => unknown
+      ) => void;
+    };
+    if (ErrorWithCapture.captureStackTrace) {
+      ErrorWithCapture.captureStackTrace(this, new.target);
     }
   }
 

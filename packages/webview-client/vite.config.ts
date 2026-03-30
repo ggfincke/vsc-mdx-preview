@@ -40,11 +40,24 @@ export default defineConfig({
           return 'static/media/[name][extname]';
         },
         // code splitting for heavy dependencies (M.4 optimization)
-        manualChunks: {
-          mermaid: ['mermaid'],
-          graphviz: ['@viz-js/viz'],
-          katex: ['katex'],
-          dompurify: ['dompurify'],
+        manualChunks(id) {
+          // exclude CSS files — Rolldown mishandles CSS-only namespace
+          // exports when forced into a JS chunk (katex_min_exports bug)
+          if (id.endsWith('.css')) {
+            return;
+          }
+          if (id.includes('node_modules/mermaid/')) {
+            return 'mermaid';
+          }
+          if (id.includes('node_modules/@viz-js/viz/')) {
+            return 'graphviz';
+          }
+          if (id.includes('node_modules/katex/')) {
+            return 'katex';
+          }
+          if (id.includes('node_modules/dompurify/')) {
+            return 'dompurify';
+          }
         },
       },
     },
