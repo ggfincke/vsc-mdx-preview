@@ -2,7 +2,7 @@
   "name": "vsc-mdx-preview",
   "displayName": "Modern MDX Preview",
   "description": "Live MDX preview with React component rendering, syntax highlighting, and Safe/Trusted workspace security modes",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "publisher": "ggfincke",
   "author": "Garrett Fincke",
   "contributors": [

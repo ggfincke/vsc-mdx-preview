@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-04-01
+
+### Changed
+
+- **Dependencies**: Bump `mdx-forge` from ^0.2.1 to ^0.3.1 — removes stale compiler barrel, uses ES2022 `Error.cause` constructor & fixes README docs
+
 ## [1.3.0] - 2026-03-30
 
 ### Added
