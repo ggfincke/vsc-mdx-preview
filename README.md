@@ -10,13 +10,16 @@ A modern, actively maintained successor to the original [MDX Preview](https://ma
 - **React Components** - Full import and rendering support in Trusted Mode
 - **Framework Shims** - Auto-detection and built-in shims for Docusaurus, Starlight, Nextra, and Next.js
 - **Tailwind CSS** - Built-in Tailwind v4 compilation with auto-detection
-- **Syntax Highlighting** - Shiki-powered code blocks with 100+ languages and 23 themes
-- **Preview Themes** - 15+ themes (GitHub, Atom, Solarized, etc.) with auto light/dark switching
+- **Syntax Highlighting** - Shiki-powered code blocks with 100+ languages and 24 themes
+- **Preview Themes** - 16 themes (GitHub, Atom, Solarized, etc.) with auto light/dark switching
 - **Mermaid Diagrams** - Flowcharts, sequence diagrams, state diagrams, and more
 - **PlantUML Diagrams** - Server-side rendering via configurable PlantUML server
 - **Graphviz Diagrams** - Client-side DOT graph rendering via WASM engine
 - **Math Expressions** - KaTeX for inline (`$...$`) and block (`$$...$$`) math
 - **GitHub Alerts** - NOTE, TIP, WARNING, CAUTION, IMPORTANT callouts
+- **Image Lightbox** - Fullscreen image viewer with gallery navigation, zoom, and pan
+- **Preview Zoom** - Preview-scoped zoom commands without changing VS Code's global zoom
+- **Authoring Feedback** - Source-line highlighting, MDX outline, symbols, and frontmatter-aware completions
 - **Custom Plugins** - Load remark/rehype plugins from your project
 - **TypeScript Preview** - Preview `.tsx`/`.ts` files that render to `#root`
 - **Safe/Trusted Modes** - Safe Mode for untrusted content, Trusted Mode for full rendering
@@ -41,7 +44,7 @@ MDX Preview detects your framework from `package.json` and provides compatible c
 | **Next.js**    | `next` + MDX         | `next/image`, `next/link`                       |
 | **Generic**    | (fallback)           | `Callout`, `Tabs`, `Collapsible`, `CodeGroup`   |
 
-See [docs/frameworks.md](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/frameworks.md) for details and examples.
+See [Frameworks](./docs/frameworks.md) for details and examples.
 
 ## Custom Layout
 
@@ -95,7 +98,7 @@ Per-project customization via `.mdx-previewrc.json` (Trusted Mode only):
 }
 ```
 
-Plugins must be installed in your project's `node_modules`. See [docs/configuration.md](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/configuration.md) for the full reference.
+Plugins must be installed in your project's `node_modules`. See [Configuration](./docs/configuration.md) for the full reference.
 
 ## Security
 
@@ -105,31 +108,34 @@ Plugins must be installed in your project's `node_modules`. See [docs/configurat
 
 Code is only evaluated inside VS Code's isolated webview iframe. MDX files can only require dependencies within your active workspace. By default, only HTTPS content is allowed. You can change security settings through `mdx-preview.preview.security` or **"MDX: Change Security Settings"**.
 
-See [docs/security.md](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/security.md) for the full security model.
+See [Security](./docs/security.md) for the full security model.
 
 ## Extension Settings
 
-| Setting                                        | Default              | Description                                               |
-| ---------------------------------------------- | -------------------- | --------------------------------------------------------- |
-| `mdx-preview.preview.enableScripts`            | `false`              | Enable JS execution (requires trusted workspace)          |
-| `mdx-preview.preview.updateMode`               | `"onType"`           | When to update: `onType`, `onSave`, `manual`              |
-| `mdx-preview.preview.previewTheme`             | `"none"`             | Preview theme (github-light, atom-dark, etc.)             |
-| `mdx-preview.preview.codeBlockTheme`           | `"auto"`             | Code syntax theme (`auto` matches preview)                |
-| `mdx-preview.preview.autoTheme`                | `true`               | Auto light/dark switching with VS Code                    |
-| `mdx-preview.preview.security`                 | `"strict"`           | CSP policy: `strict` or `disabled`                        |
-| `mdx-preview.preview.useVscodeMarkdownStyles`  | `true`               | Use VS Code Markdown styles                               |
-| `mdx-preview.preview.useWhiteBackground`       | `false`              | Force white background                                    |
-| `mdx-preview.preview.customCss`                | `""`                 | Path to custom CSS file                                   |
-| `mdx-preview.preview.mdx.customLayoutFilePath` | `""`                 | Path to custom layout file                                |
-| `mdx-preview.framework`                        | `"auto"`             | Framework detection mode                                  |
-| `mdx-preview.tailwind.enabled`                 | `"enabled"`          | Tailwind CSS: `auto`, `enabled`, `disabled`               |
-| `mdx-preview.preview.mermaidTheme`             | `"default"`          | Mermaid diagram theme                                     |
-| `mdx-preview.preview.openMdxLinksInPreview`    | `true`               | Open `.mdx` links in preview                              |
-| `mdx-preview.framework.componentShims`         | `true`               | Enable framework component shims                          |
-| `mdx-preview.components.builtins`              | `true`               | Enable built-in component shims                           |
-| `mdx-preview.components.unknownBehavior`       | `"placeholder"`      | Unknown component handling: `strip`, `placeholder`, `raw` |
-| `mdx-preview.diagrams.plantUmlServer`          | `"https://kroki.io"` | PlantUML server URL                                       |
-| `mdx-preview.build.useSucraseTranspiler`       | `false`              | Use Sucrase instead of Babel                              |
+| Setting                                        | Default              | Description                                                 |
+| ---------------------------------------------- | -------------------- | ----------------------------------------------------------- |
+| `mdx-preview.preview.enableScripts`            | `false`              | Enable JS execution (requires trusted workspace)            |
+| `mdx-preview.preview.updateMode`               | `"onType"`           | When to update: `onType`, `onSave`, `manual`                |
+| `mdx-preview.preview.previewTheme`             | `"none"`             | Preview theme (github-light, atom-dark, etc.)               |
+| `mdx-preview.preview.codeBlockTheme`           | `"auto"`             | Code syntax theme (`auto` matches preview)                  |
+| `mdx-preview.preview.autoTheme`                | `true`               | Auto light/dark switching with VS Code                      |
+| `mdx-preview.preview.security`                 | `"strict"`           | CSP policy: `strict` or `disabled`                          |
+| `mdx-preview.preview.useVscodeMarkdownStyles`  | `true`               | Use VS Code Markdown styles                                 |
+| `mdx-preview.preview.useWhiteBackground`       | `false`              | Force white background                                      |
+| `mdx-preview.preview.customCss`                | `""`                 | Path to custom CSS file                                     |
+| `mdx-preview.preview.mdx.customLayoutFilePath` | `""`                 | Path to custom layout file                                  |
+| `mdx-preview.framework`                        | `"auto"`             | Framework detection mode                                    |
+| `mdx-preview.tailwind.enabled`                 | `"enabled"`          | Tailwind CSS: `auto`, `enabled`, `disabled`                 |
+| `mdx-preview.preview.mermaidTheme`             | `"default"`          | Mermaid diagram theme                                       |
+| `mdx-preview.preview.sourceLineHighlight`      | `true`               | Highlight rendered blocks by source line on hover           |
+| `mdx-preview.preview.sourceLineHighlightColor` | `"dependent"`        | Highlight color mode: `dependent`, `white`, `black`, `auto` |
+| `mdx-preview.preview.shimSideRail`             | `true`               | Show the framework shim side rail when relevant             |
+| `mdx-preview.preview.openMdxLinksInPreview`    | `true`               | Open `.mdx` links in preview                                |
+| `mdx-preview.framework.componentShims`         | `true`               | Enable framework component shims                            |
+| `mdx-preview.components.builtins`              | `true`               | Enable built-in component shims                             |
+| `mdx-preview.components.unknownBehavior`       | `"placeholder"`      | Unknown component handling: `strip`, `placeholder`, `raw`   |
+| `mdx-preview.diagrams.plantUmlServer`          | `"https://kroki.io"` | PlantUML server URL                                         |
+| `mdx-preview.build.useSucraseTranspiler`       | `false`              | Use Sucrase instead of Babel                                |
 
 ## Webview Limitations
 
@@ -147,16 +153,17 @@ VS Code webviews have some inherent limitations:
 
 **Framework not detected?** Verify the framework package is in your `package.json`, or manually set `mdx-preview.framework`.
 
-See [docs/troubleshooting.md](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/troubleshooting.md) for more.
+See [Troubleshooting](./docs/troubleshooting.md) for more.
 
 ## Documentation
 
-- [Configuration](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/configuration.md) - Full configuration reference
-- [Frameworks](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/frameworks.md) - Framework support and component shims
-- [Security](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/security.md) - Security model deep dive
-- [Troubleshooting](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/troubleshooting.md) - Common issues and solutions
-- [Contributing](https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/contributing.md) - Development setup and guidelines
-- [Examples](https://github.com/ggfincke/vsc-mdx-preview/tree/main/examples) - Working examples for Docusaurus, Starlight, Nextra, Next.js, PlantUML, Graphviz, and more
+- [Configuration](./docs/configuration.md) - Full configuration reference
+- [Frameworks](./docs/frameworks.md) - Framework support and component shims
+- [Security](./docs/security.md) - Security model deep dive
+- [Troubleshooting](./docs/troubleshooting.md) - Common issues and solutions
+- [Contributing](./docs/contributing.md) - Development setup and guidelines
+- [Architecture](./docs/architecture.mdx) - Extension and webview architecture
+- [Examples](./examples) - Working examples for Docusaurus, Starlight, Nextra, Next.js, PlantUML, Graphviz, lightbox/zoom, and more
 
 ## Credits
 

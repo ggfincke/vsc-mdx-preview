@@ -33,8 +33,8 @@ Do NOT import directly from this directory. The bridge file provides:
 
 ## Contents
 
-- **`previewThemes`**: 15+ preview themes (github-light, github-dark, one-dark, etc.)
-- **`codeBlockThemes`**: 20+ code block themes with Shiki CSS variables
+- **`previewThemes`**: 16 preview themes
+- **`codeBlockThemes`**: 24 code block themes with Shiki CSS variables
 
 ## Related Files
 

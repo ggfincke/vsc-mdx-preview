@@ -1,92 +1,65 @@
-# MDX Preview Webview App
+# MDX Preview Webview Client
 
-This is the React application that renders MDX content inside VS Code's webview panel.
+This package is the React 19 application that renders preview content inside the VS Code webview.
 
-## Development
+## Commands
+
+The package-level scripts are intentionally small:
 
 ```bash
-# Start development server (for standalone testing)
 npm run dev
-
-# Run tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Build for production
 npm run build
-
-# Preview production build
 npm run preview
-
-# Lint code
 npm run lint
+npm run lint:fix
 ```
+
+Package tests are driven from the workspace root via `npm run test:webview` and `npm run test:all`.
 
 ## Architecture
 
-- **Framework**: React 19 with TypeScript
-- **Build Tool**: Vite
-- **Testing**: Vitest with React Testing Library
+### Rendering Modes
 
-### Preview Modes
+- Safe Mode renders HTML pushed from the extension host and sanitizes it in the webview
+- Trusted Mode evaluates transpiled modules fetched over RPC and renders the resulting React tree
 
-The webview operates in two modes based on workspace trust and configuration:
+### Important Directories
 
-1. **Safe Mode** (default)
-   - Renders MDX as static HTML
-   - No JavaScript execution
-   - JSX components shown as placeholders
-   - Works in untrusted workspaces
-
-2. **Trusted Mode**
-   - Full MDX component evaluation
-   - Dynamic module loading from the workspace
-   - Requires trusted workspace + scripts enabled
-
-### Project Structure
-
-```
+```text
 src/
-  components/          # React components
-    ErrorBoundary.tsx  # Error boundary for graceful failures
-    LoadingBar/        # Loading indicator
-    TrustBanner/       # Trust mode indicator
-    ModeBadge.tsx      # Safe/Trusted mode badge
-  module-system/       # Dynamic module system for Trusted Mode
-    eval/              # Safe eval for transpiled code
-    loader/            # Dependency loading
-    preload/           # Core + shim preloads (generated)
-    registry/          # Module cache and resolution
-    runtime/           # require() runtime
-    styles/            # CSS injection handling
-  App.tsx              # Main application component
-  SafePreview.tsx      # Safe mode renderer (static HTML)
-  TrustedPreview.tsx   # Trusted mode renderer (full MDX)
-  rpc-webview.ts       # RPC communication with extension
+├── entry/               # Webview bootstrap
+├── app/                 # App shell, providers, state, root styles
+├── features/
+│   ├── preview/         # Safe and Trusted preview rendering
+│   ├── module-runtime/  # Browser-side module loading and cache bridge
+│   ├── diagrams/        # Mermaid, PlantUML, Graphviz
+│   ├── code-block/      # Code block enhancement and KaTeX helpers
+│   ├── lightbox/        # Fullscreen image viewer
+│   └── theme/           # Theme data and runtime logic
+├── generated/           # Generated preload and shim barrel files
+├── platform/rpc/        # Webview RPC client and handler factory
+└── shared/              # Shared hooks, UI, utilities
 ```
 
-### Communication
+### RPC Surface
 
-The webview communicates with the extension via VS Code's webview messaging API:
+The extension pushes preview state into the webview over RPC:
 
-- **Extension -> Webview**: Content updates, trust state changes
-- **Webview -> Extension**: Module fetch requests, error reports
+- preview content and trust state
+- theme and runtime-UI settings
+- Tailwind CSS and used-component metadata
+- module fetch requests and error reporting
 
-## Testing
+### Preview UI State
 
-Tests use Vitest with jsdom environment and React Testing Library:
+The webview owns several UI-only concerns that do not live in VS Code settings:
 
-```bash
-# Run all tests
-npm test
+- preview zoom persistence
+- lightbox gallery state
+- loading and stale indicators
+- Safe/Trusted mode presentation
 
-# Run with coverage
-npm run test -- --coverage
-```
+## Related Docs
 
-Key test files:
-
-- `App.test.tsx` - Main component rendering
-- `test/SafePreview.test.tsx` - XSS prevention tests
+- [`../../docs/architecture.mdx`](../../docs/architecture.mdx)
+- [`src/features/theme/data/README.md`](./src/features/theme/data/README.md)
