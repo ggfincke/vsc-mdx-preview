@@ -41,7 +41,9 @@ Allowed files:
 - `tests/services/ServiceRegistry.circular.test.ts`
 - `tests/services/ServiceRegistry.subsystem.test.ts`
 - `tests/shared/constant-parity.test.ts`
+- `tests/shared/duplicate-divergence.test.ts`
 - `tests/shared/metadata-parity.test.ts`
+- `tests/shared/utility-parity.test.ts`
 - `tests/extension/activate.unhandled-rejection.test.ts`
 - `tests/extension/commands/security.test.ts`
 - `tests/extension/compiler/plugin-loader.test.ts`
@@ -51,6 +53,9 @@ Allowed files:
 - `tests/extension/deps/import-extractor.test.ts`
 - `tests/extension/diagnostics/ComponentCodeActions.test.ts`
 - `tests/extension/diagnostics/ComponentDetector.test.ts`
+- `tests/extension/language/MDXCompletionProvider.test.ts`
+- `tests/extension/language/MDXOutlineProvider.test.ts`
+- `tests/extension/language/MDXSymbolProvider.test.ts`
 - `tests/extension/errors/ErrorReporter.test.ts`
 - `tests/extension/framework/FrameworkDetector.test.ts`
 - `tests/extension/handlers/*.test.ts`
@@ -86,7 +91,13 @@ Retained suites must stay representative. `scripts/check-test-philosophy.mjs` en
 - Default maximum: `4`
 - `tests/security/*.test.ts`: `6`
 - `tests/resolution/unified-resolver.test.ts`: `6`
+- `tests/shared/constant-parity.test.ts`: `7`
+- `tests/shared/duplicate-divergence.test.ts`: `5`
+- `tests/shared/utility-parity.test.ts`: `6`
 - `tests/extension/errors/ErrorReporter.test.ts`: `6`
+- `tests/extension/language/MDXCompletionProvider.test.ts`: `10`
+- `tests/extension/language/MDXOutlineProvider.test.ts`: `5`
+- `tests/extension/language/MDXSymbolProvider.test.ts`: `12`
 - `tests/extension/rpc-input-validation.test.ts`: `6`
 - `tests/webview/SafePreview.test.ts`: `6`
 

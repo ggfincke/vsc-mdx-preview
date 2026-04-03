@@ -16,18 +16,18 @@ MDX Preview operates in one of two rendering modes:
 
 **Trusted Mode** enables full React rendering with component imports, custom plugins, Tailwind CSS, and MDX transclusion. Requires: trusted workspace + `mdx-preview.preview.enableScripts` set to `true` + local files (not remote).
 
-| Feature | Safe Mode | Trusted Mode |
-|---------|-----------|--------------|
-| Markdown, math, diagrams | Yes | Yes |
-| GitHub Alerts | Yes | Yes |
-| Directive callouts (`:::`) | Yes | Yes |
-| Built-in components (Callout, Tabs, etc.) | Semantic HTML | Full React render |
-| Framework components (Docusaurus, Starlight, etc.) | No | Yes |
-| Custom imports | No | Yes |
-| Tailwind CSS | No | Yes |
-| Custom remark/rehype plugins | No | Yes |
-| MDX transclusion | No | Yes |
-| Custom layouts | No | Yes |
+| Feature                                            | Safe Mode     | Trusted Mode      |
+| -------------------------------------------------- | ------------- | ----------------- |
+| Markdown, math, diagrams                           | Yes           | Yes               |
+| GitHub Alerts                                      | Yes           | Yes               |
+| Directive callouts (`:::`)                         | Yes           | Yes               |
+| Built-in components (Callout, Tabs, etc.)          | Semantic HTML | Full React render |
+| Framework components (Docusaurus, Starlight, etc.) | No            | Yes               |
+| Custom imports                                     | No            | Yes               |
+| Tailwind CSS                                       | No            | Yes               |
+| Custom remark/rehype plugins                       | No            | Yes               |
+| MDX transclusion                                   | No            | Yes               |
+| Custom layouts                                     | No            | Yes               |
 
 ---
 
@@ -318,16 +318,16 @@ These components are available without imports:
 
 **Aliases** (use either the alias or the canonical name):
 
-| Alias | Maps To |
-|-------|---------|
-| `abstract`, `tldr` | `summary` |
-| `warn` | `warning` |
-| `error` | `danger` |
-| `check`, `done` | `success` |
-| `help`, `faq` | `question` |
-| `fail`, `missing` | `failure` |
-| `snippet` | `example` |
-| `cite` | `quote` |
+| Alias              | Maps To    |
+| ------------------ | ---------- |
+| `abstract`, `tldr` | `summary`  |
+| `warn`             | `warning`  |
+| `error`            | `danger`   |
+| `check`, `done`    | `success`  |
+| `help`, `faq`      | `question` |
+| `fail`, `missing`  | `failure`  |
+| `snippet`          | `example`  |
+| `cite`             | `quote`    |
 
 **Component aliases:** `<Alert>` and `<Admonition>` work identically to `<Callout>`.
 
@@ -481,7 +481,14 @@ Icons: `star`, `rocket`, `document`, `pencil`, `puzzle`, `setting`, `information
 ### Nextra Projects (Next.js)
 
 ```mdx
-import { Callout, Tabs, Cards, FileTree, Steps, Bleed } from 'nextra/components';
+import {
+  Callout,
+  Tabs,
+  Cards,
+  FileTree,
+  Steps,
+  Bleed,
+} from 'nextra/components';
 
 <Callout type="info" emoji="💡">
   Nextra callouts support custom emoji.
@@ -510,13 +517,13 @@ import { Callout, Tabs, Cards, FileTree, Steps, Bleed } from 'nextra/components'
   ### Step 1
   Install dependencies.
 
-  ### Step 2
-  Configure your project.
+### Step 2
+
+Configure your project.
+
 </Steps>
 
-<Bleed>
-  This content breaks out of the container to full width.
-</Bleed>
+<Bleed>This content breaks out of the container to full width.</Bleed>
 ```
 
 ### Next.js Projects
@@ -611,17 +618,17 @@ description: A brief description of this page
 ```mdx
 ---
 title: My Page
-theme: github-dark
-layout: full
+previewTheme: github-dark
+codeBlockTheme: github-dark
 ---
 ```
 
-| Key | Description |
-|-----|-------------|
-| `title` | Document title |
-| `description` | Page description |
-| `theme` | Override preview theme for this document |
-| `layout` | Layout mode: `default`, `full` (full-width), or `raw` (no styling) |
+| Key              | Description                                     |
+| ---------------- | ----------------------------------------------- |
+| `title`          | Document title                                  |
+| `description`    | Page description                                |
+| `previewTheme`   | Override the preview theme for this document    |
+| `codeBlockTheme` | Override the code block theme for this document |
 
 ### Nextra-Specific Frontmatter
 
@@ -645,9 +652,7 @@ Create a `.mdx-previewrc.json` in your project root for per-project settings. Mo
 ```json
 {
   "remarkPlugins": ["remark-toc"],
-  "rehypePlugins": [
-    ["rehype-external-links", { "target": "_blank" }]
-  ],
+  "rehypePlugins": [["rehype-external-links", { "target": "_blank" }]],
   "components": {
     "Button": "./src/components/Button.tsx",
     "Chart": "./src/components/Chart.tsx"
@@ -657,15 +662,15 @@ Create a `.mdx-previewrc.json` in your project root for per-project settings. Mo
 }
 ```
 
-| Field | Description |
-|-------|-------------|
-| `remarkPlugins` | Custom remark plugins (Trusted Mode only) |
-| `rehypePlugins` | Custom rehype plugins (Trusted Mode only) |
-| `components` | Map component names to file paths (Trusted Mode only) |
-| `framework` | Override framework detection: `generic`, `docusaurus`, `starlight`, `nextra`, `nextjs` |
-| `frameworkOptions` | Framework-specific options (`enableShims`, `customAliases`) |
-| `tailwind` | Tailwind settings (`enabled`, `configPath`) |
-| `unknownBehavior` | Unknown component handling: `placeholder` (default), `strip`, `raw` |
+| Field              | Description                                                                            |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| `remarkPlugins`    | Custom remark plugins (Trusted Mode only)                                              |
+| `rehypePlugins`    | Custom rehype plugins (Trusted Mode only)                                              |
+| `components`       | Map component names to file paths (Trusted Mode only)                                  |
+| `framework`        | Override framework detection: `generic`, `docusaurus`, `starlight`, `nextra`, `nextjs` |
+| `frameworkOptions` | Framework-specific options (`enableShims`, `customAliases`)                            |
+| `tailwind`         | Tailwind settings (`enabled`, `configPath`)                                            |
+| `unknownBehavior`  | Unknown component handling: `placeholder` (default), `strip`, `raw`                    |
 
 Plugins are resolved from your project's `node_modules`. Supports both `"plugin-name"` and `["plugin-name", { options }]` syntax.
 
@@ -867,3 +872,4 @@ const data = await response.json();
 | MDX transclusion | `import X from './X.mdx'; <X />` (Trusted Mode) |
 | Custom layout | `export default Layout` (Trusted Mode) |
 | Config file | `.mdx-previewrc.json` |
+````

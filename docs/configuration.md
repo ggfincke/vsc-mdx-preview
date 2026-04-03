@@ -1,158 +1,106 @@
 # Configuration
 
-This document covers all configuration options for MDX Preview, including VS Code settings, project configuration files, frontmatter overrides, and theme customization.
+This document covers the active configuration surface for MDX Preview:
+
+- VS Code settings under the `mdx-preview.*` namespace
+- Per-project `.mdx-previewrc.json` files
+- Frontmatter keys recognized by the preview runtime
+- Theme and behavior defaults that affect the webview
 
 ---
 
-## Overview
+## Configuration Precedence
 
-MDX Preview uses a layered configuration system with five levels of precedence:
+MDX Preview merges configuration in this order:
 
-```mermaid
-flowchart LR
-    A[Frontmatter] -->|Highest| FINAL
-    B[".mdx-previewrc.json"] --> FINAL
-    C[VS Code Workspace Settings] --> FINAL
-    D[VS Code User Settings] --> FINAL
-    E[Defaults] -->|Lowest| FINAL
+1. Frontmatter overrides for recognized preview keys
+2. Project config file (`.mdx-previewrc.json` or `.mdx-previewrc`)
+3. VS Code workspace settings
+4. VS Code user settings
+5. Built-in defaults
 
-    FINAL[Effective Config]
-```
-
-**Precedence Order (highest to lowest):**
-
-1. **Frontmatter** - Per-document overrides in YAML front matter
-2. **Project Config File** - `.mdx-previewrc.json` in project directory
-3. **VS Code Workspace Settings** - `.vscode/settings.json` in your project
-4. **VS Code User Settings** - Global user settings
-5. **Defaults** - Built-in extension defaults
-
-This allows you to set defaults globally, customize them per-workspace, override per-project, and fine-tune per-document.
+Only a small, explicit set of frontmatter keys override VS Code settings. See [Frontmatter Overrides](#frontmatter-overrides).
 
 ---
 
 ## VS Code Settings
 
-All settings are prefixed with `mdx-preview.` in VS Code's settings.json.
+All settings are prefixed with `mdx-preview.` in `settings.json`.
 
 ### Preview Settings
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `preview.updateMode` | string | `"onType"` | When to update the preview: `"onType"`, `"onSave"`, or `"manual"` |
-| `preview.debounceDelay` | number | `300` | Delay in milliseconds before updating preview after typing |
-| `preview.enableScripts` | boolean | `false` | Enable Trusted Mode for JavaScript execution and imports |
-| `preview.openMdxLinksInPreview` | boolean | `true` | Open `.mdx` links in the preview instead of the editor |
-| `preview.security` | string | `"strict"` | Security policy: `"strict"` or `"disabled"` |
-| `preview.useVscodeMarkdownStyles` | boolean | `true` | Use VS Code's built-in markdown styles as base |
-| `preview.useWhiteBackground` | boolean | `false` | Force white background regardless of theme |
-| `preview.customCss` | string | `""` | Path to custom CSS file for preview styling |
-| `preview.mdx.customLayoutFilePath` | string | `""` | Path to custom MDX layout component |
-
-#### Update Mode Options
-
-| Value | Behavior |
-|-------|----------|
-| `"onType"` | Updates preview as you type (with debounce delay) |
-| `"onSave"` | Updates preview only when file is saved |
-| `"manual"` | Updates only when manually refreshed |
-
-> [!TIP]
-> Use `"onSave"` for large documents or slow machines to reduce CPU usage.
+| Setting                            | Type    | Default       | Description                                                               |
+| ---------------------------------- | ------- | ------------- | ------------------------------------------------------------------------- |
+| `preview.updateMode`               | string  | `"onType"`    | Update on type, save, or manual refresh                                   |
+| `preview.debounceDelay`            | number  | `300`         | Debounce delay in milliseconds for `onType` updates                       |
+| `preview.enableScripts`            | boolean | `false`       | Enable Trusted Mode when trust requirements are satisfied                 |
+| `preview.openMdxLinksInPreview`    | boolean | `true`        | Open relative `.md` and `.mdx` links in the preview instead of the editor |
+| `preview.security`                 | string  | `"strict"`    | CSP policy: `"strict"` or `"disabled"`                                    |
+| `preview.useVscodeMarkdownStyles`  | boolean | `true`        | Layer VS Code markdown styles under preview content                       |
+| `preview.useWhiteBackground`       | boolean | `false`       | Force a white preview background                                          |
+| `preview.customCss`                | string  | `""`          | Path to a custom CSS file injected into the preview                       |
+| `preview.mdx.customLayoutFilePath` | string  | `""`          | Path to a global custom MDX layout component                              |
+| `preview.sourceLineHighlight`      | boolean | `true`        | Highlight rendered blocks by source line on hover                         |
+| `preview.sourceLineHighlightColor` | string  | `"dependent"` | Highlight color mode: `"dependent"`, `"white"`, `"black"`, `"auto"`       |
+| `preview.shimSideRail`             | boolean | `true`        | Show the framework shim side rail when applicable                         |
 
 ### Theme Settings
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `preview.previewTheme` | string | `"none"` | Preview theme for document styling |
-| `preview.codeBlockTheme` | string | `"auto"` | Syntax highlighting theme for code blocks |
-| `preview.mermaidTheme` | string | `"default"` | Theme for Mermaid diagrams |
-| `preview.autoTheme` | boolean | `true` | Automatically switch light/dark based on VS Code theme |
-
-See [Theme Configuration](#theme-configuration) for available themes.
+| Setting                   | Type    | Default              | Description                                            |
+| ------------------------- | ------- | -------------------- | ------------------------------------------------------ |
+| `preview.previewTheme`    | string  | `"none"`             | Preview document theme                                 |
+| `preview.codeBlockTheme`  | string  | `"auto"`             | Code block syntax theme                                |
+| `preview.mermaidTheme`    | string  | `"default"`          | Mermaid diagram theme                                  |
+| `preview.autoTheme`       | boolean | `true`               | Auto-switch preview theme pairs based on VS Code theme |
+| `diagrams.plantUmlServer` | string  | `"https://kroki.io"` | PlantUML/Kroki server URL                              |
 
 ### Build Settings
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `build.useSucraseTranspiler` | boolean | `false` | Use Sucrase instead of Babel for faster transpilation |
-
-> [!NOTE]
-> Sucrase is faster but supports fewer syntax features. Babel provides full ES2022+ support.
+| Setting                      | Type    | Default | Description                                               |
+| ---------------------------- | ------- | ------- | --------------------------------------------------------- |
+| `build.useSucraseTranspiler` | boolean | `false` | Use Sucrase instead of Babel for dependency transpilation |
 
 ### Tailwind Settings
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `tailwind.enabled` | string | `"enabled"` | Tailwind processing: `"auto"`, `"enabled"`, or `"disabled"` |
-| `tailwind.maxFileSizeBytes` | number | `10485760` | Maximum file size to scan for Tailwind classes (10MB) |
-| `tailwind.maxCssFilesToSearch` | number | `500` | Maximum CSS files to search for entry points |
-| `tailwind.cacheMaxEntries` | number | `50` | Maximum cache entries for compiled CSS |
-| `tailwind.cacheTtlSeconds` | number | `300` | Cache time-to-live in seconds (5 minutes) |
-| `tailwind.compilationTimeout` | number | `15000` | Timeout for Tailwind compilation in milliseconds |
+| Setting                        | Type   | Default     | Description                                                   |
+| ------------------------------ | ------ | ----------- | ------------------------------------------------------------- |
+| `tailwind.enabled`             | string | `"enabled"` | Tailwind processing mode: `"auto"`, `"enabled"`, `"disabled"` |
+| `tailwind.maxFileSizeBytes`    | number | `10485760`  | Maximum file size scanned for Tailwind class extraction       |
+| `tailwind.maxCssFilesToSearch` | number | `500`       | Maximum CSS files searched for Tailwind entry points          |
+| `tailwind.cacheMaxEntries`     | number | `50`        | Maximum Tailwind compilation cache entries                    |
+| `tailwind.cacheTtlSeconds`     | number | `300`       | Tailwind cache TTL in seconds                                 |
+| `tailwind.compilationTimeout`  | number | `15000`     | Tailwind compilation timeout in milliseconds                  |
 
-#### Tailwind Enabled Options
+### Framework and Component Settings
 
-| Value | Behavior |
-|-------|----------|
-| `"auto"` | Enable if Tailwind is detected in package.json |
-| `"enabled"` | Always process Tailwind CSS |
-| `"disabled"` | Never process Tailwind CSS |
-
-### Framework Settings
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `framework` | string | `"auto"` | MDX framework: `"auto"`, `"docusaurus"`, `"starlight"`, `"nextra"`, `"nextjs"`, or `"generic"` |
-| `framework.componentShims` | boolean | `true` | Enable built-in component shims for detected framework |
-
-> [!TIP]
-> Use `"auto"` (default) to let MDX Preview detect your framework from package.json. Set explicitly if detection is incorrect.
-
-### Component Settings
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `components.builtins` | boolean | `true` | Enable built-in components (Callout, Tabs, etc.) |
-| `components.unknownBehavior` | string | `"placeholder"` | How to handle unknown components: `"strip"`, `"placeholder"`, or `"raw"` |
-
-#### Unknown Component Behavior
-
-| Value | Behavior |
-|-------|----------|
-| `"strip"` | Remove the component entirely |
-| `"placeholder"` | Show placeholder box with component name and children |
-| `"raw"` | Remove the wrapper but render children inline |
+| Setting                      | Type    | Default         | Description                                                                                  |
+| ---------------------------- | ------- | --------------- | -------------------------------------------------------------------------------------------- |
+| `framework`                  | string  | `"auto"`        | Framework mode: `"auto"`, `"generic"`, `"docusaurus"`, `"starlight"`, `"nextra"`, `"nextjs"` |
+| `framework.componentShims`   | boolean | `true`          | Enable framework-specific component shims                                                    |
+| `components.builtins`        | boolean | `true`          | Enable built-in generic components such as `Callout` and `Tabs`                              |
+| `components.unknownBehavior` | string  | `"placeholder"` | Safe Mode unknown component behavior: `"strip"`, `"placeholder"`, `"raw"`                    |
 
 ### Advanced Settings
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `advanced.watcherDebounceMs` | number | `500` | Debounce delay for file watchers |
+| Setting                      | Type    | Default | Description                                                    |
+| ---------------------------- | ------- | ------- | -------------------------------------------------------------- |
+| `advanced.watcherDebounceMs` | number  | `500`   | Debounce delay for extension-side file watchers                |
+| `advanced.debugOutput`       | boolean | `false` | Enable verbose debug logging in the MDX Preview output channel |
 
 ---
 
 ## Project Configuration File
 
-Create a `.mdx-previewrc.json` file in your project root for per-project settings.
+Create `.mdx-previewrc.json` or `.mdx-previewrc` in your project. The extension searches upward from the current document until it reaches the workspace root.
 
-### Location and Discovery
-
-The extension searches for configuration files in this order:
-
-1. `.mdx-previewrc.json` (preferred)
-2. `.mdx-previewrc`
-
-Starting from the MDX document's directory, it searches upward until it finds a config file or reaches the workspace root.
-
-### Schema
+### Supported Fields
 
 ```json
 {
-  "remarkPlugins": ["plugin-name", ["plugin-with-options", { "option": true }]],
-  "rehypePlugins": ["rehype-plugin"],
+  "remarkPlugins": ["remark-toc"],
+  "rehypePlugins": [["rehype-external-links", { "target": "_blank" }]],
   "components": {
-    "ComponentName": "./path/to/Component.tsx"
+    "Button": "./src/components/Button.tsx"
   },
   "framework": "docusaurus",
   "frameworkOptions": {
@@ -163,240 +111,134 @@ Starting from the MDX document's directory, it searches upward until it finds a 
   },
   "tailwind": {
     "enabled": "auto",
-    "configPath": "./tailwind.config.js"
+    "configPath": "./tailwind.config.ts"
   },
-  "unknownBehavior": "placeholder"
+  "unknownBehavior": "placeholder",
+  "enableScripts": false
 }
 ```
 
-### Configuration Options
+| Field                            | Type           | Description                                                                 |
+| -------------------------------- | -------------- | --------------------------------------------------------------------------- |
+| `remarkPlugins`                  | `PluginSpec[]` | Custom remark plugins loaded from workspace `node_modules` in Trusted Mode  |
+| `rehypePlugins`                  | `PluginSpec[]` | Custom rehype plugins loaded from workspace `node_modules` in Trusted Mode  |
+| `components`                     | object         | Map component names to import paths for Trusted Mode auto-import generation |
+| `framework`                      | string         | Override framework auto-detection for this project                          |
+| `frameworkOptions.enableShims`   | boolean        | Enable or disable framework shims for this project                          |
+| `frameworkOptions.customAliases` | object         | Custom alias mappings used during module resolution                         |
+| `tailwind.enabled`               | string         | Tailwind mode override for this project                                     |
+| `tailwind.configPath`            | string         | Relative path to a Tailwind config file                                     |
+| `unknownBehavior`                | string         | Safe Mode unknown component behavior override                               |
+| `enableScripts`                  | boolean        | Force Safe Mode for this project when set to `false`                        |
 
-#### remarkPlugins
-
-Custom remark plugins added after built-in plugins.
+### Plugin Spec Formats
 
 ```json
 {
-  "remarkPlugins": [
-    "remark-gfm",
-    ["remark-toc", { "heading": "contents", "maxDepth": 3 }]
-  ]
+  "remarkPlugins": ["remark-gfm", ["remark-toc", { "heading": "contents" }]]
 }
 ```
 
-**Plugin Spec Formats:**
-- `"plugin-name"` - Plugin without options
-- `["plugin-name", { options }]` - Plugin with options
+- `"plugin-name"` loads a plugin without options
+- `["plugin-name", { ... }]` loads a plugin with options
 
-> [!WARNING]
-> Plugin loading requires Trusted Mode. Plugins are resolved from your workspace's `node_modules`.
-
-#### rehypePlugins
-
-Custom rehype plugins added after built-in plugins.
-
-```json
-{
-  "rehypePlugins": [
-    "rehype-slug",
-    ["rehype-autolink-headings", { "behavior": "wrap" }]
-  ]
-}
-```
-
-#### components
-
-Map component names to file paths for automatic import generation.
-
-```json
-{
-  "components": {
-    "Button": "./src/components/Button.tsx",
-    "Card": "./src/components/Card.tsx",
-    "Alert": "@/components/Alert"
-  }
-}
-```
-
-Paths are resolved relative to the config file location. The extension generates import statements automatically:
-
-```javascript
-import Button from './src/components/Button.tsx';
-import Card from './src/components/Card.tsx';
-import Alert from '@/components/Alert';
-```
-
-#### framework
-
-Override auto-detected framework.
-
-```json
-{
-  "framework": "docusaurus"
-}
-```
-
-Valid values: `"docusaurus"`, `"starlight"`, `"nextra"`, `"nextjs"`, `"generic"`
-
-#### frameworkOptions
-
-Framework-specific customization.
-
-```json
-{
-  "frameworkOptions": {
-    "enableShims": true,
-    "customAliases": {
-      "@theme": "./src/theme",
-      "@site": "./src"
-    }
-  }
-}
-```
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `enableShims` | boolean | Enable/disable component shims for this project |
-| `customAliases` | object | Custom import alias mappings |
-
-#### tailwind
-
-Tailwind CSS configuration.
-
-```json
-{
-  "tailwind": {
-    "enabled": "auto",
-    "configPath": "./config/tailwind.config.js"
-  }
-}
-```
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `enabled` | string | `"auto"`, `"enabled"`, or `"disabled"` |
-| `configPath` | string | Path to Tailwind config file (relative to config file) |
-
-#### unknownBehavior
-
-How to handle unknown JSX components in Safe Mode.
-
-```json
-{
-  "unknownBehavior": "placeholder"
-}
-```
-
-Valid values: `"strip"`, `"placeholder"`, `"raw"`
+Plugins and custom component imports are only active in Trusted Mode.
 
 ---
 
-## Frontmatter Configuration
+## Frontmatter Overrides
 
-Override settings per-document using YAML frontmatter.
+These are the only frontmatter keys that override preview settings:
 
-### Supported Keys
+| Key              | Maps To                              | Description                                    |
+| ---------------- | ------------------------------------ | ---------------------------------------------- |
+| `previewTheme`   | `mdx-preview.preview.previewTheme`   | Override the preview theme for one document    |
+| `codeBlockTheme` | `mdx-preview.preview.codeBlockTheme` | Override the code block theme for one document |
+
+Example:
 
 ```yaml
 ---
-title: My Document
-layout: full
-theme: github-dark
+previewTheme: github-dark
+codeBlockTheme: github-dark
 ---
-
-# Content starts here
 ```
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `title` | string | Document title (used by some frameworks) |
-| `layout` | string | Layout mode: `"default"`, `"full"`, or `"raw"` |
-| `theme` | string | Override preview theme for this document |
+### Framework Frontmatter
 
-### Layout Modes
+Other frontmatter keys may still matter to framework-specific behavior, but they are not generic preview-setting overrides.
 
-| Layout | Description |
-|--------|-------------|
-| `default` | Standard preview with table of contents |
-| `full` | Full-width preview without sidebar |
-| `raw` | Minimal preview without any wrapper |
-
-> [!NOTE]
-> Layout modes are primarily used with Nextra and are read from `_meta.json` files as well.
+- Nextra metadata can consume keys such as `title`, `description`, `sidebarTitle`, and `layout`
+- `_meta.json` and Nextra frontmatter are merged by the Nextra metadata resolver
 
 ---
 
-## Theme Configuration
+## Theme Inventory
 
 ### Preview Themes
 
-16 preview themes available, inherited from Markdown Preview Enhanced:
+There are 16 preview themes:
 
-| Light Themes | Dark Themes |
-|--------------|-------------|
-| `github-light` | `github-dark` |
-| `atom-light` | `atom-dark` |
-| `one-light` | `one-dark` |
-| `solarized-light` | `solarized-dark` |
-| `vue` | `atom-material` |
-| `newsprint` | `gothic` |
-| `medium` | `night` |
-| `none` (minimal) | `monokai` |
+- `github-light`
+- `github-dark`
+- `atom-dark`
+- `atom-light`
+- `atom-material`
+- `one-dark`
+- `one-light`
+- `solarized-dark`
+- `solarized-light`
+- `gothic`
+- `medium`
+- `monokai`
+- `newsprint`
+- `night`
+- `none`
+- `vue`
 
 ### Code Block Themes
 
-23 syntax highlighting themes for code blocks (including `auto` and `default`):
+There are 24 code block themes:
 
-| Theme | Theme | Theme |
-|-------|-------|-------|
-| `auto` | `default` | `atom-dark` |
-| `atom-light` | `atom-material` | `coy` |
-| `darcula` | `dark` | `funky` |
-| `github` | `github-dark` | `hopscotch` |
-| `monokai` | `okaidia` | `one-dark` |
-| `one-light` | `pen-paper-coffee` | `pojoaque` |
-| `solarized-dark` | `solarized-light` | `twilight` |
-| `vs` | `vue` | `xonokai` |
-
-The `auto` option selects a theme that matches your preview theme.
+- `auto`
+- `default`
+- `atom-dark`
+- `atom-light`
+- `atom-material`
+- `coy`
+- `darcula`
+- `dark`
+- `funky`
+- `github`
+- `github-dark`
+- `hopscotch`
+- `monokai`
+- `okaidia`
+- `one-dark`
+- `one-light`
+- `pen-paper-coffee`
+- `pojoaque`
+- `solarized-dark`
+- `solarized-light`
+- `twilight`
+- `vs`
+- `vue`
+- `xonokai`
 
 ### Mermaid Themes
 
-| Theme | Description |
-|-------|-------------|
-| `default` | Light theme (default) |
-| `dark` | Dark theme |
-| `forest` | Green-accented theme |
-| `neutral` | Grayscale theme |
-| `base` | Minimal styling |
-| `null` | No theme (raw) |
-
-### Auto Theme Switching
-
-When `preview.autoTheme` is enabled (default), the extension automatically switches between light and dark theme variants based on your VS Code color theme.
-
-```mermaid
-flowchart LR
-    A[VS Code Theme Changes] --> B{Light or Dark?}
-    B -->|Light| C[Use Light Preview Theme]
-    B -->|Dark| D[Use Dark Preview Theme]
-    C --> E[Push to Webview]
-    D --> E
-```
-
-Theme pairs (light ↔ dark):
-- `github-light` ↔ `github-dark`
-- `atom-light` ↔ `atom-dark`
-- `one-light` ↔ `one-dark`
-- `solarized-light` ↔ `solarized-dark`
+- `default`
+- `dark`
+- `forest`
+- `neutral`
+- `base`
+- `null`
 
 ---
 
-## Examples
+## Practical Examples
 
-### Minimal Configuration
-
-Just enable Trusted Mode in VS Code settings:
+### Minimal Trusted Mode
 
 ```json
 {
@@ -404,117 +246,66 @@ Just enable Trusted Mode in VS Code settings:
 }
 ```
 
-### Docusaurus Project
+### Preview Interaction Tweaks
 
-`.mdx-previewrc.json`:
+```json
+{
+  "mdx-preview.preview.sourceLineHighlight": true,
+  "mdx-preview.preview.sourceLineHighlightColor": "auto",
+  "mdx-preview.preview.shimSideRail": true
+}
+```
+
+### Docusaurus Project
 
 ```json
 {
   "framework": "docusaurus",
-  "remarkPlugins": ["remark-gfm"],
-  "components": {
-    "CodeBlock": "@theme/CodeBlock"
+  "frameworkOptions": {
+    "enableShims": true
   }
 }
 ```
 
-### Next.js with Tailwind
-
-`.mdx-previewrc.json`:
+### Tailwind Project
 
 ```json
 {
-  "framework": "nextjs",
   "tailwind": {
     "enabled": "enabled",
     "configPath": "./tailwind.config.ts"
-  },
-  "components": {
-    "Image": "next/image",
-    "Link": "next/link"
   }
 }
 ```
 
-### Custom Components Library
+---
 
-`.mdx-previewrc.json`:
+## Cache and Refresh Behavior
 
-```json
-{
-  "components": {
-    "Button": "./src/components/Button.tsx",
-    "Card": "./src/components/Card.tsx",
-    "Alert": "./src/components/Alert.tsx",
-    "Tabs": "./src/components/Tabs.tsx",
-    "TabItem": "./src/components/TabItem.tsx"
-  },
-  "remarkPlugins": [
-    "remark-gfm",
-    ["remark-directive", {}]
-  ],
-  "rehypePlugins": [
-    "rehype-slug"
-  ]
-}
-```
-
-### Full-Featured Configuration
-
-VS Code settings.json:
-
-```json
-{
-  "mdx-preview.preview.enableScripts": true,
-  "mdx-preview.preview.updateMode": "onType",
-  "mdx-preview.preview.debounceDelay": 500,
-  "mdx-preview.preview.previewTheme": "github-light",
-  "mdx-preview.preview.codeBlockTheme": "auto",
-  "mdx-preview.preview.autoTheme": true,
-  "mdx-preview.tailwind.enabled": "auto",
-  "mdx-preview.framework": "auto",
-  "mdx-preview.components.builtins": true,
-  "mdx-preview.components.unknownBehavior": "placeholder"
-}
-```
+- Config files are cached and watched for changes
+- Tailwind results are cached separately from config resolution
+- Use `MDX: Clear All Caches` if you suspect stale config or stale transpilation
+- Use `MDX: Show Effective Configuration` to inspect the resolved configuration and its sources
 
 ---
 
-## Configuration Caching
+## Troubleshooting
 
-Configuration files are cached for performance:
+### Config File Not Loading
 
-- **Per-directory cache** - Each directory's resolved config is cached
-- **File watchers** - Changes to config files trigger cache invalidation
-- **Automatic refresh** - Preview updates when config changes
-
-To manually clear all caches (including configuration), use the command:
-
-```
-MDX Preview: Clear All Caches
-```
-
----
-
-## Troubleshooting Configuration
-
-### Config File Not Found
-
-1. Verify file is named `.mdx-previewrc.json` or `.mdx-previewrc`
-2. Check file is within the workspace root
-3. Check for JSON syntax errors
+1. Verify the file is named `.mdx-previewrc.json` or `.mdx-previewrc`
+2. Confirm the file is inside the workspace root
+3. Check the JSON syntax
+4. Run `MDX: Show Effective Configuration`
 
 ### Plugins Not Loading
 
-1. Verify Trusted Mode is enabled
-2. Check plugins are installed in `node_modules`
-3. Check plugin name matches npm package name
+1. Confirm the workspace is trusted
+2. Set `mdx-preview.preview.enableScripts` to `true`
+3. Make sure the plugin is installed in the workspace's `node_modules`
 
-### Settings Not Applied
+### Settings Seem Ignored
 
-1. Check configuration precedence (frontmatter > config file > VS Code)
-2. Reload window after changing `.mdx-previewrc.json`
-3. Check Output panel for configuration errors
-
-> [!TIP]
-> View the Output panel (View > Output > MDX Preview) for detailed configuration loading logs.
+1. Remember the precedence order: frontmatter, config file, workspace settings, user settings, defaults
+2. Verify the exact setting names under the `mdx-preview.` prefix
+3. Check the `MDX Preview` output channel for configuration errors

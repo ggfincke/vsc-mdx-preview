@@ -64,7 +64,7 @@
 
   <!-- row 4: bottom labels -->
   <rect x="200" y="400" width="500" height="45" rx="6" fill="rgba(255,255,255,0.05)" />
-  <text x="450" y="428" text-anchor="middle" font-family="monospace" font-size="10" fill="rgba(255,255,255,0.4)">Webview Client (browser) -- React 19 + Vite 7 -- VS Code iframe sandbox</text>
+  <text x="450" y="428" text-anchor="middle" font-family="monospace" font-size="10" fill="rgba(255,255,255,0.4)">Webview Client (browser) -- React 19 + Vite 8 -- VS Code iframe sandbox</text>
 
   <!-- title -->
   <text x="450" y="480" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" fill="rgba(255,255,255,0.5)">Zoom in to read the small labels</text>

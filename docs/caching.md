@@ -7,27 +7,27 @@ describes all caches, their invalidation triggers, and troubleshooting guidance.
 
 ### Extension-Side Caches (Node.js)
 
-| Cache | Location | Type | TTL | Max | Invalidation Trigger |
-|-------|----------|------|-----|-----|---------------------|
-| Resolver FS | resolver-factory.ts | CachedInputFileSystem | 30s | - | PackageJsonWatcher, manual command |
-| File Prober Stats | file-prober.ts | LRUCache | 5s | 1000 | Auto-expires |
-| TS Path Index | TypeScriptPathStrategy.ts | Map | - | - | tsconfig.json watcher |
-| TypeScript Config | TypeScriptConfigResolver.ts | PathCache | - | 50 | tsconfig.json watcher |
-| MDX Preview Config | ConfigCache.ts | PathCache | - | 100 | .mdx-previewrc.json watcher |
-| Babel Options | babel.ts | Singleton | - | 1 | Never (extension lifetime) |
-| Sass Module | SassHandler.ts | Map | - | - | PackageJsonWatcher, manual command |
-| Tailwind CSS | TailwindProcessor.ts | ContentHashCache | 5m | 50 | Auto-expires, manual command |
-| Tailwind Scan | TailwindProcessor.ts (scanCache field) | ContentHashCache | 5m | 200 | DependencyWatcher, auto-expires |
-| Framework | FrameworkDetector.ts | PathCache | - | - | PackageJsonWatcher |
-| Root Directory | checkFsPath.ts | Map | - | - | Workspace folder changes |
+| Cache              | Location                               | Type                  | TTL | Max  | Invalidation Trigger               |
+| ------------------ | -------------------------------------- | --------------------- | --- | ---- | ---------------------------------- |
+| Resolver FS        | resolver-factory.ts                    | CachedInputFileSystem | 30s | -    | PackageJsonWatcher, manual command |
+| File Prober Stats  | file-prober.ts                         | LRUCache              | 5s  | 1000 | Auto-expires                       |
+| TS Path Index      | TypeScriptPathStrategy.ts              | Map                   | -   | -    | tsconfig.json watcher              |
+| TypeScript Config  | TypeScriptConfigResolver.ts            | PathCache             | -   | 50   | tsconfig.json watcher              |
+| MDX Preview Config | ConfigCache.ts                         | PathCache             | -   | 100  | .mdx-previewrc.json watcher        |
+| Babel Options      | babel.ts                               | Singleton             | -   | 1    | Never (extension lifetime)         |
+| Sass Module        | SassHandler.ts                         | Map                   | -   | -    | PackageJsonWatcher, manual command |
+| Tailwind CSS       | TailwindProcessor.ts                   | ContentHashCache      | 5m  | 50   | Auto-expires, manual command       |
+| Tailwind Scan      | TailwindProcessor.ts (scanCache field) | ContentHashCache      | 5m  | 200  | DependencyWatcher, auto-expires    |
+| Framework          | FrameworkDetector.ts                   | PathCache             | -   | -    | PackageJsonWatcher                 |
+| Root Directory     | checkFsPath.ts                         | Map                   | -   | -    | Workspace folder changes           |
 
 ### Webview-Side Caches (Browser)
 
-| Cache | Location | Type | Max | Invalidation Trigger |
-|-------|----------|------|-----|---------------------|
-| Module Cache | ModuleCache.ts | LRU (count+memory) | 500 / 50MB | Preview refresh, manual command |
-| Style Cache | StyleCache.ts | Dual-map LRU | 100 | Preview refresh, manual command |
-| Dependency Tracker | DependencyTracker.ts | Multi-map | - | Preview refresh, manual command |
+| Cache              | Location             | Type               | Max        | Invalidation Trigger            |
+| ------------------ | -------------------- | ------------------ | ---------- | ------------------------------- |
+| Module Cache       | ModuleCache.ts       | LRU (count+memory) | 500 / 50MB | Preview refresh, manual command |
+| Style Cache        | StyleCache.ts        | Dual-map LRU       | 100        | Preview refresh, manual command |
+| Dependency Tracker | DependencyTracker.ts | Multi-map          | -          | Preview refresh, manual command |
 
 ## Invalidation Triggers
 
@@ -40,8 +40,8 @@ describes all caches, their invalidation triggers, and troubleshooting guidance.
 
 ### Manual Invalidation
 
-- **"MDX Preview: Clear All Caches" command** - Clears ALL caches (extension + webview)
-- **"MDX Preview: Refresh Preview" command** - Clears webview caches for that preview
+- **`MDX: Clear All Caches` command** - Clears all extension and webview caches
+- **`MDX: Refresh Preview` command** - Clears webview caches for the active preview
 
 ## Tailwind Cache Key Composition
 
@@ -64,7 +64,7 @@ CSS is not served.
 
 If styles don't update after `npm install`:
 
-1. Run "MDX Preview: Clear All Caches" command (Cmd/Ctrl+Shift+P)
+1. Run `MDX: Clear All Caches` from the Command Palette
 2. Or restart the preview
 
 ### Tailwind Classes Not Applying
@@ -72,7 +72,7 @@ If styles don't update after `npm install`:
 If Tailwind classes aren't being applied:
 
 1. Check that Tailwind is installed (`npm list tailwindcss`)
-2. Run "MDX Preview: Clear All Caches" to clear caches
+2. Run `MDX: Clear All Caches`
 3. Check Output panel (MDX Preview) for errors
 
 ### SCSS/Sass Not Compiling
@@ -80,7 +80,7 @@ If Tailwind classes aren't being applied:
 If Sass files show "not installed" message:
 
 1. Install sass: `npm install -D sass`
-2. Run "MDX Preview: Clear All Caches" command
+2. Run `MDX: Clear All Caches`
 3. Refresh the preview
 
 ### Module Not Updating After Edit
@@ -88,7 +88,7 @@ If Sass files show "not installed" message:
 If a module doesn't reflect recent edits:
 
 1. The DependencyWatcher should auto-detect changes
-2. If not, run "MDX Preview: Clear All Caches" command
+2. If not, run `MDX: Clear All Caches`
 3. Check that the file is saved (unsaved changes won't trigger watcher)
 
 ## Cache Architecture Details

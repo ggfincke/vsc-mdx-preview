@@ -8,19 +8,20 @@ This guide covers common issues with MDX Preview and how to resolve them. If you
 
 Before diving into specific issues, run through this checklist:
 
-| Check | How to Verify |
-|-------|---------------|
-| Extension installed | View > Extensions > Search "MDX Preview" |
-| Document is `.mdx` file | Check file extension in editor tab |
-| Workspace is open | File > Open Folder (not just a single file) |
-| Preview is open | Use `Ctrl+K X` / `Cmd+K X` to open preview |
-| Output panel | View > Output > Select "MDX Preview" |
+| Check                   | How to Verify                               |
+| ----------------------- | ------------------------------------------- |
+| Extension installed     | View > Extensions > Search "MDX Preview"    |
+| Document is `.mdx` file | Check file extension in editor tab          |
+| Workspace is open       | File > Open Folder (not just a single file) |
+| Preview is open         | Use `Ctrl+K X` / `Cmd+K X` to open preview  |
+| Output panel            | View > Output > Select "MDX Preview"        |
 
 ---
 
 ## Preview Not Appearing
 
 ### Symptoms
+
 - Preview panel is blank or white
 - "Loading..." indicator stuck
 - Panel opens but nothing renders
@@ -42,8 +43,9 @@ File > Open Folder > Select your project folder
 **3. Refresh the preview**
 
 Use the Command Palette:
+
 ```
-MDX Preview: Refresh Preview
+MDX: Refresh Preview
 ```
 
 **4. Check the Output panel**
@@ -53,6 +55,7 @@ View > Output > Select "MDX Preview" from the dropdown. Look for error messages.
 **5. Reload the window**
 
 If the preview is stuck, reload VS Code:
+
 ```
 Command Palette > Developer: Reload Window
 ```
@@ -81,12 +84,12 @@ Command Palette > Developer: Reload Window
 
 **Check all 4 requirements:**
 
-| Requirement | How to Check |
-|-------------|--------------|
-| Workspace trusted | Command Palette > "Workspaces: Manage Workspace Trust" |
-| Scripts enabled | Settings > `mdx-preview.preview.enableScripts` |
-| Not remote | Check lower-left corner of VS Code for "SSH", "Container", etc. |
-| Local file | Check file path starts with `/` or drive letter |
+| Requirement       | How to Check                                                    |
+| ----------------- | --------------------------------------------------------------- |
+| Workspace trusted | Command Palette > "Workspaces: Manage Workspace Trust"          |
+| Scripts enabled   | Settings > `mdx-preview.preview.enableScripts`                  |
+| Not remote        | Check lower-left corner of VS Code for "SSH", "Container", etc. |
+| Local file        | Check file path starts with `/` or drive letter                 |
 
 ### "Seeing placeholder boxes"
 
@@ -99,7 +102,7 @@ Command Palette > Developer: Reload Window
 3. Change the behavior in settings:
    ```json
    {
-     "mdx-preview.components.unknownBehavior": "ignore"
+     "mdx-preview.components.unknownBehavior": "raw"
    }
    ```
 
@@ -123,7 +126,7 @@ import Button from './components/Button.tsx';
 import { FaGithub } from 'react-icons/fa';
 
 // Wrong - missing file extension for local files
-import Button from './components/Button';  // May need .tsx
+import Button from './components/Button'; // May need .tsx
 ```
 
 **2. Verify file exists**
@@ -266,12 +269,9 @@ Your `tailwind.config.js` should include MDX files:
 
 ```javascript
 module.exports = {
-  content: [
-    './src/**/*.{js,jsx,ts,tsx,mdx}',
-    './docs/**/*.mdx',
-  ],
+  content: ['./src/**/*.{js,jsx,ts,tsx,mdx}', './docs/**/*.mdx'],
   // ...
-}
+};
 ```
 
 **5. Verify entry CSS**
@@ -308,6 +308,7 @@ MDX Preview loads sass from your workspace's `node_modules`, not from the extens
 **Solutions:**
 
 1. Verify framework detection:
+
    ```json
    {
      "mdx-preview.framework": "docusaurus"
@@ -386,6 +387,7 @@ const hello = 'world';
 ````
 
 Not:
+
 ````mdx
 ```
 const hello = 'world';
@@ -485,7 +487,7 @@ Display math: `$$E = mc^2$$`
 In MDX, some characters need escaping:
 
 ```mdx
-$\{x\}$  // Braces need escaping
+$\{x\}$ // Braces need escaping
 ```
 
 **3. Check for syntax errors**
@@ -527,7 +529,7 @@ Large numbers of imports slow down resolution. Consider consolidating imports.
 **1. Clear all caches**
 
 ```
-Command Palette > MDX Preview: Clear All Caches
+Command Palette > MDX: Clear All Caches
 ```
 
 **2. Reduce Tailwind cache**
@@ -613,7 +615,7 @@ External scripts/styles may be blocked. Use local resources instead.
 Use the built-in command to view the full effective configuration:
 
 ```
-Command Palette > MDX Preview: Show Effective Configuration
+Command Palette > MDX: Show Effective Configuration
 ```
 
 This opens a JSON document showing metadata (document path, framework, trust state), merged configuration values, and the source of each setting (frontmatter, config file, workspace settings, user settings, or default).
@@ -622,14 +624,14 @@ You can also check the Output panel (View > Output > "MDX Preview") for configur
 
 ### Common Log Tags
 
-| Tag | Meaning |
-|-----|---------|
-| `[TRUST_MANAGER]` | Trust state changes |
-| `[PREVIEW]` | Preview lifecycle events |
-| `[MODULE]` | Module resolution/fetching |
-| `[CONFIG]` | Configuration loading |
-| `[FRAMEWORK]` | Framework detection |
-| `[TAILWIND]` | Tailwind CSS processing |
+| Tag               | Meaning                    |
+| ----------------- | -------------------------- |
+| `[TRUST_MANAGER]` | Trust state changes        |
+| `[PREVIEW]`       | Preview lifecycle events   |
+| `[MODULE]`        | Module resolution/fetching |
+| `[CONFIG]`        | Configuration loading      |
+| `[FRAMEWORK]`     | Framework detection        |
+| `[TAILWIND]`      | Tailwind CSS processing    |
 
 ---
 
@@ -642,13 +644,13 @@ You can also check the Output panel (View > Output > "MDX Preview") for configur
 **1. Refresh preview**
 
 ```
-Command Palette > MDX Preview: Refresh Preview
+Command Palette > MDX: Refresh Preview
 ```
 
 **2. Clear all caches**
 
 ```
-Command Palette > MDX Preview: Clear All Caches
+Command Palette > MDX: Clear All Caches
 ```
 
 This clears all extension-side caches (resolver, Sass, component detection, path security) and all webview-side caches (modules, styles, dependencies) in one command.
@@ -681,16 +683,16 @@ Command Palette > Developer: Reload Window
 
 ## Common Error Messages
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| "Module not found" | Import path incorrect | Check path and file existence |
-| "TrustError" | Not in Trusted Mode | Enable workspace trust and scripts |
-| "SecurityError" | Path validation failed | Keep imports within workspace |
-| "Parse error" | Syntax error in MDX | Check MDX/JSX syntax |
-| "Circular dependency" | Module cycle detected | Refactor to break cycle |
-| "Plugin load failed" | Plugin not installed | Install plugin: `npm install <plugin>` |
-| "Tailwind compile failed" | Tailwind configuration error | Check tailwind.config.js |
-| "Sass not found" | sass package missing | `npm install sass` |
+| Error                     | Cause                        | Solution                               |
+| ------------------------- | ---------------------------- | -------------------------------------- |
+| "Module not found"        | Import path incorrect        | Check path and file existence          |
+| "TrustError"              | Not in Trusted Mode          | Enable workspace trust and scripts     |
+| "SecurityError"           | Path validation failed       | Keep imports within workspace          |
+| "Parse error"             | Syntax error in MDX          | Check MDX/JSX syntax                   |
+| "Circular dependency"     | Module cycle detected        | Refactor to break cycle                |
+| "Plugin load failed"      | Plugin not installed         | Install plugin: `npm install <plugin>` |
+| "Tailwind compile failed" | Tailwind configuration error | Check tailwind.config.js               |
+| "Sass not found"          | sass package missing         | `npm install sass`                     |
 
 ---
 
@@ -747,6 +749,7 @@ No. For security, only local workspace files and npm packages can be imported.
 Open an issue at: https://github.com/ggfincke/vsc-mdx-preview/issues
 
 Include:
+
 1. VS Code version
 2. Extension version
 3. Steps to reproduce

@@ -1081,17 +1081,20 @@ flowchart LR
 
 ### VS Code Settings
 
-| Setting                                  | Type    | Default   | Description               |
-| ---------------------------------------- | ------- | --------- | ------------------------- |
-| `mdx-preview.preview.enableScripts`      | boolean | false     | Enable Trusted Mode       |
-| `mdx-preview.preview.updateMode`         | string  | "onType"  | When to update preview    |
-| `mdx-preview.preview.debounceDelay`      | number  | 300       | Debounce delay (ms)       |
-| `mdx-preview.preview.previewTheme`       | string  | "none"    | Preview theme             |
-| `mdx-preview.preview.codeBlockTheme`     | string  | "auto"    | Code block theme          |
-| `mdx-preview.preview.autoTheme`          | boolean | true      | Auto light/dark switching |
-| `mdx-preview.framework`                  | string  | "auto"    | MDX framework             |
-| `mdx-preview.tailwind.enabled`           | string  | "enabled" | Tailwind processing       |
-| `mdx-preview.build.useSucraseTranspiler` | boolean | false     | Use Sucrase over Babel    |
+| Setting                                        | Type    | Default     | Description                      |
+| ---------------------------------------------- | ------- | ----------- | -------------------------------- |
+| `mdx-preview.preview.enableScripts`            | boolean | false       | Enable Trusted Mode              |
+| `mdx-preview.preview.updateMode`               | string  | "onType"    | When to update preview           |
+| `mdx-preview.preview.debounceDelay`            | number  | 300         | Debounce delay (ms)              |
+| `mdx-preview.preview.previewTheme`             | string  | "none"      | Preview theme                    |
+| `mdx-preview.preview.codeBlockTheme`           | string  | "auto"      | Code block theme                 |
+| `mdx-preview.preview.autoTheme`                | boolean | true        | Auto light/dark switching        |
+| `mdx-preview.preview.sourceLineHighlight`      | boolean | true        | Hover highlight by source line   |
+| `mdx-preview.preview.sourceLineHighlightColor` | string  | "dependent" | Source-line highlight color mode |
+| `mdx-preview.preview.shimSideRail`             | boolean | true        | Framework shim side rail         |
+| `mdx-preview.framework`                        | string  | "auto"      | MDX framework                    |
+| `mdx-preview.tailwind.enabled`                 | string  | "enabled"   | Tailwind processing              |
+| `mdx-preview.build.useSucraseTranspiler`       | boolean | false       | Use Sucrase over Babel           |
 
 ### Project Configuration File
 
@@ -1192,14 +1195,15 @@ sequenceDiagram
 
 ## Commands
 
-The extension provides 14 VS Code commands organized by category.
+The extension currently contributes 19 VS Code commands organized by category.
 
 ### Preview Commands
 
-| Command ID                            | Description                          |
-| ------------------------------------- | ------------------------------------ |
-| `mdx-preview.commands.openPreview`    | Open MDX preview for active document |
-| `mdx-preview.commands.refreshPreview` | Refresh current preview              |
+| Command ID                                     | Description                                 |
+| ---------------------------------------------- | ------------------------------------------- |
+| `mdx-preview.commands.openPreview`             | Open MDX preview for active document        |
+| `mdx-preview.commands.refreshPreview`          | Refresh current preview                     |
+| `mdx-preview.commands.openPreviewFromExplorer` | Open preview for the selected Explorer item |
 
 ### Config Toggle Commands
 
@@ -1217,11 +1221,12 @@ The extension provides 14 VS Code commands organized by category.
 
 ### Theme Commands
 
-| Command ID                                  | Description                       |
-| ------------------------------------------- | --------------------------------- |
-| `mdx-preview.commands.selectPreviewTheme`   | Select preview theme from list    |
-| `mdx-preview.commands.selectCodeBlockTheme` | Select code block theme from list |
-| `mdx-preview.commands.selectMermaidTheme`   | Select Mermaid diagram theme      |
+| Command ID                                            | Description                        |
+| ----------------------------------------------------- | ---------------------------------- |
+| `mdx-preview.commands.selectPreviewTheme`             | Select preview theme from list     |
+| `mdx-preview.commands.selectCodeBlockTheme`           | Select code block theme from list  |
+| `mdx-preview.commands.selectMermaidTheme`             | Select Mermaid diagram theme       |
+| `mdx-preview.commands.selectSourceLineHighlightColor` | Select source-line highlight color |
 
 ### Framework Commands
 
@@ -1263,6 +1268,14 @@ The `showEffectiveConfig` command opens a JSON document showing:
 | Command ID                                | Description                           |
 | ----------------------------------------- | ------------------------------------- |
 | `mdx-preview.commands.copyAuthoringGuide` | Copy MDX authoring guide to clipboard |
+
+### Zoom Commands
+
+| Command ID                       | Description                  |
+| -------------------------------- | ---------------------------- |
+| `mdx-preview.commands.zoomIn`    | Increase preview zoom by 10% |
+| `mdx-preview.commands.zoomOut`   | Decrease preview zoom by 10% |
+| `mdx-preview.commands.resetZoom` | Reset preview zoom to 100%   |
 
 ---
 
@@ -1685,7 +1698,7 @@ All parallel operations use a custom `Semaphore` utility to prevent resource exh
 | `src/features/preview/trusted/` | Trusted Mode rendering                                   |
 | `src/features/preview/shared/`  | Shared preview UI (loading, stale, trust)                |
 | `src/features/module-runtime/`  | Module caching, loading, preload                         |
-| `src/features/shims/`           | Framework component shim re-exports (from mdx-forge)     |
+| `src/generated/shim-barrels/`   | Generated framework shim re-exports                      |
 | `src/features/diagrams/`        | Mermaid, PlantUML, Graphviz rendering                    |
 | `src/features/code-block/`      | Code block enhancement & KaTeX                           |
 | `src/features/lightbox/`        | Image lightbox                                           |
