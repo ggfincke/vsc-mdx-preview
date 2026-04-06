@@ -18,9 +18,9 @@
     "@viz-js/viz": "^3.24.0",
     "comlink": "^4.4.1",
     "dompurify": "^3.0.0",
-    "katex": "^0.16.32",
+    "katex": "^0.16.45",
     "mdx-forge": "^0.3.1",
-    "mermaid": "^11.12.3",
+    "mermaid": "^11.14.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-error-boundary": "^6.1.1"
