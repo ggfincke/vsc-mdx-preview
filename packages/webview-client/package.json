@@ -15,14 +15,14 @@
     "@mdx-js/react": "^3.0.0",
     "@mdx-preview/contracts": "*",
     "@mdx-preview/runtime-utils": "*",
-    "@viz-js/viz": "^3.24.0",
+    "@viz-js/viz": "^3.26.0",
     "comlink": "^4.4.1",
-    "dompurify": "^3.0.0",
-    "katex": "^0.16.32",
+    "dompurify": "^3.4.0",
+    "katex": "^0.16.45",
     "mdx-forge": "^0.3.1",
-    "mermaid": "^11.12.3",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "mermaid": "^11.14.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "react-error-boundary": "^6.1.1"
   },
   "devDependencies": {
@@ -32,11 +32,11 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^9.0.0",
-    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.1",
-    "globals": "^17.4.0",
+    "globals": "^17.5.0",
     "typescript": "^5.4.0",
-    "typescript-eslint": "^8.56.1",
+    "typescript-eslint": "^8.58.2",
     "vite": "^8.0.3"
   }
 }
