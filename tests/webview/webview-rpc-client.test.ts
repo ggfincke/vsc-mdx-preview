@@ -124,4 +124,102 @@ describe('webview-rpc-client', () => {
     expect(handlers.setSafeContent).toHaveBeenCalledWith('<p>safe</p>');
     expect(handlers.setSourceLineHighlight).toHaveBeenCalledWith(false);
   });
+
+  it('gates trusted content for queued and direct handler paths', async () => {
+    let scenario = await setupRpcScenario();
+    let handlers = createStateHandlers();
+
+    scenario.exposedHandle.updatePreview(
+      'export default function Demo() {}',
+      '/doc.mdx',
+      []
+    );
+    scenario.module.registerWebviewHandlers(handlers as any);
+    expect(handlers.setTrustedContent).not.toHaveBeenCalled();
+
+    scenario = await setupRpcScenario();
+    handlers = createStateHandlers();
+    scenario.exposedHandle.setTrustState(createTrustState(false));
+    scenario.exposedHandle.updatePreview(
+      'export default function Demo() {}',
+      '/doc.mdx',
+      []
+    );
+    scenario.module.registerWebviewHandlers(handlers as any);
+    expect(handlers.setTrustedContent).not.toHaveBeenCalled();
+
+    scenario = await setupRpcScenario();
+    handlers = createStateHandlers();
+    scenario.module.registerWebviewHandlers(handlers as any);
+    scenario.exposedHandle.setTrustState(createTrustState(false));
+    scenario.exposedHandle.updatePreview(
+      'export default function Demo() {}',
+      '/doc.mdx',
+      []
+    );
+    expect(handlers.setTrustedContent).not.toHaveBeenCalled();
+
+    scenario = await setupRpcScenario();
+    handlers = createStateHandlers();
+    scenario.module.registerWebviewHandlers(handlers as any);
+    scenario.exposedHandle.setTrustState(createTrustState(true));
+    scenario.exposedHandle.updatePreview(
+      'export default function Demo() {}',
+      '/doc.mdx',
+      ['/dep.ts']
+    );
+    expect(handlers.setTrustedContent).toHaveBeenCalledWith(
+      'export default function Demo() {}',
+      '/doc.mdx',
+      ['/dep.ts']
+    );
+  });
 });
+
+interface ExposedHandle {
+  setTrustState: (state: unknown) => void;
+  updatePreview: (
+    code: string,
+    entryFilePath: string,
+    dependencies: string[]
+  ) => void;
+}
+
+async function setupRpcScenario(): Promise<{
+  module: typeof import('../../packages/webview-client/src/platform/rpc/webview-rpc-client');
+  exposedHandle: ExposedHandle;
+}> {
+  vi.clearAllMocks();
+  vi.resetModules();
+  (globalThis as any).acquireVsCodeApi = acquireMock;
+
+  const module =
+    await import('../../packages/webview-client/src/platform/rpc/webview-rpc-client');
+
+  module.initRPCWebviewSide();
+
+  return {
+    module,
+    exposedHandle: mockExpose.mock.calls[0][0] as ExposedHandle,
+  };
+}
+
+function createTrustState(canExecute: boolean) {
+  return {
+    workspaceTrusted: canExecute,
+    scriptsEnabled: canExecute,
+    canExecute,
+    openMdxLinksInPreview: false,
+  };
+}
+
+function createStateHandlers() {
+  return {
+    setTrustState: vi.fn(),
+    setSafeContent: vi.fn(),
+    setTrustedContent: vi.fn(),
+    setError: vi.fn(),
+    setStale: vi.fn(),
+    setSourceLineHighlight: vi.fn(),
+  };
+}

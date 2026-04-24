@@ -48,6 +48,18 @@ describe('checkFsPathAsync', () => {
     await expect(
       checkFsPathAsync('/workspace/src', '/other/file.ts')
     ).resolves.toBe(false);
+
+    mockWorkspaceFolders.mockReturnValue([
+      createWorkspaceFolder('/workspace'),
+      createWorkspaceFolder('/workspace/site'),
+    ]);
+
+    await expect(
+      checkFsPathAsync('/workspace/site/docs', '/workspace/site/src/file.ts')
+    ).resolves.toBe(true);
+    await expect(
+      checkFsPathAsync('/workspace/site/docs', '/workspace/shared/file.ts')
+    ).resolves.toBe(false);
   });
 
   it('blocks traversal that escapes the workspace while allowing normalized internal paths', async () => {

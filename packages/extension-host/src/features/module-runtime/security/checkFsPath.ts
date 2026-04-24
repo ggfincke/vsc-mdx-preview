@@ -85,8 +85,8 @@ async function getRootDirectoryPathAsync(
     }
   }
 
-  // sort by path length (shortest = most specific workspace)
-  matchingFolders.sort((a, b) => a.length - b.length);
+  // sort by path length (longest = most specific workspace)
+  matchingFolders.sort((a, b) => b.length - a.length);
   const rootDirectory = matchingFolders[0];
 
   if (rootDirectory) {
