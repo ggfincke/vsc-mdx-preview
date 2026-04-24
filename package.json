@@ -825,7 +825,7 @@
   "overrides": {
     "@types/node": "^20.0.0",
     "comlink": "^4.4.1",
-    "lodash-es": "4.17.23"
+    "lodash-es": "4.18.1"
   },
   "sideEffects": false,
   "directories": {
