@@ -116,14 +116,20 @@ export async function ensureFrameworkShims(
 
     state.lastShimLoadResult = shimResult;
 
+    if (shimResult.success) {
+      state.loadedFramework = framework;
+    }
+
     if (shimResult.usedFallback) {
       log.debug(`${framework} using generic fallback shims`);
     }
   })();
 
-  await state.frameworkLoadPromise;
-  state.loadedFramework = framework;
-  state.frameworkLoadPromise = null;
+  try {
+    await state.frameworkLoadPromise;
+  } finally {
+    state.frameworkLoadPromise = null;
+  }
   log.debug(
     `${framework} shims loaded (success=${state.lastShimLoadResult?.success})`
   );
