@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.5] - 2026-04-24
+
+### Added
+
+- **Trust Gating**: `content-mode-guard.ts` centralizes trusted-content gating — trusted RPC payloads are discarded when `TrustState.canExecute` is false or the trust handshake has not completed
+- **Lifecycle**: `registerUnhandledRejectionHandler()` / `disposeUnhandledRejectionHandler()` register the `process.on('unhandledRejection')` listener as a disposable that is torn down in `deactivate()`
+
+### Changed
+
+- **Activation**: Wrap background promises (`handleTrustChange`, `refreshAllPreviews`, `showSafeModeNotificationIfNeeded`, `packageJsonWatcher.start`) in `reportBackgroundPromiseFailure()` so async failures are logged instead of surfacing as unhandled rejections
+- **RPC Queue**: `createRpcMessageQueue` accepts `getTrustState` / `onTrustStateChange` so the client & queue share a single trust state; direct handlers consult `shouldHandleDirectMessage` before dispatching trusted payloads
+- **Dependencies**: Bump `mdx-forge` ^0.3.1 -> ^0.4.1; relax `@types/vscode` back to ^1.90.0 for broader engine compatibility
+
+### Tests
+
+- Expanded preload atomic registration & shim loading coverage
+- Added direct-handler trust-gating coverage for `webview-rpc-client`
+- Refreshed `duplicate-divergence` & `utility-parity` tests against the `mdx-forge` browser surface
+- `chore(runtime-utils)`: trim noisy comments in `semaphore.ts` & `lru-cache.ts` while preserving cross-repo duplicate markers
+
+## [1.3.4] - 2026-04-24
+
+### Fixed
+
+- **Security**: Resolve high-severity `lodash` / `lodash-es` advisories (code injection via `_.template`, prototype pollution via `_.unset` / `_.omit`) — bump to 4.18.1 & update the workspace override to match
+- **Security**: Bump transitive `@azure/msal-node` 5.1.1 -> 5.1.4
+
+### Changed
+
+- **Dependencies** (minor-and-patch group, 19 updates): `get-tsconfig` 4.13.7->4.14.0, `postcss` 8.5.8->8.5.10, `@types/vscode` 1.110.0->1.116.0, `@vscode/vsce` 3.7.1->3.9.1, `esbuild` 0.27.4->0.28.0, `globals` 17.4.0->17.5.0, `jsdom` 29.0.1->29.0.2, `katex` 0.16.44->0.16.45, `prettier` 3.8.1->3.8.3, `sass` 1.98.0->1.99.0, `typescript-eslint` 8.58.0->8.58.2, `vitest` 4.1.2->4.1.4, `@viz-js/viz` 3.25.0->3.26.0, `dompurify` 3.3.3->3.4.0, `mermaid` 11.13.0->11.14.0, `react` / `react-dom` 19.2.4->19.2.5, `eslint-plugin-react-hooks` 7.0.1->7.1.1, `vite` 8.0.3->8.0.9
+- **CI**: Bump `softprops/action-gh-release` v2 -> v3
+
+## [1.3.3] - 2026-04-03
+
+### Documentation
+
+- Refreshed README, architecture, caching, configuration, contributing & troubleshooting guides; synced `MDX_AUTHORING_GUIDE.md` with the in-extension authoring guide; trimmed ~260 net lines of stale content across 12 docs
+
+## [1.3.2] - 2026-04-01
+
+### Infrastructure
+
+- **Release Workflow**: Verify release tags are ancestors of `origin/main` before publishing (`git merge-base --is-ancestor`) & fetch full history on checkout so the ancestry check can resolve
+
 ## [1.3.1] - 2026-04-01
 
 ### Changed
