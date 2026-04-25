@@ -1,17 +1,17 @@
 // tests/shared/utility-parity.test.ts
-// verify cross-repo utility behavioral parity between vsc-mdx-preview & mdx-forge
-// ! cross-repo parity: mirror test in mdx-forge/tests/cross-repo/utility-parity.test.ts
-// ! changes to shared behavior must update BOTH test files
+// verify copied utility behavior across vsc-mdx-preview & mdx-forge
+// ! cross-repo parity: mirror mdx-forge/tests/cross-repo/utility-parity.test.ts
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { cn } from '../../packages/webview-client/src/shared/utils/cn';
-import { copyToClipboard } from '../../packages/webview-client/src/shared/utils/clipboard';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Semaphore } from '../../packages/runtime-utils/src/async/semaphore';
+import { LRUCache } from '../../packages/runtime-utils/src/cache/lru-cache';
+import { isBareImport } from '../../packages/runtime-utils/src/module-id';
+import { copyToClipboard } from '../../packages/webview-client/src/shared/utils/clipboard';
+import { cn } from '../../packages/webview-client/src/shared/utils/cn';
 
 describe('cross-repo utility parity', () => {
-  // cn() — shared surface: identical function
   describe('cn() behavioral contract', () => {
-    it('joins class names, filters falsy values & returns empty for no args', () => {
+    it('joins class names and filters falsy values', () => {
       expect(cn('a', 'b')).toBe('a b');
       expect(cn('a', false, 'b')).toBe('a b');
       expect(cn('a', null, undefined, 'b')).toBe('a b');
@@ -21,7 +21,6 @@ describe('cross-repo utility parity', () => {
     });
   });
 
-  // copyToClipboard() — shared surface: success & failure return values
   describe('copyToClipboard() behavioral contract', () => {
     let originalNavigator: typeof globalThis.navigator;
 
@@ -37,16 +36,14 @@ describe('cross-repo utility parity', () => {
       });
     });
 
-    it('returns true on successful clipboard write', async () => {
+    it('returns true for success and false for write failures', async () => {
       Object.defineProperty(globalThis, 'navigator', {
         value: { clipboard: { writeText: async () => {} } },
         writable: true,
         configurable: true,
       });
       expect(await copyToClipboard('test')).toBe(true);
-    });
 
-    it('returns false when clipboard API throws', async () => {
       Object.defineProperty(globalThis, 'navigator', {
         value: {
           clipboard: {
@@ -62,60 +59,118 @@ describe('cross-repo utility parity', () => {
     });
   });
 
-  // Semaphore — shared surface: constructor, acquire(), release()
-  describe('Semaphore behavioral contract', () => {
-    it('allows immediate acquire when permits available', async () => {
-      const sem = new Semaphore(1);
-      await sem.acquire();
-      // resolves immediately w/o hanging
-    });
-
-    it('blocks acquire when no permits & releases waiters in FIFO order', async () => {
-      const sem = new Semaphore(1);
-      await sem.acquire();
-
-      let acquired = false;
-      const pending = sem.acquire().then(() => {
-        acquired = true;
+  describe('LRUCache shared contract', () => {
+    it('tracks access order, eviction, memory, protection and settings', () => {
+      const evicted: Array<[string, number]> = [];
+      const cache = new LRUCache<string, number>({
+        maxEntries: 2,
+        onEvict: (key, value) => evicted.push([key, value]),
       });
 
-      // yield to event loop — should NOT have acquired
-      await new Promise((r) => setTimeout(r, 10));
-      expect(acquired).toBe(false);
+      cache.set('a', 1);
+      cache.set('b', 2);
+      expect(Array.from(cache.entries())).toEqual([
+        ['a', 1],
+        ['b', 2],
+      ]);
+      expect(cache.get('a')).toBe(1);
+      expect(Array.from(cache.keys())).toEqual(['b', 'a']);
 
-      // release unblocks the waiter
-      sem.release();
-      await pending;
-      expect(acquired).toBe(true);
+      cache.set('c', 3);
+      expect(cache.has('b')).toBe(false);
+      expect(cache.peek('a')).toBe(1);
+      expect(Array.from(cache.keys())).toEqual(['a', 'c']);
+      expect(cache.delete('a')).toBe(true);
+      expect(cache.delete('missing')).toBe(false);
+      cache.clear();
+      expect(evicted).toEqual([
+        ['b', 2],
+        ['a', 1],
+      ]);
 
-      // FIFO order: release first permit, queue two more
+      const memoryCache = new LRUCache<string, number>({
+        maxEntries: 10,
+        estimateSize: (value) => value,
+        maxMemoryBytes: 5,
+      });
+      memoryCache.set('a', 2);
+      memoryCache.set('b', 2);
+      memoryCache.set('c', 2);
+      expect(Array.from(memoryCache.keys())).toEqual(['b', 'c']);
+      expect(memoryCache.memoryBytes).toBe(4);
+
+      const protectedCache = new LRUCache<string, number>({
+        maxEntries: 1,
+        isProtected: (key) => key === 'a',
+      });
+      protectedCache.set('a', 1);
+      protectedCache.set('b', 2);
+      protectedCache.set('c', 3);
+      expect(Array.from(protectedCache.keys())).toEqual(['a', 'c']);
+
+      const settingsCache = new LRUCache<string, number>({ maxEntries: 3 });
+      settingsCache.set('x', 1);
+      settingsCache.set('y', 2);
+      settingsCache.set('z', 3);
+      settingsCache.updateSettings({ maxEntries: 1 });
+      expect(Array.from(settingsCache.entries())).toEqual([['z', 3]]);
+    });
+  });
+
+  describe('Semaphore shared contract', () => {
+    it('limits concurrency and releases queued waiters in FIFO order', async () => {
+      const semaphore = new Semaphore(2);
+      expect(semaphore.available).toBe(2);
+      expect(semaphore.waiting).toBe(0);
+
+      await semaphore.acquire();
+      await semaphore.acquire();
+      expect(semaphore.available).toBe(0);
+
       const order: number[] = [];
-      const p1 = sem.acquire().then(() => order.push(1));
-      const p2 = sem.acquire().then(() => order.push(2));
+      const first = semaphore.acquire().then(() => order.push(1));
+      const second = semaphore.acquire().then(() => order.push(2));
+      expect(semaphore.waiting).toBe(2);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(order).toEqual([]);
 
-      sem.release();
-      sem.release();
-      await Promise.all([p1, p2]);
+      semaphore.release();
+      await first;
+      expect(semaphore.waiting).toBe(1);
+      expect(semaphore.available).toBe(0);
+
+      semaphore.release();
+      await second;
       expect(order).toEqual([1, 2]);
+      expect(semaphore.waiting).toBe(0);
+      expect(semaphore.available).toBe(0);
+
+      semaphore.release();
+      semaphore.release();
+      expect(semaphore.available).toBe(2);
     });
+  });
 
-    it('supports multiple permits', async () => {
-      const sem = new Semaphore(3);
-      await sem.acquire();
-      await sem.acquire();
-      await sem.acquire();
+  describe('module ID shared contract', () => {
+    it('classifies bare imports without treating paths or URLs as bare', () => {
+      const cases: Array<[string, boolean]> = [
+        ['react', true],
+        ['@scope/pkg/subpath', true],
+        ['lodash/merge', true],
+        ['node:fs', true],
+        ['./relative', false],
+        ['../parent', false],
+        ['.hidden', false],
+        ['/absolute', false],
+        ['C:\\absolute\\path', false],
+        ['npm://react@18', false],
+        ['https://example.com/pkg', false],
+        ['data:text/javascript,export default 1', false],
+      ];
 
-      let acquired = false;
-      const pending = sem.acquire().then(() => {
-        acquired = true;
-      });
-
-      await new Promise((r) => setTimeout(r, 10));
-      expect(acquired).toBe(false);
-
-      sem.release();
-      await pending;
-      expect(acquired).toBe(true);
+      for (const [specifier, expected] of cases) {
+        expect(isBareImport(specifier)).toBe(expected);
+      }
     });
   });
 });

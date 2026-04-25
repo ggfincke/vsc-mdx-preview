@@ -12,16 +12,19 @@ import {
   LogTags,
   type ExtensionRPC,
   type Framework,
+  type TrustState,
   type WebviewRPC,
 } from '@mdx-preview/contracts';
 import {
   createHandlerFactories,
+  type PendingMessage,
   type WebviewStateHandlers,
 } from './handler-factory';
 import { bootstrapRpcWebviewSide } from './rpc-bootstrap';
 import { createRpcMessageQueue } from './rpc-message-queue';
 import { createRpcRegistration } from './rpc-registration';
 import { loadModuleSystem } from './module-system-loader';
+import { canAcceptContentMode } from './content-mode-guard';
 
 const log = createTaggedLogger(LogTags.RPC_WEBVIEW);
 
@@ -29,10 +32,29 @@ export type ExtensionHandle = ExtensionRPC;
 
 let stateHandlers: WebviewStateHandlers | null = null;
 let extensionHandleRef: ExtensionHandle | null = null;
+let currentTrustState: TrustState | null = null;
+
+function recordTrustState(message: PendingMessage): void {
+  if (message.type === 'trust') {
+    currentTrustState = message.payload as TrustState;
+  }
+}
+
+function shouldHandleDirectMessage(message: PendingMessage): boolean {
+  if (message.type !== 'trusted') {
+    return true;
+  }
+
+  return canAcceptContentMode(currentTrustState, 'trusted', log);
+}
 
 const queue = createRpcMessageQueue({
   log,
   getHandlers: () => stateHandlers,
+  getTrustState: () => currentTrustState,
+  onTrustStateChange: (state) => {
+    currentTrustState = state;
+  },
 });
 
 const {
@@ -42,7 +64,11 @@ const {
 } = createHandlerFactories(
   () => stateHandlers,
   queue.enqueueQueued,
-  queue.enqueueOptional
+  queue.enqueueOptional,
+  {
+    onMessageReceived: recordTrustState,
+    shouldHandleDirectMessage,
+  }
 );
 
 // simple pass-through queued handlers (payload = first arg, handler gets [payload])

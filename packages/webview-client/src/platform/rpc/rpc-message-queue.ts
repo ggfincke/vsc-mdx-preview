@@ -13,6 +13,7 @@ import type {
   QueuedMessageType,
   WebviewStateHandlers,
 } from './handler-factory';
+import { canAcceptContentMode } from './content-mode-guard';
 
 export interface RpcMessageQueue {
   enqueueQueued: (message: PendingMessage) => void;
@@ -24,6 +25,8 @@ export interface RpcMessageQueue {
 interface CreateRpcMessageQueueOptions {
   log: TaggedLogger;
   getHandlers: () => WebviewStateHandlers | null;
+  getTrustState?: () => TrustState | null;
+  onTrustStateChange?: (state: TrustState) => void;
 }
 
 export function createRpcMessageQueue(
@@ -34,7 +37,16 @@ export function createRpcMessageQueue(
     keyof OptionalStateHandlers,
     PendingOptionalMessage
   >();
-  let currentTrustState: TrustState | null = null;
+  let fallbackTrustState: TrustState | null = null;
+
+  function getCurrentTrustState(): TrustState | null {
+    return options.getTrustState?.() ?? fallbackTrustState;
+  }
+
+  function setCurrentTrustState(state: TrustState): void {
+    fallbackTrustState = state;
+    options.onTrustStateChange?.(state);
+  }
 
   function enqueueQueued(message: PendingMessage): void {
     const hadPrevious = pendingMessages.has(message.type);
@@ -66,8 +78,8 @@ export function createRpcMessageQueue(
     const trustMessage = messages.get('trust');
     if (trustMessage) {
       options.log.debug('Flushing trust state first');
-      currentTrustState = trustMessage.payload as TrustState;
-      handlers.setTrustState(currentTrustState);
+      setCurrentTrustState(trustMessage.payload as TrustState);
+      handlers.setTrustState(getCurrentTrustState() as TrustState);
     }
 
     const safeMsg = messages.get('safe');
@@ -77,7 +89,7 @@ export function createRpcMessageQueue(
       options.log.warn(
         'Both safe & trusted content queued - selecting based on trust'
       );
-      if (currentTrustState?.canExecute) {
+      if (getCurrentTrustState()?.canExecute) {
         flushTrusted(handlers, trustedMsg.payload);
       } else {
         options.log.debug('Flushing safe content (safe mode active)');
@@ -128,7 +140,7 @@ export function createRpcMessageQueue(
     handlers: WebviewStateHandlers,
     payload: unknown
   ): void {
-    if (!validateContentMode(currentTrustState, 'trusted', options.log)) {
+    if (!canAcceptContentMode(getCurrentTrustState(), 'trusted', options.log)) {
       return;
     }
 
@@ -169,23 +181,4 @@ export function createRpcMessageQueue(
     flush,
     pendingCounts,
   };
-}
-
-function validateContentMode(
-  trustState: TrustState | null,
-  contentMode: 'safe' | 'trusted',
-  log: TaggedLogger
-): boolean {
-  if (!trustState) {
-    return true;
-  }
-
-  if (contentMode === 'trusted' && !trustState.canExecute) {
-    log.warn(
-      'Discarding trusted content - trust state is not canExecute (scripts disabled or workspace untrusted)'
-    );
-    return false;
-  }
-
-  return true;
 }

@@ -1,37 +1,22 @@
 // packages/runtime-utils/src/cache/lru-cache.ts
-// generic LRU cache w/ optional TTL, memory-based eviction, & entry protection
-// ! cross-repo duplicate: mdx-forge/src/browser/internal/lru-cache.ts
-// ! changes here must be mirrored (GPL licensing prevents shared dependency)
-// use Map insertion order for O(1) LRU tracking - oldest entries are at the
-// start of the Map, accessing an entry moves it to the end (delete + re-insert),
-// eviction removes from the start (skipping protected entries)
+// GPL runtime LRU cache; shared subset mirrors mdx-forge browser LRU
+// ! cross-repo duplicate: keep common behavior covered by parity tests
 
-// configuration options for LRUCache
 export interface LRUCacheOptions<K, V> {
-  // max entries
   maxEntries: number;
-  // ttl ms
   ttlMs?: number;
-  // eviction callback
   onEvict?: (key: K, value: V) => void;
-  // size estimator
   estimateSize?: (value: V) => number;
-  // max memory bytes
   maxMemoryBytes?: number;
-  // protection predicate
   isProtected?: (key: K, value: V) => boolean;
 }
 
-// internal cache entry w/ metadata
 interface CacheEntry<V> {
   value: V;
-  // expiration time
   expiresAt: number | null;
-  // entry size
   size: number;
 }
 
-// generic LRU cache w/ optional TTL, memory-based eviction, & entry protection
 export class LRUCache<K, V> {
   private cache = new Map<K, CacheEntry<V>>();
   private _maxEntries: number;
@@ -51,35 +36,29 @@ export class LRUCache<K, V> {
     this._isProtected = options.isProtected;
   }
 
-  // get value, return null if missing/expired
   get(key: K): V | null {
     const entry = this.cache.get(key);
     if (!entry) {
       return null;
     }
 
-    // check TTL expiration
     if (entry.expiresAt !== null && entry.expiresAt < Date.now()) {
       this.deleteEntry(key, entry);
       return null;
     }
 
-    // update LRU position (move to end)
     this.cache.delete(key);
     this.cache.set(key, entry);
 
     return entry.value;
   }
 
-  // get entry w/o updating LRU position (for inspection)
-  // return undefined if not found, entry if found (may be expired)
   peek(key: K): V | undefined {
     const entry = this.cache.get(key);
     if (!entry) {
       return undefined;
     }
 
-    // check TTL expiration
     if (entry.expiresAt !== null && entry.expiresAt < Date.now()) {
       this.deleteEntry(key, entry);
       return undefined;
@@ -88,37 +67,29 @@ export class LRUCache<K, V> {
     return entry.value;
   }
 
-  // set a value in the cache
-  // evicts old entries if necessary
   set(key: K, value: V): void {
-    // remove existing entry if present
     const existing = this.cache.get(key);
     if (existing) {
       this._currentMemoryBytes -= existing.size;
       this.cache.delete(key);
     }
 
-    // calculate size & expiration
     const size = this._estimateSize ? this._estimateSize(value) : 0;
     const expiresAt = this._ttlMs ? Date.now() + this._ttlMs : null;
 
-    // add new entry
     const entry: CacheEntry<V> = { value, expiresAt, size };
     this.cache.set(key, entry);
     this._currentMemoryBytes += size;
 
-    // evict if over limits
     this.evictOverflow();
   }
 
-  // check if key exists
   has(key: K): boolean {
     const entry = this.cache.get(key);
     if (!entry) {
       return false;
     }
 
-    // check TTL expiration
     if (entry.expiresAt !== null && entry.expiresAt < Date.now()) {
       this.deleteEntry(key, entry);
       return false;
@@ -127,7 +98,6 @@ export class LRUCache<K, V> {
     return true;
   }
 
-  // delete key
   delete(key: K): boolean {
     const entry = this.cache.get(key);
     if (!entry) {
@@ -137,14 +107,11 @@ export class LRUCache<K, V> {
     return true;
   }
 
-  // clear all entries from the cache
-  // does NOT call onEvict for each entry
   clear(): void {
     this.cache.clear();
     this._currentMemoryBytes = 0;
   }
 
-  // clear all entries & call onEvict for each
   clearWithEviction(): void {
     if (this._onEvict) {
       for (const [key, entry] of this.cache) {
@@ -155,17 +122,14 @@ export class LRUCache<K, V> {
     this._currentMemoryBytes = 0;
   }
 
-  // entry count
   get size(): number {
     return this.cache.size;
   }
 
-  // current memory usage in bytes (if estimateSize is configured)
   get memoryBytes(): number {
     return this._currentMemoryBytes;
   }
 
-  // count of protected entries
   get protectedCount(): number {
     if (!this._isProtected) {
       return 0;
@@ -179,15 +143,12 @@ export class LRUCache<K, V> {
     return count;
   }
 
-  // get all keys in the cache (oldest first)
   keys(): IterableIterator<K> {
     return this.cache.keys();
   }
 
-  // get all entries in the cache (oldest first)
   *entries(): IterableIterator<[K, V]> {
     for (const [key, entry] of this.cache) {
-      // skip expired entries
       if (entry.expiresAt !== null && entry.expiresAt < Date.now()) {
         continue;
       }
@@ -195,8 +156,6 @@ export class LRUCache<K, V> {
     }
   }
 
-  // update cache settings dynamically
-  // trigger eviction if new limits are lower
   updateSettings(options: Partial<LRUCacheOptions<K, V>>): void {
     if (options.maxEntries !== undefined) {
       this._maxEntries = options.maxEntries;
@@ -217,12 +176,9 @@ export class LRUCache<K, V> {
       this._isProtected = options.isProtected;
     }
 
-    // evict if now over limits
     this.evictOverflow();
   }
 
-  // remove expired entries proactively
-  // call periodically to prevent stale entries from consuming memory
   pruneExpired(): number {
     if (!this._ttlMs) {
       return 0;
@@ -241,8 +197,6 @@ export class LRUCache<K, V> {
     return pruned;
   }
 
-  // delete an entry & update memory tracking
-  // call onEvict if configured
   private deleteEntry(key: K, entry: CacheEntry<V>): void {
     this.cache.delete(key);
     this._currentMemoryBytes -= entry.size;
@@ -251,7 +205,6 @@ export class LRUCache<K, V> {
     }
   }
 
-  // count non-protected entries (for capacity checking)
   private countEvictable(): number {
     if (!this._isProtected) {
       return this.cache.size;
@@ -265,7 +218,6 @@ export class LRUCache<K, V> {
     return count;
   }
 
-  // get memory used by non-protected entries
   private getEvictableMemory(): number {
     if (!this._isProtected) {
       return this._currentMemoryBytes;
@@ -279,8 +231,6 @@ export class LRUCache<K, V> {
     return memory;
   }
 
-  // evict oldest non-protected entry
-  // O(p) where p = number of protected entries at start of Map
   private evictOldestEvictable(): boolean {
     for (const [key, entry] of this.cache) {
       if (!this._isProtected || !this._isProtected(key, entry.value)) {
@@ -291,16 +241,13 @@ export class LRUCache<K, V> {
     return false;
   }
 
-  // evict entries until under limits (respects isProtected)
   private evictOverflow(): void {
-    // evict by count (only non-protected entries count against limit)
     while (this.countEvictable() > this._maxEntries) {
       if (!this.evictOldestEvictable()) {
         break;
       }
     }
 
-    // evict by memory (if configured, only non-protected memory counts)
     if (this._maxMemoryBytes && this._estimateSize) {
       while (
         this.getEvictableMemory() > this._maxMemoryBytes &&

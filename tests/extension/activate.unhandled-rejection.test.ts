@@ -1,13 +1,17 @@
 // tests/extension/activate.unhandled-rejection.test.ts
 // ensure unhandled promise rejections are logged without user popups
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   ErrorContext,
   ErrorSeverity,
 } from '../../packages/extension-host/src/shared/errors';
 import { mockErrorReporter } from '../helpers/mock-services';
-import { reportUnhandledPromiseRejection } from '../../packages/extension-host/src/entry/activate';
+import {
+  disposeUnhandledRejectionHandler,
+  registerUnhandledRejectionHandler,
+  reportUnhandledPromiseRejection,
+} from '../../packages/extension-host/src/entry/activate';
 
 describe('reportUnhandledPromiseRejection', () => {
   beforeEach(() => {
@@ -44,5 +48,54 @@ describe('reportUnhandledPromiseRejection', () => {
       showNotification: false,
       metadata: { rejectionValueType: 'string' },
     });
+  });
+});
+
+describe('registerUnhandledRejectionHandler', () => {
+  beforeEach(() => {
+    disposeUnhandledRejectionHandler();
+  });
+
+  afterEach(() => {
+    disposeUnhandledRejectionHandler();
+  });
+
+  it('registers one disposable process listener at a time', () => {
+    const onSpy = vi.spyOn(process, 'on').mockImplementation(() => process);
+    const offSpy = vi.spyOn(process, 'off').mockImplementation(() => process);
+    const context = { subscriptions: [] as Array<{ dispose: () => void }> };
+
+    registerUnhandledRejectionHandler(context as any);
+    registerUnhandledRejectionHandler(context as any);
+
+    expect(onSpy).toHaveBeenCalledTimes(1);
+    expect(onSpy).toHaveBeenCalledWith(
+      'unhandledRejection',
+      expect.any(Function)
+    );
+    expect(context.subscriptions).toHaveLength(1);
+
+    context.subscriptions[0].dispose();
+
+    expect(offSpy).toHaveBeenCalledTimes(1);
+    expect(offSpy).toHaveBeenCalledWith(
+      'unhandledRejection',
+      expect.any(Function)
+    );
+  });
+
+  it('can register again after disposal', () => {
+    const onSpy = vi.spyOn(process, 'on').mockImplementation(() => process);
+    vi.spyOn(process, 'off').mockImplementation(() => process);
+    const first = { subscriptions: [] as Array<{ dispose: () => void }> };
+    const second = { subscriptions: [] as Array<{ dispose: () => void }> };
+
+    registerUnhandledRejectionHandler(first as any);
+    first.subscriptions[0].dispose();
+    registerUnhandledRejectionHandler(second as any);
+
+    expect(onSpy).toHaveBeenCalledTimes(2);
+    expect(first.subscriptions).toHaveLength(1);
+    expect(second.subscriptions).toHaveLength(1);
   });
 });

@@ -83,11 +83,17 @@ export type PendingMessage =
   | { type: 'error'; payload: unknown }
   | { type: 'stale'; payload: unknown };
 
+interface QueuedHandlerFactoryOptions {
+  onMessageReceived?: (message: PendingMessage) => void;
+  shouldHandleDirectMessage?: (message: PendingMessage) => boolean;
+}
+
 // create factory context bound to module-level state
 export function createHandlerFactories(
   getHandlers: () => WebviewStateHandlers | null,
   enqueueFn: (msg: PendingMessage) => void,
-  enqueueOptionalFn?: (msg: PendingOptionalMessage) => void
+  enqueueOptionalFn?: (msg: PendingOptionalMessage) => void,
+  options: QueuedHandlerFactoryOptions = {}
 ) {
   // create QUEUED pattern handler
   function createQueuedHandler<TPayload, THandlerArgs extends unknown[]>(
@@ -110,9 +116,16 @@ export function createHandlerFactories(
         args.length === 1 ? args[0] : args.length > 1 ? args : undefined
       );
 
+      const payload = toPayload(...args);
+      const message = { type: messageType, payload } as PendingMessage;
+      options.onMessageReceived?.(message);
+
       const handlers = getHandlers();
       if (handlers) {
-        const payload = toPayload(...args);
+        if (options.shouldHandleDirectMessage?.(message) === false) {
+          return;
+        }
+
         const handlerArgs = toHandlerArgs(payload);
         const handler = handlers[handlerKey] as unknown as (
           ...a: THandlerArgs
@@ -121,7 +134,7 @@ export function createHandlerFactories(
         return;
       }
 
-      enqueueFn({ type: messageType, payload: toPayload(...args) });
+      enqueueFn(message);
     };
   }
 

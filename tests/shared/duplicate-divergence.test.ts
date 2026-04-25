@@ -1,58 +1,77 @@
 // tests/shared/duplicate-divergence.test.ts
-// document intentional divergence between GPL/MIT duplicate pairs (finding 14)
-// ! cross-repo parity: these tests make drift visible immediately
-// if a test fails, the divergence has changed & the audit matrix needs updating
+// document intentional GPL/MIT duplicate divergence
+// ! cross-repo duplicate: update audit if private-only behavior changes
 
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LRUCache } from '../../packages/runtime-utils/src/cache/lru-cache';
 import {
   isNpmModuleId,
-  isBareImport,
   isValidModuleRequest,
 } from '../../packages/runtime-utils/src/module-id';
 
-describe('LRU cache divergence contract (Finding 14)', () => {
-  // runtime-utils LRUCache supports TTL, clearWithEviction, protectedCount
-  // mdx-forge's copy does NOT have these features (simpler)
+afterEach(() => {
+  vi.useRealTimers();
+});
 
-  it('runtime-utils LRUCache supports TTL', () => {
-    const cache = new LRUCache<string, string>({ maxEntries: 10, ttlMs: 1000 });
-    cache.set('key', 'value');
-    expect(cache.get('key')).toBe('value');
-  });
+describe('LRU cache private runtime-utils surface', () => {
+  it('keeps TTL and eviction helpers outside the shared subset', () => {
+    vi.useFakeTimers();
+    const ttlEvicted: Array<[string, string]> = [];
+    const ttlCache = new LRUCache<string, string>({
+      maxEntries: 10,
+      ttlMs: 1000,
+      onEvict: (key, value) => ttlEvicted.push([key, value]),
+    });
 
-  it('runtime-utils LRUCache supports protectedCount', () => {
-    const cache = new LRUCache<string, number>({ maxEntries: 3 });
-    cache.set('a', 1);
-    cache.set('b', 2);
-    cache.set('c', 3);
-    // protectedCount tracks entries shielded from eviction
-    expect(typeof cache.protectedCount).toBe('number');
+    ttlCache.set('ttl-a', 'a');
+    ttlCache.set('ttl-b', 'b');
+    vi.advanceTimersByTime(1001);
+    expect(ttlCache.get('ttl-a')).toBeNull();
+    expect(ttlCache.pruneExpired()).toBe(1);
+    expect(ttlEvicted).toEqual([
+      ['ttl-a', 'a'],
+      ['ttl-b', 'b'],
+    ]);
+
+    const clearEvicted: Array<[string, number]> = [];
+    const clearCache = new LRUCache<string, number>({
+      maxEntries: 10,
+      onEvict: (key, value) => clearEvicted.push([key, value]),
+    });
+    clearCache.set('a', 1);
+    clearCache.set('b', 2);
+    clearCache.clearWithEviction();
+    expect(clearCache.size).toBe(0);
+    expect(clearEvicted).toEqual([
+      ['a', 1],
+      ['b', 2],
+    ]);
+
+    const protectedCache = new LRUCache<string, number>({
+      maxEntries: 1,
+      isProtected: (key) => key === 'keep',
+    });
+    protectedCache.set('keep', 1);
+    protectedCache.set('drop-1', 2);
+    protectedCache.set('drop-2', 3);
+    expect(protectedCache.protectedCount).toBe(1);
+    expect(Array.from(protectedCache.keys())).toEqual(['keep', 'drop-2']);
   });
 });
 
-describe('module-id divergence contract (Finding 14)', () => {
-  // runtime-utils exports isNpmModuleId, isBareImport, isValidModuleRequest
-  // mdx-forge's copy only exposes isBareImport (simpler)
-
-  it('runtime-utils exports isNpmModuleId', () => {
+describe('module ID private runtime-utils surface', () => {
+  it('keeps npm ID and request validation helpers outside mdx-forge', () => {
     expect(isNpmModuleId('npm://react@18')).toBe(true);
     expect(isNpmModuleId('./local')).toBe(false);
-  });
 
-  it('runtime-utils exports isValidModuleRequest', () => {
     expect(isValidModuleRequest('react')).toBe(true);
-    expect(isValidModuleRequest('http://evil.com')).toBe(false);
+    expect(isValidModuleRequest('node:fs')).toBe(true);
+    expect(isValidModuleRequest('npm://react@18')).toBe(true);
+    expect(isValidModuleRequest('http://example.com/pkg')).toBe(false);
     expect(isValidModuleRequest('file:///etc/passwd')).toBe(false);
-  });
-
-  it('isBareImport shared behavior matches mdx-forge contract', () => {
-    // these must match mdx-forge's isBareImport behavior exactly
-    expect(isBareImport('react')).toBe(true);
-    expect(isBareImport('lodash/merge')).toBe(true);
-    expect(isBareImport('./relative')).toBe(false);
-    expect(isBareImport('../parent')).toBe(false);
-    expect(isBareImport('/absolute')).toBe(false);
-    expect(isBareImport('npm://react@18')).toBe(false);
+    expect(isValidModuleRequest('data:text/javascript,export default 1')).toBe(
+      false
+    );
+    expect(isValidModuleRequest('bad\0request')).toBe(false);
   });
 });

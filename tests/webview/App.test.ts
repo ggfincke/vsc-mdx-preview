@@ -212,7 +212,7 @@ describe('App', () => {
     expect(html).toContain('Compilation failed');
   });
 
-  it('renders safe mode with trust banner and nextra metadata', () => {
+  it('renders preview content according to trust state', () => {
     appState.trustState = { canExecute: false };
     appState.isStale = true;
     appState.content = {
@@ -231,6 +231,25 @@ describe('App', () => {
     expect(html).toContain('Safe Page');
     expect(html).toContain('nextra-layout-full');
     expect(html).toContain('data-testid="stale-indicator"');
+
+    appState.content = {
+      mode: 'trusted',
+      code: 'export default function Demo() {}',
+      entryFilePath: '/workspace/doc.mdx',
+      dependencies: [],
+    };
+
+    const blockedTrustedHtml = renderAppToString();
+
+    expect(blockedTrustedHtml).toContain('data-testid="trust-banner"');
+    expect(mockTrustedPreviewRenderer).not.toHaveBeenCalled();
+
+    appState.trustState = { canExecute: true };
+
+    const allowedTrustedHtml = renderAppToString();
+
+    expect(allowedTrustedHtml).toContain('data-testid="trusted-preview"');
+    expect(mockTrustedPreviewRenderer).toHaveBeenCalledTimes(1);
   });
 
   it('opens external links on Ctrl/Cmd+click', () => {
@@ -256,5 +275,4 @@ describe('App', () => {
     expect(mockOpenExternal).toHaveBeenCalledWith('https://example.com');
     unmountApp(root);
   });
-
 });

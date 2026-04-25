@@ -115,6 +115,37 @@ export function reportUnhandledPromiseRejection(reason: unknown): void {
   }
 }
 
+function handleUnhandledPromiseRejection(reason: unknown): void {
+  reportUnhandledPromiseRejection(reason);
+}
+
+let unhandledRejectionDisposable: vscode.Disposable | null = null;
+
+export function registerUnhandledRejectionHandler(
+  context: vscode.ExtensionContext
+): void {
+  if (unhandledRejectionDisposable) {
+    return;
+  }
+
+  process.on('unhandledRejection', handleUnhandledPromiseRejection);
+  unhandledRejectionDisposable = {
+    dispose() {
+      process.off('unhandledRejection', handleUnhandledPromiseRejection);
+      unhandledRejectionDisposable = null;
+    },
+  };
+  context.subscriptions.push(unhandledRejectionDisposable);
+}
+
+export function disposeUnhandledRejectionHandler(): void {
+  unhandledRejectionDisposable?.dispose();
+}
+
+function reportBackgroundPromiseFailure(message: string, error: unknown): void {
+  log.error(message, error);
+}
+
 // set up workspace trust event handlers for trust grant & revoke
 function setupTrustHandlers(context: vscode.ExtensionContext): void {
   const workspaceWithTrust = vscode.workspace as typeof vscode.workspace & {
@@ -148,15 +179,24 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
     }
   };
 
+  const scheduleTrustChange = (trusted: boolean): void => {
+    void handleTrustChange(trusted).catch((error) => {
+      reportBackgroundPromiseFailure(
+        'Failed to handle workspace trust change',
+        error
+      );
+    });
+  };
+
   if (workspaceWithTrust.onDidChangeWorkspaceTrust) {
     // handle workspace trust changes (grant & revoke)
     context.subscriptions.push(
-      workspaceWithTrust.onDidChangeWorkspaceTrust(handleTrustChange)
+      workspaceWithTrust.onDidChangeWorkspaceTrust(scheduleTrustChange)
     );
   } else {
     // fallback for older VS Code versions (grant only)
     context.subscriptions.push(
-      vscode.workspace.onDidGrantWorkspaceTrust(() => handleTrustChange(true))
+      vscode.workspace.onDidGrantWorkspaceTrust(() => scheduleTrustChange(true))
     );
   }
 
@@ -167,7 +207,14 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
     getTrustManager().subscribe((state) => {
       if (state.canExecute !== lastCanExecute) {
         lastCanExecute = state.canExecute;
-        getPreviewManager().refreshAllPreviews();
+        void getPreviewManager()
+          .refreshAllPreviews()
+          .catch((error) => {
+            reportBackgroundPromiseFailure(
+              'Failed to refresh previews after trust change',
+              error
+            );
+          });
       }
     })
   );
@@ -180,9 +227,7 @@ export async function activate(
   log.debug('Starting extension activation...');
 
   // handle unhandled promise rejections
-  process.on('unhandledRejection', (reason: unknown) => {
-    reportUnhandledPromiseRejection(reason);
-  });
+  registerUnhandledRejectionHandler(context);
 
   // register services w/ centralized registry before using service locators
   // order matters: register services w/ no dependencies first, then dependent services
@@ -262,7 +307,12 @@ export async function activate(
   }
 
   // show safe mode notification if in untrusted workspace
-  showSafeModeNotificationIfNeeded(context);
+  void showSafeModeNotificationIfNeeded(context).catch((error) => {
+    reportBackgroundPromiseFailure(
+      'Failed to show safe mode notification',
+      error
+    );
+  });
 
   // set up trust event handlers
   setupTrustHandlers(context);
@@ -285,7 +335,14 @@ export async function activate(
   context.subscriptions.push(
     vscode.window.onDidChangeActiveColorTheme(() => {
       themeLog.debug('VS Code color theme changed, refreshing previews');
-      getPreviewManager().refreshAllPreviews();
+      void getPreviewManager()
+        .refreshAllPreviews()
+        .catch((error) => {
+          reportBackgroundPromiseFailure(
+            'Failed to refresh previews after theme change',
+            error
+          );
+        });
     })
   );
 
@@ -297,7 +354,9 @@ export async function activate(
       'Resolver & Sass caches cleared due to package file change'
     );
   });
-  void packageJsonWatcher.start();
+  void packageJsonWatcher.start().catch((error) => {
+    reportBackgroundPromiseFailure('Failed to start package watcher', error);
+  });
   context.subscriptions.push(packageJsonWatcher);
 
   log.debug('Extension activation complete');
@@ -305,6 +364,8 @@ export async function activate(
 
 // deactivate extension
 export function deactivate(): void {
+  disposeUnhandledRejectionHandler();
+
   // single disposal call - handle everything
   // 1. subsystems (resolver, meta) disposed first (reverse registration order)
   // 2. services disposed second (reverse registration order)

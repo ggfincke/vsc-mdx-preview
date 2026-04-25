@@ -133,6 +133,9 @@ function App() {
   // render preview content in Safe or Trusted Mode
   log.debug(`Rendering content in ${content.mode} mode`);
 
+  const shouldRenderTrustedContent =
+    content.mode === 'trusted' && trustState.canExecute;
+
   return (
     <div
       className={`mdx-preview-container ${nextraLayoutClass}`.trim()}
@@ -153,14 +156,14 @@ function App() {
           )}
           {content.mode === 'safe' ? (
             <SafePreviewRenderer html={content.html} />
-          ) : (
+          ) : shouldRenderTrustedContent ? (
             <TrustedPreviewRenderer
               content={content as TrustedPreviewContent}
               evaluatedComponent={evaluatedComponent}
               onComponentReady={setEvaluatedComponent}
               onError={setError}
             />
-          )}
+          ) : null}
         </div>
       </MDXErrorBoundary>
     </div>
