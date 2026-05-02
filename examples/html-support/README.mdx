@@ -1,0 +1,100 @@
+---
+title: HTML Pass-Through (Safe Mode)
+description: Demonstrates intrinsic HTML elements written as JSX rendering as real HTML in Safe Mode
+tags: [safe-mode, html, intrinsic-elements]
+---
+
+# HTML Pass-Through (Safe Mode)
+
+This example demonstrates that intrinsic HTML elements written as JSX in MDX render as real HTML in **Safe Mode**, not as "unknown component" placeholders.
+
+This works because the Safe Mode pipeline includes `rehype-raw`, which parses serialized HTML nodes into proper HAST elements, and the compiler recognizes the standard HTML element names.
+
+> [!NOTE]
+> This example is forced into Safe Mode via `.mdx-previewrc.json` (`"enableScripts": false`). You'll see the pass-through behavior even with Trusted Mode enabled in your VS Code settings.
+
+---
+
+## Block Elements
+
+A `<div>` with inline styles renders as a real `<div>`:
+
+<div style={{ padding: '1rem', border: '1px solid #888', borderRadius: '8px', background: '#f5f5f5' }}>
+  This is a styled <code>div</code>. The element, attributes, and inline styles all pass through.
+</div>
+
+A `<figure>` with `<figcaption>`:
+
+<figure>
+  <div style={{ height: '120px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '6px' }} />
+  <figcaption style={{ marginTop: '0.5rem', fontStyle: 'italic', color: '#666' }}>
+    Figure 1 — A gradient placeholder rendered via intrinsic HTML elements.
+  </figcaption>
+</figure>
+
+---
+
+## Tables
+
+JSX-written tables also pass through (useful when you need column attributes that Markdown table syntax can't express):
+
+<table>
+  <thead>
+    <tr>
+      <th>Element</th>
+      <th>Tag</th>
+      <th>Pass-through?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Division</td>
+      <td><code>&lt;div&gt;</code></td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>Figure</td>
+      <td><code>&lt;figure&gt;</code></td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td>Custom component</td>
+      <td><code>&lt;MyButton&gt;</code></td>
+      <td>No (placeholder in Safe Mode)</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## What Gets a Placeholder
+
+Capitalized tag names that are **not** intrinsic HTML elements render as placeholders in Safe Mode, since Safe Mode doesn't execute imports or JSX. The behavior is controlled by `mdx-preview.components.unknownBehavior` (`placeholder` by default; can be `strip` or `raw`).
+
+<MyCustomComponent label="example" />
+
+The element above is an unknown component — it renders as a placeholder, not real HTML.
+
+---
+
+## Standard Markdown Still Works
+
+Of course, regular Markdown elements work as before:
+
+| Standard Table | Renders | Like |
+| -------------- | ------- | ---- |
+| Markdown       | This    | One  |
+
+```typescript
+const greeting = 'hello, html pass-through';
+```
+
+> Blockquotes, code, lists — all unchanged.
+
+---
+
+## See Also
+
+- [Safe Mode example](../safe-mode/README.mdx) — broader Safe Mode capability/restriction tour
+- [Generic shims example](../generic-shims/README.mdx) — built-in component shims that *do* render in Safe Mode
+- [Security model](../../docs/security.md) — why Safe Mode is the default

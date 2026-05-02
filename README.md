@@ -19,6 +19,7 @@ A modern, actively maintained successor to the original [MDX Preview](https://ma
 - **GitHub Alerts** - NOTE, TIP, WARNING, CAUTION, IMPORTANT callouts
 - **Image Lightbox** - Fullscreen image viewer with gallery navigation, zoom, and pan
 - **Preview Zoom** - Preview-scoped zoom commands without changing VS Code's global zoom
+- **Export to HTML** - Save the rendered preview as a standalone `.html` file from the toolbar or command palette
 - **Authoring Feedback** - Source-line highlighting, MDX outline, symbols, and frontmatter-aware completions
 - **Custom Plugins** - Load remark/rehype plugins from your project
 - **TypeScript Preview** - Preview `.tsx`/`.ts` files that render to `#root`
@@ -136,6 +137,8 @@ See [Security](./docs/security.md) for the full security model.
 | `mdx-preview.components.unknownBehavior`       | `"placeholder"`      | Unknown component handling: `strip`, `placeholder`, `raw`   |
 | `mdx-preview.diagrams.plantUmlServer`          | `"https://kroki.io"` | PlantUML server URL                                         |
 | `mdx-preview.build.useSucraseTranspiler`       | `false`              | Use Sucrase instead of Babel                                |
+
+This table covers the most common settings. See [Configuration](./docs/configuration.md) for the full reference, including Tailwind tuning (`mdx-preview.tailwind.*`) and advanced options (`mdx-preview.advanced.*`).
 
 ## Webview Limitations
 

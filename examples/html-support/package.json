@@ -1,0 +1,5 @@
+{
+  "name": "mdx-preview-html-support-example",
+  "description": "MDX Preview example demonstrating HTML intrinsic-element pass-through in Safe Mode",
+  "private": true
+}

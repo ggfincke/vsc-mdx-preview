@@ -75,19 +75,19 @@ vsc-mdx-preview/
 
 ### Core Build and Test
 
-| Script                         | Description                             |
-| ------------------------------ | --------------------------------------- |
-| `npm run build`                | Build extension and webview             |
-| `npm run build:extension`      | Build extension host only               |
-| `npm run build:webview-client` | Build webview client directly           |
-| `npm run build:webview-app`    | Legacy alias for `build:webview-client` |
-| `npm run watch`                | Watch extension host changes            |
-| `npm run start:webview-client` | Run the webview Vite dev server         |
-| `npm run start:webview-app`    | Legacy alias for `start:webview-client` |
-| `npm test`                     | Run the production-critical suite       |
-| `npm run test:webview`         | Run webview-focused tests               |
-| `npm run test:all`             | Run all configured tests                |
-| `npm run test:integration`     | Run VS Code integration tests           |
+| Script                         | Description                                              |
+| ------------------------------ | -------------------------------------------------------- |
+| `npm run build`                | Build extension and webview                              |
+| `npm run build:extension`      | Build extension host only                                |
+| `npm run build:webview-client` | Build webview client directly                            |
+| `npm run build:webview-app`    | Legacy alias for `build:webview-client`                  |
+| `npm run watch`                | Watch extension host changes                             |
+| `npm run start:webview-client` | Run the webview Vite dev server                          |
+| `npm run start:webview-app`    | Legacy alias for `start:webview-client`                  |
+| `npm test`                     | Run the production-critical suite (extension + webview)  |
+| `npm run test:watch`           | Watch mode for the production-critical suite             |
+| `npm run test:webview`         | Run only the `tests/webview/` subdirectory               |
+| `npm run test:all`             | Alias for `npm test` — same vitest config & files        |
 
 ### Quality and Guardrails
 
@@ -139,9 +139,9 @@ When Trusted Mode is allowed, the extension compiles MDX to JavaScript and the w
 
 The repository intentionally keeps the test surface small and production-focused.
 
-- `tests/` contains the enforced production-critical suites
-- `packages/extension-host/test/__mocks__/vscode.ts` provides VS Code mocks for unit tests
-- `vitest.integration.config.ts` runs integration coverage inside a real VS Code environment
+- `tests/` contains the enforced production-critical suites; `tests/vitest.config.ts` is the single test config
+- `packages/extension-host/test/__mocks__/vscode.ts` provides VS Code mocks so unit tests can exercise extension code without an Extension Development Host
+- VS Code API integration is covered through the mocked-vscode unit suite; there is no separate integration runner
 
 See [`../tests/README.md`](../tests/README.md) for the current test philosophy and allowlist.
 
