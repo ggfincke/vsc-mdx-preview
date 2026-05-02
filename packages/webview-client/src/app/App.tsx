@@ -24,6 +24,7 @@ import { classifyLink } from '../shared/utils/linkHandler';
 import type { TrustedPreviewContent } from './types';
 import { useTheme } from '../features/theme/runtime';
 import { useTrust, usePreview, useLoading, useUIFlags } from './state';
+import { PREVIEW_CONTENT_CLASS, PREVIEW_ROOT_CLASS } from './constants';
 import './styles/App.css';
 import '../features/preview/shared/styles/admonitions.css';
 // base generic shim styles from extracted doc-components library
@@ -114,7 +115,7 @@ function App() {
       errorObj.moduleError = error.moduleError;
     }
     return (
-      <div className="mdx-preview-container">
+      <div className={PREVIEW_ROOT_CLASS}>
         <ErrorDisplay
           error={errorObj}
           onReset={clearError}
@@ -138,7 +139,7 @@ function App() {
 
   return (
     <div
-      className={`mdx-preview-container ${nextraLayoutClass}`.trim()}
+      className={`${PREVIEW_ROOT_CLASS} ${nextraLayoutClass}`.trim()}
       onClick={handleLinkClick}
       style={zoomLevel !== 1 ? { zoom: zoomLevel } : undefined}
       data-mpe-theme-active={previewTheme !== 'none' ? 'true' : undefined}
@@ -150,7 +151,7 @@ function App() {
       <MDXErrorBoundary
         onError={(err) => setError({ message: err.message, stack: err.stack })}
       >
-        <div className="mdx-preview-content">
+        <div className={PREVIEW_CONTENT_CLASS}>
           {nextraMeta?.title && (
             <h1 className="nextra-page-title">{nextraMeta.title}</h1>
           )}

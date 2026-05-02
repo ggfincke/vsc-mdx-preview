@@ -25,6 +25,7 @@ import { createRpcMessageQueue } from './rpc-message-queue';
 import { createRpcRegistration } from './rpc-registration';
 import { loadModuleSystem } from './module-system-loader';
 import { canAcceptContentMode } from './content-mode-guard';
+import { createExportableHtml } from './export-html';
 
 const log = createTaggedLogger(LogTags.RPC_WEBVIEW);
 
@@ -225,6 +226,11 @@ class RPCWebviewHandle implements WebviewRPC {
     const styleElements = document.querySelectorAll('style[data-mdx-module]');
     styleElements.forEach((el) => el.remove());
     log.debug('clearAllCaches complete');
+  }
+
+  async getExportableHtml(): Promise<string> {
+    log.debug('getExportableHtml called');
+    return createExportableHtml();
   }
 }
 

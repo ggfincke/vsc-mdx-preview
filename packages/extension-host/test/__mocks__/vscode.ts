@@ -433,6 +433,11 @@ export const workspace = {
       uri.fsPath.startsWith(folder.uri.fsPath)
     );
   },
+  fs: {
+    writeFile: async (_uri: Uri, _content: Uint8Array): Promise<void> => {},
+    readFile: async (_uri: Uri): Promise<Uint8Array> => new Uint8Array(),
+    stat: async (_uri: Uri): Promise<unknown> => ({}),
+  },
 };
 
 const activeEditorEmitter = new EventEmitter<any>();
@@ -444,6 +449,7 @@ export const window = {
   onDidChangeActiveTextEditor: (handler: EventHandler<any>): Disposable =>
     activeEditorEmitter.event(handler),
   showQuickPick: async (_items: any, _options?: any): Promise<any> => undefined,
+  showSaveDialog: async (_options?: any): Promise<Uri | undefined> => undefined,
   showInformationMessage: async (
     _msg: string,
     ..._items: any[]

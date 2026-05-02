@@ -58,4 +58,5 @@ export interface WebviewRPC {
   setSourceLineHighlightColor(mode: SourceLineHighlightColorValue): void;
   setShimSideRail(enabled: boolean): void;
   setZoom(level: number): void;
+  getExportableHtml(): Promise<string>;
 }
