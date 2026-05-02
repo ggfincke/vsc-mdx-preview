@@ -40,6 +40,9 @@ export const CommandNames = {
   // authoring guide commands
   COPY_AUTHORING_GUIDE: 'mdx-preview.commands.copyAuthoringGuide',
 
+  // export commands
+  EXPORT_TO_HTML: 'mdx-preview.commands.exportToHtml',
+
   // zoom commands
   ZOOM_IN: 'mdx-preview.commands.zoomIn',
   ZOOM_OUT: 'mdx-preview.commands.zoomOut',

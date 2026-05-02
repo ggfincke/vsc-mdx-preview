@@ -24,6 +24,7 @@ import { commands as frameworkSelectionCommands } from './framework-selection';
 import { commands as cacheCommands } from './cache';
 import { commands as configInfoCommands } from './config-info';
 import { commands as simpleCommands } from './simple-commands';
+import { commands as exportCommands } from './export';
 import { commands as zoomCommands } from './zoom';
 
 import type { CommandDefinition, UriCommandDefinition } from './types';
@@ -39,6 +40,7 @@ const allCommands: CommandDefinition[] = [
   ...cacheCommands,
   ...configInfoCommands,
   ...simpleCommands,
+  ...exportCommands,
   ...zoomCommands,
 ];
 

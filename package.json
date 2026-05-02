@@ -199,6 +199,12 @@
         "category": "MDX"
       },
       {
+        "command": "mdx-preview.commands.exportToHtml",
+        "title": "Export Preview as HTML",
+        "category": "MDX",
+        "icon": "$(save-as)"
+      },
+      {
         "command": "mdx-preview.commands.zoomIn",
         "title": "Zoom In",
         "category": "MDX"
@@ -238,6 +244,11 @@
         },
         {
           "command": "mdx-preview.commands.refreshPreview",
+          "when": "mdxPreviewFocus",
+          "group": "navigation"
+        },
+        {
+          "command": "mdx-preview.commands.exportToHtml",
           "when": "mdxPreviewFocus",
           "group": "navigation"
         }
