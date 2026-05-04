@@ -1,6 +1,6 @@
 # Security Model
 
-> Last security review: 2026-02-02
+> Last security review: 2026-04-24
 
 MDX Preview implements a defense-in-depth security model with two rendering modes to balance functionality with protection. This document covers the trust model, Content Security Policy, Safe Mode, Trusted Mode, and security best practices.
 
@@ -62,6 +62,25 @@ This two-factor approach ensures:
 - Opening an untrusted folder doesn't enable code execution
 - Users must explicitly opt-in via both VS Code trust and extension setting
 - Revoking either factor immediately disables Trusted Mode
+
+### Webview-Side Trust Gating
+
+Trust enforcement is **not** extension-only. The webview also discards trusted-mode RPC payloads it shouldn't have received, in case they slip through during a trust-state change or before the trust handshake completes:
+
+```typescript title="packages/webview-client/src/platform/rpc/content-mode-guard.ts"
+export function canAcceptContentMode(
+  trustState: TrustState | null,
+  contentMode: 'safe' | 'trusted',
+  log: TaggedLogger
+): boolean {
+  if (contentMode !== 'trusted') return true;
+  if (trustState?.canExecute === true) return true;
+  log.warn('Discarding trusted content - trust state not canExecute');
+  return false;
+}
+```
+
+Both the queued-message flow (`rpc-message-queue.ts`) and the direct-handler flow (`webview-rpc-client.ts`) consult this guard before applying any trusted payload. The webview's trust state is replicated from the extension via `setTrustState(...)` and is shared with the queue through the `getTrustState` / `onTrustStateChange` callbacks passed to `createRpcMessageQueue(...)`.
 
 ### Trust State Management
 
@@ -261,30 +280,49 @@ fn(exports, requireFn, module);
 
 ### CSP Generation
 
-CSP headers are dynamically generated based on trust state:
+CSP is generated from a small `CSPOptions` record (webview, nonce, eval policy, optional extra `connect-src` sources). `getCSP(...)` resolves the trust-aware eval policy and delegates to `generateCSP(...)`:
 
-```typescript
-function getCSP(
-  webview: vscode.Webview,
-  nonce: string,
-  trustState: TrustState
-): string {
-  const allowUnsafeEval = trustState.canExecute;
+```typescript title="packages/extension-host/src/features/security/CSP.ts"
+export interface CSPOptions {
+  webview: vscode.Webview;
+  nonce: string;
+  allowUnsafeEval: boolean;
+  connectSrc?: string[];
+}
 
+export function generateCSP(options: CSPOptions): string {
+  const { webview, nonce, allowUnsafeEval, connectSrc } = options;
   const scriptSrc = allowUnsafeEval
-    ? `${webview.cspSource} 'nonce-${nonce}' 'unsafe-eval'`
-    : `${webview.cspSource} 'nonce-${nonce}'`;
+    ? `${webview.cspSource} 'nonce-${nonce}' 'unsafe-eval' 'wasm-unsafe-eval'`
+    : `${webview.cspSource} 'nonce-${nonce}' 'wasm-unsafe-eval'`;
+  const connectSources = buildConnectSources(webview, connectSrc);
 
   return [
     "default-src 'none'",
     `img-src ${webview.cspSource} https: data:`,
     `style-src ${webview.cspSource} 'unsafe-inline'`,
     `script-src ${scriptSrc}`,
-    `connect-src ${webview.cspSource}`,
+    `connect-src ${connectSources.join(' ')}`,
     `font-src ${webview.cspSource}`,
   ].join('; ');
 }
+
+export function getCSP(
+  webview: vscode.Webview,
+  nonce: string,
+  trustState: TrustState,
+  securityPolicy: SecurityPolicy = SecurityPolicy.Strict
+): string {
+  if (securityPolicy === SecurityPolicy.Disabled) return '';
+  return generateCSP({
+    webview,
+    nonce,
+    allowUnsafeEval: trustState.canExecute,
+  });
+}
 ```
+
+The optional `connectSrc` extension list (deduplicated against `webview.cspSource`) is what lets opt-in subsystems such as the PlantUML/Kroki client whitelist their server origin without weakening the rest of the policy.
 
 ### CSP Directives Explained
 
@@ -400,6 +438,29 @@ function compileDocument(doc: vscode.TextDocument) {
   }
 }
 ```
+
+### Try Pattern (non-throwing)
+
+Use when you want a single guard call to either return the validated `TrustState` or short-circuit cleanly. This is what the RPC handler uses on every `fetch(...)` request, since a `TrustError` thrown from inside a Comlink call would surface as an opaque rejected promise on the webview side:
+
+```typescript
+import {
+  tryRequireTrustedModeForDocument,
+  type TrustError,
+} from './security/validateTrust';
+
+const trustState = tryRequireTrustedModeForDocument(
+  docUri,
+  'fetch and evaluate modules',
+  (error: TrustError) => {
+    log.warn('refused module fetch', { reason: error.message });
+  }
+);
+
+if (!trustState) return undefined; // gracefully refused, no throw
+```
+
+Both `tryRequireTrustedMode(...)` and `tryRequireTrustedModeForDocument(...)` return `TrustState | undefined` and re-throw any non-`TrustError` exception. The optional callback runs once, before the function returns `undefined`, so callers can attach context-specific logging without writing their own `try/catch`.
 
 ### TrustError Handling
 
@@ -560,18 +621,22 @@ If you discover a security vulnerability:
 
 ## Known Vulnerabilities
 
-MDX Preview maintains awareness of dependency vulnerabilities via `npm audit`. The following moderate vulnerabilities are accepted risks:
+MDX Preview tracks dependency vulnerabilities via `npm audit` and addresses any high-severity advisory affecting production code paths. The following moderate-severity advisories are currently accepted risks:
 
-### esbuild Request Forgery (GHSA-67mh-4wv8-2f99)
+### uuid `Buffer` Bounds Check (GHSA-w5hq-g745-h8pq)
 
-**Path:** `vitest -> vite -> esbuild`
+**Path:** transitive via `@azure/msal-node` and `mermaid`
 
-**Assessment:** No production risk
-- Development dependency only
-- Not included in extension bundle
-- Only affects local dev server during testing
+**Assessment:** No production risk for the extension
+- Affects v3/v5/v6 generation when callers pass a custom `buf` argument to `uuid.*` — neither dependency does that with attacker-controlled input
+- `@azure/msal-node` is reachable only via Microsoft auth flows that the extension does not invoke
+- `mermaid` runs in the sandboxed webview and uses `uuid` for internal node IDs only
 
-**Mitigation:** Will update when vitest 4.x stabilizes.
+**Mitigation:** Will update when both upstreams cut releases pinned to `uuid >= 14`.
+
+### Triage Policy
+
+We do not enumerate every transitive moderate advisory here — `npm audit` is the source of truth. This section only documents advisories that we have actively reviewed and chosen not to mitigate, and the rationale. Any high-severity advisory affecting bundled extension code is patched in a point release (see CHANGELOG entries tagged **Security**).
 
 ---
 

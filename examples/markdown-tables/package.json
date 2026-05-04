@@ -1,0 +1,5 @@
+{
+  "name": "mdx-preview-markdown-tables-example",
+  "description": "MDX Preview example demonstrating GFM table rendering & per-column alignment",
+  "private": true
+}

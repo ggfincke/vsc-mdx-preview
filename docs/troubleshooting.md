@@ -663,6 +663,32 @@ Command Palette > Developer: Reload Window
 
 ---
 
+## Export to HTML Issues
+
+### "MDX Preview: Open a preview before exporting HTML"
+
+**Cause:** The `MDX: Export Preview as HTML` command was triggered with no active preview.
+
+**Solution:** Open a preview (`Ctrl+K X` / `Cmd+K X` on an `.mdx`/`.md` file) first, then re-run the command from the command palette or click the export button in the preview toolbar.
+
+### Export saves but the file looks unstyled
+
+**Cause:** The exported HTML inlines the styles that were applied at the moment of export. If the preview hadn't fully loaded a custom theme, Tailwind layer, or KaTeX/Mermaid CSS yet, the snapshot can ship without those rules.
+
+**Solution:**
+
+1. Wait for the preview to finish rendering (loading bar idle, no spinners) before exporting
+2. If you depend on Tailwind, make sure Trusted Mode is active so Tailwind has run — Safe Mode does not compile Tailwind
+3. Re-run `MDX: Refresh Preview` and then re-export
+
+### Exported file references local images that don't resolve
+
+**Cause:** The export pulls images from the rendered DOM. If those images use webview-internal URIs, opening the saved `.html` outside VS Code can't resolve them.
+
+**Solution:** Use absolute `https:` image URLs (or inline `data:` images) in your MDX when you intend to share the exported HTML outside VS Code.
+
+---
+
 ## Remote Development Issues
 
 ### "Trusted Mode not available"
@@ -683,16 +709,18 @@ Command Palette > Developer: Reload Window
 
 ## Common Error Messages
 
-| Error                     | Cause                        | Solution                               |
-| ------------------------- | ---------------------------- | -------------------------------------- |
-| "Module not found"        | Import path incorrect        | Check path and file existence          |
-| "TrustError"              | Not in Trusted Mode          | Enable workspace trust and scripts     |
-| "SecurityError"           | Path validation failed       | Keep imports within workspace          |
-| "Parse error"             | Syntax error in MDX          | Check MDX/JSX syntax                   |
-| "Circular dependency"     | Module cycle detected        | Refactor to break cycle                |
-| "Plugin load failed"      | Plugin not installed         | Install plugin: `npm install <plugin>` |
-| "Tailwind compile failed" | Tailwind configuration error | Check tailwind.config.js               |
-| "Sass not found"          | sass package missing         | `npm install sass`                     |
+| Error                                         | Cause                              | Solution                                  |
+| --------------------------------------------- | ---------------------------------- | ----------------------------------------- |
+| "Module not found"                            | Import path incorrect              | Check path and file existence             |
+| "TrustError"                                  | Not in Trusted Mode                | Enable workspace trust and scripts        |
+| "SecurityError"                               | Path validation failed             | Keep imports within workspace             |
+| "Parse error"                                 | Syntax error in MDX                | Check MDX/JSX syntax                      |
+| "Circular dependency"                         | Module cycle detected              | Refactor to break cycle                   |
+| "Plugin load failed"                          | Plugin not installed               | Install plugin: `npm install <plugin>`    |
+| "Tailwind compile failed"                     | Tailwind configuration error       | Check tailwind.config.js                  |
+| "Sass not found"                              | sass package missing               | `npm install sass`                        |
+| "Open a preview before exporting HTML"        | No active preview when exporting   | Open a preview first, then re-export      |
+| "Failed to export HTML — ..."                 | Preview DOM serialization failed   | Refresh preview, retry; check Output logs |
 
 ---
 

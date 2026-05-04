@@ -871,5 +871,6 @@ const data = await response.json();
 | Tailwind CSS | `className="flex ..."` (Trusted Mode) |
 | MDX transclusion | `import X from './X.mdx'; <X />` (Trusted Mode) |
 | Custom layout | `export default Layout` (Trusted Mode) |
+| Export to HTML | `MDX: Export Preview as HTML` (toolbar or palette) |
 | Config file | `.mdx-previewrc.json` |
 ````
