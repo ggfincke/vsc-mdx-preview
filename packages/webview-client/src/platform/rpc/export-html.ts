@@ -2,10 +2,7 @@
 // export rendered preview DOM as a standalone HTML document
 
 import { LogTags } from '@mdx-preview/contracts';
-import {
-  PREVIEW_CONTENT_CLASS,
-  PREVIEW_ROOT_CLASS,
-} from '../../app/constants';
+import { PREVIEW_CONTENT_CLASS, PREVIEW_ROOT_CLASS } from '../../app/constants';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
 
 const log = createTaggedLogger(LogTags.RPC_WEBVIEW);
