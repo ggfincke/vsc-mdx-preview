@@ -7,10 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.7] - 2026-05-05
+
 ### Added
 
 - **Export Preview as HTML**: New `MDX: Export Preview as HTML` command saves the rendered preview to a standalone `.html` file via a save dialog; available from the command palette and the preview toolbar (`editor/title`) when a preview is focused
 - **RPC**: Webview `getExportableHtml()` method serializes the live preview DOM (including injected styles) into a self-contained HTML document for the export command
+
+### Fixed
+
+- **Dependencies**: Dedupe `mdx-forge` to ^0.4.2 across the root and all workspaces so nested 0.3.1 installs disappear from the lockfile; drop the conditional `import('mdx-forge/components/generic')` path from preload codegen so generic shim loaders reuse the same static import binding as the eager preloader
+
+### Infrastructure
+
+- **Guardrails**: New `check:mdx-forge-deps` script fails CI on mismatched ranges or nested `mdx-forge` installs; added regression test asserting the generated preload source never reintroduces the dynamic `mdx-forge/components/generic` import
 
 ## [1.3.5] - 2026-04-24
 
