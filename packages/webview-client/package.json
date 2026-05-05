@@ -19,7 +19,7 @@
     "comlink": "^4.4.1",
     "dompurify": "^3.4.2",
     "katex": "^0.16.45",
-    "mdx-forge": "^0.3.1",
+    "mdx-forge": "^0.4.2",
     "mermaid": "^11.14.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
