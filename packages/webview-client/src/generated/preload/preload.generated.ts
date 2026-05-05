@@ -72,18 +72,15 @@ export function preloadGenericShims(registry: ModuleRegistry): void {
   });
 }
 
-// individual lazy loaders for conditional generic shim preloading
+// conditional generic shim preloaders
 export const GENERIC_SHIM_LOADERS: Record<
   string,
   (registry: ModuleRegistry) => Promise<void>
 > = {
   Callout: async (registry: ModuleRegistry) => {
-    const component = await import('mdx-forge/components/generic').then(
-      (m) => m.Callout
-    );
     preloadEntry(registry, {
       id: 'npm://@mdx-preview/shims-generic/Callout',
-      exports: createComponentModule(component, [
+      exports: createComponentModule(generic_Callout, [
         'Callout',
         'Alert',
         'Admonition',
@@ -99,12 +96,9 @@ export const GENERIC_SHIM_LOADERS: Record<
     });
   },
   Collapsible: async (registry: ModuleRegistry) => {
-    const component = await import('mdx-forge/components/generic').then(
-      (m) => m.Collapsible
-    );
     preloadEntry(registry, {
       id: 'npm://@mdx-preview/shims-generic/Collapsible',
-      exports: createComponentModule(component, [
+      exports: createComponentModule(generic_Collapsible, [
         'Collapsible',
         'Accordion',
         'Details',
@@ -120,22 +114,16 @@ export const GENERIC_SHIM_LOADERS: Record<
     });
   },
   Tabs: async (registry: ModuleRegistry) => {
-    const component = await import('mdx-forge/components/generic').then(
-      (m) => m.Tabs
-    );
     preloadEntry(registry, {
       id: 'npm://@mdx-preview/shims-generic/Tabs',
-      exports: createComponentModule(component, ['Tabs']),
+      exports: createComponentModule(generic_Tabs, ['Tabs']),
       aliases: ['@mdx-preview/shims/generic/Tabs', 'Tabs'],
     });
   },
   TabItem: async (registry: ModuleRegistry) => {
-    const component = await import('mdx-forge/components/generic').then(
-      (m) => m.TabItem
-    );
     preloadEntry(registry, {
       id: 'npm://@mdx-preview/shims-generic/TabItem',
-      exports: createComponentModule(component, ['TabItem', 'Tab']),
+      exports: createComponentModule(generic_TabItem, ['TabItem', 'Tab']),
       aliases: [
         '@mdx-preview/shims/generic/Tab',
         '@mdx-preview/shims/generic/TabItem',
@@ -145,12 +133,9 @@ export const GENERIC_SHIM_LOADERS: Record<
     });
   },
   CodeGroup: async (registry: ModuleRegistry) => {
-    const component = await import('mdx-forge/components/generic').then(
-      (m) => m.CodeGroup
-    );
     preloadEntry(registry, {
       id: 'npm://@mdx-preview/shims-generic/CodeGroup',
-      exports: createComponentModule(component, ['CodeGroup']),
+      exports: createComponentModule(generic_CodeGroup, ['CodeGroup']),
       aliases: ['@mdx-preview/shims/generic/CodeGroup', 'CodeGroup'],
     });
   },

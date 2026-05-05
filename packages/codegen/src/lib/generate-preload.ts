@@ -168,17 +168,10 @@ function generateGenericPreloadFunction(
         `  preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createComponentModule(${importVar}, ${exportNamesJson}), aliases: ${aliasesJson} });`
       );
 
-      const loaderExpression = relativeImport.startsWith(
-        'mdx-forge/components/'
-      )
-        ? `import('${relativeImport}').then(m => m.${entry.importName ?? entry.name})`
-        : `import('${relativeImport}').then(m => m.default)`;
-
-      // generate individual lazy loader for conditional preloading
+      // register conditionally using static generic imports
       loaderEntries.push(
         `  '${entry.name}': async (registry: ModuleRegistry) => {
-    const component = await ${loaderExpression};
-    preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createComponentModule(component, ${exportNamesJson}), aliases: ${aliasesJson} });
+    preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createComponentModule(${importVar}, ${exportNamesJson}), aliases: ${aliasesJson} });
   }`
       );
     } else {
@@ -195,7 +188,7 @@ export function preloadGenericShims(registry: ModuleRegistry): void {
 ${preloadLines.join('\n')}
 }`;
 
-  const loaders = `// individual lazy loaders for conditional generic shim preloading
+  const loaders = `// conditional generic shim preloaders
 export const GENERIC_SHIM_LOADERS: Record<string, (registry: ModuleRegistry) => Promise<void>> = {
 ${loaderEntries.join(',\n')}
 };`;

@@ -51,6 +51,7 @@ const EXACT_ALLOWED = new Set([
   'tests/webview/TrustedPreview.test.ts',
   'tests/webview/module-system-loader.test.ts',
   'tests/webview/preload-atomic-registration.test.ts',
+  'tests/webview/preload-generation.test.ts',
   'tests/webview/safe-mode-processing.test.ts',
   'tests/webview/shimLoader.test.ts',
   'tests/webview/webview-rpc-client.test.ts',
