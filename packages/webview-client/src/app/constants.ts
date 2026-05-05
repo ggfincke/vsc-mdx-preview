@@ -9,10 +9,8 @@ export const CODE_COPY_FEEDBACK_DURATION_MS = 2000;
 // delay before showing loading bar to prevent flicker (ms)
 export const LOADING_BAR_SHOW_DELAY_MS = 500;
 
-// preview DOM class names — shared between App rendering and export pipeline
-// so renaming either side does not silently break HTML export.
-// CSS files (App.css, vscode-dark-adapter.css) hard-code these too;
-// keep all four in sync.
+// preview DOM class names shared by App, export pipeline & CSS
+// keep constants, selectors & style rules in sync
 export const PREVIEW_ROOT_CLASS = 'mdx-preview-container';
 export const PREVIEW_CONTENT_CLASS = 'mdx-preview-content';
 
