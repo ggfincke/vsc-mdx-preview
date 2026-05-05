@@ -27,9 +27,8 @@ export async function createExportableHtml(): Promise<string> {
   removeRuntimeOnlyStyles(exportRoot);
   removeExecutableContent(exportRoot);
 
-  // image inlining and stylesheet collection both perform network fetches and
-  // do not depend on each other — running them in parallel halves export
-  // latency for documents with many remote resources.
+  // run image inlining & stylesheet collection in parallel
+  // avoid serial fetch latency for remote-heavy documents
   const [, styleBlocks] = await Promise.all([
     inlineImages(contentClone),
     collectStyleBlocks(),
@@ -49,9 +48,8 @@ export async function createExportableHtml(): Promise<string> {
   });
 }
 
-// strip transient runtime-only inline styles (e.g. user zoom level) from the
-// cloned root. Data attributes like data-mpe-theme-active are kept because
-// CSS rules in the collected style blocks key on them.
+// strip transient runtime-only inline styles from cloned root
+// keep data attributes used by collected style blocks
 function removeRuntimeOnlyStyles(root: HTMLElement): void {
   root.style.removeProperty('zoom');
   if (!root.getAttribute('style')?.trim()) {
@@ -185,9 +183,7 @@ async function inlineImages(root: HTMLElement): Promise<void> {
       image.setAttribute('src', dataUri);
       image.removeAttribute('srcset');
     }),
-    // <picture><source srcset="..."> would otherwise still point at the
-    // original CDN in the exported file. Strip them so the <img> data URI
-    // is the only candidate.
+    // strip picture source candidates so exported files use data URI images
     ...sources.map(async (source) => {
       source.removeAttribute('srcset');
     }),
@@ -270,8 +266,8 @@ async function fetchAsDataUri(
   }
 }
 
-// returns null on timeout or network error so callers can keep partial
-// progress instead of aborting the whole export.
+// return null on timeout or network error
+// let callers preserve partial export progress
 async function fetchWithTimeout(url: string): Promise<Response | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -284,11 +280,8 @@ async function fetchWithTimeout(url: string): Promise<Response | null> {
   }
 }
 
-// FileReader.readAsDataURL would be cleaner but is unreliable in our vitest
-// jsdom environment when fetch returns a Node-native Response (jsdom's
-// FileReader rejects the resulting Node Blob). Manual encoding works in both
-// the real webview and the test env. Chunking keeps String.fromCharCode under
-// the JS engine arg-count limit on large assets.
+// encode manually for webview & vitest Blob compatibility
+// chunk bytes to stay under String.fromCharCode arg limits
 async function blobToDataUri(blob: Blob): Promise<string> {
   const bytes = new Uint8Array(await blob.arrayBuffer());
   const chunks: string[] = [];
