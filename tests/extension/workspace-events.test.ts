@@ -1,7 +1,7 @@
 // tests/extension/workspace-events.test.ts
 // ensure workspace config handler wires preview updates for runtime setting keys
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as vscode from 'vscode';
 import {
   mockConfigManager,
@@ -9,10 +9,16 @@ import {
 } from '../helpers/mock-services';
 import { initWorkspaceHandlers } from '../../packages/extension-host/src/app/workspace-events';
 import { SETTINGS } from '../../packages/extension-host/src/shared/config';
+import { disposeEditorPreviewScrollSync } from '../../packages/extension-host/src/features/preview/scroll-sync';
 
 describe('workspace-events', () => {
+  let visibleRangeCallback:
+    | ((event: { textEditor: vscode.TextEditor }) => void)
+    | undefined;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    visibleRangeCallback = undefined;
 
     (vscode.workspace as any).onDidSaveTextDocument = vi.fn(() => ({
       dispose: vi.fn(),
@@ -23,6 +29,17 @@ describe('workspace-events', () => {
     (vscode.workspace as any).onDidChangeWorkspaceFolders = vi.fn(() => ({
       dispose: vi.fn(),
     }));
+    (vscode.window as any).onDidChangeTextEditorVisibleRanges = vi.fn(
+      (callback: (event: { textEditor: vscode.TextEditor }) => void) => {
+        visibleRangeCallback = callback;
+        return { dispose: vi.fn() };
+      }
+    );
+  });
+
+  afterEach(() => {
+    disposeEditorPreviewScrollSync();
+    vi.useRealTimers();
   });
 
   it('subscribes preview update handler to runtime config keys', () => {
@@ -47,13 +64,66 @@ describe('workspace-events', () => {
       expect.arrayContaining([
         SETTINGS.SOURCE_LINE_HIGHLIGHT,
         SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR,
+        SETTINGS.SCROLL_SYNC,
         SETTINGS.SHIM_SIDE_RAIL,
       ]),
       expect.any(Function)
     );
-    expect(context.subscriptions.length).toBe(4);
+    expect(context.subscriptions.length).toBe(5);
 
     changeCallback?.();
     expect(updateConfiguration).toHaveBeenCalledTimes(1);
+  });
+
+  it('syncs the preview to the first visible editor line when enabled', () => {
+    vi.useFakeTimers();
+    const uri = vscode.Uri.file('/workspace/test.mdx');
+    const scrollToLine = vi.fn();
+    mockPreviewManager.getCurrentPreview.mockReturnValue({
+      active: true,
+      doc: { uri },
+      configuration: { scrollSync: 'editorToPreview' },
+      scrollToLine,
+    });
+
+    const context = { subscriptions: [] as Array<{ dispose: () => void }> };
+    initWorkspaceHandlers(context as any);
+
+    visibleRangeCallback?.({
+      textEditor: {
+        document: { uri },
+        visibleRanges: [new vscode.Range(4, 0, 20, 0)],
+      } as never,
+    });
+
+    vi.advanceTimersByTime(80);
+
+    expect(scrollToLine).toHaveBeenCalledWith(5);
+  });
+
+  it('does not sync editor scroll when scroll sync is disabled', () => {
+    vi.useFakeTimers();
+    const uri = vscode.Uri.file('/workspace/test.mdx');
+    const scrollToLine = vi.fn();
+    mockPreviewManager.getCurrentPreview.mockReturnValue({
+      active: true,
+      doc: { uri },
+      configuration: { scrollSync: 'off' },
+      scrollToLine,
+    });
+
+    const context = { subscriptions: [] as Array<{ dispose: () => void }> };
+    initWorkspaceHandlers(context as any);
+
+    visibleRangeCallback?.({
+      textEditor: {
+        document: { uri },
+        visibleRanges: [new vscode.Range(4, 0, 20, 0)],
+      } as never,
+    });
+
+    vi.advanceTimersByTime(80);
+
+    expect(scrollToLine).not.toHaveBeenCalled();
   });
 });

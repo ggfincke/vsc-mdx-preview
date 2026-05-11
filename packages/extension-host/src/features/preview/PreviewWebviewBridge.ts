@@ -115,4 +115,8 @@ export class PreviewWebviewBridge {
       await this.webviewHandle.clearAllCaches();
     }
   }
+
+  scrollToLine(line: number): void {
+    this.webviewHandle?.scrollToLine(line);
+  }
 }

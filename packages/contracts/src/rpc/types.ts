@@ -56,6 +56,7 @@ export interface WebviewRPC {
   setNextraMeta(meta: NextraPageMeta): void;
   setSourceLineHighlight(enabled: boolean): void;
   setSourceLineHighlightColor(mode: SourceLineHighlightColorValue): void;
+  scrollToLine(line: number): void;
   setShimSideRail(enabled: boolean): void;
   setZoom(level: number): void;
   getExportableHtml(): Promise<string>;

@@ -670,6 +670,20 @@
           "description": "Color mode for source-line highlight bars in the preview.",
           "scope": "resource"
         },
+        "mdx-preview.preview.scrollSync": {
+          "type": "string",
+          "enum": [
+            "off",
+            "editorToPreview"
+          ],
+          "enumDescriptions": [
+            "Disable scroll synchronization.",
+            "Scroll the preview to follow the editor's visible source line."
+          ],
+          "default": "off",
+          "description": "Controls scroll synchronization between the editor and preview.",
+          "scope": "resource"
+        },
         "mdx-preview.preview.shimSideRail": {
           "type": "boolean",
           "default": true,

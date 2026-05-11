@@ -441,6 +441,7 @@ export const workspace = {
 };
 
 const activeEditorEmitter = new EventEmitter<any>();
+const visibleRangesEmitter = new EventEmitter<any>();
 
 export const window = {
   activeTextEditor: undefined as any,
@@ -448,6 +449,9 @@ export const window = {
     undefined,
   onDidChangeActiveTextEditor: (handler: EventHandler<any>): Disposable =>
     activeEditorEmitter.event(handler),
+  onDidChangeTextEditorVisibleRanges: (
+    handler: EventHandler<any>
+  ): Disposable => visibleRangesEmitter.event(handler),
   showQuickPick: async (_items: any, _options?: any): Promise<any> => undefined,
   showSaveDialog: async (_options?: any): Promise<Uri | undefined> => undefined,
   showInformationMessage: async (
@@ -467,6 +471,11 @@ export const window = {
 export function __fireActiveTextEditorChange(editor: any): void {
   window.activeTextEditor = editor;
   activeEditorEmitter.fire(editor);
+}
+
+// trigger visible-range change events for tests
+export function __fireTextEditorVisibleRangesChange(event: any): void {
+  visibleRangesEmitter.fire(event);
 }
 
 export const commands = {

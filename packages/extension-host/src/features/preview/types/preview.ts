@@ -3,6 +3,7 @@
 
 import type * as vscode from 'vscode';
 import type {
+  PreviewScrollSyncValue,
   TailwindEnabledValue,
   UpdateModeValue,
 } from '@mdx-preview/contracts';
@@ -34,6 +35,7 @@ export interface ConfigurationState extends PreviewRuntimeConfig {
   useSucraseTranspiler: boolean;
   securityPolicy: SecurityPolicy;
   tailwindEnabled: TailwindEnabledValue;
+  scrollSync: PreviewScrollSyncValue;
 }
 
 // result of configuration change detection

@@ -21,6 +21,7 @@ function createMockHandle() {
     setSourceLineHighlight: vi.fn(),
     setSourceLineHighlightColor: vi.fn(),
     setShimSideRail: vi.fn(),
+    scrollToLine: vi.fn(),
     invalidate: vi.fn(async () => {}),
     clearAllCaches: vi.fn(async () => {}),
   };
@@ -91,21 +92,22 @@ describe('PreviewWebviewBridge', () => {
     });
   });
 
-  it('forwards runtime configuration flags to the webview handle', () => {
+  it('forwards runtime flags and scroll requests to the webview handle', () => {
     const handle = createMockHandle();
     const watcherManager = createWatcherManager();
     bridge.setWebviewHandle(handle as never, watcherManager as never);
 
-    bridge.pushRuntimeConfiguration(
-      {
-        sourceLineHighlight: false,
-        sourceLineHighlightColor: 'white',
-        shimSideRail: false,
-      }
-    );
+    bridge.pushRuntimeConfiguration({
+      sourceLineHighlight: false,
+      sourceLineHighlightColor: 'white',
+      shimSideRail: false,
+    });
 
     expect(handle.setSourceLineHighlight).toHaveBeenCalledWith(false);
     expect(handle.setSourceLineHighlightColor).toHaveBeenCalledWith('white');
     expect(handle.setShimSideRail).toHaveBeenCalledWith(false);
+
+    bridge.scrollToLine(42);
+    expect(handle.scrollToLine).toHaveBeenCalledWith(42);
   });
 });

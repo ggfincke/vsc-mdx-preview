@@ -23,6 +23,7 @@ export function mapSettingsToPreviewConfiguration(
     useSucraseTranspiler: settings[SETTINGS.USE_SUCRASE],
     securityPolicy: settings[SETTINGS.SECURITY],
     tailwindEnabled: settings[SETTINGS.TAILWIND_ENABLED],
+    scrollSync: settings[SETTINGS.SCROLL_SYNC],
     ...runtimeConfig,
   };
 }

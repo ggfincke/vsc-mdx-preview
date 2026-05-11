@@ -9,11 +9,13 @@ export {
   UPDATE_MODE_VALUES,
   SECURITY_POLICY_VALUES,
   SOURCE_LINE_HIGHLIGHT_COLOR_VALUES,
+  PREVIEW_SCROLL_SYNC_VALUES,
   type TailwindEnabledValue,
   type UnknownBehaviorValue,
   type UpdateModeValue,
   type SecurityPolicyValue,
   type SourceLineHighlightColorValue,
+  type PreviewScrollSyncValue,
 } from './enums';
 
 export { MDX_PREVIEW_CONFIG_SCHEMA } from './schema';
@@ -40,6 +42,7 @@ export {
   DEFAULT_AUTO_THEME,
   DEFAULT_SOURCE_LINE_HIGHLIGHT,
   DEFAULT_SOURCE_LINE_HIGHLIGHT_COLOR,
+  DEFAULT_PREVIEW_SCROLL_SYNC,
   DEFAULT_SHIM_SIDE_RAIL,
   DEFAULT_DIAGRAMS_PLANTUML_SERVER,
   DEFAULT_USE_SUCRASE_TRANSPILER,

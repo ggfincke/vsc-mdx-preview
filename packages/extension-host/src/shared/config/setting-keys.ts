@@ -4,6 +4,7 @@
 import { SecurityPolicy } from '../../features/security/SecurityPolicy';
 import {
   type FrameworkSetting,
+  type PreviewScrollSyncValue,
   type SourceLineHighlightColorValue,
   type TailwindEnabledValue,
   type UnknownBehaviorValue,
@@ -28,6 +29,7 @@ export type SettingKey =
   | 'preview.autoTheme'
   | 'preview.sourceLineHighlight'
   | 'preview.sourceLineHighlightColor'
+  | 'preview.scrollSync'
   | 'preview.shimSideRail'
   | 'diagrams.plantUmlServer'
   | 'build.useSucraseTranspiler'
@@ -62,6 +64,7 @@ export interface SettingTypes {
   'preview.autoTheme': boolean;
   'preview.sourceLineHighlight': boolean;
   'preview.sourceLineHighlightColor': SourceLineHighlightColorValue;
+  'preview.scrollSync': PreviewScrollSyncValue;
   'preview.shimSideRail': boolean;
   'diagrams.plantUmlServer': string;
   'build.useSucraseTranspiler': boolean;
@@ -106,6 +109,7 @@ function mapDefaults(): SettingTypes {
       SETTINGS_DEFAULTS['preview.sourceLineHighlight'],
     'preview.sourceLineHighlightColor':
       SETTINGS_DEFAULTS['preview.sourceLineHighlightColor'],
+    'preview.scrollSync': SETTINGS_DEFAULTS['preview.scrollSync'],
     'preview.shimSideRail': SETTINGS_DEFAULTS['preview.shimSideRail'],
     'diagrams.plantUmlServer': SETTINGS_DEFAULTS['diagrams.plantUmlServer'],
     'build.useSucraseTranspiler':
@@ -145,6 +149,7 @@ export const SETTINGS = {
   AUTO_THEME: 'preview.autoTheme' as const,
   SOURCE_LINE_HIGHLIGHT: 'preview.sourceLineHighlight' as const,
   SOURCE_LINE_HIGHLIGHT_COLOR: 'preview.sourceLineHighlightColor' as const,
+  SCROLL_SYNC: 'preview.scrollSync' as const,
   SHIM_SIDE_RAIL: 'preview.shimSideRail' as const,
   USE_VSCODE_MARKDOWN_STYLES: 'preview.useVscodeMarkdownStyles' as const,
   USE_WHITE_BACKGROUND: 'preview.useWhiteBackground' as const,
@@ -179,6 +184,7 @@ export const THEME_KEYS: readonly SettingKey[] = [
 export const PREVIEW_RUNTIME_CONFIG_KEYS: readonly SettingKey[] = [
   SETTINGS.SOURCE_LINE_HIGHLIGHT,
   SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR,
+  SETTINGS.SCROLL_SYNC,
   SETTINGS.SHIM_SIDE_RAIL,
 ] as const;
 

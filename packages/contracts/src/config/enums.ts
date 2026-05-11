@@ -58,3 +58,9 @@ export const SOURCE_LINE_HIGHLIGHT_COLOR_VALUES = [
 ] as const;
 export type SourceLineHighlightColorValue =
   (typeof SOURCE_LINE_HIGHLIGHT_COLOR_VALUES)[number];
+
+// preview scroll sync options
+// used in: package.json mdx-preview.preview.scrollSync setting
+export const PREVIEW_SCROLL_SYNC_VALUES = ['off', 'editorToPreview'] as const;
+export type PreviewScrollSyncValue =
+  (typeof PREVIEW_SCROLL_SYNC_VALUES)[number];

@@ -36,6 +36,10 @@ import { PreviewInitializer } from './PreviewInitializer';
 import { getPreviewManager } from '../../app/services/service-locator';
 import { runPreviewUpdateFlow } from './preview-update-flow';
 import { runPreviewRefreshFlow } from './preview-refresh-flow';
+import {
+  resetPreviewScrollSync,
+  syncPreviewScrollFromActiveEditor,
+} from './scroll-sync';
 
 // re-export types for consumers
 export type { StyleConfiguration, WebviewHandle };
@@ -289,6 +293,12 @@ export class Preview {
 
   onWebviewReady(): void {
     this.webviewBridge.onWebviewReady(this.doc.uri);
+    if (this.configuration.scrollSync === 'editorToPreview') {
+      // webview was just reset — drop the cached dispatch state so the next
+      // queued line scrolls even if it matches what was last sent
+      resetPreviewScrollSync(this);
+      syncPreviewScrollFromActiveEditor(this);
+    }
   }
 
   pushThemeState(frontmatter?: Record<string, unknown>): void {
@@ -302,6 +312,10 @@ export class Preview {
   // clear all caches in the webview (for manual cache refresh command)
   async clearAllCaches(): Promise<void> {
     await this.webviewBridge.clearAllCaches();
+  }
+
+  scrollToLine(line: number): void {
+    this.webviewBridge.scrollToLine(line);
   }
 
   markStale(): void {

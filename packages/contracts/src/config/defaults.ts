@@ -23,6 +23,7 @@ export const DEFAULT_MERMAID_THEME = 'default' as const;
 export const DEFAULT_AUTO_THEME = true;
 export const DEFAULT_SOURCE_LINE_HIGHLIGHT = true;
 export const DEFAULT_SOURCE_LINE_HIGHLIGHT_COLOR = 'dependent' as const;
+export const DEFAULT_PREVIEW_SCROLL_SYNC = 'off' as const;
 export const DEFAULT_SHIM_SIDE_RAIL = true;
 export const DEFAULT_DIAGRAMS_PLANTUML_SERVER = DEFAULT_PLANTUML_SERVER;
 
@@ -66,6 +67,7 @@ export const SETTINGS_DEFAULTS = {
   'preview.autoTheme': DEFAULT_AUTO_THEME,
   'preview.sourceLineHighlight': DEFAULT_SOURCE_LINE_HIGHLIGHT,
   'preview.sourceLineHighlightColor': DEFAULT_SOURCE_LINE_HIGHLIGHT_COLOR,
+  'preview.scrollSync': DEFAULT_PREVIEW_SCROLL_SYNC,
   'preview.shimSideRail': DEFAULT_SHIM_SIDE_RAIL,
   'diagrams.plantUmlServer': DEFAULT_DIAGRAMS_PLANTUML_SERVER,
   'build.useSucraseTranspiler': DEFAULT_USE_SUCRASE_TRANSPILER,
