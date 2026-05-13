@@ -9,6 +9,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { useSourceLineHighlight } from '../../packages/webview-client/src/features/preview/shared/hooks/useSourceLineHighlight';
 import {
   findBestSourceLineEntry,
+  scheduleScrollToSourceLine,
   scrollToSourceLine,
 } from '../../packages/webview-client/src/features/preview/shared/utils/scrollToSourceLine';
 
@@ -31,6 +32,9 @@ function Harness({ children, onOpenSourceLine, enabled = true }: HarnessProps) {
 }
 
 let mountedRoot: Root | undefined;
+let originalRequestAnimationFrame:
+  | typeof window.requestAnimationFrame
+  | undefined;
 
 async function mountHarness(
   children: ReactNode,
@@ -86,6 +90,7 @@ describe('useSourceLineHighlight', () => {
     (
       globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
     ).IS_REACT_ACT_ENVIRONMENT = true;
+    originalRequestAnimationFrame = window.requestAnimationFrame;
     Object.defineProperty(window, 'scrollTo', {
       value: vi.fn(),
       writable: true,
@@ -101,6 +106,15 @@ describe('useSourceLineHighlight', () => {
     (
       globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
     ).IS_REACT_ACT_ENVIRONMENT = false;
+    if (originalRequestAnimationFrame) {
+      Object.defineProperty(window, 'requestAnimationFrame', {
+        value: originalRequestAnimationFrame,
+        writable: true,
+      });
+    } else {
+      delete (window as Partial<Window>).requestAnimationFrame;
+    }
+    originalRequestAnimationFrame = undefined;
     vi.restoreAllMocks();
   });
 
@@ -199,7 +213,7 @@ describe('useSourceLineHighlight', () => {
     expect(onOpenSourceLine).not.toHaveBeenCalled();
   });
 
-  it('resolves exact and nearest scroll targets', () => {
+  it('resolves exact, nearest, and scheduled scroll targets', () => {
     const container = renderMappedPreview();
     const exactTarget = document.getElementById('line-12')!;
     setElementTop(exactTarget, 180);
@@ -215,6 +229,28 @@ describe('useSourceLineHighlight', () => {
     expect(findBestSourceLineEntry(container, 2)?.highlightElement).toBe(
       document.getElementById('line-5')
     );
+
+    const frames: FrameRequestCallback[] = [];
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      value: vi.fn((callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      }),
+      writable: true,
+    });
+    const latestTarget = document.getElementById('line-24')!;
+    setElementTop(latestTarget, 260);
+    vi.mocked(window.scrollTo).mockClear();
+
+    scheduleScrollToSourceLine(5);
+    scheduleScrollToSourceLine(24);
+
+    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1);
+    frames[0](100);
+    expect(window.scrollTo).toHaveBeenCalledWith({
+      top: 200,
+      behavior: 'auto',
+    });
 
     document.body.innerHTML = '<div class="mdx-preview-content"></div>';
     expect(scrollToSourceLine(0)).toBe(false);

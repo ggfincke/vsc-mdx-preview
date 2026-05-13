@@ -54,6 +54,7 @@ const EXACT_ALLOWED = new Set([
   'tests/webview/preload-generation.test.ts',
   'tests/webview/safe-mode-processing.test.ts',
   'tests/webview/shimLoader.test.ts',
+  'tests/webview/source-line-highlight.test.ts',
   'tests/webview/webview-rpc-client.test.ts',
 ]);
 

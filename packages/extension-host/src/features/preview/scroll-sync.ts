@@ -2,23 +2,24 @@
 // editor-to-preview scroll synchronization helpers
 
 import * as vscode from 'vscode';
-import debounce from 'lodash.debounce';
 import { getPreviewManager } from '../../app/services';
 import type { Preview } from './Preview';
 
-const EDITOR_TO_PREVIEW_SCROLL_DEBOUNCE_MS = 80;
+const EDITOR_TO_PREVIEW_SCROLL_INTERVAL_MS = 33;
+const EDITOR_TO_PREVIEW_SCROLL_SETTLE_MS = 80;
 
 interface PreviewScheduler {
   pendingLine: number | undefined;
-  lastDispatchedLine: number | undefined;
-  flush: (() => void) & { cancel(): void; flush(): void };
+  pendingDocumentKey: string | undefined;
+  lastDispatchedKey: string | undefined;
+  lastDispatchAtMs: number;
+  liveTimer: ReturnType<typeof setTimeout> | undefined;
+  settleTimer: ReturnType<typeof setTimeout> | undefined;
 }
 
 const schedulers = new Map<Preview, PreviewScheduler>();
 
-function isEligibleForSync(
-  preview: Preview | undefined
-): preview is Preview {
+function isEligibleForSync(preview: Preview | undefined): preview is Preview {
   return (
     !!preview &&
     preview.active &&
@@ -30,7 +31,15 @@ function isPreviewDocument(
   preview: Preview,
   document: vscode.TextDocument
 ): boolean {
-  return preview.doc.uri.toString() === document.uri.toString();
+  return getPreviewDocumentKey(preview) === document.uri.toString();
+}
+
+function getPreviewDocumentKey(preview: Preview): string {
+  return preview.doc.uri.toString();
+}
+
+function getDispatchKey(documentKey: string, line: number): string {
+  return `${documentKey}:${line}`;
 }
 
 function getFirstVisibleSourceLine(
@@ -70,41 +79,106 @@ function getOrCreateScheduler(preview: Preview): PreviewScheduler {
   }
   const created: PreviewScheduler = {
     pendingLine: undefined,
-    lastDispatchedLine: undefined,
-    flush: debounce(
-      () => flushScheduler(preview),
-      EDITOR_TO_PREVIEW_SCROLL_DEBOUNCE_MS
-    ),
+    pendingDocumentKey: undefined,
+    lastDispatchedKey: undefined,
+    lastDispatchAtMs: 0,
+    liveTimer: undefined,
+    settleTimer: undefined,
   };
   schedulers.set(preview, created);
   return created;
 }
 
-function flushScheduler(preview: Preview): void {
+function clearSchedulerTimer(
+  timer: ReturnType<typeof setTimeout> | undefined
+): undefined {
+  if (timer) {
+    clearTimeout(timer);
+  }
+  return undefined;
+}
+
+function dispatchPendingScroll(preview: Preview): void {
   const scheduler = schedulers.get(preview);
   if (!scheduler) {
     return;
   }
   const line = scheduler.pendingLine;
+  const documentKey = scheduler.pendingDocumentKey;
   scheduler.pendingLine = undefined;
-  if (line === undefined || !isEligibleForSync(preview)) {
+  scheduler.pendingDocumentKey = undefined;
+  scheduler.liveTimer = clearSchedulerTimer(scheduler.liveTimer);
+
+  if (
+    line === undefined ||
+    documentKey === undefined ||
+    !isEligibleForSync(preview) ||
+    getPreviewDocumentKey(preview) !== documentKey
+  ) {
     return;
   }
-  scheduler.lastDispatchedLine = line;
+
+  const dispatchKey = getDispatchKey(documentKey, line);
+  if (scheduler.lastDispatchedKey === dispatchKey) {
+    return;
+  }
+
+  scheduler.lastDispatchedKey = dispatchKey;
+  scheduler.lastDispatchAtMs = Date.now();
   preview.scrollToLine(line);
+}
+
+function scheduleLiveDispatch(preview: Preview): void {
+  const scheduler = getOrCreateScheduler(preview);
+  const elapsedMs = Date.now() - scheduler.lastDispatchAtMs;
+  if (
+    scheduler.lastDispatchedKey === undefined ||
+    elapsedMs >= EDITOR_TO_PREVIEW_SCROLL_INTERVAL_MS
+  ) {
+    dispatchPendingScroll(preview);
+    return;
+  }
+
+  if (!scheduler.liveTimer) {
+    scheduler.liveTimer = setTimeout(
+      () => dispatchPendingScroll(preview),
+      EDITOR_TO_PREVIEW_SCROLL_INTERVAL_MS - elapsedMs
+    );
+  }
+}
+
+function scheduleSettleDispatch(preview: Preview): void {
+  const scheduler = getOrCreateScheduler(preview);
+  scheduler.settleTimer = clearSchedulerTimer(scheduler.settleTimer);
+  scheduler.settleTimer = setTimeout(
+    () => dispatchPendingScroll(preview),
+    EDITOR_TO_PREVIEW_SCROLL_SETTLE_MS
+  );
 }
 
 function queueScroll(preview: Preview, line: number): void {
   const scheduler = getOrCreateScheduler(preview);
+  const documentKey = getPreviewDocumentKey(preview);
+  const dispatchKey = getDispatchKey(documentKey, line);
   if (
-    scheduler.pendingLine === line ||
-    (scheduler.pendingLine === undefined &&
-      scheduler.lastDispatchedLine === line)
+    scheduler.pendingLine === line &&
+    scheduler.pendingDocumentKey === documentKey
   ) {
+    scheduleSettleDispatch(preview);
     return;
   }
+  if (
+    scheduler.pendingLine === undefined &&
+    scheduler.lastDispatchedKey === dispatchKey
+  ) {
+    scheduleSettleDispatch(preview);
+    return;
+  }
+
   scheduler.pendingLine = line;
-  scheduler.flush();
+  scheduler.pendingDocumentKey = documentKey;
+  scheduleLiveDispatch(preview);
+  scheduleSettleDispatch(preview);
 }
 
 export function handleEditorVisibleRangesChange(
@@ -134,21 +208,25 @@ export function syncPreviewScrollFromActiveEditor(
   queueScroll(preview, line);
 }
 
-// drop cached dispatch state for a preview — call when the webview reloads
-// so a fresh scroll dispatches even if it matches the previously sent line
+// reset cached dispatch state after webview reload
+// allow the same line to dispatch after webview replacement
 export function resetPreviewScrollSync(preview: Preview): void {
   const scheduler = schedulers.get(preview);
   if (!scheduler) {
     return;
   }
-  scheduler.flush.cancel();
+  scheduler.liveTimer = clearSchedulerTimer(scheduler.liveTimer);
+  scheduler.settleTimer = clearSchedulerTimer(scheduler.settleTimer);
   scheduler.pendingLine = undefined;
-  scheduler.lastDispatchedLine = undefined;
+  scheduler.pendingDocumentKey = undefined;
+  scheduler.lastDispatchedKey = undefined;
+  scheduler.lastDispatchAtMs = 0;
 }
 
 export function disposeEditorPreviewScrollSync(): void {
   for (const scheduler of schedulers.values()) {
-    scheduler.flush.cancel();
+    scheduler.liveTimer = clearSchedulerTimer(scheduler.liveTimer);
+    scheduler.settleTimer = clearSchedulerTimer(scheduler.settleTimer);
   }
   schedulers.clear();
 }

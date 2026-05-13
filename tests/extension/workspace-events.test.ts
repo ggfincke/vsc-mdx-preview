@@ -75,7 +75,7 @@ describe('workspace-events', () => {
     expect(updateConfiguration).toHaveBeenCalledTimes(1);
   });
 
-  it('syncs the preview to the first visible editor line when enabled', () => {
+  it('live-syncs the preview to the first visible editor line when enabled', () => {
     vi.useFakeTimers();
     const uri = vscode.Uri.file('/workspace/test.mdx');
     const scrollToLine = vi.fn();
@@ -96,9 +96,30 @@ describe('workspace-events', () => {
       } as never,
     });
 
-    vi.advanceTimersByTime(80);
+    expect(scrollToLine).toHaveBeenCalledTimes(1);
+    expect(scrollToLine).toHaveBeenLastCalledWith(5);
 
-    expect(scrollToLine).toHaveBeenCalledWith(5);
+    visibleRangeCallback?.({
+      textEditor: {
+        document: { uri },
+        visibleRanges: [new vscode.Range(9, 0, 20, 0)],
+      } as never,
+    });
+    vi.advanceTimersByTime(10);
+    visibleRangeCallback?.({
+      textEditor: {
+        document: { uri },
+        visibleRanges: [new vscode.Range(14, 0, 20, 0)],
+      } as never,
+    });
+
+    vi.advanceTimersByTime(22);
+    expect(scrollToLine).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(1);
+
+    expect(scrollToLine).toHaveBeenCalledTimes(2);
+    expect(scrollToLine).toHaveBeenLastCalledWith(15);
   });
 
   it('does not sync editor scroll when scroll sync is disabled', () => {

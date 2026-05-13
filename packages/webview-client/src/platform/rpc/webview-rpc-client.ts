@@ -26,7 +26,7 @@ import { createRpcRegistration } from './rpc-registration';
 import { loadModuleSystem } from './module-system-loader';
 import { canAcceptContentMode } from './content-mode-guard';
 import { createExportableHtml } from './export-html';
-import { scrollToSourceLine } from '../../features/preview/shared/utils/scrollToSourceLine';
+import { scheduleScrollToSourceLine } from '../../features/preview/shared/utils/scrollToSourceLine';
 
 const log = createTaggedLogger(LogTags.RPC_WEBVIEW);
 
@@ -216,7 +216,7 @@ class RPCWebviewHandle implements WebviewRPC {
 
   scrollToLine(line: number): void {
     log.debug(`scrollToLine called: ${line}`);
-    scrollToSourceLine(line);
+    scheduleScrollToSourceLine(line);
   }
 
   async invalidate(fsPath: string): Promise<void> {
