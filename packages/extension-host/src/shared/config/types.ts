@@ -7,6 +7,7 @@ import type * as vscode from 'vscode';
 import type {
   CodeBlockTheme,
   FrameworkId,
+  PreviewScrollSyncValue,
   PreviewTheme,
   SecurityPolicyValue,
   SourceLineHighlightColorValue,
@@ -23,6 +24,7 @@ import type {
 // Re-export shared types for convenience
 export type {
   SecurityPolicyValue,
+  PreviewScrollSyncValue,
   TailwindEnabledValue,
   UnknownBehaviorValue,
   UpdateModeValue,
@@ -87,6 +89,7 @@ export interface ResolvedConfig {
 export interface PreviewRuntimeConfig {
   sourceLineHighlight: boolean;
   sourceLineHighlightColor: SourceLineHighlightColorValue;
+  scrollSync: PreviewScrollSyncValue;
   shimSideRail: boolean;
 }
 

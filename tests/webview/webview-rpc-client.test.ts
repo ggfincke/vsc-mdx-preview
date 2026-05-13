@@ -26,6 +26,7 @@ const {
     openExternal: vi.fn(),
     openDocument: vi.fn(async () => {}),
     openPreview: vi.fn(async () => {}),
+    reportPreviewSourceLine: vi.fn(async () => {}),
     renderPlantUml: vi.fn(async () => undefined),
   };
   const mockWrap = vi.fn(() => mockExtensionHandle);
@@ -86,6 +87,11 @@ describe('webview-rpc-client', () => {
     expect(mockExtensionHandle.openExternal).toHaveBeenCalledWith(
       'https://example.com'
     );
+
+    await module.ExtensionHandle.reportPreviewSourceLine(12);
+    expect(mockExtensionHandle.reportPreviewSourceLine).toHaveBeenCalledWith(
+      12
+    );
   });
 
   it('registerWebviewHandlers flushes buffered queued and optional messages', async () => {
@@ -98,6 +104,7 @@ describe('webview-rpc-client', () => {
       setTrustState: (state: unknown) => void;
       updatePreviewSafe: (html: string) => void;
       setSourceLineHighlight: (enabled: boolean) => void;
+      setScrollSync: (mode: string) => void;
     };
 
     exposedHandle.setTrustState({
@@ -108,6 +115,7 @@ describe('webview-rpc-client', () => {
     });
     exposedHandle.updatePreviewSafe('<p>safe</p>');
     exposedHandle.setSourceLineHighlight(false);
+    exposedHandle.setScrollSync('previewToEditor');
 
     const handlers = {
       setTrustState: vi.fn(),
@@ -116,6 +124,7 @@ describe('webview-rpc-client', () => {
       setError: vi.fn(),
       setStale: vi.fn(),
       setSourceLineHighlight: vi.fn(),
+      setScrollSync: vi.fn(),
     };
 
     module.registerWebviewHandlers(handlers as any);
@@ -123,6 +132,7 @@ describe('webview-rpc-client', () => {
     expect(handlers.setTrustState).toHaveBeenCalledTimes(1);
     expect(handlers.setSafeContent).toHaveBeenCalledWith('<p>safe</p>');
     expect(handlers.setSourceLineHighlight).toHaveBeenCalledWith(false);
+    expect(handlers.setScrollSync).toHaveBeenCalledWith('previewToEditor');
   });
 
   it('gates trusted content for queued and direct handler paths', async () => {

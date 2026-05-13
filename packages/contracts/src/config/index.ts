@@ -10,6 +10,8 @@ export {
   SECURITY_POLICY_VALUES,
   SOURCE_LINE_HIGHLIGHT_COLOR_VALUES,
   PREVIEW_SCROLL_SYNC_VALUES,
+  isEditorToPreviewMode,
+  isPreviewToEditorMode,
   type TailwindEnabledValue,
   type UnknownBehaviorValue,
   type UpdateModeValue,

@@ -3,6 +3,7 @@
 
 import { memo, useEffect } from 'react';
 import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
+import { usePreviewScrollSync } from '../shared/hooks/usePreviewScrollSync';
 import { useSourceLineHighlight } from '../shared/hooks/useSourceLineHighlight';
 import { useSafeModeProcessing } from './hooks/useSafeModeProcessing';
 import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
@@ -19,7 +20,7 @@ interface SafePreviewRendererProps {
 // wrapped w/ React.memo to prevent unnecessary re-renders
 export const SafePreviewRenderer = memo(
   function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
-    const { sourceLineHighlightEnabled } = useUIFlags();
+    const { sourceLineHighlightEnabled, scrollSyncMode } = useUIFlags();
 
     // shared preview setup (container ref, diagram rendering, image lightbox)
     const { containerRef, handleImageClick, renderPortals } = usePreviewSetup({
@@ -38,6 +39,12 @@ export const SafePreviewRenderer = memo(
       containerRef,
       trigger: html,
       enabled: sourceLineHighlightEnabled,
+    });
+
+    usePreviewScrollSync({
+      containerRef,
+      trigger: html,
+      mode: scrollSyncMode,
     });
 
     // lazy-load KaTeX CSS when math content is detected (string-based detection)

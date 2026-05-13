@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, createElement, useRef, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { useSourceLineHighlight } from '../../packages/webview-client/src/features/preview/shared/hooks/useSourceLineHighlight';
+import { findActivePreviewSourceLine } from '../../packages/webview-client/src/features/preview/shared/hooks/usePreviewScrollSync';
 import {
   findBestSourceLineEntry,
   scheduleScrollToSourceLine,
@@ -229,6 +230,11 @@ describe('useSourceLineHighlight', () => {
     expect(findBestSourceLineEntry(container, 2)?.highlightElement).toBe(
       document.getElementById('line-5')
     );
+
+    setElementTop(document.getElementById('line-5')!, -40);
+    setElementTop(document.getElementById('line-12')!, 160);
+    setElementTop(document.getElementById('line-24')!, 320);
+    expect(findActivePreviewSourceLine(container, 600)).toBe(12);
 
     const frames: FrameRequestCallback[] = [];
     Object.defineProperty(window, 'requestAnimationFrame', {

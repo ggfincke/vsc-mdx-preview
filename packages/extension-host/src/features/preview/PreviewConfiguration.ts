@@ -27,6 +27,7 @@ function projectRuntimeConfiguration(
   return {
     sourceLineHighlight: configuration.sourceLineHighlight,
     sourceLineHighlightColor: configuration.sourceLineHighlightColor,
+    scrollSync: configuration.scrollSync,
     shimSideRail: configuration.shimSideRail,
   };
 }
@@ -38,6 +39,7 @@ function hasRuntimeConfigChanges(
   return (
     previous.sourceLineHighlight !== next.sourceLineHighlight ||
     previous.sourceLineHighlightColor !== next.sourceLineHighlightColor ||
+    previous.scrollSync !== next.scrollSync ||
     previous.shimSideRail !== next.shimSideRail
   );
 }
@@ -103,6 +105,8 @@ export class PreviewConfiguration {
       previousRuntimeConfig,
       nextRuntimeConfig
     );
+    const scrollSyncChanged =
+      previousRuntimeConfig.scrollSync !== nextRuntimeConfig.scrollSync;
 
     const needsDebounceRecreate =
       newConfig.debounceDelay !== this._configuration.debounceDelay;
@@ -125,6 +129,7 @@ export class PreviewConfiguration {
       needsRuntimeConfigPush,
       needsDebounceRecreate,
       needsCssWatcherUpdate,
+      scrollSyncChanged,
       oldCssPath,
     };
   }

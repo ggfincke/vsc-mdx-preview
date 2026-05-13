@@ -96,6 +96,13 @@ export class Range {
 
 export class Selection extends Range {}
 
+export enum TextEditorRevealType {
+  Default = 0,
+  InCenter = 1,
+  InCenterIfOutsideViewport = 2,
+  AtTop = 3,
+}
+
 export class Location {
   uri: Uri;
   range: Range;
@@ -445,6 +452,7 @@ const visibleRangesEmitter = new EventEmitter<any>();
 
 export const window = {
   activeTextEditor: undefined as any,
+  visibleTextEditors: [] as any[],
   showTextDocument: async (_doc: any, _options?: any): Promise<any> =>
     undefined,
   onDidChangeActiveTextEditor: (handler: EventHandler<any>): Disposable =>

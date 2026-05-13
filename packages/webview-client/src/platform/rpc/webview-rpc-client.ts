@@ -103,6 +103,7 @@ const optionalHandlers = buildOptionalHandlers(
     'setNextraMeta',
     'setSourceLineHighlight',
     'setSourceLineHighlightColor',
+    'setScrollSync',
     'setShimSideRail',
     'setZoom',
   ],
@@ -158,6 +159,7 @@ class RPCWebviewHandle implements WebviewRPC {
   setNextraMeta = optionalHandlers.setNextraMeta;
   setSourceLineHighlight = optionalHandlers.setSourceLineHighlight;
   setSourceLineHighlightColor = optionalHandlers.setSourceLineHighlightColor;
+  setScrollSync = optionalHandlers.setScrollSync;
   setShimSideRail = optionalHandlers.setShimSideRail;
   setZoom = optionalHandlers.setZoom;
 
@@ -311,6 +313,9 @@ export const ExtensionHandle: ExtensionHandle = {
   },
   openPreview(relativePath: string) {
     return getInitializedExtensionHandle().openPreview(relativePath);
+  },
+  reportPreviewSourceLine(line: number) {
+    return getInitializedExtensionHandle().reportPreviewSourceLine(line);
   },
   renderPlantUml(code: string) {
     return getInitializedExtensionHandle().renderPlantUml(code);

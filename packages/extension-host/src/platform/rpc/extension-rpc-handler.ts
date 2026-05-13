@@ -4,6 +4,7 @@
 import { performance } from 'perf_hooks';
 import * as vscode from 'vscode';
 import { Preview } from '../../features/preview/preview-manager';
+import { handlePreviewSourceLineReport } from '../../features/preview/scroll-sync';
 import { fetchLocal } from '../../features/module-runtime/fetch/fetchLocal';
 import {
   getTrustManager,
@@ -307,6 +308,18 @@ class ExtensionHandle implements ExtensionRPC {
         ErrorContext.Extension
       );
     }
+  }
+
+  async reportPreviewSourceLine(line: number): Promise<void> {
+    const validLine = validateNumber(line, 'line number', {
+      context: 'reportPreviewSourceLine',
+      min: 1,
+    });
+    if (validLine === undefined || !Number.isInteger(validLine)) {
+      return;
+    }
+
+    handlePreviewSourceLineReport(this.preview, validLine);
   }
 
   // proxy PlantUML rendering via extension host (avoids CORS in webview)

@@ -13,6 +13,7 @@ import {
 } from 'react';
 import { evaluateModuleToComponent } from '../../module-runtime';
 import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
+import { usePreviewScrollSync } from '../shared/hooks/usePreviewScrollSync';
 import { useSourceLineHighlight } from '../shared/hooks/useSourceLineHighlight';
 import { useAsyncEffect } from '../../../shared/hooks/useAsyncEffect';
 import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
@@ -88,24 +89,18 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   onComponentReady,
   onError,
 }: TrustedPreviewRendererProps) {
-  const { sourceLineHighlightEnabled } = useUIFlags();
+  const { sourceLineHighlightEnabled, scrollSyncMode } = useUIFlags();
 
-  // local loading state tracks webview-side module evaluation (distinct from global
-  // isLoading which tracks extension-side compilation). This separation is intentional -
-  // the global loading state controls the LoadingBar overlay, while isEvaluating controls
-  // evaluation phase spinner
+  // track webview-side module evaluation separately from global compilation
+  // global loading controls LoadingBar; local loading controls the spinner
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   // shared preview setup (container ref, diagram rendering, image lightbox)
-  const {
-    containerRef,
-    handleImageClick,
-    renderPortals,
-    scan,
-  } = usePreviewSetup({
-    diagramMode: 'before-paint',
-    filterStale: true,
-  });
+  const { containerRef, handleImageClick, renderPortals, scan } =
+    usePreviewSetup({
+      diagramMode: 'before-paint',
+      filterStale: true,
+    });
 
   // evaluate code when content changes
   useAsyncEffect(
@@ -147,6 +142,12 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
     containerRef,
     trigger: evaluatedComponent,
     enabled: sourceLineHighlightEnabled,
+  });
+
+  usePreviewScrollSync({
+    containerRef,
+    trigger: evaluatedComponent,
+    mode: scrollSyncMode,
   });
 
   // show loading state while evaluating

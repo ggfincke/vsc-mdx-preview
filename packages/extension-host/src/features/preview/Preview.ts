@@ -37,7 +37,9 @@ import { getPreviewManager } from '../../app/services/service-locator';
 import { runPreviewUpdateFlow } from './preview-update-flow';
 import { runPreviewRefreshFlow } from './preview-refresh-flow';
 import {
+  disposeScrollSyncForPreview,
   resetPreviewScrollSync,
+  supportsEditorToPreviewScrollSync,
   syncPreviewScrollFromActiveEditor,
 } from './scroll-sync';
 
@@ -293,9 +295,8 @@ export class Preview {
 
   onWebviewReady(): void {
     this.webviewBridge.onWebviewReady(this.doc.uri);
-    if (this.configuration.scrollSync === 'editorToPreview') {
-      // webview was just reset — drop the cached dispatch state so the next
-      // queued line scrolls even if it matches what was last sent
+    if (supportsEditorToPreviewScrollSync(this.configuration.scrollSync)) {
+      // allow the same line to dispatch when the preview remounts
       resetPreviewScrollSync(this);
       syncPreviewScrollFromActiveEditor(this);
     }
@@ -380,6 +381,14 @@ export class Preview {
       this.pushRuntimeConfiguration();
     }
 
+    if (
+      result.scrollSyncChanged &&
+      supportsEditorToPreviewScrollSync(this.configuration.scrollSync)
+    ) {
+      resetPreviewScrollSync(this);
+      syncPreviewScrollFromActiveEditor(this);
+    }
+
     if (result.needsCssWatcherUpdate) {
       // setup custom CSS watcher directly via initializer (coordinator was removed)
       this.initializer.setupCustomCssWatcher(
@@ -401,6 +410,7 @@ export class Preview {
   dispose(): void {
     this._performanceObserver?.disconnect();
     this._performanceObserver = undefined;
+    disposeScrollSyncForPreview(this);
     this.watcherManager.dispose();
   }
 }

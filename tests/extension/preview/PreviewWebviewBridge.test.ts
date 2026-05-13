@@ -20,6 +20,7 @@ function createMockHandle() {
     setTheme: vi.fn(),
     setSourceLineHighlight: vi.fn(),
     setSourceLineHighlightColor: vi.fn(),
+    setScrollSync: vi.fn(),
     setShimSideRail: vi.fn(),
     scrollToLine: vi.fn(),
     invalidate: vi.fn(async () => {}),
@@ -100,11 +101,13 @@ describe('PreviewWebviewBridge', () => {
     bridge.pushRuntimeConfiguration({
       sourceLineHighlight: false,
       sourceLineHighlightColor: 'white',
+      scrollSync: 'bidirectional',
       shimSideRail: false,
     });
 
     expect(handle.setSourceLineHighlight).toHaveBeenCalledWith(false);
     expect(handle.setSourceLineHighlightColor).toHaveBeenCalledWith('white');
+    expect(handle.setScrollSync).toHaveBeenCalledWith('bidirectional');
     expect(handle.setShimSideRail).toHaveBeenCalledWith(false);
 
     bridge.scrollToLine(42);

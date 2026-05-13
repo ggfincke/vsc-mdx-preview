@@ -99,6 +99,7 @@ export class PreviewWebviewBridge {
     this.webviewHandle.setSourceLineHighlightColor(
       runtimeConfig.sourceLineHighlightColor
     );
+    this.webviewHandle.setScrollSync(runtimeConfig.scrollSync);
     this.webviewHandle.setShimSideRail(runtimeConfig.shimSideRail);
   }
 

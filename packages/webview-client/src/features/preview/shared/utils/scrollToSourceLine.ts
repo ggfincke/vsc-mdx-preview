@@ -3,6 +3,10 @@
 
 import { PREVIEW_CONTENT_CLASS } from '../../../../app/constants';
 import {
+  scheduleFrame,
+  type ScheduledFrame,
+} from '../../../../shared/utils/frameScheduler';
+import {
   SOURCE_LINE_SELECTOR,
   getDataSourceLine,
   resolveHighlightOwner,
@@ -13,7 +17,7 @@ const MARKDOWN_BODY_SELECTOR = '.markdown-body';
 const SCROLL_OFFSET_PX = 60;
 
 let pendingScrollLine: number | undefined;
-let pendingScrollFrame = 0;
+let pendingScrollFrame: ScheduledFrame | undefined;
 
 function getPreviewContentRoot(): HTMLElement | null {
   const content = document.querySelector(`.${PREVIEW_CONTENT_CLASS}`);
@@ -119,28 +123,20 @@ export function scrollToSourceLine(sourceLine: number): boolean {
   return true;
 }
 
-function requestScrollFrame(callback: FrameRequestCallback): number {
-  if (typeof window.requestAnimationFrame === 'function') {
-    return window.requestAnimationFrame(callback);
-  }
-
-  return window.setTimeout(() => callback(Date.now()), 0);
-}
-
 export function scheduleScrollToSourceLine(sourceLine: number): void {
   if (!Number.isFinite(sourceLine) || sourceLine < 1) {
     return;
   }
 
   pendingScrollLine = sourceLine;
-  if (pendingScrollFrame !== 0) {
+  if (pendingScrollFrame) {
     return;
   }
 
-  pendingScrollFrame = requestScrollFrame(() => {
+  pendingScrollFrame = scheduleFrame(() => {
     const line = pendingScrollLine;
     pendingScrollLine = undefined;
-    pendingScrollFrame = 0;
+    pendingScrollFrame = undefined;
     if (line !== undefined) {
       scrollToSourceLine(line);
     }

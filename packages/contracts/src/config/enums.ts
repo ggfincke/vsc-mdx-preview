@@ -61,6 +61,19 @@ export type SourceLineHighlightColorValue =
 
 // preview scroll sync options
 // used in: package.json mdx-preview.preview.scrollSync setting
-export const PREVIEW_SCROLL_SYNC_VALUES = ['off', 'editorToPreview'] as const;
+export const PREVIEW_SCROLL_SYNC_VALUES = [
+  'off',
+  'editorToPreview',
+  'previewToEditor',
+  'bidirectional',
+] as const;
 export type PreviewScrollSyncValue =
   (typeof PREVIEW_SCROLL_SYNC_VALUES)[number];
+
+export function isEditorToPreviewMode(mode: PreviewScrollSyncValue): boolean {
+  return mode === 'editorToPreview' || mode === 'bidirectional';
+}
+
+export function isPreviewToEditorMode(mode: PreviewScrollSyncValue): boolean {
+  return mode === 'previewToEditor' || mode === 'bidirectional';
+}

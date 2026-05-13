@@ -88,6 +88,7 @@ function createPreview(): {
     setNextraMeta: ReturnType<typeof vi.fn>;
     setSourceLineHighlight: ReturnType<typeof vi.fn>;
     setSourceLineHighlightColor: ReturnType<typeof vi.fn>;
+    setScrollSync: ReturnType<typeof vi.fn>;
     setShimSideRail: ReturnType<typeof vi.fn>;
   };
   runtimeConfiguration: PreviewRuntimeConfig;
@@ -109,6 +110,7 @@ function createPreview(): {
   const runtimeConfiguration: PreviewRuntimeConfig = {
     sourceLineHighlight: true,
     sourceLineHighlightColor: 'dependent',
+    scrollSync: 'off',
     shimSideRail: true,
   };
   const webviewHandle = {
@@ -122,6 +124,7 @@ function createPreview(): {
     setNextraMeta: vi.fn(),
     setSourceLineHighlight: vi.fn(),
     setSourceLineHighlightColor: vi.fn(),
+    setScrollSync: vi.fn(),
     setShimSideRail: vi.fn(),
   };
   const pushRuntimeConfiguration = vi.fn(() => {
@@ -131,6 +134,7 @@ function createPreview(): {
     webviewHandle.setSourceLineHighlightColor(
       runtimeConfiguration.sourceLineHighlightColor
     );
+    webviewHandle.setScrollSync(runtimeConfiguration.scrollSync);
     webviewHandle.setShimSideRail(runtimeConfiguration.shimSideRail);
   });
 
@@ -298,6 +302,7 @@ describe('evaluate-in-webview Tailwind routing', () => {
 
     preview.runtimeConfiguration.sourceLineHighlight = false;
     preview.runtimeConfiguration.sourceLineHighlightColor = 'white';
+    preview.runtimeConfiguration.scrollSync = 'bidirectional';
     preview.runtimeConfiguration.shimSideRail = false;
     mockEngine.evaluateTrusted.mockResolvedValueOnce({
       code: 'export default function Demo() { return null; }',
@@ -319,6 +324,9 @@ describe('evaluate-in-webview Tailwind routing', () => {
     expect(
       preview.webviewHandle.setSourceLineHighlightColor
     ).toHaveBeenCalledWith('white');
+    expect(preview.webviewHandle.setScrollSync).toHaveBeenCalledWith(
+      'bidirectional'
+    );
     expect(preview.webviewHandle.setShimSideRail).toHaveBeenCalledWith(false);
   });
 });
