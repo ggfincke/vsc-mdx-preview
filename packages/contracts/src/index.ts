@@ -40,6 +40,7 @@ export {
   isPreviewError,
   formatTrustStateForDebug,
   type NextraPageMeta,
+  SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
 } from './preview';
 
 // module error types
@@ -83,7 +84,11 @@ export {
 } from './themes';
 
 // RPC interface contracts
-export type { ExtensionRPC, WebviewRPC } from './rpc';
+export type {
+  ExtensionRPC,
+  PreviewSourceLineReportResult,
+  WebviewRPC,
+} from './rpc';
 
 // logging types & tags
 export {

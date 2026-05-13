@@ -5,6 +5,8 @@ import * as vscode from 'vscode';
 import {
   isEditorToPreviewMode,
   isPreviewToEditorMode,
+  SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
+  type PreviewSourceLineReportResult,
   type PreviewScrollSyncValue,
 } from '@mdx-preview/contracts';
 import { getPreviewManager } from '../../app/services';
@@ -12,10 +14,9 @@ import type { Preview } from './Preview';
 
 const EDITOR_TO_PREVIEW_SCROLL_INTERVAL_MS = 33;
 const EDITOR_TO_PREVIEW_SCROLL_SETTLE_MS = 80;
-// long enough to outlast a typical editor reveal animation (revealRange w/
-// InCenterIfOutsideViewport settles within ~150ms), short enough that real
-// user-driven scrolling on the other pane is not silently dropped
-const SCROLL_SYNC_LOOP_SUPPRESSION_MS = 200;
+const SCROLL_SYNC_LOOP_SUPPRESSION_MS = 120;
+const PREVIEW_TO_EDITOR_GUARD_RATIO = 0.2;
+const PREVIEW_TO_EDITOR_MIN_GUARD_LINES = 3;
 
 type SyncDirection = 'editorToPreview' | 'previewToEditor';
 
@@ -68,24 +69,38 @@ function getDispatchKey(documentKey: string, line: number): string {
   return `${documentKey}:${line}`;
 }
 
-function getFirstVisibleSourceLine(
+function getLeadingVisibleRange(
   visibleRanges: readonly vscode.Range[]
-): number | undefined {
+): vscode.Range | undefined {
   if (visibleRanges.length === 0) {
     return undefined;
   }
 
-  let firstLine = Number.POSITIVE_INFINITY;
+  let leadingRange: vscode.Range | undefined;
   for (const range of visibleRanges) {
-    firstLine = Math.min(firstLine, range.start.line);
+    if (!leadingRange || range.start.line < leadingRange.start.line) {
+      leadingRange = range;
+    }
   }
 
-  if (!Number.isFinite(firstLine)) {
+  return leadingRange;
+}
+
+function getAnchoredVisibleSourceLine(
+  visibleRanges: readonly vscode.Range[]
+): number | undefined {
+  const range = getLeadingVisibleRange(visibleRanges);
+  if (!range) {
     return undefined;
   }
 
+  const visibleLineCount = Math.max(1, range.end.line - range.start.line + 1);
+  const anchorOffset = Math.floor(
+    (visibleLineCount - 1) * SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO
+  );
+
   // visible ranges are 0-based; mdx source-line annotations are 1-based
-  return firstLine + 1;
+  return range.start.line + anchorOffset + 1;
 }
 
 function getEditorScrollLine(
@@ -95,7 +110,7 @@ function getEditorScrollLine(
   if (!editor || !isPreviewDocument(preview, editor.document)) {
     return undefined;
   }
-  return getFirstVisibleSourceLine(editor.visibleRanges);
+  return getAnchoredVisibleSourceLine(editor.visibleRanges);
 }
 
 function getOrCreateScheduler(preview: Preview): PreviewScheduler {
@@ -244,18 +259,68 @@ function findVisiblePreviewEditor(
     : undefined;
 }
 
+function getClampedLineIndex(
+  editor: vscode.TextEditor,
+  sourceLine: number
+): number {
+  const lineCount = Math.max(1, editor.document.lineCount);
+  return Math.max(0, Math.min(sourceLine - 1, lineCount - 1));
+}
+
+function findVisibleRangeForLine(
+  editor: vscode.TextEditor,
+  lineIndex: number
+): vscode.Range | undefined {
+  return editor.visibleRanges.find(
+    (range) => lineIndex >= range.start.line && lineIndex <= range.end.line
+  );
+}
+
+function getGuardLineCount(range: vscode.Range): number {
+  const visibleLineCount = Math.max(1, range.end.line - range.start.line + 1);
+  return Math.max(
+    PREVIEW_TO_EDITOR_MIN_GUARD_LINES,
+    Math.floor(visibleLineCount * PREVIEW_TO_EDITOR_GUARD_RATIO)
+  );
+}
+
+function getRevealTypeForLine(
+  editor: vscode.TextEditor,
+  lineIndex: number
+): vscode.TextEditorRevealType | undefined {
+  const visibleRange = findVisibleRangeForLine(editor, lineIndex);
+  if (!visibleRange) {
+    return vscode.TextEditorRevealType.InCenterIfOutsideViewport;
+  }
+
+  const guardLineCount = getGuardLineCount(visibleRange);
+  const comfortStartLine = visibleRange.start.line + guardLineCount;
+  const comfortEndLine = visibleRange.end.line - guardLineCount;
+  if (comfortStartLine > comfortEndLine) {
+    return undefined;
+  }
+
+  if (lineIndex < comfortStartLine || lineIndex > comfortEndLine) {
+    return vscode.TextEditorRevealType.InCenter;
+  }
+
+  return undefined;
+}
+
 function revealEditorSourceLine(
   editor: vscode.TextEditor,
   sourceLine: number
-): void {
-  const lineCount = Math.max(1, editor.document.lineCount);
-  const lineIndex = Math.max(0, Math.min(sourceLine - 1, lineCount - 1));
+): boolean {
+  const lineIndex = getClampedLineIndex(editor, sourceLine);
+  const revealType = getRevealTypeForLine(editor, lineIndex);
+  if (revealType === undefined) {
+    return false;
+  }
+
   const position = new vscode.Position(lineIndex, 0);
   const range = new vscode.Range(position, position);
-  editor.revealRange(
-    range,
-    vscode.TextEditorRevealType.InCenterIfOutsideViewport
-  );
+  editor.revealRange(range, revealType);
+  return true;
 }
 
 export function supportsEditorToPreviewScrollSync(
@@ -297,32 +362,36 @@ export function syncPreviewScrollFromActiveEditor(
 export function handlePreviewSourceLineReport(
   preview: Preview | undefined,
   line: number
-): void {
+): PreviewSourceLineReportResult {
   if (!Number.isInteger(line) || line < 1) {
-    return;
+    return 'ignored';
   }
   if (!isEligibleForSync(preview, 'previewToEditor')) {
-    return;
+    return 'ignored';
   }
   if (shouldIgnoreScroll(preview, 'previewToEditor')) {
-    return;
+    return 'retry';
   }
 
   const scheduler = getOrCreateScheduler(preview);
   const documentKey = getPreviewDocumentKey(preview);
   const dispatchKey = getDispatchKey(documentKey, line);
   if (scheduler.lastPreviewReportedKey === dispatchKey) {
-    return;
+    return 'accepted';
   }
 
   const editor = findVisiblePreviewEditor(preview);
   if (!editor) {
-    return;
+    return 'ignored';
   }
 
-  revealEditorSourceLine(editor, line);
+  const didReveal = revealEditorSourceLine(editor, line);
   scheduler.lastPreviewReportedKey = dispatchKey;
-  scheduler.ignoreEditorUntilMs = Date.now() + SCROLL_SYNC_LOOP_SUPPRESSION_MS;
+  if (didReveal) {
+    scheduler.ignoreEditorUntilMs =
+      Date.now() + SCROLL_SYNC_LOOP_SUPPRESSION_MS;
+  }
+  return 'accepted';
 }
 
 // reset cached dispatch state after webview reload

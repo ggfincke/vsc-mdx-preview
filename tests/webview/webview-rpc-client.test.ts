@@ -26,7 +26,7 @@ const {
     openExternal: vi.fn(),
     openDocument: vi.fn(async () => {}),
     openPreview: vi.fn(async () => {}),
-    reportPreviewSourceLine: vi.fn(async () => {}),
+    reportPreviewSourceLine: vi.fn(async () => 'accepted'),
     renderPlantUml: vi.fn(async () => undefined),
   };
   const mockWrap = vi.fn(() => mockExtensionHandle);
@@ -88,7 +88,9 @@ describe('webview-rpc-client', () => {
       'https://example.com'
     );
 
-    await module.ExtensionHandle.reportPreviewSourceLine(12);
+    await expect(
+      module.ExtensionHandle.reportPreviewSourceLine(12)
+    ).resolves.toBe('accepted');
     expect(mockExtensionHandle.reportPreviewSourceLine).toHaveBeenCalledWith(
       12
     );

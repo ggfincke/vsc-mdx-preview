@@ -1,9 +1,11 @@
 // packages/webview-client/src/features/preview/shared/utils/scrollToSourceLine.ts
 // scroll preview content to the closest rendered source-line element
 
+import { SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO } from '@mdx-preview/contracts';
 import { PREVIEW_CONTENT_CLASS } from '../../../../app/constants';
 import {
   scheduleFrame,
+  cancelScheduledFrame,
   type ScheduledFrame,
 } from '../../../../shared/utils/frameScheduler';
 import {
@@ -14,10 +16,21 @@ import {
 } from './sourceLineElements';
 
 const MARKDOWN_BODY_SELECTOR = '.markdown-body';
-const SCROLL_OFFSET_PX = 60;
+const MIN_SCROLL_ANCHOR_OFFSET_PX = 60;
+const SCROLL_ANIMATION_MS = 120;
+const MIN_SCROLL_DELTA_PX = 2;
 
 let pendingScrollLine: number | undefined;
 let pendingScrollFrame: ScheduledFrame | undefined;
+
+interface ScrollAnimation {
+  frame: ScheduledFrame | undefined;
+  startTop: number;
+  targetTop: number;
+  startTime: number | undefined;
+}
+
+let activeScrollAnimation: ScrollAnimation | undefined;
 
 function getPreviewContentRoot(): HTMLElement | null {
   const content = document.querySelector(`.${PREVIEW_CONTENT_CLASS}`);
@@ -36,6 +49,76 @@ function buildEntry(
 ): SourceLineEntry | null {
   const owner = resolveHighlightOwner(element, container);
   return owner ? { highlightElement: owner, sourceLine } : null;
+}
+
+function easeScrollProgress(progress: number): number {
+  return 1 - Math.pow(1 - progress, 3);
+}
+
+function setWindowScrollTop(top: number): void {
+  window.scrollTo({ top, behavior: 'auto' });
+}
+
+function getViewportHeight(): number {
+  return document.documentElement.clientHeight || window.innerHeight;
+}
+
+function getScrollAnchorOffset(): number {
+  return Math.max(
+    MIN_SCROLL_ANCHOR_OFFSET_PX,
+    getViewportHeight() * SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO
+  );
+}
+
+function cancelActiveScrollAnimation(): void {
+  if (activeScrollAnimation?.frame) {
+    cancelScheduledFrame(activeScrollAnimation.frame);
+  }
+  activeScrollAnimation = undefined;
+}
+
+function animateWindowScrollTo(targetTop: number): void {
+  const startTop = window.scrollY;
+  if (Math.abs(targetTop - startTop) <= MIN_SCROLL_DELTA_PX) {
+    cancelActiveScrollAnimation();
+    setWindowScrollTop(targetTop);
+    return;
+  }
+
+  cancelActiveScrollAnimation();
+  activeScrollAnimation = {
+    frame: undefined,
+    startTop,
+    targetTop,
+    startTime: undefined,
+  };
+
+  const step = (time: number): void => {
+    const animation = activeScrollAnimation;
+    if (!animation) {
+      return;
+    }
+
+    animation.startTime ??= time;
+    const progress = Math.min(
+      1,
+      (time - animation.startTime) / SCROLL_ANIMATION_MS
+    );
+    const easedProgress = easeScrollProgress(progress);
+    const top =
+      animation.startTop +
+      (animation.targetTop - animation.startTop) * easedProgress;
+    setWindowScrollTop(top);
+
+    if (progress >= 1) {
+      activeScrollAnimation = undefined;
+      return;
+    }
+
+    animation.frame = scheduleFrame(step);
+  };
+
+  activeScrollAnimation.frame = scheduleFrame(step);
 }
 
 export function findBestSourceLineEntry(
@@ -118,8 +201,8 @@ export function scrollToSourceLine(sourceLine: number): boolean {
   }
 
   const rect = entry.highlightElement.getBoundingClientRect();
-  const top = Math.max(0, rect.top + window.scrollY - SCROLL_OFFSET_PX);
-  window.scrollTo({ top, behavior: 'auto' });
+  const top = Math.max(0, rect.top + window.scrollY - getScrollAnchorOffset());
+  animateWindowScrollTo(top);
   return true;
 }
 

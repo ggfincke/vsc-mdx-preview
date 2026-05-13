@@ -6,8 +6,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, createElement, useRef, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO } from '@mdx-preview/contracts';
+
+const { mockReportPreviewSourceLine } = vi.hoisted(() => ({
+  mockReportPreviewSourceLine: vi.fn(async () => 'accepted'),
+}));
+
+vi.mock(
+  '../../packages/webview-client/src/platform/rpc/webview-rpc-client',
+  () => ({
+    ExtensionHandle: {
+      reportPreviewSourceLine: mockReportPreviewSourceLine,
+    },
+  })
+);
+
 import { useSourceLineHighlight } from '../../packages/webview-client/src/features/preview/shared/hooks/useSourceLineHighlight';
-import { findActivePreviewSourceLine } from '../../packages/webview-client/src/features/preview/shared/hooks/usePreviewScrollSync';
+import {
+  findActivePreviewSourceLine,
+  usePreviewScrollSync,
+} from '../../packages/webview-client/src/features/preview/shared/hooks/usePreviewScrollSync';
 import {
   findBestSourceLineEntry,
   scheduleScrollToSourceLine,
@@ -32,6 +50,17 @@ function Harness({ children, onOpenSourceLine, enabled = true }: HarnessProps) {
   return createElement('div', { ref }, children);
 }
 
+function ScrollSyncHarness({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  usePreviewScrollSync({
+    containerRef: ref,
+    trigger: 'ready',
+    mode: 'previewToEditor',
+  });
+
+  return createElement('div', { ref }, children);
+}
+
 let mountedRoot: Root | undefined;
 let originalRequestAnimationFrame:
   | typeof window.requestAnimationFrame
@@ -50,6 +79,20 @@ async function mountHarness(
     mountedRoot?.render(
       createElement(Harness, { onOpenSourceLine, enabled }, children)
     );
+  });
+
+  return host;
+}
+
+async function mountScrollSyncHarness(
+  children: ReactNode
+): Promise<HTMLElement> {
+  const host = document.createElement('div');
+  document.body.appendChild(host);
+  mountedRoot = createRoot(host);
+
+  await act(async () => {
+    mountedRoot?.render(createElement(ScrollSyncHarness, null, children));
   });
 
   return host;
@@ -96,6 +139,8 @@ describe('useSourceLineHighlight', () => {
       value: vi.fn(),
       writable: true,
     });
+    mockReportPreviewSourceLine.mockReset();
+    mockReportPreviewSourceLine.mockResolvedValue('accepted');
   });
 
   afterEach(() => {
@@ -116,6 +161,7 @@ describe('useSourceLineHighlight', () => {
       delete (window as Partial<Window>).requestAnimationFrame;
     }
     originalRequestAnimationFrame = undefined;
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -214,13 +260,31 @@ describe('useSourceLineHighlight', () => {
     expect(onOpenSourceLine).not.toHaveBeenCalled();
   });
 
-  it('resolves exact, nearest, and scheduled scroll targets', () => {
+  it('resolves exact, nearest, and scheduled scroll targets', async () => {
     const container = renderMappedPreview();
     const exactTarget = document.getElementById('line-12')!;
-    setElementTop(exactTarget, 180);
+    const scrollAnchorY =
+      window.innerHeight * SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO;
+    setElementTop(exactTarget, scrollAnchorY + 120);
+
+    const frames: FrameRequestCallback[] = [];
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      value: vi.fn((callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      }),
+      writable: true,
+    });
+    Object.defineProperty(window, 'cancelAnimationFrame', {
+      value: vi.fn(),
+      writable: true,
+    });
 
     expect(scrollToSourceLine(12)).toBe(true);
-    expect(window.scrollTo).toHaveBeenCalledWith({
+    expect(window.scrollTo).not.toHaveBeenCalled();
+    frames.shift()?.(0);
+    frames.shift()?.(120);
+    expect(window.scrollTo).toHaveBeenLastCalledWith({
       top: 120,
       behavior: 'auto',
     });
@@ -236,24 +300,24 @@ describe('useSourceLineHighlight', () => {
     setElementTop(document.getElementById('line-24')!, 320);
     expect(findActivePreviewSourceLine(container, 600)).toBe(12);
 
-    const frames: FrameRequestCallback[] = [];
-    Object.defineProperty(window, 'requestAnimationFrame', {
-      value: vi.fn((callback: FrameRequestCallback) => {
-        frames.push(callback);
-        return frames.length;
-      }),
-      writable: true,
-    });
+    setElementTop(document.getElementById('line-5')!, 188);
+    setElementTop(document.getElementById('line-12')!, 200);
+    expect(findActivePreviewSourceLine(container, 600, 5)).toBe(5);
+
     const latestTarget = document.getElementById('line-24')!;
-    setElementTop(latestTarget, 260);
+    setElementTop(latestTarget, scrollAnchorY + 200);
     vi.mocked(window.scrollTo).mockClear();
+    vi.mocked(window.requestAnimationFrame).mockClear();
+    frames.length = 0;
 
     scheduleScrollToSourceLine(5);
     scheduleScrollToSourceLine(24);
 
     expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1);
-    frames[0](100);
-    expect(window.scrollTo).toHaveBeenCalledWith({
+    frames.shift()?.(200);
+    frames.shift()?.(200);
+    frames.shift()?.(320);
+    expect(window.scrollTo).toHaveBeenLastCalledWith({
       top: 200,
       behavior: 'auto',
     });
@@ -261,5 +325,78 @@ describe('useSourceLineHighlight', () => {
     document.body.innerHTML = '<div class="mdx-preview-content"></div>';
     expect(scrollToSourceLine(0)).toBe(false);
     expect(scrollToSourceLine(10)).toBe(false);
+
+    vi.useFakeTimers();
+    frames.length = 0;
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      value: vi.fn((callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      }),
+      writable: true,
+    });
+    Object.defineProperty(window, 'cancelAnimationFrame', {
+      value: vi.fn(),
+      writable: true,
+    });
+    mockReportPreviewSourceLine
+      .mockResolvedValueOnce('retry')
+      .mockResolvedValue('accepted');
+
+    const host = await mountScrollSyncHarness(
+      createElement('div', null, [
+        createElement(
+          'p',
+          { key: 'a', id: 'line-12', 'data-source-line': '12' },
+          'A'
+        ),
+        createElement(
+          'p',
+          { key: 'b', id: 'line-24', 'data-source-line': '24' },
+          'B'
+        ),
+      ])
+    );
+    setElementTop(host.querySelector('#line-12')!, 250);
+    setElementTop(host.querySelector('#line-24')!, 520);
+
+    await act(async () => {
+      frames.shift()?.(0);
+      await Promise.resolve();
+    });
+
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(1);
+    expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(12);
+
+    await act(async () => {
+      vi.advanceTimersByTime(119);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(2);
+    expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(12);
+
+    setElementTop(host.querySelector('#line-12')!, -40);
+    setElementTop(host.querySelector('#line-24')!, 250);
+    act(() => {
+      window.dispatchEvent(new Event('scroll'));
+    });
+    await act(async () => {
+      frames.shift()?.(200);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      vi.advanceTimersByTime(50);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(3);
+    expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(24);
   });
 });

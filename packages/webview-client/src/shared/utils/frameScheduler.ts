@@ -1,5 +1,5 @@
 // packages/webview-client/src/shared/utils/frameScheduler.ts
-// rAF with setTimeout fallback for environments without requestAnimationFrame
+// rAF w/ setTimeout fallback for environments without requestAnimationFrame
 
 export type ScheduledFrame =
   | { type: 'animation'; id: number }

@@ -35,7 +35,11 @@ import {
 } from '../../features/security/pathSecurity';
 import { MAX_FETCH_REQUEST_LENGTH } from '../../shared/constants';
 import { isValidModuleRequest } from '@mdx-preview/runtime-utils';
-import type { ExtensionRPC, FetchResult } from '@mdx-preview/contracts';
+import type {
+  ExtensionRPC,
+  FetchResult,
+  PreviewSourceLineReportResult,
+} from '@mdx-preview/contracts';
 
 // allowed URL schemes for openExternal
 const ALLOWED_EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
@@ -310,16 +314,18 @@ class ExtensionHandle implements ExtensionRPC {
     }
   }
 
-  async reportPreviewSourceLine(line: number): Promise<void> {
+  async reportPreviewSourceLine(
+    line: number
+  ): Promise<PreviewSourceLineReportResult> {
     const validLine = validateNumber(line, 'line number', {
       context: 'reportPreviewSourceLine',
       min: 1,
     });
     if (validLine === undefined || !Number.isInteger(validLine)) {
-      return;
+      return 'ignored';
     }
 
-    handlePreviewSourceLineReport(this.preview, validLine);
+    return handlePreviewSourceLineReport(this.preview, validLine);
   }
 
   // proxy PlantUML rendering via extension host (avoids CORS in webview)

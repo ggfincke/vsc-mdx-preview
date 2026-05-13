@@ -14,6 +14,8 @@ import type {
 } from '../config';
 import type { WebviewThemeState } from '../themes';
 
+export type PreviewSourceLineReportResult = 'accepted' | 'ignored' | 'retry';
+
 // extension-exposed RPC methods
 export interface ExtensionRPC {
   handshake(): void;
@@ -32,7 +34,7 @@ export interface ExtensionRPC {
     column?: number
   ): Promise<void>;
   openPreview(relativePath: string): Promise<void>;
-  reportPreviewSourceLine(line: number): Promise<void>;
+  reportPreviewSourceLine(line: number): Promise<PreviewSourceLineReportResult>;
   renderPlantUml(code: string): Promise<string | undefined>;
 }
 

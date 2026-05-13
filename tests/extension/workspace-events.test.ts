@@ -82,7 +82,7 @@ describe('workspace-events', () => {
     expect(updateConfiguration).toHaveBeenCalledTimes(1);
   });
 
-  it('live-syncs the preview to the first visible editor line when enabled', () => {
+  it('live-syncs the preview to the focused editor line when enabled', () => {
     vi.useFakeTimers();
     const uri = vscode.Uri.file('/workspace/test.mdx');
     const scrollToLine = vi.fn();
@@ -104,7 +104,7 @@ describe('workspace-events', () => {
     });
 
     expect(scrollToLine).toHaveBeenCalledTimes(1);
-    expect(scrollToLine).toHaveBeenLastCalledWith(5);
+    expect(scrollToLine).toHaveBeenLastCalledWith(10);
 
     visibleRangeCallback?.({
       textEditor: {
@@ -126,7 +126,7 @@ describe('workspace-events', () => {
     vi.advanceTimersByTime(1);
 
     expect(scrollToLine).toHaveBeenCalledTimes(2);
-    expect(scrollToLine).toHaveBeenLastCalledWith(15);
+    expect(scrollToLine).toHaveBeenLastCalledWith(17);
   });
 
   it('reveals editor lines from preview reports without feedback loops', () => {
@@ -157,27 +157,44 @@ describe('workspace-events', () => {
         visibleRanges: [new vscode.Range(4, 0, 20, 0)],
       } as never,
     });
-    expect(scrollToLine).toHaveBeenCalledWith(5);
+    expect(scrollToLine).toHaveBeenCalledWith(10);
 
-    handlePreviewSourceLineReport(preview as never, 12);
+    expect(handlePreviewSourceLineReport(preview as never, 12)).toBe('retry');
     expect(revealRange).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(201);
-    handlePreviewSourceLineReport(preview as never, 12);
+    vi.advanceTimersByTime(121);
+    expect(handlePreviewSourceLineReport(preview as never, 12)).toBe(
+      'accepted'
+    );
+    expect(revealRange).not.toHaveBeenCalled();
+
+    expect(handlePreviewSourceLineReport(preview as never, 18)).toBe(
+      'accepted'
+    );
 
     expect(revealRange).toHaveBeenCalledTimes(1);
-    expect(revealRange.mock.calls[0][0].start.line).toBe(11);
+    expect(revealRange.mock.calls[0][0].start.line).toBe(17);
     expect(revealRange.mock.calls[0][1]).toBe(
-      vscode.TextEditorRevealType.InCenterIfOutsideViewport
+      vscode.TextEditorRevealType.InCenter
     );
 
     visibleRangeCallback?.({
       textEditor: {
         document: { uri },
-        visibleRanges: [new vscode.Range(11, 0, 30, 0)],
+        visibleRanges: [new vscode.Range(17, 0, 36, 0)],
       } as never,
     });
     expect(scrollToLine).toHaveBeenCalledTimes(1);
+
+    expect(handlePreviewSourceLineReport(preview as never, 60)).toBe(
+      'accepted'
+    );
+
+    expect(revealRange).toHaveBeenCalledTimes(2);
+    expect(revealRange.mock.calls[1][0].start.line).toBe(59);
+    expect(revealRange.mock.calls[1][1]).toBe(
+      vscode.TextEditorRevealType.InCenterIfOutsideViewport
+    );
   });
 
   it('does not sync editor scroll when mode excludes editor-to-preview', () => {

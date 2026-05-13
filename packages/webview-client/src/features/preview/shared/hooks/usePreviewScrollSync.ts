@@ -5,6 +5,8 @@ import { useEffect, type RefObject } from 'react';
 import {
   isPreviewToEditorMode,
   LogTags,
+  SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
+  type PreviewSourceLineReportResult,
   type PreviewScrollSyncValue,
 } from '@mdx-preview/contracts';
 import { createTaggedLogger } from '../../../../shared/utils/createTaggedLogger';
@@ -17,7 +19,9 @@ import { ExtensionHandle } from '../../../../platform/rpc/webview-rpc-client';
 import { collectSourceLineEntries } from '../utils/sourceLineElements';
 
 const log = createTaggedLogger(LogTags.RPC_WEBVIEW);
-const PREVIEW_SCROLL_ANCHOR_RATIO = 0.35;
+const PREVIEW_SCROLL_HYSTERESIS_PX = 24;
+const PREVIEW_SOURCE_REPORT_INTERVAL_MS = 50;
+const PREVIEW_SOURCE_REPORT_RETRY_MS = 120;
 const MIN_VISIBLE_HEIGHT_PX = 1;
 
 interface ActiveLineCandidate {
@@ -60,10 +64,12 @@ function isBetterCandidate(
 
 export function findActivePreviewSourceLine(
   container: HTMLElement,
-  viewportHeight = window.innerHeight
+  viewportHeight = window.innerHeight,
+  stickyLine?: number
 ): number | undefined {
-  const anchorY = viewportHeight * PREVIEW_SCROLL_ANCHOR_RATIO;
+  const anchorY = viewportHeight * SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO;
   let best: ActiveLineCandidate | undefined;
+  let sticky: ActiveLineCandidate | undefined;
 
   for (const { highlightElement, sourceLine } of collectSourceLineEntries(
     container
@@ -84,26 +90,34 @@ export function findActivePreviewSourceLine(
       distance: getCandidateDistance(rect, anchorY),
       visibleTop,
     };
+    if (sourceLine === stickyLine) {
+      sticky = candidate;
+    }
     if (isBetterCandidate(candidate, best)) {
       best = candidate;
-      // exact anchor hit; later candidates with equal distance can only
-      // tie-break worse on visibleTop
-      if (best.distance === 0 && best.visibleTop === 0) {
-        break;
-      }
     }
+  }
+
+  if (
+    sticky &&
+    best &&
+    sticky.line !== best.line &&
+    sticky.distance <= best.distance + PREVIEW_SCROLL_HYSTERESIS_PX
+  ) {
+    return sticky.line;
   }
 
   return best?.line;
 }
 
-function reportPreviewSourceLine(line: number): void {
+async function reportPreviewSourceLine(
+  line: number
+): Promise<PreviewSourceLineReportResult> {
   try {
-    void ExtensionHandle.reportPreviewSourceLine(line).catch((error) => {
-      log.warn('Failed to report preview source line', error);
-    });
+    return await ExtensionHandle.reportPreviewSourceLine(line);
   } catch (error) {
     log.warn('Failed to report preview source line', error);
+    return 'ignored';
   }
 }
 
@@ -119,8 +133,107 @@ export function usePreviewScrollSync({
     }
 
     let frame: ScheduledFrame | undefined;
+    let reportTimer: ReturnType<typeof setTimeout> | undefined;
     let disposed = false;
-    let lastReportedLine: number | undefined;
+    let hasSentReport = false;
+    let lastAcceptedLine: number | undefined;
+    let lastSentAtMs = 0;
+    let pendingLine: number | undefined;
+    let inFlightLine: number | undefined;
+
+    const clearReportTimer = (): void => {
+      if (reportTimer) {
+        clearTimeout(reportTimer);
+        reportTimer = undefined;
+      }
+    };
+
+    const getStickyLine = (): number | undefined =>
+      pendingLine ?? inFlightLine ?? lastAcceptedLine;
+
+    const scheduleReport = (minimumDelayMs?: number): void => {
+      if (disposed || inFlightLine !== undefined || pendingLine === undefined) {
+        return;
+      }
+
+      if (reportTimer) {
+        return;
+      }
+
+      const intervalDelayMs = hasSentReport
+        ? Math.max(
+            0,
+            PREVIEW_SOURCE_REPORT_INTERVAL_MS - (Date.now() - lastSentAtMs)
+          )
+        : 0;
+      const delayMs = Math.max(intervalDelayMs, minimumDelayMs ?? 0);
+      if (delayMs === 0) {
+        sendPendingReport();
+        return;
+      }
+
+      reportTimer = setTimeout(sendPendingReport, delayMs);
+    };
+
+    const queueLine = (line: number): void => {
+      if (
+        line === lastAcceptedLine &&
+        pendingLine === undefined &&
+        inFlightLine === undefined
+      ) {
+        return;
+      }
+      if (line === pendingLine || line === inFlightLine) {
+        return;
+      }
+
+      pendingLine = line;
+      scheduleReport();
+    };
+
+    const finishReport = (
+      line: number,
+      result: PreviewSourceLineReportResult
+    ): void => {
+      let retryDelayMs: number | undefined;
+      if (result === 'accepted') {
+        lastAcceptedLine = line;
+      } else if (
+        result === 'retry' &&
+        pendingLine === undefined &&
+        line !== lastAcceptedLine
+      ) {
+        pendingLine = line;
+        retryDelayMs = PREVIEW_SOURCE_REPORT_RETRY_MS;
+      }
+
+      inFlightLine = undefined;
+      if (pendingLine !== undefined) {
+        scheduleReport(retryDelayMs);
+      }
+    };
+
+    function sendPendingReport(): void {
+      clearReportTimer();
+      if (disposed || inFlightLine !== undefined) {
+        return;
+      }
+
+      const line = pendingLine;
+      pendingLine = undefined;
+      if (line === undefined || line === lastAcceptedLine) {
+        return;
+      }
+
+      inFlightLine = line;
+      hasSentReport = true;
+      lastSentAtMs = Date.now();
+      void reportPreviewSourceLine(line).then((result) => {
+        if (!disposed) {
+          finishReport(line, result);
+        }
+      });
+    }
 
     const flush = (): void => {
       frame = undefined;
@@ -128,13 +241,16 @@ export function usePreviewScrollSync({
         return;
       }
 
-      const line = findActivePreviewSourceLine(container);
-      if (line === undefined || line === lastReportedLine) {
+      const line = findActivePreviewSourceLine(
+        container,
+        window.innerHeight,
+        getStickyLine()
+      );
+      if (line === undefined) {
         return;
       }
 
-      lastReportedLine = line;
-      reportPreviewSourceLine(line);
+      queueLine(line);
     };
 
     const schedule = (): void => {
@@ -153,6 +269,7 @@ export function usePreviewScrollSync({
       disposed = true;
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
+      clearReportTimer();
       if (frame) {
         cancelScheduledFrame(frame);
       }
