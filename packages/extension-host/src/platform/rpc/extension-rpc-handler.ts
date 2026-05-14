@@ -4,7 +4,10 @@
 import { performance } from 'perf_hooks';
 import * as vscode from 'vscode';
 import { Preview } from '../../features/preview/preview-manager';
-import { handlePreviewSourceLineReport } from '../../features/preview/scroll-sync';
+import {
+  handlePreviewSourceLineReport,
+  suppressEditorScrollSync,
+} from '../../features/preview/scroll-sync';
 import { fetchLocal } from '../../features/module-runtime/fetch/fetchLocal';
 import {
   getTrustManager,
@@ -311,6 +314,39 @@ class ExtensionHandle implements ExtensionRPC {
         new Error(`Could not open preview: ${relativePath}`),
         ErrorContext.Extension
       );
+    }
+  }
+
+  // open the preview's own source document in the editor at the given line
+  // (cmd+click on a preview element wires through here)
+  async openSourceLine(line: number): Promise<void> {
+    const validLine = validateNumber(line, 'line number', {
+      context: 'openSourceLine',
+      min: 1,
+    });
+    if (validLine === undefined || !Number.isInteger(validLine)) {
+      return;
+    }
+
+    if (!this.preview.active) {
+      return;
+    }
+
+    // pre-suppress editor->preview sync: showTextDocument fires
+    // onDidChangeTextEditorVisibleRanges which would otherwise bounce back
+    suppressEditorScrollSync(this.preview);
+
+    const lineIndex = validLine - 1;
+    const position = new vscode.Position(lineIndex, 0);
+    const selection = new vscode.Range(position, position);
+
+    try {
+      await vscode.window.showTextDocument(this.preview.doc, {
+        selection,
+        preserveFocus: false,
+      });
+    } catch (error) {
+      log.warn('openSourceLine: failed to show document', error);
     }
   }
 

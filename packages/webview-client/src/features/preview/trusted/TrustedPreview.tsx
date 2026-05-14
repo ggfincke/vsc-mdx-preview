@@ -15,6 +15,7 @@ import { evaluateModuleToComponent } from '../../module-runtime';
 import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
 import { usePreviewScrollSync } from '../shared/hooks/usePreviewScrollSync';
 import { useSourceLineHighlight } from '../shared/hooks/useSourceLineHighlight';
+import { openSourceLine } from '../shared/utils/openSourceLine';
 import { useAsyncEffect } from '../../../shared/hooks/useAsyncEffect';
 import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
 import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnhancement';
@@ -142,6 +143,7 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
     containerRef,
     trigger: evaluatedComponent,
     enabled: sourceLineHighlightEnabled,
+    onOpenSourceLine: openSourceLine,
   });
 
   usePreviewScrollSync({

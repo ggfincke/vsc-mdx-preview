@@ -34,6 +34,7 @@ export interface ExtensionRPC {
     column?: number
   ): Promise<void>;
   openPreview(relativePath: string): Promise<void>;
+  openSourceLine(line: number): Promise<void>;
   reportPreviewSourceLine(line: number): Promise<PreviewSourceLineReportResult>;
   renderPlantUml(code: string): Promise<string | undefined>;
 }

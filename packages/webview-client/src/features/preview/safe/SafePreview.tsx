@@ -5,6 +5,7 @@ import { memo, useEffect } from 'react';
 import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
 import { usePreviewScrollSync } from '../shared/hooks/usePreviewScrollSync';
 import { useSourceLineHighlight } from '../shared/hooks/useSourceLineHighlight';
+import { openSourceLine } from '../shared/utils/openSourceLine';
 import { useSafeModeProcessing } from './hooks/useSafeModeProcessing';
 import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
 import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnhancement';
@@ -39,6 +40,7 @@ export const SafePreviewRenderer = memo(
       containerRef,
       trigger: html,
       enabled: sourceLineHighlightEnabled,
+      onOpenSourceLine: openSourceLine,
     });
 
     usePreviewScrollSync({

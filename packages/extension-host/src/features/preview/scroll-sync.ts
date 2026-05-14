@@ -217,7 +217,8 @@ function queueScroll(preview: Preview, line: number): void {
     scheduler.pendingLine === undefined &&
     scheduler.lastDispatchedKey === dispatchKey
   ) {
-    scheduleSettleDispatch(preview);
+    // nothing pending and we've already dispatched this line — no work for the
+    // settle timer to do
     return;
   }
 
@@ -392,6 +393,14 @@ export function handlePreviewSourceLineReport(
       Date.now() + SCROLL_SYNC_LOOP_SUPPRESSION_MS;
   }
   return 'accepted';
+}
+
+// suppress editor->preview sync briefly after the extension itself moves the editor
+// (e.g. cmd+click in preview opens source line) so the resulting visible-range
+// change doesn't bounce back through the editor->preview path
+export function suppressEditorScrollSync(preview: Preview): void {
+  const scheduler = getOrCreateScheduler(preview);
+  scheduler.ignoreEditorUntilMs = Date.now() + SCROLL_SYNC_LOOP_SUPPRESSION_MS;
 }
 
 // reset cached dispatch state after webview reload

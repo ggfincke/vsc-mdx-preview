@@ -314,6 +314,9 @@ export const ExtensionHandle: ExtensionHandle = {
   openPreview(relativePath: string) {
     return getInitializedExtensionHandle().openPreview(relativePath);
   },
+  openSourceLine(line: number) {
+    return getInitializedExtensionHandle().openSourceLine(line);
+  },
   reportPreviewSourceLine(line: number) {
     return getInitializedExtensionHandle().reportPreviewSourceLine(line);
   },
