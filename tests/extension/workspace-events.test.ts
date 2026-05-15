@@ -172,10 +172,12 @@ describe('workspace-events', () => {
       'accepted'
     );
 
+    // reveal anchors the reported line at the preview's 35% ratio:
+    // visibleLineCount=21, anchorOffset=floor(20*0.35)=7, reportedIdx=17 -> top=10
     expect(revealRange).toHaveBeenCalledTimes(1);
-    expect(revealRange.mock.calls[0][0].start.line).toBe(17);
+    expect(revealRange.mock.calls[0][0].start.line).toBe(10);
     expect(revealRange.mock.calls[0][1]).toBe(
-      vscode.TextEditorRevealType.InCenter
+      vscode.TextEditorRevealType.AtTop
     );
 
     visibleRangeCallback?.({
@@ -190,10 +192,11 @@ describe('workspace-events', () => {
       'accepted'
     );
 
+    // reported line outside viewport -> anchored top = 59 - 7 = 52
     expect(revealRange).toHaveBeenCalledTimes(2);
-    expect(revealRange.mock.calls[1][0].start.line).toBe(59);
+    expect(revealRange.mock.calls[1][0].start.line).toBe(52);
     expect(revealRange.mock.calls[1][1]).toBe(
-      vscode.TextEditorRevealType.InCenterIfOutsideViewport
+      vscode.TextEditorRevealType.AtTop
     );
   });
 

@@ -285,27 +285,47 @@ function getGuardLineCount(range: vscode.Range): number {
   );
 }
 
-function getRevealTypeForLine(
+function getEditorVisibleLineCount(editor: vscode.TextEditor): number {
+  const leading = getLeadingVisibleRange(editor.visibleRanges);
+  if (!leading) {
+    return 1;
+  }
+  return Math.max(1, leading.end.line - leading.start.line + 1);
+}
+
+// place the reported line at the same 35% anchor the preview uses, so each
+// preview->editor reveal moves the editor by the same delta the user just
+// scrolled in the preview (rather than snapping the line to vscode's
+// InCenter/InCenterIfOutsideViewport ~50% position)
+function computeAnchoredTopLine(
   editor: vscode.TextEditor,
   lineIndex: number
-): vscode.TextEditorRevealType | undefined {
+): number {
+  const visibleLineCount = getEditorVisibleLineCount(editor);
+  const anchorOffset = Math.floor(
+    (visibleLineCount - 1) * SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO
+  );
+  const maxTopLine = Math.max(0, editor.document.lineCount - 1);
+  return Math.max(0, Math.min(maxTopLine, lineIndex - anchorOffset));
+}
+
+function shouldRevealAtAnchor(
+  editor: vscode.TextEditor,
+  lineIndex: number
+): boolean {
   const visibleRange = findVisibleRangeForLine(editor, lineIndex);
   if (!visibleRange) {
-    return vscode.TextEditorRevealType.InCenterIfOutsideViewport;
+    return true;
   }
 
   const guardLineCount = getGuardLineCount(visibleRange);
   const comfortStartLine = visibleRange.start.line + guardLineCount;
   const comfortEndLine = visibleRange.end.line - guardLineCount;
   if (comfortStartLine > comfortEndLine) {
-    return undefined;
+    return false;
   }
 
-  if (lineIndex < comfortStartLine || lineIndex > comfortEndLine) {
-    return vscode.TextEditorRevealType.InCenter;
-  }
-
-  return undefined;
+  return lineIndex < comfortStartLine || lineIndex > comfortEndLine;
 }
 
 function revealEditorSourceLine(
@@ -313,14 +333,14 @@ function revealEditorSourceLine(
   sourceLine: number
 ): boolean {
   const lineIndex = getClampedLineIndex(editor, sourceLine);
-  const revealType = getRevealTypeForLine(editor, lineIndex);
-  if (revealType === undefined) {
+  if (!shouldRevealAtAnchor(editor, lineIndex)) {
     return false;
   }
 
-  const position = new vscode.Position(lineIndex, 0);
+  const topLine = computeAnchoredTopLine(editor, lineIndex);
+  const position = new vscode.Position(topLine, 0);
   const range = new vscode.Range(position, position);
-  editor.revealRange(range, revealType);
+  editor.revealRange(range, vscode.TextEditorRevealType.AtTop);
   return true;
 }
 
