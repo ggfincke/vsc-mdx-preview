@@ -6,7 +6,7 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@mdx-preview/runtime-utils": "*",
-    "mdx-forge": "^0.4.2"
+    "mdx-forge": "^0.4.3"
   },
   "exports": {
     ".": "./src/index.ts",
