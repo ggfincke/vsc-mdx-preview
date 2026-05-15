@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.8] - 2026-05-14
+
+### Fixed
+
+- **Security**: Bump transitive `fast-uri` 3.1.0 -> 3.1.2 to clear the high-severity advisories (path traversal via percent-encoded dot segments; host confusion via percent-encoded authority delimiters)
+
+### Changed
+
+- **Dependencies** (root): `@babel/preset-env` ^7.29.3 -> ^7.29.5, `@tailwindcss/postcss` ^4.2.4 -> ^4.3.0, `enhanced-resolve` ^5.21.0 -> ^5.21.2, `mdx-forge` ^0.4.2 -> ^0.4.3, `typescript-eslint` ^8.59.1 -> ^8.59.2
+- **Dependencies** (webview-client): `mdx-forge` ^0.4.2 -> ^0.4.3, `mermaid` ^11.14.0 -> ^11.15.0, `react` / `react-dom` ^19.2.5 -> ^19.2.6, `typescript-eslint` ^8.59.1 -> ^8.59.2, `vite` ^8.0.10 -> ^8.0.12
+- **Dependencies** (extension-host, codegen): `mdx-forge` ^0.4.2 -> ^0.4.3
+
 ## [1.3.7] - 2026-05-05
 
 ### Added
