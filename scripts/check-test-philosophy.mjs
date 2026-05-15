@@ -69,6 +69,7 @@ const CASE_COUNT_OVERRIDES = new Map([
   ['tests/extension/language/MDXSymbolProvider.test.ts', 12],
   ['tests/extension/rpc-input-validation.test.ts', 6],
   ['tests/webview/SafePreview.test.ts', 6],
+  ['tests/webview/source-line-highlight.test.ts', 7],
 ]);
 
 function listTestFiles(dirPath) {

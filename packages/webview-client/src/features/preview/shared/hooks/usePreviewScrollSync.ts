@@ -17,11 +17,13 @@ import {
 } from '../../../../shared/utils/frameScheduler';
 import { ExtensionHandle } from '../../../../platform/rpc/webview-rpc-client';
 import { collectSourceLineEntries } from '../utils/sourceLineElements';
+import { isSourceLineScrollInProgress } from '../utils/scrollToSourceLine';
 
 const log = createTaggedLogger(LogTags.RPC_WEBVIEW);
 const PREVIEW_SCROLL_HYSTERESIS_PX = 24;
 const PREVIEW_SOURCE_REPORT_INTERVAL_MS = 50;
 const PREVIEW_SOURCE_REPORT_RETRY_MS = 120;
+const PREVIEW_SOURCE_REPORT_IGNORED_RETRY_MS = 250;
 const MIN_VISIBLE_HEIGHT_PX = 1;
 
 interface ActiveLineCandidate {
@@ -196,15 +198,21 @@ export function usePreviewScrollSync({
       result: PreviewSourceLineReportResult
     ): void => {
       let retryDelayMs: number | undefined;
+      const queueRetry = (delayMs: number): void => {
+        if (pendingLine === undefined && line !== lastAcceptedLine) {
+          pendingLine = line;
+          retryDelayMs = delayMs;
+        }
+      };
+
       if (result === 'accepted') {
         lastAcceptedLine = line;
-      } else if (
-        result === 'retry' &&
-        pendingLine === undefined &&
-        line !== lastAcceptedLine
-      ) {
-        pendingLine = line;
-        retryDelayMs = PREVIEW_SOURCE_REPORT_RETRY_MS;
+      } else if (result === 'retry') {
+        // editor reveal is briefly suppressed
+        queueRetry(PREVIEW_SOURCE_REPORT_RETRY_MS);
+      } else {
+        // ignored reports may be transient when the editor is hidden or RPC fails
+        queueRetry(PREVIEW_SOURCE_REPORT_IGNORED_RETRY_MS);
       }
 
       inFlightLine = undefined;
@@ -238,6 +246,10 @@ export function usePreviewScrollSync({
     const flush = (): void => {
       frame = undefined;
       if (disposed) {
+        return;
+      }
+
+      if (isSourceLineScrollInProgress()) {
         return;
       }
 

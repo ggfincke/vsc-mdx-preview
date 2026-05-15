@@ -16,6 +16,7 @@ import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
 import { usePreviewScrollSync } from '../shared/hooks/usePreviewScrollSync';
 import { useSourceLineHighlight } from '../shared/hooks/useSourceLineHighlight';
 import { openSourceLine } from '../shared/utils/openSourceLine';
+import { flushPendingScrollToSourceLine } from '../shared/utils/scrollToSourceLine';
 import { useAsyncEffect } from '../../../shared/hooks/useAsyncEffect';
 import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
 import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnhancement';
@@ -131,6 +132,12 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
       scan();
     }
   }, [containerRef, evaluatedComponent, scan]);
+
+  useLayoutEffect(() => {
+    if (evaluatedComponent) {
+      flushPendingScrollToSourceLine();
+    }
+  }, [evaluatedComponent]);
 
   // lazy-load KaTeX CSS when math content is detected (DOM-based detection)
   useKatexDetection({ containerRef, trigger: evaluatedComponent });

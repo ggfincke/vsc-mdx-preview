@@ -295,11 +295,6 @@ export class Preview {
 
   onWebviewReady(): void {
     this.webviewBridge.onWebviewReady(this.doc.uri);
-    if (supportsEditorToPreviewScrollSync(this.configuration.scrollSync)) {
-      // allow the same line to dispatch when the preview remounts
-      resetPreviewScrollSync(this);
-      syncPreviewScrollFromActiveEditor(this);
-    }
   }
 
   pushThemeState(frontmatter?: Record<string, unknown>): void {
@@ -317,6 +312,14 @@ export class Preview {
 
   scrollToLine(line: number): void {
     this.webviewBridge.scrollToLine(line);
+  }
+
+  syncEditorScrollToPreview(): void {
+    if (!supportsEditorToPreviewScrollSync(this.configuration.scrollSync)) {
+      return;
+    }
+    resetPreviewScrollSync(this);
+    syncPreviewScrollFromActiveEditor(this);
   }
 
   markStale(): void {
@@ -385,8 +388,7 @@ export class Preview {
       result.scrollSyncChanged &&
       supportsEditorToPreviewScrollSync(this.configuration.scrollSync)
     ) {
-      resetPreviewScrollSync(this);
-      syncPreviewScrollFromActiveEditor(this);
+      this.syncEditorScrollToPreview();
     }
 
     if (result.needsCssWatcherUpdate) {

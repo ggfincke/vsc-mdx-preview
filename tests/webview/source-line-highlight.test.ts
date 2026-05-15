@@ -1,5 +1,5 @@
 // tests/webview/source-line-highlight.test.ts
-// tests source-line hover & click navigation binding
+// tests source-line hover, click navigation & preview scroll sync
 //
 // @vitest-environment jsdom
 
@@ -28,6 +28,8 @@ import {
 } from '../../packages/webview-client/src/features/preview/shared/hooks/usePreviewScrollSync';
 import {
   findBestSourceLineEntry,
+  flushPendingScrollToSourceLine,
+  isSourceLineScrollInProgress,
   scheduleScrollToSourceLine,
   scrollToSourceLine,
 } from '../../packages/webview-client/src/features/preview/shared/utils/scrollToSourceLine';
@@ -260,7 +262,7 @@ describe('useSourceLineHighlight', () => {
     expect(onOpenSourceLine).not.toHaveBeenCalled();
   });
 
-  it('resolves exact, nearest, and scheduled scroll targets', async () => {
+  it('animates, coalesces, and defers source-line scroll targets', () => {
     const container = renderMappedPreview();
     const exactTarget = document.getElementById('line-12')!;
     const scrollAnchorY =
@@ -288,6 +290,7 @@ describe('useSourceLineHighlight', () => {
       top: 120,
       behavior: 'auto',
     });
+
     expect(findBestSourceLineEntry(container, 18)?.highlightElement).toBe(
       exactTarget
     );
@@ -304,15 +307,14 @@ describe('useSourceLineHighlight', () => {
     setElementTop(document.getElementById('line-12')!, 200);
     expect(findActivePreviewSourceLine(container, 600, 5)).toBe(5);
 
-    const latestTarget = document.getElementById('line-24')!;
-    setElementTop(latestTarget, scrollAnchorY + 200);
+    setElementTop(document.getElementById('line-24')!, scrollAnchorY + 200);
     vi.mocked(window.scrollTo).mockClear();
     vi.mocked(window.requestAnimationFrame).mockClear();
     frames.length = 0;
 
+    // two schedule calls coalesce into one frame & the latest line wins
     scheduleScrollToSourceLine(5);
     scheduleScrollToSourceLine(24);
-
     expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1);
     frames.shift()?.(200);
     frames.shift()?.(200);
@@ -322,12 +324,113 @@ describe('useSourceLineHighlight', () => {
       behavior: 'auto',
     });
 
+    // w/ no rendered target the scheduled line stays pending
     document.body.innerHTML = '<div class="mdx-preview-content"></div>';
     expect(scrollToSourceLine(0)).toBe(false);
     expect(scrollToSourceLine(10)).toBe(false);
+    vi.mocked(window.scrollTo).mockClear();
+    scheduleScrollToSourceLine(12);
+    frames.shift()?.(360);
+    expect(window.scrollTo).not.toHaveBeenCalled();
 
+    // the pending scroll flushes once matching content renders
+    const lateContainer = renderMappedPreview();
+    const lateTarget = lateContainer.querySelector('#line-12')!;
+    setElementTop(lateTarget, scrollAnchorY + 160);
+    expect(flushPendingScrollToSourceLine()).toBe(true);
+    frames.shift()?.(480);
+    frames.shift()?.(600);
+    expect(window.scrollTo).toHaveBeenLastCalledWith({
+      top: 160,
+      behavior: 'auto',
+    });
+  });
+
+  it('suppresses reports caused by programmatic preview scrolls', async () => {
+    const frames: FrameRequestCallback[] = [];
     vi.useFakeTimers();
-    frames.length = 0;
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      value: vi.fn((callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      }),
+      writable: true,
+    });
+    Object.defineProperty(window, 'cancelAnimationFrame', {
+      value: vi.fn(),
+      writable: true,
+    });
+
+    const scrollAnchorY =
+      window.innerHeight * SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO;
+    const host = await mountScrollSyncHarness(
+      createElement(
+        'div',
+        { className: 'mdx-preview-content' },
+        createElement(
+          'div',
+          { className: 'markdown-body' },
+          createElement(
+            'p',
+            { id: 'line-12', 'data-source-line': '12' },
+            'A'
+          )
+        )
+      )
+    );
+    setElementTop(host.querySelector('#line-12')!, scrollAnchorY + 120);
+
+    scheduleScrollToSourceLine(12);
+
+    await act(async () => {
+      frames.shift()?.(0);
+      frames.shift()?.(0);
+      await Promise.resolve();
+    });
+
+    expect(isSourceLineScrollInProgress()).toBe(true);
+    expect(mockReportPreviewSourceLine).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(new Event('scroll'));
+    });
+    await act(async () => {
+      frames.shift()?.(16);
+      frames.shift()?.(16);
+      frames.shift()?.(136);
+      await Promise.resolve();
+    });
+
+    expect(isSourceLineScrollInProgress()).toBe(true);
+    act(() => {
+      window.dispatchEvent(new Event('scroll'));
+    });
+    await act(async () => {
+      frames.shift()?.(152);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).not.toHaveBeenCalled();
+
+    await act(async () => {
+      vi.advanceTimersByTime(80);
+      await Promise.resolve();
+    });
+    expect(isSourceLineScrollInProgress()).toBe(false);
+
+    act(() => {
+      window.dispatchEvent(new Event('scroll'));
+    });
+    await act(async () => {
+      frames.shift()?.(240);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(1);
+    expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(12);
+  });
+
+  it('reports preview source lines with retry and interval throttling', async () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.useFakeTimers();
     Object.defineProperty(window, 'requestAnimationFrame', {
       value: vi.fn((callback: FrameRequestCallback) => {
         frames.push(callback);
@@ -398,5 +501,63 @@ describe('useSourceLineHighlight', () => {
     });
     expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(3);
     expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(24);
+  });
+
+  it('keeps ignored preview reports retryable with backoff', async () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.useFakeTimers();
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      value: vi.fn((callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      }),
+      writable: true,
+    });
+    Object.defineProperty(window, 'cancelAnimationFrame', {
+      value: vi.fn(),
+      writable: true,
+    });
+    mockReportPreviewSourceLine
+      .mockResolvedValueOnce('ignored')
+      .mockResolvedValue('accepted');
+
+    const host = await mountScrollSyncHarness(
+      createElement(
+        'p',
+        { id: 'line-12', 'data-source-line': '12' },
+        'A'
+      )
+    );
+    setElementTop(host.querySelector('#line-12')!, 250);
+
+    await act(async () => {
+      frames.shift()?.(0);
+      await Promise.resolve();
+    });
+
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(1);
+    expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(12);
+
+    await act(async () => {
+      vi.advanceTimersByTime(249);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(2);
+    expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(12);
+
+    act(() => {
+      window.dispatchEvent(new Event('scroll'));
+    });
+    await act(async () => {
+      frames.shift()?.(300);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(2);
   });
 });

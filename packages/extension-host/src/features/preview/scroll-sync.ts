@@ -14,6 +14,9 @@ import type { Preview } from './Preview';
 
 const EDITOR_TO_PREVIEW_SCROLL_INTERVAL_MS = 33;
 const EDITOR_TO_PREVIEW_SCROLL_SETTLE_MS = 80;
+// window to ignore bounce-back scroll events after the extension drives one side
+// kept in step w/ the webview scroll-animation duration; if RPC latency outlasts
+// it the comfort-zone guard (shouldRevealAtAnchor) is the real loop backstop
 const SCROLL_SYNC_LOOP_SUPPRESSION_MS = 120;
 const PREVIEW_TO_EDITOR_GUARD_RATIO = 0.2;
 const PREVIEW_TO_EDITOR_MIN_GUARD_LINES = 3;
@@ -69,6 +72,8 @@ function getDispatchKey(documentKey: string, line: number): string {
   return `${documentKey}:${line}`;
 }
 
+// pick the topmost visible range; w/ folded code vscode reports several ranges
+// & the anchor math intentionally tracks only this leading one
 function getLeadingVisibleRange(
   visibleRanges: readonly vscode.Range[]
 ): vscode.Range | undefined {
@@ -217,8 +222,7 @@ function queueScroll(preview: Preview, line: number): void {
     scheduler.pendingLine === undefined &&
     scheduler.lastDispatchedKey === dispatchKey
   ) {
-    // nothing pending and we've already dispatched this line — no work for the
-    // settle timer to do
+    // skip duplicate settled dispatch when same line already reached preview
     return;
   }
 

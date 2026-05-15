@@ -104,6 +104,7 @@ function createPreview(): {
   clearTailwindFallbackReason: ReturnType<typeof vi.fn>;
   setTailwindBrowserRuntimeEnabled: ReturnType<typeof vi.fn>;
   refreshWebview: ReturnType<typeof vi.fn>;
+  syncEditorScrollToPreview: ReturnType<typeof vi.fn>;
   entryFsDirectory: string;
   mdxPreviewConfig: undefined;
 } {
@@ -160,6 +161,7 @@ function createPreview(): {
     clearTailwindFallbackReason: vi.fn(),
     setTailwindBrowserRuntimeEnabled: vi.fn(() => false),
     refreshWebview: vi.fn(async () => {}),
+    syncEditorScrollToPreview: vi.fn(),
     entryFsDirectory: '/workspace',
     mdxPreviewConfig: undefined,
   };
@@ -328,5 +330,39 @@ describe('evaluate-in-webview Tailwind routing', () => {
       'bidirectional'
     );
     expect(preview.webviewHandle.setShimSideRail).toHaveBeenCalledWith(false);
+  });
+
+  it('syncs editor scroll after preview content is posted', async () => {
+    mockTrustedState();
+    const trustedPreview = createPreview();
+
+    await evaluateInWebview(
+      trustedPreview as unknown as MockPreview,
+      '# doc',
+      '/workspace/doc.mdx'
+    );
+
+    expect(trustedPreview.syncEditorScrollToPreview).toHaveBeenCalledTimes(1);
+    expect(
+      trustedPreview.webviewHandle.updatePreview.mock.invocationCallOrder[0]
+    ).toBeLessThan(
+      trustedPreview.syncEditorScrollToPreview.mock.invocationCallOrder[0]
+    );
+
+    mockSafeState();
+    const safePreview = createPreview();
+
+    await evaluateInWebview(
+      safePreview as unknown as MockPreview,
+      '# doc',
+      '/workspace/doc.mdx'
+    );
+
+    expect(safePreview.syncEditorScrollToPreview).toHaveBeenCalledTimes(1);
+    expect(
+      safePreview.webviewHandle.updatePreviewSafe.mock.invocationCallOrder[0]
+    ).toBeLessThan(
+      safePreview.syncEditorScrollToPreview.mock.invocationCallOrder[0]
+    );
   });
 });

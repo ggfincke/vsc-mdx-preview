@@ -172,7 +172,7 @@ describe('workspace-events', () => {
       'accepted'
     );
 
-    // reveal anchors the reported line at the preview's 35% ratio:
+    // reveal anchors reported line at preview 35% ratio
     // visibleLineCount=21, anchorOffset=floor(20*0.35)=7, reportedIdx=17 -> top=10
     expect(revealRange).toHaveBeenCalledTimes(1);
     expect(revealRange.mock.calls[0][0].start.line).toBe(10);

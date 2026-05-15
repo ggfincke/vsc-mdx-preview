@@ -19,9 +19,13 @@ const MARKDOWN_BODY_SELECTOR = '.markdown-body';
 const MIN_SCROLL_ANCHOR_OFFSET_PX = 60;
 const SCROLL_ANIMATION_MS = 120;
 const MIN_SCROLL_DELTA_PX = 2;
+const PENDING_SCROLL_TTL_MS = 10000;
+const PROGRAMMATIC_SCROLL_SETTLE_MS = 80;
 
 let pendingScrollLine: number | undefined;
+let pendingScrollRequestedAtMs = 0;
 let pendingScrollFrame: ScheduledFrame | undefined;
+let programmaticScrollUntilMs = 0;
 
 interface ScrollAnimation {
   frame: ScheduledFrame | undefined;
@@ -77,11 +81,52 @@ function cancelActiveScrollAnimation(): void {
   activeScrollAnimation = undefined;
 }
 
+function clearPendingScroll(): void {
+  pendingScrollLine = undefined;
+  pendingScrollRequestedAtMs = 0;
+}
+
+function markProgrammaticScrollSettled(): void {
+  programmaticScrollUntilMs = Date.now() + PROGRAMMATIC_SCROLL_SETTLE_MS;
+}
+
+function hasExpiredPendingScroll(): boolean {
+  return (
+    pendingScrollLine !== undefined &&
+    Date.now() - pendingScrollRequestedAtMs > PENDING_SCROLL_TTL_MS
+  );
+}
+
+function isProgrammaticScrollSettling(): boolean {
+  const remainingMs = programmaticScrollUntilMs - Date.now();
+  if (remainingMs <= 0) {
+    programmaticScrollUntilMs = 0;
+    return false;
+  }
+  if (remainingMs > PROGRAMMATIC_SCROLL_SETTLE_MS) {
+    programmaticScrollUntilMs = 0;
+    return false;
+  }
+  return true;
+}
+
+export function isSourceLineScrollInProgress(): boolean {
+  if (hasExpiredPendingScroll()) {
+    clearPendingScroll();
+  }
+  return (
+    pendingScrollLine !== undefined ||
+    activeScrollAnimation !== undefined ||
+    isProgrammaticScrollSettling()
+  );
+}
+
 function animateWindowScrollTo(targetTop: number): void {
   const startTop = window.scrollY;
   if (Math.abs(targetTop - startTop) <= MIN_SCROLL_DELTA_PX) {
     cancelActiveScrollAnimation();
     setWindowScrollTop(targetTop);
+    markProgrammaticScrollSettled();
     return;
   }
 
@@ -112,6 +157,7 @@ function animateWindowScrollTo(targetTop: number): void {
 
     if (progress >= 1) {
       activeScrollAnimation = undefined;
+      markProgrammaticScrollSettled();
       return;
     }
 
@@ -212,16 +258,32 @@ export function scheduleScrollToSourceLine(sourceLine: number): void {
   }
 
   pendingScrollLine = sourceLine;
+  pendingScrollRequestedAtMs = Date.now();
   if (pendingScrollFrame) {
     return;
   }
 
   pendingScrollFrame = scheduleFrame(() => {
-    const line = pendingScrollLine;
-    pendingScrollLine = undefined;
     pendingScrollFrame = undefined;
-    if (line !== undefined) {
-      scrollToSourceLine(line);
-    }
+    flushPendingScrollToSourceLine();
   });
+}
+
+export function flushPendingScrollToSourceLine(): boolean {
+  if (hasExpiredPendingScroll()) {
+    clearPendingScroll();
+    return false;
+  }
+
+  const line = pendingScrollLine;
+  if (line === undefined) {
+    return false;
+  }
+
+  if (!scrollToSourceLine(line)) {
+    return false;
+  }
+
+  clearPendingScroll();
+  return true;
 }
