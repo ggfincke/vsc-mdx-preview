@@ -326,6 +326,8 @@ function shouldRevealAtAnchor(
   const comfortStartLine = visibleRange.start.line + guardLineCount;
   const comfortEndLine = visibleRange.end.line - guardLineCount;
   if (comfortStartLine > comfortEndLine) {
+    // viewport is too small for a stable comfort band; suppress reveals so
+    // every small preview scroll doesn't yank a near-empty editor around
     return false;
   }
 

@@ -225,4 +225,40 @@ describe('workspace-events', () => {
 
     expect(scrollToLine).not.toHaveBeenCalled();
   });
+
+  it('ignores visible-range events for editors not bound to the preview', () => {
+    vi.useFakeTimers();
+    const previewUri = vscode.Uri.file('/workspace/preview.mdx');
+    const otherUri = vscode.Uri.file('/workspace/other.mdx');
+    const scrollToLine = vi.fn();
+    mockPreviewManager.getCurrentPreview.mockReturnValue({
+      active: true,
+      doc: { uri: previewUri },
+      configuration: { scrollSync: 'editorToPreview' },
+      scrollToLine,
+    });
+
+    const context = { subscriptions: [] as Array<{ dispose: () => void }> };
+    initWorkspaceHandlers(context as any);
+
+    // scrolling an unrelated editor must not dispatch to the preview
+    visibleRangeCallback?.({
+      textEditor: {
+        document: { uri: otherUri },
+        visibleRanges: [new vscode.Range(4, 0, 20, 0)],
+      } as never,
+    });
+    vi.advanceTimersByTime(80);
+    expect(scrollToLine).not.toHaveBeenCalled();
+
+    // returning focus to the preview's source resumes sync
+    visibleRangeCallback?.({
+      textEditor: {
+        document: { uri: previewUri },
+        visibleRanges: [new vscode.Range(4, 0, 20, 0)],
+      } as never,
+    });
+    expect(scrollToLine).toHaveBeenCalledTimes(1);
+    expect(scrollToLine).toHaveBeenLastCalledWith(10);
+  });
 });

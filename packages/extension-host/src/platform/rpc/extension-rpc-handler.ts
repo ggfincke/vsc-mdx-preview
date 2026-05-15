@@ -348,6 +348,11 @@ class ExtensionHandle implements ExtensionRPC {
     } catch (error) {
       log.warn('openSourceLine: failed to show document', error);
     }
+
+    // re-arm suppression after the await: if showTextDocument latency outran
+    // the 120ms window the visible-range event has yet to fire, & we still
+    // want the resulting editor->preview bounce-back suppressed
+    suppressEditorScrollSync(this.preview);
   }
 
   async reportPreviewSourceLine(

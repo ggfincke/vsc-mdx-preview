@@ -260,6 +260,10 @@ export function scheduleScrollToSourceLine(sourceLine: number): void {
   pendingScrollLine = sourceLine;
   pendingScrollRequestedAtMs = Date.now();
   if (pendingScrollFrame) {
+    // burst coalescing: when the extension dispatches multiple targets in the
+    // same frame only the newest survives. landing on the latest line beats
+    // animating through stale intermediate lines that no longer match the
+    // editor's current scroll position
     return;
   }
 
