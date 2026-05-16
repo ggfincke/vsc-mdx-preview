@@ -7,6 +7,7 @@ import {
   isPreviewToEditorMode,
   SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS,
   SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
+  SOURCE_LINE_SCROLL_SYNC_SETTLE_MS,
   type PreviewSourceLineReportResult,
   type PreviewScrollSyncValue,
 } from '@mdx-preview/contracts';
@@ -14,7 +15,6 @@ import { getPreviewManager } from '../../app/services';
 import type { Preview } from './Preview';
 
 const EDITOR_TO_PREVIEW_SCROLL_INTERVAL_MS = 33;
-const EDITOR_TO_PREVIEW_SCROLL_SETTLE_MS = 80;
 
 type SyncDirection = 'editorToPreview' | 'previewToEditor';
 
@@ -210,7 +210,7 @@ function scheduleSettleDispatch(preview: Preview): void {
   scheduler.settleTimer = clearSchedulerTimer(scheduler.settleTimer);
   scheduler.settleTimer = setTimeout(
     () => dispatchPendingScroll(preview),
-    EDITOR_TO_PREVIEW_SCROLL_SETTLE_MS
+    SOURCE_LINE_SCROLL_SYNC_SETTLE_MS
   );
 }
 

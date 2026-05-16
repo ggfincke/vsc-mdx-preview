@@ -350,15 +350,21 @@ export function usePreviewScrollSync({
       }
     };
 
-    const markSourceLineEntriesDirty = (): void => {
-      sourceLineEntriesDirty = true;
+    const handleSourceLineMutations: MutationCallback = (records) => {
+      const hasEntryMutation = records.some(
+        (record) =>
+          record.type !== 'attributes' || record.attributeName !== 'style'
+      );
+      if (hasEntryMutation) {
+        sourceLineEntriesDirty = true;
+      }
       schedule();
     };
 
     const mutationObserver =
       typeof MutationObserver === 'undefined'
         ? undefined
-        : new MutationObserver(markSourceLineEntriesDirty);
+        : new MutationObserver(handleSourceLineMutations);
     mutationObserver?.observe(container, {
       attributes: true,
       attributeFilter: [

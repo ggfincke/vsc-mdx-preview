@@ -12,6 +12,7 @@ import { SETTINGS } from '../../packages/extension-host/src/shared/config';
 import {
   disposeEditorPreviewScrollSync,
   handlePreviewSourceLineReport,
+  resetPreviewScrollSync,
   syncPreviewScrollFromActiveEditor,
 } from '../../packages/extension-host/src/features/preview/scroll-sync';
 
@@ -243,6 +244,24 @@ describe('workspace-events', () => {
       'accepted'
     );
     expect(revealRange).toHaveBeenCalledTimes(4);
+
+    vi.advanceTimersByTime(121);
+    visibleRangeCallback?.({
+      textEditor: {
+        document: { uri },
+        visibleRanges: [new vscode.Range(4, 0, 20, 0)],
+      } as never,
+    });
+    expect(scrollToLine).toHaveBeenCalledTimes(3);
+    expect(scrollToLine).toHaveBeenLastCalledWith(10);
+
+    preview.configuration.scrollSync = 'previewToEditor';
+    resetPreviewScrollSync(preview as never);
+
+    expect(handlePreviewSourceLineReport(preview as never, 12)).toBe(
+      'accepted'
+    );
+    expect(revealRange).toHaveBeenCalledTimes(5);
   });
 
   it('does not sync editor scroll when mode excludes editor-to-preview', () => {

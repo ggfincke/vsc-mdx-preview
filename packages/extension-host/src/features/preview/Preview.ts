@@ -384,11 +384,12 @@ export class Preview {
       this.pushRuntimeConfiguration();
     }
 
-    if (
-      result.scrollSyncChanged &&
-      supportsEditorToPreviewScrollSync(this.configuration.scrollSync)
-    ) {
-      this.syncEditorScrollToPreview();
+    if (result.scrollSyncChanged) {
+      if (supportsEditorToPreviewScrollSync(this.configuration.scrollSync)) {
+        this.syncEditorScrollToPreview();
+      } else {
+        resetPreviewScrollSync(this);
+      }
     }
 
     if (result.needsCssWatcherUpdate) {

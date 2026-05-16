@@ -4,6 +4,7 @@
 import {
   SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS,
   SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
+  SOURCE_LINE_SCROLL_SYNC_SETTLE_MS,
 } from '@mdx-preview/contracts';
 import { PREVIEW_CONTENT_CLASS } from '../../../../app/constants';
 import {
@@ -22,9 +23,10 @@ const MARKDOWN_BODY_SELECTOR = '.markdown-body';
 const MIN_SCROLL_ANCHOR_OFFSET_PX = 60;
 const MIN_SCROLL_DELTA_PX = 2;
 const PENDING_SCROLL_TTL_MS = 10000;
-const PROGRAMMATIC_SCROLL_SETTLE_MS = 80;
 const PROGRAMMATIC_SCROLL_RECHECK_BUFFER_MS = 16;
 
+// VS Code gives each preview its own webview JS context
+// keep module scroll state scoped to that single preview document
 let pendingScrollLine: number | undefined;
 let pendingScrollRequestedAtMs = 0;
 let pendingScrollFrame: ScheduledFrame | undefined;
@@ -92,7 +94,7 @@ function clearPendingScroll(): void {
 }
 
 function markProgrammaticScrollSettled(): void {
-  programmaticScrollUntilMs = Date.now() + PROGRAMMATIC_SCROLL_SETTLE_MS;
+  programmaticScrollUntilMs = Date.now() + SOURCE_LINE_SCROLL_SYNC_SETTLE_MS;
 }
 
 function hasExpiredPendingScroll(): boolean {
@@ -108,7 +110,7 @@ function isProgrammaticScrollSettling(): boolean {
     programmaticScrollUntilMs = 0;
     return false;
   }
-  if (remainingMs > PROGRAMMATIC_SCROLL_SETTLE_MS) {
+  if (remainingMs > SOURCE_LINE_SCROLL_SYNC_SETTLE_MS) {
     programmaticScrollUntilMs = 0;
     return false;
   }
@@ -133,13 +135,13 @@ export function getSourceLineScrollRetryDelayMs(): number {
   if (pendingScrollLine !== undefined || activeScrollAnimation !== undefined) {
     return (
       SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS +
-      PROGRAMMATIC_SCROLL_SETTLE_MS +
+      SOURCE_LINE_SCROLL_SYNC_SETTLE_MS +
       PROGRAMMATIC_SCROLL_RECHECK_BUFFER_MS
     );
   }
 
   const remainingMs = programmaticScrollUntilMs - Date.now();
-  if (remainingMs <= 0 || remainingMs > PROGRAMMATIC_SCROLL_SETTLE_MS) {
+  if (remainingMs <= 0 || remainingMs > SOURCE_LINE_SCROLL_SYNC_SETTLE_MS) {
     return PROGRAMMATIC_SCROLL_RECHECK_BUFFER_MS;
   }
 

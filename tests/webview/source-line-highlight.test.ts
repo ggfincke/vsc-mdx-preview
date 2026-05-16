@@ -5,7 +5,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, createElement, useRef, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO } from '@mdx-preview/contracts';
+import {
+  SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
+  SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS,
+  SOURCE_LINE_SCROLL_SYNC_SETTLE_MS,
+} from '@mdx-preview/contracts';
 
 const { mockReportPreviewSourceLine } = vi.hoisted(() => ({
   mockReportPreviewSourceLine: vi.fn(async () => 'accepted'),
@@ -437,7 +441,11 @@ describe('useSourceLineHighlight', () => {
     expect(mockReportPreviewSourceLine).not.toHaveBeenCalled();
 
     await act(async () => {
-      vi.advanceTimersByTime(216);
+      vi.advanceTimersByTime(
+        SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS +
+          SOURCE_LINE_SCROLL_SYNC_SETTLE_MS +
+          16
+      );
       await Promise.resolve();
     });
     expect(isSourceLineScrollInProgress()).toBe(false);
@@ -470,6 +478,33 @@ describe('useSourceLineHighlight', () => {
     });
     expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(2);
     expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(24);
+    const container = host.firstElementChild as HTMLElement;
+    const querySelectorAll = vi.spyOn(container, 'querySelectorAll');
+
+    host
+      .querySelector('#line-24')!
+      .setAttribute('style', 'transform: translateY(1px)');
+    await act(async () => {
+      await Promise.resolve();
+      frames.shift()?.(360);
+      await Promise.resolve();
+    });
+
+    expect(querySelectorAll).not.toHaveBeenCalled();
+
+    const nextLine = document.createElement('p');
+    nextLine.setAttribute('data-source-line', '24');
+    nextLine.textContent = 'B';
+    container.appendChild(nextLine);
+    setElementTop(nextLine, 300);
+
+    await act(async () => {
+      await Promise.resolve();
+      frames.shift()?.(376);
+      await Promise.resolve();
+    });
+
+    expect(querySelectorAll).toHaveBeenCalled();
   });
 
   it('reports preview source lines with retry and interval throttling', async () => {

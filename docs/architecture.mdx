@@ -414,6 +414,10 @@ interface WebviewRPC {
   setTailwindBrowserCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
 
+  // Editor → preview scroll sync
+  setScrollSync(mode: PreviewScrollSyncValue): void;
+  scrollToLine(line: number): void;
+
   // Nextra support
   setNextraMeta(meta: NextraPageMeta): void;
 }
@@ -450,12 +454,78 @@ interface ExtensionRPC {
     column?: number
   ): Promise<void>;
   openPreview(relativePath: string): Promise<void>;
+
+  // Source-line navigation & preview → editor scroll sync
+  openSourceLine(line: number): Promise<void>;
+  reportPreviewSourceLine(
+    line: number
+  ): Promise<PreviewSourceLineReportResult>; // 'accepted' | 'ignored' | 'retry'
+
   renderPlantUml(code: string): Promise<string | undefined>;
 }
 ```
 
 > [!IMPORTANT]
 > The `fetch` method is the primary attack surface. All inputs are validated: type validation (strings, booleans), length checks, security validation via `isValidModuleRequest()`, and trust validation via `requireTrustedModeForDocument()`.
+
+### Source-Line Scroll Sync
+
+Scroll synchronization between the VS Code editor and the rendered preview is implemented as a pair of coordinated pipelines, both keyed on the `data-source-line` annotations the MDX compiler emits onto rendered blocks.
+
+**Mode contract** (`packages/contracts/src/config/enums.ts`):
+
+```typescript
+export const PREVIEW_SCROLL_SYNC_VALUES = [
+  'off',
+  'editorToPreview',
+  'previewToEditor',
+  'bidirectional',
+] as const;
+
+export function isEditorToPreviewMode(mode: PreviewScrollSyncValue): boolean;
+export function isPreviewToEditorMode(mode: PreviewScrollSyncValue): boolean;
+```
+
+The mode is part of the runtime configuration pushed to the webview (`PreviewConfiguration`) and changes are honored without a reload; switching into a mode that includes `editorToPreview` immediately calls `Preview.syncEditorScrollToPreview()` to align the freshly-enabled side.
+
+**Shared tuning constants** (`packages/contracts/src/preview/scroll-sync.ts`):
+
+| Constant                                  | Value | Purpose                                                                 |
+| ----------------------------------------- | ----- | ----------------------------------------------------------------------- |
+| `SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO`    | 0.35  | Both sides target the top-third reading band instead of vertical center |
+| `SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS`    | 120   | Suppression window applied after a programmatic scroll dispatch         |
+| `SOURCE_LINE_SCROLL_SYNC_SETTLE_MS`       | 80    | Idle window before a final "settled" dispatch is sent                   |
+
+**Editor → preview pipeline** (`packages/extension-host/src/features/preview/scroll-sync.ts`):
+
+1. `workspace-events.ts` subscribes `window.onDidChangeTextEditorVisibleRanges` to `handleEditorVisibleRangesChange`.
+2. The handler resolves the active preview, picks the leading visible range (folded code can produce multiple), and computes the anchored source line at the 35% band.
+3. `queueScroll(preview, line)` writes the line into a per-`Preview` scheduler. Two dispatches are scheduled:
+   - **Live dispatch** throttled at ~33 ms while the user is actively scrolling.
+   - **Settle dispatch** after `EDITOR_TO_PREVIEW_SCROLL_SETTLE_MS` (80 ms) of quiet for the final landing line.
+4. On dispatch, `preview.scrollToLine(line)` calls `WebviewRPC.scrollToLine`. The dispatch also sets `ignorePreviewUntilMs = now + 120 ms` so the resulting preview scroll does not bounce back as a `reportPreviewSourceLine`.
+
+**Preview → editor pipeline** (`packages/webview-client/src/features/preview/shared/hooks/usePreviewScrollSync.ts`):
+
+1. The hook observes the preview container on every scroll/resize, finding the entry whose bounding rect is closest to the anchor line at 35% of viewport height.
+2. The active source line is reported via `ExtensionHandle.reportPreviewSourceLine(line)`. The reply is one of:
+   - `'accepted'` — extension revealed the editor or confirmed the line was already current.
+   - `'ignored'` — sync is disabled, the line is invalid, or no visible editor matches the preview's document.
+   - `'retry'` — extension is currently inside its editor→preview suppression window; the hook reschedules.
+3. The hook honors user interrupts (scroll keys, wheel) by cancelling any in-flight programmatic preview scrolls before measuring the new active line.
+
+**Bounce-back suppression.** Both sides maintain independent suppression windows on the `PreviewScheduler`:
+
+- `ignorePreviewUntilMs` — set after an editor→preview dispatch; preview→editor reports are deferred during this window and replied to with `'retry'`.
+- `ignoreEditorUntilMs` — set after a preview→editor reveal or after `openSourceLine` opens the document; editor→preview visible-range events are dropped during this window.
+
+**Cmd/Ctrl+Click navigation.** `useSourceLineHighlight` attaches a click handler that fires only when `event.button === 0` and either `event.ctrlKey` or `event.metaKey` is true, and only when the click target is not inside a native interactive element (`a`, `button`, `input`, `select`, `textarea`, `label`, `details`, `summary`, `[role="button"]`, `[contenteditable]`). It then calls `openSourceLine(line)`, which dispatches `ExtensionHandle.openSourceLine`. The extension pre-suppresses editor→preview sync, calls `vscode.window.showTextDocument` with a selection, then re-arms suppression after the await to cover the case where `showTextDocument` latency outran the 120 ms window.
+
+**Lifecycle.**
+
+- Schedulers are held in a `Map<Preview, PreviewScheduler>` keyed by `Preview` instance.
+- `Preview.dispose()` calls `disposeScrollSyncForPreview(this)` to clear timers and drop the entry.
+- `runtime config push` reset: when the webview reloads, `resetPreviewScrollSync` clears cached `lastPreviewSourceKey` state so the same line can be re-dispatched against the fresh DOM.
 
 ---
 
