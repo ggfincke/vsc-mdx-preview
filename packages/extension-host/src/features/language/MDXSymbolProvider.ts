@@ -10,6 +10,11 @@ import { analyzeMdxDocument } from './mdx-document-analysis';
 
 const log = createTaggedLogger(LogTags.SYMBOL_PROVIDER);
 
+interface MdastPosition {
+  start: { line: number; column: number };
+  end: { line: number; column: number };
+}
+
 // heading AST node
 interface HeadingNode {
   type: 'heading';
@@ -19,20 +24,14 @@ interface HeadingNode {
     value?: string;
     children?: Array<{ type: string; value?: string }>;
   }>;
-  position?: {
-    start: { line: number; column: number };
-    end: { line: number; column: number };
-  };
+  position?: MdastPosition;
 }
 
 // MDX ESM node (imports/exports)
 interface MdxjsEsmNode {
   type: 'mdxjsEsm';
   value: string;
-  position?: {
-    start: { line: number; column: number };
-    end: { line: number; column: number };
-  };
+  position?: MdastPosition;
 }
 
 // extract text content from heading children nodes
@@ -92,6 +91,18 @@ function extractEsmName(value: string): string {
 
   // fallback: first line truncated
   return value.split('\n')[0].substring(0, 40);
+}
+
+function toDocumentRange(
+  position: MdastPosition,
+  frontmatterLineOffset: number
+): vscode.Range {
+  return new vscode.Range(
+    position.start.line - 1 + frontmatterLineOffset,
+    position.start.column - 1,
+    position.end.line - 1 + frontmatterLineOffset,
+    position.end.column - 1
+  );
 }
 
 // build nested heading hierarchy from flat heading list
@@ -254,11 +265,9 @@ export function extractMDXSymbols(
   visit(tree, 'mdxjsEsm', (node) => {
     const esmNode = node as unknown as MdxjsEsmNode;
     if (esmNode.position) {
-      const range = new vscode.Range(
-        esmNode.position.start.line - 1 + frontmatterLineOffset,
-        esmNode.position.start.column - 1,
-        esmNode.position.end.line - 1 + frontmatterLineOffset,
-        esmNode.position.end.column - 1
+      const range = toDocumentRange(
+        esmNode.position,
+        frontmatterLineOffset
       );
       esmNodes.push({ value: esmNode.value, range });
     }
@@ -274,11 +283,9 @@ export function extractMDXSymbols(
   visit(tree, 'heading', (node) => {
     const heading = node as unknown as HeadingNode;
     if (heading.position) {
-      const range = new vscode.Range(
-        heading.position.start.line - 1 + frontmatterLineOffset,
-        heading.position.start.column - 1,
-        heading.position.end.line - 1 + frontmatterLineOffset,
-        heading.position.end.column - 1
+      const range = toDocumentRange(
+        heading.position,
+        frontmatterLineOffset
       );
       headings.push({
         depth: heading.depth,

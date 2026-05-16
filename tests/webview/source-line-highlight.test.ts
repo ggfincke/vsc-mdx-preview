@@ -134,6 +134,27 @@ function renderMappedPreview(): HTMLElement {
   return document.querySelector('.markdown-body') as HTMLElement;
 }
 
+function installAnimationFrameQueue(fakeTimers = false): FrameRequestCallback[] {
+  if (fakeTimers) {
+    vi.useFakeTimers();
+  }
+
+  const frames: FrameRequestCallback[] = [];
+  Object.defineProperty(window, 'requestAnimationFrame', {
+    value: vi.fn((callback: FrameRequestCallback) => {
+      frames.push(callback);
+      return frames.length;
+    }),
+    writable: true,
+  });
+  Object.defineProperty(window, 'cancelAnimationFrame', {
+    value: vi.fn(),
+    writable: true,
+  });
+
+  return frames;
+}
+
 describe('useSourceLineHighlight', () => {
   beforeEach(() => {
     (
@@ -272,18 +293,7 @@ describe('useSourceLineHighlight', () => {
       window.innerHeight * SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO;
     setElementTop(exactTarget, scrollAnchorY + 120);
 
-    const frames: FrameRequestCallback[] = [];
-    Object.defineProperty(window, 'requestAnimationFrame', {
-      value: vi.fn((callback: FrameRequestCallback) => {
-        frames.push(callback);
-        return frames.length;
-      }),
-      writable: true,
-    });
-    Object.defineProperty(window, 'cancelAnimationFrame', {
-      value: vi.fn(),
-      writable: true,
-    });
+    const frames = installAnimationFrameQueue();
 
     expect(scrollToSourceLine(12)).toBe(true);
     expect(window.scrollTo).not.toHaveBeenCalled();
@@ -378,19 +388,7 @@ describe('useSourceLineHighlight', () => {
   });
 
   it('suppresses reports caused by programmatic preview scrolls', async () => {
-    const frames: FrameRequestCallback[] = [];
-    vi.useFakeTimers();
-    Object.defineProperty(window, 'requestAnimationFrame', {
-      value: vi.fn((callback: FrameRequestCallback) => {
-        frames.push(callback);
-        return frames.length;
-      }),
-      writable: true,
-    });
-    Object.defineProperty(window, 'cancelAnimationFrame', {
-      value: vi.fn(),
-      writable: true,
-    });
+    const frames = installAnimationFrameQueue(true);
 
     const scrollAnchorY =
       window.innerHeight * SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO;
@@ -508,19 +506,7 @@ describe('useSourceLineHighlight', () => {
   });
 
   it('reports preview source lines with retry and interval throttling', async () => {
-    const frames: FrameRequestCallback[] = [];
-    vi.useFakeTimers();
-    Object.defineProperty(window, 'requestAnimationFrame', {
-      value: vi.fn((callback: FrameRequestCallback) => {
-        frames.push(callback);
-        return frames.length;
-      }),
-      writable: true,
-    });
-    Object.defineProperty(window, 'cancelAnimationFrame', {
-      value: vi.fn(),
-      writable: true,
-    });
+    const frames = installAnimationFrameQueue(true);
     mockReportPreviewSourceLine
       .mockResolvedValueOnce('retry')
       .mockResolvedValue('accepted');
@@ -583,19 +569,7 @@ describe('useSourceLineHighlight', () => {
   });
 
   it('keeps ignored preview reports retryable with backoff', async () => {
-    const frames: FrameRequestCallback[] = [];
-    vi.useFakeTimers();
-    Object.defineProperty(window, 'requestAnimationFrame', {
-      value: vi.fn((callback: FrameRequestCallback) => {
-        frames.push(callback);
-        return frames.length;
-      }),
-      writable: true,
-    });
-    Object.defineProperty(window, 'cancelAnimationFrame', {
-      value: vi.fn(),
-      writable: true,
-    });
+    const frames = installAnimationFrameQueue(true);
     mockReportPreviewSourceLine
       .mockResolvedValueOnce('ignored')
       .mockResolvedValue('accepted');

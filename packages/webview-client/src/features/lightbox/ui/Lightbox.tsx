@@ -10,6 +10,20 @@ const ZOOM_STEP = 0.25;
 const ZOOM_TOGGLE_TARGET = 2;
 const DRAG_CLOSE_GUARD_MS = 150;
 
+function getCursorOffsetFromImageCenter(
+  event: { clientX: number; clientY: number },
+  imageElement: HTMLImageElement
+): { x: number; y: number } {
+  const rect = imageElement.getBoundingClientRect();
+  const imgCenterX = rect.left + rect.width / 2;
+  const imgCenterY = rect.top + rect.height / 2;
+
+  return {
+    x: event.clientX - imgCenterX,
+    y: event.clientY - imgCenterY,
+  };
+}
+
 // lightbox modal for viewing images fullscreen w/ zoom & gallery
 export function Lightbox() {
   const {
@@ -103,19 +117,16 @@ export function Lightbox() {
         return;
       }
 
-      // center zoom on cursor position
-      const rect = imageRef.current.getBoundingClientRect();
-      const imgCenterX = rect.left + rect.width / 2;
-      const imgCenterY = rect.top + rect.height / 2;
-      const cursorX = e.clientX - imgCenterX;
-      const cursorY = e.clientY - imgCenterY;
-
+      const cursorOffset = getCursorOffsetFromImageCenter(
+        e,
+        imageRef.current
+      );
       const clampedZoom = clampZoom(newZoom);
       const scale = clampedZoom / zoom;
 
       setOffset({
-        x: offset.x - cursorX * (scale - 1),
-        y: offset.y - cursorY * (scale - 1),
+        x: offset.x - cursorOffset.x * (scale - 1),
+        y: offset.y - cursorOffset.y * (scale - 1),
       });
       setZoom(clampedZoom);
     },
@@ -131,15 +142,13 @@ export function Lightbox() {
       if (zoom === 1) {
         // zoom in to 2x centered on click
         if (imageRef.current) {
-          const rect = imageRef.current.getBoundingClientRect();
-          const imgCenterX = rect.left + rect.width / 2;
-          const imgCenterY = rect.top + rect.height / 2;
-          const cursorX = e.clientX - imgCenterX;
-          const cursorY = e.clientY - imgCenterY;
-
+          const cursorOffset = getCursorOffsetFromImageCenter(
+            e,
+            imageRef.current
+          );
           setOffset({
-            x: -cursorX * (ZOOM_TOGGLE_TARGET - 1),
-            y: -cursorY * (ZOOM_TOGGLE_TARGET - 1),
+            x: -cursorOffset.x * (ZOOM_TOGGLE_TARGET - 1),
+            y: -cursorOffset.y * (ZOOM_TOGGLE_TARGET - 1),
           });
         }
         setZoom(ZOOM_TOGGLE_TARGET);

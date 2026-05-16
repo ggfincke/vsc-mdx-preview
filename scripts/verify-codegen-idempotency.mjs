@@ -4,27 +4,9 @@
 // run after generators to catch stale committed files
 
 import { execSync } from 'node:child_process';
+import { ALL_GENERATED_FILES } from './generated-files.mjs';
 
-// exhaustive list of files produced by generators
-// TS generated files (codegen: preload, shims, framework-css)
-const GENERATED_TS_FILES = [
-  'packages/webview-client/src/generated/preload/preload.generated.ts',
-  'packages/webview-client/src/generated/preload/aliases.generated.ts',
-  'packages/webview-client/src/generated/framework-css/frameworkCssLoader.ts',
-  'packages/webview-client/src/generated/shim-barrels/generic/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/docusaurus/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/starlight/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/nextra/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/nextjs/index.ts',
-];
-
-// JSON schema (codegen: generate-schema)
-const GENERATED_JSON_FILES = ['schemas/mdx-previewrc.schema.json'];
-
-// note: package.json is NOT included here because it is both manually edited
-// & synced by generate-settings
-// catch settings drift by verify:settings instead
-const ALL_FILES = [...GENERATED_TS_FILES, ...GENERATED_JSON_FILES];
+const ALL_FILES = ALL_GENERATED_FILES;
 
 try {
   // check git diff on all generated/synced files

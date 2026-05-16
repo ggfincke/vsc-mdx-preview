@@ -4,6 +4,7 @@
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
+import { GENERATED_TS_FILES } from './generated-files.mjs';
 
 const ALLOWED_PATTERNS = ['packages/webview-client/src/generated/'];
 const HEADER = '// AUTO-GENERATED FILE - DO NOT EDIT';
@@ -18,18 +19,7 @@ const IGNORED_DIRECTORIES = new Set([
   'node_modules',
 ]);
 
-// exhaustive manifest of expected generated TS files
-// update this list when adding or removing generated files
-const EXPECTED_GENERATED_FILES = [
-  'packages/webview-client/src/generated/preload/preload.generated.ts',
-  'packages/webview-client/src/generated/preload/aliases.generated.ts',
-  'packages/webview-client/src/generated/framework-css/frameworkCssLoader.ts',
-  'packages/webview-client/src/generated/shim-barrels/generic/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/docusaurus/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/starlight/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/nextra/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/nextjs/index.ts',
-];
+const EXPECTED_GENERATED_FILES = GENERATED_TS_FILES;
 
 function normalizePath(filePath) {
   return filePath.replaceAll('\\', '/');
