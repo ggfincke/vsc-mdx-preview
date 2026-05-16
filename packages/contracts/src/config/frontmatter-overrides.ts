@@ -1,7 +1,5 @@
 // packages/contracts/src/config/frontmatter-overrides.ts
-// canonical frontmatter override metadata (single source of truth)
-// define which frontmatter keys are recognized as setting overrides,
-// which setting they map to, & which values are valid
+// canonical frontmatter keys mapped to settings & valid override values
 
 import { PREVIEW_THEMES, CODE_BLOCK_THEMES } from '../themes/data';
 

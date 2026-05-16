@@ -1,6 +1,5 @@
 // tests/webview/safe-mode-processing.test.ts
 // unit tests for safe-mode HTML sanitization & DOM injection
-//
 // @vitest-environment jsdom
 
 import { act, createElement, useRef, type JSX, type RefObject } from 'react';

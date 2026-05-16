@@ -50,7 +50,12 @@ export const validateBoolean = createPrimitiveValidator<boolean>({
 export function validateNumber(
   value: unknown,
   name: string,
-  opts?: ValidationOptions & { min?: number; max?: number; finite?: boolean }
+  opts?: ValidationOptions & {
+    min?: number;
+    max?: number;
+    finite?: boolean;
+    integer?: boolean;
+  }
 ): number | undefined {
   const log = getLogger(opts);
   const ctx = formatContext(opts?.context);
@@ -63,6 +68,11 @@ export function validateNumber(
   // finite check defaults to true
   if (opts?.finite !== false && !isFinite(value)) {
     log(`${ctx}${name} must be finite`, value);
+    return undefined;
+  }
+
+  if (opts?.integer && !Number.isInteger(value)) {
+    log(`${ctx}${name} must be an integer`, value);
     return undefined;
   }
 

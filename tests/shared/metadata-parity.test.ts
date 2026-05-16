@@ -1,7 +1,6 @@
 // tests/shared/metadata-parity.test.ts
 // verify mdx-forge metadata contracts match expected canonical values
-// prevent metadata drift when mdx-forge is updated (Finding F3)
-// ! cross-repo parity: mirror test in mdx-forge/tests/cross-repo/metadata-contract.test.ts
+// ! cross-repo parity; mirror in mdx-forge metadata contract test
 
 import { describe, it, expect } from 'vitest';
 import path from 'path';
@@ -80,13 +79,11 @@ const EXPANDED_CONTRACT = {
   },
 };
 
-const expectedContract = 'summary' in CALLOUT_TITLES
-  ? EXPANDED_CONTRACT
-  : LEGACY_CONTRACT;
+const expectedContract =
+  'summary' in CALLOUT_TITLES ? EXPANDED_CONTRACT : LEGACY_CONTRACT;
 
 describe('mdx-forge metadata contract', () => {
   describe('callout type contract', () => {
-
     it('CALLOUT_TITLES values match the supported display labels', () => {
       expect(CALLOUT_TITLES).toEqual(expectedContract.titles);
     });
@@ -98,7 +95,9 @@ describe('mdx-forge metadata contract', () => {
     });
 
     it('normalizeCalloutType resolves each supported alias', () => {
-      for (const [alias, canonical] of Object.entries(expectedContract.aliases)) {
+      for (const [alias, canonical] of Object.entries(
+        expectedContract.aliases
+      )) {
         expect(normalizeCalloutType(alias)).toBe(canonical);
       }
     });

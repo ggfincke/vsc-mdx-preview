@@ -1,10 +1,6 @@
 // packages/extension-host/src/shared/utils/file-utils.ts
-// centralized file I/O utilities w/ consistent error handling
-//
-// error handling strategy
-// - all functions return null/undefined on failure (never throw)
-// - optional debug logging via options parameter
-// - consistent error message format for troubleshooting
+// centralized file I/O utilities that return null/undefined on failure
+// optional debug logging keeps errors consistent for troubleshooting
 
 import * as fs from 'fs';
 import { createTaggedLogger } from '../logging/logger';

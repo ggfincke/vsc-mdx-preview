@@ -12,6 +12,7 @@ import { SETTINGS } from '../../packages/extension-host/src/shared/config';
 import {
   disposeEditorPreviewScrollSync,
   handlePreviewSourceLineReport,
+  syncPreviewScrollFromActiveEditor,
 } from '../../packages/extension-host/src/features/preview/scroll-sync';
 
 describe('workspace-events', () => {
@@ -92,6 +93,21 @@ describe('workspace-events', () => {
       configuration: { scrollSync: 'editorToPreview' },
       scrollToLine,
     });
+    const preview = mockPreviewManager.getCurrentPreview();
+    (vscode.window as any).visibleTextEditors = [
+      {
+        document: { uri },
+        visibleRanges: [new vscode.Range(20, 0, 30, 0)],
+      },
+    ];
+
+    syncPreviewScrollFromActiveEditor(preview as never);
+
+    expect(scrollToLine).toHaveBeenCalledTimes(1);
+    expect(scrollToLine).toHaveBeenLastCalledWith(24);
+    disposeEditorPreviewScrollSync();
+    scrollToLine.mockClear();
+    (vscode.window as any).visibleTextEditors = [];
 
     const context = { subscriptions: [] as Array<{ dispose: () => void }> };
     initWorkspaceHandlers(context as any);
@@ -166,7 +182,8 @@ describe('workspace-events', () => {
     expect(handlePreviewSourceLineReport(preview as never, 12)).toBe(
       'accepted'
     );
-    expect(revealRange).not.toHaveBeenCalled();
+    expect(revealRange).toHaveBeenCalledTimes(1);
+    expect(revealRange.mock.calls[0][0].start.line).toBe(4);
 
     expect(handlePreviewSourceLineReport(preview as never, 18)).toBe(
       'accepted'
@@ -174,9 +191,9 @@ describe('workspace-events', () => {
 
     // reveal anchors reported line at preview 35% ratio
     // visibleLineCount=21, anchorOffset=floor(20*0.35)=7, reportedIdx=17 -> top=10
-    expect(revealRange).toHaveBeenCalledTimes(1);
-    expect(revealRange.mock.calls[0][0].start.line).toBe(10);
-    expect(revealRange.mock.calls[0][1]).toBe(
+    expect(revealRange).toHaveBeenCalledTimes(2);
+    expect(revealRange.mock.calls[1][0].start.line).toBe(10);
+    expect(revealRange.mock.calls[1][1]).toBe(
       vscode.TextEditorRevealType.AtTop
     );
 
@@ -193,11 +210,39 @@ describe('workspace-events', () => {
     );
 
     // reported line outside viewport -> anchored top = 59 - 7 = 52
-    expect(revealRange).toHaveBeenCalledTimes(2);
-    expect(revealRange.mock.calls[1][0].start.line).toBe(52);
-    expect(revealRange.mock.calls[1][1]).toBe(
+    expect(revealRange).toHaveBeenCalledTimes(3);
+    expect(revealRange.mock.calls[2][0].start.line).toBe(52);
+    expect(revealRange.mock.calls[2][1]).toBe(
       vscode.TextEditorRevealType.AtTop
     );
+
+    vi.advanceTimersByTime(121);
+    visibleRangeCallback?.({
+      textEditor: {
+        document: { uri },
+        visibleRanges: [new vscode.Range(4, 0, 20, 0)],
+      } as never,
+    });
+    expect(scrollToLine).toHaveBeenCalledTimes(2);
+    expect(scrollToLine).toHaveBeenLastCalledWith(10);
+
+    visibleRangeCallback?.({
+      textEditor: {
+        document: { uri },
+        visibleRanges: [new vscode.Range(14, 0, 30, 0)],
+      } as never,
+    });
+    expect(scrollToLine).toHaveBeenCalledTimes(2);
+
+    expect(handlePreviewSourceLineReport(preview as never, 44)).toBe('retry');
+    vi.advanceTimersByTime(33);
+    expect(scrollToLine).toHaveBeenCalledTimes(2);
+
+    vi.advanceTimersByTime(88);
+    expect(handlePreviewSourceLineReport(preview as never, 44)).toBe(
+      'accepted'
+    );
+    expect(revealRange).toHaveBeenCalledTimes(4);
   });
 
   it('does not sync editor scroll when mode excludes editor-to-preview', () => {

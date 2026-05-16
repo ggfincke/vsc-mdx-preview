@@ -22,6 +22,7 @@ const TRUSTED_SHIM_OWNER_SELECTOR = [
 
 export interface SourceLineEntry {
   highlightElement: Element;
+  targetElement: Element;
   sourceLine: number | null;
 }
 
@@ -106,6 +107,7 @@ export function collectSourceLineEntries(
 
   const registerHighlightElement = (
     highlightElement: Element,
+    targetElement: Element,
     sourceLine: number | null
   ): void => {
     if (seenHighlightElements.has(highlightElement)) {
@@ -113,7 +115,7 @@ export function collectSourceLineEntries(
     }
 
     seenHighlightElements.add(highlightElement);
-    entries.push({ highlightElement, sourceLine });
+    entries.push({ highlightElement, targetElement, sourceLine });
   };
 
   sourceLineElements.forEach((sourceLineElement) => {
@@ -134,14 +136,18 @@ export function collectSourceLineEntries(
       return;
     }
 
-    registerHighlightElement(highlightElement, dataSourceLine);
+    registerHighlightElement(
+      highlightElement,
+      sourceLineElement,
+      dataSourceLine
+    );
   });
 
   const trustedShimOwners = Array.from(
     container.querySelectorAll(TRUSTED_SHIM_OWNER_SELECTOR)
   );
   trustedShimOwners.forEach((owner) => {
-    registerHighlightElement(owner, getFirstSourceLine(owner));
+    registerHighlightElement(owner, owner, getFirstSourceLine(owner));
   });
 
   Array.from(container.children).forEach((child) => {
@@ -153,7 +159,33 @@ export function collectSourceLineEntries(
       return;
     }
 
-    registerHighlightElement(child, null);
+    registerHighlightElement(child, child, null);
+  });
+
+  return entries;
+}
+
+export function collectSourceLineTargetEntries(
+  container: HTMLElement
+): SourceLineEntry[] {
+  const entries: SourceLineEntry[] = [];
+
+  container.querySelectorAll(SOURCE_LINE_SELECTOR).forEach((targetElement) => {
+    if (targetElement.tagName === 'A') {
+      return;
+    }
+
+    const sourceLine = getDataSourceLine(targetElement);
+    if (sourceLine === null) {
+      return;
+    }
+
+    const highlightElement = resolveHighlightOwner(targetElement, container);
+    if (!highlightElement) {
+      return;
+    }
+
+    entries.push({ highlightElement, targetElement, sourceLine });
   });
 
   return entries;

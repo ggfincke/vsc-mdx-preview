@@ -41,6 +41,7 @@ export {
   formatTrustStateForDebug,
   type NextraPageMeta,
   SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
+  SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS,
 } from './preview';
 
 // module error types

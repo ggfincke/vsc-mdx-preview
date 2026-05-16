@@ -1,12 +1,6 @@
 // packages/extension-host/src/features/module-runtime/transform/babel.ts
-// babel configuration for transpiling user code in MDX files
-//
-// webview evaluates modules using new Function() which requires CommonJS format
-// preset-env converts ES modules (import/export) to CommonJS (require/module.exports)
-//
-// G.1 optimization: @babel/core is loaded dynamically on first transform,
-// not at module initialization time. This reduces extension activation time
-// for Safe Mode users who never need Babel
+// transpile user code to CommonJS for new Function() webview evaluation
+// load @babel/core lazily so Safe Mode users avoid activation cost
 
 import type * as BabelCore from '@babel/core';
 import { LogTags } from '@mdx-preview/contracts';

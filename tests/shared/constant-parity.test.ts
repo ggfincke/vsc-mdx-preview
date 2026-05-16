@@ -1,7 +1,6 @@
 // tests/shared/constant-parity.test.ts
 // verify cross-repo constant alignment & theme label completeness
-// prevent runtime behavior drift (Finding F5) & settings governance drift (Finding F14)
-// prevent preloaded module ID drift (Finding 15) & framework union drift (Finding 15)
+// prevent runtime, settings, preload ID & framework union drift
 
 import { describe, it, expect } from 'vitest';
 import {
@@ -60,9 +59,7 @@ describe('preloaded module ID parity (Finding 15)', () => {
     expect(PRELOADED_MODULE_IDS.reactDomClient).toBe(
       'npm://react-dom/client@18'
     );
-    expect(PRELOADED_MODULE_IDS.jsxRuntime).toBe(
-      'npm://react/jsx-runtime@18'
-    );
+    expect(PRELOADED_MODULE_IDS.jsxRuntime).toBe('npm://react/jsx-runtime@18');
     expect(PRELOADED_MODULE_IDS.mdxReact).toBe('npm://@mdx-js/react@3');
     expect(PRELOADED_MODULE_IDS.vscodeLayout).toBe(
       'npm://vscode-markdown-layout@0.1.0'
@@ -92,5 +89,4 @@ describe('theme label completeness', () => {
       [...CODE_BLOCK_THEMES].sort()
     );
   });
-
 });

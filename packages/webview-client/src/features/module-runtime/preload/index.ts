@@ -54,9 +54,7 @@ function createInitialState(): PreloadState {
 const state = createInitialState();
 
 // initialize preloaded modules in the registry
-// load only core modules synchronously - generic & framework shims are lazy-loaded
-// generic shims loaded on demand via ensureGenericShims when extension sends component list
-// framework-specific shims are loaded lazily via ensureFrameworkShims
+// load core modules eagerly, then generic & framework shims lazily
 export function initPreloadedModules(
   registry: ModuleRegistry,
   vscodeMarkdownLayout: unknown

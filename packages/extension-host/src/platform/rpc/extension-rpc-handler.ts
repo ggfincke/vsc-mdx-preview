@@ -323,8 +323,9 @@ class ExtensionHandle implements ExtensionRPC {
     const validLine = validateNumber(line, 'line number', {
       context: 'openSourceLine',
       min: 1,
+      integer: true,
     });
-    if (validLine === undefined || !Number.isInteger(validLine)) {
+    if (validLine === undefined) {
       return;
     }
 
@@ -361,8 +362,9 @@ class ExtensionHandle implements ExtensionRPC {
     const validLine = validateNumber(line, 'line number', {
       context: 'reportPreviewSourceLine',
       min: 1,
+      integer: true,
     });
-    if (validLine === undefined || !Number.isInteger(validLine)) {
+    if (validLine === undefined) {
       return 'ignored';
     }
 

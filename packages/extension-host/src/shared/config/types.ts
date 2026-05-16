@@ -1,7 +1,6 @@
 // packages/extension-host/src/shared/config/types.ts
 // type definitions for configuration management
-// note: SettingKey & SettingTypes are defined in ConfigManager.ts (canonical source)
-// & imported directly from there - they are NOT re-exported here to avoid duplication
+// SettingKey & SettingTypes stay canonical in ConfigManager.ts
 
 import type * as vscode from 'vscode';
 import type {

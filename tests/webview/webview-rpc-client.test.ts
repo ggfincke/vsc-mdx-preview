@@ -1,6 +1,5 @@
 // tests/webview/webview-rpc-client.test.ts
 // integration-style tests for webview-rpc-client composition root
-//
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

@@ -1,6 +1,5 @@
 // tests/webview/SafePreview.test.ts
 // verify representative safe-mode sanitization boundaries
-//
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';

@@ -1,7 +1,6 @@
 // scripts/check-changelog.mjs
 // verify CHANGELOG.md contains an entry for the current version
-// runs as an npm "version" lifecycle hook — after package.json is
-// bumped but before the commit & tag are created
+// runs after package.json bump but before commit & tag creation
 
 import { readFileSync } from 'node:fs';
 
@@ -12,7 +11,7 @@ const heading = `## [${version}]`;
 if (!changelog.includes(heading)) {
   console.error(
     `\n  Missing changelog entry for v${version}.\n` +
-      `  Add a "${heading}" section to CHANGELOG.md before running npm version.\n`,
+      `  Add a "${heading}" section to CHANGELOG.md before running npm version.\n`
   );
   process.exit(1);
 }

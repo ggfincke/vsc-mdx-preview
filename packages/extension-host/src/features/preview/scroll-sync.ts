@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import {
   isEditorToPreviewMode,
   isPreviewToEditorMode,
+  SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS,
   SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
   type PreviewSourceLineReportResult,
   type PreviewScrollSyncValue,
@@ -14,20 +15,15 @@ import type { Preview } from './Preview';
 
 const EDITOR_TO_PREVIEW_SCROLL_INTERVAL_MS = 33;
 const EDITOR_TO_PREVIEW_SCROLL_SETTLE_MS = 80;
-// window to ignore bounce-back scroll events after the extension drives one side
-// kept in step w/ the webview scroll-animation duration; if RPC latency outlasts
-// it the comfort-zone guard (shouldRevealAtAnchor) is the real loop backstop
-const SCROLL_SYNC_LOOP_SUPPRESSION_MS = 120;
-const PREVIEW_TO_EDITOR_GUARD_RATIO = 0.2;
-const PREVIEW_TO_EDITOR_MIN_GUARD_LINES = 3;
 
 type SyncDirection = 'editorToPreview' | 'previewToEditor';
 
 interface PreviewScheduler {
   pendingLine: number | undefined;
   pendingDocumentKey: string | undefined;
-  lastDispatchedKey: string | undefined;
-  lastPreviewReportedKey: string | undefined;
+  lastPreviewSourceKey: string | undefined;
+  lastEditorToPreviewDispatchKey: string | undefined;
+  lastPreviewToEditorReportKey: string | undefined;
   lastDispatchAtMs: number;
   ignoreEditorUntilMs: number;
   ignorePreviewUntilMs: number;
@@ -35,6 +31,7 @@ interface PreviewScheduler {
   settleTimer: ReturnType<typeof setTimeout> | undefined;
 }
 
+// strong refs; Preview.dispose must call disposeScrollSyncForPreview
 const schedulers = new Map<Preview, PreviewScheduler>();
 
 function modeSupports(
@@ -126,8 +123,9 @@ function getOrCreateScheduler(preview: Preview): PreviewScheduler {
   const created: PreviewScheduler = {
     pendingLine: undefined,
     pendingDocumentKey: undefined,
-    lastDispatchedKey: undefined,
-    lastPreviewReportedKey: undefined,
+    lastPreviewSourceKey: undefined,
+    lastEditorToPreviewDispatchKey: undefined,
+    lastPreviewToEditorReportKey: undefined,
     lastDispatchAtMs: 0,
     ignoreEditorUntilMs: 0,
     ignorePreviewUntilMs: 0,
@@ -145,6 +143,14 @@ function clearSchedulerTimer(
     clearTimeout(timer);
   }
   return undefined;
+}
+
+function clearPendingEditorToPreviewScroll(scheduler: PreviewScheduler): void {
+  scheduler.pendingLine = undefined;
+  scheduler.pendingDocumentKey = undefined;
+  scheduler.liveTimer = clearSchedulerTimer(scheduler.liveTimer);
+  scheduler.settleTimer = clearSchedulerTimer(scheduler.settleTimer);
+  scheduler.lastEditorToPreviewDispatchKey = undefined;
 }
 
 function dispatchPendingScroll(preview: Preview): void {
@@ -168,14 +174,15 @@ function dispatchPendingScroll(preview: Preview): void {
   }
 
   const dispatchKey = getDispatchKey(documentKey, line);
-  if (scheduler.lastDispatchedKey === dispatchKey) {
+  if (scheduler.lastPreviewSourceKey === dispatchKey) {
     return;
   }
 
-  scheduler.lastDispatchedKey = dispatchKey;
+  scheduler.lastPreviewSourceKey = dispatchKey;
+  scheduler.lastEditorToPreviewDispatchKey = dispatchKey;
   scheduler.lastDispatchAtMs = Date.now();
   scheduler.ignorePreviewUntilMs =
-    scheduler.lastDispatchAtMs + SCROLL_SYNC_LOOP_SUPPRESSION_MS;
+    scheduler.lastDispatchAtMs + SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS;
   preview.scrollToLine(line);
 }
 
@@ -183,7 +190,7 @@ function scheduleLiveDispatch(preview: Preview): void {
   const scheduler = getOrCreateScheduler(preview);
   const elapsedMs = Date.now() - scheduler.lastDispatchAtMs;
   if (
-    scheduler.lastDispatchedKey === undefined ||
+    scheduler.lastEditorToPreviewDispatchKey === undefined ||
     elapsedMs >= EDITOR_TO_PREVIEW_SCROLL_INTERVAL_MS
   ) {
     dispatchPendingScroll(preview);
@@ -220,9 +227,9 @@ function queueScroll(preview: Preview, line: number): void {
   }
   if (
     scheduler.pendingLine === undefined &&
-    scheduler.lastDispatchedKey === dispatchKey
+    scheduler.lastPreviewSourceKey === dispatchKey
   ) {
-    // skip duplicate settled dispatch when same line already reached preview
+    // skip duplicate settled dispatch when preview is already on this line
     return;
   }
 
@@ -272,23 +279,6 @@ function getClampedLineIndex(
   return Math.max(0, Math.min(sourceLine - 1, lineCount - 1));
 }
 
-function findVisibleRangeForLine(
-  editor: vscode.TextEditor,
-  lineIndex: number
-): vscode.Range | undefined {
-  return editor.visibleRanges.find(
-    (range) => lineIndex >= range.start.line && lineIndex <= range.end.line
-  );
-}
-
-function getGuardLineCount(range: vscode.Range): number {
-  const visibleLineCount = Math.max(1, range.end.line - range.start.line + 1);
-  return Math.max(
-    PREVIEW_TO_EDITOR_MIN_GUARD_LINES,
-    Math.floor(visibleLineCount * PREVIEW_TO_EDITOR_GUARD_RATIO)
-  );
-}
-
 function getEditorVisibleLineCount(editor: vscode.TextEditor): number {
   const leading = getLeadingVisibleRange(editor.visibleRanges);
   if (!leading) {
@@ -297,10 +287,8 @@ function getEditorVisibleLineCount(editor: vscode.TextEditor): number {
   return Math.max(1, leading.end.line - leading.start.line + 1);
 }
 
-// place the reported line at the same 35% anchor the preview uses, so each
-// preview->editor reveal moves the editor by the same delta the user just
-// scrolled in the preview (rather than snapping the line to vscode's
-// InCenter/InCenterIfOutsideViewport ~50% position)
+// reveal at the shared 35% anchor so preview->editor keeps the user's delta
+// instead of snapping to vscode's ~50% InCenter position
 function computeAnchoredTopLine(
   editor: vscode.TextEditor,
   lineIndex: number
@@ -313,37 +301,16 @@ function computeAnchoredTopLine(
   return Math.max(0, Math.min(maxTopLine, lineIndex - anchorOffset));
 }
 
-function shouldRevealAtAnchor(
-  editor: vscode.TextEditor,
-  lineIndex: number
-): boolean {
-  const visibleRange = findVisibleRangeForLine(editor, lineIndex);
-  if (!visibleRange) {
-    return true;
-  }
-
-  const guardLineCount = getGuardLineCount(visibleRange);
-  const comfortStartLine = visibleRange.start.line + guardLineCount;
-  const comfortEndLine = visibleRange.end.line - guardLineCount;
-  if (comfortStartLine > comfortEndLine) {
-    // viewport is too small for a stable comfort band; suppress reveals so
-    // every small preview scroll doesn't yank a near-empty editor around
-    return false;
-  }
-
-  return lineIndex < comfortStartLine || lineIndex > comfortEndLine;
-}
-
 function revealEditorSourceLine(
   editor: vscode.TextEditor,
   sourceLine: number
 ): boolean {
   const lineIndex = getClampedLineIndex(editor, sourceLine);
-  if (!shouldRevealAtAnchor(editor, lineIndex)) {
+  const topLine = computeAnchoredTopLine(editor, lineIndex);
+  if (getLeadingVisibleRange(editor.visibleRanges)?.start.line === topLine) {
     return false;
   }
 
-  const topLine = computeAnchoredTopLine(editor, lineIndex);
   const position = new vscode.Position(topLine, 0);
   const range = new vscode.Range(position, position);
   editor.revealRange(range, vscode.TextEditorRevealType.AtTop);
@@ -379,7 +346,7 @@ export function syncPreviewScrollFromActiveEditor(
   if (!isEligibleForSync(preview, 'editorToPreview')) {
     return;
   }
-  const line = getEditorScrollLine(preview, vscode.window.activeTextEditor);
+  const line = getEditorScrollLine(preview, findVisiblePreviewEditor(preview));
   if (line === undefined) {
     return;
   }
@@ -396,14 +363,17 @@ export function handlePreviewSourceLineReport(
   if (!isEligibleForSync(preview, 'previewToEditor')) {
     return 'ignored';
   }
+  const scheduler = getOrCreateScheduler(preview);
   if (shouldIgnoreScroll(preview, 'previewToEditor')) {
+    clearPendingEditorToPreviewScroll(scheduler);
     return 'retry';
   }
 
-  const scheduler = getOrCreateScheduler(preview);
   const documentKey = getPreviewDocumentKey(preview);
   const dispatchKey = getDispatchKey(documentKey, line);
-  if (scheduler.lastPreviewReportedKey === dispatchKey) {
+  if (scheduler.lastPreviewToEditorReportKey === dispatchKey) {
+    scheduler.lastPreviewSourceKey = dispatchKey;
+    clearPendingEditorToPreviewScroll(scheduler);
     return 'accepted';
   }
 
@@ -412,21 +382,23 @@ export function handlePreviewSourceLineReport(
     return 'ignored';
   }
 
+  clearPendingEditorToPreviewScroll(scheduler);
   const didReveal = revealEditorSourceLine(editor, line);
-  scheduler.lastPreviewReportedKey = dispatchKey;
+  scheduler.lastPreviewToEditorReportKey = dispatchKey;
+  scheduler.lastPreviewSourceKey = dispatchKey;
   if (didReveal) {
     scheduler.ignoreEditorUntilMs =
-      Date.now() + SCROLL_SYNC_LOOP_SUPPRESSION_MS;
+      Date.now() + SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS;
   }
   return 'accepted';
 }
 
-// suppress editor->preview sync briefly after the extension itself moves the editor
-// (e.g. cmd+click in preview opens source line) so the resulting visible-range
-// change doesn't bounce back through the editor->preview path
+// suppress editor->preview sync after extension-driven editor movement
+// prevents visible-range changes from bouncing back into the preview
 export function suppressEditorScrollSync(preview: Preview): void {
   const scheduler = getOrCreateScheduler(preview);
-  scheduler.ignoreEditorUntilMs = Date.now() + SCROLL_SYNC_LOOP_SUPPRESSION_MS;
+  scheduler.ignoreEditorUntilMs =
+    Date.now() + SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS;
 }
 
 // reset cached dispatch state after webview reload
@@ -440,8 +412,9 @@ export function resetPreviewScrollSync(preview: Preview): void {
   scheduler.settleTimer = clearSchedulerTimer(scheduler.settleTimer);
   scheduler.pendingLine = undefined;
   scheduler.pendingDocumentKey = undefined;
-  scheduler.lastDispatchedKey = undefined;
-  scheduler.lastPreviewReportedKey = undefined;
+  scheduler.lastPreviewSourceKey = undefined;
+  scheduler.lastEditorToPreviewDispatchKey = undefined;
+  scheduler.lastPreviewToEditorReportKey = undefined;
   scheduler.lastDispatchAtMs = 0;
   scheduler.ignoreEditorUntilMs = 0;
   scheduler.ignorePreviewUntilMs = 0;

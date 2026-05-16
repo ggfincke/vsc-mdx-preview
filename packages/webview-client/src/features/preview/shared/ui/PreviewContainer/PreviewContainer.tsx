@@ -21,12 +21,7 @@ export interface PreviewContainerProps {
 }
 
 // shared container component for both Safe & Trusted preview modes
-// provide a unified structure for
-// - container ref attachment for DOM manipulation
-// - mode attribute for styling hooks
-// - optional onClick handler for image lightbox
-// - diagram portal rendering
-// - markdown-body class for styling
+// provide ref attachment, mode styling hooks, lightbox & diagram portals
 export function PreviewContainer({
   containerRef,
   mode,

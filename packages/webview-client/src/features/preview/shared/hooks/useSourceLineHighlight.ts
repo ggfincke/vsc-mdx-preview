@@ -15,8 +15,11 @@ const INTERACTIVE_SELECTOR = [
   'input',
   'select',
   'textarea',
+  'label',
+  'details',
   'summary',
   '[role="button"]',
+  '[contenteditable]',
 ].join(', ');
 
 function isInteractiveTarget(
@@ -80,7 +83,7 @@ export function useSourceLineHighlight({
       element: Element;
       onMouseEnter: EventListener;
       onMouseLeave: EventListener;
-      onClick: EventListener;
+      onClick: EventListener | undefined;
     }> = [];
 
     const applySingleHighlight = (highlightElement: Element | null): void => {
@@ -142,26 +145,29 @@ export function useSourceLineHighlight({
         highlightElement.classList.remove(HIGHLIGHT_ACTIVE_CLASS);
       };
 
-      const onClick: EventListener = (event) => {
-        const mouseEvent = event as MouseEvent;
-        if (
-          !onOpenSourceLine ||
-          sourceLine === null ||
-          !isSourceNavigationClick(mouseEvent) ||
-          isInteractiveTarget(mouseEvent.target, container)
-        ) {
-          return;
-        }
+      const onClick: EventListener | undefined =
+        onOpenSourceLine && sourceLine !== null
+          ? (event) => {
+              const mouseEvent = event as MouseEvent;
+              if (
+                !isSourceNavigationClick(mouseEvent) ||
+                isInteractiveTarget(mouseEvent.target, container)
+              ) {
+                return;
+              }
 
-        mouseEvent.preventDefault();
-        mouseEvent.stopPropagation();
-        highlightElement.classList.add(HIGHLIGHT_ACTIVE_CLASS);
-        onOpenSourceLine(sourceLine);
-      };
+              mouseEvent.preventDefault();
+              mouseEvent.stopPropagation();
+              highlightElement.classList.add(HIGHLIGHT_ACTIVE_CLASS);
+              onOpenSourceLine(sourceLine);
+            }
+          : undefined;
 
       highlightElement.addEventListener('mouseenter', onMouseEnter);
       highlightElement.addEventListener('mouseleave', onMouseLeave);
-      highlightElement.addEventListener('click', onClick);
+      if (onClick) {
+        highlightElement.addEventListener('click', onClick);
+      }
       listeners.push({
         element: highlightElement,
         onMouseEnter,
@@ -176,7 +182,9 @@ export function useSourceLineHighlight({
       listeners.forEach(({ element, onMouseEnter, onMouseLeave, onClick }) => {
         element.removeEventListener('mouseenter', onMouseEnter);
         element.removeEventListener('mouseleave', onMouseLeave);
-        element.removeEventListener('click', onClick);
+        if (onClick) {
+          element.removeEventListener('click', onClick);
+        }
         element.classList.remove(HIGHLIGHT_LINE_CLASS);
         element.classList.remove(HIGHLIGHT_ACTIVE_CLASS);
       });

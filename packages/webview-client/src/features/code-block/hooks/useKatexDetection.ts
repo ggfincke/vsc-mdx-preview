@@ -16,9 +16,7 @@ interface UseKatexDetectionOptions {
 }
 
 // detect KaTeX/math content & lazy-load KaTeX CSS
-// support two detection modes
-// - Safe Mode: string-based detection via html prop (run before DOM exists)
-// - Trusted Mode: DOM-based detection via containerRef + trigger (run after render)
+// support Safe Mode html scanning & Trusted Mode DOM scanning
 // use useLayoutEffect for synchronous loading to avoid FOUC
 export function useKatexDetection(options: UseKatexDetectionOptions): void {
   const { html, containerRef, trigger } = options;

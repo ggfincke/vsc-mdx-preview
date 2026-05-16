@@ -1,9 +1,6 @@
 // packages/webview-client/src/features/code-block/utils/katexLoader.ts
 // lazy-load KaTeX CSS only when math content is detected
-//
-// use createResourceLoader for idempotent loading w/ state machine
-// KaTeX CSS (~115KB) is deferred from initial bundle load to improve startup
-// time for documents w/o math expressions
+// defer 115KB CSS through idempotent resource loader for faster startup
 
 import { createResourceLoader } from '../../../shared/utils/createResourceLoader';
 

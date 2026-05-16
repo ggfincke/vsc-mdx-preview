@@ -8,10 +8,6 @@ import { DOMPURIFY_CONFIG, ensureSafeModeStyles } from '../security';
 // hook for processing Safe Mode HTML content
 // handle sanitization & inject into container
 // use useLayoutEffect for synchronous DOM injection before paint
-// (prevents flash of empty/unstyled content)
-//
-// performance optimization: use DocumentFragment for off-DOM manipulation
-// to reduce layout recalculations
 export function useSafeModeProcessing(
   containerRef: RefObject<HTMLDivElement>,
   html: string

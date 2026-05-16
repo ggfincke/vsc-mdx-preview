@@ -16,8 +16,13 @@ import {
   type ScheduledFrame,
 } from '../../../../shared/utils/frameScheduler';
 import { ExtensionHandle } from '../../../../platform/rpc/webview-rpc-client';
-import { collectSourceLineEntries } from '../utils/sourceLineElements';
-import { isSourceLineScrollInProgress } from '../utils/scrollToSourceLine';
+import { collectSourceLineTargetEntries } from '../utils/sourceLineElements';
+import type { SourceLineEntry } from '../utils/sourceLineElements';
+import {
+  cancelSourceLineScroll,
+  getSourceLineScrollRetryDelayMs,
+  isSourceLineScrollInProgress,
+} from '../utils/scrollToSourceLine';
 
 const log = createTaggedLogger(LogTags.RPC_WEBVIEW);
 const PREVIEW_SCROLL_HYSTERESIS_PX = 24;
@@ -25,6 +30,17 @@ const PREVIEW_SOURCE_REPORT_INTERVAL_MS = 50;
 const PREVIEW_SOURCE_REPORT_RETRY_MS = 120;
 const PREVIEW_SOURCE_REPORT_IGNORED_RETRY_MS = 250;
 const MIN_VISIBLE_HEIGHT_PX = 1;
+const USER_SCROLL_INTERRUPT_KEYS = new Set([
+  ' ',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'End',
+  'Home',
+  'PageDown',
+  'PageUp',
+]);
 
 interface ActiveLineCandidate {
   line: number;
@@ -64,8 +80,12 @@ function isBetterCandidate(
   return candidate.visibleTop < best.visibleTop;
 }
 
-export function findActivePreviewSourceLine(
-  container: HTMLElement,
+function isScrollInterruptKey(event: KeyboardEvent): boolean {
+  return USER_SCROLL_INTERRUPT_KEYS.has(event.key);
+}
+
+function findActivePreviewSourceLineInEntries(
+  entries: readonly SourceLineEntry[],
   viewportHeight = window.innerHeight,
   stickyLine?: number
 ): number | undefined {
@@ -73,14 +93,12 @@ export function findActivePreviewSourceLine(
   let best: ActiveLineCandidate | undefined;
   let sticky: ActiveLineCandidate | undefined;
 
-  for (const { highlightElement, sourceLine } of collectSourceLineEntries(
-    container
-  )) {
+  for (const { targetElement, sourceLine } of entries) {
     if (sourceLine === null) {
       continue;
     }
 
-    const rect = highlightElement.getBoundingClientRect();
+    const rect = targetElement.getBoundingClientRect();
     const visibleTop = Math.max(rect.top, 0);
     const visibleBottom = Math.min(rect.bottom, viewportHeight);
     if (visibleBottom - visibleTop < MIN_VISIBLE_HEIGHT_PX) {
@@ -92,7 +110,7 @@ export function findActivePreviewSourceLine(
       distance: getCandidateDistance(rect, anchorY),
       visibleTop,
     };
-    if (sourceLine === stickyLine) {
+    if (sourceLine === stickyLine && isBetterCandidate(candidate, sticky)) {
       sticky = candidate;
     }
     if (isBetterCandidate(candidate, best)) {
@@ -110,6 +128,18 @@ export function findActivePreviewSourceLine(
   }
 
   return best?.line;
+}
+
+export function findActivePreviewSourceLine(
+  container: HTMLElement,
+  viewportHeight = window.innerHeight,
+  stickyLine?: number
+): number | undefined {
+  return findActivePreviewSourceLineInEntries(
+    collectSourceLineTargetEntries(container),
+    viewportHeight,
+    stickyLine
+  );
 }
 
 async function reportPreviewSourceLine(
@@ -136,18 +166,37 @@ export function usePreviewScrollSync({
 
     let frame: ScheduledFrame | undefined;
     let reportTimer: ReturnType<typeof setTimeout> | undefined;
+    let suppressedFlushTimer: ReturnType<typeof setTimeout> | undefined;
     let disposed = false;
     let hasSentReport = false;
     let lastAcceptedLine: number | undefined;
     let lastSentAtMs = 0;
     let pendingLine: number | undefined;
     let inFlightLine: number | undefined;
+    let sourceLineEntries = collectSourceLineTargetEntries(container);
+    let sourceLineEntriesDirty = false;
 
     const clearReportTimer = (): void => {
       if (reportTimer) {
         clearTimeout(reportTimer);
         reportTimer = undefined;
       }
+    };
+
+    const clearSuppressedFlushTimer = (): void => {
+      if (suppressedFlushTimer) {
+        clearTimeout(suppressedFlushTimer);
+        suppressedFlushTimer = undefined;
+      }
+    };
+
+    const getSourceLineEntries = (): readonly SourceLineEntry[] => {
+      if (sourceLineEntriesDirty) {
+        sourceLineEntries = collectSourceLineTargetEntries(container);
+        sourceLineEntriesDirty = false;
+      }
+
+      return sourceLineEntries;
     };
 
     const getStickyLine = (): number | undefined =>
@@ -250,11 +299,12 @@ export function usePreviewScrollSync({
       }
 
       if (isSourceLineScrollInProgress()) {
+        scheduleSuppressedFlush();
         return;
       }
 
-      const line = findActivePreviewSourceLine(
-        container,
+      const line = findActivePreviewSourceLineInEntries(
+        getSourceLineEntries(),
         window.innerHeight,
         getStickyLine()
       );
@@ -273,15 +323,80 @@ export function usePreviewScrollSync({
       frame = scheduleFrame(flush);
     };
 
+    const scheduleSuppressedFlush = (): void => {
+      if (disposed || suppressedFlushTimer) {
+        return;
+      }
+
+      suppressedFlushTimer = setTimeout(() => {
+        suppressedFlushTimer = undefined;
+        schedule();
+      }, getSourceLineScrollRetryDelayMs());
+    };
+
+    const handleUserScrollIntent = (): void => {
+      if (!isSourceLineScrollInProgress()) {
+        return;
+      }
+
+      cancelSourceLineScroll();
+      clearSuppressedFlushTimer();
+      schedule();
+    };
+
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (isScrollInterruptKey(event)) {
+        handleUserScrollIntent();
+      }
+    };
+
+    const markSourceLineEntriesDirty = (): void => {
+      sourceLineEntriesDirty = true;
+      schedule();
+    };
+
+    const mutationObserver =
+      typeof MutationObserver === 'undefined'
+        ? undefined
+        : new MutationObserver(markSourceLineEntriesDirty);
+    mutationObserver?.observe(container, {
+      attributes: true,
+      attributeFilter: [
+        'aria-expanded',
+        'data-source-line',
+        'hidden',
+        'open',
+        'style',
+      ],
+      childList: true,
+      subtree: true,
+    });
+
     window.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', schedule);
+    window.addEventListener('wheel', handleUserScrollIntent, {
+      passive: true,
+    });
+    window.addEventListener('touchmove', handleUserScrollIntent, {
+      passive: true,
+    });
+    window.addEventListener('mousedown', handleUserScrollIntent, {
+      passive: true,
+    });
+    window.addEventListener('keydown', handleKeyDown);
     schedule();
 
     return () => {
       disposed = true;
+      mutationObserver?.disconnect();
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
+      window.removeEventListener('wheel', handleUserScrollIntent);
+      window.removeEventListener('touchmove', handleUserScrollIntent);
+      window.removeEventListener('mousedown', handleUserScrollIntent);
+      window.removeEventListener('keydown', handleKeyDown);
       clearReportTimer();
+      clearSuppressedFlushTimer();
       if (frame) {
         cancelScheduledFrame(frame);
       }

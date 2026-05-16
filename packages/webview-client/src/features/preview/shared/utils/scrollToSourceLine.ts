@@ -1,7 +1,10 @@
 // packages/webview-client/src/features/preview/shared/utils/scrollToSourceLine.ts
 // scroll preview content to the closest rendered source-line element
 
-import { SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO } from '@mdx-preview/contracts';
+import {
+  SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS,
+  SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
+} from '@mdx-preview/contracts';
 import { PREVIEW_CONTENT_CLASS } from '../../../../app/constants';
 import {
   scheduleFrame,
@@ -17,10 +20,10 @@ import {
 
 const MARKDOWN_BODY_SELECTOR = '.markdown-body';
 const MIN_SCROLL_ANCHOR_OFFSET_PX = 60;
-const SCROLL_ANIMATION_MS = 120;
 const MIN_SCROLL_DELTA_PX = 2;
 const PENDING_SCROLL_TTL_MS = 10000;
 const PROGRAMMATIC_SCROLL_SETTLE_MS = 80;
+const PROGRAMMATIC_SCROLL_RECHECK_BUFFER_MS = 16;
 
 let pendingScrollLine: number | undefined;
 let pendingScrollRequestedAtMs = 0;
@@ -52,7 +55,9 @@ function buildEntry(
   sourceLine: number
 ): SourceLineEntry | null {
   const owner = resolveHighlightOwner(element, container);
-  return owner ? { highlightElement: owner, sourceLine } : null;
+  return owner
+    ? { highlightElement: owner, targetElement: element, sourceLine }
+    : null;
 }
 
 function easeScrollProgress(progress: number): number {
@@ -121,6 +126,36 @@ export function isSourceLineScrollInProgress(): boolean {
   );
 }
 
+export function getSourceLineScrollRetryDelayMs(): number {
+  if (hasExpiredPendingScroll()) {
+    clearPendingScroll();
+  }
+  if (pendingScrollLine !== undefined || activeScrollAnimation !== undefined) {
+    return (
+      SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS +
+      PROGRAMMATIC_SCROLL_SETTLE_MS +
+      PROGRAMMATIC_SCROLL_RECHECK_BUFFER_MS
+    );
+  }
+
+  const remainingMs = programmaticScrollUntilMs - Date.now();
+  if (remainingMs <= 0 || remainingMs > PROGRAMMATIC_SCROLL_SETTLE_MS) {
+    return PROGRAMMATIC_SCROLL_RECHECK_BUFFER_MS;
+  }
+
+  return remainingMs + PROGRAMMATIC_SCROLL_RECHECK_BUFFER_MS;
+}
+
+export function cancelSourceLineScroll(): void {
+  clearPendingScroll();
+  if (pendingScrollFrame) {
+    cancelScheduledFrame(pendingScrollFrame);
+    pendingScrollFrame = undefined;
+  }
+  cancelActiveScrollAnimation();
+  programmaticScrollUntilMs = 0;
+}
+
 function animateWindowScrollTo(targetTop: number): void {
   const startTop = window.scrollY;
   if (Math.abs(targetTop - startTop) <= MIN_SCROLL_DELTA_PX) {
@@ -147,7 +182,7 @@ function animateWindowScrollTo(targetTop: number): void {
     animation.startTime ??= time;
     const progress = Math.min(
       1,
-      (time - animation.startTime) / SCROLL_ANIMATION_MS
+      (time - animation.startTime) / SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS
     );
     const easedProgress = easeScrollProgress(progress);
     const top =
@@ -246,7 +281,7 @@ export function scrollToSourceLine(sourceLine: number): boolean {
     return false;
   }
 
-  const rect = entry.highlightElement.getBoundingClientRect();
+  const rect = entry.targetElement.getBoundingClientRect();
   const top = Math.max(0, rect.top + window.scrollY - getScrollAnchorOffset());
   animateWindowScrollTo(top);
   return true;
@@ -260,10 +295,8 @@ export function scheduleScrollToSourceLine(sourceLine: number): void {
   pendingScrollLine = sourceLine;
   pendingScrollRequestedAtMs = Date.now();
   if (pendingScrollFrame) {
-    // burst coalescing: when the extension dispatches multiple targets in the
-    // same frame only the newest survives. landing on the latest line beats
-    // animating through stale intermediate lines that no longer match the
-    // editor's current scroll position
+    // burst coalescing keeps only the newest same-frame dispatch
+    // landing on the latest line beats animating through stale targets
     return;
   }
 

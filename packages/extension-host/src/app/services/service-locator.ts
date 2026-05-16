@@ -49,10 +49,7 @@ function createServiceGetter<T extends IService>(name: ServiceName): () => T {
   return () => ServiceRegistry.getInstance().get<T>(name);
 }
 
-// typed service getters (preferred)
-// these provide better IntelliSense & type checking than generic getService()
-// import & use these in your code
-// import { getConfigManager, getTrustManager } from './services'
+// typed service getters w/ better IntelliSense than generic getService
 
 // get the ConfigManager service - manages VS Code configuration settings for the extension
 export const getConfigManager = createServiceGetter<ConfigManager>(

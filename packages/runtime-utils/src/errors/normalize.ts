@@ -1,7 +1,6 @@
 // packages/runtime-utils/src/errors/normalize.ts
 // cross-environment error handling utilities (works in both Node.js & browser)
-// ! cross-repo duplicate: mdx-forge/src/internal/errors.ts
-// ! changes here must be mirrored (GPL licensing prevents shared dependency)
+// ! cross-repo duplicate; mirror changes in mdx-forge/src/internal/errors.ts
 
 // check if value is an Error instance (type guard)
 function isError(value: unknown): value is Error {

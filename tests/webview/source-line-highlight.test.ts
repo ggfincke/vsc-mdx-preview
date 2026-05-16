@@ -1,6 +1,5 @@
 // tests/webview/source-line-highlight.test.ts
 // tests source-line hover, click navigation & preview scroll sync
-//
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -298,6 +297,34 @@ describe('useSourceLineHighlight', () => {
       document.getElementById('line-5')
     );
 
+    const table = document.createElement('table');
+    const tableBody = document.createElement('tbody');
+    const tableRow = document.createElement('tr');
+    const tableLaterRow = document.createElement('tr');
+    tableRow.setAttribute('data-source-line', '40');
+    tableLaterRow.setAttribute('data-source-line', '48');
+    tableBody.appendChild(tableRow);
+    tableBody.appendChild(tableLaterRow);
+    table.appendChild(tableBody);
+    container.appendChild(table);
+    const tableEntry = findBestSourceLineEntry(container, 40);
+    expect(tableEntry?.highlightElement).toBe(table);
+    expect(tableEntry?.targetElement).toBe(tableRow);
+    setElementTop(table, scrollAnchorY + 20);
+    setElementTop(tableRow, scrollAnchorY + 180);
+    setElementTop(tableLaterRow, scrollAnchorY + 5);
+    vi.mocked(window.scrollTo).mockClear();
+    frames.length = 0;
+    expect(scrollToSourceLine(40)).toBe(true);
+    frames.shift()?.(140);
+    frames.shift()?.(260);
+    expect(window.scrollTo).toHaveBeenLastCalledWith({
+      top: 180,
+      behavior: 'auto',
+    });
+    expect(findActivePreviewSourceLine(container, 600)).toBe(48);
+    table.remove();
+
     setElementTop(document.getElementById('line-5')!, -40);
     setElementTop(document.getElementById('line-12')!, 160);
     setElementTop(document.getElementById('line-24')!, 320);
@@ -370,15 +397,13 @@ describe('useSourceLineHighlight', () => {
         createElement(
           'div',
           { className: 'markdown-body' },
-          createElement(
-            'p',
-            { id: 'line-12', 'data-source-line': '12' },
-            'A'
-          )
+          createElement('p', { id: 'line-12', 'data-source-line': '12' }, 'A'),
+          createElement('p', { id: 'line-24', 'data-source-line': '24' }, 'B')
         )
       )
     );
     setElementTop(host.querySelector('#line-12')!, scrollAnchorY + 120);
+    setElementTop(host.querySelector('#line-24')!, scrollAnchorY + 420);
 
     scheduleScrollToSourceLine(12);
 
@@ -412,20 +437,39 @@ describe('useSourceLineHighlight', () => {
     expect(mockReportPreviewSourceLine).not.toHaveBeenCalled();
 
     await act(async () => {
-      vi.advanceTimersByTime(80);
+      vi.advanceTimersByTime(216);
       await Promise.resolve();
     });
     expect(isSourceLineScrollInProgress()).toBe(false);
 
-    act(() => {
-      window.dispatchEvent(new Event('scroll'));
-    });
     await act(async () => {
       frames.shift()?.(240);
       await Promise.resolve();
     });
     expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(1);
     expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(12);
+
+    setElementTop(host.querySelector('#line-12')!, -80);
+    setElementTop(host.querySelector('#line-24')!, scrollAnchorY + 80);
+    scheduleScrollToSourceLine(24);
+    act(() => {
+      window.dispatchEvent(new WheelEvent('wheel'));
+    });
+    await act(async () => {
+      frames.shift()?.(280);
+      frames.shift()?.(296);
+      frames.shift()?.(312);
+      frames.shift()?.(328);
+      await Promise.resolve();
+    });
+    expect(isSourceLineScrollInProgress()).toBe(false);
+
+    await act(async () => {
+      vi.advanceTimersByTime(50);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(2);
+    expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(24);
   });
 
   it('reports preview source lines with retry and interval throttling', async () => {
@@ -522,11 +566,7 @@ describe('useSourceLineHighlight', () => {
       .mockResolvedValue('accepted');
 
     const host = await mountScrollSyncHarness(
-      createElement(
-        'p',
-        { id: 'line-12', 'data-source-line': '12' },
-        'A'
-      )
+      createElement('p', { id: 'line-12', 'data-source-line': '12' }, 'A')
     );
     setElementTop(host.querySelector('#line-12')!, 250);
 
