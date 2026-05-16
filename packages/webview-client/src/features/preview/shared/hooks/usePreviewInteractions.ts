@@ -1,5 +1,6 @@
 // packages/webview-client/src/features/preview/shared/hooks/usePreviewInteractions.ts
 // wire common preview interactions for Safe & Trusted renderers
+// discriminated mode lets KaTeX detection dispatch on the actual shape (html vs DOM)
 
 import { useLayoutEffect, type RefObject } from 'react';
 import { useUIFlags } from '../../../../app/state';
@@ -10,28 +11,29 @@ import { flushPendingScrollToSourceLine } from '../utils/scrollToSourceLine';
 import { usePreviewScrollSync } from './usePreviewScrollSync';
 import { useSourceLineHighlight } from './useSourceLineHighlight';
 
-type PreviewInteractionMode = 'safe' | 'trusted';
-
-interface UsePreviewInteractionsOptions {
+interface SharedInteractionFields {
   containerRef: RefObject<HTMLElement | null>;
-  trigger: unknown;
-  mode: PreviewInteractionMode;
 }
 
-export function usePreviewInteractions({
-  containerRef,
-  trigger,
-  mode,
-}: UsePreviewInteractionsOptions): void {
+export type UsePreviewInteractionsOptions =
+  | (SharedInteractionFields & { mode: 'safe'; html: string })
+  | (SharedInteractionFields & { mode: 'trusted'; component: unknown });
+
+export function usePreviewInteractions(
+  options: UsePreviewInteractionsOptions
+): void {
+  const { containerRef } = options;
+  const trigger: unknown =
+    options.mode === 'safe' ? options.html : options.component;
   const { sourceLineHighlightEnabled, scrollSyncMode } = useUIFlags();
 
+  // trusted mode defers the flush until the component is evaluated
   useLayoutEffect(() => {
-    if (mode === 'trusted' && !trigger) {
+    if (options.mode === 'trusted' && !trigger) {
       return;
     }
-
     flushPendingScrollToSourceLine();
-  }, [mode, trigger]);
+  }, [options.mode, trigger]);
 
   useCodeBlockEnhancement({ containerRef, trigger });
 
@@ -48,9 +50,9 @@ export function usePreviewInteractions({
     mode: scrollSyncMode,
   });
 
-  useKatexDetection({
-    html: mode === 'safe' && typeof trigger === 'string' ? trigger : undefined,
-    containerRef: mode === 'trusted' ? containerRef : undefined,
-    trigger: mode === 'trusted' ? trigger : undefined,
-  });
+  useKatexDetection(
+    options.mode === 'safe'
+      ? { html: options.html }
+      : { containerRef, trigger: options.component }
+  );
 }

@@ -105,13 +105,17 @@ function toDocumentRange(
   );
 }
 
+// markdown depths 1..6 plus reserved index 0 so depth indexes the lookup directly
+const MAX_HEADING_DEPTH = 6;
+
 function computeHeadingSectionEndLines(
   headings: Array<{ depth: number; range: vscode.Range }>,
   lastLine: number
 ): number[] {
   const endLines = new Array<number>(headings.length);
-  const nextStartLineByDepth: Array<number | undefined> =
-    Array(7).fill(undefined);
+  const nextStartLineByDepth: Array<number | undefined> = Array(
+    MAX_HEADING_DEPTH + 1
+  ).fill(undefined);
 
   for (let i = headings.length - 1; i >= 0; i -= 1) {
     const { depth, range } = headings[i];

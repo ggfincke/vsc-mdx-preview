@@ -62,30 +62,7 @@ export function analyzeMdxDocument(text: string): MdxDocumentAnalysis {
   };
 }
 
-// lightweight frontmatter boundary detection (no AST parse)
-// return whether `line` (0-based) is inside the frontmatter region
-export function isLineInFrontmatter(text: string, line: number): boolean {
-  if (line === 0) {
-    return false;
-  }
-
-  const lines = text.split('\n');
-  if (lines[0]?.trim() !== '---') {
-    return false;
-  }
-
-  // find closing ---
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i].trim() === '---') {
-      // cursor must be between opening & closing delimiters (exclusive)
-      return line > 0 && line < i;
-    }
-  }
-
-  // no closing --- found yet, still in frontmatter
-  return true;
-}
-
+// frontmatter boundary check via TextDocument.lineAt (no full-text materialisation)
 export function isDocumentLineInFrontmatter(
   document: { lineAt(line: number): { text: string }; lineCount: number },
   line: number
@@ -101,7 +78,7 @@ export function isDocumentLineInFrontmatter(
   const lastLine = Math.min(line, document.lineCount - 1);
   for (let i = 1; i <= lastLine; i++) {
     if (document.lineAt(i).text.trim() === '---') {
-      return line > 0 && line < i;
+      return line < i;
     }
   }
 

@@ -137,27 +137,36 @@ export class UnifiedResolver {
     return { specifier: s, plan: this.getStrategyPlan(s, context) };
   }
 
-  private resolveStrategySync(
-    strategy: IResolutionStrategy,
-    specifier: string,
-    context: ResolutionContext,
-    mode: ResolutionMode
-  ): ResolutionResult | null {
-    return strategy.resolve(specifier, context, mode);
-  }
+  // describe enabled strategies in priority order (shared between sync & async)
+  private getStrategyDescriptors(plan: StrategyPlan): Array<{
+    getStrategy: () => IResolutionStrategy;
+    preferAsync: boolean;
+  }> {
+    const descriptors: Array<{
+      getStrategy: () => IResolutionStrategy;
+      preferAsync: boolean;
+    }> = [];
 
-  private async resolveStrategyAsync(
-    strategy: IResolutionStrategy,
-    preferAsync: boolean,
-    specifier: string,
-    context: ResolutionContext,
-    mode: ResolutionMode
-  ): Promise<ResolutionResult | null> {
-    if (preferAsync && strategy.resolveAsync) {
-      return strategy.resolveAsync(specifier, context, mode);
+    if (plan.useTypeScript) {
+      descriptors.push({
+        getStrategy: getTypeScriptPathStrategy,
+        preferAsync: true,
+      });
+    }
+    if (plan.useEnhancedResolve) {
+      descriptors.push({
+        getStrategy: getEnhancedResolveStrategy,
+        preferAsync: false,
+      });
+    }
+    if (plan.useFileProbe) {
+      descriptors.push({
+        getStrategy: getFileProbeStrategy,
+        preferAsync: true,
+      });
     }
 
-    return strategy.resolve(specifier, context, mode);
+    return descriptors;
   }
 
   private resolvePlannedStrategiesSync(
@@ -166,42 +175,12 @@ export class UnifiedResolver {
     mode: ResolutionMode,
     plan: StrategyPlan
   ): ResolutionResult | null {
-    if (plan.useTypeScript) {
-      const result = this.resolveStrategySync(
-        getTypeScriptPathStrategy(),
-        specifier,
-        context,
-        mode
-      );
+    for (const { getStrategy } of this.getStrategyDescriptors(plan)) {
+      const result = getStrategy().resolve(specifier, context, mode);
       if (result) {
         return result;
       }
     }
-
-    if (plan.useEnhancedResolve) {
-      const result = this.resolveStrategySync(
-        getEnhancedResolveStrategy(),
-        specifier,
-        context,
-        mode
-      );
-      if (result) {
-        return result;
-      }
-    }
-
-    if (plan.useFileProbe) {
-      const result = this.resolveStrategySync(
-        getFileProbeStrategy(),
-        specifier,
-        context,
-        mode
-      );
-      if (result) {
-        return result;
-      }
-    }
-
     return null;
   }
 
@@ -211,45 +190,18 @@ export class UnifiedResolver {
     mode: ResolutionMode,
     plan: StrategyPlan
   ): Promise<ResolutionResult | null> {
-    if (plan.useTypeScript) {
-      const result = await this.resolveStrategyAsync(
-        getTypeScriptPathStrategy(),
-        true,
-        specifier,
-        context,
-        mode
-      );
+    for (const { getStrategy, preferAsync } of this.getStrategyDescriptors(
+      plan
+    )) {
+      const strategy = getStrategy();
+      const result =
+        preferAsync && strategy.resolveAsync
+          ? await strategy.resolveAsync(specifier, context, mode)
+          : strategy.resolve(specifier, context, mode);
       if (result) {
         return result;
       }
     }
-
-    if (plan.useEnhancedResolve) {
-      const result = await this.resolveStrategyAsync(
-        getEnhancedResolveStrategy(),
-        false,
-        specifier,
-        context,
-        mode
-      );
-      if (result) {
-        return result;
-      }
-    }
-
-    if (plan.useFileProbe) {
-      const result = await this.resolveStrategyAsync(
-        getFileProbeStrategy(),
-        true,
-        specifier,
-        context,
-        mode
-      );
-      if (result) {
-        return result;
-      }
-    }
-
     return null;
   }
 

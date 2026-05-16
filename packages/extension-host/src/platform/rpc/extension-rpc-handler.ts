@@ -73,20 +73,6 @@ class ExtensionHandle implements ExtensionRPC {
     this.preview = preview;
   }
 
-  private validateRelativePath(
-    relativePath: string,
-    context: string
-  ): string | undefined {
-    return validateString(relativePath, 'path', { context });
-  }
-
-  private async resolveSecureRelativePath(
-    validPath: string,
-    context: string
-  ): ReturnType<typeof validateAndResolveSecurePath> {
-    return validateAndResolveSecurePath(this.preview, validPath, context);
-  }
-
   // handshake to resolve when webview is ready
   handshake(): void {
     log.debug('handshake() called from webview!');
@@ -217,7 +203,8 @@ class ExtensionHandle implements ExtensionRPC {
       `openDocument: ${relativePath}${line ? `:${line}` : ''}${column ? `:${column}` : ''}`
     );
 
-    const validPath = this.validateRelativePath(relativePath, 'openDocument');
+    const opts = { context: 'openDocument' };
+    const validPath = validateString(relativePath, 'path', opts);
     if (!validPath) {
       return;
     }
@@ -231,15 +218,16 @@ class ExtensionHandle implements ExtensionRPC {
 
     // validate line/column if provided (optional, min 1)
     const validLine = validateOptionalNumber(line, 'line number', {
-      context: 'openDocument',
+      ...opts,
       min: 1,
     });
     const validColumn = validateOptionalNumber(column, 'column number', {
-      context: 'openDocument',
+      ...opts,
       min: 1,
     });
 
-    const securePathResult = await this.resolveSecureRelativePath(
+    const securePathResult = await validateAndResolveSecurePath(
+      this.preview,
       validPath,
       'openDocument'
     );
@@ -274,12 +262,15 @@ class ExtensionHandle implements ExtensionRPC {
   async openPreview(relativePath: string): Promise<void> {
     log.debug(`openPreview: ${relativePath}`);
 
-    const validPath = this.validateRelativePath(relativePath, 'openPreview');
+    const validPath = validateString(relativePath, 'path', {
+      context: 'openPreview',
+    });
     if (!validPath) {
       return;
     }
 
-    const securePathResult = await this.resolveSecureRelativePath(
+    const securePathResult = await validateAndResolveSecurePath(
+      this.preview,
       validPath,
       'openPreview'
     );

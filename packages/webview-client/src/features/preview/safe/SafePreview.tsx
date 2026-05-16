@@ -26,9 +26,9 @@ export const SafePreviewRenderer = memo(
     useSafeModeProcessing(containerRef, html);
 
     usePreviewInteractions({
-      containerRef,
-      trigger: html,
       mode: 'safe',
+      containerRef,
+      html,
     });
 
     // add image click event listener (imperative for Safe Mode since HTML is injected)

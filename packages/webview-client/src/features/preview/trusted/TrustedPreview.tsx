@@ -126,9 +126,9 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   }, [containerRef, evaluatedComponent, scan]);
 
   usePreviewInteractions({
-    containerRef,
-    trigger: evaluatedComponent,
     mode: 'trusted',
+    containerRef,
+    component: evaluatedComponent,
   });
 
   // show loading state while evaluating
