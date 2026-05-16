@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-05-16
+
+### Added
+
+- **Source Line Sync**: Opt-in scroll synchronization between the MDX editor and the preview, controlled by the new resource-scoped `mdx-preview.preview.scrollSync` setting (`off` _(default)_ / `editorToPreview` / `previewToEditor` / `bidirectional`). Both directions map "the line the user is looking at" to a shared 35% viewport anchor so round trips converge instead of drifting
+- **Cmd/Ctrl+Click Navigation**: Modifier-click on a mapped preview element opens the source document at that line via the new `openSourceLine` RPC; reuses the existing `data-source-line` annotations and highlight-owner resolution shared with hover highlighting (interactive children like links/buttons are excluded)
+- **Scroll Scheduler** (`features/preview/scroll-sync.ts`): Per-preview throttled scheduler (~30fps) emits a final "settled" update once scrolling stops; loop suppression briefly ignores bounce-back events after driving the other side, with a comfort-band guard as the structural backstop. `reportPreviewSourceLine` returns `accepted | ignored | retry` so the webview can back off rather than spin
+- **Webview Hook** (`usePreviewScrollSync`): Finds the active source line as the preview scrolls and reports it over RPC with retry/throttle; `scrollToSourceLine` eases the preview to a line and defers until content has rendered
+
+### Changed
+
+- **Codebase Simplification**: Trimmed redundant logic across `MDXSymbolProvider`, `UnifiedResolver`, `setting-keys.ts`, `Lightbox`, `SafePreview` / `TrustedPreview`, and the build scripts; extracted shared preview interaction logic into `usePreviewInteractions` and consolidated source-line DOM helpers into `sourceLineElements.ts`
+- **Build Scripts**: Factored shared codegen file lists into `scripts/generated-files.mjs` and shared filesystem walking into `scripts/lib/file-walk.mjs`; `check-generated-files`, `check-legacy-path-prefixes`, `check-test-philosophy`, and `verify-codegen-idempotency` now consume the shared helpers instead of duplicating walk logic
+
+### Infrastructure
+
+- **Comment Style Check**: `scripts/check-comment-style.mjs` gained additional enforcement to keep generated artifacts and authored code aligned with `dev-docs/comment-style.md`
+
 ## [1.3.8] - 2026-05-14
 
 ### Fixed
