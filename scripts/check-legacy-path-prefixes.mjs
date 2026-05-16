@@ -2,8 +2,9 @@
 // scripts/check-legacy-path-prefixes.mjs
 // fail if deprecated monorepo path prefixes appear in active code/docs/tests
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { extname, join, relative } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
+import { collectFiles, normalizePath } from './lib/file-walk.mjs';
 
 const SCAN_ROOTS = ['packages', 'tests', 'docs'];
 const ALLOWED_EXTENSIONS = new Set([
@@ -35,33 +36,6 @@ const LEGACY_PATTERNS = [
     regex: /\bpackages\/webview-app\//,
   },
 ];
-
-function normalizePath(filePath) {
-  return filePath.replaceAll('\\', '/');
-}
-
-function collectFiles(rootDir, currentDir, output) {
-  const entries = readdirSync(currentDir, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const absolutePath = join(currentDir, entry.name);
-
-    if (entry.isDirectory()) {
-      if (IGNORED_DIRECTORIES.has(entry.name)) {
-        continue;
-      }
-
-      collectFiles(rootDir, absolutePath, output);
-      continue;
-    }
-
-    if (!ALLOWED_EXTENSIONS.has(extname(entry.name))) {
-      continue;
-    }
-
-    output.push(absolutePath);
-  }
-}
 
 function scanFile(rootDir, absolutePath) {
   const violations = [];
@@ -99,7 +73,14 @@ try {
       continue;
     }
 
-    collectFiles(rootDir, scanPath, filesToScan);
+    filesToScan.push(
+      ...collectFiles({
+        rootDir,
+        startDir: scanPath,
+        extensions: ALLOWED_EXTENSIONS,
+        ignoredDirectories: IGNORED_DIRECTORIES,
+      })
+    );
   }
 
   const violations = [];

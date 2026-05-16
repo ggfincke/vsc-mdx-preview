@@ -1,5 +1,6 @@
 // packages/contracts/src/index.ts
 // contract types, interfaces & constants for extension & webview packages
+// explicit re-exports (no export *) keep the public API surface deliberate
 
 // framework type aliases & canonical metadata
 export type {

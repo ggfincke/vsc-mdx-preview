@@ -1,7 +1,7 @@
 // tests/helpers/mock-document.ts
 // Lightweight TextDocument mock for tests
 
-import { Uri } from 'vscode';
+import { Range, Uri } from 'vscode';
 
 export interface MockDocumentOptions {
   fsPath?: string;
@@ -10,16 +10,15 @@ export interface MockDocumentOptions {
 }
 
 export interface MockDocument {
-  uri: {
-    fsPath: string;
-    scheme: string;
-    path: string;
-    toString(): string;
-  };
+  uri: Uri;
   languageId: string;
   getText(): string;
   fileName: string;
   lineCount: number;
+  lineAt(line: number): {
+    text: string;
+    range: Range;
+  };
 }
 
 export function createMockDocument(
@@ -31,17 +30,22 @@ export function createMockDocument(
     languageId = 'mdx',
     scheme = 'file',
   } = options;
+  const lines = content.split('\n');
+  const uri =
+    scheme === 'file' ? Uri.file(fsPath) : Uri.parse(`${scheme}://${fsPath}`);
 
   return {
-    uri: {
-      fsPath,
-      scheme,
-      path: fsPath,
-      toString: () => `${scheme}://${fsPath}`,
-    },
+    uri,
     languageId,
     getText: () => content,
     fileName: fsPath,
-    lineCount: content.split('\n').length,
+    lineCount: lines.length,
+    lineAt: (line: number) => {
+      const text = lines[Math.min(line, lines.length - 1)] ?? '';
+      return {
+        text,
+        range: new Range(line, 0, line, text.length),
+      };
+    },
   };
 }

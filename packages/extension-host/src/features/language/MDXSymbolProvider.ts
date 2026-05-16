@@ -10,6 +10,11 @@ import { analyzeMdxDocument } from './mdx-document-analysis';
 
 const log = createTaggedLogger(LogTags.SYMBOL_PROVIDER);
 
+interface MdastPosition {
+  start: { line: number; column: number };
+  end: { line: number; column: number };
+}
+
 // heading AST node
 interface HeadingNode {
   type: 'heading';
@@ -19,20 +24,14 @@ interface HeadingNode {
     value?: string;
     children?: Array<{ type: string; value?: string }>;
   }>;
-  position?: {
-    start: { line: number; column: number };
-    end: { line: number; column: number };
-  };
+  position?: MdastPosition;
 }
 
 // MDX ESM node (imports/exports)
 interface MdxjsEsmNode {
   type: 'mdxjsEsm';
   value: string;
-  position?: {
-    start: { line: number; column: number };
-    end: { line: number; column: number };
-  };
+  position?: MdastPosition;
 }
 
 // extract text content from heading children nodes
@@ -94,6 +93,55 @@ function extractEsmName(value: string): string {
   return value.split('\n')[0].substring(0, 40);
 }
 
+function toDocumentRange(
+  position: MdastPosition,
+  frontmatterLineOffset: number
+): vscode.Range {
+  return new vscode.Range(
+    position.start.line - 1 + frontmatterLineOffset,
+    position.start.column - 1,
+    position.end.line - 1 + frontmatterLineOffset,
+    position.end.column - 1
+  );
+}
+
+// markdown depths 1..6 plus reserved index 0 so depth indexes the lookup directly
+const MAX_HEADING_DEPTH = 6;
+
+function computeHeadingSectionEndLines(
+  headings: Array<{ depth: number; range: vscode.Range }>,
+  lastLine: number
+): number[] {
+  const endLines = new Array<number>(headings.length);
+  const nextStartLineByDepth: Array<number | undefined> = Array(
+    MAX_HEADING_DEPTH + 1
+  ).fill(undefined);
+
+  for (let i = headings.length - 1; i >= 0; i -= 1) {
+    const { depth, range } = headings[i];
+    let nextSameOrHigherStartLine: number | undefined;
+
+    for (let candidateDepth = 1; candidateDepth <= depth; candidateDepth += 1) {
+      const candidateLine = nextStartLineByDepth[candidateDepth];
+      if (
+        candidateLine !== undefined &&
+        (nextSameOrHigherStartLine === undefined ||
+          candidateLine < nextSameOrHigherStartLine)
+      ) {
+        nextSameOrHigherStartLine = candidateLine;
+      }
+    }
+
+    endLines[i] =
+      nextSameOrHigherStartLine !== undefined
+        ? Math.max(nextSameOrHigherStartLine - 1, range.start.line)
+        : lastLine;
+    nextStartLineByDepth[depth] = range.start.line;
+  }
+
+  return endLines;
+}
+
 // build nested heading hierarchy from flat heading list
 function buildHeadingHierarchy(
   headings: Array<{ depth: number; text: string; range: vscode.Range }>,
@@ -101,27 +149,12 @@ function buildHeadingHierarchy(
 ): vscode.DocumentSymbol[] {
   const root: vscode.DocumentSymbol[] = [];
   const stack: Array<{ depth: number; symbol: vscode.DocumentSymbol }> = [];
+  const lastLine = document.lineCount - 1;
+  const sectionEndLines = computeHeadingSectionEndLines(headings, lastLine);
 
   for (let i = 0; i < headings.length; i++) {
     const { depth, text, range } = headings[i];
-
-    // determine full range (from this heading to next heading of same/higher level or EOF)
-    // forward scan from i+1 instead of findIndex from 0 (avoids O(n²))
-    let nextSameOrHigherIdx = -1;
-    for (let j = i + 1; j < headings.length; j++) {
-      if (headings[j].depth <= depth) {
-        nextSameOrHigherIdx = j;
-        break;
-      }
-    }
-    const lastLine = document.lineCount - 1;
-    const endLine =
-      nextSameOrHigherIdx !== -1
-        ? Math.max(
-            headings[nextSameOrHigherIdx].range.start.line - 1,
-            range.start.line
-          )
-        : lastLine;
+    const endLine = sectionEndLines[i];
     const endLineText = document.lineAt(Math.min(endLine, lastLine)).text;
     const fullRange = new vscode.Range(
       range.start,
@@ -254,12 +287,7 @@ export function extractMDXSymbols(
   visit(tree, 'mdxjsEsm', (node) => {
     const esmNode = node as unknown as MdxjsEsmNode;
     if (esmNode.position) {
-      const range = new vscode.Range(
-        esmNode.position.start.line - 1 + frontmatterLineOffset,
-        esmNode.position.start.column - 1,
-        esmNode.position.end.line - 1 + frontmatterLineOffset,
-        esmNode.position.end.column - 1
-      );
+      const range = toDocumentRange(esmNode.position, frontmatterLineOffset);
       esmNodes.push({ value: esmNode.value, range });
     }
   });
@@ -274,12 +302,7 @@ export function extractMDXSymbols(
   visit(tree, 'heading', (node) => {
     const heading = node as unknown as HeadingNode;
     if (heading.position) {
-      const range = new vscode.Range(
-        heading.position.start.line - 1 + frontmatterLineOffset,
-        heading.position.start.column - 1,
-        heading.position.end.line - 1 + frontmatterLineOffset,
-        heading.position.end.column - 1
-      );
+      const range = toDocumentRange(heading.position, frontmatterLineOffset);
       headings.push({
         depth: heading.depth,
         text: extractHeadingText(heading.children),

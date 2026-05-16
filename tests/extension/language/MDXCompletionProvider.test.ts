@@ -4,13 +4,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { MDXCompletionProvider } from '../../../packages/extension-host/src/features/language/MDXCompletionProvider';
 import {
-  Uri,
   Position,
-  Range,
   CompletionItemKind,
   SnippetString,
   type CancellationToken,
 } from 'vscode';
+import { createMockDocument } from '../../helpers/mock-document';
 
 // mock service locator to avoid ServiceRegistry dependency
 vi.mock(
@@ -21,25 +20,6 @@ vi.mock(
     }),
   })
 );
-
-function createMockDocument(content: string): any {
-  const lines = content.split('\n');
-  return {
-    uri: Uri.file('/workspace/test.mdx'),
-    languageId: 'mdx',
-    getText: () => content,
-    lineCount: lines.length,
-    lineAt: (line: number) => ({
-      text: lines[Math.min(line, lines.length - 1)] ?? '',
-      range: new Range(
-        line,
-        0,
-        line,
-        (lines[Math.min(line, lines.length - 1)] ?? '').length
-      ),
-    }),
-  };
-}
 
 const provider = new MDXCompletionProvider();
 const token = {} as CancellationToken;
@@ -188,6 +168,33 @@ describe('MDXCompletionProvider', () => {
       const labels = items!.map((i) => i.label);
       expect(labels).toContain('title');
       expect(labels).toContain('description');
+
+      const incompleteDoc = createMockDocument('---\ntitle: ');
+      const incompleteItems = provider.provideCompletionItems(
+        incompleteDoc,
+        new Position(1, 0),
+        token,
+        completionContext
+      );
+      expect(incompleteItems).toBeDefined();
+      expect(incompleteItems!.map((i) => i.label)).toContain('title');
+
+      expect(
+        provider.provideCompletionItems(
+          doc,
+          new Position(0, 0),
+          token,
+          completionContext
+        )
+      ).toBeUndefined();
+      expect(
+        provider.provideCompletionItems(
+          doc,
+          new Position(2, 0),
+          token,
+          completionContext
+        )
+      ).toBeUndefined();
     });
 
     it('frontmatter completions use Property kind', () => {

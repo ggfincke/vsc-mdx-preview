@@ -204,8 +204,6 @@ class ExtensionHandle implements ExtensionRPC {
     );
 
     const opts = { context: 'openDocument' };
-
-    // validate path (required)
     const validPath = validateString(relativePath, 'path', opts);
     if (!validPath) {
       return;
@@ -228,7 +226,6 @@ class ExtensionHandle implements ExtensionRPC {
       min: 1,
     });
 
-    // validate & resolve path securely (entry dir check + path traversal check)
     const securePathResult = await validateAndResolveSecurePath(
       this.preview,
       validPath,
@@ -265,15 +262,13 @@ class ExtensionHandle implements ExtensionRPC {
   async openPreview(relativePath: string): Promise<void> {
     log.debug(`openPreview: ${relativePath}`);
 
-    const opts = { context: 'openPreview' };
-
-    // validate path (required)
-    const validPath = validateString(relativePath, 'path', opts);
+    const validPath = validateString(relativePath, 'path', {
+      context: 'openPreview',
+    });
     if (!validPath) {
       return;
     }
 
-    // validate & resolve path securely (entry dir check + path traversal check)
     const securePathResult = await validateAndResolveSecurePath(
       this.preview,
       validPath,

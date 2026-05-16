@@ -3,32 +3,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { MDXSymbolProvider } from '../../../packages/extension-host/src/features/language/MDXSymbolProvider';
-import {
-  Uri,
-  Range,
-  Position,
-  SymbolKind,
-  type CancellationToken,
-} from 'vscode';
-
-function createMockDocument(content: string): any {
-  const lines = content.split('\n');
-  return {
-    uri: Uri.file('/test.mdx'),
-    languageId: 'mdx',
-    getText: () => content,
-    lineCount: lines.length,
-    lineAt: (line: number) => ({
-      text: lines[Math.min(line, lines.length - 1)] ?? '',
-      range: new Range(
-        line,
-        0,
-        line,
-        (lines[Math.min(line, lines.length - 1)] ?? '').length
-      ),
-    }),
-  };
-}
+import { Position, SymbolKind, type CancellationToken } from 'vscode';
+import { createMockDocument } from '../../helpers/mock-document';
 
 const provider = new MDXSymbolProvider();
 const token = {} as CancellationToken;
@@ -64,10 +40,14 @@ describe('MDXSymbolProvider', () => {
       expect(top!.children.length).toBe(2);
       expect(top!.children[0].name).toBe('Child 1');
       expect(top!.children[1].name).toBe('Child 2');
+      expect(top!.range.end.line).toBe(9);
+      expect(top!.children[0].range.end.line).toBe(5);
+      expect(top!.children[1].range.end.line).toBe(9);
 
       // h3 nested under h2
       expect(top!.children[1].children.length).toBe(1);
       expect(top!.children[1].children[0].name).toBe('Grandchild');
+      expect(top!.children[1].children[0].range.end.line).toBe(9);
     });
 
     it('extracts heading text w/ inline code', () => {

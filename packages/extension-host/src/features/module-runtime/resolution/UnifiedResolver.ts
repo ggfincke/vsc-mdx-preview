@@ -31,34 +31,15 @@ export interface FrameworkAliasResult {
   earlyResult?: ResolutionResult;
 }
 
-type SyncResolutionStep = () => ResolutionResult | null;
-type AsyncResolutionStep = () => Promise<ResolutionResult | null>;
+interface StrategyPlan {
+  useTypeScript: boolean;
+  useEnhancedResolve: boolean;
+  useFileProbe: boolean;
+}
 
 // check if specifier is a relative import
 function isRelativeImport(specifier: string): boolean {
   return specifier.startsWith('./') || specifier.startsWith('../');
-}
-
-function runSyncSteps(steps: SyncResolutionStep[]): ResolutionResult | null {
-  for (const step of steps) {
-    const result = step();
-    if (result) {
-      return result;
-    }
-  }
-  return null;
-}
-
-async function runAsyncSteps(
-  steps: AsyncResolutionStep[]
-): Promise<ResolutionResult | null> {
-  for (const step of steps) {
-    const result = await step();
-    if (result) {
-      return result;
-    }
-  }
-  return null;
 }
 
 // resolve framework alias for bare imports
@@ -129,11 +110,7 @@ export class UnifiedResolver {
   private getStrategyPlan(
     specifier: string,
     context: ResolutionContext
-  ): {
-    useTypeScript: boolean;
-    useEnhancedResolve: boolean;
-    useFileProbe: boolean;
-  } {
+  ): StrategyPlan {
     const isRelative = this.isRelativeImport(specifier);
     return {
       useTypeScript: Boolean(context.tsConfig) && !isRelative,
@@ -150,7 +127,7 @@ export class UnifiedResolver {
     | { earlyResult: ResolutionResult }
     | {
         specifier: string;
-        plan: ReturnType<UnifiedResolver['getStrategyPlan']>;
+        plan: StrategyPlan;
       } {
     const aliasResult = resolveFrameworkAliasStep(specifier, context);
     if (aliasResult.earlyResult) {
@@ -160,12 +137,8 @@ export class UnifiedResolver {
     return { specifier: s, plan: this.getStrategyPlan(s, context) };
   }
 
-  // describe which strategies to invoke (shared between sync & async)
-  private buildStrategyDescriptors(plan: {
-    useTypeScript: boolean;
-    useEnhancedResolve: boolean;
-    useFileProbe: boolean;
-  }): Array<{
+  // describe enabled strategies in priority order (shared between sync & async)
+  private getStrategyDescriptors(plan: StrategyPlan): Array<{
     getStrategy: () => IResolutionStrategy;
     preferAsync: boolean;
   }> {
@@ -173,6 +146,7 @@ export class UnifiedResolver {
       getStrategy: () => IResolutionStrategy;
       preferAsync: boolean;
     }> = [];
+
     if (plan.useTypeScript) {
       descriptors.push({
         getStrategy: getTypeScriptPathStrategy,
@@ -191,7 +165,44 @@ export class UnifiedResolver {
         preferAsync: true,
       });
     }
+
     return descriptors;
+  }
+
+  private resolvePlannedStrategiesSync(
+    specifier: string,
+    context: ResolutionContext,
+    mode: ResolutionMode,
+    plan: StrategyPlan
+  ): ResolutionResult | null {
+    for (const { getStrategy } of this.getStrategyDescriptors(plan)) {
+      const result = getStrategy().resolve(specifier, context, mode);
+      if (result) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  private async resolvePlannedStrategiesAsync(
+    specifier: string,
+    context: ResolutionContext,
+    mode: ResolutionMode,
+    plan: StrategyPlan
+  ): Promise<ResolutionResult | null> {
+    for (const { getStrategy, preferAsync } of this.getStrategyDescriptors(
+      plan
+    )) {
+      const strategy = getStrategy();
+      const result =
+        preferAsync && strategy.resolveAsync
+          ? await strategy.resolveAsync(specifier, context, mode)
+          : strategy.resolve(specifier, context, mode);
+      if (result) {
+        return result;
+      }
+    }
+    return null;
   }
 
   // resolve after alias (sync)
@@ -206,11 +217,7 @@ export class UnifiedResolver {
     }
 
     const { specifier: s, plan } = prep;
-    const descriptors = this.buildStrategyDescriptors(plan);
-    const steps: SyncResolutionStep[] = descriptors.map(
-      (d) => () => d.getStrategy().resolve(s, context, mode)
-    );
-    return runSyncSteps(steps);
+    return this.resolvePlannedStrategiesSync(s, context, mode, plan);
   }
 
   // resolve after alias (async)
@@ -225,14 +232,7 @@ export class UnifiedResolver {
     }
 
     const { specifier: s, plan } = prep;
-    const descriptors = this.buildStrategyDescriptors(plan);
-    const steps: AsyncResolutionStep[] = descriptors.map((d) => async () => {
-      const strategy = d.getStrategy();
-      return d.preferAsync && strategy.resolveAsync
-        ? strategy.resolveAsync(s, context, mode)
-        : strategy.resolve(s, context, mode);
-    });
-    return runAsyncSteps(steps);
+    return this.resolvePlannedStrategiesAsync(s, context, mode, plan);
   }
 
   // synchronous resolution

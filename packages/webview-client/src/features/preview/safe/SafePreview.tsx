@@ -1,18 +1,12 @@
 // packages/webview-client/src/features/preview/safe/SafePreview.tsx
 // render pre-sanitized HTML in Safe Mode (no JavaScript execution)
 
-import { memo, useEffect, useLayoutEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
-import { usePreviewScrollSync } from '../shared/hooks/usePreviewScrollSync';
-import { useSourceLineHighlight } from '../shared/hooks/useSourceLineHighlight';
-import { openSourceLine } from '../shared/utils/openSourceLine';
-import { flushPendingScrollToSourceLine } from '../shared/utils/scrollToSourceLine';
+import { usePreviewInteractions } from '../shared/hooks/usePreviewInteractions';
 import { useSafeModeProcessing } from './hooks/useSafeModeProcessing';
-import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
-import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnhancement';
 import { PreviewContainer } from '../shared/ui/PreviewContainer/PreviewContainer';
 import { fastStringEquals } from '../../../shared/utils/memoCompare';
-import { useUIFlags } from '../../../app/state';
 
 interface SafePreviewRendererProps {
   html: string;
@@ -22,8 +16,6 @@ interface SafePreviewRendererProps {
 // wrapped w/ React.memo to prevent unnecessary re-renders
 export const SafePreviewRenderer = memo(
   function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
-    const { sourceLineHighlightEnabled, scrollSyncMode } = useUIFlags();
-
     // shared preview setup (container ref, diagram rendering, image lightbox)
     const { containerRef, handleImageClick, renderPortals } = usePreviewSetup({
       diagramMode: 'before-paint',
@@ -33,29 +25,11 @@ export const SafePreviewRenderer = memo(
     // sanitize & inject Safe Mode HTML
     useSafeModeProcessing(containerRef, html);
 
-    useLayoutEffect(() => {
-      flushPendingScrollToSourceLine();
-    }, [html]);
-
-    // enhance Shiki code blocks w/ copy buttons & language badges
-    useCodeBlockEnhancement({ containerRef, trigger: html });
-
-    // bind MPE-style source-line hover highlights after HTML injection
-    useSourceLineHighlight({
+    usePreviewInteractions({
+      mode: 'safe',
       containerRef,
-      trigger: html,
-      enabled: sourceLineHighlightEnabled,
-      onOpenSourceLine: openSourceLine,
+      html,
     });
-
-    usePreviewScrollSync({
-      containerRef,
-      trigger: html,
-      mode: scrollSyncMode,
-    });
-
-    // lazy-load KaTeX CSS when math content is detected (string-based detection)
-    useKatexDetection({ html });
 
     // add image click event listener (imperative for Safe Mode since HTML is injected)
     useEffect(() => {

@@ -2,7 +2,7 @@
 // verify representative RPC validation boundaries
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { mockTrustManager } from '../helpers/mock-services';
+import { mockErrorReporter, mockTrustManager } from '../helpers/mock-services';
 
 const {
   mockHandlePreviewSourceLineReport,
@@ -19,6 +19,7 @@ const {
     workspace: {
       openTextDocument: vi.fn(),
       isTrusted: true,
+      workspaceFolders: [{ uri: { fsPath: '/workspace' } }],
     },
     window: {
       showTextDocument: vi.fn(),
@@ -119,10 +120,19 @@ describe('RPC Input Validation', () => {
     expect(preview.evaluationDuration).toBe(150);
   });
 
-  it('rejects null byte injection attempts in fetch specifiers', async () => {
+  it('rejects malicious path-like RPC inputs (null bytes, traversal)', async () => {
     const result = await handle.fetch('react\0.malicious', false, '/entry.mdx');
 
     expect(result).toBeUndefined();
+
+    mockErrorReporter.report.mockClear();
+    mockVscode.workspace.openTextDocument.mockClear();
+
+    await handle.openDocument('../outside.mdx');
+    await handle.openPreview('../outside.mdx');
+
+    expect(mockVscode.workspace.openTextDocument).not.toHaveBeenCalled();
+    expect(mockErrorReporter.report).toHaveBeenCalledTimes(2);
   });
 
   it('calls completeHandshake during handshake', () => {

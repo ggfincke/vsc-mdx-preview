@@ -3,6 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { collectFiles } from './lib/file-walk.mjs';
 
 const EXACT_ALLOWED = new Set([
   'tests/compilation/safe-compile.test.ts',
@@ -73,25 +74,6 @@ const CASE_COUNT_OVERRIDES = new Map([
   ['tests/webview/source-line-highlight.test.ts', 7],
 ]);
 
-function listTestFiles(dirPath) {
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-  const files = [];
-
-  for (const entry of entries) {
-    const fullPath = path.join(dirPath, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...listTestFiles(fullPath));
-      continue;
-    }
-
-    if (entry.isFile() && entry.name.endsWith('.test.ts')) {
-      files.push(fullPath);
-    }
-  }
-
-  return files;
-}
-
 function toRepoPath(rootDir, fullPath) {
   return path.relative(rootDir, fullPath).split(path.sep).join('/');
 }
@@ -132,7 +114,12 @@ function countSkippedBlocks(contents) {
 }
 
 const rootDir = process.cwd();
-const testFiles = listTestFiles(path.join(rootDir, 'tests'))
+const testFiles = collectFiles({
+  rootDir,
+  startDir: path.join(rootDir, 'tests'),
+  includeFile: (_absolutePath, entry) =>
+    entry.isFile() && entry.name.endsWith('.test.ts'),
+})
   .map((fullPath) => toRepoPath(rootDir, fullPath))
   .sort();
 const errors = [];

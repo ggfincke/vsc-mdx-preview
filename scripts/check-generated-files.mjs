@@ -2,8 +2,10 @@
 // check that auto-generated files only exist in allowed directories
 // & that all expected generated files are present
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { extname, join, relative } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { GENERATED_TS_FILES } from './generated-files.mjs';
+import { collectFiles } from './lib/file-walk.mjs';
 
 const ALLOWED_PATTERNS = ['packages/webview-client/src/generated/'];
 const HEADER = '// AUTO-GENERATED FILE - DO NOT EDIT';
@@ -18,44 +20,7 @@ const IGNORED_DIRECTORIES = new Set([
   'node_modules',
 ]);
 
-// exhaustive manifest of expected generated TS files
-// update this list when adding or removing generated files
-const EXPECTED_GENERATED_FILES = [
-  'packages/webview-client/src/generated/preload/preload.generated.ts',
-  'packages/webview-client/src/generated/preload/aliases.generated.ts',
-  'packages/webview-client/src/generated/framework-css/frameworkCssLoader.ts',
-  'packages/webview-client/src/generated/shim-barrels/generic/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/docusaurus/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/starlight/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/nextra/index.ts',
-  'packages/webview-client/src/generated/shim-barrels/nextjs/index.ts',
-];
-
-function normalizePath(filePath) {
-  return filePath.replaceAll('\\', '/');
-}
-
-function collectSourceFiles(rootDir, currentDir, output) {
-  const entries = readdirSync(currentDir, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const absolutePath = join(currentDir, entry.name);
-    if (entry.isDirectory()) {
-      if (IGNORED_DIRECTORIES.has(entry.name)) {
-        continue;
-      }
-      collectSourceFiles(rootDir, absolutePath, output);
-      continue;
-    }
-
-    if (!SOURCE_EXTENSIONS.has(extname(entry.name))) {
-      continue;
-    }
-
-    const relativePath = normalizePath(relative(rootDir, absolutePath));
-    output.push(relativePath);
-  }
-}
+const EXPECTED_GENERATED_FILES = GENERATED_TS_FILES;
 
 function checkExpectedFiles(rootDir) {
   const missing = [];
@@ -85,8 +50,12 @@ try {
   let hasFailures = false;
 
   // phase 1: scan for generated files in unexpected locations
-  const sourceFiles = [];
-  collectSourceFiles(rootDir, rootDir, sourceFiles);
+  const sourceFiles = collectFiles({
+    rootDir,
+    extensions: SOURCE_EXTENSIONS,
+    ignoredDirectories: IGNORED_DIRECTORIES,
+    pathMode: 'relative',
+  });
 
   const generatedFiles = [];
   const violations = [];

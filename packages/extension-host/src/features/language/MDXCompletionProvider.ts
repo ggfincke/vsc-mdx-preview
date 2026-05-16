@@ -19,7 +19,7 @@ import {
   GITHUB_ALERT_TYPES as GITHUB_ALERT_TYPE_LIST,
 } from 'mdx-forge/compiler';
 import { getFrameworkDetector } from '../../app/services';
-import { isLineInFrontmatter } from './mdx-document-analysis';
+import { isDocumentLineInFrontmatter } from './mdx-document-analysis';
 
 const log = createTaggedLogger(LogTags.COMPLETION_PROVIDER);
 
@@ -45,7 +45,7 @@ function detectCompletionContext(
   const textBeforeCursor = line.substring(0, position.character);
 
   // check if in frontmatter (between --- delimiters) via shared helper
-  if (isLineInFrontmatter(document.getText(), position.line)) {
+  if (isDocumentLineInFrontmatter(document, position.line)) {
     return 'frontmatter';
   }
 

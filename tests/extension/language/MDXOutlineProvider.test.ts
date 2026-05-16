@@ -7,31 +7,11 @@ import {
   SymbolTreeItem,
 } from '../../../packages/extension-host/src/features/language/MDXOutlineProvider';
 import {
-  Uri,
-  Range,
   SymbolKind,
   TreeItemCollapsibleState,
   ThemeIcon,
 } from 'vscode';
-
-function createMockDocument(content: string): any {
-  const lines = content.split('\n');
-  return {
-    uri: Uri.file('/test.mdx'),
-    languageId: 'mdx',
-    getText: () => content,
-    lineCount: lines.length,
-    lineAt: (line: number) => ({
-      text: lines[Math.min(line, lines.length - 1)] ?? '',
-      range: new Range(
-        line,
-        0,
-        line,
-        (lines[Math.min(line, lines.length - 1)] ?? '').length
-      ),
-    }),
-  };
-}
+import { createMockDocument } from '../../helpers/mock-document';
 
 describe('MDXOutlineProvider', () => {
   it('returns root symbols from MDX document', () => {

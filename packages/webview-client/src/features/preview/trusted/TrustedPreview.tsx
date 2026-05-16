@@ -13,17 +13,11 @@ import {
 } from 'react';
 import { evaluateModuleToComponent } from '../../module-runtime';
 import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
-import { usePreviewScrollSync } from '../shared/hooks/usePreviewScrollSync';
-import { useSourceLineHighlight } from '../shared/hooks/useSourceLineHighlight';
-import { openSourceLine } from '../shared/utils/openSourceLine';
-import { flushPendingScrollToSourceLine } from '../shared/utils/scrollToSourceLine';
+import { usePreviewInteractions } from '../shared/hooks/usePreviewInteractions';
 import { useAsyncEffect } from '../../../shared/hooks/useAsyncEffect';
-import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
-import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnhancement';
 import { PreviewContainer } from '../shared/ui/PreviewContainer/PreviewContainer';
 import type { TrustedPreviewContent, PreviewError } from '../../../app/types';
 import { extractErrorInfo } from '@mdx-preview/runtime-utils';
-import { useUIFlags } from '../../../app/state';
 import {
   shallowArrayEquals,
   createFieldComparator,
@@ -91,8 +85,6 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   onComponentReady,
   onError,
 }: TrustedPreviewRendererProps) {
-  const { sourceLineHighlightEnabled, scrollSyncMode } = useUIFlags();
-
   // track webview-side module evaluation separately from global compilation
   // global loading controls LoadingBar; local loading controls the spinner
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -133,30 +125,10 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
     }
   }, [containerRef, evaluatedComponent, scan]);
 
-  useLayoutEffect(() => {
-    if (evaluatedComponent) {
-      flushPendingScrollToSourceLine();
-    }
-  }, [evaluatedComponent]);
-
-  // lazy-load KaTeX CSS when math content is detected (DOM-based detection)
-  useKatexDetection({ containerRef, trigger: evaluatedComponent });
-
-  // enhance Shiki code blocks w/ copy buttons & language badges
-  useCodeBlockEnhancement({ containerRef, trigger: evaluatedComponent });
-
-  // bind MPE-style source-line hover highlights once rendered content is ready
-  useSourceLineHighlight({
+  usePreviewInteractions({
+    mode: 'trusted',
     containerRef,
-    trigger: evaluatedComponent,
-    enabled: sourceLineHighlightEnabled,
-    onOpenSourceLine: openSourceLine,
-  });
-
-  usePreviewScrollSync({
-    containerRef,
-    trigger: evaluatedComponent,
-    mode: scrollSyncMode,
+    component: evaluatedComponent,
   });
 
   // show loading state while evaluating
