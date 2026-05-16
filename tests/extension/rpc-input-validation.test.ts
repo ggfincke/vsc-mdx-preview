@@ -2,7 +2,7 @@
 // verify representative RPC validation boundaries
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { mockTrustManager } from '../helpers/mock-services';
+import { mockErrorReporter, mockTrustManager } from '../helpers/mock-services';
 
 const {
   mockHandlePreviewSourceLineReport,
@@ -19,6 +19,7 @@ const {
     workspace: {
       openTextDocument: vi.fn(),
       isTrusted: true,
+      workspaceFolders: [{ uri: { fsPath: '/workspace' } }],
     },
     window: {
       showTextDocument: vi.fn(),
@@ -144,7 +145,7 @@ describe('RPC Input Validation', () => {
     expect(result).toBeUndefined();
   });
 
-  it('handles safe commands and rejects unsafe external URLs', () => {
+  it('handles safe commands and rejects unsafe external URLs', async () => {
     handle.openExternal('javascript:alert(1)');
 
     expect(mockVscode.env.openExternal).not.toHaveBeenCalled();
@@ -154,6 +155,15 @@ describe('RPC Input Validation', () => {
       'workbench.action.openSettings',
       'mdx-preview.preview.enableScripts'
     );
+
+    mockErrorReporter.report.mockClear();
+    mockVscode.workspace.openTextDocument.mockClear();
+
+    await handle.openDocument('../outside.mdx');
+    await handle.openPreview('../outside.mdx');
+
+    expect(mockVscode.workspace.openTextDocument).not.toHaveBeenCalled();
+    expect(mockErrorReporter.report).toHaveBeenCalledTimes(2);
   });
 
   it('validates and suppresses source-line editor opens', async () => {

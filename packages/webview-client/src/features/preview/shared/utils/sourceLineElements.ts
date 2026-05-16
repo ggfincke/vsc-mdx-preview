@@ -96,12 +96,35 @@ export function resolveHighlightOwner(
   return sourceLineElement;
 }
 
+function collectMappedSourceLineTargets(
+  container: HTMLElement
+): SourceLineEntry[] {
+  const entries: SourceLineEntry[] = [];
+
+  container.querySelectorAll(SOURCE_LINE_SELECTOR).forEach((targetElement) => {
+    if (targetElement.tagName === 'A') {
+      return;
+    }
+
+    const sourceLine = getDataSourceLine(targetElement);
+    if (sourceLine === null) {
+      return;
+    }
+
+    const highlightElement = resolveHighlightOwner(targetElement, container);
+    if (!highlightElement) {
+      return;
+    }
+
+    entries.push({ highlightElement, targetElement, sourceLine });
+  });
+
+  return entries;
+}
+
 export function collectSourceLineEntries(
   container: HTMLElement
 ): SourceLineEntry[] {
-  const sourceLineElements = Array.from(
-    container.querySelectorAll(SOURCE_LINE_SELECTOR)
-  );
   const seenHighlightElements = new Set<Element>();
   const entries: SourceLineEntry[] = [];
 
@@ -118,30 +141,15 @@ export function collectSourceLineEntries(
     entries.push({ highlightElement, targetElement, sourceLine });
   };
 
-  sourceLineElements.forEach((sourceLineElement) => {
-    if (sourceLineElement.tagName === 'A') {
-      return;
+  collectMappedSourceLineTargets(container).forEach(
+    ({ highlightElement, targetElement, sourceLine }) => {
+      registerHighlightElement(
+        highlightElement,
+        targetElement,
+        sourceLine
+      );
     }
-
-    const dataSourceLine = getDataSourceLine(sourceLineElement);
-    if (dataSourceLine === null) {
-      return;
-    }
-
-    const highlightElement = resolveHighlightOwner(
-      sourceLineElement,
-      container
-    );
-    if (!highlightElement) {
-      return;
-    }
-
-    registerHighlightElement(
-      highlightElement,
-      sourceLineElement,
-      dataSourceLine
-    );
-  });
+  );
 
   const trustedShimOwners = Array.from(
     container.querySelectorAll(TRUSTED_SHIM_OWNER_SELECTOR)
@@ -168,25 +176,5 @@ export function collectSourceLineEntries(
 export function collectSourceLineTargetEntries(
   container: HTMLElement
 ): SourceLineEntry[] {
-  const entries: SourceLineEntry[] = [];
-
-  container.querySelectorAll(SOURCE_LINE_SELECTOR).forEach((targetElement) => {
-    if (targetElement.tagName === 'A') {
-      return;
-    }
-
-    const sourceLine = getDataSourceLine(targetElement);
-    if (sourceLine === null) {
-      return;
-    }
-
-    const highlightElement = resolveHighlightOwner(targetElement, container);
-    if (!highlightElement) {
-      return;
-    }
-
-    entries.push({ highlightElement, targetElement, sourceLine });
-  });
-
-  return entries;
+  return collectMappedSourceLineTargets(container);
 }

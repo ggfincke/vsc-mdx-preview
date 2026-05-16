@@ -168,6 +168,33 @@ describe('MDXCompletionProvider', () => {
       const labels = items!.map((i) => i.label);
       expect(labels).toContain('title');
       expect(labels).toContain('description');
+
+      const incompleteDoc = createMockDocument('---\ntitle: ');
+      const incompleteItems = provider.provideCompletionItems(
+        incompleteDoc,
+        new Position(1, 0),
+        token,
+        completionContext
+      );
+      expect(incompleteItems).toBeDefined();
+      expect(incompleteItems!.map((i) => i.label)).toContain('title');
+
+      expect(
+        provider.provideCompletionItems(
+          doc,
+          new Position(0, 0),
+          token,
+          completionContext
+        )
+      ).toBeUndefined();
+      expect(
+        provider.provideCompletionItems(
+          doc,
+          new Position(2, 0),
+          token,
+          completionContext
+        )
+      ).toBeUndefined();
     });
 
     it('frontmatter completions use Property kind', () => {

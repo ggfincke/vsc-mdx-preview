@@ -73,6 +73,20 @@ class ExtensionHandle implements ExtensionRPC {
     this.preview = preview;
   }
 
+  private validateRelativePath(
+    relativePath: string,
+    context: string
+  ): string | undefined {
+    return validateString(relativePath, 'path', { context });
+  }
+
+  private async resolveSecureRelativePath(
+    validPath: string,
+    context: string
+  ): ReturnType<typeof validateAndResolveSecurePath> {
+    return validateAndResolveSecurePath(this.preview, validPath, context);
+  }
+
   // handshake to resolve when webview is ready
   handshake(): void {
     log.debug('handshake() called from webview!');
@@ -203,10 +217,10 @@ class ExtensionHandle implements ExtensionRPC {
       `openDocument: ${relativePath}${line ? `:${line}` : ''}${column ? `:${column}` : ''}`
     );
 
-    const opts = { context: 'openDocument' };
-
-    // validate path (required)
-    const validPath = validateString(relativePath, 'path', opts);
+    const validPath = this.validateRelativePath(
+      relativePath,
+      'openDocument'
+    );
     if (!validPath) {
       return;
     }
@@ -220,17 +234,15 @@ class ExtensionHandle implements ExtensionRPC {
 
     // validate line/column if provided (optional, min 1)
     const validLine = validateOptionalNumber(line, 'line number', {
-      ...opts,
+      context: 'openDocument',
       min: 1,
     });
     const validColumn = validateOptionalNumber(column, 'column number', {
-      ...opts,
+      context: 'openDocument',
       min: 1,
     });
 
-    // validate & resolve path securely (entry dir check + path traversal check)
-    const securePathResult = await validateAndResolveSecurePath(
-      this.preview,
+    const securePathResult = await this.resolveSecureRelativePath(
       validPath,
       'openDocument'
     );
@@ -265,17 +277,12 @@ class ExtensionHandle implements ExtensionRPC {
   async openPreview(relativePath: string): Promise<void> {
     log.debug(`openPreview: ${relativePath}`);
 
-    const opts = { context: 'openPreview' };
-
-    // validate path (required)
-    const validPath = validateString(relativePath, 'path', opts);
+    const validPath = this.validateRelativePath(relativePath, 'openPreview');
     if (!validPath) {
       return;
     }
 
-    // validate & resolve path securely (entry dir check + path traversal check)
-    const securePathResult = await validateAndResolveSecurePath(
-      this.preview,
+    const securePathResult = await this.resolveSecureRelativePath(
       validPath,
       'openPreview'
     );

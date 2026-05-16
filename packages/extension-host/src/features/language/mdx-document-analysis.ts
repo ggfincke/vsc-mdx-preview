@@ -86,6 +86,28 @@ export function isLineInFrontmatter(text: string, line: number): boolean {
   return true;
 }
 
+export function isDocumentLineInFrontmatter(
+  document: { lineAt(line: number): { text: string }; lineCount: number },
+  line: number
+): boolean {
+  if (line === 0) {
+    return false;
+  }
+
+  if (document.lineAt(0).text.trim() !== '---') {
+    return false;
+  }
+
+  const lastLine = Math.min(line, document.lineCount - 1);
+  for (let i = 1; i <= lastLine; i++) {
+    if (document.lineAt(i).text.trim() === '---') {
+      return line > 0 && line < i;
+    }
+  }
+
+  return true;
+}
+
 // convert AST position to 0-based line number (adjusting for frontmatter offset)
 export function astLineToDocumentLine(
   astLine: number,
