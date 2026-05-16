@@ -23,6 +23,9 @@ import {
   buildCompilerConfig,
   toCompilerConfig,
 } from '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig';
+import { DEFAULTS } from '../../../packages/extension-host/src/shared/config/setting-keys';
+import { SecurityPolicy } from '../../../packages/extension-host/src/features/security/SecurityPolicy';
+import { SETTINGS_DEFAULTS } from '@mdx-preview/contracts';
 
 const DOC_URI = {
   scheme: 'file',
@@ -148,6 +151,21 @@ describe('CompilerConfig helpers', () => {
       componentsBuiltins: true,
       componentsUnknownBehavior: 'strip',
       configFile: resolvedConfig,
+    });
+  });
+
+  it('derives extension defaults from shared contract defaults', () => {
+    const expectedSecurityPolicy =
+      (SETTINGS_DEFAULTS['preview.security'] as string) === 'disabled'
+        ? SecurityPolicy.Disabled
+        : SecurityPolicy.Strict;
+
+    expect(Object.keys(DEFAULTS).sort()).toEqual(
+      Object.keys(SETTINGS_DEFAULTS).sort()
+    );
+    expect(DEFAULTS).toEqual({
+      ...SETTINGS_DEFAULTS,
+      'preview.security': expectedSecurityPolicy,
     });
   });
 });

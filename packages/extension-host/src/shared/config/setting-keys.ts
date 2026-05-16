@@ -13,38 +13,7 @@ import {
 } from '@mdx-preview/contracts';
 
 // VS Code setting keys (relative to 'mdx-preview' namespace)
-export type SettingKey =
-  | 'preview.updateMode'
-  | 'preview.debounceDelay'
-  | 'preview.enableScripts'
-  | 'preview.openMdxLinksInPreview'
-  | 'preview.security'
-  | 'preview.useVscodeMarkdownStyles'
-  | 'preview.useWhiteBackground'
-  | 'preview.customCss'
-  | 'preview.mdx.customLayoutFilePath'
-  | 'preview.previewTheme'
-  | 'preview.codeBlockTheme'
-  | 'preview.mermaidTheme'
-  | 'preview.autoTheme'
-  | 'preview.sourceLineHighlight'
-  | 'preview.sourceLineHighlightColor'
-  | 'preview.scrollSync'
-  | 'preview.shimSideRail'
-  | 'diagrams.plantUmlServer'
-  | 'build.useSucraseTranspiler'
-  | 'tailwind.enabled'
-  | 'tailwind.maxFileSizeBytes'
-  | 'tailwind.maxCssFilesToSearch'
-  | 'tailwind.cacheMaxEntries'
-  | 'tailwind.cacheTtlSeconds'
-  | 'tailwind.compilationTimeout'
-  | 'framework'
-  | 'framework.componentShims'
-  | 'components.builtins'
-  | 'components.unknownBehavior'
-  | 'advanced.watcherDebounceMs'
-  | 'advanced.debugOutput';
+export type SettingKey = keyof typeof SETTINGS_DEFAULTS;
 
 // type mapping for settings
 // enum types imported from @mdx-preview/shared (canonical source)
@@ -82,59 +51,16 @@ export interface SettingTypes {
   'advanced.debugOutput': boolean;
 }
 
-// map shared defaults to extension setting types
-function mapDefaults(): SettingTypes {
-  return {
-    'preview.updateMode': SETTINGS_DEFAULTS['preview.updateMode'],
-    'preview.debounceDelay': SETTINGS_DEFAULTS['preview.debounceDelay'],
-    'preview.enableScripts': SETTINGS_DEFAULTS['preview.enableScripts'],
-    'preview.openMdxLinksInPreview':
-      SETTINGS_DEFAULTS['preview.openMdxLinksInPreview'],
-    'preview.security':
-      (SETTINGS_DEFAULTS['preview.security'] as string) === 'disabled'
-        ? SecurityPolicy.Disabled
-        : SecurityPolicy.Strict,
-    'preview.useVscodeMarkdownStyles':
-      SETTINGS_DEFAULTS['preview.useVscodeMarkdownStyles'],
-    'preview.useWhiteBackground':
-      SETTINGS_DEFAULTS['preview.useWhiteBackground'],
-    'preview.customCss': SETTINGS_DEFAULTS['preview.customCss'],
-    'preview.mdx.customLayoutFilePath':
-      SETTINGS_DEFAULTS['preview.mdx.customLayoutFilePath'],
-    'preview.previewTheme': SETTINGS_DEFAULTS['preview.previewTheme'],
-    'preview.codeBlockTheme': SETTINGS_DEFAULTS['preview.codeBlockTheme'],
-    'preview.mermaidTheme': SETTINGS_DEFAULTS['preview.mermaidTheme'],
-    'preview.autoTheme': SETTINGS_DEFAULTS['preview.autoTheme'],
-    'preview.sourceLineHighlight':
-      SETTINGS_DEFAULTS['preview.sourceLineHighlight'],
-    'preview.sourceLineHighlightColor':
-      SETTINGS_DEFAULTS['preview.sourceLineHighlightColor'],
-    'preview.scrollSync': SETTINGS_DEFAULTS['preview.scrollSync'],
-    'preview.shimSideRail': SETTINGS_DEFAULTS['preview.shimSideRail'],
-    'diagrams.plantUmlServer': SETTINGS_DEFAULTS['diagrams.plantUmlServer'],
-    'build.useSucraseTranspiler':
-      SETTINGS_DEFAULTS['build.useSucraseTranspiler'],
-    'tailwind.enabled': SETTINGS_DEFAULTS['tailwind.enabled'],
-    'tailwind.maxFileSizeBytes': SETTINGS_DEFAULTS['tailwind.maxFileSizeBytes'],
-    'tailwind.maxCssFilesToSearch':
-      SETTINGS_DEFAULTS['tailwind.maxCssFilesToSearch'],
-    'tailwind.cacheMaxEntries': SETTINGS_DEFAULTS['tailwind.cacheMaxEntries'],
-    'tailwind.cacheTtlSeconds': SETTINGS_DEFAULTS['tailwind.cacheTtlSeconds'],
-    'tailwind.compilationTimeout':
-      SETTINGS_DEFAULTS['tailwind.compilationTimeout'],
-    framework: SETTINGS_DEFAULTS.framework,
-    'framework.componentShims': SETTINGS_DEFAULTS['framework.componentShims'],
-    'components.builtins': SETTINGS_DEFAULTS['components.builtins'],
-    'components.unknownBehavior':
-      SETTINGS_DEFAULTS['components.unknownBehavior'],
-    'advanced.watcherDebounceMs':
-      SETTINGS_DEFAULTS['advanced.watcherDebounceMs'],
-    'advanced.debugOutput': SETTINGS_DEFAULTS['advanced.debugOutput'],
-  };
-}
+const DEFAULT_SECURITY_POLICY =
+  (SETTINGS_DEFAULTS['preview.security'] as string) === 'disabled'
+    ? SecurityPolicy.Disabled
+    : SecurityPolicy.Strict;
 
 // default values for all settings
-export const DEFAULTS: SettingTypes = mapDefaults();
+export const DEFAULTS: SettingTypes = {
+  ...SETTINGS_DEFAULTS,
+  'preview.security': DEFAULT_SECURITY_POLICY,
+};
 
 // centralized key constants for high-churn settings
 // reduce string repetition across the codebase
