@@ -105,6 +105,39 @@ function toDocumentRange(
   );
 }
 
+function computeHeadingSectionEndLines(
+  headings: Array<{ depth: number; range: vscode.Range }>,
+  lastLine: number
+): number[] {
+  const endLines = new Array<number>(headings.length);
+  const nextStartLineByDepth: Array<number | undefined> =
+    Array(7).fill(undefined);
+
+  for (let i = headings.length - 1; i >= 0; i -= 1) {
+    const { depth, range } = headings[i];
+    let nextSameOrHigherStartLine: number | undefined;
+
+    for (let candidateDepth = 1; candidateDepth <= depth; candidateDepth += 1) {
+      const candidateLine = nextStartLineByDepth[candidateDepth];
+      if (
+        candidateLine !== undefined &&
+        (nextSameOrHigherStartLine === undefined ||
+          candidateLine < nextSameOrHigherStartLine)
+      ) {
+        nextSameOrHigherStartLine = candidateLine;
+      }
+    }
+
+    endLines[i] =
+      nextSameOrHigherStartLine !== undefined
+        ? Math.max(nextSameOrHigherStartLine - 1, range.start.line)
+        : lastLine;
+    nextStartLineByDepth[depth] = range.start.line;
+  }
+
+  return endLines;
+}
+
 // build nested heading hierarchy from flat heading list
 function buildHeadingHierarchy(
   headings: Array<{ depth: number; text: string; range: vscode.Range }>,
@@ -112,27 +145,12 @@ function buildHeadingHierarchy(
 ): vscode.DocumentSymbol[] {
   const root: vscode.DocumentSymbol[] = [];
   const stack: Array<{ depth: number; symbol: vscode.DocumentSymbol }> = [];
+  const lastLine = document.lineCount - 1;
+  const sectionEndLines = computeHeadingSectionEndLines(headings, lastLine);
 
   for (let i = 0; i < headings.length; i++) {
     const { depth, text, range } = headings[i];
-
-    // determine full range (from this heading to next heading of same/higher level or EOF)
-    // forward scan from i+1 instead of findIndex from 0 (avoids O(n²))
-    let nextSameOrHigherIdx = -1;
-    for (let j = i + 1; j < headings.length; j++) {
-      if (headings[j].depth <= depth) {
-        nextSameOrHigherIdx = j;
-        break;
-      }
-    }
-    const lastLine = document.lineCount - 1;
-    const endLine =
-      nextSameOrHigherIdx !== -1
-        ? Math.max(
-            headings[nextSameOrHigherIdx].range.start.line - 1,
-            range.start.line
-          )
-        : lastLine;
+    const endLine = sectionEndLines[i];
     const endLineText = document.lineAt(Math.min(endLine, lastLine)).text;
     const fullRange = new vscode.Range(
       range.start,

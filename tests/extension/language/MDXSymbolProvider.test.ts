@@ -40,10 +40,14 @@ describe('MDXSymbolProvider', () => {
       expect(top!.children.length).toBe(2);
       expect(top!.children[0].name).toBe('Child 1');
       expect(top!.children[1].name).toBe('Child 2');
+      expect(top!.range.end.line).toBe(9);
+      expect(top!.children[0].range.end.line).toBe(5);
+      expect(top!.children[1].range.end.line).toBe(9);
 
       // h3 nested under h2
       expect(top!.children[1].children.length).toBe(1);
       expect(top!.children[1].children[0].name).toBe('Grandchild');
+      expect(top!.children[1].children[0].range.end.line).toBe(9);
     });
 
     it('extracts heading text w/ inline code', () => {
