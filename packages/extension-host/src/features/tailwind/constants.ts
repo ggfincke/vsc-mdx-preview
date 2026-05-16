@@ -32,11 +32,8 @@ export const TAILWIND_CACHE_SCHEMA_VERSION = 1;
 // processing limits
 
 // max characters per @source inline() directive for Tailwind v4
-// Tailwind v4 uses CSS-based `@source inline("...")` directives instead of the
-// v3 `content` configuration option - this limit prevents potential issues w/
-// PostCSS or CSS parsers when processing very long inline source strings
-// the value of 2000 is a conservative defensive limit - content exceeding this
-// is split into multiple @source directives
+// split long CSS-based source directives to protect PostCSS parsing
+// 2000 is a conservative defensive chunk size
 export const MAX_INLINE_SOURCE_CHUNK_SIZE = 2000;
 
 // max recursion depth for nested template literal extraction
@@ -81,10 +78,5 @@ export const MAX_KNOWN_TAILWIND_VERSION = 5;
 // class extraction patterns
 
 // valid Tailwind class token pattern
-// match common Tailwind patterns including
-// - basic classes: flex, gap-4, text-sm
-// - responsive/state variants: sm:flex, hover:bg-blue-500
-// - arbitrary values: w-[100px], bg-[#ff0000]
-// - negative values: -mt-4
-// - fractions: w-1/2
+// match basic classes, variants, arbitrary values, negatives & fractions
 export const CLASS_TOKEN_RE = /^[A-Za-z0-9:_/.\-[\]()%,#=!]+$/;

@@ -21,11 +21,8 @@ interface SubsystemRegistration {
 }
 
 // * central registry for managing service lifecycle
-// key features
-// - lazy initialization: services are created on first access
-// - dependency ordering: services disposed in reverse registration order
-// - singleton pattern: each service type has one instance
-// - compatible w/ existing getInstance() pattern
+// lazy service creation, singleton instances & reverse-order disposal
+// compatible w/ existing getInstance() pattern
 export class ServiceRegistry implements Disposable {
   private static instance: ServiceRegistry | undefined;
   private services = new Map<string, ServiceRegistration<IService>>();

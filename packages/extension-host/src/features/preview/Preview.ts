@@ -36,6 +36,12 @@ import { PreviewInitializer } from './PreviewInitializer';
 import { getPreviewManager } from '../../app/services/service-locator';
 import { runPreviewUpdateFlow } from './preview-update-flow';
 import { runPreviewRefreshFlow } from './preview-refresh-flow';
+import {
+  disposeScrollSyncForPreview,
+  resetPreviewScrollSync,
+  supportsEditorToPreviewScrollSync,
+  syncPreviewScrollFromActiveEditor,
+} from './scroll-sync';
 
 // re-export types for consumers
 export type { StyleConfiguration, WebviewHandle };
@@ -304,6 +310,18 @@ export class Preview {
     await this.webviewBridge.clearAllCaches();
   }
 
+  scrollToLine(line: number): void {
+    this.webviewBridge.scrollToLine(line);
+  }
+
+  syncEditorScrollToPreview(): void {
+    if (!supportsEditorToPreviewScrollSync(this.configuration.scrollSync)) {
+      return;
+    }
+    resetPreviewScrollSync(this);
+    syncPreviewScrollFromActiveEditor(this);
+  }
+
   markStale(): void {
     this.documentHandler.markStale(this.watcherManager);
   }
@@ -366,6 +384,14 @@ export class Preview {
       this.pushRuntimeConfiguration();
     }
 
+    if (result.scrollSyncChanged) {
+      if (supportsEditorToPreviewScrollSync(this.configuration.scrollSync)) {
+        this.syncEditorScrollToPreview();
+      } else {
+        resetPreviewScrollSync(this);
+      }
+    }
+
     if (result.needsCssWatcherUpdate) {
       // setup custom CSS watcher directly via initializer (coordinator was removed)
       this.initializer.setupCustomCssWatcher(
@@ -387,6 +413,7 @@ export class Preview {
   dispose(): void {
     this._performanceObserver?.disconnect();
     this._performanceObserver = undefined;
+    disposeScrollSyncForPreview(this);
     this.watcherManager.dispose();
   }
 }

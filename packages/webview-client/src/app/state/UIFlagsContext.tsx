@@ -5,6 +5,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
 import {
   LogTags,
+  type PreviewScrollSyncValue,
   type SourceLineHighlightColorValue,
 } from '@mdx-preview/contracts';
 import { createContextProvider } from '../providers/createContextProvider';
@@ -46,10 +47,12 @@ function persistZoom(level: number): void {
 interface UIFlagsContextValue {
   sourceLineHighlightEnabled: boolean;
   sourceLineHighlightColorMode: SourceLineHighlightColorValue;
+  scrollSyncMode: PreviewScrollSyncValue;
   shimSideRailEnabled: boolean;
   zoomLevel: number;
   setSourceLineHighlight: (enabled: boolean) => void;
   setSourceLineHighlightColor: (mode: SourceLineHighlightColorValue) => void;
+  setScrollSync: (mode: PreviewScrollSyncValue) => void;
   setShimSideRail: (enabled: boolean) => void;
   setZoomLevel: (level: number) => void;
 }
@@ -63,6 +66,8 @@ function useUIFlagsProviderValue(): UIFlagsContextValue {
     useState(true);
   const [sourceLineHighlightColorMode, setSourceLineHighlightColorModeState] =
     useState<SourceLineHighlightColorValue>('dependent');
+  const [scrollSyncMode, setScrollSyncMode] =
+    useState<PreviewScrollSyncValue>('off');
   const [shimSideRailEnabled, setShimSideRailEnabledState] = useState(true);
   const [zoomLevel, setZoomLevelState] = useState(readPersistedZoom);
 
@@ -84,10 +89,14 @@ function useUIFlagsProviderValue(): UIFlagsContextValue {
     setShimSideRailEnabledState(enabled);
   }, []);
 
+  const setScrollSync = useCallback((mode: PreviewScrollSyncValue) => {
+    log.debug('setScrollSync called', mode);
+    setScrollSyncMode(mode);
+  }, []);
+
   const setZoomLevel = useCallback((level: number) => {
-    const clamped = Math.round(
-      Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, level)) * 100
-    ) / 100;
+    const clamped =
+      Math.round(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, level)) * 100) / 100;
     log.debug('setZoomLevel called', clamped);
     setZoomLevelState(clamped);
     persistZoom(clamped);
@@ -97,20 +106,24 @@ function useUIFlagsProviderValue(): UIFlagsContextValue {
     () => ({
       sourceLineHighlightEnabled,
       sourceLineHighlightColorMode,
+      scrollSyncMode,
       shimSideRailEnabled,
       zoomLevel,
       setSourceLineHighlight,
       setSourceLineHighlightColor,
+      setScrollSync,
       setShimSideRail,
       setZoomLevel,
     }),
     [
       sourceLineHighlightEnabled,
       sourceLineHighlightColorMode,
+      scrollSyncMode,
       shimSideRailEnabled,
       zoomLevel,
       setSourceLineHighlight,
       setSourceLineHighlightColor,
+      setScrollSync,
       setShimSideRail,
       setZoomLevel,
     ]

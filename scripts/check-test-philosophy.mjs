@@ -54,6 +54,7 @@ const EXACT_ALLOWED = new Set([
   'tests/webview/preload-generation.test.ts',
   'tests/webview/safe-mode-processing.test.ts',
   'tests/webview/shimLoader.test.ts',
+  'tests/webview/source-line-highlight.test.ts',
   'tests/webview/webview-rpc-client.test.ts',
 ]);
 
@@ -67,7 +68,9 @@ const CASE_COUNT_OVERRIDES = new Map([
   ['tests/extension/language/MDXOutlineProvider.test.ts', 5],
   ['tests/extension/language/MDXSymbolProvider.test.ts', 12],
   ['tests/extension/rpc-input-validation.test.ts', 6],
+  ['tests/extension/workspace-events.test.ts', 5],
   ['tests/webview/SafePreview.test.ts', 6],
+  ['tests/webview/source-line-highlight.test.ts', 7],
 ]);
 
 function listTestFiles(dirPath) {

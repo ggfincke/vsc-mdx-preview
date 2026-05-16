@@ -4,7 +4,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockTrustManager } from '../helpers/mock-services';
 
-const { mockVscode } = vi.hoisted(() => ({
+const {
+  mockHandlePreviewSourceLineReport,
+  mockSuppressEditorScrollSync,
+  mockVscode,
+} = vi.hoisted(() => ({
+  mockHandlePreviewSourceLineReport: vi.fn(() => 'accepted'),
+  mockSuppressEditorScrollSync: vi.fn(),
   mockVscode: {
     Uri: {
       file: (path: string) => ({ scheme: 'file', fsPath: path, path }),
@@ -48,6 +54,14 @@ vi.mock('perf_hooks', () => ({
 }));
 
 vi.mock(
+  '../../packages/extension-host/src/features/preview/scroll-sync',
+  () => ({
+    handlePreviewSourceLineReport: mockHandlePreviewSourceLineReport,
+    suppressEditorScrollSync: mockSuppressEditorScrollSync,
+  })
+);
+
+vi.mock(
   '../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal',
   () => ({
     fetchLocal: vi
@@ -59,7 +73,7 @@ vi.mock(
 import ExtensionHandle from '../../packages/extension-host/src/platform/rpc/extension-rpc-handler';
 import { MAX_FETCH_REQUEST_LENGTH } from '../../packages/extension-host/src/shared/constants';
 
-function createMockPreview(fsPath = '/workspace/test.mdx') {
+function createMockPreview(fsPath = '/workspace/test.mdx', active = true) {
   return {
     doc: {
       uri: { scheme: 'file', fsPath },
@@ -67,6 +81,8 @@ function createMockPreview(fsPath = '/workspace/test.mdx') {
     },
     fsPath,
     entryFsDirectory: '/workspace',
+    active,
+    configuration: { scrollSync: 'bidirectional' },
     completeHandshake: vi.fn(),
     evaluationDuration: 0,
   } as unknown as Parameters<typeof ExtensionHandle>[0];
@@ -82,6 +98,7 @@ describe('RPC Input Validation', () => {
     handle = new ExtensionHandle(preview);
     mockVscode.workspace.openTextDocument.mockResolvedValue({});
     mockVscode.window.showTextDocument.mockResolvedValue({});
+    mockHandlePreviewSourceLineReport.mockReturnValue('accepted');
     mockTrustManager.getState.mockReturnValue({
       workspaceTrusted: true,
       scriptsEnabled: true,
@@ -127,18 +144,85 @@ describe('RPC Input Validation', () => {
     expect(result).toBeUndefined();
   });
 
-  it('rejects javascript URLs in openExternal', () => {
+  it('handles safe commands and rejects unsafe external URLs', () => {
     handle.openExternal('javascript:alert(1)');
 
     expect(mockVscode.env.openExternal).not.toHaveBeenCalled();
-  });
-
-  it('opens settings for explicit setting ids', () => {
     handle.openSettings('mdx-preview.preview.enableScripts');
 
     expect(mockVscode.commands.executeCommand).toHaveBeenCalledWith(
       'workbench.action.openSettings',
       'mdx-preview.preview.enableScripts'
     );
+  });
+
+  it('validates and suppresses source-line editor opens', async () => {
+    for (const line of [0, 1.5, Number.NaN]) {
+      await expect(handle.reportPreviewSourceLine(line)).resolves.toBe(
+        'ignored'
+      );
+    }
+    expect(mockHandlePreviewSourceLineReport).not.toHaveBeenCalled();
+
+    await expect(handle.reportPreviewSourceLine(8)).resolves.toBe('accepted');
+    expect(mockHandlePreviewSourceLineReport).toHaveBeenCalledWith(preview, 8);
+    mockHandlePreviewSourceLineReport.mockClear();
+
+    for (const line of [0, 1.5, Number.NaN]) {
+      await handle.openSourceLine(line);
+    }
+
+    expect(mockVscode.window.showTextDocument).not.toHaveBeenCalled();
+    expect(mockSuppressEditorScrollSync).not.toHaveBeenCalled();
+
+    handle = new ExtensionHandle(
+      createMockPreview('/workspace/test.mdx', false)
+    );
+    await handle.openSourceLine(12);
+
+    expect(mockVscode.window.showTextDocument).not.toHaveBeenCalled();
+    expect(mockSuppressEditorScrollSync).not.toHaveBeenCalled();
+
+    preview = createMockPreview();
+    handle = new ExtensionHandle(preview);
+    let resolveShow: ((value: unknown) => void) | undefined;
+    mockVscode.window.showTextDocument.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveShow = resolve;
+        })
+    );
+
+    const openPromise = handle.openSourceLine(12);
+
+    expect(mockSuppressEditorScrollSync).toHaveBeenCalledTimes(1);
+    const [shownDocument, showOptions] =
+      mockVscode.window.showTextDocument.mock.calls[0];
+    expect(shownDocument).toBe(preview.doc);
+    expect(showOptions.preserveFocus).toBe(false);
+    expect(showOptions.selection.start.line).toBe(11);
+    expect(showOptions.selection.start.character).toBe(0);
+    expect(
+      mockSuppressEditorScrollSync.mock.invocationCallOrder[0]
+    ).toBeLessThan(
+      mockVscode.window.showTextDocument.mock.invocationCallOrder[0]
+    );
+
+    resolveShow?.({});
+    await openPromise;
+
+    expect(mockSuppressEditorScrollSync).toHaveBeenCalledTimes(2);
+    expect(
+      mockVscode.window.showTextDocument.mock.invocationCallOrder[0]
+    ).toBeLessThan(mockSuppressEditorScrollSync.mock.invocationCallOrder[1]);
+
+    mockSuppressEditorScrollSync.mockClear();
+    mockVscode.window.showTextDocument.mockClear();
+    mockVscode.window.showTextDocument.mockRejectedValueOnce(new Error('nope'));
+
+    await handle.openSourceLine(4);
+
+    expect(mockVscode.window.showTextDocument).toHaveBeenCalledTimes(1);
+    expect(mockSuppressEditorScrollSync).toHaveBeenCalledTimes(2);
   });
 });

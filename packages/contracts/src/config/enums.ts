@@ -1,9 +1,5 @@
 // packages/contracts/src/config/enums.ts
-// canonical enum arrays for config validation & VS Code settings
-// these are the single source of truth for all enum values used in
-// - runtime validation (packages/extension-host/src/shared/utils/validation/schema.ts)
-// - VS Code settings (package.json contributes.configuration)
-// - JSON schema (schemas/mdx-previewrc.schema.json)
+// canonical enum arrays for runtime validation, settings & schema generation
 
 import type { FrameworkId, FrameworkSetting } from '../frameworks';
 
@@ -58,3 +54,22 @@ export const SOURCE_LINE_HIGHLIGHT_COLOR_VALUES = [
 ] as const;
 export type SourceLineHighlightColorValue =
   (typeof SOURCE_LINE_HIGHLIGHT_COLOR_VALUES)[number];
+
+// preview scroll sync options
+// used in: package.json mdx-preview.preview.scrollSync setting
+export const PREVIEW_SCROLL_SYNC_VALUES = [
+  'off',
+  'editorToPreview',
+  'previewToEditor',
+  'bidirectional',
+] as const;
+export type PreviewScrollSyncValue =
+  (typeof PREVIEW_SCROLL_SYNC_VALUES)[number];
+
+export function isEditorToPreviewMode(mode: PreviewScrollSyncValue): boolean {
+  return mode === 'editorToPreview' || mode === 'bidirectional';
+}
+
+export function isPreviewToEditorMode(mode: PreviewScrollSyncValue): boolean {
+  return mode === 'previewToEditor' || mode === 'bidirectional';
+}

@@ -42,6 +42,7 @@ export interface ConfigChangeResult {
   needsRuntimeConfigPush: boolean;
   needsDebounceRecreate: boolean;
   needsCssWatcherUpdate: boolean;
+  scrollSyncChanged: boolean;
   oldCssPath: string;
 }
 

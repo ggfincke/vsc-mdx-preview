@@ -130,11 +130,7 @@ export class PluginError extends ExtensionError {
   }
 }
 
-// tailwind errors
-// E500 = TAILWIND_NOT_INSTALLED
-// E501 = TAILWIND_VERSION_UNSUPPORTED
-// E520 = TAILWIND_CONFIG_NOT_FOUND
-// E562 = TAILWIND_INVALID_PLUGIN
+// tailwind errors: install, version, config & plugin failures
 export type TailwindErrorCode =
   | 'E500'
   | 'E501'
@@ -153,10 +149,7 @@ export class TailwindError extends ExtensionError {
   }
 }
 
-// webview errors
-// E600 = WEBVIEW_MANIFEST_ERROR
-// E620 = WEBVIEW_HANDSHAKE_TIMEOUT
-// E640 = WEBVIEW_RPC_ERROR
+// webview errors: manifest, handshake & RPC failures
 export type WebviewErrorCode = 'E600' | 'E620' | 'E640';
 
 export class WebviewError extends ExtensionError {
@@ -170,10 +163,7 @@ export class WebviewError extends ExtensionError {
   }
 }
 
-// service errors
-// E800 = SERVICE_NOT_REGISTERED
-// E801 = SERVICE_ALREADY_DISPOSED
-// E802 = SERVICE_CIRCULAR_DEPENDENCY
+// service errors: missing, disposed & circular registrations
 export type ServiceErrorCode = 'E800' | 'E801' | 'E802';
 
 export class ServiceError extends ExtensionError {

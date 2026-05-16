@@ -33,6 +33,7 @@ export function mapSettingsToPreviewRuntimeConfig(
   return {
     sourceLineHighlight: settings[SETTINGS.SOURCE_LINE_HIGHLIGHT],
     sourceLineHighlightColor: settings[SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR],
+    scrollSync: settings[SETTINGS.SCROLL_SYNC],
     shimSideRail: settings[SETTINGS.SHIM_SIDE_RAIL],
   };
 }

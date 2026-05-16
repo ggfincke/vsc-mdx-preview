@@ -2,165 +2,54 @@
 // MPE-style hover highlight binding using data-source-line annotations
 
 import { useEffect, type RefObject } from 'react';
+import {
+  HIGHLIGHT_ACTIVE_CLASS,
+  HIGHLIGHT_LINE_CLASS,
+  collectSourceLineEntries,
+  type SourceLineEntry,
+} from '../utils/sourceLineElements';
 
-const SOURCE_LINE_SELECTOR = '[data-source-line]';
-const HIGHLIGHT_LINE_CLASS = 'highlight-line';
-const HIGHLIGHT_ACTIVE_CLASS = 'highlight-active';
-const CALLOUT_OWNER_SELECTOR = [
-  '.mdx-safe-callout',
-  '.mdx-preview-admonition',
-  '.github-alert',
-  '[data-callout-type]',
-  '.mdx-preview-nextra-callout',
-  '.mdx-preview-nextra-callout-wrapper',
-].join(', ');
-const TRUSTED_SHIM_OWNER_SELECTOR = [
-  '[data-callout-type]',
-  '[data-component="collapsible"]',
-  '[data-component="tabs"]',
-  '.mdx-preview-generic-code-group',
+const INTERACTIVE_SELECTOR = [
+  'a',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  'label',
+  'details',
+  'summary',
+  '[role="button"]',
+  '[contenteditable]',
 ].join(', ');
 
-function getDataSourceLine(element: Element): number | null {
-  const dataLine = element.getAttribute('data-source-line');
-  if (!dataLine) {
-    return null;
+function isInteractiveTarget(
+  target: EventTarget | null,
+  root: HTMLElement
+): boolean {
+  if (!(target instanceof Element)) {
+    return false;
   }
-  const line = Number.parseInt(dataLine, 10);
-  return Number.isFinite(line) ? line : null;
+
+  const interactiveElement = target.closest(INTERACTIVE_SELECTOR);
+  return !!interactiveElement && root.contains(interactiveElement);
+}
+
+function isSourceNavigationClick(event: MouseEvent): boolean {
+  return event.button === 0 && (event.ctrlKey || event.metaKey);
 }
 
 interface UseSourceLineHighlightOptions {
   containerRef: RefObject<HTMLElement | null>;
   trigger?: unknown;
   enabled?: boolean;
-}
-
-interface SourceLineEntry {
-  highlightElement: Element;
-}
-
-function resolveCalloutOwner(
-  sourceLineElement: Element,
-  root: HTMLElement
-): Element | null {
-  const calloutOwner = sourceLineElement.closest(CALLOUT_OWNER_SELECTOR);
-  if (!calloutOwner || !root.contains(calloutOwner)) {
-    return null;
-  }
-
-  if (calloutOwner.classList.contains('mdx-preview-nextra-callout-wrapper')) {
-    const promotedOwner = Array.from(calloutOwner.children).find((child) =>
-      child.classList.contains('mdx-preview-nextra-callout')
-    );
-    if (promotedOwner && root.contains(promotedOwner)) {
-      return promotedOwner;
-    }
-  }
-
-  return calloutOwner;
-}
-
-function resolveHighlightOwner(
-  sourceLineElement: Element,
-  root: HTMLElement
-): Element | null {
-  const table = sourceLineElement.closest('table');
-  if (table && root.contains(table)) {
-    // promote table descendants to the table root so the hover rail stays stable
-    return table;
-  }
-
-  const calloutOwner = resolveCalloutOwner(sourceLineElement, root);
-  if (calloutOwner) {
-    return calloutOwner;
-  }
-
-  const listItem = sourceLineElement.closest('li');
-  if (listItem && root.contains(listItem)) {
-    return listItem;
-  }
-
-  if (sourceLineElement.tagName === 'IMG') {
-    return sourceLineElement.parentElement ?? sourceLineElement;
-  }
-
-  if (sourceLineElement.parentElement?.tagName === 'P') {
-    return sourceLineElement.parentElement;
-  }
-
-  return sourceLineElement;
-}
-
-function collectSourceLineEntries(container: HTMLElement): SourceLineEntry[] {
-  const sourceLineElements = Array.from(
-    container.querySelectorAll(SOURCE_LINE_SELECTOR)
-  );
-  const seenHighlightElements = new Set<Element>();
-  const entries: SourceLineEntry[] = [];
-
-  const registerHighlightElement = (highlightElement: Element): void => {
-    if (seenHighlightElements.has(highlightElement)) {
-      return;
-    }
-
-    seenHighlightElements.add(highlightElement);
-    entries.push({ highlightElement });
-  };
-
-  sourceLineElements.forEach((sourceLineElement) => {
-    // avoid overlap w/ inline links
-    if (sourceLineElement.tagName === 'A') {
-      return;
-    }
-
-    const dataSourceLine = getDataSourceLine(sourceLineElement);
-    if (dataSourceLine === null) {
-      return;
-    }
-
-    const highlightElement = resolveHighlightOwner(
-      sourceLineElement,
-      container
-    );
-    if (!highlightElement) {
-      return;
-    }
-
-    registerHighlightElement(highlightElement);
-  });
-
-  // Trusted-mode shim components often render root DOM nodes w/o forwarding
-  // data-source-line, so bind directly to their semantic roots
-  const trustedShimOwners = Array.from(
-    container.querySelectorAll(TRUSTED_SHIM_OWNER_SELECTOR)
-  );
-  trustedShimOwners.forEach((owner) => {
-    registerHighlightElement(owner);
-  });
-
-  // Imported/custom React components can render top-level DOM w/o
-  // data-source-line anywhere in the subtree
-  // highlight the root block so hover affordance still works in Trusted Mode
-  Array.from(container.children).forEach((child) => {
-    if (child.hasAttribute('data-source-line')) {
-      return;
-    }
-
-    if (child.querySelector(SOURCE_LINE_SELECTOR)) {
-      return;
-    }
-
-    registerHighlightElement(child);
-  });
-
-  return entries;
+  onOpenSourceLine?: (line: number) => void;
 }
 
 export function useSourceLineHighlight({
   containerRef,
   trigger,
   enabled = true,
+  onOpenSourceLine,
 }: UseSourceLineHighlightOptions): void {
   useEffect(() => {
     const container = containerRef.current;
@@ -194,6 +83,7 @@ export function useSourceLineHighlight({
       element: Element;
       onMouseEnter: EventListener;
       onMouseLeave: EventListener;
+      onClick: EventListener | undefined;
     }> = [];
 
     const applySingleHighlight = (highlightElement: Element | null): void => {
@@ -232,10 +122,8 @@ export function useSourceLineHighlight({
       return null;
     };
 
-    const bindHighlightElementEvent = (highlightElement: Element): void => {
-      if (addedEventsSet.has(highlightElement)) {
-        return;
-      }
+    const bindEntry = ({ highlightElement, sourceLine }: SourceLineEntry) => {
+      // addedEventsSet powers findRegisteredOwner's ancestor lookup on mouseleave
       addedEventsSet.add(highlightElement);
 
       const onMouseEnter: EventListener = () => {
@@ -257,25 +145,52 @@ export function useSourceLineHighlight({
         highlightElement.classList.remove(HIGHLIGHT_ACTIVE_CLASS);
       };
 
+      const onClick: EventListener | undefined =
+        onOpenSourceLine && sourceLine !== null
+          ? (event) => {
+              const mouseEvent = event as MouseEvent;
+              if (
+                !isSourceNavigationClick(mouseEvent) ||
+                isInteractiveTarget(mouseEvent.target, container)
+              ) {
+                return;
+              }
+
+              mouseEvent.preventDefault();
+              mouseEvent.stopPropagation();
+              highlightElement.classList.add(HIGHLIGHT_ACTIVE_CLASS);
+              onOpenSourceLine(sourceLine);
+            }
+          : undefined;
+
       highlightElement.addEventListener('mouseenter', onMouseEnter);
       highlightElement.addEventListener('mouseleave', onMouseLeave);
-      listeners.push({ element: highlightElement, onMouseEnter, onMouseLeave });
+      if (onClick) {
+        highlightElement.addEventListener('click', onClick);
+      }
+      listeners.push({
+        element: highlightElement,
+        onMouseEnter,
+        onMouseLeave,
+        onClick,
+      });
     };
 
-    sourceLineEntries.forEach(({ highlightElement }) => {
-      bindHighlightElementEvent(highlightElement);
-    });
+    sourceLineEntries.forEach(bindEntry);
 
     return () => {
-      listeners.forEach(({ element, onMouseEnter, onMouseLeave }) => {
+      listeners.forEach(({ element, onMouseEnter, onMouseLeave, onClick }) => {
         element.removeEventListener('mouseenter', onMouseEnter);
         element.removeEventListener('mouseleave', onMouseLeave);
+        if (onClick) {
+          element.removeEventListener('click', onClick);
+        }
         element.classList.remove(HIGHLIGHT_LINE_CLASS);
         element.classList.remove(HIGHLIGHT_ACTIVE_CLASS);
       });
       currentHighlightElement = null;
     };
-  }, [containerRef, trigger, enabled]);
+  }, [containerRef, trigger, enabled, onOpenSourceLine]);
 }
 
 export default useSourceLineHighlight;

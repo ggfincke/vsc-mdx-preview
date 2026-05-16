@@ -1,8 +1,6 @@
 // scripts/check-no-linked-deps.mjs
 // verify that no dependencies are npm-linked (symlinked)
-// prevents accidentally shipping a local symlink instead of a real npm install
-// exit code 0 = no symlinks found
-// exit code 1 = symlinked dependency detected
+// prevents shipping local symlinks instead of real npm installs
 
 import { lstatSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';

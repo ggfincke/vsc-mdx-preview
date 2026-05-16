@@ -1,7 +1,6 @@
 // packages/webview-client/src/shared/utils/clipboard.ts
 // unified clipboard utility for both React & DOM contexts
-// ! cross-repo duplicate: mdx-forge/src/components/internal/clipboard.ts
-// ! changes here must be mirrored (GPL licensing prevents shared dependency)
+// ! cross-repo duplicate; mirror changes in mdx-forge clipboard utility
 
 import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../app/constants';
 

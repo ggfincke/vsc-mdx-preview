@@ -99,6 +99,7 @@ export class PreviewWebviewBridge {
     this.webviewHandle.setSourceLineHighlightColor(
       runtimeConfig.sourceLineHighlightColor
     );
+    this.webviewHandle.setScrollSync(runtimeConfig.scrollSync);
     this.webviewHandle.setShimSideRail(runtimeConfig.shimSideRail);
   }
 
@@ -114,5 +115,9 @@ export class PreviewWebviewBridge {
     if (this.webviewHandle) {
       await this.webviewHandle.clearAllCaches();
     }
+  }
+
+  scrollToLine(line: number): void {
+    this.webviewHandle?.scrollToLine(line);
   }
 }

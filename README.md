@@ -21,6 +21,7 @@ A modern, actively maintained successor to the original [MDX Preview](https://ma
 - **Preview Zoom** - Preview-scoped zoom commands without changing VS Code's global zoom
 - **Export to HTML** - Save the rendered preview as a standalone `.html` file from the toolbar or command palette
 - **Authoring Feedback** - Source-line highlighting, MDX outline, symbols, and frontmatter-aware completions
+- **Editor ↔ Preview Sync** - Opt-in scroll sync between editor and preview, plus `Cmd/Ctrl+Click` jump from preview to source
 - **Custom Plugins** - Load remark/rehype plugins from your project
 - **TypeScript Preview** - Preview `.tsx`/`.ts` files that render to `#root`
 - **Safe/Trusted Modes** - Safe Mode for untrusted content, Trusted Mode for full rendering
@@ -72,6 +73,25 @@ import Introduction from './Introduction.mdx';
 
 <Introduction />
 ```
+
+## Editor ↔ Preview Sync
+
+Two opt-in features keep the editor and preview aligned while you author:
+
+**Scroll sync** — set `mdx-preview.preview.scrollSync` to one of:
+
+| Mode               | Behavior                                                    |
+| ------------------ | ----------------------------------------------------------- |
+| `off` _(default)_  | No scroll coupling                                          |
+| `editorToPreview`  | Preview follows the editor's visible source line            |
+| `previewToEditor`  | Editor reveals the matching source line as you scroll the preview |
+| `bidirectional`    | Both directions, with debouncing to prevent feedback loops  |
+
+Sync is anchored around the top-third reading band (~35% from the top) so the line you're focused on stays in roughly the same vertical position on both sides instead of snapping to center.
+
+**Cmd/Ctrl+Click to source** — hold `Cmd` (macOS) or `Ctrl` (Windows/Linux) and click any rendered block in the preview to open the editor at that source line. Clicks on interactive elements (links, buttons, form fields, `<details>`) still behave normally.
+
+Both features work in Safe Mode and Trusted Mode. They rely on MDX's `data-source-line` annotations, so they're available for any block the compiler can map (paragraphs, headings, lists, tables, code blocks, callouts, etc.).
 
 ## JavaScript/TypeScript Preview
 
@@ -130,6 +150,7 @@ See [Security](./docs/security.md) for the full security model.
 | `mdx-preview.preview.mermaidTheme`             | `"default"`          | Mermaid diagram theme                                       |
 | `mdx-preview.preview.sourceLineHighlight`      | `true`               | Highlight rendered blocks by source line on hover           |
 | `mdx-preview.preview.sourceLineHighlightColor` | `"dependent"`        | Highlight color mode: `dependent`, `white`, `black`, `auto` |
+| `mdx-preview.preview.scrollSync`               | `"off"`              | Scroll sync: `off`, `editorToPreview`, `previewToEditor`, `bidirectional` |
 | `mdx-preview.preview.shimSideRail`             | `true`               | Show the framework shim side rail when relevant             |
 | `mdx-preview.preview.openMdxLinksInPreview`    | `true`               | Open `.mdx` links in preview                                |
 | `mdx-preview.framework.componentShims`         | `true`               | Enable framework component shims                            |

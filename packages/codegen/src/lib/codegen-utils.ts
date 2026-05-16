@@ -11,6 +11,7 @@ import {
   UPDATE_MODE_VALUES,
   SECURITY_POLICY_VALUES,
   SOURCE_LINE_HIGHLIGHT_COLOR_VALUES,
+  PREVIEW_SCROLL_SYNC_VALUES,
 } from '@mdx-preview/contracts';
 
 // normalize a file path to a valid import path (forward slashes, relative prefix)
@@ -56,4 +57,5 @@ export const SETTINGS_ENUM_MAP: Record<string, readonly string[]> = {
   'mdx-preview.preview.security': SECURITY_POLICY_VALUES,
   'mdx-preview.preview.sourceLineHighlightColor':
     SOURCE_LINE_HIGHLIGHT_COLOR_VALUES,
+  'mdx-preview.preview.scrollSync': PREVIEW_SCROLL_SYNC_VALUES,
 };

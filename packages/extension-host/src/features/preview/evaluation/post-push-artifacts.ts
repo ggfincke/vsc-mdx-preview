@@ -53,6 +53,7 @@ async function postTrustedArtifacts(
     result.dependencies
   );
   log.debug('updatePreview called');
+  preview.syncEditorScrollToPreview();
 
   if (!context.tailwindEnabled) {
     clearTailwindChannels(context.preview, webviewHandle);
@@ -89,6 +90,7 @@ function postSafeArtifacts(
   log.debug('Calling webviewHandle.updatePreviewSafe');
   webviewHandle.updatePreviewSafe(stageResult.result.html);
   log.debug('updatePreviewSafe called');
+  preview.syncEditorScrollToPreview();
 }
 
 async function detectAndPushUsedComponents(

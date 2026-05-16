@@ -126,6 +126,39 @@ function collectFileHeaderViolations(filePath, text, output) {
   }
 }
 
+function collectCommentBlockLengthViolations(filePath, text, output) {
+  const lines = text.split(/\r?\n/);
+  let blockStartLine = 0;
+  let blockLength = 0;
+
+  const flushBlock = () => {
+    if (blockLength > 3) {
+      output.push({
+        file: filePath,
+        line: blockStartLine,
+        rule: 'comment-block-length',
+        detail: `${blockLength} consecutive // lines`,
+      });
+    }
+    blockStartLine = 0;
+    blockLength = 0;
+  };
+
+  lines.forEach((lineText, index) => {
+    if (/^\s*\/\//.test(lineText)) {
+      if (blockLength === 0) {
+        blockStartLine = index + 1;
+      }
+      blockLength += 1;
+      return;
+    }
+
+    flushBlock();
+  });
+
+  flushBlock();
+}
+
 function collectCommentViolations(filePath, sourceFile, text, range, output) {
   const line = sourceFile.getLineAndCharacterOfPosition(range.pos).line + 1;
 
@@ -178,6 +211,7 @@ function scanFile(rootDir, relativePath) {
   const text = readFileSync(absolutePath, 'utf-8');
   const violations = [];
   collectFileHeaderViolations(relativePath, text, violations);
+  collectCommentBlockLengthViolations(relativePath, text, violations);
   const sourceFile = ts.createSourceFile(
     relativePath,
     text,
@@ -238,7 +272,7 @@ try {
       `Comment style check FAILED (${violations.length} violation(s))`
     );
     console.error(
-      'Rules: require file headers, no block comments, no inline comments, use &/w/, no trailing punctuation'
+      'Rules: require file headers, no block comments, no inline comments, max 3 // lines, use &/w/, no trailing punctuation'
     );
     console.error('');
 

@@ -38,6 +38,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
   const {
     setSourceLineHighlight,
     setSourceLineHighlightColor,
+    setScrollSync,
     setShimSideRail,
     setZoomLevel,
   } = useUIFlags();
@@ -66,6 +67,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
       setNextraMeta,
       setSourceLineHighlight,
       setSourceLineHighlightColor,
+      setScrollSync,
       setShimSideRail,
       setZoom: setZoomLevel,
     });
@@ -81,6 +83,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
     setNextraMeta,
     setSourceLineHighlight,
     setSourceLineHighlightColor,
+    setScrollSync,
     setShimSideRail,
     setZoomLevel,
   ]);

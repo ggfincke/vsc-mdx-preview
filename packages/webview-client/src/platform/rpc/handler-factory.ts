@@ -5,6 +5,7 @@ import type {
   TaggedLogger,
   NextraPageMeta,
   PreviewError,
+  PreviewScrollSyncValue,
   SourceLineHighlightColorValue,
   TrustState,
   WebviewThemeState,
@@ -37,6 +38,7 @@ export interface OptionalStateHandlers {
   setNextraMeta?: (meta: NextraPageMeta) => void;
   setSourceLineHighlight?: (enabled: boolean) => void;
   setSourceLineHighlightColor?: (mode: SourceLineHighlightColorValue) => void;
+  setScrollSync?: (mode: PreviewScrollSyncValue) => void;
   setShimSideRail?: (enabled: boolean) => void;
   setZoom?: (level: number) => void;
 }

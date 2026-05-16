@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 // scripts/verify-codegen-idempotency.mjs
 // verify generated files match what generators produce
-// run AFTER generators (pretest pipeline) to catch stale committed files
-// exit code 0 = all generated files are up to date
-// exit code 1 = generated files are out of date (re-run generators)
+// run after generators to catch stale committed files
 
 import { execSync } from 'node:child_process';
 

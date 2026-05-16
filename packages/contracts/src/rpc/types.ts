@@ -8,8 +8,13 @@ import type {
   PreviewError,
   NextraPageMeta,
 } from '../preview';
-import type { SourceLineHighlightColorValue } from '../config';
+import type {
+  PreviewScrollSyncValue,
+  SourceLineHighlightColorValue,
+} from '../config';
 import type { WebviewThemeState } from '../themes';
+
+export type PreviewSourceLineReportResult = 'accepted' | 'ignored' | 'retry';
 
 // extension-exposed RPC methods
 export interface ExtensionRPC {
@@ -29,6 +34,8 @@ export interface ExtensionRPC {
     column?: number
   ): Promise<void>;
   openPreview(relativePath: string): Promise<void>;
+  openSourceLine(line: number): Promise<void>;
+  reportPreviewSourceLine(line: number): Promise<PreviewSourceLineReportResult>;
   renderPlantUml(code: string): Promise<string | undefined>;
 }
 
@@ -56,6 +63,8 @@ export interface WebviewRPC {
   setNextraMeta(meta: NextraPageMeta): void;
   setSourceLineHighlight(enabled: boolean): void;
   setSourceLineHighlightColor(mode: SourceLineHighlightColorValue): void;
+  setScrollSync(mode: PreviewScrollSyncValue): void;
+  scrollToLine(line: number): void;
   setShimSideRail(enabled: boolean): void;
   setZoom(level: number): void;
   getExportableHtml(): Promise<string>;

@@ -1,10 +1,6 @@
 // packages/extension-host/src/shared/utils/path-utils.ts
 // centralized path manipulation utilities for cross-platform compatibility
-//
-// key conventions
-// - all import paths use forward slashes (even on Windows)
-// - relative import paths start w/ './' or '../'
-// - absolute paths are platform-native (use path.sep)
+// import paths use forward slashes; absolute paths stay platform-native
 
 import * as path from 'path';
 import * as fs from 'fs';

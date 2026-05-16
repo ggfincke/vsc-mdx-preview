@@ -52,14 +52,8 @@ function getBannerKey(trustState: TrustState): string | null {
     : 'restricted:unknown';
 }
 
-// trust banner component - display warning banner in Safe Mode w/ actions to enable Trusted Mode
-//
-// states
-// - Safe Mode (untrusted workspace): show warning w/ "Manage Trust" button
-// - Safe Mode (scripts disabled): show info w/ "Enable Scripts" button
-// - Trusted Mode: hidden (no banner needed)
-//
-// wrapped w/ React.memo to prevent re-renders when parent updates but trust state unchanged
+// trust banner for Safe Mode trust & script actions
+// wrapped w/ React.memo to avoid parent-driven re-renders
 export const TrustBanner = memo(
   function TrustBanner({ trustState, dismissible = true }: TrustBannerProps) {
     const [dismissedBannerKey, setDismissedBannerKey] = useState<string | null>(

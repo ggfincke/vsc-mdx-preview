@@ -1,12 +1,12 @@
 // packages/extension-host/src/shared/config/types.ts
 // type definitions for configuration management
-// note: SettingKey & SettingTypes are defined in ConfigManager.ts (canonical source)
-// & imported directly from there - they are NOT re-exported here to avoid duplication
+// SettingKey & SettingTypes stay canonical in ConfigManager.ts
 
 import type * as vscode from 'vscode';
 import type {
   CodeBlockTheme,
   FrameworkId,
+  PreviewScrollSyncValue,
   PreviewTheme,
   SecurityPolicyValue,
   SourceLineHighlightColorValue,
@@ -23,6 +23,7 @@ import type {
 // Re-export shared types for convenience
 export type {
   SecurityPolicyValue,
+  PreviewScrollSyncValue,
   TailwindEnabledValue,
   UnknownBehaviorValue,
   UpdateModeValue,
@@ -87,6 +88,7 @@ export interface ResolvedConfig {
 export interface PreviewRuntimeConfig {
   sourceLineHighlight: boolean;
   sourceLineHighlightColor: SourceLineHighlightColorValue;
+  scrollSync: PreviewScrollSyncValue;
   shimSideRail: boolean;
 }
 

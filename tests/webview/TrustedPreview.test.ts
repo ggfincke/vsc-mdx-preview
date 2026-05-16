@@ -1,7 +1,5 @@
 // tests/webview/TrustedPreview.test.ts
-// tests/webview/features/preview/trusted/TrustedPreview.test.ts
 // unit tests for trusted preview rendering & export resolution
-//
 // @vitest-environment jsdom
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

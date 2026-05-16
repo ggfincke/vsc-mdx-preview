@@ -689,6 +689,48 @@ Command Palette > Developer: Reload Window
 
 ---
 
+## Editor ↔ Preview Sync Issues
+
+### "Scroll sync isn't doing anything"
+
+**Cause:** `mdx-preview.preview.scrollSync` defaults to `"off"`.
+
+**Solution:** Set it to one of `"editorToPreview"`, `"previewToEditor"`, or `"bidirectional"`:
+
+```json
+{
+  "mdx-preview.preview.scrollSync": "bidirectional"
+}
+```
+
+The setting takes effect immediately; no reload required.
+
+### "Some blocks don't sync"
+
+Sync relies on `data-source-line` annotations from the MDX compiler. Custom React components rendered in Trusted Mode may not emit these annotations, so the preview anchor falls back to the nearest annotated block. Stick with standard MDX block structures (paragraphs, headings, lists, tables, code blocks, callouts) when you want precise sync.
+
+### "Preview snaps to the wrong place"
+
+The sync target lands at the top-third reading band (~35% from the top of the viewport), not at the very top or center. If the preview seems to jump too far up or down, confirm you're scrolling using either real scroll input (wheel, trackpad, keyboard) or the editor's visible range — programmatic jumps from extensions outside MDX Preview can fire visible-range events that compete with sync.
+
+### "Cmd/Ctrl+Click does nothing"
+
+**Causes & fixes:**
+
+1. You clicked a native interactive element (link, button, form control, `<details>`, `[role="button"]`, contenteditable). Source-line navigation intentionally defers to native behavior on those elements.
+2. The block has no `data-source-line` annotation. This happens for custom components in Trusted Mode that don't preserve the annotation.
+3. The preview is in an error state. Check the Output panel for a `[RPC_WEBVIEW]` warning like `Failed to open source line`.
+
+### "Editor and preview keep fighting each other in bidirectional mode"
+
+The sync uses short suppression windows on both sides to break feedback loops. If you still see oscillation:
+
+1. Confirm only one preview is open for the document
+2. Reload the window (`Developer: Reload Window`) — stale schedulers from a crashed webview can occasionally outlive the preview
+3. As a workaround, switch temporarily to `editorToPreview` or `previewToEditor`
+
+---
+
 ## Remote Development Issues
 
 ### "Trusted Mode not available"

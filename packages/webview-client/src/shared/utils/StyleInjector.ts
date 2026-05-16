@@ -1,12 +1,6 @@
 // packages/webview-client/src/shared/utils/StyleInjector.ts
 // unified CSS injection utility for webview
-//
-// ARCHITECTURE NOTE
-// StyleInjector is a pure DOM manipulation layer - the authoritative source
-// of truth for which styles have been injected is ModuleRegistry (from
-// mdx-forge/browser), which has reference counting & LRU eviction -
-// callers should check ModuleRegistry before calling injectModuleCss()
-// to avoid duplicate injection
+// pure DOM layer; ModuleRegistry owns injected module-style truth
 
 export interface StyleInjectorOptions {
   // deduplication flag
@@ -29,9 +23,8 @@ export const STYLE_IDS = {
 } as const;
 
 // centralized style injection manager
-// handle module CSS, theme CSS, custom CSS, & Tailwind CSS w/ proper ordering
-// for module CSS specifically, ModuleRegistry is the authoritative tracker
-// call registry.hasInjectedStyle() before calling injectModuleCss()
+// handle module, theme, custom & Tailwind CSS w/ proper ordering
+// ModuleRegistry remains authoritative for module CSS tracking
 class StyleInjectorImpl {
   // track non-module injected style IDs for deduplication (themes, custom CSS, etc.)
   private injectedIds = new Set<string>();
@@ -94,9 +87,7 @@ class StyleInjectorImpl {
   }
 
   // inject CSS for a module (uses data-module-id attribute pattern)
-  // IMPORTANT: callers must check ModuleRegistry.hasInjectedStyle() before calling
-  // this method to avoid duplicate injection - ModuleRegistry is the authoritative
-  // source of truth for module style tracking
+  // callers check ModuleRegistry.hasInjectedStyle() before injection
   injectModuleCss(moduleId: string, css: string): void {
     const style = document.createElement('style');
     style.setAttribute('data-module-id', moduleId);

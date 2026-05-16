@@ -40,6 +40,9 @@ export {
   isPreviewError,
   formatTrustStateForDebug,
   type NextraPageMeta,
+  SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
+  SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS,
+  SOURCE_LINE_SCROLL_SYNC_SETTLE_MS,
 } from './preview';
 
 // module error types
@@ -83,7 +86,11 @@ export {
 } from './themes';
 
 // RPC interface contracts
-export type { ExtensionRPC, WebviewRPC } from './rpc';
+export type {
+  ExtensionRPC,
+  PreviewSourceLineReportResult,
+  WebviewRPC,
+} from './rpc';
 
 // logging types & tags
 export {
@@ -109,6 +116,9 @@ export {
   UPDATE_MODE_VALUES,
   SECURITY_POLICY_VALUES,
   SOURCE_LINE_HIGHLIGHT_COLOR_VALUES,
+  PREVIEW_SCROLL_SYNC_VALUES,
+  isEditorToPreviewMode,
+  isPreviewToEditorMode,
   DEFAULT_PREVIEW_UPDATE_MODE,
   DEFAULT_PREVIEW_DEBOUNCE_DELAY_MS,
   DEFAULT_PREVIEW_ENABLE_SCRIPTS,
@@ -124,6 +134,7 @@ export {
   DEFAULT_AUTO_THEME,
   DEFAULT_SOURCE_LINE_HIGHLIGHT,
   DEFAULT_SOURCE_LINE_HIGHLIGHT_COLOR,
+  DEFAULT_PREVIEW_SCROLL_SYNC,
   DEFAULT_SHIM_SIDE_RAIL,
   DEFAULT_DIAGRAMS_PLANTUML_SERVER,
   DEFAULT_USE_SUCRASE_TRANSPILER,
@@ -145,6 +156,7 @@ export {
   type UpdateModeValue,
   type SecurityPolicyValue,
   type SourceLineHighlightColorValue,
+  type PreviewScrollSyncValue,
   FRONTMATTER_OVERRIDES,
   FRONTMATTER_OVERRIDE_MAP,
   type FrontmatterOverrideDescriptor,

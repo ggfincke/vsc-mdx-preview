@@ -1,13 +1,17 @@
 // packages/extension-host/src/app/workspace-events.ts
 // initialize workspace event handlers for preview updates & folder changes
 
-import { workspace, ExtensionContext } from 'vscode';
+import { workspace, window, ExtensionContext } from 'vscode';
 
 import { createTaggedLogger } from '../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { getPreviewManager, getConfigManager } from './services';
 import { handleDidChangeWorkspaceFolders } from '../features/module-runtime/security/checkFsPath';
 import { PREVIEW_CONFIG_KEYS } from '../shared/config';
+import {
+  disposeEditorPreviewScrollSync,
+  handleEditorVisibleRangesChange,
+} from '../features/preview/scroll-sync';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.WORKSPACE);
@@ -62,4 +66,15 @@ export function initWorkspaceHandlers(context: ExtensionContext): void {
       handleDidChangeWorkspaceFolders();
     })
   );
+
+  // handle editor scroll changes for opt-in preview sync
+  const editorScrollSubscription = window.onDidChangeTextEditorVisibleRanges(
+    handleEditorVisibleRangesChange
+  );
+  context.subscriptions.push({
+    dispose: () => {
+      editorScrollSubscription.dispose();
+      disposeEditorPreviewScrollSync();
+    },
+  });
 }

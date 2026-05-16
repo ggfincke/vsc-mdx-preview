@@ -1,7 +1,5 @@
 // packages/runtime-utils/src/cache/content-hash-cache.ts
-// LRU cache w/ content hash validation - extends LRUCache to validate entries
-// by content hash before returning; useful for caching computed results based
-// on file content where the file may have changed since caching
+// LRU cache extension that validates cached entries by content hash
 
 import { LRUCache, type LRUCacheOptions } from './lru-cache';
 

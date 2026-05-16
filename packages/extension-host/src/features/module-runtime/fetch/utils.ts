@@ -18,10 +18,8 @@ let hasWarnedAboutCoreModules = false;
 // track all core modules used in current preview (for debug output)
 const usedCoreModules = new Set<string>();
 
-// node.js core modules that cannot be shimmed in a browser environment
-// return noop module when requested
-// https://github.com/calvinmetcalf/rollup-plugin-node-builtins
-// license: MIT except ES6 ports of browserify modules
+// node.js core modules that cannot be shimmed in browser runtime
+// return noop modules for rollup-plugin-node-builtins cases
 const UNSHIMMABLE_CORE_MODULES = new Set([
   'dns',
   'dgram',

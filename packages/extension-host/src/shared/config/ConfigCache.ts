@@ -1,7 +1,5 @@
 // packages/extension-host/src/shared/config/ConfigCache.ts
-// encapsulate config cache state for proper lifecycle management
-// use LRUCache for automatic eviction while preserving the distinction
-// between "not cached" (undefined) & "cached as no config" (null)
+// lifecycle-managed config cache preserving missing vs no-config state
 
 import * as path from 'path';
 import { createTaggedLogger } from '../logging/logger';
@@ -26,11 +24,8 @@ interface CacheWrapper {
 }
 
 // * manage cache & file watchers for MDX preview config files
-// encapsulate the global state from ConfigResolver
-// configCache: Map of directory -> resolved config (w/ LRU eviction)
-// configWatchers: track config path -> watcher instance
-// configChangeSubscribers: Set of callbacks for config changes
-// register w/ ServiceRegistry for proper disposal
+// stores resolved configs, config watchers & change subscribers
+// registered w/ ServiceRegistry for proper disposal
 export class ConfigCache extends WithSubscribers<
   ConfigCache,
   ConfigChangeEvent
@@ -70,10 +65,7 @@ export class ConfigCache extends WithSubscribers<
     this.cache.set(dir, { config });
   }
 
-  // invalidate cache entries affected by a config file change
-  // remove all entries where
-  // - The entry's configPath matches the changed file
-  // - The cached directory is w/in the changed config's directory
+  // invalidate entries for changed config path or child cached directories
   invalidate(configPath: string): void {
     const configDir = path.dirname(configPath);
 

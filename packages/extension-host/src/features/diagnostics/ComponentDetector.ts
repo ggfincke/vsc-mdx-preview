@@ -191,11 +191,7 @@ function isHtmlElement(name: string): boolean {
 function extractImports(esmValue: string): Map<string, string> {
   const imports = new Map<string, string>();
 
-  // match import statements
-  // import Foo from 'path'
-  // import { Foo, Bar } from 'path'
-  // import { Foo as Baz } from 'path'
-  // import * as Foo from 'path'
+  // match default, named, aliased & namespace import statements
   const importRegex =
     /import\s+(?:(\w+)|(?:\{([^}]+)\})|(?:\*\s+as\s+(\w+)))\s+from\s+['"]([^'"]+)['"]/g;
 

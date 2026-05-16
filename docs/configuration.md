@@ -42,6 +42,7 @@ All settings are prefixed with `mdx-preview.` in `settings.json`.
 | `preview.mdx.customLayoutFilePath` | string  | `""`          | Path to a global custom MDX layout component                              |
 | `preview.sourceLineHighlight`      | boolean | `true`        | Highlight rendered blocks by source line on hover                         |
 | `preview.sourceLineHighlightColor` | string  | `"dependent"` | Highlight color mode: `"dependent"`, `"white"`, `"black"`, `"auto"`       |
+| `preview.scrollSync`               | string  | `"off"`       | Scroll sync: `"off"`, `"editorToPreview"`, `"previewToEditor"`, `"bidirectional"` |
 | `preview.shimSideRail`             | boolean | `true`        | Show the framework shim side rail when applicable                         |
 
 ### Theme Settings
@@ -236,6 +237,37 @@ There are 24 code block themes:
 
 ---
 
+## Editor ↔ Preview Sync
+
+Two coordinated features keep the editor view and rendered preview aligned. Both rely on `data-source-line` annotations emitted by the MDX compiler and only act on blocks the compiler can map (paragraphs, headings, lists, tables, code blocks, callouts, and so on).
+
+### Scroll Sync Modes
+
+| Mode               | What it does                                                                                          |
+| ------------------ | ----------------------------------------------------------------------------------------------------- |
+| `off` _(default)_  | Scrolling the editor or preview has no effect on the other side.                                      |
+| `editorToPreview`  | When the editor's visible source line changes, the preview scrolls the matching block into view.     |
+| `previewToEditor`  | While the preview scrolls, the editor reveals the source line for the block under the reading anchor. |
+| `bidirectional`    | Both directions, with mutual suppression so the two sides do not bounce off each other.              |
+
+**Reading anchor.** Sync uses the top-third reading band (~35% from the top of the viewport) as the anchor point. The mapped line lands at the anchor rather than snapping to vertical center, so the line you were last looking at stays roughly where your eye already is.
+
+**Suppression windows.** When one side initiates a sync, the other side ignores its own scroll events for a short settle window. This prevents oscillation in `bidirectional` mode and after extension-driven editor moves (such as `Cmd/Ctrl+Click` navigation).
+
+**Lifecycle.**
+
+- Scroll sync state is tracked per `Preview` and disposed when the preview is closed.
+- Toggling the setting at runtime is honored without reloading. Switching to a mode that includes `editorToPreview` immediately scrolls the preview to the currently visible editor line.
+- Changes survive webview reloads; cached "last dispatched line" state is reset so the same line can be re-sent against the fresh DOM.
+
+### Cmd/Ctrl+Click Preview Navigation
+
+Hold `Cmd` (macOS) or `Ctrl` (Windows/Linux) and left-click a rendered preview block to open the editor at the corresponding source line. The click skips elements that own native click behavior — anchors, buttons, form controls, `<details>`/`<summary>`, and anything with `[role="button"]` or `contenteditable` — so links, toggles, and form fields keep working.
+
+This navigation is always available regardless of the `scrollSync` mode and is enabled in both Safe and Trusted Mode.
+
+---
+
 ## Practical Examples
 
 ### Minimal Trusted Mode
@@ -255,6 +287,16 @@ There are 24 code block themes:
   "mdx-preview.preview.shimSideRail": true
 }
 ```
+
+### Bidirectional Scroll Sync
+
+```json
+{
+  "mdx-preview.preview.scrollSync": "bidirectional"
+}
+```
+
+See [Editor ↔ Preview Sync](#editor--preview-sync) for the full behavior of each mode.
 
 ### Docusaurus Project
 

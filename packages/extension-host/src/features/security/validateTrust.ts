@@ -67,9 +67,7 @@ function tryRequire<T>(
 }
 
 // non-throwing trust check for document-specific operations
-// return TrustState on success, undefined on TrustError
-// invoke optional callback w/ error before returning undefined
-// rethrow non-TrustError exceptions
+// return TrustState or invoke callback & return undefined on TrustError
 export function tryRequireTrustedModeForDocument(
   docUri: vscode.Uri,
   operation: string,
@@ -82,9 +80,7 @@ export function tryRequireTrustedModeForDocument(
 }
 
 // non-throwing trust check for general operations
-// return TrustState on success, undefined on TrustError
-// invoke optional callback w/ error before returning undefined
-// rethrow non-TrustError exceptions
+// return TrustState or invoke callback & return undefined on TrustError
 export function tryRequireTrustedMode(
   operation: string,
   onTrustError?: (error: TrustError) => void

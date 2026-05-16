@@ -1,9 +1,12 @@
 // packages/webview-client/src/features/preview/safe/SafePreview.tsx
 // render pre-sanitized HTML in Safe Mode (no JavaScript execution)
 
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useLayoutEffect } from 'react';
 import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
+import { usePreviewScrollSync } from '../shared/hooks/usePreviewScrollSync';
 import { useSourceLineHighlight } from '../shared/hooks/useSourceLineHighlight';
+import { openSourceLine } from '../shared/utils/openSourceLine';
+import { flushPendingScrollToSourceLine } from '../shared/utils/scrollToSourceLine';
 import { useSafeModeProcessing } from './hooks/useSafeModeProcessing';
 import { useKatexDetection } from '../../code-block/hooks/useKatexDetection';
 import { useCodeBlockEnhancement } from '../../code-block/hooks/useCodeBlockEnhancement';
@@ -19,7 +22,7 @@ interface SafePreviewRendererProps {
 // wrapped w/ React.memo to prevent unnecessary re-renders
 export const SafePreviewRenderer = memo(
   function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
-    const { sourceLineHighlightEnabled } = useUIFlags();
+    const { sourceLineHighlightEnabled, scrollSyncMode } = useUIFlags();
 
     // shared preview setup (container ref, diagram rendering, image lightbox)
     const { containerRef, handleImageClick, renderPortals } = usePreviewSetup({
@@ -30,6 +33,10 @@ export const SafePreviewRenderer = memo(
     // sanitize & inject Safe Mode HTML
     useSafeModeProcessing(containerRef, html);
 
+    useLayoutEffect(() => {
+      flushPendingScrollToSourceLine();
+    }, [html]);
+
     // enhance Shiki code blocks w/ copy buttons & language badges
     useCodeBlockEnhancement({ containerRef, trigger: html });
 
@@ -38,6 +45,13 @@ export const SafePreviewRenderer = memo(
       containerRef,
       trigger: html,
       enabled: sourceLineHighlightEnabled,
+      onOpenSourceLine: openSourceLine,
+    });
+
+    usePreviewScrollSync({
+      containerRef,
+      trigger: html,
+      mode: scrollSyncMode,
     });
 
     // lazy-load KaTeX CSS when math content is detected (string-based detection)

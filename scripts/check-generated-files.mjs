@@ -1,9 +1,6 @@
 // scripts/check-generated-files.mjs
 // check that auto-generated files only exist in allowed directories
 // & that all expected generated files are present
-// scan the filesystem (tracked + untracked files) for *.ts & *.tsx
-// exit code 0 = all generated files are in allowed locations & all expected files exist
-// exit code 1 = generated files found in unexpected locations or expected files missing
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
@@ -74,7 +71,9 @@ function checkExpectedFiles(rootDir) {
     const content = readFileSync(absolutePath, 'utf-8');
     const firstLine = content.split(/\r?\n/, 1)[0]?.trim() ?? '';
     if (!firstLine.startsWith(HEADER)) {
-      missing.push(`${expectedFile} (exists but missing AUTO-GENERATED header)`);
+      missing.push(
+        `${expectedFile} (exists but missing AUTO-GENERATED header)`
+      );
     }
   }
 

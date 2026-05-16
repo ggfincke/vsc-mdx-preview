@@ -4,6 +4,10 @@
 import { performance } from 'perf_hooks';
 import * as vscode from 'vscode';
 import { Preview } from '../../features/preview/preview-manager';
+import {
+  handlePreviewSourceLineReport,
+  suppressEditorScrollSync,
+} from '../../features/preview/scroll-sync';
 import { fetchLocal } from '../../features/module-runtime/fetch/fetchLocal';
 import {
   getTrustManager,
@@ -34,7 +38,11 @@ import {
 } from '../../features/security/pathSecurity';
 import { MAX_FETCH_REQUEST_LENGTH } from '../../shared/constants';
 import { isValidModuleRequest } from '@mdx-preview/runtime-utils';
-import type { ExtensionRPC, FetchResult } from '@mdx-preview/contracts';
+import type {
+  ExtensionRPC,
+  FetchResult,
+  PreviewSourceLineReportResult,
+} from '@mdx-preview/contracts';
 
 // allowed URL schemes for openExternal
 const ALLOWED_EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
@@ -307,6 +315,60 @@ class ExtensionHandle implements ExtensionRPC {
         ErrorContext.Extension
       );
     }
+  }
+
+  // open the preview's own source document in the editor at the given line
+  // (cmd+click on a preview element wires through here)
+  async openSourceLine(line: number): Promise<void> {
+    const validLine = validateNumber(line, 'line number', {
+      context: 'openSourceLine',
+      min: 1,
+      integer: true,
+    });
+    if (validLine === undefined) {
+      return;
+    }
+
+    if (!this.preview.active) {
+      return;
+    }
+
+    // pre-suppress editor->preview sync: showTextDocument fires
+    // onDidChangeTextEditorVisibleRanges which would otherwise bounce back
+    suppressEditorScrollSync(this.preview);
+
+    const lineIndex = validLine - 1;
+    const position = new vscode.Position(lineIndex, 0);
+    const selection = new vscode.Range(position, position);
+
+    try {
+      await vscode.window.showTextDocument(this.preview.doc, {
+        selection,
+        preserveFocus: false,
+      });
+    } catch (error) {
+      log.warn('openSourceLine: failed to show document', error);
+    }
+
+    // re-arm suppression after the await: if showTextDocument latency outran
+    // the 120ms window the visible-range event has yet to fire, & we still
+    // want the resulting editor->preview bounce-back suppressed
+    suppressEditorScrollSync(this.preview);
+  }
+
+  async reportPreviewSourceLine(
+    line: number
+  ): Promise<PreviewSourceLineReportResult> {
+    const validLine = validateNumber(line, 'line number', {
+      context: 'reportPreviewSourceLine',
+      min: 1,
+      integer: true,
+    });
+    if (validLine === undefined) {
+      return 'ignored';
+    }
+
+    return handlePreviewSourceLineReport(this.preview, validLine);
   }
 
   // proxy PlantUML rendering via extension host (avoids CORS in webview)

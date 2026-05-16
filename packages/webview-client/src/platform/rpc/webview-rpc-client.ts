@@ -26,6 +26,7 @@ import { createRpcRegistration } from './rpc-registration';
 import { loadModuleSystem } from './module-system-loader';
 import { canAcceptContentMode } from './content-mode-guard';
 import { createExportableHtml } from './export-html';
+import { scheduleScrollToSourceLine } from '../../features/preview/shared/utils/scrollToSourceLine';
 
 const log = createTaggedLogger(LogTags.RPC_WEBVIEW);
 
@@ -102,6 +103,7 @@ const optionalHandlers = buildOptionalHandlers(
     'setNextraMeta',
     'setSourceLineHighlight',
     'setSourceLineHighlightColor',
+    'setScrollSync',
     'setShimSideRail',
     'setZoom',
   ],
@@ -157,6 +159,7 @@ class RPCWebviewHandle implements WebviewRPC {
   setNextraMeta = optionalHandlers.setNextraMeta;
   setSourceLineHighlight = optionalHandlers.setSourceLineHighlight;
   setSourceLineHighlightColor = optionalHandlers.setSourceLineHighlightColor;
+  setScrollSync = optionalHandlers.setScrollSync;
   setShimSideRail = optionalHandlers.setShimSideRail;
   setZoom = optionalHandlers.setZoom;
 
@@ -211,6 +214,11 @@ class RPCWebviewHandle implements WebviewRPC {
       .catch((err) => {
         log.error('Failed to load generic shims:', err);
       });
+  }
+
+  scrollToLine(line: number): void {
+    log.debug(`scrollToLine called: ${line}`);
+    scheduleScrollToSourceLine(line);
   }
 
   async invalidate(fsPath: string): Promise<void> {
@@ -305,6 +313,12 @@ export const ExtensionHandle: ExtensionHandle = {
   },
   openPreview(relativePath: string) {
     return getInitializedExtensionHandle().openPreview(relativePath);
+  },
+  openSourceLine(line: number) {
+    return getInitializedExtensionHandle().openSourceLine(line);
+  },
+  reportPreviewSourceLine(line: number) {
+    return getInitializedExtensionHandle().reportPreviewSourceLine(line);
   },
   renderPlantUml(code: string) {
     return getInitializedExtensionHandle().renderPlantUml(code);
