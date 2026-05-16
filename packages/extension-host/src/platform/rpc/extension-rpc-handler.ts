@@ -217,10 +217,7 @@ class ExtensionHandle implements ExtensionRPC {
       `openDocument: ${relativePath}${line ? `:${line}` : ''}${column ? `:${column}` : ''}`
     );
 
-    const validPath = this.validateRelativePath(
-      relativePath,
-      'openDocument'
-    );
+    const validPath = this.validateRelativePath(relativePath, 'openDocument');
     if (!validPath) {
       return;
     }

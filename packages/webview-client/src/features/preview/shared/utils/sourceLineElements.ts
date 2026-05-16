@@ -143,11 +143,7 @@ export function collectSourceLineEntries(
 
   collectMappedSourceLineTargets(container).forEach(
     ({ highlightElement, targetElement, sourceLine }) => {
-      registerHighlightElement(
-        highlightElement,
-        targetElement,
-        sourceLine
-      );
+      registerHighlightElement(highlightElement, targetElement, sourceLine);
     }
   );
 

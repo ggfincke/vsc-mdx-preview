@@ -265,10 +265,7 @@ export function extractMDXSymbols(
   visit(tree, 'mdxjsEsm', (node) => {
     const esmNode = node as unknown as MdxjsEsmNode;
     if (esmNode.position) {
-      const range = toDocumentRange(
-        esmNode.position,
-        frontmatterLineOffset
-      );
+      const range = toDocumentRange(esmNode.position, frontmatterLineOffset);
       esmNodes.push({ value: esmNode.value, range });
     }
   });
@@ -283,10 +280,7 @@ export function extractMDXSymbols(
   visit(tree, 'heading', (node) => {
     const heading = node as unknown as HeadingNode;
     if (heading.position) {
-      const range = toDocumentRange(
-        heading.position,
-        frontmatterLineOffset
-      );
+      const range = toDocumentRange(heading.position, frontmatterLineOffset);
       headings.push({
         depth: heading.depth,
         text: extractHeadingText(heading.children),
