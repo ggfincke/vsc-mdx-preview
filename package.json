@@ -793,20 +793,20 @@
     "version": "node scripts/check-changelog.mjs && git add CHANGELOG.md"
   },
   "devDependencies": {
-    "@eslint/js": "^9.0.0",
+    "@eslint/js": "^10.0.0",
     "@types/babel__core": "^7.20.5",
     "@types/lodash.debounce": "^4.0.9",
-    "@types/node": "^20.0.0",
+    "@types/node": "^25.0.0",
     "@types/vscode": "1.90.0",
     "@vscode/test-electron": "^2.3.0",
     "@vscode/vsce": "^3.9.1",
     "concurrently": "^9.1.0",
     "dependency-cruiser": "^17.4.0",
     "esbuild": "^0.28.0",
-    "eslint": "^9.0.0",
+    "eslint": "^10.0.0",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
-    "katex": "^0.16.45",
+    "katex": "^0.17.0",
     "prettier": "^3.8.3",
     "sass": "^1.99.0",
     "tsx": "^4.19.2",
@@ -853,7 +853,7 @@
     "unifiedjs.vscode-mdx"
   ],
   "overrides": {
-    "@types/node": "^20.0.0",
+    "@types/node": "^25.0.0",
     "comlink": "^4.4.1",
     "lodash-es": "4.18.1"
   },
