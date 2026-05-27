@@ -20,7 +20,7 @@ module.exports = {
   },
 
   create(context) {
-    const filename = context.getFilename();
+    const filename = context.filename;
 
     // Allow in ConfigManager.ts itself (the authorized location)
     if (filename.includes('ConfigManager.ts')) {

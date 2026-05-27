@@ -18,7 +18,11 @@ const log = createTaggedLogger(LogTags.RESOLVER);
 
 // shared cached file system for all resolvers
 // exported for subsystem disposal (resolver-subsystem.ts)
-export const cachedFs = new CachedInputFileSystem(fs, RESOLVER_CACHE_TTL_MS);
+// cast: @types/node 25 fs type no longer matches enhanced-resolve BaseFileSystem (runtime-safe)
+export const cachedFs = new CachedInputFileSystem(
+  fs as unknown as ConstructorParameters<typeof CachedInputFileSystem>[0],
+  RESOLVER_CACHE_TTL_MS
+);
 
 // resolver mode determines the resolution strategy
 type ResolverMode = 'browser' | 'node';
