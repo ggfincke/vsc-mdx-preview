@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-05-26
+
+### Fixed
+
+- **Security**: Bump transitive `tmp` 0.2.5 -> 0.2.6 to clear the high-severity advisory (path traversal via unsanitized prefix/postfix — GHSA-ph9p-34f9-6g65)
+
+### Changed
+
+- **Dependencies** (root): `mdx-forge` ^0.4.3 -> ^0.4.4, `typescript-eslint` ^8.59.2 -> ^8.60.0; `@babel/core`, `@babel/plugin-proposal-export-default-from`, `@babel/preset-env`, `@babel/preset-react` lockfile bumps to 7.29.7
+- **Dependencies** (webview-client): `mdx-forge` ^0.4.3 -> ^0.4.4, `typescript-eslint` ^8.59.2 -> ^8.60.0, `dompurify` ^3.4.2 -> ^3.4.6
+- **Dependencies** (extension-host, codegen): `mdx-forge` ^0.4.3 -> ^0.4.4
+
 ## [1.4.0] - 2026-05-16
 
 ### Added
