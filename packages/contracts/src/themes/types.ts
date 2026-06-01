@@ -56,6 +56,20 @@ export type CodeBlockTheme =
   | 'vue'
   | 'xonokai';
 
+// mermaid icon pack as configured in settings
+// source is a workspace-relative or absolute path to an Iconify JSON file
+export interface MermaidIconPackSetting {
+  name: string;
+  source: string;
+}
+
+// mermaid icon pack after the host has read & parsed its JSON
+// ready to send to the webview for registerIconPacks
+export interface ResolvedMermaidIconPack {
+  name: string;
+  icons: unknown;
+}
+
 // theme state sent from extension to webview
 export interface WebviewThemeState {
   previewTheme: PreviewTheme;
@@ -63,4 +77,5 @@ export interface WebviewThemeState {
   mermaidTheme: MermaidTheme;
   isLight: boolean;
   plantUmlServer: string;
+  mermaidIconPacks: ResolvedMermaidIconPack[];
 }

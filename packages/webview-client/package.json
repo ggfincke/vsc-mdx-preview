@@ -12,6 +12,7 @@
     "lint:fix": "eslint src --fix"
   },
   "dependencies": {
+    "@iconify-json/logos": "^1.2.0",
     "@mdx-js/react": "^3.0.0",
     "@mdx-preview/contracts": "*",
     "@mdx-preview/runtime-utils": "*",

@@ -75,6 +75,8 @@ export {
   type MermaidTheme,
   type CodeBlockTheme,
   type WebviewThemeState,
+  type MermaidIconPackSetting,
+  type ResolvedMermaidIconPack,
   MERMAID_THEMES,
   isLightPreviewTheme,
   PREVIEW_THEMES,

@@ -23,6 +23,7 @@ export {
 
 import type {
   CodeBlockTheme,
+  MermaidIconPackSetting,
   MermaidTheme,
   PreviewTheme,
 } from '@mdx-preview/contracts';
@@ -34,4 +35,5 @@ export interface ThemeConfiguration {
   mermaidTheme: MermaidTheme;
   autoTheme: boolean;
   plantUmlServer: string;
+  mermaidIconPacks: MermaidIconPackSetting[];
 }

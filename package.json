@@ -582,6 +582,29 @@
           "markdownDescription": "PlantUML rendering server URL. Supports Kroki (`https://kroki.io`) and compatible PlantUML servers.",
           "scope": "resource"
         },
+        "mdx-preview.diagrams.mermaidIconPacks": {
+          "type": "array",
+          "default": [],
+          "markdownDescription": "Icon packs for Mermaid `architecture-beta` diagrams. Each entry registers an [Iconify](https://iconify.design) JSON pack from a local file, referenced in diagrams as `name:icon` (e.g. `aws:Lambda`). The `logos` pack (AWS service logos) is built in.",
+          "scope": "resource",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "source"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "markdownDescription": "Pack name used as the icon prefix in diagrams (e.g. `aws` → `aws:Lambda`)."
+              },
+              "source": {
+                "type": "string",
+                "markdownDescription": "Path to an Iconify JSON file. Relative paths resolve against the workspace folder."
+              }
+            }
+          }
+        },
         "mdx-preview.framework": {
           "type": "string",
           "enum": [

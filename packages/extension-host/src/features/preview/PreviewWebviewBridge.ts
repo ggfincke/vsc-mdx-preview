@@ -8,9 +8,14 @@ import { LogTags } from '@mdx-preview/contracts';
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.PREVIEW);
 import { getThemeManager } from '../../app/services';
+import { resolveMermaidIconPacks } from '../themes/IconPackResolver';
 import { DocumentTracker, CustomCssWatcher, WatcherManager } from './watchers';
 import type { WebviewHandleType } from '../../platform/rpc/extension-endpoint';
 import type { PreviewRuntimeConfig } from '../types';
+import type {
+  MermaidIconPackSetting,
+  WebviewThemeState,
+} from '@mdx-preview/contracts';
 
 export type WebviewHandle = WebviewHandleType;
 
@@ -84,8 +89,29 @@ export class PreviewWebviewBridge {
       }
     }
 
-    log.debug('pushThemeState - pushing theme state', themeState);
-    this.webviewHandle.setTheme(themeState);
+    // resolve configured mermaid icon packs (async file reads) then push
+    const iconPackConfig =
+      themeManager.getThemeConfiguration(docUri).mermaidIconPacks;
+    void this.pushThemeStateWithIconPacks(themeState, iconPackConfig, docUri);
+  }
+
+  // resolve icon pack files & send the final theme state to the webview
+  private async pushThemeStateWithIconPacks(
+    themeState: WebviewThemeState,
+    iconPackConfig: MermaidIconPackSetting[],
+    docUri: vscode.Uri
+  ): Promise<void> {
+    const mermaidIconPacks = await resolveMermaidIconPacks(
+      iconPackConfig,
+      docUri
+    );
+    const finalState: WebviewThemeState = { ...themeState, mermaidIconPacks };
+
+    if (!this.webviewHandle) {
+      return;
+    }
+    log.debug('pushThemeState - pushing theme state', finalState);
+    this.webviewHandle.setTheme(finalState);
   }
 
   pushRuntimeConfiguration(runtimeConfig: PreviewRuntimeConfig): void {

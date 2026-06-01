@@ -57,6 +57,7 @@ export class ThemeManager extends WithSubscribers<
       ) as MermaidTheme,
       autoTheme: configManager.get(SETTINGS.AUTO_THEME, docUri),
       plantUmlServer: configManager.get(SETTINGS.PLANTUML_SERVER, docUri),
+      mermaidIconPacks: configManager.get(SETTINGS.MERMAID_ICON_PACKS, docUri),
     };
   }
 
@@ -132,6 +133,8 @@ export class ThemeManager extends WithSubscribers<
       mermaidTheme: config.mermaidTheme,
       isLight: this.isLightTheme(),
       plantUmlServer: config.plantUmlServer,
+      // resolved (file contents read) by PreviewWebviewBridge before sending
+      mermaidIconPacks: [],
     };
   }
 

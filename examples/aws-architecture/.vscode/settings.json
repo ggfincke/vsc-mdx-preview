@@ -1,0 +1,5 @@
+{
+  "mdx-preview.diagrams.mermaidIconPacks": [
+    { "name": "custom", "source": "./icons/sample-pack.json" }
+  ]
+}

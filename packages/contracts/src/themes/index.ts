@@ -6,6 +6,8 @@ export type {
   MermaidTheme,
   CodeBlockTheme,
   WebviewThemeState,
+  MermaidIconPackSetting,
+  ResolvedMermaidIconPack,
 } from './types';
 
 export {
