@@ -67,9 +67,10 @@ export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
         startOnLoad: false,
         theme: mermaidTheme,
         securityLevel: 'strict',
-        // disable HTML labels to produce pure SVG (no foreignObject)
-        // this keeps DOMPurify allowlist tighter
-        flowchart: { htmlLabels: false },
+        // disable HTML labels at the root so node labels render as pure SVG text
+        // the flowchart-scoped flag is deprecated & ignored; mermaid's root
+        // htmlLabels defaults true, so foreignObject leaks through w/o this
+        htmlLabels: false,
         sequence: { useMaxWidth: true },
         // fix ER diagram relationship label contrast
         themeCSS: `
