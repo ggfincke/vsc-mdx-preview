@@ -43,7 +43,7 @@ All settings are prefixed with `mdx-preview.` in `settings.json`.
 | `preview.sourceLineHighlight`      | boolean | `true`        | Highlight rendered blocks by source line on hover                         |
 | `preview.sourceLineHighlightColor` | string  | `"dependent"` | Highlight color mode: `"dependent"`, `"white"`, `"black"`, `"auto"`       |
 | `preview.scrollSync`               | string  | `"off"`       | Scroll sync: `"off"`, `"editorToPreview"`, `"previewToEditor"`, `"bidirectional"` |
-| `preview.shimSideRail`             | boolean | `true`        | Show the framework shim side rail when applicable                         |
+| `preview.shimSideRail`             | boolean | `true`        | Show left side-accent rails on callout and admonition shim blocks         |
 
 ### Theme Settings
 
@@ -54,6 +54,9 @@ All settings are prefixed with `mdx-preview.` in `settings.json`.
 | `preview.mermaidTheme`    | string  | `"default"`          | Mermaid diagram theme                                  |
 | `preview.autoTheme`       | boolean | `true`               | Auto-switch preview theme pairs based on VS Code theme |
 | `diagrams.plantUmlServer` | string  | `"https://kroki.io"` | PlantUML/Kroki server URL                              |
+| `diagrams.mermaidIconPacks` | array | `[]`                 | Iconify icon packs for Mermaid `architecture-beta` diagrams |
+
+Icon packs require a trusted workspace. Each entry is `{ "name": "...", "source": "..." }`, where `source` is a path to a local [Iconify](https://iconify.design) JSON file (relative paths resolve against the workspace folder). Reference icons in `architecture-beta` diagrams as `name:icon` (e.g. `logos:aws-lambda` from the built-in `logos` pack). See the [AWS architecture example](../examples/aws-architecture).
 
 ### Build Settings
 

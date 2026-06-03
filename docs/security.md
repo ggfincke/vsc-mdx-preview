@@ -1,6 +1,6 @@
 # Security Model
 
-> Last security review: 2026-04-24
+> Last security review: 2026-06-03
 
 MDX Preview implements a defense-in-depth security model with two rendering modes to balance functionality with protection. This document covers the trust model, Content Security Policy, Safe Mode, Trusted Mode, and security best practices.
 
@@ -180,11 +180,12 @@ All HTML output is sanitized before rendering:
 
 ```typescript
 import DOMPurify from 'dompurify';
+import { DOMPURIFY_CONFIG } from './security/allowlist';
 
-const sanitized = DOMPurify.sanitize(html, {
-  ADD_ATTR: ['target', 'data-mermaid'],
-  ADD_TAGS: ['mermaid'],
-});
+// DOMPURIFY_CONFIG is a strict explicit allowlist (ALLOWED_TAGS + ALLOWED_ATTR)
+// covering HTML, KaTeX math, and SVG for Mermaid (no foreignObject), with
+// ADD_ATTR: ['target', 'rel'] and protocol filtering via ALLOWED_URI_REGEXP.
+const sanitized = DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
 ```
 
 **3. Strict Content Security Policy**
@@ -322,7 +323,7 @@ export function getCSP(
 }
 ```
 
-The optional `connectSrc` extension list (deduplicated against `webview.cspSource`) is what lets opt-in subsystems such as the PlantUML/Kroki client whitelist their server origin without weakening the rest of the policy.
+The `connectSrc` parameter is a reserved extension point that no current caller supplies, so `connect-src` is always just `webview.cspSource`. PlantUML/Kroki diagrams are rendered by the extension host proxy (`renderPlantUml`, a server-side fetch) to avoid CORS, so the sandboxed webview never connects to the diagram server itself.
 
 ### CSP Directives Explained
 
@@ -365,14 +366,22 @@ CSP can be disabled via `mdx-preview.preview.security: "disabled"`:
 Safe Mode uses DOMPurify with a carefully tuned configuration:
 
 ```typescript
-DOMPurify.sanitize(html, {
-  // Allow target attribute for links
-  ADD_ATTR: ['target', 'data-mermaid', 'data-code-block'],
-  // Allow mermaid custom element
-  ADD_TAGS: ['mermaid'],
-  // Allow data URIs for images
-  ALLOW_DATA_ATTR: true,
-});
+// packages/webview-client/src/features/preview/safe/security/allowlist.ts
+export const DOMPURIFY_CONFIG = {
+  // explicit element allowlist: headings, text, lists, code, links,
+  // tables, KaTeX math, and SVG (no foreignObject)
+  ALLOWED_TAGS: ['h1', 'p', 'a', 'pre', 'code', 'table', 'svg', 'use' /* ... */],
+  // explicit attribute allowlist, incl. diagram data attributes
+  ALLOWED_ATTR: [
+    'href', 'src', 'class', 'xlink:href',
+    'data-mermaid-chart', 'data-mermaid-id',
+    'data-plantuml-code', 'data-graphviz-code',
+    'data-admonition-type', 'data-source-line' /* ... */,
+  ],
+  ADD_ATTR: ['target', 'rel'],
+  ALLOW_UNKNOWN_PROTOCOLS: false,
+  ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+};
 ```
 
 ### What Gets Sanitized
@@ -382,17 +391,17 @@ DOMPurify.sanitize(html, {
 | `<script>` tags | Removed |
 | `onclick` handlers | Removed |
 | `javascript:` URLs | Removed |
-| `data:` URLs (except images) | Removed |
+| `data:` URLs (all) | Removed (blocked by `ALLOWED_URI_REGEXP`) |
 | Unknown attributes | Removed |
-| SVG `<use>` elements | Sanitized |
+| SVG `<use>` elements | Allowed (in `ALLOWED_TAGS`; `xlink:href` permitted) |
+| `<foreignObject>` (e.g. Mermaid HTML labels) | Removed (not in allowlist) |
 
 ### Post-Processing
 
 After sanitization, additional processing occurs:
 
-1. **Link rewriting** - Add `target="_blank"` and `rel="noopener"`
-2. **Image path resolution** - Resolve relative paths to webview URIs
-3. **Code block enhancement** - Add copy buttons and language badges
+1. **Relative URL resolution** - Relative image/link URLs resolve against the base `href` (the document's webview URI) set in the host HTML
+2. **Code block enhancement** - Add copy buttons and language badges
 
 ---
 

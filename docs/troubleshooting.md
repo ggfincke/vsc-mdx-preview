@@ -626,9 +626,9 @@ You can also check the Output panel (View > Output > "MDX Preview") for configur
 
 | Tag               | Meaning                    |
 | ----------------- | -------------------------- |
-| `[TRUST_MANAGER]` | Trust state changes        |
+| `[TRUST-MANAGER]` | Trust state changes        |
 | `[PREVIEW]`       | Preview lifecycle events   |
-| `[MODULE]`        | Module resolution/fetching |
+| `[MODULE-SYSTEM]` | Module resolution/fetching |
 | `[CONFIG]`        | Configuration loading      |
 | `[FRAMEWORK]`     | Framework detection        |
 | `[TAILWIND]`      | Tailwind CSS processing    |
@@ -719,7 +719,7 @@ The sync target lands at the top-third reading band (~35% from the top of the vi
 
 1. You clicked a native interactive element (link, button, form control, `<details>`, `[role="button"]`, contenteditable). Source-line navigation intentionally defers to native behavior on those elements.
 2. The block has no `data-source-line` annotation. This happens for custom components in Trusted Mode that don't preserve the annotation.
-3. The preview is in an error state. Check the Output panel for a `[RPC_WEBVIEW]` warning like `Failed to open source line`.
+3. The preview is in an error state. Check the Output panel for a `[RPC-WEBVIEW]` warning like `Failed to open source line`.
 
 ### "Editor and preview keep fighting each other in bidirectional mode"
 

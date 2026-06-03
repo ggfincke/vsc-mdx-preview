@@ -116,7 +116,7 @@ Aliases also work: `:::abstract`, `:::tldr`, `:::error`, `:::faq`, `:::check`, e
 ````mdx
 ```javascript
 function greet(name) {
-  return \`Hello, \${name}!\`;
+  return `Hello, ${name}!`;
 }
 ```
 ````
@@ -399,9 +399,9 @@ import Details from '@theme/Details';
 </Tabs>
 
 <CodeBlock language="jsx" title="Component.jsx" showLineNumbers>
-  {\`function App() {
+  {`function App() {
   return <div>Hello</div>;
-}\`}
+}`}
 </CodeBlock>
 
 <Details summary="Click to expand">
@@ -871,5 +871,6 @@ const data = await response.json();
 | Tailwind CSS | `className="flex ..."` (Trusted Mode) |
 | MDX transclusion | `import X from './X.mdx'; <X />` (Trusted Mode) |
 | Custom layout | `export default Layout` (Trusted Mode) |
+| Export to HTML | `MDX: Export Preview as HTML` (toolbar or palette) |
 | Config file | `.mdx-previewrc.json` |
 ````

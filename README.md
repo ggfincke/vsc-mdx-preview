@@ -12,7 +12,7 @@ A modern, actively maintained successor to the original [MDX Preview](https://ma
 - **Tailwind CSS** - Built-in Tailwind v4 compilation with auto-detection
 - **Syntax Highlighting** - Shiki-powered code blocks with 100+ languages and 24 themes
 - **Preview Themes** - 16 themes (GitHub, Atom, Solarized, etc.) with auto light/dark switching
-- **Mermaid Diagrams** - Flowcharts, sequence diagrams, state diagrams, and more
+- **Mermaid Diagrams** - Flowcharts, sequence, state, and `architecture-beta` diagrams, with configurable [Iconify](https://iconify.design) icon packs (built-in `logos` pack)
 - **PlantUML Diagrams** - Server-side rendering via configurable PlantUML server
 - **Graphviz Diagrams** - Client-side DOT graph rendering via WASM engine
 - **Math Expressions** - KaTeX for inline (`$...$`) and block (`$$...$$`) math
@@ -151,12 +151,13 @@ See [Security](./docs/security.md) for the full security model.
 | `mdx-preview.preview.sourceLineHighlight`      | `true`               | Highlight rendered blocks by source line on hover           |
 | `mdx-preview.preview.sourceLineHighlightColor` | `"dependent"`        | Highlight color mode: `dependent`, `white`, `black`, `auto` |
 | `mdx-preview.preview.scrollSync`               | `"off"`              | Scroll sync: `off`, `editorToPreview`, `previewToEditor`, `bidirectional` |
-| `mdx-preview.preview.shimSideRail`             | `true`               | Show the framework shim side rail when relevant             |
+| `mdx-preview.preview.shimSideRail`             | `true`               | Show side accent rails on callout/admonition shims          |
 | `mdx-preview.preview.openMdxLinksInPreview`    | `true`               | Open `.mdx` links in preview                                |
 | `mdx-preview.framework.componentShims`         | `true`               | Enable framework component shims                            |
 | `mdx-preview.components.builtins`              | `true`               | Enable built-in component shims                             |
 | `mdx-preview.components.unknownBehavior`       | `"placeholder"`      | Unknown component handling: `strip`, `placeholder`, `raw`   |
 | `mdx-preview.diagrams.plantUmlServer`          | `"https://kroki.io"` | PlantUML server URL                                         |
+| `mdx-preview.diagrams.mermaidIconPacks`        | `[]`                 | Iconify icon packs for Mermaid `architecture-beta` diagrams |
 | `mdx-preview.build.useSucraseTranspiler`       | `false`              | Use Sucrase instead of Babel                                |
 
 This table covers the most common settings. See [Configuration](./docs/configuration.md) for the full reference, including Tailwind tuning (`mdx-preview.tailwind.*`) and advanced options (`mdx-preview.advanced.*`).
@@ -187,7 +188,7 @@ See [Troubleshooting](./docs/troubleshooting.md) for more.
 - [Troubleshooting](./docs/troubleshooting.md) - Common issues and solutions
 - [Contributing](./docs/contributing.md) - Development setup and guidelines
 - [Architecture](./docs/architecture.mdx) - Extension and webview architecture
-- [Examples](./examples) - Working examples for Docusaurus, Starlight, Nextra, Next.js, PlantUML, Graphviz, lightbox/zoom, and more
+- [Examples](./examples) - Working examples for Docusaurus, Starlight, Nextra, Next.js, PlantUML, Graphviz, AWS architecture diagrams, lightbox/zoom, and more
 
 ## Credits
 
