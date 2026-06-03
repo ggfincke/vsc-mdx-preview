@@ -502,7 +502,7 @@ The mode is part of the runtime configuration pushed to the webview (`PreviewCon
 2. The handler resolves the active preview, picks the leading visible range (folded code can produce multiple), and computes the anchored source line at the 35% band.
 3. `queueScroll(preview, line)` writes the line into a per-`Preview` scheduler. Two dispatches are scheduled:
    - **Live dispatch** throttled at ~33 ms while the user is actively scrolling.
-   - **Settle dispatch** after `EDITOR_TO_PREVIEW_SCROLL_SETTLE_MS` (80 ms) of quiet for the final landing line.
+   - **Settle dispatch** after `SOURCE_LINE_SCROLL_SYNC_SETTLE_MS` (80 ms) of quiet for the final landing line.
 4. On dispatch, `preview.scrollToLine(line)` calls `WebviewRPC.scrollToLine`. The dispatch also sets `ignorePreviewUntilMs = now + 120 ms` so the resulting preview scroll does not bounce back as a `reportPreviewSourceLine`.
 
 **Preview → editor pipeline** (`packages/webview-client/src/features/preview/shared/hooks/usePreviewScrollSync.ts`):
@@ -854,9 +854,9 @@ graph TB
 
 **StyleCache:**
 
-- Dual-map architecture (referenced vs unreferenced)
-- Reference counting for proper cleanup
-- O(1) LRU eviction via Map insertion order
+- Shared LRUCache with reference-counted eviction protection
+- `isProtected` predicate keeps styles with active references (`refCount > 0`)
+- Unreferenced styles evicted in LRU order to stay under capacity
 
 **DependencyTracker:**
 
@@ -1040,10 +1040,11 @@ flowchart LR
 
 For Nextra projects, the extension resolves `_meta.json` files:
 
-```typescript title="packages/extension-host/src/features/framework/nextra/MetaResolver.ts"
+```typescript title="packages/contracts/src/preview/types.ts"
 interface NextraPageMeta {
   title?: string;
   layout?: 'default' | 'full' | 'raw';
+  description?: string;
   toc?: boolean;
 }
 ```
@@ -1114,13 +1115,11 @@ graph TD
 
 ```typescript
 buildCacheKey(
-  tailwindVersion, // 'v3' or 'v4'
-  extractedClasses, // 'flex gap-4 text-sm ...'
-  configPath, // '/path/to/tailwind.config.js'
-  configFileStamp, // mtime or error marker
-  entryCssPath, // '/path/to/globals.css'
-  entryFileStamp // mtime or error marker
-); // returns SHA1 hash
+  version, // 'v3' or 'v4'
+  content, // 'flex gap-4 text-sm ...'
+  configPath, // '/path/to/tailwind.config.js' | null
+  entryCssPath // '/path/to/globals.css' | null
+); // derives config/entry file stamps internally; returns SHA1 hash
 ```
 
 > [!NOTE]
@@ -1629,13 +1628,28 @@ DoS prevention via size and dependency limits:
 
 All HTML in Safe Mode is sanitized:
 
-```typescript title="packages/webview-client/src/features/preview/safe/SafePreview.tsx"
+```typescript title="packages/webview-client/src/features/preview/safe/security/allowlist.ts"
 import DOMPurify from 'dompurify';
 
-const sanitized = DOMPurify.sanitize(html, {
-  ADD_ATTR: ['target'],
-  ADD_TAGS: ['mermaid'],
-});
+// DOMPURIFY_CONFIG is a strict explicit allowlist (no ADD_TAGS); foreignObject
+// is excluded. Consumed once, via the useSafeModeProcessing hook.
+const DOMPURIFY_CONFIG = {
+  // HTML + KaTeX/MathML + SVG (foreignObject excluded; 'use' allowed)
+  ALLOWED_TAGS: ['h1', 'p', 'a', 'pre', 'code', 'table', 'svg', 'use' /* ... */],
+  // standard attrs + diagram data attributes
+  ALLOWED_ATTR: [
+    'href', 'src', 'class', 'xlink:href',
+    'data-mermaid-chart', 'data-mermaid-id',
+    'data-plantuml-code', 'data-graphviz-code',
+    'data-admonition-type', 'data-source-line' /* ... */,
+  ],
+  ADD_ATTR: ['target', 'rel'],
+  ALLOW_UNKNOWN_PROTOCOLS: false,
+  ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+};
+
+// invoked in useSafeModeProcessing.ts
+const sanitized = DOMPurify.sanitize(html, DOMPURIFY_CONFIG);
 ```
 
 ### Security Checklist

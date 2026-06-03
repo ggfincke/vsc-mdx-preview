@@ -16,17 +16,19 @@ describes all caches, their invalidation triggers, and troubleshooting guidance.
 | MDX Preview Config | ConfigCache.ts                         | PathCache             | -   | 100  | .mdx-previewrc.json watcher        |
 | Babel Options      | babel.ts                               | Singleton             | -   | 1    | Never (extension lifetime)         |
 | Sass Module        | SassHandler.ts                         | Map                   | -   | -    | PackageJsonWatcher, manual command |
-| Tailwind CSS       | TailwindProcessor.ts                   | ContentHashCache      | 5m  | 50   | Auto-expires, manual command       |
+| Tailwind CSS       | TailwindProcessor.ts                   | LRUCache              | 5m  | 50   | Auto-expires, manual command       |
 | Tailwind Scan      | TailwindProcessor.ts (scanCache field) | ContentHashCache      | 5m  | 200  | DependencyWatcher, auto-expires    |
 | Framework          | FrameworkDetector.ts                   | PathCache             | -   | -    | PackageJsonWatcher                 |
 | Root Directory     | checkFsPath.ts                         | Map                   | -   | -    | Workspace folder changes           |
+
+> The Tailwind CSS cache TTL (5m) and max entries (50) are the defaults of `mdx-preview.tailwind.cacheTtlSeconds` and `mdx-preview.tailwind.cacheMaxEntries` and can be overridden in settings; related Tailwind limits are `mdx-preview.tailwind.compilationTimeout` (15s) and `mdx-preview.tailwind.maxFileSizeBytes` (10MB).
 
 ### Webview-Side Caches (Browser)
 
 | Cache              | Location             | Type               | Max        | Invalidation Trigger            |
 | ------------------ | -------------------- | ------------------ | ---------- | ------------------------------- |
 | Module Cache       | ModuleCache.ts       | LRU (count+memory) | 500 / 50MB | Preview refresh, manual command |
-| Style Cache        | StyleCache.ts        | Dual-map LRU       | 100        | Preview refresh, manual command |
+| Style Cache        | StyleCache.ts        | Ref-counted LRU    | 100        | Preview refresh, manual command |
 | Dependency Tracker | DependencyTracker.ts | Multi-map          | -          | Preview refresh, manual command |
 
 ## Invalidation Triggers

@@ -52,7 +52,7 @@ import TabItem from '@theme/TabItem';
 ````
 
 > [!NOTE]
-> Docusaurus admonitions are rendered using the built-in callout styles. Import paths like `@theme/Admonition` resolve to the generic Callout shim.
+> Docusaurus admonitions are rendered using the built-in callout styles. The bare `Admonition` element is aliased to the generic Callout shim.
 
 ---
 
@@ -218,7 +218,7 @@ Generic components can be used without imports when `components.builtins` is ena
 </Tabs>
 ```
 
-**Callout Types:**
+**Common Callout Types:**
 
 | Type      | Description            |
 | --------- | ---------------------- |
@@ -228,6 +228,8 @@ Generic components can be used without imports when `components.builtins` is ena
 | `warning` | Warning/caution        |
 | `danger`  | Error/danger           |
 | `success` | Success message        |
+
+The Callout shim accepts 17 types (plus aliases such as `caution` and `important`) and falls back to `note` for unknown values.
 
 ---
 

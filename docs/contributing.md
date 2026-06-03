@@ -152,7 +152,7 @@ See [`../tests/README.md`](../tests/README.md) for the current test philosophy a
 - TypeScript in strict mode
 - Prettier: single quotes, semicolons, 2-space indent, 80-column width
 - ESLint: custom rules plus project guardrails
-- Comments must follow [`../../dev-docs/comment-style.md`](../../dev-docs/comment-style.md)
+- Comments must follow the project comment style, enforced by `npm run check:comments` (see [`../scripts/check-comment-style.mjs`](../scripts/check-comment-style.mjs))
 
 Important guardrails:
 
