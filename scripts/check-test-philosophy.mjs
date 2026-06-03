@@ -42,11 +42,13 @@ const EXACT_ALLOWED = new Set([
   'tests/extension/preview/preview-update-flow.test.ts',
   'tests/extension/rpc-input-validation.test.ts',
   'tests/extension/security/checkFsPath.test.ts',
+  'tests/extension/security/frontmatter-eval.test.ts',
   'tests/extension/tailwind/TailwindProcessor.test.ts',
   'tests/extension/themes/IconPackResolver.test.ts',
   'tests/extension/themes/iconPackValidation.test.ts',
   'tests/extension/workspace-events.test.ts',
   'tests/webview/App.test.ts',
+  'tests/webview/dompurify-use-hook.test.ts',
   'tests/webview/export-html.test.ts',
   'tests/webview/ModuleRegistry.test.ts',
   'tests/webview/SafePreview.test.ts',
@@ -60,6 +62,7 @@ const EXACT_ALLOWED = new Set([
   'tests/webview/source-line-highlight.test.ts',
   'tests/webview/webview-rpc-client.test.ts',
   'tests/webview/mermaidIconPacks.test.ts',
+  'tests/webview/sanitize-mermaid-svg.test.ts',
 ]);
 
 const CASE_COUNT_OVERRIDES = new Map([
