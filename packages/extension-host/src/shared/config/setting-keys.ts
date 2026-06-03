@@ -4,6 +4,7 @@
 import { SecurityPolicy } from '../../features/security/SecurityPolicy';
 import {
   type FrameworkSetting,
+  type MermaidIconPackSetting,
   type PreviewScrollSyncValue,
   type SourceLineHighlightColorValue,
   type TailwindEnabledValue,
@@ -36,6 +37,7 @@ export interface SettingTypes {
   'preview.scrollSync': PreviewScrollSyncValue;
   'preview.shimSideRail': boolean;
   'diagrams.plantUmlServer': string;
+  'diagrams.mermaidIconPacks': MermaidIconPackSetting[];
   'build.useSucraseTranspiler': boolean;
   'tailwind.enabled': TailwindEnabledValue;
   'tailwind.maxFileSizeBytes': number;
@@ -88,6 +90,7 @@ export const SETTINGS = {
   COMPONENTS_BUILTINS: 'components.builtins' as const,
   COMPONENTS_UNKNOWN_BEHAVIOR: 'components.unknownBehavior' as const,
   PLANTUML_SERVER: 'diagrams.plantUmlServer' as const,
+  MERMAID_ICON_PACKS: 'diagrams.mermaidIconPacks' as const,
   OPEN_MDX_LINKS_IN_PREVIEW: 'preview.openMdxLinksInPreview' as const,
   DEBUG_OUTPUT: 'advanced.debugOutput' as const,
   WATCHER_DEBOUNCE_MS: 'advanced.watcherDebounceMs' as const,
@@ -105,6 +108,7 @@ export const THEME_KEYS: readonly SettingKey[] = [
   SETTINGS.MERMAID_THEME,
   SETTINGS.AUTO_THEME,
   SETTINGS.PLANTUML_SERVER,
+  SETTINGS.MERMAID_ICON_PACKS,
 ] as const;
 
 export const PREVIEW_RUNTIME_CONFIG_KEYS: readonly SettingKey[] = [

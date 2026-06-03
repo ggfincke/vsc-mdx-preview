@@ -8,6 +8,7 @@ import type {
   CodeBlockTheme,
   MermaidTheme,
   PreviewTheme,
+  ResolvedMermaidIconPack,
   WebviewThemeState,
 } from '@mdx-preview/contracts';
 import {
@@ -27,6 +28,7 @@ interface ThemeContextValue {
   codeBlockTheme: CodeBlockTheme;
   mermaidTheme: MermaidTheme;
   plantUmlServer: string;
+  mermaidIconPacks: ResolvedMermaidIconPack[];
   // handler for extension to push theme state
   setPreviewThemeState: (state: WebviewThemeState) => void;
 }
@@ -45,6 +47,9 @@ function useThemeValue(): ThemeContextValue {
   const [plantUmlServer, setPlantUmlServer] = useState<string>(
     DEFAULT_PLANTUML_SERVER
   );
+  const [mermaidIconPacks, setMermaidIconPacks] = useState<
+    ResolvedMermaidIconPack[]
+  >([]);
   const [isLight, setIsLight] = useState(true);
 
   // track VS Code theme changes (local detection for UI only)
@@ -69,6 +74,7 @@ function useThemeValue(): ThemeContextValue {
     setMermaidTheme(state.mermaidTheme);
     setIsLight(state.isLight);
     setPlantUmlServer(state.plantUmlServer);
+    setMermaidIconPacks(state.mermaidIconPacks);
   }, []);
 
   const value = useMemo<ThemeContextValue>(
@@ -80,6 +86,7 @@ function useThemeValue(): ThemeContextValue {
       codeBlockTheme,
       mermaidTheme,
       plantUmlServer,
+      mermaidIconPacks,
       setPreviewThemeState,
     }),
     [
@@ -88,6 +95,7 @@ function useThemeValue(): ThemeContextValue {
       codeBlockTheme,
       mermaidTheme,
       plantUmlServer,
+      mermaidIconPacks,
       setPreviewThemeState,
     ]
   );

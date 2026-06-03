@@ -125,7 +125,9 @@ function verifyDefault(
     return;
   }
 
-  if (packageDefault !== canonicalDefault) {
+  // compare by value so array/object defaults (e.g. []) aren't flagged as
+  // mismatched on reference inequality
+  if (JSON.stringify(packageDefault) !== JSON.stringify(canonicalDefault)) {
     errors.push(
       `Default mismatch for ${settingKey}:\n` +
         `  package.json: ${JSON.stringify(packageDefault)}\n` +

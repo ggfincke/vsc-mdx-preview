@@ -6,6 +6,7 @@ import {
   STANDARD_WATCHER_DEBOUNCE_MS,
 } from '../runtime/constants';
 import { DEFAULT_PLANTUML_SERVER } from '../diagrams/constants';
+import type { MermaidIconPackSetting } from '../themes/types';
 
 // preview defaults
 export const DEFAULT_PREVIEW_UPDATE_MODE = 'onType' as const;
@@ -26,6 +27,7 @@ export const DEFAULT_SOURCE_LINE_HIGHLIGHT_COLOR = 'dependent' as const;
 export const DEFAULT_PREVIEW_SCROLL_SYNC = 'off' as const;
 export const DEFAULT_SHIM_SIDE_RAIL = true;
 export const DEFAULT_DIAGRAMS_PLANTUML_SERVER = DEFAULT_PLANTUML_SERVER;
+export const DEFAULT_DIAGRAMS_MERMAID_ICON_PACKS: MermaidIconPackSetting[] = [];
 
 // build defaults
 export const DEFAULT_USE_SUCRASE_TRANSPILER = false;
@@ -70,6 +72,7 @@ export const SETTINGS_DEFAULTS = {
   'preview.scrollSync': DEFAULT_PREVIEW_SCROLL_SYNC,
   'preview.shimSideRail': DEFAULT_SHIM_SIDE_RAIL,
   'diagrams.plantUmlServer': DEFAULT_DIAGRAMS_PLANTUML_SERVER,
+  'diagrams.mermaidIconPacks': DEFAULT_DIAGRAMS_MERMAID_ICON_PACKS,
   'build.useSucraseTranspiler': DEFAULT_USE_SUCRASE_TRANSPILER,
   'tailwind.enabled': DEFAULT_TAILWIND_ENABLED,
   'tailwind.maxFileSizeBytes': DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES,

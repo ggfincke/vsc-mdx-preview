@@ -4,8 +4,24 @@
 import { LogTags } from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
+import { useEffect } from 'react';
 import { loadMermaid } from '../../utils/mermaidLoader';
+import {
+  registerBuiltinIconPacks,
+  registerDynamicIconPacks,
+  setPendingDynamicPacks,
+  getPendingDynamicPacks,
+} from '../../utils/mermaidIconPacks';
 import './MermaidRenderer.css';
+
+// read mermaid theme & keep configured icon packs in sync for the renderer
+function useMermaidThemeValue(): string {
+  const { mermaidTheme, mermaidIconPacks } = useTheme();
+  useEffect(() => {
+    setPendingDynamicPacks(mermaidIconPacks);
+  }, [mermaidIconPacks]);
+  return mermaidTheme;
+}
 
 // check if mermaid theme is dark (needs dark background)
 function isDarkMermaidTheme(theme: string): boolean {
@@ -27,13 +43,18 @@ export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
   errorLabel: 'Mermaid parse error',
   loadingText: 'Loading diagram...',
   logTag: LogTags.MERMAID_RENDERER,
-  useThemeValue: () => useTheme().mermaidTheme,
+  useThemeValue: useMermaidThemeValue,
   toDataTheme: (theme) => (isDarkMermaidTheme(theme) ? 'dark' : 'light'),
   render: async (_props, signal, mermaidTheme) => {
     const { code, id } = _props;
     const isDark = isDarkMermaidTheme(mermaidTheme);
 
     const mermaid = await loadMermaid();
+
+    // register icon packs (idempotent) so architecture-beta diagrams can use
+    // icons like logos:aws-lambda or user-configured packs
+    registerBuiltinIconPacks(mermaid);
+    registerDynamicIconPacks(mermaid, getPendingDynamicPacks());
 
     // only re-initialize if theme or dark state changed (perf optimization)
     const needsReinit =
