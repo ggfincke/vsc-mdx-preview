@@ -11,7 +11,7 @@ import type {
 import logosIcons from '@iconify-json/logos/icons.json';
 import type { MermaidModule } from './mermaidLoader';
 
-// re-sanitize icon bodies in the webview — never trust host RPC data blindly.
+// re-sanitize icon bodies in the webview — never trust host RPC data blindly
 // forbid external-resource elements/attrs so a malicious pack can't beacon out
 // under the webview CSP (img-src allows https:)
 const ICON_BODY_PURIFY_CONFIG: Config = {
@@ -25,8 +25,8 @@ const ICON_BODY_PURIFY_CONFIG: Config = {
     'use',
     'style',
   ],
-  // style is dropped too: DOMPurify does not sanitize CSS, so a url() inside it
-  // would survive as an external-resource beacon under img-src https:
+  // style is dropped too — DOMPurify doesn't sanitize CSS, so a url() in a style
+  // attr would survive as an external-resource beacon under img-src
   FORBID_ATTR: ['href', 'xlink:href', 'style'],
 };
 

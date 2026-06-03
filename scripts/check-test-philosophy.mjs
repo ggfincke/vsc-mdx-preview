@@ -43,6 +43,8 @@ const EXACT_ALLOWED = new Set([
   'tests/extension/rpc-input-validation.test.ts',
   'tests/extension/security/checkFsPath.test.ts',
   'tests/extension/tailwind/TailwindProcessor.test.ts',
+  'tests/extension/themes/IconPackResolver.test.ts',
+  'tests/extension/themes/iconPackValidation.test.ts',
   'tests/extension/workspace-events.test.ts',
   'tests/webview/App.test.ts',
   'tests/webview/export-html.test.ts',
@@ -57,6 +59,7 @@ const EXACT_ALLOWED = new Set([
   'tests/webview/shimLoader.test.ts',
   'tests/webview/source-line-highlight.test.ts',
   'tests/webview/webview-rpc-client.test.ts',
+  'tests/webview/mermaidIconPacks.test.ts',
 ]);
 
 const CASE_COUNT_OVERRIDES = new Map([
@@ -72,6 +75,9 @@ const CASE_COUNT_OVERRIDES = new Map([
   ['tests/extension/workspace-events.test.ts', 5],
   ['tests/webview/SafePreview.test.ts', 6],
   ['tests/webview/source-line-highlight.test.ts', 7],
+  ['tests/extension/themes/iconPackValidation.test.ts', 6],
+  ['tests/extension/themes/IconPackResolver.test.ts', 8],
+  ['tests/webview/mermaidIconPacks.test.ts', 7],
 ]);
 
 function toRepoPath(rootDir, fullPath) {

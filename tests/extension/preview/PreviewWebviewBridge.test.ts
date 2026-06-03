@@ -80,16 +80,19 @@ describe('PreviewWebviewBridge', () => {
     );
   });
 
-  it('pushes theme state after the webview handshake completes', () => {
+  it('pushes theme state after the webview handshake completes', async () => {
     const handle = createMockHandle();
     const watcherManager = createWatcherManager();
     bridge.setWebviewHandle(handle as never, watcherManager as never);
 
     bridge.onWebviewReady(mockDocUri as never);
+    // icon-pack resolution is async; let the deferred setTheme settle
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(handle.setTheme).toHaveBeenCalledWith({
       previewTheme: 'github-light',
       codeBlockTheme: 'auto',
+      mermaidIconPacks: [],
     });
   });
 

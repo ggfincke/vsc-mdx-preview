@@ -70,9 +70,9 @@ describe('registerDynamicIconPacks', () => {
         '<rect style="mask-image:url(https://evil.example/x)"/><path d="M0 0"/>'
       ),
     ]);
-    const out = registered
-      .find((r) => r.name === 'aws')!
-      .loader() as { icons: Record<string, { body: string }> };
+    const out = registered.find((r) => r.name === 'aws')!.loader() as {
+      icons: Record<string, { body: string }>;
+    };
     expect(out.icons.sample.body).not.toContain('evil.example');
     expect(out.icons.sample.body).not.toContain('style');
     expect(out.icons.sample.body).toContain('path');
@@ -83,9 +83,9 @@ describe('registerDynamicIconPacks', () => {
     registerDynamicIconPacks(mermaid, [
       pack('icons', '<circle cx="12" cy="12" r="10"/><path d="M2 2"/>'),
     ]);
-    const out = registered
-      .find((r) => r.name === 'icons')!
-      .loader() as { icons: Record<string, { body: string }> };
+    const out = registered.find((r) => r.name === 'icons')!.loader() as {
+      icons: Record<string, { body: string }>;
+    };
     expect(out.icons.sample.body).toContain('circle');
     expect(out.icons.sample.body).toContain('path');
   });

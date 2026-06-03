@@ -7,12 +7,9 @@ import type { IconifyIcon, IconifyIconPack } from '@mdx-preview/contracts';
 export const MAX_ICONS_PER_PACK = 10000;
 export const MAX_BODY_LENGTH = 64 * 1024;
 
-// ! best-effort host-side pre-filter; the webview's DOMPurify pass (allowlist)
-// is the authoritative sanitizer. drops the obvious beacon/script vectors so
-// they never reach the RPC payload, logs, or the webview. CSP blocks inline JS
-// but img-src allows https:, so an <image>, external href, or a CSS url() (in a
-// style attr or <style>) referencing an external/protocol-relative URL is a
-// phone-home beacon. internal #fragment refs are allowed
+// ! host-side pre-filter; the webview DOMPurify pass is the real sanitizer
+// drop external href/url(), <image>, <script>, <style>, <foreignobject> & on*
+// handlers before they reach the RPC payload, logs or the webview
 const UNSAFE_BODY_RE =
   /<\s*(?:script|image|foreignobject|iframe|style)\b|javascript:|\son\w+\s*=|(?:(?:xlink:)?href\s*=|url\s*\()\s*["']?\s*(?!#)(?:[a-z][\w+.-]*:|\/\/)/i;
 
@@ -25,10 +22,9 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-// validate & narrow untrusted JSON to the minimal Iconify shape
-// drops unknown fields, oversized/dangerous bodies & prototype keys
-// returns null if the result has no usable icons (pure & silent by design —
-// a hostile pack with thousands of bad icons must not spam the log)
+// validate & narrow untrusted JSON to the minimal Iconify shape; drop unknown
+// fields, oversized/dangerous bodies & prototype keys. return null if no
+// usable icons remain — silent so a hostile pack can't spam the log
 export function validateIconifyPack(raw: unknown): IconifyIconPack | null {
   if (!isPlainObject(raw) || !isPlainObject(raw.icons)) {
     return null;
@@ -72,8 +68,14 @@ export function validateIconifyPack(raw: unknown): IconifyIconPack | null {
   }
 
   const pack: IconifyIconPack = { icons };
-  if (typeof raw.prefix === 'string') pack.prefix = raw.prefix;
-  if (typeof raw.width === 'number') pack.width = raw.width;
-  if (typeof raw.height === 'number') pack.height = raw.height;
+  if (typeof raw.prefix === 'string') {
+    pack.prefix = raw.prefix;
+  }
+  if (typeof raw.width === 'number') {
+    pack.width = raw.width;
+  }
+  if (typeof raw.height === 'number') {
+    pack.height = raw.height;
+  }
   return pack;
 }

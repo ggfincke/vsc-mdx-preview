@@ -67,6 +67,7 @@ export const mockPreviewManager = {
 export const mockThemeManager = {
   getWebviewThemeState: vi.fn(() => ({})),
   extractThemeFromFrontmatter: vi.fn(() => ({})),
+  getThemeConfiguration: vi.fn(() => ({ mermaidIconPacks: [] })),
 };
 
 export const mockConfigCache = {
