@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-06-03
+
+### Added
+
+- **Mermaid Icon Packs**: New resource-scoped `mdx-preview.diagrams.mermaidIconPacks` setting registers [Iconify](https://iconify.design) JSON packs from local files for `architecture-beta` diagrams, referenced as `name:icon` (e.g. `aws:Lambda`); the Iconify `logos` pack (AWS service logos, e.g. `logos:aws-lambda`) is bundled in. Packs are read host-side and pushed to the webview over the existing theme RPC, so they work offline and within the webview CSP (the sandboxed webview never fetches). Contributed by [@sandipan1](https://github.com/sandipan1) (#93)
+- **Icon Pack Hardening**: Pack file reads are gated on workspace trust (`diagrams.mermaidIconPacks` added to `untrustedWorkspaces.restrictedConfigurations`); relative sources are confined to the workspace via realpath (defeats `../` & symlink escape); file-size, entry, icon & body-length caps with a bounded LRU cache; pack JSON is narrowed to a minimal Iconify shape in a new `iconPackValidation` module and unsafe icon bodies (external/protocol/data hrefs, external CSS `url()`, `image`/`script`/`style`/`foreignObject`/`iframe`, event handlers, prototype keys) are dropped, then re-sanitized in the webview with DOMPurify
+
+### Fixed
+
+- **Mermaid Node Labels**: Node-label text rendered blank/empty in flowcharts and other diagrams. Mermaid 11.x ignores the deprecated `flowchart.htmlLabels` flag and its root `htmlLabels` defaults to `true`, so node labels were emitted inside `<foreignObject>` HTML — which the Safe Mode sanitizer strips (the allowlist excludes `foreignObject`) and which lost the page color cascade in Trusted Mode (only edge labels survived, via their `!important` `themeCSS` override). Set root-level `htmlLabels: false` so node labels render as pure SVG `<text>` — visible in both themes and intact through the Safe Mode allowlist
+
+### Changed
+
+- **Dependencies** (root): `mdx-forge` ^0.4.4 -> ^0.5.0, `concurrently` ^9.1.0 -> ^10.0.3; `@vscode/vsce` 3.9.1 -> 3.9.2, `dependency-cruiser` 17.4.2 -> 17.4.3, `eslint` 10.4.0 -> 10.4.1, `enhanced-resolve` 5.22.0 -> 5.22.2, `shiki` 4.1.0 -> 4.2.0, `tsx` 4.22.3 -> 4.22.4, `typescript-eslint` 8.60.0 -> 8.60.1, `vitest` 4.1.7 -> 4.1.8 lockfile bumps
+- **Dependencies** (webview-client): `mdx-forge` ^0.4.4 -> ^0.5.0; `@types/react` 19.2.15 -> 19.2.16, `@viz-js/viz` 3.27.0 -> 3.28.0, `dompurify` 3.4.6 -> 3.4.8, `eslint` 10.4.0 -> 10.4.1, `react` / `react-dom` 19.2.6 -> 19.2.7, `typescript-eslint` 8.60.0 -> 8.60.1, `vite` 8.0.14 -> 8.0.16 lockfile bumps
+- **Dependencies** (extension-host, codegen): `mdx-forge` ^0.4.4 -> ^0.5.0
+
 ## [1.4.1] - 2026-05-26
 
 ### Fixed
