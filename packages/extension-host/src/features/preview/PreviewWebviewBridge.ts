@@ -110,7 +110,14 @@ export class PreviewWebviewBridge {
     if (!this.webviewHandle) {
       return;
     }
-    log.debug('pushThemeState - pushing theme state', finalState);
+    // redact pack payloads (may contain file-derived content) from logs
+    log.debug('pushThemeState - pushing theme state', {
+      ...finalState,
+      mermaidIconPacks: finalState.mermaidIconPacks.map((pack) => ({
+        name: pack.name,
+        iconCount: Object.keys(pack.icons.icons).length,
+      })),
+    });
     this.webviewHandle.setTheme(finalState);
   }
 

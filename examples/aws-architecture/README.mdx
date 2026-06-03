@@ -35,13 +35,18 @@ architecture-beta
 ```
 
 To use a different pack, drop its Iconify JSON anywhere in the workspace, point
-a `{ "name": ..., "source": ... }` entry at it, and reload the preview. For the
-full AWS Architecture icon set, bundle a pack such as
-[`harmalh/aws-mermaid-icons`](https://github.com/harmalh/aws-mermaid-icons).
+a `{ "name": ..., "source": ... }` entry at it, and reload the preview. Use only
+icon JSON from sources you trust — see the security note below.
 
 ## Notes
 
 - Packs are read by the extension host and sent to the webview, so they work
   offline and within the webview's Content-Security-Policy (no CDN fetch).
 - Relative `source` paths resolve against the workspace folder.
+- **Trusted workspaces only.** Icon packs are read from disk only when the
+  workspace is trusted; in Restricted Mode they're ignored. A pack's `body` is
+  SVG that gets injected into the diagram, so treat an icon pack like code: only
+  add packs from sources you'd be comfortable running. Pack contents are
+  validated and sanitized (size/shape limits, no external-resource markup), but
+  the safest posture is still trusted input.
 - Regular Mermaid diagrams (flowcharts, sequence diagrams, etc.) are unaffected.

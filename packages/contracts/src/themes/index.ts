@@ -8,6 +8,8 @@ export type {
   WebviewThemeState,
   MermaidIconPackSetting,
   ResolvedMermaidIconPack,
+  IconifyIcon,
+  IconifyIconPack,
 } from './types';
 
 export {

@@ -79,7 +79,8 @@
       "supported": "limited",
       "description": "In Restricted Mode, MDX Preview renders content as static HTML only. JavaScript execution and custom components require a trusted workspace with scripts enabled.",
       "restrictedConfigurations": [
-        "mdx-preview.preview.enableScripts"
+        "mdx-preview.preview.enableScripts",
+        "mdx-preview.diagrams.mermaidIconPacks"
       ]
     }
   },
