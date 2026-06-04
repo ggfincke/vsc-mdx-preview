@@ -1,43 +1,26 @@
 // eslint.config.mjs
 // ESLint configuration for extension & webview packages
 
-import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
 
-// Local custom rules for mdx-preview
-import localRules from './packages/extension-host/eslint-rules/index.js';
+import {
+  baseConfig,
+  sharedRemovedImportPattern,
+} from './packages/extension-host/eslint-rules/eslint-base.mjs';
 
 export default tseslint.config(
-  eslint.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...baseConfig(import.meta.dirname),
   {
     languageOptions: {
       globals: {
         ...globals.node,
       },
-      // L.3 optimization: enable incremental type-checking
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-    plugins: {
-      local: localRules,
     },
     rules: {
       // migrated from tslint.json
       'no-throw-literal': 'error',
-      'no-unused-expressions': 'warn',
-      curly: 'error',
-      eqeqeq: ['error', 'always'],
 
-      // TypeScript-specific
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        { argsIgnorePattern: '^_' },
-      ],
-      '@typescript-eslint/no-explicit-any': 'warn',
       // some dynamic requires are intentional
       '@typescript-eslint/no-require-imports': 'off',
 
@@ -51,11 +34,7 @@ export default tseslint.config(
               message:
                 'Extension/shared code must not import from webview-client.',
             },
-            {
-              group: ['@mdx-preview/shared', '@mdx-preview/shared/*'],
-              message:
-                'packages/shared was removed. Import from @mdx-preview/contracts or @mdx-preview/runtime-utils.',
-            },
+            sharedRemovedImportPattern,
           ],
         },
       ],
@@ -63,8 +42,6 @@ export default tseslint.config(
       // Custom local rules
       // Enforce ConfigManager usage for VS Code configuration access
       'local/no-direct-vscode-config': 'error',
-      // Enforce LogTags usage for log prefixes
-      'local/no-raw-log-tag': 'error',
       // Enforce createTaggedLogger over manual tag interpolation
       'local/prefer-tagged-logger': 'error',
     },
