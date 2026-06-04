@@ -30,76 +30,13 @@ The following do **not** belong in `tests/`:
 
 `scripts/check-test-philosophy.mjs` is the source of truth for the allowed `tests/**/*.test.ts` files.
 
-Allowed files:
-
-- `tests/security/*.test.ts`
-- `tests/compilation/safe-compile.test.ts`
-- `tests/compilation/trusted-compile.test.ts`
-- `tests/transpilation/babel.test.ts`
-- `tests/resolution/alias-resolver.test.ts`
-- `tests/resolution/unified-resolver.test.ts`
-- `tests/services/ServiceRegistry.circular.test.ts`
-- `tests/services/ServiceRegistry.subsystem.test.ts`
-- `tests/shared/constant-parity.test.ts`
-- `tests/shared/duplicate-divergence.test.ts`
-- `tests/shared/metadata-parity.test.ts`
-- `tests/shared/utility-parity.test.ts`
-- `tests/extension/activate.unhandled-rejection.test.ts`
-- `tests/extension/commands/security.test.ts`
-- `tests/extension/compiler/plugin-loader.test.ts`
-- `tests/extension/config/CompilerConfig.test.ts`
-- `tests/extension/config/ConfigResolver.test.ts`
-- `tests/extension/config/TypeScriptConfigResolver.test.ts`
-- `tests/extension/deps/import-extractor.test.ts`
-- `tests/extension/diagnostics/ComponentCodeActions.test.ts`
-- `tests/extension/diagnostics/ComponentDetector.test.ts`
-- `tests/extension/language/MDXCompletionProvider.test.ts`
-- `tests/extension/language/MDXOutlineProvider.test.ts`
-- `tests/extension/language/MDXSymbolProvider.test.ts`
-- `tests/extension/errors/ErrorReporter.test.ts`
-- `tests/extension/framework/FrameworkDetector.test.ts`
-- `tests/extension/handlers/*.test.ts`
-- `tests/extension/module-system/fetchLocal.timeout.test.ts`
-- `tests/extension/nextra/MetaResolver.test.ts`
-- `tests/extension/preview/EvaluationEngine.timeout.test.ts`
-- `tests/extension/preview/PreviewInitializer.test.ts`
-- `tests/extension/preview/PreviewManager.test.ts`
-- `tests/extension/preview/PreviewWebviewBridge.test.ts`
-- `tests/extension/preview/evaluate-in-webview.test.ts`
-- `tests/extension/preview/preview-update-flow.test.ts`
-- `tests/extension/rpc-input-validation.test.ts`
-- `tests/extension/security/checkFsPath.test.ts`
-- `tests/extension/tailwind/TailwindProcessor.test.ts`
-- `tests/extension/workspace-events.test.ts`
-- `tests/webview/App.test.ts`
-- `tests/webview/ModuleRegistry.test.ts`
-- `tests/webview/SafePreview.test.ts`
-- `tests/webview/StyleInjector.test.ts`
-- `tests/webview/TrustedPreview.test.ts`
-- `tests/webview/module-system-loader.test.ts`
-- `tests/webview/preload-atomic-registration.test.ts`
-- `tests/webview/safe-mode-processing.test.ts`
-- `tests/webview/shimLoader.test.ts`
-- `tests/webview/webview-rpc-client.test.ts`
+The allowlist lives in that script's `EXACT_ALLOWED` set plus its prefix rules (`tests/security/*.test.ts`, `tests/extension/handlers/*.test.ts`); `npm run check:test-philosophy` enforces it. This doc intentionally does not duplicate the list — read the script to avoid drift.
 
 Everything else under `tests/` is out of policy and should be deleted.
 
 ## Case-Count Caps
 
-Retained suites must stay representative. `scripts/check-test-philosophy.mjs` enforces active `it(...)` caps:
-
-- Default maximum: `4`
-- `tests/security/*.test.ts`: `6`
-- `tests/resolution/unified-resolver.test.ts`: `6`
-- `tests/shared/constant-parity.test.ts`: `7`
-- `tests/shared/duplicate-divergence.test.ts`: `5`
-- `tests/shared/utility-parity.test.ts`: `6`
-- `tests/extension/errors/ErrorReporter.test.ts`: `6`
-- `tests/extension/language/MDXCompletionProvider.test.ts`: `10`
-- `tests/extension/language/MDXOutlineProvider.test.ts`: `5`
-- `tests/extension/language/MDXSymbolProvider.test.ts`: `12`
-- `tests/extension/rpc-input-validation.test.ts`: `6`
-- `tests/webview/SafePreview.test.ts`: `6`
+Retained suites must stay representative. `scripts/check-test-philosophy.mjs` enforces active `it(...)` caps: a default maximum of `4`, `6` for `tests/security/*.test.ts`, and per-file overrides in its `CASE_COUNT_OVERRIDES` map. See the script for current values.
 
 If a suite needs more than its cap, the test is too granular for `tests/`.
 
