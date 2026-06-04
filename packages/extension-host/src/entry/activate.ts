@@ -142,10 +142,6 @@ export function disposeUnhandledRejectionHandler(): void {
   unhandledRejectionDisposable?.dispose();
 }
 
-function reportBackgroundPromiseFailure(message: string, error: unknown): void {
-  log.error(message, error);
-}
-
 // set up workspace trust event handlers for trust grant & revoke
 function setupTrustHandlers(context: vscode.ExtensionContext): void {
   const workspaceWithTrust = vscode.workspace as typeof vscode.workspace & {
@@ -181,10 +177,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
 
   const scheduleTrustChange = (trusted: boolean): void => {
     void handleTrustChange(trusted).catch((error) => {
-      reportBackgroundPromiseFailure(
-        'Failed to handle workspace trust change',
-        error
-      );
+      log.error('Failed to handle workspace trust change', error);
     });
   };
 
@@ -210,10 +203,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
         void getPreviewManager()
           .refreshAllPreviews()
           .catch((error) => {
-            reportBackgroundPromiseFailure(
-              'Failed to refresh previews after trust change',
-              error
-            );
+            log.error('Failed to refresh previews after trust change', error);
           });
       }
     })
@@ -308,10 +298,7 @@ export async function activate(
 
   // show safe mode notification if in untrusted workspace
   void showSafeModeNotificationIfNeeded(context).catch((error) => {
-    reportBackgroundPromiseFailure(
-      'Failed to show safe mode notification',
-      error
-    );
+    log.error('Failed to show safe mode notification', error);
   });
 
   // set up trust event handlers
@@ -338,10 +325,7 @@ export async function activate(
       void getPreviewManager()
         .refreshAllPreviews()
         .catch((error) => {
-          reportBackgroundPromiseFailure(
-            'Failed to refresh previews after theme change',
-            error
-          );
+          log.error('Failed to refresh previews after theme change', error);
         });
     })
   );
@@ -355,7 +339,7 @@ export async function activate(
     );
   });
   void packageJsonWatcher.start().catch((error) => {
-    reportBackgroundPromiseFailure('Failed to start package watcher', error);
+    log.error('Failed to start package watcher', error);
   });
   context.subscriptions.push(packageJsonWatcher);
 

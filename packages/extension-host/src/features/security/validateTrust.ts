@@ -2,7 +2,6 @@
 // centralized trust validation utilities for trust-gated operations
 
 import * as vscode from 'vscode';
-import { SecurityMode } from './TrustManager';
 import { getTrustManager } from '../../app/services';
 import type { TrustState } from '@mdx-preview/contracts';
 
@@ -12,16 +11,6 @@ export class TrustError extends Error {
     super(message);
     this.name = 'TrustError';
   }
-}
-
-// check if Trusted Mode is currently enabled
-export function isTrustedModeEnabled(): boolean {
-  return getTrustManager().canExecute();
-}
-
-// check if current security mode is Trusted
-export function isSecurityModeTrusted(): boolean {
-  return getTrustManager().getMode() === SecurityMode.Trusted;
 }
 
 // require Trusted Mode for an operation - throw TrustError if not in Trusted Mode

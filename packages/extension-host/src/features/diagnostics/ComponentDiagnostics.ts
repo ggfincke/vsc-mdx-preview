@@ -197,21 +197,6 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
     return this.diagnosticCollection.get(uri) || [];
   }
 
-  // get all unknown component names across all documents
-  getAllUnknownComponents(): Set<string> {
-    const names = new Set<string>();
-    this.diagnosticCollection.forEach((_uri, diagnostics) => {
-      for (const diag of diagnostics) {
-        // extract component name from message
-        const match = diag.message.match(/Unknown component "([^"]+)"/);
-        if (match) {
-          names.add(match[1]);
-        }
-      }
-    });
-    return names;
-  }
-
   // custom cleanup - clear all timers
   protected override onDispose(): void {
     for (const timer of this.documentTimers.values()) {

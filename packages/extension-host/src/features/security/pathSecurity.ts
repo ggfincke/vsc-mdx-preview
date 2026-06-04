@@ -81,16 +81,3 @@ export function reportTrustViolationError(
     { context: ErrorContext.Security, severity: ErrorSeverity.Warning }
   );
 }
-
-// get & validate entry directory from preview w/ standardized logging
-export function requireEntryDirectory(
-  preview: Preview,
-  context: string
-): string | undefined {
-  const entryDir = preview.entryFsDirectory;
-  if (!entryDir) {
-    log.warn(`${context}: no entry directory`);
-    return undefined;
-  }
-  return entryDir;
-}

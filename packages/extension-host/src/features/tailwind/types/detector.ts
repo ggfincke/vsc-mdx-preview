@@ -13,13 +13,6 @@ export interface TailwindVersionInfo {
 // capability-routed Tailwind profiles (Phase 8)
 export type TailwindProfile = 'browser' | 'advanced';
 
-// result of Tailwind detection
-export interface TailwindDetectionResult {
-  workspaceRoot: string | null;
-  configPath: string | null;
-  entryCssPath: string | null;
-}
-
 // profile detection result used to route browser vs advanced Tailwind paths
 export interface TailwindProfileDetectionResult {
   profile: TailwindProfile;

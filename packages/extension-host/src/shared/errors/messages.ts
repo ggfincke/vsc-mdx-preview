@@ -9,12 +9,8 @@ import type { ModuleError } from '@mdx-preview/contracts';
 const USER_MESSAGES: Record<string, string> = {
   // trust & security errors
   PATH_TRAVERSAL: "Access denied: '{attemptedPath}' is outside workspace",
-  E002: "Invalid path format: '{attemptedPath}'",
   TRUST_VIOLATION:
     'Operation blocked - workspace not trusted or scripts disabled',
-  E021: 'Workspace is not trusted. Trust this workspace to enable Trusted Mode.',
-  E022: "Scripts are disabled. Enable 'mdx-preview.preview.enableScripts' in settings.",
-  E023: 'Remote environment detected. Trusted Mode requires local workspaces.',
 
   // module fetch errors (uses moduleId & parentModuleId)
   E100: "Cannot find module '{moduleId}'. Did you run npm install?",
@@ -22,19 +18,13 @@ const USER_MESSAGES: Record<string, string> = {
   E102: "Circular dependency detected: '{moduleId}'",
   E110: "Syntax error in '{moduleId}'",
   E120: "Failed to compile '{moduleId}'",
-  E162: "Failed to read module file: '{moduleId}'",
 
   // configuration errors (uses configPath)
   CONFIG_PARSE_ERROR: "Failed to parse config file '{configPath}'",
-  E201: "Config file not found: '{configPath}'",
   CONFIG_VALIDATION_ERROR: "Invalid configuration in '{configPath}'",
-  E221: 'Invalid plugin specification in config',
-  E222: 'Invalid component mapping in config',
 
   // transpilation errors (uses sourceFile, line, column)
   TRANSPILE_ERROR: "Compilation error in '{sourceFile}' at line {line}",
-  E301: "Invalid frontmatter in '{sourceFile}'",
-  E320: "Babel transform failed for '{sourceFile}'",
 
   // plugin errors (uses pluginName)
   PLUGIN_NOT_FOUND: "Cannot find plugin '{pluginName}'. Ensure it's installed.",
@@ -55,18 +45,9 @@ const USER_MESSAGES: Record<string, string> = {
   E620: 'Preview initialization timed out',
   E640: 'Failed to communicate w/ preview',
 
-  // file I/O errors (uses filePath)
-  E700: "Failed to read file: '{filePath}'",
-  E701: "File not found: '{filePath}'",
-  E740: "Failed to create file watcher for '{pattern}'",
-
   // service errors (uses serviceName)
   E800: "Service not registered: '{serviceName}'",
   E801: 'Cannot access disposed service registry',
-
-  // general errors
-  UNKNOWN_ERROR: 'An unexpected error occurred',
-  E901: 'Internal extension error',
 };
 
 // format error for user display (replaces placeholders w/ error context)

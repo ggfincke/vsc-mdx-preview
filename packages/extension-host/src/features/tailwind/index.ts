@@ -14,7 +14,6 @@ export type {
 export { TailwindDetector } from './TailwindDetector';
 export type {
   TailwindVersionInfo,
-  TailwindDetectionResult,
   TailwindProfile,
   TailwindProfileDetectionResult,
   ResolveWorkspaceRootOptions,

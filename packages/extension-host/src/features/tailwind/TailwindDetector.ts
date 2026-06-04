@@ -77,7 +77,6 @@ const COMMON_CSS_LOCATIONS = [
 // re-export canonical type definitions from types/
 export type {
   TailwindVersionInfo,
-  TailwindDetectionResult,
   TailwindProfile,
   TailwindProfileDetectionResult,
   ResolveWorkspaceRootOptions,
