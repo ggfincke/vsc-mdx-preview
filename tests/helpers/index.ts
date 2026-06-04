@@ -2,6 +2,7 @@
 // re-export all test helpers
 
 export { FIXTURES } from './fixtures';
+export { createCompilerConfig } from './create-compiler-config';
 export {
   createMockDocument,
   type MockDocument,
