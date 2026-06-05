@@ -12,12 +12,12 @@ const log = createTaggedLogger(LogTags.TRUST_MANAGER);
 
 export type { TrustState } from '@mdx-preview/contracts';
 
-// re-export canonical type definitions from types/
-export { SecurityMode, getSecurityMode } from '../types';
-export type { TrustedModeCheck } from '../types';
+// re-export canonical type definitions from security/types
+export { SecurityMode, getSecurityMode } from './types';
+export type { TrustedModeCheck } from './types';
 
-import { SecurityMode, getSecurityMode } from '../types';
-import type { TrustedModeCheck } from '../types';
+import { SecurityMode, getSecurityMode } from './types';
+import type { TrustedModeCheck } from './types';
 
 // manage trust state for MDX preview
 export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
@@ -85,8 +85,10 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
 
   // check if Trusted Mode can be used for specific document (validates 4 security rules)
   canUseTrustedMode(docUri: vscode.Uri): TrustedModeCheck {
+    const state = this.getState();
+
     // rule 1: workspace must be trusted
-    if (!vscode.workspace.isTrusted) {
+    if (!state.workspaceTrusted) {
       return {
         allowed: false,
         reason:
@@ -95,8 +97,7 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
     }
 
     // rule 2: scripts must be enabled
-    const scriptsEnabled = getConfigManager().get(SETTINGS.ENABLE_SCRIPTS);
-    if (!scriptsEnabled) {
+    if (!state.scriptsEnabled) {
       return {
         allowed: false,
         reason:
