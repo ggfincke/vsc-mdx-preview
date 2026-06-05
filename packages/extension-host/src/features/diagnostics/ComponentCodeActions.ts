@@ -23,9 +23,9 @@ import { readJsonSync } from '../../shared/utils/file-utils';
 
 // config file name
 const CONFIG_FILE_NAME = '.mdx-previewrc.json';
+const UNKNOWN_COMPONENT_MESSAGE_PATTERN = /^Unknown component "([^"]+)"/;
 
-// read the unknown-component name from structured diagnostic data
-// Diagnostic.data is runtime-supported but absent from @types/vscode 1.90; cast
+// read component name from data first, then VS Code-preserved message text
 function readComponentName(diagnostic: vscode.Diagnostic): string | null {
   const data = (diagnostic as vscode.Diagnostic & { data?: unknown }).data as
     | UnknownComponentDiagnosticData
@@ -33,7 +33,9 @@ function readComponentName(diagnostic: vscode.Diagnostic): string | null {
   if (data && typeof data.componentName === 'string' && data.componentName) {
     return data.componentName;
   }
-  return null;
+
+  const match = UNKNOWN_COMPONENT_MESSAGE_PATTERN.exec(diagnostic.message);
+  return match?.[1] ?? null;
 }
 
 // code action provider for component diagnostics
@@ -54,7 +56,7 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
     );
 
     for (const diagnostic of relevantDiagnostics) {
-      // read component name from structured diagnostic data
+      // read component name from diagnostic metadata or preserved message
       const componentName = readComponentName(diagnostic);
       if (!componentName) {
         continue;

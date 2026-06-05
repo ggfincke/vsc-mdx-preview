@@ -78,4 +78,30 @@ describe('ComponentCodeActionsProvider', () => {
     );
     expect(builtinAction?.edit?.edits[0]?.newText).toBe('Callout');
   });
+
+  it('falls back to message text when diagnostic data is absent', () => {
+    const document = {
+      uri: Uri.file('/workspace/docs.mdx'),
+    } as any;
+
+    const diagnostic = createDiagnostic('note');
+    delete diagnostic.data;
+    const actions = provider.provideCodeActions(
+      document,
+      new Range(0, 0, 0, 4),
+      { diagnostics: [diagnostic] },
+      {} as any
+    );
+
+    expect(actions).toHaveLength(3);
+    const addAction = actions.find((action) =>
+      action.title.includes('.mdx-previewrc.json')
+    );
+    const builtinAction = actions.find((action) =>
+      action.title.includes('Use built-in')
+    );
+
+    expect(addAction?.command?.arguments?.[0]).toBe('note');
+    expect(builtinAction?.edit?.edits[0]?.newText).toBe('Callout');
+  });
 });
