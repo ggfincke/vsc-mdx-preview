@@ -4,7 +4,7 @@
 // branding
 
 // extension display name shown in notifications, output channel & status bar
-export const EXTENSION_DISPLAY_NAME = 'MDX Preview';
+export { EXTENSION_DISPLAY_NAME } from '@mdx-preview/contracts';
 
 // timeouts
 

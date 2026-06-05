@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import {
+  EXTENSION_DISPLAY_NAME,
   SHIM_LOAD_MAX_RETRIES,
   SHIM_LOAD_RETRY_DELAY_MS,
   PREVIEW_THEMES,
@@ -57,6 +58,11 @@ describe('cross-repo constant parity', () => {
     // see: mdx-forge/tests/browser/constants-contract.test.ts
     expect(SHIM_LOAD_MAX_RETRIES).toBe(3);
     expect(SHIM_LOAD_RETRY_DELAY_MS).toBe(200);
+  });
+
+  it('EXTENSION_DISPLAY_NAME is single-sourced from contracts', () => {
+    // brand string for the webview HTML-export fallback title
+    expect(EXTENSION_DISPLAY_NAME).toBe('MDX Preview');
   });
 
   it('code copy feedback duration matches mdx-forge canonical value', () => {

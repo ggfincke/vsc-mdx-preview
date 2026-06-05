@@ -17,6 +17,7 @@ export {
 
 // shared timing & limit constants
 export {
+  EXTENSION_DISPLAY_NAME,
   STANDARD_DEBOUNCE_MS,
   STANDARD_CACHE_TTL_MS,
   STANDARD_WATCHER_DEBOUNCE_MS,

@@ -1,7 +1,7 @@
 // packages/webview-client/src/platform/rpc/export-html.ts
 // export rendered preview DOM as a standalone HTML document
 
-import { LogTags } from '@mdx-preview/contracts';
+import { EXTENSION_DISPLAY_NAME, LogTags } from '@mdx-preview/contracts';
 import { PREVIEW_CONTENT_CLASS, PREVIEW_ROOT_CLASS } from '../../app/constants';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
 
@@ -297,7 +297,7 @@ async function blobToDataUri(blob: Blob): Promise<string> {
 
 function getExportTitle(root: HTMLElement): string {
   const heading = root.querySelector('h1')?.textContent?.trim();
-  return heading || document.title || 'MDX Preview';
+  return heading || document.title || EXTENSION_DISPLAY_NAME;
 }
 
 interface HtmlDocumentInput {
