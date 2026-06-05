@@ -18,6 +18,7 @@ import { StaleIndicator } from '../features/preview/shared/ui/StaleIndicator/Sta
 import { SafePreviewRenderer } from '../features/preview/safe/SafePreview';
 import { TrustedPreviewRenderer } from '../features/preview/trusted/TrustedPreview';
 import { ExtensionHandle } from '../platform/rpc/webview-rpc-client';
+import { canRenderTrusted } from '../platform/rpc/content-mode-guard';
 import { createTaggedLogger } from '../shared/utils/createTaggedLogger';
 import { LogTags } from '@mdx-preview/contracts';
 import { classifyLink } from '../shared/utils/linkHandler';
@@ -135,7 +136,7 @@ function App() {
   log.debug(`Rendering content in ${content.mode} mode`);
 
   const shouldRenderTrustedContent =
-    content.mode === 'trusted' && trustState.canExecute;
+    content.mode === 'trusted' && canRenderTrusted(trustState);
 
   return (
     <div
