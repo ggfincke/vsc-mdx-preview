@@ -14,10 +14,7 @@ import {
   type IResolutionStrategy,
 } from '../../../types';
 import { buildResolutionResult } from '../resolution-builders';
-import {
-  probeTypeScriptFile,
-  probeTypeScriptFileAsync,
-} from '../file-prober';
+import { probeTypeScriptFile, probeTypeScriptFileAsync } from '../file-prober';
 
 // module-level tagged logger for TypeScript path resolution
 const log = createTaggedLogger(LogTags.TYPESCRIPT);
