@@ -854,7 +854,7 @@
     "hast-util-from-html-isomorphic": "^2.0.0",
     "is-module": "^1.0.0",
     "lodash.debounce": "^4.0.8",
-    "mdx-forge": "^0.5.0",
+    "mdx-forge": "^0.6.0",
     "postcss": "^8.5.13",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-katex": "^7.0.1",

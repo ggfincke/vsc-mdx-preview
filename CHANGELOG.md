@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Codebase consolidation** (behavior-preserving): Large internal cleanup across the extension host and webview — single-sourced the trust/security predicates and RPC config-disable rules (named `requireWorkspaceTrusted` / `canRenderTrusted` helpers replace inline `canExecute` reads), deduped resolver/transform helpers (`compileMdxTrusted`, shared default-handler instance, derived TypeScript-extension checks), consolidated the diagnostics shared AST-range + ESM parser, unified error-message handling, and single-sourced `EXTENSION_DISPLAY_NAME` from `@mdx-preview/contracts` for the HTML export. No user-facing behavior change
+- **Dependencies**: `mdx-forge` ^0.5.0 -> ^0.6.0 across the root, extension-host, webview-client & codegen — picks up the `ShimBarrelConfig.injectCss` field the shim generator now reads to emit framework CSS imports
 
 ### Infrastructure
 

@@ -6,6 +6,6 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@mdx-preview/runtime-utils": "*",
-    "mdx-forge": "^0.5.0"
+    "mdx-forge": "^0.6.0"
   }
 }
