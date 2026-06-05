@@ -58,4 +58,19 @@ describe('detectComponents', () => {
     const unknown = getUnknownComponents(result).map((c) => c.name);
     expect(unknown).toEqual([]);
   });
+
+  it('includePositions returns the correct range for a known-line component', async () => {
+    const result = await detectComponents(
+      mdxSample,
+      { detectImports: true, includePositions: true },
+      new Set()
+    );
+
+    const custom = result.components.find((c) => c.name === 'CustomComponent');
+    expect(custom).toBeDefined();
+    expect(custom?.range.start.line).toBe(8);
+    expect(custom?.range.start.character).toBe(0);
+    expect(custom?.range.end.line).toBe(8);
+    expect(custom?.range.end.character).toBe(19);
+  });
 });

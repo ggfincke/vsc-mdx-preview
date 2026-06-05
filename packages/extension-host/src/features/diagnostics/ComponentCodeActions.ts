@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { writeFileSync } from 'fs';
 import { DIAGNOSTIC_CODES } from './ComponentDiagnostics';
+import type { UnknownComponentDiagnosticData } from '../types';
 import { KNOWN_GENERIC_COMPONENTS } from 'mdx-forge/compiler';
 import {
   getCanonicalComponentName,
@@ -22,6 +23,18 @@ import { readJsonSync } from '../../shared/utils/file-utils';
 
 // config file name
 const CONFIG_FILE_NAME = '.mdx-previewrc.json';
+
+// read the unknown-component name from structured diagnostic data
+// Diagnostic.data is runtime-supported but absent from @types/vscode 1.90; cast
+function readComponentName(diagnostic: vscode.Diagnostic): string | null {
+  const data = (diagnostic as vscode.Diagnostic & { data?: unknown }).data as
+    | UnknownComponentDiagnosticData
+    | undefined;
+  if (data && typeof data.componentName === 'string' && data.componentName) {
+    return data.componentName;
+  }
+  return null;
+}
 
 // code action provider for component diagnostics
 export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
@@ -41,13 +54,11 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
     );
 
     for (const diagnostic of relevantDiagnostics) {
-      // extract component name from diagnostic message
-      const match = diagnostic.message.match(/Unknown component "([^"]+)"/);
-      if (!match) {
+      // read component name from structured diagnostic data
+      const componentName = readComponentName(diagnostic);
+      if (!componentName) {
         continue;
       }
-
-      const componentName = match[1];
 
       // action: add to .mdx-previewrc.json
       const addToConfigAction = this.createAddToConfigAction(

@@ -6,14 +6,14 @@ import { visit } from 'unist-util-visit';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
-import { analyzeMdxDocument } from './mdx-document-analysis';
+import {
+  analyzeMdxDocument,
+  astPositionToRange,
+} from './mdx-document-analysis';
+import { describeEsmStatement } from './esm-imports';
+import type { MdastPosition, MdxjsEsmNode } from '../diagnostics/types';
 
 const log = createTaggedLogger(LogTags.SYMBOL_PROVIDER);
-
-interface MdastPosition {
-  start: { line: number; column: number };
-  end: { line: number; column: number };
-}
 
 // heading AST node
 interface HeadingNode {
@@ -24,13 +24,6 @@ interface HeadingNode {
     value?: string;
     children?: Array<{ type: string; value?: string }>;
   }>;
-  position?: MdastPosition;
-}
-
-// MDX ESM node (imports/exports)
-interface MdxjsEsmNode {
-  type: 'mdxjsEsm';
-  value: string;
   position?: MdastPosition;
 }
 
@@ -54,55 +47,6 @@ function extractHeadingText(
     }
   }
   return parts.join('');
-}
-
-// extract meaningful name from import/export statement
-function extractEsmName(value: string): string {
-  // import Foo from 'path'
-  const defaultMatch = value.match(/import\s+(\w+)\s+from/);
-  if (defaultMatch) {
-    return defaultMatch[1];
-  }
-
-  // import { Foo, Bar } from 'path'
-  const namedMatch = value.match(/import\s+\{([^}]+)\}\s+from/);
-  if (namedMatch) {
-    return namedMatch[1].trim();
-  }
-
-  // import * as Foo from 'path'
-  const namespaceMatch = value.match(/import\s+\*\s+as\s+(\w+)\s+from/);
-  if (namespaceMatch) {
-    return namespaceMatch[1];
-  }
-
-  // export const foo =
-  const exportMatch = value.match(
-    /export\s+(?:const|let|var|function|class)\s+(\w+)/
-  );
-  if (exportMatch) {
-    return exportMatch[1];
-  }
-
-  // export default
-  if (value.includes('export default')) {
-    return 'default';
-  }
-
-  // fallback: first line truncated
-  return value.split('\n')[0].substring(0, 40);
-}
-
-function toDocumentRange(
-  position: MdastPosition,
-  frontmatterLineOffset: number
-): vscode.Range {
-  return new vscode.Range(
-    position.start.line - 1 + frontmatterLineOffset,
-    position.start.column - 1,
-    position.end.line - 1 + frontmatterLineOffset,
-    position.end.column - 1
-  );
 }
 
 // markdown depths 1..6 plus reserved index 0 so depth indexes the lookup directly
@@ -242,7 +186,7 @@ function createEsmSymbols(
       continue;
     }
 
-    const name = extractEsmName(node.value);
+    const name = describeEsmStatement(node.value);
     const kind = isImport
       ? vscode.SymbolKind.Module
       : vscode.SymbolKind.Variable;
@@ -287,7 +231,7 @@ export function extractMDXSymbols(
   visit(tree, 'mdxjsEsm', (node) => {
     const esmNode = node as unknown as MdxjsEsmNode;
     if (esmNode.position) {
-      const range = toDocumentRange(esmNode.position, frontmatterLineOffset);
+      const range = astPositionToRange(esmNode.position, frontmatterLineOffset);
       esmNodes.push({ value: esmNode.value, range });
     }
   });
@@ -302,7 +246,7 @@ export function extractMDXSymbols(
   visit(tree, 'heading', (node) => {
     const heading = node as unknown as HeadingNode;
     if (heading.position) {
-      const range = toDocumentRange(heading.position, frontmatterLineOffset);
+      const range = astPositionToRange(heading.position, frontmatterLineOffset);
       headings.push({
         depth: heading.depth,
         text: extractHeadingText(heading.children),

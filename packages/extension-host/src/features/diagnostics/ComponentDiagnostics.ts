@@ -7,7 +7,10 @@ import {
   getUnknownComponents,
   invalidateComponentCache,
 } from './ComponentDetector';
-import type { DetectedComponent } from '../types';
+import type {
+  DetectedComponent,
+  UnknownComponentDiagnosticData,
+} from '../types';
 import { LogTags } from '@mdx-preview/contracts';
 import { resolveConfig } from '../preview/configuration/ConfigResolver';
 import { createTaggedLogger } from '../../shared/logging/logger';
@@ -165,6 +168,13 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
 
     diagnostic.source = DIAGNOSTIC_SOURCE;
     diagnostic.code = DIAGNOSTIC_CODES.UNKNOWN_COMPONENT;
+
+    // carry the component name structurally so code actions need not re-parse the message
+    // Diagnostic.data is runtime-supported but absent from @types/vscode 1.90; cast
+    const data: UnknownComponentDiagnosticData = {
+      componentName: component.name,
+    };
+    (diagnostic as vscode.Diagnostic & { data?: unknown }).data = data;
 
     // add related info about available options
     diagnostic.relatedInformation = [
