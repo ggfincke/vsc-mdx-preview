@@ -71,17 +71,8 @@ export function generateShimBarrelFiles(
       fileLines.push('');
     }
 
-    if (entry.sideEffectImports && entry.sideEffectImports.length > 0) {
-      for (const sideEffect of entry.sideEffectImports) {
-        if (sideEffect.endsWith('.css')) {
-          fileLines.push(
-            `import 'mdx-forge/components/styles/${framework}.css';`
-          );
-          continue;
-        }
-
-        fileLines.push(`import '${frameworkImport}';`);
-      }
+    if (entry.injectCss) {
+      fileLines.push(`import 'mdx-forge/components/styles/${framework}.css';`);
       fileLines.push('');
     }
 
