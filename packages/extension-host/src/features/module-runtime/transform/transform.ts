@@ -31,6 +31,19 @@ export type { TransformEntryResult, TransformResult } from '../../types';
 
 import type { TransformEntryResult, TransformResult } from '../../types';
 
+// compile MDX via Trusted Mode (shared by entry & dependency transforms)
+async function compileMdxTrusted(
+  code: string,
+  opts: { isEntry: boolean; compilerConfig: CompilerConfig }
+): Promise<{ code: string; frontmatter: Record<string, unknown> }> {
+  const { compileTrusted } = await getCompileTrustedModule();
+  return compileTrusted(
+    code,
+    opts.isEntry,
+    toMdxForgeCompilerConfig(opts.compilerConfig)
+  );
+}
+
 // transform entry file (MDX -> TS -> Babel/Sucrase)
 // I.1: return both esmCode (for import extraction) & code (for webview)
 async function transformEntry(
@@ -48,12 +61,10 @@ async function transformEntry(
     languageId === 'mdx' ||
     uri.scheme === 'untitled'
   ) {
-    const { compileTrusted } = await getCompileTrustedModule();
-    const mdxResult = await compileTrusted(
-      code,
-      true,
-      toMdxForgeCompilerConfig(compilerConfig)
-    );
+    const mdxResult = await compileMdxTrusted(code, {
+      isEntry: true,
+      compilerConfig,
+    });
     code = mdxResult.code;
     frontmatter = mdxResult.frontmatter;
   }
@@ -93,12 +104,10 @@ async function transform(
       docUri: preview.doc.uri,
       docFsPath: fsPath,
     });
-    const { compileTrusted } = await getCompileTrustedModule();
-    const mdxResult = await compileTrusted(
-      code,
-      false,
-      toMdxForgeCompilerConfig(compilerConfig)
-    );
+    const mdxResult = await compileMdxTrusted(code, {
+      isEntry: false,
+      compilerConfig,
+    });
     code = mdxResult.code;
   }
 

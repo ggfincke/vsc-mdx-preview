@@ -28,7 +28,7 @@ import {
   buildNoopResult,
   NOOP_MODULE,
 } from './utils';
-import { handleByExtension } from '../handlers';
+import { handleByExtension, getScriptHandler } from '../handlers';
 import { readFileAsync } from '../../../shared/utils/file-utils';
 import { normalizePathSeparators } from '../../../shared/utils/path-utils';
 
@@ -200,9 +200,7 @@ export async function fetchLocal(
     let result = await handleByExtension(code, fsPath, extname, preview);
     if (!result) {
       // fallback for unknown file types - treat as script
-      const { ScriptHandler } = await import('../handlers/ScriptHandler');
-      const scriptHandler = new ScriptHandler();
-      result = await scriptHandler.handle(code, fsPath, preview);
+      result = await getScriptHandler().handle(code, fsPath, preview);
     }
 
     // check dependency count (prevents combinatorial explosion)

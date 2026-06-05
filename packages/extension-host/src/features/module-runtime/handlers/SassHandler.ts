@@ -57,14 +57,26 @@ export function clearSassCache(): void {
   log.debug('Sass cache cleared');
 }
 
+// boxed-comment border (length must stay exact)
+const SASS_COMMENT_BORDER =
+  '════════════════════════════════════════════════════════════════════════════';
+
+// build a boxed CSS comment w/ title & precomputed body
+function buildSassCssComment(title: string, body: string): string {
+  return `/* ${SASS_COMMENT_BORDER}
+   ${title}
+   ${SASS_COMMENT_BORDER}
+
+${body}
+
+   ${SASS_COMMENT_BORDER} */
+`;
+}
+
 // generate helpful CSS comment when sass is not available
 function buildSassNotInstalledResult(fsPath: string): FetchResult {
   const fileName = path.basename(fsPath);
-  const helpfulCss = `/* ════════════════════════════════════════════════════════════════════════════
-   MDX Preview: SCSS/Sass Support Not Available
-   ════════════════════════════════════════════════════════════════════════════
-
-   The file "${fileName}" could not be compiled because the 'sass'
+  const body = `   The file "${fileName}" could not be compiled because the 'sass'
    package is not installed in your workspace.
 
    To enable SCSS/Sass support, run one of the following commands in your
@@ -76,10 +88,11 @@ function buildSassNotInstalledResult(fsPath: string): FetchResult {
      # or
      pnpm add -D sass
 
-   After installing, refresh the MDX preview (Cmd/Ctrl+Shift+P -> "MDX: Refresh Preview")
-
-   ════════════════════════════════════════════════════════════════════════════ */
-`;
+   After installing, refresh the MDX preview (Cmd/Ctrl+Shift+P -> "MDX: Refresh Preview")`;
+  const helpfulCss = buildSassCssComment(
+    'MDX Preview: SCSS/Sass Support Not Available',
+    body
+  );
   return buildCssResult(fsPath, helpfulCss);
 }
 
@@ -137,20 +150,18 @@ export class SassHandler implements FileTypeHandler {
     } catch (error: unknown) {
       // sass compilation error - return error as CSS comment for visibility
       const errorMessage = extractErrorMessage(error);
-      const errorCss = `/* ════════════════════════════════════════════════════════════════════════════
-   MDX Preview: SCSS Compilation Error
-   ════════════════════════════════════════════════════════════════════════════
-
-   File: ${path.basename(fsPath)}
+      const indentedError = errorMessage
+        .split('\n')
+        .map((line) => '   ' + line)
+        .join('\n');
+      const body = `   File: ${path.basename(fsPath)}
 
    Error:
-${errorMessage
-  .split('\n')
-  .map((line) => '   ' + line)
-  .join('\n')}
-
-   ════════════════════════════════════════════════════════════════════════════ */
-`;
+${indentedError}`;
+      const errorCss = buildSassCssComment(
+        'MDX Preview: SCSS Compilation Error',
+        body
+      );
       log.warn(`Compilation error for ${fsPath}: ${errorMessage}`);
       return buildCssResult(fsPath, errorCss);
     }
