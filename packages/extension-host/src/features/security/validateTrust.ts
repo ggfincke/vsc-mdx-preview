@@ -39,6 +39,18 @@ export function requireTrustedModeForDocument(
   return trustState;
 }
 
+// require a trusted workspace for an operation - throw TrustError if untrusted
+// checks ONLY workspaceTrusted (not canExecute/scriptsEnabled) by design
+export function requireWorkspaceTrusted(operation: string): TrustState {
+  const trustState = getTrustManager().getState();
+  if (!trustState.workspaceTrusted) {
+    throw new TrustError(
+      `Operation blocked: ${operation} requires a trusted workspace`
+    );
+  }
+  return trustState;
+}
+
 // run trust guard w/ optional TrustError callback
 function tryRequire<T>(
   guard: () => T,
@@ -75,4 +87,13 @@ export function tryRequireTrustedMode(
   onTrustError?: (error: TrustError) => void
 ): TrustState | undefined {
   return tryRequire(() => requireTrustedMode(operation), onTrustError);
+}
+
+// non-throwing workspace-trust check
+// return TrustState or invoke callback & return undefined on TrustError
+export function tryRequireWorkspaceTrusted(
+  operation: string,
+  onTrustError?: (error: TrustError) => void
+): TrustState | undefined {
+  return tryRequire(() => requireWorkspaceTrusted(operation), onTrustError);
 }

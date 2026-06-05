@@ -9,12 +9,11 @@ import {
   suppressEditorScrollSync,
 } from '../../features/preview/scroll-sync';
 import { fetchLocal } from '../../features/module-runtime/fetch/fetchLocal';
+import { getErrorReporter, getConfigManager } from '../../app/services';
 import {
-  getTrustManager,
-  getErrorReporter,
-  getConfigManager,
-} from '../../app/services';
-import { tryRequireTrustedModeForDocument } from '../../features/security/validateTrust';
+  tryRequireTrustedModeForDocument,
+  tryRequireWorkspaceTrusted,
+} from '../../features/security/validateTrust';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
@@ -209,10 +208,12 @@ class ExtensionHandle implements ExtensionRPC {
       return;
     }
 
-    // workspace trust check via TrustManager (not direct vscode.workspace.isTrusted)
-    const trustState = getTrustManager().getState();
-    if (!trustState.workspaceTrusted) {
-      log.warn('openDocument: blocked - workspace not trusted');
+    // workspace trust gate (named helper - checks ONLY workspaceTrusted)
+    if (
+      !tryRequireWorkspaceTrusted('open document', (error) =>
+        log.warn(`openDocument: blocked - ${error.message}`)
+      )
+    ) {
       return;
     }
 
