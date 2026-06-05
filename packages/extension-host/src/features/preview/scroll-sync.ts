@@ -115,12 +115,9 @@ function getEditorScrollLine(
   return getAnchoredVisibleSourceLine(editor.visibleRanges);
 }
 
-function getOrCreateScheduler(preview: Preview): PreviewScheduler {
-  const existing = schedulers.get(preview);
-  if (existing) {
-    return existing;
-  }
-  const created: PreviewScheduler = {
+// build a scheduler in its zero state (all keys cleared)
+function makeScheduler(): PreviewScheduler {
+  return {
     pendingLine: undefined,
     pendingDocumentKey: undefined,
     lastPreviewSourceKey: undefined,
@@ -132,6 +129,14 @@ function getOrCreateScheduler(preview: Preview): PreviewScheduler {
     liveTimer: undefined,
     settleTimer: undefined,
   };
+}
+
+function getOrCreateScheduler(preview: Preview): PreviewScheduler {
+  const existing = schedulers.get(preview);
+  if (existing) {
+    return existing;
+  }
+  const created = makeScheduler();
   schedulers.set(preview, created);
   return created;
 }
@@ -143,6 +148,12 @@ function clearSchedulerTimer(
     clearTimeout(timer);
   }
   return undefined;
+}
+
+// clear both pending dispatch timers on a scheduler
+function clearSchedulerTimers(scheduler: PreviewScheduler): void {
+  scheduler.liveTimer = clearSchedulerTimer(scheduler.liveTimer);
+  scheduler.settleTimer = clearSchedulerTimer(scheduler.settleTimer);
 }
 
 function clearPendingEditorToPreviewScroll(scheduler: PreviewScheduler): void {
@@ -408,16 +419,8 @@ export function resetPreviewScrollSync(preview: Preview): void {
   if (!scheduler) {
     return;
   }
-  scheduler.liveTimer = clearSchedulerTimer(scheduler.liveTimer);
-  scheduler.settleTimer = clearSchedulerTimer(scheduler.settleTimer);
-  scheduler.pendingLine = undefined;
-  scheduler.pendingDocumentKey = undefined;
-  scheduler.lastPreviewSourceKey = undefined;
-  scheduler.lastEditorToPreviewDispatchKey = undefined;
-  scheduler.lastPreviewToEditorReportKey = undefined;
-  scheduler.lastDispatchAtMs = 0;
-  scheduler.ignoreEditorUntilMs = 0;
-  scheduler.ignorePreviewUntilMs = 0;
+  clearSchedulerTimers(scheduler);
+  Object.assign(scheduler, makeScheduler());
 }
 
 export function disposeScrollSyncForPreview(preview: Preview): void {
@@ -425,15 +428,13 @@ export function disposeScrollSyncForPreview(preview: Preview): void {
   if (!scheduler) {
     return;
   }
-  scheduler.liveTimer = clearSchedulerTimer(scheduler.liveTimer);
-  scheduler.settleTimer = clearSchedulerTimer(scheduler.settleTimer);
+  clearSchedulerTimers(scheduler);
   schedulers.delete(preview);
 }
 
 export function disposeEditorPreviewScrollSync(): void {
   for (const scheduler of schedulers.values()) {
-    scheduler.liveTimer = clearSchedulerTimer(scheduler.liveTimer);
-    scheduler.settleTimer = clearSchedulerTimer(scheduler.settleTimer);
+    clearSchedulerTimers(scheduler);
   }
   schedulers.clear();
 }

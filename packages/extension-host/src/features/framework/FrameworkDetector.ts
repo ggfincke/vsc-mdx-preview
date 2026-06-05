@@ -265,11 +265,6 @@ export class FrameworkDetector extends WithSubscribers<
     return null;
   }
 
-  // notify subscribers of framework change
-  private notifyFrameworkSubscribers(info: FrameworkInfo): void {
-    this.notifySubscribers(info);
-  }
-
   // invalidate cache for workspace
   invalidateCache(workspaceRoot: string): void {
     this.cache.delete(workspaceRoot);
@@ -285,7 +280,7 @@ export class FrameworkDetector extends WithSubscribers<
     const editor = vscode.window.activeTextEditor;
     if (editor) {
       const info = this.getFramework(editor.document.uri);
-      this.notifyFrameworkSubscribers(info);
+      this.notifySubscribers(info);
     }
   }
 
@@ -310,7 +305,7 @@ export class FrameworkDetector extends WithSubscribers<
         editorFolder?.uri.fsPath === workspaceFolder.uri.fsPath
       ) {
         const info = this.getFramework(editor.document.uri);
-        this.notifyFrameworkSubscribers(info);
+        this.notifySubscribers(info);
       }
     }
   }

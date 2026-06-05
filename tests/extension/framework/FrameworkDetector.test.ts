@@ -104,6 +104,10 @@ describe('FrameworkDetector', () => {
 
     expect(result.framework).toBe('starlight');
     expect(result.detected).toBe(false);
+
+    // facade delegates to canonical metadata (FW-THIN-DELEGATION)
+    expect(detector.getFrameworkDisplayName('starlight')).toBe('Starlight');
+    expect(detector.getFrameworkDisplayName('docusaurus')).toBe('Docusaurus');
   });
 
 });

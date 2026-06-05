@@ -29,12 +29,14 @@ import { FrameworkDetector } from '../features/framework/FrameworkDetector';
 import {
   ServiceRegistry,
   ServiceNames,
+  type ServiceName,
   getPreviewManager,
   getStatusBarManager,
   getConfigManager,
   getTrustManager,
   getErrorReporter,
 } from '../app/services';
+import type { ServiceFactory, IService } from '../app/services/types';
 import { TailwindProcessor } from '../features/tailwind/TailwindProcessor';
 import { ErrorReporter, ErrorContext, ErrorSeverity } from '../shared/errors';
 import { PackageJsonWatcher } from '../features/module-runtime/resolution/PackageJsonWatcher';
@@ -222,31 +224,38 @@ export async function activate(
   // register services w/ centralized registry before using service locators
   // order matters: register services w/ no dependencies first, then dependent services
   const registry = ServiceRegistry.getInstance();
-  registry.register(ServiceNames.CONFIG_MANAGER, () =>
-    ConfigManager.getInstance()
-  );
-  registry.register(ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance());
+
+  // uniform getInstance() registrations driven from an ordered table
+  // (registration order = disposal order reversed)
+  const registerServices = (
+    entries: readonly [ServiceName, ServiceFactory<IService>][]
+  ): void => {
+    for (const [name, factory] of entries) {
+      registry.register(name, factory);
+    }
+  };
+
+  registerServices([
+    [ServiceNames.CONFIG_MANAGER, () => ConfigManager.getInstance()],
+  ]);
+  registerServices([
+    [ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance()],
+  ]);
 
   // initialize logging w/ reactive debug setting (after ConfigManager)
   context.subscriptions.push(initLogging());
-  registry.register(ServiceNames.TRUST_MANAGER, () =>
-    TrustManager.getInstance()
-  );
-  registry.register(ServiceNames.THEME_MANAGER, () =>
-    ThemeManager.getInstance()
-  );
-  registry.register(ServiceNames.PREVIEW_MANAGER, () =>
-    PreviewManager.getInstance()
-  );
-  registry.register(ServiceNames.FRAMEWORK_DETECTOR, () =>
-    FrameworkDetector.getInstance()
-  );
-  registry.register(ServiceNames.TAILWIND_PROCESSOR, () =>
-    TailwindProcessor.getInstance()
-  );
-  registry.register(ServiceNames.ERROR_REPORTER, () =>
-    ErrorReporter.getInstance()
-  );
+
+  // StatusBarManager depends on TrustManager, FrameworkDetector, PreviewManager
+  // COMPONENT_DIAGNOSTICS: unknown component warnings; META_RESOLVER: Nextra _meta.json
+  registerServices([
+    [ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance()],
+    [ServiceNames.THEME_MANAGER, () => ThemeManager.getInstance()],
+    [ServiceNames.PREVIEW_MANAGER, () => PreviewManager.getInstance()],
+    [ServiceNames.FRAMEWORK_DETECTOR, () => FrameworkDetector.getInstance()],
+    [ServiceNames.TAILWIND_PROCESSOR, () => TailwindProcessor.getInstance()],
+    [ServiceNames.ERROR_REPORTER, () => ErrorReporter.getInstance()],
+  ]);
+
   // wrap OutputChannel for IService compatibility (shared channel from logging.ts)
   registry.register(ServiceNames.OUTPUT_CHANNEL, () => {
     const channel = getOutputChannel();
@@ -257,18 +266,15 @@ export async function activate(
       },
     };
   });
-  // StatusBarManager depends on TrustManager, FrameworkDetector, PreviewManager
-  registry.register(ServiceNames.STATUS_BAR_MANAGER, () =>
-    StatusBarManager.getInstance()
-  );
-  // ComponentDiagnostics for unknown component warnings
-  registry.register(ServiceNames.COMPONENT_DIAGNOSTICS, () =>
-    ComponentDiagnostics.getInstance()
-  );
-  // MetaResolver for Nextra _meta.json resolution
-  registry.register(ServiceNames.META_RESOLVER, () =>
-    MetaResolver.getInstance()
-  );
+
+  registerServices([
+    [ServiceNames.STATUS_BAR_MANAGER, () => StatusBarManager.getInstance()],
+    [
+      ServiceNames.COMPONENT_DIAGNOSTICS,
+      () => ComponentDiagnostics.getInstance(),
+    ],
+    [ServiceNames.META_RESOLVER, () => MetaResolver.getInstance()],
+  ]);
   log.debug('Services registered');
 
   // register subsystems (AFTER services, so they dispose BEFORE services)

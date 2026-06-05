@@ -42,6 +42,9 @@ function setupConfigWatcher(configFile: string): void {
 
   const cacheKey = path.dirname(configFile);
 
+  // ! intentional divergence from ConfigResolver: no onCreate handler here
+  // ConfigResolver invalidates + notifies on file create; this resolver omits it
+  // pending a deliberate bugfix (adding it would change cache behavior unguarded)
   configCache.watchPath(configFile, {
     onChange: () => {
       log.debug(`tsconfig.json changed: ${configFile}`);

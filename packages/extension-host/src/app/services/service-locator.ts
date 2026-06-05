@@ -16,6 +16,7 @@ import type { TailwindProcessor } from '../../features/tailwind/TailwindProcesso
 import type { ErrorReporter } from '../../shared/errors/ErrorReporter';
 import type { StatusBarManager } from '../../features/preview/StatusBarManager';
 import type { MetaResolver } from '../../features/framework/nextra/MetaResolver';
+import type { ComponentDiagnostics } from '../../features/diagnostics/ComponentDiagnostics';
 import type { OutputChannel } from 'vscode';
 
 // wrapper interface for OutputChannel to satisfy IService
@@ -100,6 +101,10 @@ export const getStatusBarManager = createServiceGetter<StatusBarManager>(
 export const getMetaResolver = createServiceGetter<MetaResolver>(
   ServiceNames.META_RESOLVER
 );
+
+// get the ComponentDiagnostics service - warns on unknown components in MDX
+export const getComponentDiagnostics =
+  createServiceGetter<ComponentDiagnostics>(ServiceNames.COMPONENT_DIAGNOSTICS);
 
 // get the OutputChannel instance - used for logging messages to the "MDX Preview" output panel
 // note: OutputChannel is wrapped internally to satisfy IService interface requirements

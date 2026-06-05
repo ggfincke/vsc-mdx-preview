@@ -30,6 +30,7 @@ import {
 } from './utils';
 import { handleByExtension } from '../handlers';
 import { readFileAsync } from '../../../shared/utils/file-utils';
+import { normalizePathSeparators } from '../../../shared/utils/path-utils';
 
 // module-level tagged logger for module fetcher
 const log = createTaggedLogger(LogTags.MODULE_SYSTEM);
@@ -192,7 +193,7 @@ export async function fetchLocal(
     const extname = path.extname(fsPath);
     if (path.sep === '\\') {
       // always return forward slash paths for resolution (https://github.com/xyc/vscode-mdx-preview/issues/13)
-      fsPath = fsPath.replace(/\\/g, '/');
+      fsPath = normalizePathSeparators(fsPath);
     }
 
     // dispatch to appropriate file type handler

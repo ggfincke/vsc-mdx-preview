@@ -113,6 +113,27 @@ describe('fetchLocal timeout delegation', () => {
     });
   });
 
+  it('dispatches forward-slash fsPaths to the extension handler', async () => {
+    mockReadFileAsync.mockResolvedValueOnce('export const value = 1;');
+
+    await fetchLocal('./module.js', false, path.join(tempDir, 'entry.mdx'), {
+      entryFsDirectory: tempDir,
+      dependentFsPaths: new Set<string>(),
+      typescriptConfiguration: undefined,
+      configuration: {
+        updateMode: 'onSave',
+      },
+      doc: {
+        uri: { fsPath: path.join(tempDir, 'entry.mdx') },
+      },
+      webviewHandle: {},
+    } as any);
+
+    // normalizePathSeparators keeps resolution paths backslash-free (xyc/vscode-mdx-preview#13)
+    const handlerPath = mockHandleByExtension.mock.calls[0]?.[1];
+    expect(handlerPath).not.toContain('\\');
+  });
+
   it('reports errors when readFileAsync returns null after timeout', async () => {
     mockReadFileAsync.mockImplementationOnce(
       async (
