@@ -51,6 +51,11 @@ export function clearCompiledIndexCache(): void {
   compiledIndexCache.clear();
 }
 
+// internal/test seam: observe compiled index cache size for invalidation checks
+export function getCompiledIndexCacheSize(): number {
+  return compiledIndexCache.size;
+}
+
 // compile tsconfig paths into an indexed data structure
 function compilePathsIndex(
   paths: Record<string, string[]>,

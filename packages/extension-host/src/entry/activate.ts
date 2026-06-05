@@ -41,7 +41,7 @@ import type { ServiceFactory, IService } from '../app/services/types';
 import { TailwindProcessor } from '../features/tailwind/TailwindProcessor';
 import { ErrorReporter, ErrorContext, ErrorSeverity } from '../shared/errors';
 import { PackageJsonWatcher } from '../features/module-runtime/resolution/PackageJsonWatcher';
-import { clearResolverCache } from '../features/module-runtime/resolution/resolver-factory';
+import { invalidateResolution } from '../features/module-runtime/resolution/resolver-factory';
 import { clearSassCache } from '../features/module-runtime/handlers';
 import { registerResolverSubsystem } from '../features/module-runtime/resolution/resolver-subsystem';
 import { registerCacheSubsystem } from '../app/lifecycle/cache-subsystem';
@@ -339,7 +339,7 @@ export async function activate(
 
   // start package.json watcher to auto-invalidate resolver & sass caches
   const packageJsonWatcher = new PackageJsonWatcher(() => {
-    clearResolverCache();
+    invalidateResolution();
     clearSassCache();
     watcherLog.debug(
       'Resolver & Sass caches cleared due to package file change'

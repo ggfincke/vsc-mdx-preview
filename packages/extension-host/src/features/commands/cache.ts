@@ -3,7 +3,7 @@
 
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
-import { clearResolverCache } from '../module-runtime/resolution/resolver-factory';
+import { invalidateResolution } from '../module-runtime/resolution/resolver-factory';
 import { clearSassCache } from '../module-runtime/handlers';
 import { clearUnmanagedCaches } from '../../app/lifecycle/cache-subsystem';
 import { getPreviewManager } from '../../app/services';
@@ -18,7 +18,7 @@ const clearAllCaches = async (): Promise<void> => {
   log.debug('clearAllCaches command triggered');
 
   // extension-side caches (resolver & sass)
-  clearResolverCache();
+  invalidateResolution();
   clearSassCache();
 
   // additional unmanaged caches (components, path security)
