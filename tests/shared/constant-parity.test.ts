@@ -2,6 +2,9 @@
 // verify cross-repo constant alignment & theme label completeness
 // prevent runtime, settings, preload ID & framework union drift
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import {
   SHIM_LOAD_MAX_RETRIES,
@@ -16,6 +19,36 @@ import {
   FRAMEWORK_IDS,
 } from '@mdx-preview/contracts';
 import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../packages/webview-client/src/app/constants';
+import {
+  SAFE_PREVIEW_CLASS,
+  TRUSTED_PREVIEW_CLASS,
+} from '../../packages/webview-client/src/features/preview/safe/security/previewClassNames';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+
+// resolve a file from installed node_modules first, then sibling repo checkout
+function resolveFromMdxForge(relPath: string): string {
+  const candidates = [
+    path.resolve(HERE, '../../node_modules/mdx-forge', relPath),
+    path.resolve(HERE, '../../../mdx-forge', relPath),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  throw new Error(`could not resolve mdx-forge file: ${relPath}`);
+}
+
+// extract a single quoted string literal value for the given object key
+function extractQuotedValue(source: string, key: string): string {
+  const re = new RegExp(`${key}:\\s*'((?:\\\\.|[^'\\\\])*)'`);
+  const match = source.match(re);
+  if (!match) {
+    throw new Error(`could not extract '${key}' literal`);
+  }
+  return match[1];
+}
 
 describe('cross-repo constant parity', () => {
   it('contracts shim retry constants have expected canonical values', () => {
@@ -88,5 +121,37 @@ describe('theme label completeness', () => {
     expect(Object.keys(CODE_BLOCK_THEME_LABELS).sort()).toEqual(
       [...CODE_BLOCK_THEMES].sort()
     );
+  });
+});
+
+describe('code-block copy icon cross-repo parity', () => {
+  // ! cross-repo duplicate: CodeBlock COPY_ICONS must stay byte-identical w/
+  // mdx-forge GITHUB_ICONS.copy/.check (no shared import across the seam)
+  it('COPY_ICONS copy/check match mdx-forge GITHUB_ICONS', () => {
+    const codeBlockSource = fs.readFileSync(
+      path.resolve(
+        HERE,
+        '../../packages/webview-client/src/features/code-block/ui/CodeBlock.tsx'
+      ),
+      'utf8'
+    );
+    const iconsSource = fs.readFileSync(
+      resolveFromMdxForge('src/internal/icons.ts'),
+      'utf8'
+    );
+
+    expect(extractQuotedValue(codeBlockSource, 'copy')).toBe(
+      extractQuotedValue(iconsSource, 'copy')
+    );
+    expect(extractQuotedValue(codeBlockSource, 'check')).toBe(
+      extractQuotedValue(iconsSource, 'check')
+    );
+  });
+});
+
+describe('preview container class-name constants', () => {
+  it('SAFE_PREVIEW_CLASS / TRUSTED_PREVIEW_CLASS have canonical values', () => {
+    expect(SAFE_PREVIEW_CLASS).toBe('mdx-safe-preview');
+    expect(TRUSTED_PREVIEW_CLASS).toBe('mdx-trusted-preview');
   });
 });

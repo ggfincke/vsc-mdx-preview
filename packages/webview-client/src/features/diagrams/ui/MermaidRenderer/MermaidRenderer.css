@@ -1,14 +1,4 @@
 /* Mermaid-specific diagram styles */
 
+/* shared bg & base styles now live in diagram-shared.css */
 @import '../DiagramRenderer/diagram-shared.css';
-
-/* mermaid diagram background */
-.mdx-preview-mermaid-diagram {
-  --mermaid-bg-light: #f8f8f8;
-  --mermaid-bg-dark: #1e1e1e;
-  background: var(--mermaid-bg-light);
-}
-
-.mdx-preview-mermaid-diagram[data-theme='dark'] {
-  background: var(--mermaid-bg-dark);
-}

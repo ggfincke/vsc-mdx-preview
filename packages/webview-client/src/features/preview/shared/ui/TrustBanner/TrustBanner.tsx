@@ -4,6 +4,11 @@
 import { memo, useState, useCallback, useEffect } from 'react';
 import type { TrustState } from '../../../../../app/types';
 import { ExtensionHandle } from '../../../../../platform/rpc/webview-rpc-client';
+import {
+  getItem,
+  setItem,
+  removeItem,
+} from '../../../../../shared/utils/safeLocalStorage';
 import './TrustBanner.css';
 
 interface TrustBannerProps {
@@ -15,23 +20,15 @@ interface TrustBannerProps {
 const DISMISSED_BANNER_KEY_STORAGE = 'mdx-preview.trust-banner.dismissed';
 
 function readDismissedBannerKey(): string | null {
-  try {
-    return window.localStorage.getItem(DISMISSED_BANNER_KEY_STORAGE);
-  } catch {
-    return null;
-  }
+  return getItem(DISMISSED_BANNER_KEY_STORAGE);
 }
 
 function writeDismissedBannerKey(key: string | null): void {
-  try {
-    if (key === null) {
-      window.localStorage.removeItem(DISMISSED_BANNER_KEY_STORAGE);
-      return;
-    }
-    window.localStorage.setItem(DISMISSED_BANNER_KEY_STORAGE, key);
-  } catch {
-    // ignore storage failures in restricted webview contexts
+  if (key === null) {
+    removeItem(DISMISSED_BANNER_KEY_STORAGE);
+    return;
   }
+  setItem(DISMISSED_BANNER_KEY_STORAGE, key);
 }
 
 function getBannerKey(trustState: TrustState): string | null {

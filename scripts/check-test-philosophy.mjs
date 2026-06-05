@@ -64,7 +64,7 @@ const EXACT_ALLOWED = new Set([
 
 const CASE_COUNT_OVERRIDES = new Map([
   ['tests/resolution/unified-resolver.test.ts', 6],
-  ['tests/shared/constant-parity.test.ts', 7],
+  ['tests/shared/constant-parity.test.ts', 9],
   ['tests/shared/duplicate-divergence.test.ts', 5],
   ['tests/shared/utility-parity.test.ts', 6],
   ['tests/extension/errors/ErrorReporter.test.ts', 6],
@@ -73,7 +73,7 @@ const CASE_COUNT_OVERRIDES = new Map([
   ['tests/extension/language/MDXSymbolProvider.test.ts', 12],
   ['tests/extension/rpc-input-validation.test.ts', 6],
   ['tests/extension/workspace-events.test.ts', 5],
-  ['tests/webview/SafePreview.test.ts', 6],
+  ['tests/webview/SafePreview.test.ts', 7],
   ['tests/webview/source-line-highlight.test.ts', 7],
   ['tests/extension/themes/iconPackValidation.test.ts', 6],
   ['tests/extension/themes/IconPackResolver.test.ts', 8],

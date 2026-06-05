@@ -6,14 +6,18 @@ import {
   useLightbox,
   type LightboxImage,
 } from '../../../app/state/LightboxContext';
+import {
+  SAFE_PREVIEW_CLASS,
+  TRUSTED_PREVIEW_CLASS,
+} from '../../preview/safe/security/previewClassNames';
 
 const HEADING_TAGS = new Set(['H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
 
+const PREVIEW_CONTAINER_SELECTOR = `.${SAFE_PREVIEW_CLASS}, .${TRUSTED_PREVIEW_CLASS}`;
+
 // find the preview container by traversing up from the clicked element
 function findPreviewContainer(el: HTMLElement): HTMLElement | null {
-  return el.closest(
-    '.mdx-safe-preview, .mdx-trusted-preview'
-  ) as HTMLElement | null;
+  return el.closest(PREVIEW_CONTAINER_SELECTOR) as HTMLElement | null;
 }
 
 // check if an element is a valid lightbox image

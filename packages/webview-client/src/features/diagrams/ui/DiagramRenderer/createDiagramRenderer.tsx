@@ -4,10 +4,27 @@
 import { useRef, useState, useCallback } from 'react';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { createTaggedLogger } from '../../../../shared/utils/createTaggedLogger';
+import { cn } from '../../../../shared/utils/cn';
 import {
   useAsyncEffect,
   type CancellationSignal,
 } from '../../../../shared/hooks';
+
+// stable shared classes so diagram-shared.css targets one set of selectors
+// instead of hard-coding every per-renderer prefix; prefix classes are kept
+// alongside these for renderer-specific overrides (e.g. dark-mode SVG fills)
+const SHARED = {
+  root: 'mdx-preview-diagram',
+  surface: 'mdx-preview-diagram-surface',
+  loading: 'mdx-preview-diagram-loading',
+  spinner: 'mdx-preview-diagram-spinner',
+  error: 'mdx-preview-diagram-error',
+  errorHeader: 'mdx-preview-diagram-error-header',
+  errorIcon: 'mdx-preview-diagram-error-icon',
+  errorMsg: 'mdx-preview-diagram-error-msg',
+  toggle: 'mdx-preview-diagram-toggle',
+  source: 'mdx-preview-diagram-source',
+} as const;
 
 // base props all diagram renderers share
 export interface DiagramRendererBaseProps {
@@ -98,22 +115,24 @@ export function createDiagramRenderer<
     // error state w/ show source toggle
     if (error) {
       return (
-        <div className={`${prefix}-error`}>
-          <div className={`${prefix}-error-header`}>
-            <span className={`${prefix}-error-icon`}>!</span>
-            <span className={`${prefix}-error-msg`}>
+        <div className={cn(`${prefix}-error`, SHARED.error)}>
+          <div className={cn(`${prefix}-error-header`, SHARED.errorHeader)}>
+            <span className={cn(`${prefix}-error-icon`, SHARED.errorIcon)}>
+              !
+            </span>
+            <span className={cn(`${prefix}-error-msg`, SHARED.errorMsg)}>
               {config.errorLabel}: {error}
             </span>
           </div>
           <button
             onClick={toggleSource}
-            className={`${prefix}-toggle`}
+            className={cn(`${prefix}-toggle`, SHARED.toggle)}
             type="button"
           >
             {showSource ? 'Hide source' : 'Show source'}
           </button>
           {showSource && (
-            <pre className={`${prefix}-source`}>
+            <pre className={cn(`${prefix}-source`, SHARED.source)}>
               <code>{code}</code>
             </pre>
           )}
@@ -123,16 +142,16 @@ export function createDiagramRenderer<
 
     // diagram container w/ loading overlay
     return (
-      <div className={prefix}>
+      <div className={cn(prefix, SHARED.root)}>
         {isLoading && (
-          <div className={`${prefix}-loading`}>
-            <div className={`${prefix}-spinner`} />
+          <div className={cn(`${prefix}-loading`, SHARED.loading)}>
+            <div className={cn(`${prefix}-spinner`, SHARED.spinner)} />
             <span>{config.loadingText}</span>
           </div>
         )}
         <div
           ref={containerRef}
-          className={`${prefix}-diagram`}
+          className={cn(`${prefix}-diagram`, SHARED.surface)}
           data-theme={dataTheme}
           style={{ visibility: isLoading ? 'hidden' : 'visible' }}
         />
