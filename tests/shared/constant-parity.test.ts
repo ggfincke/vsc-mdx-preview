@@ -27,18 +27,22 @@ import {
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
-// resolve a file from installed node_modules first, then sibling repo checkout
-function resolveFromMdxForge(relPath: string): string {
-  const candidates = [
-    path.resolve(HERE, '../../node_modules/mdx-forge', relPath),
-    path.resolve(HERE, '../../../mdx-forge', relPath),
+// resolve a file from installed node_modules or sibling repo checkout
+// prefer src (dev/sibling checkout); fall back to shipped dist (published pkg ships dist only, e.g. CI)
+function resolveFromMdxForge(srcRelPath: string, distRelPath: string): string {
+  const roots = [
+    path.resolve(HERE, '../../node_modules/mdx-forge'),
+    path.resolve(HERE, '../../../mdx-forge'),
   ];
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
+  for (const relPath of [srcRelPath, distRelPath]) {
+    for (const root of roots) {
+      const candidate = path.resolve(root, relPath);
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
     }
   }
-  throw new Error(`could not resolve mdx-forge file: ${relPath}`);
+  throw new Error(`could not resolve mdx-forge file: ${srcRelPath}`);
 }
 
 // extract a single quoted string literal value for the given object key
@@ -142,7 +146,10 @@ describe('code-block copy icon cross-repo parity', () => {
       'utf8'
     );
     const iconsSource = fs.readFileSync(
-      resolveFromMdxForge('src/internal/icons.ts'),
+      resolveFromMdxForge(
+        'src/internal/icons.ts',
+        'dist/esm/internal/icons.js'
+      ),
       'utf8'
     );
 
