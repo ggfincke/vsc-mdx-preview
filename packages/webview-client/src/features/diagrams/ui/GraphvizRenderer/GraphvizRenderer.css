@@ -1,17 +1,7 @@
 /* Graphviz-specific diagram styles */
 
+/* shared bg & base styles now live in diagram-shared.css */
 @import '../DiagramRenderer/diagram-shared.css';
-
-/* graphviz diagram background */
-.mdx-preview-graphviz-diagram {
-  --graphviz-bg-light: #f8f8f8;
-  --graphviz-bg-dark: #1e1e1e;
-  background: var(--graphviz-bg-light);
-}
-
-.mdx-preview-graphviz-diagram[data-theme='dark'] {
-  background: var(--graphviz-bg-dark);
-}
 
 /* dark mode: override inline SVG colors for readability */
 .mdx-preview-graphviz-diagram[data-theme='dark'] .node polygon,

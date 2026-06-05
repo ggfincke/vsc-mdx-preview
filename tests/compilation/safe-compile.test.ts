@@ -4,19 +4,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { compileSafe } from 'mdx-forge/compiler';
-import type { CompilerConfig } from 'mdx-forge/compiler';
-import { FIXTURES } from '../helpers';
-
-// create library-native CompilerConfig
-function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
-  return {
-    documentPath: '/workspace/test.mdx',
-    useHostMarkdownStyles: true,
-    componentsBuiltins: true,
-    componentsUnknownBehavior: 'placeholder',
-    ...overrides,
-  };
-}
+import { FIXTURES, createCompilerConfig } from '../helpers';
 
 describe('compileSafe() [consumer smoke]', () => {
   beforeEach(() => {
@@ -24,7 +12,7 @@ describe('compileSafe() [consumer smoke]', () => {
   });
 
   it('compiles basic MDX to HTML', async () => {
-    const result = await compileSafe(FIXTURES.basicMdx, createConfig());
+    const result = await compileSafe(FIXTURES.basicMdx, createCompilerConfig());
 
     expect(result.html).toContain('<h1');
     expect(result.html).toContain('Hello');
@@ -35,7 +23,7 @@ describe('compileSafe() [consumer smoke]', () => {
   it('extracts frontmatter and returns it separately', async () => {
     const result = await compileSafe(
       FIXTURES.mdxWithFrontmatter,
-      createConfig()
+      createCompilerConfig()
     );
 
     expect(result.frontmatter).toBeDefined();
@@ -47,7 +35,7 @@ describe('compileSafe() [consumer smoke]', () => {
   });
 
   it('creates placeholder for unknown JSX components (default behavior)', async () => {
-    const result = await compileSafe(FIXTURES.mdxWithJsx, createConfig());
+    const result = await compileSafe(FIXTURES.mdxWithJsx, createCompilerConfig());
 
     expect(result.html).toContain('mdx-unknown-component-placeholder');
     expect(result.html).toContain('CustomComponent');

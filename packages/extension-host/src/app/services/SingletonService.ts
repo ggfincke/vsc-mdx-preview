@@ -3,6 +3,7 @@
 
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
+import { disposeCollection } from '../../shared/utils/disposable';
 import type { IService } from '../types';
 import type { LogTag, TaggedLogger } from '@mdx-preview/contracts';
 
@@ -47,10 +48,7 @@ export abstract class SingletonService<
   dispose(): void {
     this.onDispose();
 
-    for (const d of this.disposables) {
-      d.dispose();
-    }
-    this.disposables = [];
+    disposeCollection(this.disposables);
 
     // clear static instance on the actual class (not base class)
     const ctor = this.constructor as typeof SingletonService;

@@ -28,8 +28,9 @@ import {
   buildNoopResult,
   NOOP_MODULE,
 } from './utils';
-import { handleByExtension } from '../handlers';
+import { handleByExtension, getScriptHandler } from '../handlers';
 import { readFileAsync } from '../../../shared/utils/file-utils';
+import { normalizePathSeparators } from '../../../shared/utils/path-utils';
 
 // module-level tagged logger for module fetcher
 const log = createTaggedLogger(LogTags.MODULE_SYSTEM);
@@ -192,16 +193,14 @@ export async function fetchLocal(
     const extname = path.extname(fsPath);
     if (path.sep === '\\') {
       // always return forward slash paths for resolution (https://github.com/xyc/vscode-mdx-preview/issues/13)
-      fsPath = fsPath.replace(/\\/g, '/');
+      fsPath = normalizePathSeparators(fsPath);
     }
 
     // dispatch to appropriate file type handler
     let result = await handleByExtension(code, fsPath, extname, preview);
     if (!result) {
       // fallback for unknown file types - treat as script
-      const { ScriptHandler } = await import('../handlers/ScriptHandler');
-      const scriptHandler = new ScriptHandler();
-      result = await scriptHandler.handle(code, fsPath, preview);
+      result = await getScriptHandler().handle(code, fsPath, preview);
     }
 
     // check dependency count (prevents combinatorial explosion)

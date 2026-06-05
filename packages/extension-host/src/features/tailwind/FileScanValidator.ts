@@ -5,16 +5,11 @@ import * as fs from 'fs';
 import { LogTags } from '@mdx-preview/contracts';
 import { Semaphore, extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { CLASS_TOKEN_RE, TAILWIND_FILE_READ_LIMIT } from './constants';
+import { TAILWIND_FILE_READ_LIMIT } from './constants';
 import { readFileAsync } from '../../shared/utils/file-utils';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
 const readSemaphore = new Semaphore(TAILWIND_FILE_READ_LIMIT);
-
-export interface FileValidationResult {
-  valid: boolean;
-  reason?: string;
-}
 
 export interface FileReadResult {
   fsPath: string;
@@ -24,48 +19,6 @@ export interface FileReadResult {
 // validate files before scanning for Tailwind classes
 // consolidate file I/O & validation logic for testability
 export class FileScanValidator {
-  // validate file size before reading
-  async validateFileSize(
-    fsPath: string,
-    maxBytes: number
-  ): Promise<FileValidationResult> {
-    try {
-      const stat = await fs.promises.stat(fsPath);
-      if (stat.size > maxBytes) {
-        return {
-          valid: false,
-          reason: `File size ${stat.size} exceeds limit ${maxBytes}`,
-        };
-      }
-      return { valid: true };
-    } catch (err) {
-      return {
-        valid: false,
-        reason: `Cannot stat file: ${extractErrorMessage(err)}`,
-      };
-    }
-  }
-
-  // validate file extension against allowed list
-  validateExtension(
-    fsPath: string,
-    allowedExts: string[]
-  ): FileValidationResult {
-    const ext = fsPath.slice(fsPath.lastIndexOf('.'));
-    if (!allowedExts.includes(ext)) {
-      return {
-        valid: false,
-        reason: `Extension ${ext} not in allowed list: ${allowedExts.join(', ')}`,
-      };
-    }
-    return { valid: true };
-  }
-
-  // validate a Tailwind class token
-  validateClassToken(token: string): boolean {
-    return CLASS_TOKEN_RE.test(token);
-  }
-
   // read file content w/ size validation
   async readFileIfValid(
     fsPath: string,

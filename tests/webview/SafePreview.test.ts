@@ -1,10 +1,31 @@
 // tests/webview/SafePreview.test.ts
-// verify representative safe-mode sanitization boundaries
+// verify representative safe-mode sanitization boundaries & lightbox wiring
 // @vitest-environment jsdom
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { createElement, act, useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
 import DOMPurify from 'dompurify';
 import { DOMPURIFY_CONFIG } from '../../packages/webview-client/src/features/preview/safe/security/allowlist';
+
+// stub heavy diagram coordinator so usePreviewSetup keeps the real lightbox handler
+vi.mock(
+  '../../packages/webview-client/src/features/diagrams/hooks/useDiagramScanCoordinator',
+  () => ({
+    useDiagramScanCoordinator: () => ({
+      renderPortals: () => null,
+      scan: vi.fn(),
+    }),
+  })
+);
+
+// stub unrelated interaction wiring (scroll sync, code-block, katex)
+vi.mock(
+  '../../packages/webview-client/src/features/preview/shared/hooks/usePreviewInteractions',
+  () => ({
+    usePreviewInteractions: () => undefined,
+  })
+);
 
 describe('SafePreview sanitization', () => {
   it('strips script tags', () => {
@@ -64,5 +85,65 @@ describe('SafePreview sanitization', () => {
     expect(result).toContain('<h1>');
     expect(result).toContain('<strong>');
     expect(result).toContain('<em>');
+  });
+
+  // pin WC-3: clicking an img inside the safe preview opens the lightbox
+  it('opens the lightbox when an img inside the safe preview is clicked', async () => {
+    const { SafePreviewRenderer } = await import(
+      '../../packages/webview-client/src/features/preview/safe/SafePreview'
+    );
+    const { LightboxProvider, useLightbox } = await import(
+      '../../packages/webview-client/src/app/state/LightboxContext'
+    );
+
+    let openedSrc: string | null = null;
+    function LightboxProbe() {
+      const { isOpen, currentImage } = useLightbox();
+      useEffect(() => {
+        if (isOpen && currentImage) {
+          openedSrc = currentImage.src;
+        }
+      });
+      return null;
+    }
+
+    (
+      globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = true;
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+
+    act(() => {
+      root.render(
+        createElement(
+          LightboxProvider,
+          null,
+          createElement(SafePreviewRenderer, {
+            html: '<p><img src="https://example.test/cat.png" alt="cat"></p>',
+          }),
+          createElement(LightboxProbe)
+        )
+      );
+    });
+
+    const img = host.querySelector('img');
+    expect(img).toBeTruthy();
+
+    act(() => {
+      img!.dispatchEvent(
+        new MouseEvent('click', { bubbles: true, cancelable: true })
+      );
+    });
+
+    expect(openedSrc).toBe('https://example.test/cat.png');
+
+    act(() => {
+      root.unmount();
+    });
+    document.body.removeChild(host);
+    (
+      globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+    ).IS_REACT_ACT_ENVIRONMENT = false;
   });
 });

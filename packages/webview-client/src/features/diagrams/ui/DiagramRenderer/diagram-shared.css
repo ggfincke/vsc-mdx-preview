@@ -1,18 +1,14 @@
 /* shared base styles for all diagram renderers */
 
 /* container */
-.mdx-preview-mermaid,
-.mdx-preview-plantuml,
-.mdx-preview-graphviz {
+.mdx-preview-diagram {
   position: relative;
   margin: 16px 0;
   overflow-x: auto;
 }
 
 /* diagram display area */
-.mdx-preview-mermaid-diagram,
-.mdx-preview-plantuml-diagram,
-.mdx-preview-graphviz-diagram {
+.mdx-preview-diagram-surface {
   display: flex;
   justify-content: center;
   margin: 16px 0;
@@ -20,18 +16,23 @@
   padding: 16px;
 }
 
+/* shared light/dark background */
+.mdx-preview-diagram-surface {
+  background: #f8f8f8;
+}
+
+.mdx-preview-diagram-surface[data-theme='dark'] {
+  background: #1e1e1e;
+}
+
 /* SVG sizing */
-.mdx-preview-mermaid-diagram svg,
-.mdx-preview-plantuml-diagram svg,
-.mdx-preview-graphviz-diagram svg {
+.mdx-preview-diagram-surface svg {
   max-width: 100%;
   height: auto;
 }
 
 /* loading overlay */
-.mdx-preview-mermaid-loading,
-.mdx-preview-plantuml-loading,
-.mdx-preview-graphviz-loading {
+.mdx-preview-diagram-loading {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,9 +43,7 @@
 }
 
 /* spinner */
-.mdx-preview-mermaid-spinner,
-.mdx-preview-plantuml-spinner,
-.mdx-preview-graphviz-spinner {
+.mdx-preview-diagram-spinner {
   width: 20px;
   height: 20px;
   border: 2px solid var(--vscode-progressBar-background, #0e70c0);
@@ -60,9 +59,7 @@
 }
 
 /* error state */
-.mdx-preview-mermaid-error,
-.mdx-preview-plantuml-error,
-.mdx-preview-graphviz-error {
+.mdx-preview-diagram-error {
   margin: 16px 0;
   padding: 12px 16px;
   background: var(
@@ -73,18 +70,14 @@
   border-radius: 4px;
 }
 
-.mdx-preview-mermaid-error-header,
-.mdx-preview-plantuml-error-header,
-.mdx-preview-graphviz-error-header {
+.mdx-preview-diagram-error-header {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
 }
 
-.mdx-preview-mermaid-error-icon,
-.mdx-preview-plantuml-error-icon,
-.mdx-preview-graphviz-error-icon {
+.mdx-preview-diagram-error-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,16 +91,12 @@
   flex-shrink: 0;
 }
 
-.mdx-preview-mermaid-error-msg,
-.mdx-preview-plantuml-error-msg,
-.mdx-preview-graphviz-error-msg {
+.mdx-preview-diagram-error-msg {
   color: var(--vscode-errorForeground, #f48771);
   font-size: 13px;
 }
 
-.mdx-preview-mermaid-toggle,
-.mdx-preview-plantuml-toggle,
-.mdx-preview-graphviz-toggle {
+.mdx-preview-diagram-toggle {
   padding: 4px 8px;
   background: var(
     --vscode-button-secondaryBackground,
@@ -120,18 +109,14 @@
   font-size: 12px;
 }
 
-.mdx-preview-mermaid-toggle:hover,
-.mdx-preview-plantuml-toggle:hover,
-.mdx-preview-graphviz-toggle:hover {
+.mdx-preview-diagram-toggle:hover {
   background: var(
     --vscode-button-secondaryHoverBackground,
     rgba(255, 255, 255, 0.2)
   );
 }
 
-.mdx-preview-mermaid-source,
-.mdx-preview-plantuml-source,
-.mdx-preview-graphviz-source {
+.mdx-preview-diagram-source {
   margin: 12px 0 0 0;
   padding: 12px;
   background: var(--vscode-textCodeBlock-background, rgba(0, 0, 0, 0.2));
@@ -141,9 +126,7 @@
   font-family: var(--vscode-editor-font-family, monospace);
 }
 
-.mdx-preview-mermaid-source code,
-.mdx-preview-plantuml-source code,
-.mdx-preview-graphviz-source code {
+.mdx-preview-diagram-source code {
   background: transparent;
   padding: 0;
 }

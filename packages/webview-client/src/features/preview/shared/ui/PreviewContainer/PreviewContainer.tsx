@@ -3,6 +3,10 @@
 
 import type { ReactNode, RefObject, MouseEvent } from 'react';
 import { cn } from '../../../../../shared/utils/cn';
+import {
+  SAFE_PREVIEW_CLASS,
+  TRUSTED_PREVIEW_CLASS,
+} from '../../../safe/security/previewClassNames';
 import './PreviewContainer.css';
 
 export interface PreviewContainerProps {
@@ -31,7 +35,7 @@ export function PreviewContainer({
   className,
 }: PreviewContainerProps) {
   const baseClass =
-    mode === 'safe' ? 'mdx-safe-preview' : 'mdx-trusted-preview';
+    mode === 'safe' ? SAFE_PREVIEW_CLASS : TRUSTED_PREVIEW_CLASS;
 
   return (
     <div

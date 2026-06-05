@@ -39,6 +39,26 @@ export interface ComponentDiagnostic {
   code: string;
 }
 
+// structured payload on vscode.Diagnostic.data for unknown-component diagnostics
+// lets code actions read the component name w/o re-parsing the message prose
+export interface UnknownComponentDiagnosticData {
+  // unknown component name
+  componentName: string;
+}
+
+// mdast position (1-based line, 1-based column)
+export interface MdastPosition {
+  start: { line: number; column: number };
+  end: { line: number; column: number };
+}
+
+// MDX ESM node (imports/exports)
+export interface MdxjsEsmNode {
+  type: 'mdxjsEsm';
+  value: string;
+  position?: MdastPosition;
+}
+
 // result of component detection
 export interface ComponentDetectionResult {
   // detected components

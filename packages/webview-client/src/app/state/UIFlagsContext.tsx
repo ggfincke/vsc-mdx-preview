@@ -4,6 +4,15 @@
 import { useState, useCallback, useMemo } from 'react';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
 import {
+  clampToHundredths,
+  roundToHundredths,
+} from '../../shared/utils/clamp';
+import {
+  getItem,
+  setItem,
+  removeItem,
+} from '../../shared/utils/safeLocalStorage';
+import {
   LogTags,
   type PreviewScrollSyncValue,
   type SourceLineHighlightColorValue,
@@ -17,30 +26,22 @@ const ZOOM_DEFAULT = 1.0;
 
 // read persisted zoom from localStorage w/ validation
 function readPersistedZoom(): number {
-  try {
-    const stored = window.localStorage.getItem(ZOOM_STORAGE_KEY);
-    if (stored) {
-      const parsed = parseFloat(stored);
-      if (!isNaN(parsed) && parsed >= ZOOM_MIN && parsed <= ZOOM_MAX) {
-        return Math.round(parsed * 100) / 100;
-      }
+  const stored = getItem(ZOOM_STORAGE_KEY);
+  if (stored) {
+    const parsed = parseFloat(stored);
+    if (!isNaN(parsed) && parsed >= ZOOM_MIN && parsed <= ZOOM_MAX) {
+      return roundToHundredths(parsed);
     }
-  } catch {
-    // ignore storage failures
   }
   return ZOOM_DEFAULT;
 }
 
 // persist zoom to localStorage
 function persistZoom(level: number): void {
-  try {
-    if (level === ZOOM_DEFAULT) {
-      window.localStorage.removeItem(ZOOM_STORAGE_KEY);
-    } else {
-      window.localStorage.setItem(ZOOM_STORAGE_KEY, String(level));
-    }
-  } catch {
-    // ignore storage failures
+  if (level === ZOOM_DEFAULT) {
+    removeItem(ZOOM_STORAGE_KEY);
+  } else {
+    setItem(ZOOM_STORAGE_KEY, String(level));
   }
 }
 
@@ -95,8 +96,7 @@ function useUIFlagsProviderValue(): UIFlagsContextValue {
   }, []);
 
   const setZoomLevel = useCallback((level: number) => {
-    const clamped =
-      Math.round(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, level)) * 100) / 100;
+    const clamped = clampToHundredths(level, ZOOM_MIN, ZOOM_MAX);
     log.debug('setZoomLevel called', clamped);
     setZoomLevelState(clamped);
     persistZoom(clamped);

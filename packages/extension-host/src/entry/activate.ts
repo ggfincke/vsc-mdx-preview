@@ -19,6 +19,7 @@ import {
 } from '../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { SETTINGS } from '../shared/config/ConfigManager';
+import { EXTENSION_DISPLAY_NAME } from '../shared/constants';
 
 const log = createTaggedLogger(LogTags.ACTIVATE);
 const themeLog = createTaggedLogger(LogTags.THEME);
@@ -29,16 +30,18 @@ import { FrameworkDetector } from '../features/framework/FrameworkDetector';
 import {
   ServiceRegistry,
   ServiceNames,
+  type ServiceName,
   getPreviewManager,
   getStatusBarManager,
   getConfigManager,
   getTrustManager,
   getErrorReporter,
 } from '../app/services';
+import type { ServiceFactory, IService } from '../app/services/types';
 import { TailwindProcessor } from '../features/tailwind/TailwindProcessor';
 import { ErrorReporter, ErrorContext, ErrorSeverity } from '../shared/errors';
 import { PackageJsonWatcher } from '../features/module-runtime/resolution/PackageJsonWatcher';
-import { clearResolverCache } from '../features/module-runtime/resolution/resolver-factory';
+import { invalidateResolution } from '../features/module-runtime/resolution/resolver-factory';
 import { clearSassCache } from '../features/module-runtime/handlers';
 import { registerResolverSubsystem } from '../features/module-runtime/resolution/resolver-subsystem';
 import { registerCacheSubsystem } from '../app/lifecycle/cache-subsystem';
@@ -69,7 +72,7 @@ async function showSafeModeNotificationIfNeeded(
   }
 
   const selection = await vscode.window.showInformationMessage(
-    'MDX Preview is running in Safe Mode. JavaScript execution is disabled. Trust this workspace & enable scripts for full MDX rendering.',
+    `${EXTENSION_DISPLAY_NAME} is running in Safe Mode. JavaScript execution is disabled. Trust this workspace & enable scripts for full MDX rendering.`,
     'Manage Trust',
     'Learn More'
   );
@@ -142,10 +145,6 @@ export function disposeUnhandledRejectionHandler(): void {
   unhandledRejectionDisposable?.dispose();
 }
 
-function reportBackgroundPromiseFailure(message: string, error: unknown): void {
-  log.error(message, error);
-}
-
 // set up workspace trust event handlers for trust grant & revoke
 function setupTrustHandlers(context: vscode.ExtensionContext): void {
   const workspaceWithTrust = vscode.workspace as typeof vscode.workspace & {
@@ -181,10 +180,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
 
   const scheduleTrustChange = (trusted: boolean): void => {
     void handleTrustChange(trusted).catch((error) => {
-      reportBackgroundPromiseFailure(
-        'Failed to handle workspace trust change',
-        error
-      );
+      log.error('Failed to handle workspace trust change', error);
     });
   };
 
@@ -210,10 +206,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
         void getPreviewManager()
           .refreshAllPreviews()
           .catch((error) => {
-            reportBackgroundPromiseFailure(
-              'Failed to refresh previews after trust change',
-              error
-            );
+            log.error('Failed to refresh previews after trust change', error);
           });
       }
     })
@@ -232,31 +225,38 @@ export async function activate(
   // register services w/ centralized registry before using service locators
   // order matters: register services w/ no dependencies first, then dependent services
   const registry = ServiceRegistry.getInstance();
-  registry.register(ServiceNames.CONFIG_MANAGER, () =>
-    ConfigManager.getInstance()
-  );
-  registry.register(ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance());
+
+  // uniform getInstance() registrations driven from an ordered table
+  // (registration order = disposal order reversed)
+  const registerServices = (
+    entries: readonly [ServiceName, ServiceFactory<IService>][]
+  ): void => {
+    for (const [name, factory] of entries) {
+      registry.register(name, factory);
+    }
+  };
+
+  registerServices([
+    [ServiceNames.CONFIG_MANAGER, () => ConfigManager.getInstance()],
+  ]);
+  registerServices([
+    [ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance()],
+  ]);
 
   // initialize logging w/ reactive debug setting (after ConfigManager)
   context.subscriptions.push(initLogging());
-  registry.register(ServiceNames.TRUST_MANAGER, () =>
-    TrustManager.getInstance()
-  );
-  registry.register(ServiceNames.THEME_MANAGER, () =>
-    ThemeManager.getInstance()
-  );
-  registry.register(ServiceNames.PREVIEW_MANAGER, () =>
-    PreviewManager.getInstance()
-  );
-  registry.register(ServiceNames.FRAMEWORK_DETECTOR, () =>
-    FrameworkDetector.getInstance()
-  );
-  registry.register(ServiceNames.TAILWIND_PROCESSOR, () =>
-    TailwindProcessor.getInstance()
-  );
-  registry.register(ServiceNames.ERROR_REPORTER, () =>
-    ErrorReporter.getInstance()
-  );
+
+  // StatusBarManager depends on TrustManager, FrameworkDetector, PreviewManager
+  // COMPONENT_DIAGNOSTICS: unknown component warnings; META_RESOLVER: Nextra _meta.json
+  registerServices([
+    [ServiceNames.TRUST_MANAGER, () => TrustManager.getInstance()],
+    [ServiceNames.THEME_MANAGER, () => ThemeManager.getInstance()],
+    [ServiceNames.PREVIEW_MANAGER, () => PreviewManager.getInstance()],
+    [ServiceNames.FRAMEWORK_DETECTOR, () => FrameworkDetector.getInstance()],
+    [ServiceNames.TAILWIND_PROCESSOR, () => TailwindProcessor.getInstance()],
+    [ServiceNames.ERROR_REPORTER, () => ErrorReporter.getInstance()],
+  ]);
+
   // wrap OutputChannel for IService compatibility (shared channel from logging.ts)
   registry.register(ServiceNames.OUTPUT_CHANNEL, () => {
     const channel = getOutputChannel();
@@ -267,18 +267,15 @@ export async function activate(
       },
     };
   });
-  // StatusBarManager depends on TrustManager, FrameworkDetector, PreviewManager
-  registry.register(ServiceNames.STATUS_BAR_MANAGER, () =>
-    StatusBarManager.getInstance()
-  );
-  // ComponentDiagnostics for unknown component warnings
-  registry.register(ServiceNames.COMPONENT_DIAGNOSTICS, () =>
-    ComponentDiagnostics.getInstance()
-  );
-  // MetaResolver for Nextra _meta.json resolution
-  registry.register(ServiceNames.META_RESOLVER, () =>
-    MetaResolver.getInstance()
-  );
+
+  registerServices([
+    [ServiceNames.STATUS_BAR_MANAGER, () => StatusBarManager.getInstance()],
+    [
+      ServiceNames.COMPONENT_DIAGNOSTICS,
+      () => ComponentDiagnostics.getInstance(),
+    ],
+    [ServiceNames.META_RESOLVER, () => MetaResolver.getInstance()],
+  ]);
   log.debug('Services registered');
 
   // register subsystems (AFTER services, so they dispose BEFORE services)
@@ -308,10 +305,7 @@ export async function activate(
 
   // show safe mode notification if in untrusted workspace
   void showSafeModeNotificationIfNeeded(context).catch((error) => {
-    reportBackgroundPromiseFailure(
-      'Failed to show safe mode notification',
-      error
-    );
+    log.error('Failed to show safe mode notification', error);
   });
 
   // set up trust event handlers
@@ -338,24 +332,21 @@ export async function activate(
       void getPreviewManager()
         .refreshAllPreviews()
         .catch((error) => {
-          reportBackgroundPromiseFailure(
-            'Failed to refresh previews after theme change',
-            error
-          );
+          log.error('Failed to refresh previews after theme change', error);
         });
     })
   );
 
   // start package.json watcher to auto-invalidate resolver & sass caches
   const packageJsonWatcher = new PackageJsonWatcher(() => {
-    clearResolverCache();
+    invalidateResolution();
     clearSassCache();
     watcherLog.debug(
       'Resolver & Sass caches cleared due to package file change'
     );
   });
   void packageJsonWatcher.start().catch((error) => {
-    reportBackgroundPromiseFailure('Failed to start package watcher', error);
+    log.error('Failed to start package watcher', error);
   });
   context.subscriptions.push(packageJsonWatcher);
 

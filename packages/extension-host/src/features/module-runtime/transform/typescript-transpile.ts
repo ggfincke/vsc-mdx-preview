@@ -3,6 +3,7 @@
 
 import { sucraseTransform } from './sucrase';
 import type { Preview } from '../../preview/preview-manager';
+import { TS_EXTENSIONS } from '../../../shared/constants';
 
 // transpile TypeScript/TSX code using Sucrase
 // use bundled sucrase for fast transpilation
@@ -11,8 +12,8 @@ export function transpileTypeScript(
   fsPath: string,
   _preview: Preview
 ): string {
-  // determine transforms based on file extension
-  const isTsx = fsPath.endsWith('.tsx');
+  // determine transforms based on file extension (.tsx is TS_EXTENSIONS[1])
+  const isTsx = fsPath.endsWith(TS_EXTENSIONS[1]);
   const transforms: ('typescript' | 'jsx')[] = isTsx
     ? ['typescript', 'jsx']
     : ['typescript'];
@@ -34,5 +35,5 @@ export function isTypeScriptLanguage(languageId: string): boolean {
 
 // check if file extension indicates TypeScript
 export function isTypeScriptExtension(ext: string): boolean {
-  return ext === '.ts' || ext === '.tsx';
+  return (TS_EXTENSIONS as readonly string[]).includes(ext);
 }

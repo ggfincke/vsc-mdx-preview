@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Semaphore } from '../../packages/runtime-utils/src/async/semaphore';
 import { LRUCache } from '../../packages/runtime-utils/src/cache/lru-cache';
 import { isBareImport } from '../../packages/runtime-utils/src/module-id';
+import { extractErrorMessage } from '../../packages/runtime-utils/src/errors/normalize';
 import { copyToClipboard } from '../../packages/webview-client/src/shared/utils/clipboard';
 import { cn } from '../../packages/webview-client/src/shared/utils/cn';
 
@@ -170,6 +171,25 @@ describe('cross-repo utility parity', () => {
 
       for (const [specifier, expected] of cases) {
         expect(isBareImport(specifier)).toBe(expected);
+      }
+    });
+  });
+
+  describe('extractErrorMessage shared contract', () => {
+    it('maps each input to the canonical message across repos', () => {
+      const cases: Array<[unknown, string]> = [
+        [new Error('boom'), 'boom'],
+        ['plain string', 'plain string'],
+        [{ message: 'obj msg' }, 'obj msg'],
+        [{ message: 42 }, 'Unknown error'],
+        [{ foo: 'bar' }, 'Unknown error'],
+        [42, 'Unknown error'],
+        [null, 'Unknown error'],
+        [undefined, 'Unknown error'],
+      ];
+
+      for (const [input, expected] of cases) {
+        expect(extractErrorMessage(input)).toBe(expected);
       }
     });
   });

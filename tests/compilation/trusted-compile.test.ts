@@ -4,19 +4,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { compileTrusted } from 'mdx-forge/compiler';
-import type { CompilerConfig } from 'mdx-forge/compiler';
-import { FIXTURES } from '../helpers';
-
-// create library-native CompilerConfig
-function createConfig(overrides: Partial<CompilerConfig> = {}): CompilerConfig {
-  return {
-    documentPath: '/workspace/test.mdx',
-    useHostMarkdownStyles: true,
-    componentsBuiltins: true,
-    componentsUnknownBehavior: 'placeholder',
-    ...overrides,
-  };
-}
+import { FIXTURES, createCompilerConfig } from '../helpers';
 
 describe('compileTrusted() [consumer smoke]', () => {
   beforeEach(() => {
@@ -27,7 +15,7 @@ describe('compileTrusted() [consumer smoke]', () => {
     const result = await compileTrusted(
       FIXTURES.basicMdx,
       true,
-      createConfig()
+      createCompilerConfig()
     );
 
     expect(result.code).toContain('import React from');
@@ -39,7 +27,7 @@ describe('compileTrusted() [consumer smoke]', () => {
     const result = await compileTrusted(
       FIXTURES.basicMdx,
       true,
-      createConfig({ useHostMarkdownStyles: true })
+      createCompilerConfig({ useHostMarkdownStyles: true })
     );
 
     expect(result.code).toContain('vscode-markdown-layout');

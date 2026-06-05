@@ -21,6 +21,7 @@ vi.mock(
 
 import {
   buildCompilerConfig,
+  buildEffectivePreviewConfig,
   toCompilerConfig,
 } from '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig';
 import { DEFAULTS } from '../../../packages/extension-host/src/shared/config/setting-keys';
@@ -152,6 +153,27 @@ describe('CompilerConfig helpers', () => {
       componentsUnknownBehavior: 'strip',
       configFile: resolvedConfig,
     });
+  });
+
+  it('config file can only disable enableScripts, never enable it', () => {
+    mockResolveConfig.mockReturnValue({
+      configPath: '/workspace/.mdx-previewrc.json',
+      configDir: '/workspace',
+      config: { enableScripts: false },
+    });
+    const disabled = buildEffectivePreviewConfig({
+      docUri: DOC_URI,
+      docFsPath: DOC_URI.fsPath,
+    });
+    expect(disabled.enableScripts).toBe(false);
+
+    // no file override -> falls through to enabled setting
+    mockResolveConfig.mockReturnValue(null);
+    const passthrough = buildEffectivePreviewConfig({
+      docUri: DOC_URI,
+      docFsPath: DOC_URI.fsPath,
+    });
+    expect(passthrough.enableScripts).toBe(true);
   });
 
   it('derives extension defaults from shared contract defaults', () => {

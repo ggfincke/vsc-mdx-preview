@@ -51,7 +51,6 @@ export type ResolutionMode = 'browser' | 'node' | 'dependency';
 // resolution strategy enum - indicates which approach succeeded
 export enum ResolutionStrategy {
   FrameworkShim = 'framework-shim',
-  FrameworkAlias = 'framework-alias',
   TypeScript = 'typescript',
   EnhancedResolve = 'enhanced-resolve',
   FileProbe = 'file-probe',

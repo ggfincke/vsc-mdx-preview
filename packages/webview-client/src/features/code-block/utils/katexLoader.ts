@@ -13,18 +13,3 @@ const loader = createResourceLoader(
 export function loadKatexCss(): Promise<void> {
   return loader.load();
 }
-
-// check if KaTeX CSS has been loaded successfully
-export function isKatexCssLoaded(): boolean {
-  return loader.isLoaded();
-}
-
-// check if KaTeX CSS loading is in progress
-export function isKatexCssLoading(): boolean {
-  return loader.isLoading();
-}
-
-// reset state (for testing)
-export function resetKatexLoader(): void {
-  loader.reset();
-}

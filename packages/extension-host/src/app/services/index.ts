@@ -19,5 +19,6 @@ export {
   getErrorReporter,
   getStatusBarManager,
   getMetaResolver,
+  getComponentDiagnostics,
   getOutputChannel,
 } from './service-locator';

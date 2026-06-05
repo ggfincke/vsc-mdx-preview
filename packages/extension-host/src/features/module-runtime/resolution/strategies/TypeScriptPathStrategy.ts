@@ -14,11 +14,7 @@ import {
   type IResolutionStrategy,
 } from '../../../types';
 import { buildResolutionResult } from '../resolution-builders';
-import {
-  clearStatCache as clearSharedStatCache,
-  probeTypeScriptFile,
-  probeTypeScriptFileAsync,
-} from '../file-prober';
+import { probeTypeScriptFile, probeTypeScriptFileAsync } from '../file-prober';
 
 // module-level tagged logger for TypeScript path resolution
 const log = createTaggedLogger(LogTags.TYPESCRIPT);
@@ -49,17 +45,15 @@ interface CompiledPathsIndex {
 // per-tsconfig compiled index cache
 const compiledIndexCache = new Map<string, CompiledPathsIndex>();
 
-// clear all caches (stat cache & compiled pattern index)
-// call on extension deactivation
-export function clearStatCache(): void {
-  clearSharedStatCache();
-  compiledIndexCache.clear();
-}
-
 // clear only the compiled pattern index cache
 // call when tsconfig.json changes
 export function clearCompiledIndexCache(): void {
   compiledIndexCache.clear();
+}
+
+// internal/test seam: observe compiled index cache size for invalidation checks
+export function getCompiledIndexCacheSize(): number {
+  return compiledIndexCache.size;
 }
 
 // compile tsconfig paths into an indexed data structure

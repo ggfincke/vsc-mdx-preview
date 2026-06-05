@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags, FRONTMATTER_OVERRIDES } from '@mdx-preview/contracts';
 import { ErrorContext } from '../../shared/errors/ErrorReporter';
+import { notifyWarning } from '../../shared/errors';
 import {
   getConfigManager,
   getTrustManager,
@@ -278,9 +279,7 @@ const showEffectiveConfig = async (): Promise<void> => {
   // get active editor
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
-    vscode.window.showWarningMessage(
-      'MDX Preview: No active editor. Open an MDX file first.'
-    );
+    notifyWarning('No active editor. Open an MDX file first.');
     return;
   }
 
@@ -288,9 +287,7 @@ const showEffectiveConfig = async (): Promise<void> => {
 
   // check if document is MDX or Markdown
   if (!['mdx', 'markdown'].includes(document.languageId)) {
-    vscode.window.showWarningMessage(
-      'MDX Preview: Active document is not an MDX or Markdown file.'
-    );
+    notifyWarning('Active document is not an MDX or Markdown file.');
     return;
   }
 

@@ -1,7 +1,7 @@
 // packages/webview-client/src/features/preview/safe/SafePreview.tsx
 // render pre-sanitized HTML in Safe Mode (no JavaScript execution)
 
-import { memo, useEffect } from 'react';
+import { memo } from 'react';
 import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
 import { usePreviewInteractions } from '../shared/hooks/usePreviewInteractions';
 import { useSafeModeProcessing } from './hooks/useSafeModeProcessing';
@@ -31,23 +31,11 @@ export const SafePreviewRenderer = memo(
       html,
     });
 
-    // add image click event listener (imperative for Safe Mode since HTML is injected)
-    useEffect(() => {
-      const container = containerRef.current;
-      if (!container) {
-        return;
-      }
-
-      container.addEventListener('click', handleImageClick);
-      return () => {
-        container.removeEventListener('click', handleImageClick);
-      };
-    }, [containerRef, handleImageClick]);
-
     return (
       <PreviewContainer
         containerRef={containerRef}
         mode="safe"
+        onImageClick={handleImageClick}
         diagramPortals={renderPortals()}
         className="markdown-body"
       />

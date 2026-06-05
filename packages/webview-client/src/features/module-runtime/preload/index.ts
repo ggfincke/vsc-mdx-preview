@@ -178,8 +178,11 @@ export async function ensureGenericShims(
     log.debug(`Generic shims loaded: ${result.loaded.join(', ')}`);
   })();
 
-  await state.genericShimsLoadPromise;
-  state.genericShimsLoadPromise = null;
+  try {
+    await state.genericShimsLoadPromise;
+  } finally {
+    state.genericShimsLoadPromise = null;
+  }
 }
 
 // get list of all IDs that should be preserved during module reset

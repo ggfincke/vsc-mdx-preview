@@ -33,6 +33,14 @@ const CONFIG_FILES = [
 const TAILWIND_IMPORT_RE = /@import\s+['"]tailwindcss(?:\/[^'"]+)?['"]/;
 const TAILWIND_DIRECTIVE_RE = /@tailwind\s+(base|components|utilities)\b/;
 const TAILWIND_PLUGIN_DIRECTIVE_RE = /@plugin\b/;
+
+// css content qualifies as a Tailwind entry if it imports or directs Tailwind
+function isTailwindEntryCss(content: string | null): boolean {
+  return (
+    !!content &&
+    (TAILWIND_IMPORT_RE.test(content) || TAILWIND_DIRECTIVE_RE.test(content))
+  );
+}
 const INLINE_TAILWIND_STYLE_RE =
   /<style\b[^>]*\btype\s*=\s*["']text\/tailwindcss["'][^>]*>([\s\S]*?)<\/style>/gi;
 
@@ -77,7 +85,6 @@ const COMMON_CSS_LOCATIONS = [
 // re-export canonical type definitions from types/
 export type {
   TailwindVersionInfo,
-  TailwindDetectionResult,
   TailwindProfile,
   TailwindProfileDetectionResult,
   ResolveWorkspaceRootOptions,
@@ -148,10 +155,10 @@ export class TailwindDetector {
     }
 
     const cacheKey = `${workspaceRoot ?? ''}::${entryDir ?? ''}`;
-    if (this.configCache.has(cacheKey)) {
-      const cached = this.configCache.get(cacheKey) ?? null;
-      if (cached && pathExists(cached)) {
-        return cached;
+    const cachedConfig = this.configCache.get(cacheKey);
+    if (cachedConfig !== undefined) {
+      if (cachedConfig && pathExists(cachedConfig)) {
+        return cachedConfig;
       }
       this.configCache.delete(cacheKey);
     }
@@ -183,10 +190,10 @@ export class TailwindDetector {
     }
 
     const cacheKey = `${workspaceRoot}::${entryDir ?? ''}`;
-    if (this.entryCssCache.has(cacheKey)) {
-      const cached = this.entryCssCache.get(cacheKey) ?? null;
-      if (cached && pathExists(cached)) {
-        return cached;
+    const cachedEntryCss = this.entryCssCache.get(cacheKey);
+    if (cachedEntryCss !== undefined) {
+      if (cachedEntryCss && pathExists(cachedEntryCss)) {
+        return cachedEntryCss;
       }
       this.entryCssCache.delete(cacheKey);
     }
@@ -214,11 +221,7 @@ export class TailwindDetector {
 
     for (const uri of candidates) {
       const content = await readFileAsync(uri.fsPath);
-      if (
-        content &&
-        (TAILWIND_IMPORT_RE.test(content) ||
-          TAILWIND_DIRECTIVE_RE.test(content))
-      ) {
+      if (isTailwindEntryCss(content)) {
         this.entryCssCache.set(cacheKey, uri.fsPath);
         return uri.fsPath;
       }
@@ -366,14 +369,7 @@ export class TailwindDetector {
       const checks = COMMON_CSS_LOCATIONS.map(async (relativePath) => {
         const fullPath = path.join(baseDir, relativePath);
         const content = await readFileAsync(fullPath);
-        if (
-          content &&
-          (TAILWIND_IMPORT_RE.test(content) ||
-            TAILWIND_DIRECTIVE_RE.test(content))
-        ) {
-          return fullPath;
-        }
-        return null;
+        return isTailwindEntryCss(content) ? fullPath : null;
       });
 
       const results = await Promise.all(checks);

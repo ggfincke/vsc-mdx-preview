@@ -60,27 +60,6 @@ export class WatcherManager implements Disposable {
     await Promise.all(startPromises);
   }
 
-  // wait for all watchers to report ready (Promise-based, no polling)
-  async waitForAllReady(timeoutMs?: number): Promise<void> {
-    const waitPromises = Array.from(this.watchers.entries()).map(
-      async ([name, watcher]) => {
-        await watcher.waitForReady(timeoutMs);
-        log.debug(`Ready: ${name}`);
-      }
-    );
-    await Promise.all(waitPromises);
-  }
-
-  // get the ready state of all watchers
-  getReadyState(): Map<string, boolean> {
-    return new Map(
-      Array.from(this.watchers.entries()).map(([name, watcher]) => [
-        name,
-        watcher.isReady(),
-      ])
-    );
-  }
-
   // set ready gate to prevent callbacks from firing before webview is ready
   setReadyGate(gate: Promise<void>): void {
     this.readyGate = gate;
@@ -91,47 +70,6 @@ export class WatcherManager implements Disposable {
     if (this.readyGate) {
       await this.readyGate;
     }
-  }
-
-  // stop all registered watchers w/out disposing them
-  stopAll(): void {
-    for (const [name, watcher] of this.watchers) {
-      if (watcher.isActive()) {
-        watcher.stop();
-        log.debug(`Stopped: ${name}`);
-      }
-    }
-  }
-
-  // refresh a specific watcher (stop + start)
-  async refresh(name: string): Promise<void> {
-    const watcher = this.watchers.get(name);
-    if (watcher) {
-      watcher.stop();
-      await watcher.start();
-      log.debug(`Refreshed: ${name}`);
-    }
-  }
-
-  // refresh all watchers (stop + start each)
-  async refreshAll(): Promise<void> {
-    for (const [name, watcher] of this.watchers) {
-      if (watcher.isActive()) {
-        watcher.stop();
-        await watcher.start();
-        log.debug(`Refreshed: ${name}`);
-      }
-    }
-  }
-
-  // check if all watchers are ready
-  areAllReady(): boolean {
-    for (const watcher of this.watchers.values()) {
-      if (!watcher.isReady()) {
-        return false;
-      }
-    }
-    return true;
   }
 
   // get the names of all registered watchers

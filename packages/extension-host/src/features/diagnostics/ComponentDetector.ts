@@ -3,7 +3,11 @@
 
 import * as vscode from 'vscode';
 import { visit } from 'unist-util-visit';
-import { analyzeMdxDocument } from '../language/mdx-document-analysis';
+import {
+  analyzeMdxDocument,
+  astPositionToRange,
+} from '../language/mdx-document-analysis';
+import { parseEsmImports } from '../language/esm-imports';
 import { KNOWN_GENERIC_COMPONENTS } from 'mdx-forge/compiler';
 import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
 import {
@@ -16,6 +20,7 @@ import type {
   ComponentDetectionOptions,
   ComponentSource,
   MdxJsxElement,
+  MdxjsEsmNode,
 } from '../types';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { COMPONENT_CACHE_MAX_ENTRIES } from '../../shared/constants/runtime';
@@ -48,16 +53,6 @@ function contentHash(str: string): string {
 }
 
 // types
-
-// MDX ESM node (imports/exports)
-interface MdxjsEsmNode {
-  type: 'mdxjsEsm';
-  value: string;
-  position?: {
-    start: { line: number; column: number };
-    end: { line: number; column: number };
-  };
-}
 
 // using isFrameworkComponent() helper from shared instead of local Set
 
@@ -187,45 +182,22 @@ function isHtmlElement(name: string): boolean {
   return HTML_ELEMENTS.has(name.toLowerCase());
 }
 
-// extract component imports from ESM node
+// extract component imports from ESM node (PascalCase local names only)
 function extractImports(esmValue: string): Map<string, string> {
   const imports = new Map<string, string>();
 
-  // match default, named, aliased & namespace import statements
-  const importRegex =
-    /import\s+(?:(\w+)|(?:\{([^}]+)\})|(?:\*\s+as\s+(\w+)))\s+from\s+['"]([^'"]+)['"]/g;
-
-  let match;
-  while ((match = importRegex.exec(esmValue)) !== null) {
-    const defaultImport = match[1];
-    const namedImports = match[2];
-    const namespaceImport = match[3];
-    const importPath = match[4];
-
-    if (defaultImport && isPascalCase(defaultImport)) {
-      imports.set(defaultImport, importPath);
+  for (const parsed of parseEsmImports(esmValue)) {
+    if (parsed.defaultImport && isPascalCase(parsed.defaultImport)) {
+      imports.set(parsed.defaultImport, parsed.path);
     }
 
-    if (namespaceImport && isPascalCase(namespaceImport)) {
-      imports.set(namespaceImport, importPath);
+    if (parsed.namespaceImport && isPascalCase(parsed.namespaceImport)) {
+      imports.set(parsed.namespaceImport, parsed.path);
     }
 
-    if (namedImports) {
-      // parse named imports: { Foo, Bar as Baz }
-      const namedParts = namedImports.split(',').map((s) => s.trim());
-      for (const part of namedParts) {
-        const asMatch = part.match(/(\w+)\s+as\s+(\w+)/);
-        if (asMatch) {
-          const localName = asMatch[2];
-          if (isPascalCase(localName)) {
-            imports.set(localName, importPath);
-          }
-        } else {
-          const name = part.trim();
-          if (isPascalCase(name)) {
-            imports.set(name, importPath);
-          }
-        }
+    for (const binding of parsed.named) {
+      if (isPascalCase(binding.local)) {
+        imports.set(binding.local, parsed.path);
       }
     }
   }
@@ -328,13 +300,7 @@ export async function detectComponents(
 
       let range: vscode.Range;
       if (includePositions && jsxNode.position) {
-        // convert 1-based to 0-based & adjust for frontmatter offset
-        range = new vscode.Range(
-          jsxNode.position.start.line - 1 + frontmatterLineOffset,
-          jsxNode.position.start.column - 1,
-          jsxNode.position.end.line - 1 + frontmatterLineOffset,
-          jsxNode.position.end.column - 1
-        );
+        range = astPositionToRange(jsxNode.position, frontmatterLineOffset);
       } else {
         // fallback to start of file
         range = new vscode.Range(0, 0, 0, 0);

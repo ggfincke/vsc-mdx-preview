@@ -1,6 +1,9 @@
 // packages/contracts/src/runtime/constants.ts
 // shared timing & limit constants for extension & webview packages
 
+// extension display name shown in notifications, output channel & status bar
+export const EXTENSION_DISPLAY_NAME = 'MDX Preview';
+
 // standard debounce interval (ms) for preview updates, config watchers
 export const STANDARD_DEBOUNCE_MS = 300;
 

@@ -9,6 +9,7 @@ import {
   buildEffectivePreviewConfig,
   toCompilerConfig,
 } from '../../../shared/config/EffectivePreviewConfig';
+import { EXTENSION_DISPLAY_NAME } from '../../../shared/constants';
 import type { EvaluationEngine } from '../EvaluationEngine';
 import type { Preview } from '../Preview';
 import type { TailwindProfileDetectionResult } from '../../types';
@@ -100,7 +101,7 @@ function showAdvancedProfileStatusBarMessage(
   if (canExecute) {
     log.warn(`Tailwind advanced fallback active: ${fallbackReason}`);
     vscode.window.setStatusBarMessage(
-      `MDX Preview Tailwind: advanced fallback active (${fallbackReason})`,
+      `${EXTENSION_DISPLAY_NAME} Tailwind: advanced fallback active (${fallbackReason})`,
       8000
     );
     return;
@@ -110,7 +111,7 @@ function showAdvancedProfileStatusBarMessage(
     `Tailwind advanced profile detected in Safe Mode: ${fallbackReason}`
   );
   vscode.window.setStatusBarMessage(
-    `MDX Preview Tailwind: advanced config detected (${fallbackReason}); enable Trusted Mode for full Tailwind support`,
+    `${EXTENSION_DISPLAY_NAME} Tailwind: advanced config detected (${fallbackReason}); enable Trusted Mode for full Tailwind support`,
     10000
   );
 }

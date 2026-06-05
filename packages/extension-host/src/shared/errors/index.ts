@@ -22,6 +22,9 @@ export {
   shouldNotify,
   showNotification,
   sendToWebview,
+  notifyInfo,
+  notifyWarning,
+  notifyError,
 } from './error-notification';
 
 // re-export shared module error types for convenience

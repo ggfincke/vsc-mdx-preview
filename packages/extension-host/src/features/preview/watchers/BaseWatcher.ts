@@ -97,18 +97,6 @@ export abstract class BaseWatcher implements IWatcher {
     }
   }
 
-  // async version - awaits start() completion
-  protected async updateAndRestart(updateFn: () => void): Promise<void> {
-    const wasActive = this._isActive;
-    if (wasActive) {
-      this.stop();
-    }
-    updateFn();
-    if (wasActive) {
-      await this.start();
-    }
-  }
-
   // state query methods
 
   isActive(): boolean {

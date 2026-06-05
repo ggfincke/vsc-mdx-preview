@@ -16,13 +16,7 @@ export const CACHE_SUBSYSTEM = 'CacheSubsystem';
 export function registerCacheSubsystem(): void {
   ServiceRegistry.getInstance().registerSubsystem(CACHE_SUBSYSTEM, () => {
     log.debug('Disposing cache subsystem...');
-
-    // clear component detection cache
-    clearComponentCache();
-
-    // clear path security caches
-    clearPathSecurityCaches();
-
+    clearUnmanagedCaches();
     log.debug('Disposed');
   });
 }

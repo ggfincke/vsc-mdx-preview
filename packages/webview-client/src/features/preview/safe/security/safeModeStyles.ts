@@ -1,6 +1,8 @@
 // packages/webview-client/src/features/preview/safe/security/safeModeStyles.ts
 // safe mode placeholder styles
 
+import { SAFE_PREVIEW_CLASS } from './previewClassNames';
+
 const STYLE_ID = 'mdx-safe-mode-styles';
 
 // ensure safe mode placeholder styles are present in the document
@@ -28,7 +30,7 @@ export function ensureSafeModeStyles(): void {
       cursor: help;
     }
 
-    .mdx-safe-preview {
+    .${SAFE_PREVIEW_CLASS} {
       padding: 16px;
     }
   `;

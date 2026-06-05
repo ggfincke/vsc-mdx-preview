@@ -12,6 +12,27 @@ import {
   isRecoverableError,
   getContextPrefix,
 } from './error-severity';
+import { EXTENSION_DISPLAY_NAME } from '../constants';
+
+// prepend the brand prefix to a message body for command notifications
+function withBrandPrefix(message: string): string {
+  return `${EXTENSION_DISPLAY_NAME}: ${message}`;
+}
+
+// brand-prefixed information notification
+export function notifyInfo(message: string): Thenable<string | undefined> {
+  return vscode.window.showInformationMessage(withBrandPrefix(message));
+}
+
+// brand-prefixed warning notification
+export function notifyWarning(message: string): Thenable<string | undefined> {
+  return vscode.window.showWarningMessage(withBrandPrefix(message));
+}
+
+// brand-prefixed error notification
+export function notifyError(message: string): Thenable<string | undefined> {
+  return vscode.window.showErrorMessage(withBrandPrefix(message));
+}
 
 // interface for webview error display
 export interface WebviewErrorHandle {

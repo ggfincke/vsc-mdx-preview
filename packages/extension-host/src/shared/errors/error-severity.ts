@@ -3,6 +3,7 @@
 
 import { ExtensionError } from './index';
 import { ModuleError } from '@mdx-preview/contracts';
+import { EXTENSION_DISPLAY_NAME } from '../constants';
 
 // error severity determines handling behavior
 export enum ErrorSeverity {
@@ -103,14 +104,14 @@ export function isRecoverableError(error: Error): boolean {
 // get user-friendly context prefix
 export function getContextPrefix(context: ErrorContext): string {
   const prefixes: Record<ErrorContext, string> = {
-    [ErrorContext.ModuleFetch]: 'MDX Preview',
-    [ErrorContext.Transpile]: 'MDX Preview',
-    [ErrorContext.Security]: 'MDX Preview Security',
-    [ErrorContext.Config]: 'MDX Preview Config',
-    [ErrorContext.Webview]: 'MDX Preview',
-    [ErrorContext.Tailwind]: 'MDX Preview Tailwind',
-    [ErrorContext.Plugin]: 'MDX Preview Plugin',
-    [ErrorContext.Extension]: 'MDX Preview',
+    [ErrorContext.ModuleFetch]: EXTENSION_DISPLAY_NAME,
+    [ErrorContext.Transpile]: EXTENSION_DISPLAY_NAME,
+    [ErrorContext.Security]: `${EXTENSION_DISPLAY_NAME} Security`,
+    [ErrorContext.Config]: `${EXTENSION_DISPLAY_NAME} Config`,
+    [ErrorContext.Webview]: EXTENSION_DISPLAY_NAME,
+    [ErrorContext.Tailwind]: `${EXTENSION_DISPLAY_NAME} Tailwind`,
+    [ErrorContext.Plugin]: `${EXTENSION_DISPLAY_NAME} Plugin`,
+    [ErrorContext.Extension]: EXTENSION_DISPLAY_NAME,
   };
   return prefixes[context];
 }

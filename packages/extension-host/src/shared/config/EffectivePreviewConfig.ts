@@ -16,6 +16,14 @@ import type {
 } from '../types';
 import type { CompilerConfig as MdxForgeCompilerConfig } from 'mdx-forge/compiler';
 
+// config file can only disable a boolean setting (force false), never enable it
+function fileCanOnlyDisable(
+  fileVal: boolean | undefined,
+  settingVal: boolean
+): boolean {
+  return fileVal === false ? false : settingVal;
+}
+
 // build unified effective preview configuration
 export function buildEffectivePreviewConfig(
   options: BuildEffectiveConfigOptions
@@ -43,10 +51,10 @@ export function buildEffectivePreviewConfig(
     updateMode: previewConfig.updateMode,
     debounceDelay: previewConfig.debounceDelay,
     // config file can force Safe Mode (false), but cannot force Trusted Mode
-    enableScripts:
-      fileConfig?.enableScripts === false
-        ? false
-        : settings[SETTINGS.ENABLE_SCRIPTS],
+    enableScripts: fileCanOnlyDisable(
+      fileConfig?.enableScripts,
+      settings[SETTINGS.ENABLE_SCRIPTS]
+    ),
     openMdxLinksInPreview: settings[SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW],
     securityPolicy: previewConfig.securityPolicy,
     useVscodeMarkdownStyles: previewConfig.useVscodeMarkdownStyles,

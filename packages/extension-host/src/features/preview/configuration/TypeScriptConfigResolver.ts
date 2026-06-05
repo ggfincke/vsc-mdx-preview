@@ -47,6 +47,10 @@ function setupConfigWatcher(configFile: string): void {
       log.debug(`tsconfig.json changed: ${configFile}`);
       configCache.delete(cacheKey);
     },
+    onCreate: () => {
+      log.debug('tsconfig.json created: ' + configFile);
+      configCache.delete(cacheKey);
+    },
     onDelete: () => {
       log.debug(`tsconfig.json deleted: ${configFile}`);
       configCache.delete(cacheKey);

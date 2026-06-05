@@ -19,13 +19,21 @@ import { SassHandler } from './SassHandler';
 import { ImageHandler } from './ImageHandler';
 import { ScriptHandler } from './ScriptHandler';
 
+// shared script handler instance (reused as the unknown-type fallback)
+const scriptHandlerInstance = new ScriptHandler();
+
+// expose the shared script handler for fallback dispatch
+export function getScriptHandler(): FileTypeHandler {
+  return scriptHandlerInstance;
+}
+
 // handler instances
 const handlers: FileTypeHandler[] = [
   createSimpleHandler(JSON_EXTENSIONS, buildModuleExportResult),
   createSimpleHandler(CSS_EXTENSIONS, buildCssResult),
   new SassHandler(),
   new ImageHandler(),
-  new ScriptHandler(),
+  scriptHandlerInstance,
 ];
 
 // build extension -> handler lookup map

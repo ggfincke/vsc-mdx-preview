@@ -113,5 +113,22 @@ describe('TypeScriptConfigResolver', () => {
       expect(mockPathCache.set).toHaveBeenCalledWith('/workspace', null);
       expect(mockErrorReporter.reportSilent).toHaveBeenCalled();
     });
+
+    it('invalidates cache when tsconfig.json is created', () => {
+      mockParseTsconfig.mockReturnValue({
+        compilerOptions: { baseUrl: '.' },
+      });
+
+      resolveTypescriptConfig('/workspace/tsconfig.json');
+
+      // capture watch handlers & fire onCreate
+      const handlers = mockPathCache.watchPath.mock.calls[0][1];
+      expect(handlers.onCreate).toBeTypeOf('function');
+
+      mockPathCache.delete.mockClear();
+      handlers.onCreate();
+
+      expect(mockPathCache.delete).toHaveBeenCalledWith('/workspace');
+    });
   });
 });

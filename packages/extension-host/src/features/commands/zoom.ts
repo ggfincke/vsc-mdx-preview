@@ -7,7 +7,7 @@ import { getPreviewManager } from '../../app/services';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from './types';
 
-const log = createTaggedLogger(LogTags.COMMANDS);
+const log = createTaggedLogger(LogTags.CMD);
 
 const ZOOM_STEP = 0.1;
 const ZOOM_MIN = 0.5;

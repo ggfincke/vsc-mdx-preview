@@ -1,17 +1,7 @@
 /* PlantUML-specific diagram styles */
 
+/* shared bg & base styles now live in diagram-shared.css */
 @import '../DiagramRenderer/diagram-shared.css';
-
-/* plantuml diagram background */
-.mdx-preview-plantuml-diagram {
-  --plantuml-bg-light: #f8f8f8;
-  --plantuml-bg-dark: #1e1e1e;
-  background: var(--plantuml-bg-light);
-}
-
-.mdx-preview-plantuml-diagram[data-theme='dark'] {
-  background: var(--plantuml-bg-dark);
-}
 
 /* dark mode: override inline SVG colors for readability */
 .mdx-preview-plantuml-diagram[data-theme='dark'] rect {

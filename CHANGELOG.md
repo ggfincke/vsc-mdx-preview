@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Stale module resolution after dependency installs**: `Clear All Caches` and the `package.json` watcher now flush every resolution cache. Previously the file-stat cache and the (TTL-less) TypeScript path-mapping index survived a dependency install, so newly added modules could fail to resolve until the extension was restarted. A single `invalidateResolution()` now clears all five caches
+- **`tsconfig.json` creation**: The config watcher now invalidates its cache when a `tsconfig.json` is created, so newly added path aliases are picked up without restarting the extension
+- **Generic component shims**: A failed shim load no longer sticks — the in-flight load promise is cleared in a `finally`, so a later render retries instead of being blocked by the cached rejection
+- **Unknown-component quick fixes**: Component code actions fall back to parsing the diagnostic message when structured diagnostic `data` is absent, so the fix is still offered against older or external diagnostics
+
+### Changed
+
+- **Codebase consolidation** (behavior-preserving): Large internal cleanup across the extension host and webview — single-sourced the trust/security predicates and RPC config-disable rules (named `requireWorkspaceTrusted` / `canRenderTrusted` helpers replace inline `canExecute` reads), deduped resolver/transform helpers (`compileMdxTrusted`, shared default-handler instance, derived TypeScript-extension checks), consolidated the diagnostics shared AST-range + ESM parser, unified error-message handling, and single-sourced `EXTENSION_DISPLAY_NAME` from `@mdx-preview/contracts` for the HTML export. No user-facing behavior change
+- **Dependencies**: `mdx-forge` ^0.5.0 -> ^0.6.0 across the root, extension-host, webview-client & codegen — picks up the `ShimBarrelConfig.injectCss` field the shim generator now reads to emit framework CSS imports
+
+### Infrastructure
+
+- **Shared build & lint config**: Single-source `tsconfig.base`, ESLint base, and vitest aliases across packages; deduped guardrail ignore-dirs and filesystem walkers; ported the unicode-arrow comment rule; pruned dead `contracts`/`runtime-utils`/`codegen` subpath exports and stale test fixtures
+
 ## [1.5.0] - 2026-06-03
 
 ### Added

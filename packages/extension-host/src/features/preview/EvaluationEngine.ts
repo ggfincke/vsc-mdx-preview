@@ -183,6 +183,8 @@ export class EvaluationEngine {
         return;
       }
 
+      // disabled fallthrough: clear stale watch-files too (latent guard)
+      preview.updateTailwindWatchFiles([]);
       webviewHandle.setTailwindBrowserCss('');
       webviewHandle.setTailwindCss('');
     } catch (error: unknown) {

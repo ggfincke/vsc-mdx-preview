@@ -5,6 +5,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { collectFiles, normalizePath } from './lib/file-walk.mjs';
+import { IGNORED_DIRECTORIES } from './lib/ignore.mjs';
 
 const SCAN_ROOTS = ['packages', 'tests', 'docs'];
 const ALLOWED_EXTENSIONS = new Set([
@@ -14,16 +15,6 @@ const ALLOWED_EXTENSIONS = new Set([
   '.css',
   '.md',
   '.mdx',
-]);
-const IGNORED_DIRECTORIES = new Set([
-  '.git',
-  '.vscode-test',
-  'archive',
-  'build',
-  'coverage',
-  'dev-docs',
-  'dist',
-  'node_modules',
 ]);
 
 const LEGACY_PATTERNS = [

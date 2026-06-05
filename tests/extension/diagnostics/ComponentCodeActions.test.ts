@@ -8,14 +8,18 @@ import { Diagnostic, DiagnosticSeverity, Range, Uri, workspace } from 'vscode';
 
 const provider = new ComponentCodeActionsProvider();
 
-function createDiagnostic(name: string): Diagnostic {
+function createDiagnostic(
+  name: string,
+  message = `Unknown component "${name}". Add to .mdx-previewrc.json or use a built-in shim.`
+): Diagnostic {
   const range = new Range(0, 0, 0, name.length);
   const diagnostic = new Diagnostic(
     range,
-    `Unknown component "${name}". Add to .mdx-previewrc.json or use a built-in shim.`,
+    message,
     DiagnosticSeverity.Warning
   );
   diagnostic.code = DIAGNOSTIC_CODES.UNKNOWN_COMPONENT;
+  diagnostic.data = { componentName: name };
   return diagnostic;
 }
 
@@ -53,5 +57,51 @@ describe('ComponentCodeActionsProvider', () => {
     );
     expect(builtinAction?.edit?.edits[0]?.newText).toBe('Callout');
     expect(learnAction?.command?.command).toBe('vscode.open');
+  });
+
+  it('reads component name from structured data ignoring message prose', () => {
+    const document = {
+      uri: Uri.file('/workspace/docs.mdx'),
+    } as any;
+
+    const diagnostic = createDiagnostic('note', 'totally different prose');
+    const actions = provider.provideCodeActions(
+      document,
+      new Range(0, 0, 0, 4),
+      { diagnostics: [diagnostic] },
+      {} as any
+    );
+
+    expect(actions).toHaveLength(3);
+    const builtinAction = actions.find((action) =>
+      action.title.includes('Use built-in')
+    );
+    expect(builtinAction?.edit?.edits[0]?.newText).toBe('Callout');
+  });
+
+  it('falls back to message text when diagnostic data is absent', () => {
+    const document = {
+      uri: Uri.file('/workspace/docs.mdx'),
+    } as any;
+
+    const diagnostic = createDiagnostic('note');
+    delete diagnostic.data;
+    const actions = provider.provideCodeActions(
+      document,
+      new Range(0, 0, 0, 4),
+      { diagnostics: [diagnostic] },
+      {} as any
+    );
+
+    expect(actions).toHaveLength(3);
+    const addAction = actions.find((action) =>
+      action.title.includes('.mdx-previewrc.json')
+    );
+    const builtinAction = actions.find((action) =>
+      action.title.includes('Use built-in')
+    );
+
+    expect(addAction?.command?.arguments?.[0]).toBe('note');
+    expect(builtinAction?.edit?.edits[0]?.newText).toBe('Callout');
   });
 });

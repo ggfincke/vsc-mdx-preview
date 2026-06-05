@@ -6,17 +6,6 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@mdx-preview/runtime-utils": "*",
-    "mdx-forge": "^0.5.0"
-  },
-  "exports": {
-    ".": "./src/index.ts",
-    "./lib/generate-preload": "./src/lib/generate-preload.ts",
-    "./lib/generate-shims": "./src/lib/generate-shims.ts",
-    "./lib/generate-config-schema": "./src/lib/generate-config-schema.ts",
-    "./cli/generate-preload": "./src/cli/generate-preload.ts",
-    "./cli/generate-shims": "./src/cli/generate-shims.ts",
-    "./cli/generate-schema": "./src/cli/generate-schema.ts",
-    "./cli/generate-settings": "./src/cli/generate-settings.ts",
-    "./cli/verify-settings": "./src/cli/verify-settings.ts"
+    "mdx-forge": "^0.6.0"
   }
 }

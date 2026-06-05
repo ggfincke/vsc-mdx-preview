@@ -23,3 +23,8 @@ export function canAcceptContentMode(
   );
   return false;
 }
+
+// gate trusted render on resolved trust state (App always provides a value)
+export function canRenderTrusted(trustState: TrustState): boolean {
+  return trustState.canExecute === true;
+}

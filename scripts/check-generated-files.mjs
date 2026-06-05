@@ -6,19 +6,11 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { GENERATED_TS_FILES } from './generated-files.mjs';
 import { collectFiles } from './lib/file-walk.mjs';
+import { IGNORED_DIRECTORIES } from './lib/ignore.mjs';
 
 const ALLOWED_PATTERNS = ['packages/webview-client/src/generated/'];
 const HEADER = '// AUTO-GENERATED FILE - DO NOT EDIT';
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx']);
-const IGNORED_DIRECTORIES = new Set([
-  '.git',
-  '.vscode-test',
-  'archive',
-  'build',
-  'coverage',
-  'dist',
-  'node_modules',
-]);
 
 const EXPECTED_GENERATED_FILES = GENERATED_TS_FILES;
 

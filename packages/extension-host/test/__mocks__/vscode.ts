@@ -126,6 +126,7 @@ export class Diagnostic {
   severity: DiagnosticSeverity;
   source?: string;
   code?: string;
+  data?: unknown;
   relatedInformation?: DiagnosticRelatedInformation[];
 
   constructor(range: Range, message: string, severity: DiagnosticSeverity) {

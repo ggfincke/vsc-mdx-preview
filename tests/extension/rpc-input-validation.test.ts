@@ -135,6 +135,55 @@ describe('RPC Input Validation', () => {
     expect(mockErrorReporter.report).toHaveBeenCalledTimes(2);
   });
 
+  it('gates openDocument on workspace trust', async () => {
+    // nested entry dir so secure-path root resolution succeeds (entry != folder)
+    const docPreview = {
+      ...createMockPreview('/workspace/docs/test.mdx'),
+      entryFsDirectory: '/workspace/docs',
+    } as ReturnType<typeof createMockPreview>;
+    const docHandle = new ExtensionHandle(docPreview);
+
+    mockTrustManager.getState.mockReturnValue({
+      workspaceTrusted: false,
+      scriptsEnabled: false,
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    });
+
+    await docHandle.openDocument('test.mdx');
+
+    expect(mockVscode.workspace.openTextDocument).not.toHaveBeenCalled();
+    expect(mockVscode.window.showTextDocument).not.toHaveBeenCalled();
+
+    mockTrustManager.getState.mockReturnValue({
+      workspaceTrusted: true,
+      scriptsEnabled: true,
+      canExecute: true,
+      openMdxLinksInPreview: true,
+    });
+
+    await docHandle.openDocument('test.mdx');
+
+    expect(mockVscode.workspace.openTextDocument).toHaveBeenCalledTimes(1);
+    expect(mockVscode.window.showTextDocument).toHaveBeenCalledTimes(1);
+
+    // workspace-only gate: trusted workspace w/ scripts off (Safe Mode) still opens
+    // guards against silent escalation to the full canExecute gate
+    mockVscode.workspace.openTextDocument.mockClear();
+    mockVscode.window.showTextDocument.mockClear();
+    mockTrustManager.getState.mockReturnValue({
+      workspaceTrusted: true,
+      scriptsEnabled: false,
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    });
+
+    await docHandle.openDocument('test.mdx');
+
+    expect(mockVscode.workspace.openTextDocument).toHaveBeenCalledTimes(1);
+    expect(mockVscode.window.showTextDocument).toHaveBeenCalledTimes(1);
+  });
+
   it('calls completeHandshake during handshake', () => {
     handle.handshake();
 

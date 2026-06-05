@@ -2,11 +2,13 @@
 // shared MDX document parsing & analysis (frontmatter, AST, offset calculation)
 // used by MDXSymbolProvider, MDXCompletionProvider & ComponentDetector
 
+import * as vscode from 'vscode';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMdx from 'remark-mdx';
 import matter from 'gray-matter';
 import type { Root } from 'mdast';
+import type { MdastPosition } from '../diagnostics/types';
 
 // reusable parser instance (stateless, safe to share across calls)
 const mdxParser = unified().use(remarkParse).use(remarkMdx);
@@ -91,4 +93,17 @@ export function astLineToDocumentLine(
   frontmatterLineOffset: number
 ): number {
   return astLine - 1 + frontmatterLineOffset;
+}
+
+// convert a 1-based mdast position to a 0-based document Range (frontmatter-adjusted)
+export function astPositionToRange(
+  position: MdastPosition,
+  frontmatterLineOffset: number
+): vscode.Range {
+  return new vscode.Range(
+    astLineToDocumentLine(position.start.line, frontmatterLineOffset),
+    position.start.column - 1,
+    astLineToDocumentLine(position.end.line, frontmatterLineOffset),
+    position.end.column - 1
+  );
 }

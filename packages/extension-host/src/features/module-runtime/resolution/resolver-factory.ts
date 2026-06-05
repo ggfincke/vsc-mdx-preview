@@ -12,6 +12,8 @@ import {
   NODE_RESOLVE_EXTENSIONS,
 } from '../../../shared/constants';
 import { createResettableSingleton } from '../../../shared/utils/singleton-factory';
+import { clearStatCache } from './file-prober';
+import { clearCompiledIndexCache } from './strategies/TypeScriptPathStrategy';
 
 // module-level tagged logger for resolver factory
 const log = createTaggedLogger(LogTags.RESOLVER);
@@ -89,15 +91,26 @@ export const getBrowserResolver = browserResolverSingleton.get;
 // get the shared node resolver instance (used for resolving plugins to be loaded in the extension)
 export const getNodeResolver = nodeResolverSingleton.get;
 
-// clear resolver cache (invalidates all cached resolutions)
-// call when package.json changes or when manual refresh is requested
+// clear enhanced-resolve fs + resolver singletons only
+// does NOT clear statCache or compiledIndexCache; use invalidateResolution() for full invalidation
 export function clearResolverCache(): void {
-  // purge the cached file system (clears all file content & stat caches)
+  // purge the cached file system (clears enhanced-resolve file content & stat caches)
   cachedFs.purge();
 
   // reset resolver instances (forces recreation on next use)
   browserResolverSingleton.reset();
   nodeResolverSingleton.reset();
 
-  log.debug('Cache cleared');
+  log.debug('Resolver cache cleared');
+}
+
+// full resolution invalidation across every resolution cache
+// call when package.json/tsconfig changes or when manual refresh is requested
+// clears enhanced-resolve fs + resolver singletons + statCache + compiledIndexCache
+export function invalidateResolution(): void {
+  clearResolverCache();
+  clearStatCache();
+  clearCompiledIndexCache();
+
+  log.debug('Resolution fully invalidated');
 }

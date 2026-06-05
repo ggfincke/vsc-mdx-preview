@@ -2,9 +2,9 @@
 // constants for service identifiers used in the registry
 
 // service name constants for type-safe registry access
-// services are registered in dependency order (dependencies first)
+// listed in registration order; disposal runs in reverse (last registered disposed first)
 export const ServiceNames = {
-  // services w/ no dependencies
+  // services w/ no dependencies (registered first, disposed last)
   CONFIG_MANAGER: 'ConfigManager',
   CONFIG_CACHE: 'ConfigCache',
   TRUST_MANAGER: 'TrustManager',
@@ -14,11 +14,11 @@ export const ServiceNames = {
   TAILWIND_PROCESSOR: 'TailwindProcessor',
   ERROR_REPORTER: 'ErrorReporter',
   OUTPUT_CHANNEL: 'OutputChannel',
-  META_RESOLVER: 'MetaResolver',
 
-  // services w/ dependencies (disposed first)
+  // services w/ dependencies (registered last, disposed first)
   STATUS_BAR_MANAGER: 'StatusBarManager',
   COMPONENT_DIAGNOSTICS: 'ComponentDiagnostics',
+  META_RESOLVER: 'MetaResolver',
 } as const;
 
 export type ServiceName = (typeof ServiceNames)[keyof typeof ServiceNames];

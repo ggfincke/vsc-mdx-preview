@@ -2,61 +2,17 @@
 // scripts/check-comment-style.mjs
 // enforce comment-style guardrails that can be checked mechanically
 
-import { readdirSync, readFileSync } from 'node:fs';
-import { extname, join, relative } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import ts from 'typescript';
+import { collectFiles, normalizePath } from './lib/file-walk.mjs';
+import { IGNORED_DIRECTORIES } from './lib/ignore.mjs';
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.mjs']);
-const IGNORED_DIRECTORIES = new Set([
-  '.git',
-  '.vscode-test',
-  'archive',
-  'build',
-  'coverage',
-  'dev-docs',
-  'dist',
-  'node_modules',
-]);
 const IGNORED_PATH_PREFIXES = [
   'packages/webview-client/public/vendor/',
   'packages/webview-client/src/generated/',
 ];
-
-function normalizePath(filePath) {
-  return filePath.replaceAll('\\', '/');
-}
-
-function collectSourceFiles(rootDir, currentDir, output) {
-  const entries = readdirSync(currentDir, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const absolutePath = join(currentDir, entry.name);
-
-    if (entry.isDirectory()) {
-      if (IGNORED_DIRECTORIES.has(entry.name)) {
-        continue;
-      }
-
-      collectSourceFiles(rootDir, absolutePath, output);
-      continue;
-    }
-
-    if (!SOURCE_EXTENSIONS.has(extname(entry.name))) {
-      continue;
-    }
-
-    const relativePath = normalizePath(relative(rootDir, absolutePath));
-    if (
-      IGNORED_PATH_PREFIXES.some((pathPrefix) =>
-        relativePath.startsWith(pathPrefix)
-      )
-    ) {
-      continue;
-    }
-
-    output.push(relativePath);
-  }
-}
 
 function getScriptKind(relativePath) {
   if (relativePath.endsWith('.tsx')) {
@@ -196,6 +152,15 @@ function collectCommentViolations(filePath, sourceFile, text, range, output) {
     });
   }
 
+  if (/[→⇒]/.test(commentText)) {
+    output.push({
+      file: filePath,
+      line,
+      rule: 'unicode-arrow',
+      detail: formatSnippet(commentText),
+    });
+  }
+
   if (!isPathHeaderComment(commentText) && /[.!?;:]$/.test(commentText)) {
     output.push({
       file: filePath,
@@ -251,9 +216,18 @@ function scanFile(rootDir, relativePath) {
 
 try {
   const rootDir = process.cwd();
-  const sourceFiles = [];
-
-  collectSourceFiles(rootDir, rootDir, sourceFiles);
+  const sourceFiles = collectFiles({
+    rootDir,
+    extensions: SOURCE_EXTENSIONS,
+    ignoredDirectories: IGNORED_DIRECTORIES,
+    pathMode: 'relative',
+    includeFile: (absolutePath) => {
+      const relativePath = normalizePath(relative(rootDir, absolutePath));
+      return !IGNORED_PATH_PREFIXES.some((pathPrefix) =>
+        relativePath.startsWith(pathPrefix)
+      );
+    },
+  });
 
   const violations = [];
   for (const filePath of sourceFiles) {

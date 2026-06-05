@@ -31,29 +31,8 @@ function resolveMdxForgePath(
   throw new Error(`Could not resolve mdx-forge path for ${sourceRelativePath}`);
 }
 
-const aliases = [
-  {
-    find: 'vscode',
-    replacement: path.resolve(
-      __dirname,
-      '../packages/extension-host/test/__mocks__/vscode.ts'
-    ),
-  },
-  {
-    find: '@mdx-preview/contracts',
-    replacement: path.resolve(__dirname, '../packages/contracts/src/index.ts'),
-  },
-  {
-    find: '@mdx-preview/runtime-utils',
-    replacement: path.resolve(
-      __dirname,
-      '../packages/runtime-utils/src/index.ts'
-    ),
-  },
-  {
-    find: '@mdx-preview/codegen',
-    replacement: path.resolve(__dirname, '../packages/codegen/src/index.ts'),
-  },
+// single-source for the mdx-forge subpath aliases (add/remove subpaths here)
+const mdxForgeAliases = [
   {
     find: 'mdx-forge/browser/registry',
     replacement: resolveMdxForgePath(
@@ -117,6 +96,32 @@ const aliases = [
       'dist/esm/components/nextjs/index.js'
     ),
   },
+];
+
+const aliases = [
+  {
+    find: 'vscode',
+    replacement: path.resolve(
+      __dirname,
+      '../packages/extension-host/test/__mocks__/vscode.ts'
+    ),
+  },
+  {
+    find: '@mdx-preview/contracts',
+    replacement: path.resolve(__dirname, '../packages/contracts/src/index.ts'),
+  },
+  {
+    find: '@mdx-preview/runtime-utils',
+    replacement: path.resolve(
+      __dirname,
+      '../packages/runtime-utils/src/index.ts'
+    ),
+  },
+  {
+    find: '@mdx-preview/codegen',
+    replacement: path.resolve(__dirname, '../packages/codegen/src/index.ts'),
+  },
+  ...mdxForgeAliases,
 ];
 
 // load .md files as raw text strings (matches esbuild's text loader)

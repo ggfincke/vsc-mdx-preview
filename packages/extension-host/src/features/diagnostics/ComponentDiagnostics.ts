@@ -7,12 +7,16 @@ import {
   getUnknownComponents,
   invalidateComponentCache,
 } from './ComponentDetector';
-import type { DetectedComponent } from '../types';
+import type {
+  DetectedComponent,
+  UnknownComponentDiagnosticData,
+} from '../types';
 import { LogTags } from '@mdx-preview/contracts';
 import { resolveConfig } from '../preview/configuration/ConfigResolver';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { getErrorReporter } from '../../app/services';
 import { ErrorContext } from '../../shared/errors/ErrorReporter';
+import { EXTENSION_DISPLAY_NAME } from '../../shared/constants';
 
 const log = createTaggedLogger(LogTags.COMPONENT_DIAGNOSTICS);
 import { SingletonService } from '../../app/services/SingletonService';
@@ -23,7 +27,7 @@ export const DIAGNOSTIC_CODES = {
 } as const;
 
 // diagnostic source name
-const DIAGNOSTIC_SOURCE = 'MDX Preview';
+const DIAGNOSTIC_SOURCE = EXTENSION_DISPLAY_NAME;
 
 // * ComponentDiagnostics service
 // manage DiagnosticCollection for MDX component issues
@@ -166,6 +170,13 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
     diagnostic.source = DIAGNOSTIC_SOURCE;
     diagnostic.code = DIAGNOSTIC_CODES.UNKNOWN_COMPONENT;
 
+    // carry the component name structurally so code actions need not re-parse the message
+    // Diagnostic.data is runtime-supported but absent from @types/vscode 1.90; cast
+    const data: UnknownComponentDiagnosticData = {
+      componentName: component.name,
+    };
+    (diagnostic as vscode.Diagnostic & { data?: unknown }).data = data;
+
     // add related info about available options
     diagnostic.relatedInformation = [
       new vscode.DiagnosticRelatedInformation(
@@ -195,21 +206,6 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
   // get diagnostics for a document
   getDiagnostics(uri: vscode.Uri): readonly vscode.Diagnostic[] {
     return this.diagnosticCollection.get(uri) || [];
-  }
-
-  // get all unknown component names across all documents
-  getAllUnknownComponents(): Set<string> {
-    const names = new Set<string>();
-    this.diagnosticCollection.forEach((_uri, diagnostics) => {
-      for (const diag of diagnostics) {
-        // extract component name from message
-        const match = diag.message.match(/Unknown component "([^"]+)"/);
-        if (match) {
-          names.add(match[1]);
-        }
-      }
-    });
-    return names;
   }
 
   // custom cleanup - clear all timers
