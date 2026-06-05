@@ -13,11 +13,8 @@ const USER_MESSAGES: Record<string, string> = {
     'Operation blocked - workspace not trusted or scripts disabled',
 
   // module fetch errors (uses moduleId & parentModuleId)
+  // E101/E102/E110/E120 fall through to the contracts factory message (richer, keeps cause detail)
   E100: "Cannot find module '{moduleId}'. Did you run npm install?",
-  E101: "Cannot access '{moduleId}' - outside workspace folders",
-  E102: "Circular dependency detected: '{moduleId}'",
-  E110: "Syntax error in '{moduleId}'",
-  E120: "Failed to compile '{moduleId}'",
 
   // configuration errors (uses configPath)
   CONFIG_PARSE_ERROR: "Failed to parse config file '{configPath}'",

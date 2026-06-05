@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { createTaggedLogger, showOutput } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { getConfigManager } from '../../app/services';
+import { notifyInfo } from '../../shared/errors';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { CommandNames } from './command-names';
 import authoringGuideText from './data/authoring-guide.md';
@@ -18,9 +19,7 @@ const copyAuthoringGuide = async (): Promise<void> => {
 
   await vscode.env.clipboard.writeText(authoringGuideText);
 
-  vscode.window.showInformationMessage(
-    'MDX Preview: Authoring guide copied to clipboard.'
-  );
+  notifyInfo('Authoring guide copied to clipboard.');
 };
 
 // toggle debug output visibility

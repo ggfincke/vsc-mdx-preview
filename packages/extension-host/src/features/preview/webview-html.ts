@@ -6,7 +6,10 @@ import { Preview, StyleConfiguration } from './preview-manager';
 import { getCSP, generateNonce } from '../security/CSP';
 import { getPreviewManager, getTrustManager } from '../../app/services';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { CSP_DEBUG_PREVIEW_LENGTH } from '../../shared/constants';
+import {
+  CSP_DEBUG_PREVIEW_LENGTH,
+  EXTENSION_DISPLAY_NAME,
+} from '../../shared/constants';
 import { LogTags, formatTrustStateForDebug } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.WEBVIEW_MGR);
@@ -64,7 +67,7 @@ export function getWebviewAppHTML(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MDX Preview</title>
+    <title>${EXTENSION_DISPLAY_NAME}</title>
     ${styleLink}
     <meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy}">
     <base href="${baseHref}">

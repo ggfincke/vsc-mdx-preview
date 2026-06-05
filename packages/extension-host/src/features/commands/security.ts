@@ -11,6 +11,7 @@ import {
   getErrorReporter,
 } from '../../app/services';
 import { ErrorContext } from '../../shared/errors';
+import { EXTENSION_DISPLAY_NAME } from '../../shared/constants';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
@@ -54,7 +55,9 @@ const toggleScripts = async (): Promise<void> => {
   );
 
   const newState = scriptsEnabled ? 'disabled' : 'enabled';
-  vscode.window.showInformationMessage(`MDX Preview scripts ${newState}.`);
+  vscode.window.showInformationMessage(
+    `${EXTENSION_DISPLAY_NAME} scripts ${newState}.`
+  );
 };
 
 export const commands: CommandDefinition[] = [

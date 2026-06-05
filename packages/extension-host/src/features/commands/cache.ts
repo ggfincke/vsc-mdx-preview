@@ -1,13 +1,13 @@
 // packages/extension-host/src/features/commands/cache.ts
 // module & webview cache management commands
 
-import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { clearResolverCache } from '../module-runtime/resolution/resolver-factory';
 import { clearSassCache } from '../module-runtime/handlers';
 import { clearUnmanagedCaches } from '../../app/lifecycle/cache-subsystem';
 import { getPreviewManager } from '../../app/services';
+import { notifyInfo } from '../../shared/errors';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from '../types';
 
@@ -28,8 +28,8 @@ const clearAllCaches = async (): Promise<void> => {
   const previewManager = getPreviewManager();
   await previewManager.clearAllWebviewCaches();
 
-  vscode.window.showInformationMessage(
-    'MDX Preview: All caches cleared (resolver, Sass, components, security, webview modules).'
+  notifyInfo(
+    'All caches cleared (resolver, Sass, components, security, webview modules).'
   );
 };
 

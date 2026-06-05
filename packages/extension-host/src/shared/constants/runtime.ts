@@ -1,6 +1,11 @@
 // packages/extension-host/src/shared/constants/runtime.ts
 // runtime constants for the extension package (timeouts, limits, cache settings)
 
+// branding
+
+// extension display name shown in notifications, output channel & status bar
+export const EXTENSION_DISPLAY_NAME = 'MDX Preview';
+
 // timeouts
 
 // webview handshake timeout - how long to wait for webview to respond (ms)

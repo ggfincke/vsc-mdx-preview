@@ -16,6 +16,7 @@ import { resolveConfig } from '../preview/configuration/ConfigResolver';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { getErrorReporter } from '../../app/services';
 import { ErrorContext } from '../../shared/errors/ErrorReporter';
+import { EXTENSION_DISPLAY_NAME } from '../../shared/constants';
 
 const log = createTaggedLogger(LogTags.COMPONENT_DIAGNOSTICS);
 import { SingletonService } from '../../app/services/SingletonService';
@@ -26,7 +27,7 @@ export const DIAGNOSTIC_CODES = {
 } as const;
 
 // diagnostic source name
-const DIAGNOSTIC_SOURCE = 'MDX Preview';
+const DIAGNOSTIC_SOURCE = EXTENSION_DISPLAY_NAME;
 
 // * ComponentDiagnostics service
 // manage DiagnosticCollection for MDX component issues

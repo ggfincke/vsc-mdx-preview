@@ -12,7 +12,16 @@ export function extractErrorMessage(error: unknown): string {
   if (isError(error)) {
     return error.message;
   }
-  return String(error);
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (error !== null && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string') {
+      return message;
+    }
+  }
+  return 'Unknown error';
 }
 
 // extract stack trace from an unknown error value

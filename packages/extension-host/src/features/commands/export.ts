@@ -6,6 +6,8 @@ import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { getPreviewManager } from '../../app/services';
+import { notifyInfo, notifyError } from '../../shared/errors';
+import { EXTENSION_DISPLAY_NAME } from '../../shared/constants';
 import { CommandNames } from './command-names';
 import type { CommandDefinition } from './types';
 
@@ -25,9 +27,7 @@ export async function exportToHtml(): Promise<void> {
 
   const preview = getPreviewManager().getCurrentPreview();
   if (!preview?.active) {
-    vscode.window.showInformationMessage(
-      'MDX Preview: Open a preview before exporting HTML.'
-    );
+    notifyInfo('Open a preview before exporting HTML.');
     return;
   }
 
@@ -38,7 +38,7 @@ export async function exportToHtml(): Promise<void> {
         HTML: ['html', 'htm'],
       },
       saveLabel: 'Export HTML',
-      title: 'Export MDX Preview as HTML',
+      title: `Export ${EXTENSION_DISPLAY_NAME} as HTML`,
     });
 
     if (!targetUri) {
@@ -50,15 +50,11 @@ export async function exportToHtml(): Promise<void> {
       targetUri,
       new TextEncoder().encode(html)
     );
-    vscode.window.showInformationMessage(
-      `MDX Preview: Exported HTML to ${targetUri.fsPath}.`
-    );
+    notifyInfo(`Exported HTML to ${targetUri.fsPath}.`);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     log.error('Failed to export HTML', error);
-    vscode.window.showErrorMessage(
-      `MDX Preview: Failed to export HTML — ${reason}`
-    );
+    notifyError(`Failed to export HTML — ${reason}`);
   }
 }
 

@@ -13,6 +13,7 @@ import { CommandNames } from '../commands/command-names';
 import {
   STATUS_BAR_TRUST_PRIORITY,
   STATUS_BAR_FRAMEWORK_PRIORITY,
+  EXTENSION_DISPLAY_NAME,
 } from '../../shared/constants';
 import { SingletonService } from '../../app/services/SingletonService';
 import { LogTags } from '@mdx-preview/contracts';
@@ -80,14 +81,13 @@ export class StatusBarManager extends SingletonService<StatusBarManager> {
   private updateTrustDisplay(trustState: TrustState): void {
     if (trustState.canExecute) {
       this.trustStatusBarItem.text = '$(shield) MDX: Trusted';
-      this.trustStatusBarItem.tooltip =
-        'MDX Preview is in Trusted Mode. JavaScript execution is enabled. Click to manage settings.';
+      this.trustStatusBarItem.tooltip = `${EXTENSION_DISPLAY_NAME} is in Trusted Mode. JavaScript execution is enabled. Click to manage settings.`;
       this.trustStatusBarItem.backgroundColor = undefined;
     } else {
       this.trustStatusBarItem.text = '$(shield) MDX: Safe';
       this.trustStatusBarItem.tooltip = trustState.reason
-        ? `MDX Preview is in Safe Mode: ${trustState.reason}. Click to manage settings.`
-        : 'MDX Preview is in Safe Mode. JavaScript execution is disabled. Click to manage settings.';
+        ? `${EXTENSION_DISPLAY_NAME} is in Safe Mode: ${trustState.reason}. Click to manage settings.`
+        : `${EXTENSION_DISPLAY_NAME} is in Safe Mode. JavaScript execution is disabled. Click to manage settings.`;
       this.trustStatusBarItem.backgroundColor = new vscode.ThemeColor(
         'statusBarItem.warningBackground'
       );

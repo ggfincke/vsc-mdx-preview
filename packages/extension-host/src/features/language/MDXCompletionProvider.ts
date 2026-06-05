@@ -20,6 +20,7 @@ import {
 } from 'mdx-forge/compiler';
 import { getFrameworkDetector } from '../../app/services';
 import { isDocumentLineInFrontmatter } from './mdx-document-analysis';
+import { EXTENSION_DISPLAY_NAME } from '../../shared/constants';
 
 const log = createTaggedLogger(LogTags.COMPLETION_PROVIDER);
 
@@ -111,7 +112,7 @@ const FRONTMATTER_FIELDS = [
     field: 'previewTheme',
     description:
       FRONTMATTER_OVERRIDE_MAP.get('previewTheme')?.description ??
-      'MDX Preview theme override',
+      `${EXTENSION_DISPLAY_NAME} theme override`,
     snippet: `previewTheme: \${1|${PREVIEW_THEMES.join(',')}|}`,
   },
   {
@@ -133,7 +134,7 @@ function buildGenericComponentItems(): vscode.CompletionItem[] {
     );
     item.insertText = new vscode.SnippetString(snippet.template);
     item.documentation = new vscode.MarkdownString(snippet.doc);
-    item.detail = 'MDX Preview - Generic';
+    item.detail = `${EXTENSION_DISPLAY_NAME} - Generic`;
     item.sortText = `0_${snippet.name}`;
     return item;
   });
@@ -162,7 +163,7 @@ function buildFrameworkComponentItems(
     item.insertText = new vscode.SnippetString(
       `${entry.name}>\n\t$0\n</${entry.name}>`
     );
-    item.detail = `MDX Preview - ${frameworkLabel}`;
+    item.detail = `${EXTENSION_DISPLAY_NAME} - ${frameworkLabel}`;
     item.sortText = `1_${entry.name}`;
 
     if (entry.importSpecifiers.length > 0) {

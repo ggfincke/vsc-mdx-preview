@@ -19,6 +19,7 @@ import {
 } from '../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { SETTINGS } from '../shared/config/ConfigManager';
+import { EXTENSION_DISPLAY_NAME } from '../shared/constants';
 
 const log = createTaggedLogger(LogTags.ACTIVATE);
 const themeLog = createTaggedLogger(LogTags.THEME);
@@ -71,7 +72,7 @@ async function showSafeModeNotificationIfNeeded(
   }
 
   const selection = await vscode.window.showInformationMessage(
-    'MDX Preview is running in Safe Mode. JavaScript execution is disabled. Trust this workspace & enable scripts for full MDX rendering.',
+    `${EXTENSION_DISPLAY_NAME} is running in Safe Mode. JavaScript execution is disabled. Trust this workspace & enable scripts for full MDX rendering.`,
     'Manage Trust',
     'Learn More'
   );

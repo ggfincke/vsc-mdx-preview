@@ -10,6 +10,7 @@ import {
 } from '@mdx-preview/contracts';
 // import from setting-keys (not ConfigManager) to avoid circular deps
 import { SETTINGS } from '../config/setting-keys';
+import { EXTENSION_DISPLAY_NAME } from '../constants';
 
 // debug logging state (mutable for reactive updates)
 let debugEnabled = false;
@@ -22,7 +23,7 @@ let outputChannel: vscode.OutputChannel | undefined;
 // get or create output channel for extension
 export function getOutputChannel(): vscode.OutputChannel {
   if (!outputChannel) {
-    outputChannel = vscode.window.createOutputChannel('MDX Preview');
+    outputChannel = vscode.window.createOutputChannel(EXTENSION_DISPLAY_NAME);
   }
   return outputChannel;
 }

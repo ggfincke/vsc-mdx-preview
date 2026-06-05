@@ -7,6 +7,7 @@ import { MDXCompletionProvider } from './MDXCompletionProvider';
 import { MDXOutlineProvider } from './MDXOutlineProvider';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
+import { EXTENSION_DISPLAY_NAME } from '../../shared/constants';
 
 const log = createTaggedLogger(LogTags.LANGUAGE);
 
@@ -37,7 +38,7 @@ export function registerLanguageProviders(
     vscode.languages.registerDocumentSymbolProvider(
       MDX_SELECTOR,
       new MDXSymbolProvider(),
-      { label: 'MDX Preview' }
+      { label: EXTENSION_DISPLAY_NAME }
     )
   );
 

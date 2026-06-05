@@ -11,7 +11,7 @@ import {
 } from '../preview/preview-commands';
 import { CommandNames } from './command-names';
 
-const log = createTaggedLogger(LogTags.COMMANDS);
+const log = createTaggedLogger(LogTags.CMD);
 
 // re-export types & constants
 export { CommandNames, type CommandName } from './command-names';
