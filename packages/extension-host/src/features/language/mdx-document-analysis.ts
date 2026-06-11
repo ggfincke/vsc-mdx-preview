@@ -33,7 +33,6 @@ export interface MdxDocumentAnalysis {
 // parse an MDX document & extract frontmatter, AST & line offset
 export function analyzeMdxDocument(text: string): MdxDocumentAnalysis {
   const matterResult = matter(text);
-  const lines = text.split('\n');
 
   // calculate line offset for AST positions (gray-matter strips frontmatter)
   // find the closing --- line in the original text to get exact offset
@@ -42,6 +41,7 @@ export function analyzeMdxDocument(text: string): MdxDocumentAnalysis {
   const hasFrontmatter = Boolean(matterResult.matter);
 
   if (hasFrontmatter) {
+    const lines = text.split('\n');
     for (let i = 1; i < lines.length; i++) {
       if (lines[i].trim() === '---') {
         frontmatterEndLine = i;

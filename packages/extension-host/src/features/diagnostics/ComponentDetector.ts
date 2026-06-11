@@ -245,9 +245,11 @@ export async function detectComponents(
 ): Promise<ComponentDetectionResult> {
   const { includePositions = true, detectImports = true } = options;
 
+  // hoist hash so cache lookup & store share one full-text pass
+  const hash = uri ? contentHash(mdxText) : undefined;
+
   // check cache if URI is provided
-  if (uri) {
-    const hash = contentHash(mdxText);
+  if (uri && hash !== undefined) {
     const cached = parseCache.getIfHashMatches(uri, hash);
     if (cached) {
       log.debug(`Cache hit for ${uri}`);
@@ -324,8 +326,8 @@ export async function detectComponents(
   const result = { components, imports, errors };
 
   // store in cache if URI is provided
-  if (uri) {
-    parseCache.setWithHash(uri, contentHash(mdxText), result);
+  if (uri && hash !== undefined) {
+    parseCache.setWithHash(uri, hash, result);
     log.debug(`Cached result for ${uri}`);
   }
 

@@ -210,7 +210,6 @@ export function extractMDXSymbols(
   document: vscode.TextDocument
 ): vscode.DocumentSymbol[] {
   const text = document.getText();
-  const lines = text.split('\n');
   const {
     ast: tree,
     frontmatter: fmData,
@@ -220,7 +219,9 @@ export function extractMDXSymbols(
 
   const symbols: vscode.DocumentSymbol[] = [];
 
-  // frontmatter symbol
+  // frontmatter symbol (only frontmatter lines are read, so cap the split)
+  const lines =
+    frontmatterEndLine > 0 ? text.split('\n', frontmatterEndLine) : [];
   const fmSymbol = createFrontmatterSymbol(fmData, lines, frontmatterEndLine);
   if (fmSymbol) {
     symbols.push(fmSymbol);
