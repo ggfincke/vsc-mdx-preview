@@ -84,10 +84,6 @@ const CASE_COUNT_OVERRIDES = new Map([
   ['tests/webview/mermaidIconPacks.test.ts', 7],
 ]);
 
-function toRepoPath(rootDir, fullPath) {
-  return path.relative(rootDir, fullPath).split(path.sep).join('/');
-}
-
 function isAllowedTestFile(repoPath) {
   if (EXACT_ALLOWED.has(repoPath)) {
     return true;
@@ -127,11 +123,10 @@ const rootDir = process.cwd();
 const testFiles = collectFiles({
   rootDir,
   startDir: path.join(rootDir, 'tests'),
+  pathMode: 'relative',
   includeFile: (_absolutePath, entry) =>
     entry.isFile() && entry.name.endsWith('.test.ts'),
-})
-  .map((fullPath) => toRepoPath(rootDir, fullPath))
-  .sort();
+}).sort();
 const errors = [];
 
 for (const repoPath of testFiles) {
