@@ -1,21 +1,20 @@
 // packages/contracts/src/logging/factory.ts
 // shared factory for creating tagged loggers
 
-import type { LogFnVariadic, TaggedLogger } from './types';
+import type {
+  LoggerVariadic,
+  TaggedLogger,
+  TaggedLoggerFactory,
+} from './types';
 import type { LogTag } from './tags';
 
-// base logger interface that tagged logger factory requires
-export interface BaseLoggerVariadic {
-  debug: LogFnVariadic;
-  info: LogFnVariadic;
-  warn: LogFnVariadic;
-  error: LogFnVariadic;
-}
+// base logger shape that tagged logger factory requires
+export type BaseLoggerVariadic = LoggerVariadic;
 
 // create TaggedLogger factory w/ prefix
 export function createTaggedLoggerFactory(
-  baseLogger: BaseLoggerVariadic
-): (tag: LogTag | string) => TaggedLogger {
+  baseLogger: LoggerVariadic
+): TaggedLoggerFactory {
   return (tag: LogTag | string): TaggedLogger => {
     const prefix = `[${tag}]`;
 

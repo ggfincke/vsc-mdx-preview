@@ -11,39 +11,15 @@ vi.mock('vscode', () => ({
 }));
 
 import {
-  requireTrustedMode,
   requireTrustedModeForDocument,
   TrustError,
-  tryRequireTrustedMode,
   tryRequireTrustedModeForDocument,
+  tryRequireWorkspaceTrusted,
 } from '../../packages/extension-host/src/features/security/validateTrust';
 
 describe('validateTrust', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('returns TrustState when global trusted mode is available', () => {
-    const mockState = {
-      workspaceTrusted: true,
-      scriptsEnabled: true,
-      canExecute: true,
-      openMdxLinksInPreview: true,
-    };
-    mockTrustManager.getState.mockReturnValue(mockState);
-
-    expect(requireTrustedMode('test operation')).toEqual(mockState);
-  });
-
-  it('throws TrustError when global trusted mode is unavailable', () => {
-    mockTrustManager.getState.mockReturnValue({
-      workspaceTrusted: false,
-      scriptsEnabled: true,
-      canExecute: false,
-      openMdxLinksInPreview: true,
-    });
-
-    expect(() => requireTrustedMode('custom components')).toThrow(TrustError);
   });
 
   it('returns TrustState when a document passes trust checks', () => {
@@ -96,13 +72,13 @@ describe('validateTrust', () => {
     expect(onTrustError).toHaveBeenCalledWith(expect.any(TrustError));
   });
 
-  it('re-throws non-trust errors from tryRequireTrustedMode', () => {
+  it('re-throws non-trust errors from tryRequireWorkspaceTrusted', () => {
     const unexpectedError = new Error('Service unavailable');
     mockTrustManager.getState.mockImplementation(() => {
       throw unexpectedError;
     });
 
-    expect(() => tryRequireTrustedMode('test operation')).toThrow(
+    expect(() => tryRequireWorkspaceTrusted('test operation')).toThrow(
       unexpectedError
     );
   });

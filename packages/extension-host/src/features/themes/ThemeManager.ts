@@ -15,6 +15,21 @@ import type {
 } from './types';
 import { getOppositeTheme, isLightPreviewTheme } from './types';
 
+// code block theme lookup by preview theme for auto mode
+const CODE_BLOCK_THEME_MAP: Record<string, CodeBlockTheme> = {
+  'github-light': 'github',
+  'github-dark': 'github-dark',
+  'atom-dark': 'atom-dark',
+  'atom-light': 'atom-light',
+  'atom-material': 'atom-material',
+  'one-dark': 'one-dark',
+  'one-light': 'one-light',
+  'solarized-dark': 'solarized-dark',
+  'solarized-light': 'solarized-light',
+  monokai: 'monokai',
+  vue: 'vue',
+};
+
 export class ThemeManager extends WithSubscribers<
   ThemeManager,
   WebviewThemeState
@@ -23,7 +38,7 @@ export class ThemeManager extends WithSubscribers<
   protected readonly logTag = LogTags.THEME_MANAGER;
 
   protected constructor() {
-    super(LogTags.THEME_MANAGER);
+    super();
     // listen to VS Code theme changes
     this.addDisposable(
       vscode.window.onDidChangeActiveColorTheme(() => {
@@ -98,22 +113,8 @@ export class ThemeManager extends WithSubscribers<
     }
 
     // select code block theme based on preview theme in auto mode
-    const themeMap: Record<string, CodeBlockTheme> = {
-      'github-light': 'github',
-      'github-dark': 'github-dark',
-      'atom-dark': 'atom-dark',
-      'atom-light': 'atom-light',
-      'atom-material': 'atom-material',
-      'one-dark': 'one-dark',
-      'one-light': 'one-light',
-      'solarized-dark': 'solarized-dark',
-      'solarized-light': 'solarized-light',
-      monokai: 'monokai',
-      vue: 'vue',
-    };
-
     return (
-      themeMap[previewTheme] ||
+      CODE_BLOCK_THEME_MAP[previewTheme] ||
       (isLightPreviewTheme(previewTheme) ? 'github' : 'github-dark')
     );
   }

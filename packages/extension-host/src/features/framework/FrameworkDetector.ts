@@ -74,10 +74,12 @@ export class FrameworkDetector extends WithSubscribers<
   private cache = new PathCache<FrameworkInfo>({
     logTag: LogTags.FRAMEWORK,
   });
+  // memoized findUp walks keyed by `${workspaceRoot}|${documentDir}`
+  private packageJsonDirMemo = new Map<string, string>();
   private watcherReady = false;
 
   protected constructor() {
-    super(LogTags.FRAMEWORK, (error) => {
+    super((error) => {
       getErrorReporter().reportSilent(
         normalizeError(error),
         ErrorContext.Extension,
@@ -214,10 +216,16 @@ export class FrameworkDetector extends WithSubscribers<
     const documentDir = path.dirname(documentUri.fsPath);
 
     // find the closest package.json (from document dir up to workspace root)
-    const packageJsonDir = this.findClosestPackageJsonDir(
-      documentDir,
-      workspaceRoot
-    );
+    // memoized: the walk is constant for a given workspace root + document dir
+    const memoKey = `${workspaceRoot}|${documentDir}`;
+    let packageJsonDir = this.packageJsonDirMemo.get(memoKey);
+    if (packageJsonDir === undefined) {
+      packageJsonDir = this.findClosestPackageJsonDir(
+        documentDir,
+        workspaceRoot
+      );
+      this.packageJsonDirMemo.set(memoKey, packageJsonDir);
+    }
 
     // check cache using the package.json directory as key
     const cached = this.cache.get(packageJsonDir);
@@ -286,6 +294,9 @@ export class FrameworkDetector extends WithSubscribers<
 
   // handle package.json change & invalidate cache
   private onPackageJsonChange(fsPath: string): void {
+    // package.json create/delete can change the closest-dir mapping
+    this.packageJsonDirMemo.clear();
+
     // invalidate the cache for the directory containing this package.json
     const packageJsonDir = path.dirname(fsPath);
     this.invalidateCache(packageJsonDir);

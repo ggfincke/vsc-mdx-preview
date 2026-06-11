@@ -156,17 +156,9 @@ class ExtensionHandle implements ExtensionRPC {
   // open VS Code settings (optionally to specific setting)
   openSettings(settingId?: string): void {
     log.debug(`openSettings: ${settingId}`);
-    if (settingId && typeof settingId === 'string') {
-      vscode.commands.executeCommand(
-        'workbench.action.openSettings',
-        settingId
-      );
-    } else {
-      vscode.commands.executeCommand(
-        'workbench.action.openSettings',
-        'mdx-preview'
-      );
-    }
+    const target =
+      settingId && typeof settingId === 'string' ? settingId : 'mdx-preview';
+    vscode.commands.executeCommand('workbench.action.openSettings', target);
   }
 
   // open workspace trust management

@@ -1,12 +1,11 @@
 // packages/extension-host/src/shared/utils/validation/primitives.ts
-// primitive type validators (string, boolean, number, function)
+// primitive type validators (string, boolean, number)
 
 import { createTaggedLogger } from '../../logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import {
   formatContext,
   getLogger,
-  createPrimitiveValidator,
   type ValidationOptions,
   type LogFn,
 } from '../validation-factory';
@@ -38,13 +37,22 @@ export function validateString(
   return value;
 }
 
-// validate value is a boolean (factory-generated)
-export const validateBoolean = createPrimitiveValidator<boolean>({
-  typeName: 'boolean',
-  typeCheck: (v): v is boolean => typeof v === 'boolean',
-  defaultLog: defaultError,
-  logValue: false,
-});
+// validate value is a boolean
+export function validateBoolean(
+  value: unknown,
+  name: string,
+  opts?: ValidationOptions
+): boolean | undefined {
+  const log = getLogger(opts, defaultError);
+  const ctx = formatContext(opts?.context);
+
+  if (typeof value !== 'boolean') {
+    log(`${ctx}${name} must be a boolean`);
+    return undefined;
+  }
+
+  return value;
+}
 
 // validate value is a number w/ optional constraints
 export function validateNumber(
@@ -88,12 +96,3 @@ export function validateNumber(
 
   return value;
 }
-
-// callable function type (avoids ESLint no-unsafe-function-type)
-type CallableFunction = (...args: unknown[]) => unknown;
-
-// validate value is a function (factory-generated)
-export const validateFunction = createPrimitiveValidator<CallableFunction>({
-  typeName: 'function',
-  typeCheck: (v): v is CallableFunction => typeof v === 'function',
-});

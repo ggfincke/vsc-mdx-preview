@@ -35,10 +35,7 @@ export function classifyLink(href: string): LinkType {
       return 'relative-file';
     }
   } catch {
-    // invalid URL - treat as relative path if it looks like a file
-    if (looksLikeRelativePath(href)) {
-      return 'relative-file';
-    }
+    // invalid URL - fall through to the relative-path check below
   }
 
   // relative path w/o explicit scheme
@@ -67,32 +64,4 @@ function looksLikeRelativePath(href: string): boolean {
   }
 
   return false;
-}
-
-// check if a URL has an allowed external scheme
-export function isAllowedExternalScheme(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return EXTERNAL_SCHEMES.includes(parsed.protocol);
-  } catch {
-    return false;
-  }
-}
-
-// normalize a relative path for file opening (removes fragments & query strings)
-export function normalizeRelativePath(href: string): string {
-  // remove fragment
-  const withoutFragment = href.split('#')[0];
-  // remove query string
-  const withoutQuery = withoutFragment.split('?')[0];
-  return withoutQuery;
-}
-
-// extract anchor/fragment from a link
-export function extractAnchor(href: string): string | null {
-  const hashIndex = href.indexOf('#');
-  if (hashIndex === -1) {
-    return null;
-  }
-  return href.slice(hashIndex + 1);
 }

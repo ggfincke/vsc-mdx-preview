@@ -17,12 +17,8 @@ export const FRAMEWORK_IDS: readonly FrameworkId[] = [
 // used in: package.json mdx-preview.framework setting
 export const FRAMEWORK_SETTINGS: readonly FrameworkSetting[] = [
   'auto',
-  'generic',
-  'docusaurus',
-  'nextjs',
-  'starlight',
-  'nextra',
-] as const;
+  ...FRAMEWORK_IDS,
+];
 
 // tailwind enabled options
 // used in: package.json, .mdx-previewrc.json, runtime validation

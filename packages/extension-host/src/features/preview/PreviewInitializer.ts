@@ -17,7 +17,6 @@ import {
   WatcherManager,
 } from './watchers';
 import { onConfigChange } from './configuration';
-import { PackageJsonWatcher } from '../module-runtime/resolution/PackageJsonWatcher';
 import type { ResolvedConfig } from '../types';
 import { getTailwindProcessor } from '../../app/services';
 
@@ -84,8 +83,7 @@ export class PreviewInitializer {
   createWatchers(
     customCssPath: string,
     onDependencyChange: (fsPath: string) => Promise<void>,
-    webviewReadyPromise?: Promise<void>,
-    onPackageJsonChange?: () => void
+    webviewReadyPromise?: Promise<void>
   ): WatcherManager {
     const watcherManager = new WatcherManager();
 
@@ -115,16 +113,6 @@ export class PreviewInitializer {
         null
       );
       watcherManager.register('customCss', customCssWatcher);
-    }
-
-    // package.json watcher for module resolution cache invalidation
-    if (onPackageJsonChange) {
-      const packageJsonWatcher = new PackageJsonWatcher(async () => {
-        await watcherManager.waitForGate();
-        log.debug('Package.json changed, invalidating caches');
-        onPackageJsonChange();
-      });
-      watcherManager.register('packageJson', packageJsonWatcher);
     }
 
     // NOTE: watchers are NOT started here - call startWatchers() after setup

@@ -2,6 +2,7 @@
 // extract Tailwind classes from static patterns (className="...", @apply, @layer)
 
 import { CLASS_TOKEN_RE } from '../constants';
+import { extractBracedExpressions } from './parser-utils';
 import { addClasses } from './utils';
 
 // static class attribute: className="..." or class='...'
@@ -35,17 +36,13 @@ export class PatternScanner {
   }
 
   // extract custom class names defined in @layer utilities/components blocks
-  extractLayerClasses(
-    text: string,
-    classSet: Set<string>,
-    extractBracedContent: (
-      text: string,
-      pattern: RegExp,
-      open: string,
-      close: string
-    ) => string[]
-  ): void {
-    for (const layerContent of extractBracedContent(text, LAYER_RE, '{', '}')) {
+  extractLayerClasses(text: string, classSet: Set<string>): void {
+    for (const layerContent of extractBracedExpressions(
+      text,
+      LAYER_RE,
+      '{',
+      '}'
+    )) {
       // extract all CSS class selectors from within the @layer block
       for (const match of layerContent.matchAll(CSS_CLASS_SELECTOR_RE)) {
         const className = match[1];

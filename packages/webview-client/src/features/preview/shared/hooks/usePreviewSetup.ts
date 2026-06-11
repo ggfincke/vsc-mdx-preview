@@ -3,10 +3,11 @@
 
 import { useRef, type RefObject, type ReactNode } from 'react';
 import { DIAGRAM_SCAN_ADAPTERS } from '../../../diagrams/hooks/diagramAdapters';
-import { useDiagramScanCoordinator } from '../../../diagrams/hooks/useDiagramScanCoordinator';
+import {
+  useDiagramScanCoordinator,
+  type DiagramScanMode,
+} from '../../../diagrams/hooks/useDiagramScanCoordinator';
 import { useImageLightbox } from '../../../lightbox/hooks/useImageLightbox';
-
-export type DiagramScanMode = 'after-paint' | 'before-paint';
 
 interface PreviewSetupOptions {
   // diagram scan timing mode

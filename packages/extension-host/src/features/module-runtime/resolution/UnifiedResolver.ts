@@ -31,15 +31,36 @@ export interface FrameworkAliasResult {
   earlyResult?: ResolutionResult;
 }
 
-interface StrategyPlan {
-  useTypeScript: boolean;
-  useEnhancedResolve: boolean;
-  useFileProbe: boolean;
+// lazy strategy getter + async preference for one chain step
+interface StrategyDescriptor {
+  readonly getStrategy: () => IResolutionStrategy;
+  readonly preferAsync: boolean;
 }
+
+// precomputed strategy chains (only 3 possible shapes)
+const RELATIVE_CHAIN: readonly StrategyDescriptor[] = [
+  { getStrategy: getFileProbeStrategy, preferAsync: true },
+];
+const BARE_TS_CHAIN: readonly StrategyDescriptor[] = [
+  { getStrategy: getTypeScriptPathStrategy, preferAsync: true },
+  { getStrategy: getEnhancedResolveStrategy, preferAsync: false },
+];
+const BARE_CHAIN: readonly StrategyDescriptor[] = [BARE_TS_CHAIN[1]];
 
 // check if specifier is a relative import
 function isRelativeImport(specifier: string): boolean {
   return specifier.startsWith('./') || specifier.startsWith('../');
+}
+
+// pick the constant strategy chain for a specifier & context
+function pickChain(
+  specifier: string,
+  context: ResolutionContext
+): readonly StrategyDescriptor[] {
+  if (isRelativeImport(specifier)) {
+    return RELATIVE_CHAIN;
+  }
+  return context.tsConfig ? BARE_TS_CHAIN : BARE_CHAIN;
 }
 
 // resolve framework alias for bare imports
@@ -106,20 +127,7 @@ export class UnifiedResolver {
     return true;
   }
 
-  // determine which strategies to try based on specifier type & context
-  private getStrategyPlan(
-    specifier: string,
-    context: ResolutionContext
-  ): StrategyPlan {
-    const isRelative = this.isRelativeImport(specifier);
-    return {
-      useTypeScript: Boolean(context.tsConfig) && !isRelative,
-      useEnhancedResolve: !isRelative,
-      useFileProbe: isRelative,
-    };
-  }
-
-  // prepare alias resolution & strategy plan (shared between sync & async)
+  // prepare alias resolution & strategy chain (shared between sync & async)
   private prepareResolution(
     specifier: string,
     context: ResolutionContext
@@ -127,55 +135,23 @@ export class UnifiedResolver {
     | { earlyResult: ResolutionResult }
     | {
         specifier: string;
-        plan: StrategyPlan;
+        chain: readonly StrategyDescriptor[];
       } {
     const aliasResult = resolveFrameworkAliasStep(specifier, context);
     if (aliasResult.earlyResult) {
       return { earlyResult: aliasResult.earlyResult };
     }
     const s = aliasResult.specifier;
-    return { specifier: s, plan: this.getStrategyPlan(s, context) };
-  }
-
-  // describe enabled strategies in priority order (shared between sync & async)
-  private getStrategyDescriptors(plan: StrategyPlan): Array<{
-    getStrategy: () => IResolutionStrategy;
-    preferAsync: boolean;
-  }> {
-    const descriptors: Array<{
-      getStrategy: () => IResolutionStrategy;
-      preferAsync: boolean;
-    }> = [];
-
-    if (plan.useTypeScript) {
-      descriptors.push({
-        getStrategy: getTypeScriptPathStrategy,
-        preferAsync: true,
-      });
-    }
-    if (plan.useEnhancedResolve) {
-      descriptors.push({
-        getStrategy: getEnhancedResolveStrategy,
-        preferAsync: false,
-      });
-    }
-    if (plan.useFileProbe) {
-      descriptors.push({
-        getStrategy: getFileProbeStrategy,
-        preferAsync: true,
-      });
-    }
-
-    return descriptors;
+    return { specifier: s, chain: pickChain(s, context) };
   }
 
   private resolvePlannedStrategiesSync(
     specifier: string,
     context: ResolutionContext,
     mode: ResolutionMode,
-    plan: StrategyPlan
+    chain: readonly StrategyDescriptor[]
   ): ResolutionResult | null {
-    for (const { getStrategy } of this.getStrategyDescriptors(plan)) {
+    for (const { getStrategy } of chain) {
       const result = getStrategy().resolve(specifier, context, mode);
       if (result) {
         return result;
@@ -188,11 +164,9 @@ export class UnifiedResolver {
     specifier: string,
     context: ResolutionContext,
     mode: ResolutionMode,
-    plan: StrategyPlan
+    chain: readonly StrategyDescriptor[]
   ): Promise<ResolutionResult | null> {
-    for (const { getStrategy, preferAsync } of this.getStrategyDescriptors(
-      plan
-    )) {
+    for (const { getStrategy, preferAsync } of chain) {
       const strategy = getStrategy();
       const result =
         preferAsync && strategy.resolveAsync
@@ -216,8 +190,8 @@ export class UnifiedResolver {
       return prep.earlyResult;
     }
 
-    const { specifier: s, plan } = prep;
-    return this.resolvePlannedStrategiesSync(s, context, mode, plan);
+    const { specifier: s, chain } = prep;
+    return this.resolvePlannedStrategiesSync(s, context, mode, chain);
   }
 
   // resolve after alias (async)
@@ -231,8 +205,8 @@ export class UnifiedResolver {
       return prep.earlyResult;
     }
 
-    const { specifier: s, plan } = prep;
-    return this.resolvePlannedStrategiesAsync(s, context, mode, plan);
+    const { specifier: s, chain } = prep;
+    return this.resolvePlannedStrategiesAsync(s, context, mode, chain);
   }
 
   // synchronous resolution

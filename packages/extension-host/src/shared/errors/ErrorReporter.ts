@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { ExtensionError } from './index';
-import { formatUserError, formatLogError } from './messages';
+import { formatLogError } from './messages';
 import {
   error as logError,
   warn as logWarn,
@@ -31,6 +31,7 @@ import {
   shouldNotify,
   showNotification,
   sendToWebview,
+  userDisplayMessage,
 } from './error-notification';
 
 // re-export enums, interfaces, & types for consumers
@@ -67,7 +68,6 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
 
   // LRU cache for duplicate error tracking w/ capacity-based eviction
   private recentErrors: LRUCache<string, number>;
-  private readonly DEFAULT_DEDUPE_WINDOW = ERROR_DEDUPE_WINDOW_DEFAULT_MS;
 
   protected constructor() {
     super();
@@ -83,7 +83,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     error: Error | ExtensionError | ModuleError | unknown,
     options: ReportOptions
   ): void {
-    const normalizedError = this.normalizeError(error);
+    const normalizedError = sharedNormalizeError(error);
     const severity =
       options.severity ?? inferSeverity(normalizedError, options.context);
 
@@ -147,20 +147,6 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     });
   }
 
-  // convenience method for plugin errors - log but do NOT show notification
-  // plugin errors are expected in Safe Mode & should not interrupt the user
-  reportPluginError(
-    error: Error | ExtensionError | ModuleError | unknown,
-    pluginName: string
-  ): void {
-    this.report(error, {
-      context: ErrorContext.Plugin,
-      severity: ErrorSeverity.Warning,
-      showNotification: false,
-      metadata: { pluginName },
-    });
-  }
-
   // convenience method for interactive errors w/ action buttons
   // log the error & show a warning w/ clickable actions
   async reportWithActions(
@@ -168,12 +154,8 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     context: ErrorContext,
     actions: { label: string; action: () => void | Promise<void> }[]
   ): Promise<void> {
-    const normalizedError = this.normalizeError(error);
-    const message =
-      normalizedError instanceof ExtensionError ||
-      normalizedError instanceof ModuleError
-        ? formatUserError(normalizedError)
-        : normalizedError.message;
+    const normalizedError = sharedNormalizeError(error);
+    const message = userDisplayMessage(normalizedError);
 
     // log the error
     this.logError(normalizedError, ErrorSeverity.Warning, { context });
@@ -191,20 +173,6 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     if (selectedAction) {
       await selectedAction.action();
     }
-  }
-
-  // normalize any error type to ExtensionError, ModuleError, or Error
-  // preserve extension-specific error types, fall back to shared normalizeError
-  private normalizeError(error: unknown): ExtensionError | ModuleError | Error {
-    // preserve extension-specific error types
-    if (error instanceof ExtensionError) {
-      return error;
-    }
-    if (error instanceof ModuleError) {
-      return error;
-    }
-    // use shared normalizeError for generic errors
-    return sharedNormalizeError(error);
   }
 
   // log error at appropriate level
@@ -243,7 +211,7 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
   private isDuplicate(error: Error, dedupeWindow?: number): boolean {
     const key = `${error.constructor.name}:${error.message}`;
     const now = Date.now();
-    const window = dedupeWindow ?? this.DEFAULT_DEDUPE_WINDOW;
+    const window = dedupeWindow ?? ERROR_DEDUPE_WINDOW_DEFAULT_MS;
 
     const lastSeen = this.recentErrors.get(key);
     if (lastSeen !== null && now - lastSeen < window) {

@@ -167,8 +167,13 @@ async function inlineImages(root: HTMLElement): Promise<void> {
   );
   let failed = 0;
 
-  await Promise.all([
-    ...images.map(async (image) => {
+  // strip picture source candidates so exported files use data URI images
+  for (const source of sources) {
+    source.removeAttribute('srcset');
+  }
+
+  await Promise.all(
+    images.map(async (image) => {
       const src = image.getAttribute('src');
       if (!src || src.startsWith('data:')) {
         return;
@@ -182,12 +187,8 @@ async function inlineImages(root: HTMLElement): Promise<void> {
 
       image.setAttribute('src', dataUri);
       image.removeAttribute('srcset');
-    }),
-    // strip picture source candidates so exported files use data URI images
-    ...sources.map(async (source) => {
-      source.removeAttribute('srcset');
-    }),
-  ]);
+    })
+  );
 
   if (failed > 0) {
     log.warn(`Failed to inline ${failed} image(s) during export.`);

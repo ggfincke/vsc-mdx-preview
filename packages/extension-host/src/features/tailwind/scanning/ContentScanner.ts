@@ -23,48 +23,17 @@ const CVA_START_RE = /\bcva\s*\(/g;
 export class ContentScanner {
   // extract classes from className={...} expressions
   extractDynamicExpressions(text: string, classSet: Set<string>): void {
-    // extract from className={...} expressions using brace matching
-    for (const expr of this.extractBracedExpressions(
-      text,
-      CLASS_EXPR_START_RE,
-      '{',
-      '}'
-    )) {
-      const literals = this.extractStringLiterals(expr);
-      for (const literal of literals) {
-        addClasses(literal, classSet);
-      }
-    }
+    this.extractDelimited(text, CLASS_EXPR_START_RE, '{', '}', classSet);
   }
 
   // extract classes from clsx/cn/classnames(...) calls
   extractUtilityFunctions(text: string, classSet: Set<string>): void {
-    for (const expr of this.extractBracedExpressions(
-      text,
-      CLSX_START_RE,
-      '(',
-      ')'
-    )) {
-      const literals = this.extractStringLiterals(expr);
-      for (const literal of literals) {
-        addClasses(literal, classSet);
-      }
-    }
+    this.extractDelimited(text, CLSX_START_RE, '(', ')', classSet);
   }
 
   // extract classes from cva() (class-variance-authority) calls
   extractCvaPatterns(text: string, classSet: Set<string>): void {
-    for (const expr of this.extractBracedExpressions(
-      text,
-      CVA_START_RE,
-      '(',
-      ')'
-    )) {
-      const literals = this.extractStringLiterals(expr);
-      for (const literal of literals) {
-        addClasses(literal, classSet);
-      }
-    }
+    this.extractDelimited(text, CVA_START_RE, '(', ')', classSet);
   }
 
   // extract classes from array.join(' ') patterns
@@ -73,25 +42,26 @@ export class ContentScanner {
     for (const match of text.matchAll(ARRAY_JOIN_RE)) {
       const arrayContent = match[1];
       // extract string literals from inside the array brackets
-      const literals = this.extractStringLiterals(`[${arrayContent}]`);
+      const literals = extractLiterals(`[${arrayContent}]`);
       for (const literal of literals) {
         addClasses(literal, classSet);
       }
     }
   }
 
-  // extract balanced expressions using brace/paren matching & handle nested braces properly
-  extractBracedExpressions(
+  // extract balanced expressions, then add their string-literal classes
+  private extractDelimited(
     text: string,
     startPattern: RegExp,
     openChar: string,
-    closeChar: string
-  ): string[] {
-    return extractBraced(text, startPattern, openChar, closeChar);
-  }
-
-  // extract string literals from JavaScript expression w/ recursive template literal handling
-  extractStringLiterals(expression: string, depth = 0): string[] {
-    return extractLiterals(expression, depth);
+    closeChar: string,
+    classSet: Set<string>
+  ): void {
+    for (const expr of extractBraced(text, startPattern, openChar, closeChar)) {
+      const literals = extractLiterals(expr);
+      for (const literal of literals) {
+        addClasses(literal, classSet);
+      }
+    }
   }
 }

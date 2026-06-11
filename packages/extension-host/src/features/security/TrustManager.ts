@@ -13,10 +13,8 @@ const log = createTaggedLogger(LogTags.TRUST_MANAGER);
 export type { TrustState } from '@mdx-preview/contracts';
 
 // re-export canonical type definitions from security/types
-export { SecurityMode, getSecurityMode } from './types';
 export type { TrustedModeCheck } from './types';
 
-import { SecurityMode, getSecurityMode } from './types';
 import type { TrustedModeCheck } from './types';
 
 // manage trust state for MDX preview
@@ -25,9 +23,7 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
   protected readonly logTag = LogTags.TRUST_MANAGER;
 
   protected constructor() {
-    super(LogTags.TRUST_MANAGER, (error) =>
-      log.error('Error in TrustManager listener', error)
-    );
+    super((error) => log.error('Error in TrustManager listener', error));
     const workspaceWithTrust = vscode.workspace as typeof vscode.workspace & {
       onDidChangeWorkspaceTrust?: vscode.Event<boolean>;
     };
@@ -78,15 +74,16 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
     return this.getState().canExecute;
   }
 
-  // get current security mode
-  getMode(): SecurityMode {
-    return getSecurityMode(this.getState());
-  }
-
   // check if Trusted Mode can be used for specific document (validates 4 security rules)
   canUseTrustedMode(docUri: vscode.Uri): TrustedModeCheck {
-    const state = this.getState();
+    return this.canUseTrustedModeForState(this.getState(), docUri);
+  }
 
+  // evaluate the 4 Trusted Mode rules against an already-computed state
+  private canUseTrustedModeForState(
+    state: TrustState,
+    docUri: vscode.Uri
+  ): TrustedModeCheck {
     // rule 1: workspace must be trusted
     if (!state.workspaceTrusted) {
       return {
@@ -132,7 +129,7 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
   // get full trust state for specific document (includes document-specific checks)
   getStateForDocument(docUri: vscode.Uri): TrustState {
     const baseState = this.getState();
-    const modeCheck = this.canUseTrustedMode(docUri);
+    const modeCheck = this.canUseTrustedModeForState(baseState, docUri);
 
     if (!modeCheck.allowed) {
       return {

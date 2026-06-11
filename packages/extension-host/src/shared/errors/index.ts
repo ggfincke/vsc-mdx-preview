@@ -2,7 +2,6 @@
 // structured error classes for extension w/ error codes & context
 
 import {
-  type ExtensionModuleErrorCode,
   type ModuleErrorCode,
   type ModuleErrorData,
   ModuleError,
@@ -12,20 +11,8 @@ export { ErrorReporter, type ReportOptions } from './ErrorReporter';
 export { ErrorSeverity, ErrorContext } from './error-severity';
 export { type WebviewErrorHandle } from './error-notification';
 
-// re-export severity & notification helpers for direct consumers
-export {
-  inferSeverity,
-  isRecoverableError,
-  getContextPrefix,
-} from './error-severity';
-export {
-  shouldNotify,
-  showNotification,
-  sendToWebview,
-  notifyInfo,
-  notifyWarning,
-  notifyError,
-} from './error-notification';
+// re-export notification helpers for direct consumers
+export { notifyInfo, notifyWarning, notifyError } from './error-notification';
 
 // re-export shared module error types for convenience
 export { ModuleError, type ModuleErrorCode, type ModuleErrorData };
@@ -52,24 +39,6 @@ export class ExtensionError extends Error {
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, new.target);
     }
-  }
-}
-
-// module resolution & fetch errors (E100-E199)
-// extension-side subset of ModuleErrorCode
-export type ModuleFetchErrorCode = ExtensionModuleErrorCode;
-export type ModuleFetchError = ModuleError<ModuleFetchErrorCode>;
-
-// transpilation errors w/ source location
-export class TranspileError extends ExtensionError {
-  constructor(
-    message: string,
-    public readonly sourceFile: string,
-    public readonly line?: number,
-    public readonly column?: number,
-    cause?: Error
-  ) {
-    super(message, 'TRANSPILE_ERROR', cause);
   }
 }
 
@@ -108,25 +77,6 @@ export class ConfigError extends ExtensionError {
     message: string,
     code: ConfigErrorCode,
     public readonly configPath?: string,
-    cause?: Error
-  ) {
-    super(message, code, cause);
-  }
-}
-
-// plugin errors
-// E460 = PLUGIN_SAFE_MODE_BLOCKED
-export type PluginErrorCode =
-  | 'PLUGIN_NOT_FOUND'
-  | 'PLUGIN_LOAD_ERROR'
-  | 'PLUGIN_INVALID_EXPORT'
-  | 'E460';
-
-export class PluginError extends ExtensionError {
-  constructor(
-    message: string,
-    code: PluginErrorCode,
-    public readonly pluginName: string,
     cause?: Error
   ) {
     super(message, code, cause);

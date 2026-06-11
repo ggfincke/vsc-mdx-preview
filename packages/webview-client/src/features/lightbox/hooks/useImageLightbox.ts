@@ -3,7 +3,7 @@
 
 import { useCallback, type MouseEvent as ReactMouseEvent } from 'react';
 import {
-  useLightbox,
+  useLightboxActions,
   type LightboxImage,
 } from '../../../app/state/LightboxContext';
 import {
@@ -112,7 +112,7 @@ function collectSectionImageList(
 // hook for handling image clicks to open lightbox w/ gallery navigation
 // consolidate duplicate image click handling from SafePreview & TrustedPreview
 export function useImageLightbox() {
-  const { openLightbox } = useLightbox();
+  const { openLightbox } = useLightboxActions();
 
   // handle image click to open lightbox
   // support both native MouseEvent (for addEventListener) & React.MouseEvent (for onClick)

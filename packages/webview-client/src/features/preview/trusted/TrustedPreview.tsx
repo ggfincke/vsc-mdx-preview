@@ -4,6 +4,7 @@
 import {
   memo,
   useLayoutEffect,
+  useMemo,
   useState,
   isValidElement,
   cloneElement,
@@ -131,6 +132,13 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
     component: evaluatedComponent,
   });
 
+  // memoize resolved element so unrelated re-renders keep element identity
+  // & React bails out of the unchanged MDX subtree
+  const mdxNode = useMemo(
+    () => (evaluatedComponent ? resolveMdxNode(evaluatedComponent) : null),
+    [evaluatedComponent]
+  );
+
   // show loading state while evaluating
   if (isEvaluating || !evaluatedComponent) {
     return (
@@ -141,9 +149,6 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
     );
   }
 
-  // render evaluated component using defensive resolver
-  // handle both function components & pre-rendered React elements
-  const mdxNode = resolveMdxNode(evaluatedComponent);
   return (
     <PreviewContainer
       containerRef={containerRef}
@@ -156,5 +161,3 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
     </PreviewContainer>
   );
 }, arePropsEqual);
-
-export default TrustedPreviewRenderer;

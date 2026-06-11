@@ -31,22 +31,63 @@ function writeDismissedBannerKey(key: string | null): void {
   setItem(DISMISSED_BANNER_KEY_STORAGE, key);
 }
 
-function getBannerKey(trustState: TrustState): string | null {
+interface BannerConfig {
+  type: 'warning' | 'info';
+  icon: string;
+  title: string;
+  message: string;
+}
+
+// resolve dismissal key & display config from a single trust-state cascade
+// (one source keeps key & rendered banner in lockstep)
+function getBannerState(
+  trustState: TrustState
+): { key: string; config: BannerConfig } | null {
   if (trustState.canExecute) {
     return null;
   }
 
-  if (!trustState.workspaceTrusted) {
-    return 'workspace-untrusted';
+  const { workspaceTrusted, scriptsEnabled, reason } = trustState;
+
+  if (!workspaceTrusted) {
+    return {
+      key: 'workspace-untrusted',
+      config: {
+        type: 'warning',
+        icon: '⚠',
+        title: 'Safe Mode',
+        message:
+          reason ||
+          'This workspace is not trusted. JavaScript execution is disabled for security.',
+      },
+    };
   }
 
-  if (!trustState.scriptsEnabled) {
-    return 'scripts-disabled';
+  if (!scriptsEnabled) {
+    return {
+      key: 'scripts-disabled',
+      config: {
+        type: 'info',
+        icon: 'ℹ',
+        title: 'Safe Mode',
+        message:
+          reason ||
+          'Scripts are disabled. Enable scripts in settings for full MDX rendering.',
+      },
+    };
   }
 
-  return trustState.reason
-    ? `restricted:${trustState.reason}`
-    : 'restricted:unknown';
+  // remote environment or other restriction
+  return {
+    key: reason ? `restricted:${reason}` : 'restricted:unknown',
+    config: {
+      type: 'warning',
+      icon: '⚠',
+      title: 'Safe Mode',
+      message:
+        reason || 'JavaScript execution is not available in this context.',
+    },
+  };
 }
 
 // trust banner for Safe Mode trust & script actions
@@ -56,7 +97,8 @@ export const TrustBanner = memo(
     const [dismissedBannerKey, setDismissedBannerKey] = useState<string | null>(
       () => readDismissedBannerKey()
     );
-    const currentBannerKey = getBannerKey(trustState);
+    const bannerState = getBannerState(trustState);
+    const currentBannerKey = bannerState ? bannerState.key : null;
 
     const handleManageTrust = useCallback(() => {
       ExtensionHandle.manageTrust();
@@ -87,12 +129,12 @@ export const TrustBanner = memo(
       dismissedBannerKey === currentBannerKey;
 
     // don't show banner if in Trusted Mode or dismissed
-    if (currentBannerKey === null || isDismissed) {
+    if (bannerState === null || isDismissed) {
       return null;
     }
 
-    // determine banner type & message based on trust state
-    const bannerConfig = getBannerConfig(trustState);
+    // banner type & message resolved by the shared cascade above
+    const bannerConfig = bannerState.config;
 
     return (
       <div
@@ -163,46 +205,3 @@ function arePropsEqual(
     prevProps.dismissible === nextProps.dismissible
   );
 }
-
-interface BannerConfig {
-  type: 'warning' | 'info';
-  icon: string;
-  title: string;
-  message: string;
-}
-
-function getBannerConfig(trustState: TrustState): BannerConfig {
-  const { workspaceTrusted, scriptsEnabled, reason } = trustState;
-
-  if (!workspaceTrusted) {
-    return {
-      type: 'warning',
-      icon: '\u26A0',
-      title: 'Safe Mode',
-      message:
-        reason ||
-        'This workspace is not trusted. JavaScript execution is disabled for security.',
-    };
-  }
-
-  if (!scriptsEnabled) {
-    return {
-      type: 'info',
-      icon: '\u2139',
-      title: 'Safe Mode',
-      message:
-        reason ||
-        'Scripts are disabled. Enable scripts in settings for full MDX rendering.',
-    };
-  }
-
-  // remote environment or other restriction
-  return {
-    type: 'warning',
-    icon: '\u26A0',
-    title: 'Safe Mode',
-    message: reason || 'JavaScript execution is not available in this context.',
-  };
-}
-
-export default TrustBanner;

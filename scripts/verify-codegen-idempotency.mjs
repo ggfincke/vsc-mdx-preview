@@ -6,13 +6,11 @@
 import { execSync } from 'node:child_process';
 import { ALL_GENERATED_FILES } from './generated-files.mjs';
 
-const ALL_FILES = ALL_GENERATED_FILES;
-
 try {
   // check git diff on all generated/synced files
   // --exit-code makes git diff exit 1 if there are changes
   try {
-    execSync(`git diff --exit-code -- ${ALL_FILES.join(' ')}`, {
+    execSync(`git diff --exit-code -- ${ALL_GENERATED_FILES.join(' ')}`, {
       stdio: 'pipe',
       encoding: 'utf-8',
     });
@@ -23,7 +21,7 @@ try {
 
     try {
       const nameOnly = execSync(
-        `git diff --name-only -- ${ALL_FILES.join(' ')}`,
+        `git diff --name-only -- ${ALL_GENERATED_FILES.join(' ')}`,
         { encoding: 'utf-8' }
       ).trim();
 
@@ -59,7 +57,7 @@ try {
   }
 
   console.log(
-    `Codegen idempotency check passed. All ${ALL_FILES.length} generated/synced files are up to date.`
+    `Codegen idempotency check passed. All ${ALL_GENERATED_FILES.length} generated/synced files are up to date.`
   );
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);

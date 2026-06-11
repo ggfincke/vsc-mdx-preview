@@ -3,15 +3,8 @@
 
 import type { PreviewTheme, CodeBlockTheme, MermaidTheme } from './types';
 
-// available mermaid themes array (canonical source)
-export const MERMAID_THEMES: MermaidTheme[] = [
-  'default',
-  'dark',
-  'forest',
-  'neutral',
-  'base',
-  'null',
-];
+// canonical arrays live in types.ts; re-export for existing consumers
+export { PREVIEW_THEMES, CODE_BLOCK_THEMES, MERMAID_THEMES } from './types';
 
 // check if a preview theme is a light theme
 export function isLightPreviewTheme(theme: PreviewTheme): boolean {
@@ -20,54 +13,6 @@ export function isLightPreviewTheme(theme: PreviewTheme): boolean {
     ['medium', 'newsprint', 'gothic', 'none', 'vue'].includes(theme)
   );
 }
-
-// available preview themes
-export const PREVIEW_THEMES: PreviewTheme[] = [
-  'github-light',
-  'github-dark',
-  'atom-dark',
-  'atom-light',
-  'atom-material',
-  'one-dark',
-  'one-light',
-  'solarized-dark',
-  'solarized-light',
-  'gothic',
-  'medium',
-  'monokai',
-  'newsprint',
-  'night',
-  'none',
-  'vue',
-];
-
-// available code block themes
-export const CODE_BLOCK_THEMES: CodeBlockTheme[] = [
-  'auto',
-  'default',
-  'atom-dark',
-  'atom-light',
-  'atom-material',
-  'coy',
-  'darcula',
-  'dark',
-  'funky',
-  'github',
-  'github-dark',
-  'hopscotch',
-  'monokai',
-  'okaidia',
-  'one-dark',
-  'one-light',
-  'pen-paper-coffee',
-  'pojoaque',
-  'solarized-dark',
-  'solarized-light',
-  'twilight',
-  'vs',
-  'vue',
-  'xonokai',
-];
 
 // light/dark theme pairs for auto theme switching
 export const THEME_PAIRS: Record<

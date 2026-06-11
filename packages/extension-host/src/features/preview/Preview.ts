@@ -35,7 +35,6 @@ import { PreviewDocumentHandler } from './PreviewDocumentHandler';
 import { PreviewInitializer } from './PreviewInitializer';
 import { getPreviewManager } from '../../app/services/service-locator';
 import { runPreviewUpdateFlow } from './preview-update-flow';
-import { runPreviewRefreshFlow } from './preview-refresh-flow';
 import {
   disposeScrollSyncForPreview,
   resetPreviewScrollSync,
@@ -348,11 +347,14 @@ export class Preview {
   }
 
   async refreshWebview(): Promise<void> {
-    await runPreviewRefreshFlow({
-      getCurrentPreview: () => getPreviewManager().getCurrentPreview(),
-      refreshPanel,
-      updateWebviewForce: () => this.updateWebview(true),
-    });
+    log.debug('refreshWebview called');
+    const currentPreview = getPreviewManager().getCurrentPreview();
+    if (!currentPreview) {
+      return;
+    }
+
+    refreshPanel(currentPreview);
+    await this.updateWebview(true);
   }
 
   async handleDidChangeTextDocument(

@@ -17,29 +17,6 @@ import type { ErrorReporter } from '../../shared/errors/ErrorReporter';
 import type { StatusBarManager } from '../../features/preview/StatusBarManager';
 import type { MetaResolver } from '../../features/framework/nextra/MetaResolver';
 import type { ComponentDiagnostics } from '../../features/diagnostics/ComponentDiagnostics';
-import type { OutputChannel } from 'vscode';
-
-// wrapper interface for OutputChannel to satisfy IService
-interface OutputChannelService extends IService {
-  channel: OutputChannel;
-  dispose(): void;
-}
-
-// generic service accessor
-// use typed convenience functions below for better type safety
-export function getService<T extends IService>(name: ServiceName): T {
-  return ServiceRegistry.getInstance().get<T>(name);
-}
-
-// check if a service is registered (useful for conditional access w/o throwing errors)
-export function hasService(name: ServiceName): boolean {
-  return ServiceRegistry.getInstance().has(name);
-}
-
-// check if a service has been initialized (factory called)
-export function isServiceInitialized(name: ServiceName): boolean {
-  return ServiceRegistry.getInstance().isInitialized(name);
-}
 
 // service getter factory
 // create typed getter functions for registered services
@@ -50,7 +27,7 @@ function createServiceGetter<T extends IService>(name: ServiceName): () => T {
   return () => ServiceRegistry.getInstance().get<T>(name);
 }
 
-// typed service getters w/ better IntelliSense than generic getService
+// typed service getters w/ better IntelliSense
 
 // get the ConfigManager service - manages VS Code configuration settings for the extension
 export const getConfigManager = createServiceGetter<ConfigManager>(
@@ -105,11 +82,3 @@ export const getMetaResolver = createServiceGetter<MetaResolver>(
 // get the ComponentDiagnostics service - warns on unknown components in MDX
 export const getComponentDiagnostics =
   createServiceGetter<ComponentDiagnostics>(ServiceNames.COMPONENT_DIAGNOSTICS);
-
-// get the OutputChannel instance - used for logging messages to the "MDX Preview" output panel
-// note: OutputChannel is wrapped internally to satisfy IService interface requirements
-export function getOutputChannel(): OutputChannel {
-  return ServiceRegistry.getInstance().get<OutputChannelService>(
-    ServiceNames.OUTPUT_CHANNEL
-  ).channel;
-}

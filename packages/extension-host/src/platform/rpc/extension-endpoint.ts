@@ -24,15 +24,6 @@ type EventListenerOrEventListenerObject =
   | EventListenerCallback
   | EventListenerObject;
 
-// minimal MessageEvent-like interface for Comlink compatibility
-interface MessageEvent {
-  data: unknown;
-}
-
-// webview-side handle (methods extension can call)
-// type alias for shared WebviewRPC (used by Comlink)
-export type WebviewRemoteHandle = WebviewRPC;
-
 class ExtensionEndpoint implements Endpoint {
   webview: vscode.Webview;
   disposables: vscode.Disposable[];
@@ -59,9 +50,7 @@ class ExtensionEndpoint implements Endpoint {
     this.disposeEventListener = this.webview.onDidReceiveMessage(
       (message) => {
         log.debug('Received message from webview');
-        const messageEvent = {
-          data: message,
-        } as MessageEvent;
+        const messageEvent = { data: message };
         if (typeof listener === 'function') {
           listener(messageEvent);
         } else {
@@ -84,7 +73,7 @@ class ExtensionEndpoint implements Endpoint {
   }
 }
 
-export type WebviewHandleType = Remote<WebviewRemoteHandle>;
+export type WebviewHandleType = Remote<WebviewRPC>;
 
 // initialize RPC on extension side
 export function initRPCExtensionSide(
@@ -103,7 +92,7 @@ export function initRPCExtensionSide(
 
   // extension to webview calls
   log.debug('Wrapping WebviewHandle via comlink');
-  const WebviewHandle = comlink.wrap<WebviewRemoteHandle>(extensionEndpoint);
+  const WebviewHandle = comlink.wrap<WebviewRPC>(extensionEndpoint);
   log.debug('initRPCExtensionSide complete');
   return WebviewHandle;
 }

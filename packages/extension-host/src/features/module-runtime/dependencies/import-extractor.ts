@@ -81,6 +81,8 @@ export async function extractImportSpecifiers(code: string): Promise<string[]> {
 // extract CommonJS require() specifiers from code (fallback for pure CJS files)
 function extractRequireSpecifiers(code: string): string[] {
   const specifiers: string[] = [];
+  // O(1) dedupe lookups alongside the ordered array
+  const seen = new Set<string>();
 
   // reset lastIndex for global regexes (they maintain state between calls)
   REQUIRE_QUOTED.lastIndex = 0;
@@ -90,7 +92,8 @@ function extractRequireSpecifiers(code: string): string[] {
   let match: RegExpExecArray | null;
   while ((match = REQUIRE_QUOTED.exec(code)) !== null) {
     const specifier = match[2];
-    if (specifier && !specifiers.includes(specifier)) {
+    if (specifier && !seen.has(specifier)) {
+      seen.add(specifier);
       specifiers.push(specifier);
     }
   }
@@ -99,11 +102,8 @@ function extractRequireSpecifiers(code: string): string[] {
   while ((match = REQUIRE_TEMPLATE.exec(code)) !== null) {
     const specifier = match[1];
     // skip if contains ${} interpolation (can't statically analyze)
-    if (
-      specifier &&
-      !specifier.includes('${') &&
-      !specifiers.includes(specifier)
-    ) {
+    if (specifier && !specifier.includes('${') && !seen.has(specifier)) {
+      seen.add(specifier);
       specifiers.push(specifier);
     }
   }

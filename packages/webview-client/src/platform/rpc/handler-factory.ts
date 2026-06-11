@@ -79,11 +79,14 @@ export interface PendingOptionalMessage {
 
 // pending message structure for the queue (discriminated union)
 export type PendingMessage =
-  | { type: 'trust'; payload: unknown }
-  | { type: 'safe'; payload: unknown }
-  | { type: 'trusted'; payload: unknown }
-  | { type: 'error'; payload: unknown }
-  | { type: 'stale'; payload: unknown };
+  | { type: 'trust'; payload: TrustState }
+  | { type: 'safe'; payload: { html: string } }
+  | {
+      type: 'trusted';
+      payload: { code: string; entryFilePath: string; dependencies: string[] };
+    }
+  | { type: 'error'; payload: PreviewError }
+  | { type: 'stale'; payload: boolean };
 
 interface QueuedHandlerFactoryOptions {
   onMessageReceived?: (message: PendingMessage) => void;

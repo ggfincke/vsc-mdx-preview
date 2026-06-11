@@ -2,16 +2,11 @@
 // unified TypeScript transpilation helper using Sucrase (lightweight)
 
 import { sucraseTransform } from './sucrase';
-import type { Preview } from '../../preview/preview-manager';
 import { TS_EXTENSIONS } from '../../../shared/constants';
 
 // transpile TypeScript/TSX code using Sucrase
 // use bundled sucrase for fast transpilation
-export function transpileTypeScript(
-  code: string,
-  fsPath: string,
-  _preview: Preview
-): string {
+export function transpileTypeScript(code: string, fsPath: string): string {
   // determine transforms based on file extension (.tsx is TS_EXTENSIONS[1])
   const isTsx = fsPath.endsWith(TS_EXTENSIONS[1]);
   const transforms: ('typescript' | 'jsx')[] = isTsx

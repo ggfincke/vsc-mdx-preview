@@ -13,7 +13,6 @@ export const ServiceNames = {
   FRAMEWORK_DETECTOR: 'FrameworkDetector',
   TAILWIND_PROCESSOR: 'TailwindProcessor',
   ERROR_REPORTER: 'ErrorReporter',
-  OUTPUT_CHANNEL: 'OutputChannel',
 
   // services w/ dependencies (registered last, disposed first)
   STATUS_BAR_MANAGER: 'StatusBarManager',

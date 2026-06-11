@@ -181,7 +181,7 @@ function scanFile(rootDir, relativePath) {
     relativePath,
     text,
     ts.ScriptTarget.Latest,
-    true,
+    false,
     getScriptKind(relativePath)
   );
   const seenCommentPositions = new Set();

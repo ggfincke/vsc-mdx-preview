@@ -21,22 +21,6 @@ export interface DetectedComponent {
   source: ComponentSource;
   // has children
   hasChildren: boolean;
-  // raw JSX text
-  rawText?: string;
-}
-
-// diagnostic info for an unknown component
-export interface ComponentDiagnostic {
-  // component name
-  name: string;
-  // source range
-  range: vscode.Range;
-  // severity
-  severity: vscode.DiagnosticSeverity;
-  // message
-  message: string;
-  // diagnostic code
-  code: string;
 }
 
 // structured payload on vscode.Diagnostic.data for unknown-component diagnostics

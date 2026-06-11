@@ -44,5 +44,3 @@ export const SafePreviewRenderer = memo(
   // custom comparison: fast-path length check before full string comparison
   (prevProps, nextProps) => fastStringEquals(prevProps.html, nextProps.html)
 );
-
-export default SafePreviewRenderer;

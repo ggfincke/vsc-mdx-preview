@@ -2,7 +2,6 @@
 // define shared module error base class for extension & webview
 
 import type { ModuleErrorCode, ModuleErrorData } from './module-error-types';
-import { formatModuleErrorDisplay } from './module-error-types';
 import { getSuggestionsForCode } from './suggestions';
 
 export interface ModuleErrorOptions<
@@ -38,10 +37,6 @@ export class ModuleError<
     this.recoverable = options.recoverable ?? true;
     this.cause = options.cause;
 
-    if (options.cause) {
-      (this as { cause?: Error }).cause = options.cause;
-    }
-
     Object.setPrototypeOf(this, new.target.prototype);
     // V8-specific stack trace capture (not in ES2022 lib types)
     const ErrorWithCapture = Error as typeof Error & {
@@ -66,9 +61,5 @@ export class ModuleError<
       stack: this.stack,
       causeMessage: this.cause?.message,
     };
-  }
-
-  toDisplayMessage(): string {
-    return formatModuleErrorDisplay(this.toModuleErrorData());
   }
 }

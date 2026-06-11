@@ -22,26 +22,6 @@ export interface IWatcher extends vscode.Disposable {
   waitForReady(timeoutMs?: number): Promise<void>;
 }
 
-// type guard for checking if an object implements IWatcher
-export function isWatcher(obj: unknown): obj is IWatcher {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'start' in obj &&
-    'stop' in obj &&
-    'isActive' in obj &&
-    'isReady' in obj &&
-    'waitForReady' in obj &&
-    'dispose' in obj &&
-    typeof (obj as IWatcher).start === 'function' &&
-    typeof (obj as IWatcher).stop === 'function' &&
-    typeof (obj as IWatcher).isActive === 'function' &&
-    typeof (obj as IWatcher).isReady === 'function' &&
-    typeof (obj as IWatcher).waitForReady === 'function' &&
-    typeof (obj as IWatcher).dispose === 'function'
-  );
-}
-
 // typed config change event types
 export enum ConfigChangeType {
   FileChanged = 'fileChanged',

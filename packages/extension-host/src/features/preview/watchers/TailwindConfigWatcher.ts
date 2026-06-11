@@ -54,7 +54,6 @@ export class TailwindConfigWatcher extends BaseWatcher {
         onDelete: (uri) => {
           this.queueChange(uri.fsPath);
         },
-        wrapErrors: true,
       });
       this.watchers.push(watcher);
     }

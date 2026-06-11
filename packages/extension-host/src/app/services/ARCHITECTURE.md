@@ -214,10 +214,13 @@ if (trustState.canExecute) {
 **Use for:** Operations that should throw on trust failure.
 
 ```typescript
-import { requireTrustedMode, requireTrustedModeForDocument } from './security/validateTrust';
+import {
+  requireTrustedModeForDocument,
+  requireWorkspaceTrusted,
+} from './security/validateTrust';
 
 // Throws TrustError if not trusted
-requireTrustedMode('load plugins');
+requireWorkspaceTrusted('load plugins');
 
 // Document-aware check (includes remote/scheme checks)
 requireTrustedModeForDocument(documentUri, 'execute module code');

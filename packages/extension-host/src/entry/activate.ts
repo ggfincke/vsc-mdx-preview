@@ -13,7 +13,6 @@ import { initWorkspaceHandlers } from '../app/workspace-events';
 import {
   createTaggedLogger,
   showOutput,
-  getOutputChannel,
   initLogging,
   isDebugEnabled,
 } from '../shared/logging/logger';
@@ -118,10 +117,6 @@ export function reportUnhandledPromiseRejection(reason: unknown): void {
   }
 }
 
-function handleUnhandledPromiseRejection(reason: unknown): void {
-  reportUnhandledPromiseRejection(reason);
-}
-
 let unhandledRejectionDisposable: vscode.Disposable | null = null;
 
 export function registerUnhandledRejectionHandler(
@@ -131,10 +126,10 @@ export function registerUnhandledRejectionHandler(
     return;
   }
 
-  process.on('unhandledRejection', handleUnhandledPromiseRejection);
+  process.on('unhandledRejection', reportUnhandledPromiseRejection);
   unhandledRejectionDisposable = {
     dispose() {
-      process.off('unhandledRejection', handleUnhandledPromiseRejection);
+      process.off('unhandledRejection', reportUnhandledPromiseRejection);
       unhandledRejectionDisposable = null;
     },
   };
@@ -197,12 +192,15 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
   }
 
   // subscribe to TrustManager for enableScripts changes
-  // track to avoid double-refresh (trust change handler already refreshes)
-  let lastCanExecute = getTrustManager().canExecute();
+  // refresh only on pure enableScripts flips; trust flips are owned by handleTrustChange
+  let lastState = getTrustManager().getState();
   context.subscriptions.push(
     getTrustManager().subscribe((state) => {
-      if (state.canExecute !== lastCanExecute) {
-        lastCanExecute = state.canExecute;
+      const trustChanged =
+        state.workspaceTrusted !== lastState.workspaceTrusted;
+      const canExecuteChanged = state.canExecute !== lastState.canExecute;
+      lastState = state;
+      if (canExecuteChanged && !trustChanged) {
         void getPreviewManager()
           .refreshAllPreviews()
           .catch((error) => {
@@ -238,8 +236,6 @@ export async function activate(
 
   registerServices([
     [ServiceNames.CONFIG_MANAGER, () => ConfigManager.getInstance()],
-  ]);
-  registerServices([
     [ServiceNames.CONFIG_CACHE, () => ConfigCache.getInstance()],
   ]);
 
@@ -256,17 +252,6 @@ export async function activate(
     [ServiceNames.TAILWIND_PROCESSOR, () => TailwindProcessor.getInstance()],
     [ServiceNames.ERROR_REPORTER, () => ErrorReporter.getInstance()],
   ]);
-
-  // wrap OutputChannel for IService compatibility (shared channel from logging.ts)
-  registry.register(ServiceNames.OUTPUT_CHANNEL, () => {
-    const channel = getOutputChannel();
-    return {
-      channel,
-      dispose() {
-        channel.dispose();
-      },
-    };
-  });
 
   registerServices([
     [ServiceNames.STATUS_BAR_MANAGER, () => StatusBarManager.getInstance()],

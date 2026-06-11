@@ -40,9 +40,7 @@ export class ConfigCache extends WithSubscribers<
   });
 
   protected constructor() {
-    super(LogTags.CONFIG_CACHE, (err) =>
-      log.warn('Error in config change callback:', err)
-    );
+    super((err) => log.warn('Error in config change callback:', err));
   }
 
   // retrieve cached config for a directory (update LRU position)
@@ -68,22 +66,11 @@ export class ConfigCache extends WithSubscribers<
   // invalidate entries for changed config path or child cached directories
   invalidate(configPath: string): void {
     const configDir = path.dirname(configPath);
-
-    // collect keys to delete (can't modify during iteration)
-    const toDelete: string[] = [];
-
-    for (const [cachedDir, wrapper] of this.cache.entries()) {
-      if (
-        wrapper?.config?.configPath === configPath ||
+    this.cache.invalidateWhere(
+      (cachedDir, wrapper) =>
+        wrapper.config?.configPath === configPath ||
         cachedDir.startsWith(configDir)
-      ) {
-        toDelete.push(cachedDir);
-      }
-    }
-
-    for (const key of toDelete) {
-      this.cache.delete(key);
-    }
+    );
   }
 
   // clear all cached configs

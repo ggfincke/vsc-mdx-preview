@@ -15,5 +15,4 @@ export interface ServiceRegistration<T extends IService> {
   name: string;
   factory: ServiceFactory<T>;
   instance?: T;
-  registrationOrder: number;
 }

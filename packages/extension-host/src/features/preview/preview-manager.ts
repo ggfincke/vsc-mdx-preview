@@ -43,7 +43,7 @@ export class PreviewManager extends WithSubscribers<PreviewManager, void> {
   private _extensionUri: vscode.Uri | undefined;
 
   protected constructor() {
-    super(LogTags.PREVIEW_MANAGER);
+    super();
   }
 
   // get current preview

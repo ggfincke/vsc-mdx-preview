@@ -17,7 +17,6 @@ type SubsystemDisposeFn = () => void;
 interface SubsystemRegistration {
   name: string;
   dispose: SubsystemDisposeFn;
-  registrationOrder: number;
 }
 
 // * central registry for managing service lifecycle
@@ -26,7 +25,6 @@ interface SubsystemRegistration {
 export class ServiceRegistry implements Disposable {
   private static instance: ServiceRegistry | undefined;
   private services = new Map<string, ServiceRegistration<IService>>();
-  private registrationCounter = 0;
   private disposed = false;
 
   // track services currently being initialized (for cycle detection)
@@ -34,7 +32,6 @@ export class ServiceRegistry implements Disposable {
 
   // subsystem registrations for factory singletons & module-level state
   private subsystems = new Map<string, SubsystemRegistration>();
-  private subsystemCounter = 0;
 
   private constructor() {}
 
@@ -59,11 +56,12 @@ export class ServiceRegistry implements Disposable {
       log.debug(`Warning: Overwriting registration for ${name}`);
     }
 
+    // delete-before-set: overwrite re-inserts at Map tail -> fresh disposal order
+    this.services.delete(name);
     this.services.set(name, {
       name,
       factory,
       instance: undefined,
-      registrationOrder: this.registrationCounter++,
     });
 
     log.debug(`Registered: ${name}`);
@@ -84,10 +82,11 @@ export class ServiceRegistry implements Disposable {
       log.debug(`Warning: Overwriting subsystem registration for ${name}`);
     }
 
+    // delete-before-set: overwrite re-inserts at Map tail -> fresh disposal order
+    this.subsystems.delete(name);
     this.subsystems.set(name, {
       name,
       dispose,
-      registrationOrder: this.subsystemCounter++,
     });
 
     log.debug(`Registered subsystem: ${name}`);
@@ -133,21 +132,6 @@ export class ServiceRegistry implements Disposable {
     return registration.instance as T;
   }
 
-  // check if a service is registered
-  has(name: string): boolean {
-    return this.services.has(name);
-  }
-
-  // check if a service instance has been created
-  isInitialized(name: string): boolean {
-    return this.services.get(name)?.instance !== undefined;
-  }
-
-  // get the current initialization stack (for testing/diagnostics)
-  getInitializationStack(): readonly string[] {
-    return [...this.initializationStack];
-  }
-
   // dispose all subsystems & services
   // order: subsystems first (reverse order), then services (reverse order)
   // subsystems depend on services, so they must be disposed first
@@ -159,11 +143,9 @@ export class ServiceRegistry implements Disposable {
     log.debug('Starting disposal...');
 
     // 1. dispose subsystems in reverse registration order (FIRST)
-    const sortedSubsystems = Array.from(this.subsystems.values()).sort(
-      (a, b) => b.registrationOrder - a.registrationOrder
-    );
+    const reversedSubsystems = Array.from(this.subsystems.values()).reverse();
 
-    for (const subsystem of sortedSubsystems) {
+    for (const subsystem of reversedSubsystems) {
       log.debug(`Disposing subsystem: ${subsystem.name}`);
       try {
         subsystem.dispose();
@@ -174,11 +156,11 @@ export class ServiceRegistry implements Disposable {
     this.subsystems.clear();
 
     // 2. dispose services in reverse registration order (SECOND)
-    const sortedRegistrations = Array.from(this.services.values())
+    const reversedRegistrations = Array.from(this.services.values())
       .filter((reg) => reg.instance !== undefined)
-      .sort((a, b) => b.registrationOrder - a.registrationOrder);
+      .reverse();
 
-    for (const registration of sortedRegistrations) {
+    for (const registration of reversedRegistrations) {
       log.debug(`Disposing service: ${registration.name}`);
       try {
         registration.instance?.dispose?.();

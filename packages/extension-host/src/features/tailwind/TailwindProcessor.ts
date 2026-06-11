@@ -81,23 +81,13 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     log.debug('Process start');
 
     if (!trustState.canExecute) {
-      return {
-        profile: 'disabled',
-        profileReason: 'Trusted Mode is required for Tailwind processing',
-        css: '',
-        watchFiles: [],
-        enabled: false,
-      };
+      return this.disabledResult(
+        'Trusted Mode is required for Tailwind processing'
+      );
     }
 
     if (tailwindConfig.enabled === 'disabled') {
-      return {
-        profile: 'disabled',
-        profileReason: 'Tailwind is disabled by configuration',
-        css: '',
-        watchFiles: [],
-        enabled: false,
-      };
+      return this.disabledResult('Tailwind is disabled by configuration');
     }
 
     const profile =
@@ -111,13 +101,9 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     const { profile: activeProfile, reason, entryCssPath } = profile;
 
     if (tailwindConfig.enabled === 'auto' && !profile.hasTailwindInput) {
-      return {
-        profile: 'disabled',
-        profileReason: 'Tailwind auto mode found no Tailwind CSS input',
-        css: '',
-        watchFiles: [],
-        enabled: false,
-      };
+      return this.disabledResult(
+        'Tailwind auto mode found no Tailwind CSS input'
+      );
     }
 
     if (activeProfile === 'browser') {
@@ -125,6 +111,17 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     }
 
     return this.processAdvancedProfile(profile, options);
+  }
+
+  // build the shared disabled result shape (reason varies per gate)
+  private disabledResult(profileReason: string): TailwindProcessResult {
+    return {
+      profile: 'disabled',
+      profileReason,
+      css: '',
+      watchFiles: [],
+      enabled: false,
+    };
   }
 
   // handle browser profile: build input CSS from entry file & inline styles
@@ -172,13 +169,9 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       log.debug(
         `Unsupported Tailwind version ${versionInfo.version} (v${versionInfo.major}). Minimum supported: v${MIN_SUPPORTED_TAILWIND_VERSION}`
       );
-      return {
-        profile: 'disabled',
-        profileReason: `Unsupported Tailwind version ${versionInfo.version ?? 'unknown'}`,
-        css: '',
-        watchFiles: [],
-        enabled: false,
-      };
+      return this.disabledResult(
+        `Unsupported Tailwind version ${versionInfo.version ?? 'unknown'}`
+      );
     }
 
     // warn about unknown future versions (may need updates)
@@ -278,13 +271,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
         showNotification: false,
         metadata: { operation: 'compilation' },
       });
-      return {
-        profile: 'disabled',
-        profileReason: 'Tailwind advanced compilation failed',
-        css: '',
-        watchFiles: [],
-        enabled: false,
-      };
+      return this.disabledResult('Tailwind advanced compilation failed');
     }
   }
 

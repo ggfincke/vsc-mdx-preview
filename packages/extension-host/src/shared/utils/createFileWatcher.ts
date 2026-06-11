@@ -22,11 +22,9 @@ export interface FileWatcherConfig {
   ignoreChangeEvents?: boolean;
   // skip firing delete events (default: false)
   ignoreDeleteEvents?: boolean;
-  // wrap handlers in try-catch w/ error logging (default: true)
-  wrapErrors?: boolean;
   // auto-log file events before calling handlers (default: false)
   enableEventLogging?: boolean;
-  // use log tag for debug logging (e.g., LogTags.TS_CONFIG, LogTags.CSS) required if wrapErrors is true
+  // use log tag for debug logging (e.g., LogTags.TS_CONFIG, LogTags.CSS)
   logTag?: LogTag;
 }
 
@@ -36,7 +34,6 @@ export function createFileWatcher(
 ): vscode.FileSystemWatcher {
   const {
     pattern,
-    wrapErrors = true,
     enableEventLogging = false,
     logTag,
     ignoreCreateEvents = false,
@@ -63,27 +60,16 @@ export function createFileWatcher(
       return undefined;
     }
 
-    if (wrapErrors) {
-      return (uri: vscode.Uri) => {
-        try {
-          if (enableEventLogging) {
-            logger.debug(`File ${eventType}: ${uri.fsPath}`);
-          }
-          handler(uri);
-        } catch (error: unknown) {
-          logger.debug(`Error in file ${eventType} handler: ${error}`);
+    return (uri: vscode.Uri) => {
+      try {
+        if (enableEventLogging) {
+          logger.debug(`File ${eventType}: ${uri.fsPath}`);
         }
-      };
-    }
-
-    if (enableEventLogging) {
-      return (uri: vscode.Uri) => {
-        logger.debug(`File ${eventType}: ${uri.fsPath}`);
         handler(uri);
-      };
-    }
-
-    return handler;
+      } catch (error: unknown) {
+        logger.debug(`Error in file ${eventType} handler: ${error}`);
+      }
+    };
   };
 
   const onChange = wrapHandler(config.onChange, 'changed');

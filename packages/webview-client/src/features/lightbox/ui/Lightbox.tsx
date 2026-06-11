@@ -303,5 +303,3 @@ export function Lightbox() {
     </div>
   );
 }
-
-export default Lightbox;

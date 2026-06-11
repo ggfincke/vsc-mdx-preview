@@ -12,12 +12,10 @@ const ALLOWED_PATTERNS = ['packages/webview-client/src/generated/'];
 const HEADER = '// AUTO-GENERATED FILE - DO NOT EDIT';
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx']);
 
-const EXPECTED_GENERATED_FILES = GENERATED_TS_FILES;
-
 function checkExpectedFiles(rootDir) {
   const missing = [];
 
-  for (const expectedFile of EXPECTED_GENERATED_FILES) {
+  for (const expectedFile of GENERATED_TS_FILES) {
     const absolutePath = join(rootDir, expectedFile);
     if (!existsSync(absolutePath)) {
       missing.push(expectedFile);
@@ -96,17 +94,19 @@ try {
   }
 
   // phase 3: report success
+  // normally unreachable (phase 2 fails first); tripwire against ignore-set
+  // or walker drift silently emptying the phase-1 scan
   if (generatedFiles.length === 0) {
     console.error(
       'No generated files found — expected at least ' +
-        `${EXPECTED_GENERATED_FILES.length}. Something is wrong.`
+        `${GENERATED_TS_FILES.length}. Something is wrong.`
     );
     process.exit(1);
   }
 
   console.log(
     `All ${generatedFiles.length} generated file(s) are in allowed locations ` +
-      `(${EXPECTED_GENERATED_FILES.length} expected, ${generatedFiles.length} found).`
+      `(${GENERATED_TS_FILES.length} expected, ${generatedFiles.length} found).`
   );
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);

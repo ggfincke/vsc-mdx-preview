@@ -19,16 +19,21 @@ Large CSS strings are kept separate from implementation logic to:
 
 ## Usage
 
-Import theme CSS via the bridge file in `features/theme/runtime`:
+Runtime code that injects themes imports the CSS maps directly from this
+directory:
 
 ```typescript
-import { previewThemes, codeBlockThemes } from '../runtime/css';
+import { previewThemes, codeBlockThemes } from '../data';
 ```
 
-Do NOT import directly from this directory. The bridge file provides:
+Keep direct imports limited to runtime loaders or code that actually needs the
+full CSS payloads. General theme code should use runtime hooks and contract
+types so large CSS strings stay out of unrelated modules.
 
-- Type safety
+This preserves:
+
 - Clear dependency direction
+- Focused runtime modules
 - Future flexibility for lazy loading
 
 ## Contents
@@ -38,7 +43,7 @@ Do NOT import directly from this directory. The bridge file provides:
 
 ## Related Files
 
-- `../runtime/css.ts` - Bridge file that re-exports from this directory
+- `./index.ts` - Theme CSS string maps
 - `../runtime/loader.ts` - Injects theme CSS into the DOM
 - `../runtime/context.tsx` - React context for theme state
 - `../runtime/detection.ts` - VS Code theme detection (light/dark/high-contrast)

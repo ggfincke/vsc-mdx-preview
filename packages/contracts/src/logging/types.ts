@@ -31,13 +31,8 @@ export interface LoggerVariadic {
   error: LogFnVariadic;
 }
 
-// tagged logger w/ fixed prefix (all methods variadic for flexibility)
-export interface TaggedLogger {
-  debug: LogFnVariadic;
-  info: LogFnVariadic;
-  warn: LogFnVariadic;
-  error: LogFnVariadic;
-}
+// tagged logger w/ fixed prefix (same variadic shape)
+export type TaggedLogger = LoggerVariadic;
 
 // tagged logger factory function signature
 export type TaggedLoggerFactory = (tag: string) => TaggedLogger;

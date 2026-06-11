@@ -40,14 +40,11 @@ export interface ConfigurationState extends PreviewRuntimeConfig {
 export interface ConfigChangeResult {
   needsWebviewRefresh: boolean;
   needsRuntimeConfigPush: boolean;
-  needsDebounceRecreate: boolean;
   needsCssWatcherUpdate: boolean;
   scrollSyncChanged: boolean;
-  oldCssPath: string;
 }
 
 // re-export canonical preview state types from runtime modules
-export type { DocumentState } from '../PreviewDocumentHandler';
 export type { HandshakeResult } from '../PreviewInitializer';
 export type {
   TrustedEvaluationResult,

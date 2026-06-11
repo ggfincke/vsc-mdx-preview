@@ -257,16 +257,6 @@ export class TailwindDetector {
     });
 
     const inlineTailwindStyles = this.extractInlineTailwindStyles(mdxText);
-    const hasInlinePluginDirective = inlineTailwindStyles.some((styleText) =>
-      TAILWIND_PLUGIN_DIRECTIVE_RE.test(styleText)
-    );
-
-    let entryCssHasPluginDirective = false;
-    if (entryCssPath) {
-      const entryCss = await readFileAsync(entryCssPath);
-      entryCssHasPluginDirective =
-        entryCss !== null && TAILWIND_PLUGIN_DIRECTIVE_RE.test(entryCss);
-    }
 
     if (configPath) {
       return {
@@ -280,23 +270,27 @@ export class TailwindDetector {
       };
     }
 
-    if (entryCssHasPluginDirective) {
-      return {
-        profile: 'advanced',
-        reason: `@plugin directive detected in ${entryCssPath}`,
-        workspaceRoot,
-        configPath,
-        entryCssPath,
-        hasTailwindInput: true,
-        inlineTailwindStyles,
-      };
+    // @plugin checks only matter w/o a config file, so compute them here
+    let entryCssHasPluginDirective = false;
+    if (entryCssPath) {
+      const entryCss = await readFileAsync(entryCssPath);
+      entryCssHasPluginDirective =
+        entryCss !== null && TAILWIND_PLUGIN_DIRECTIVE_RE.test(entryCss);
     }
+    const hasInlinePluginDirective = inlineTailwindStyles.some((styleText) =>
+      TAILWIND_PLUGIN_DIRECTIVE_RE.test(styleText)
+    );
 
-    if (hasInlinePluginDirective) {
+    const pluginReason = entryCssHasPluginDirective
+      ? `@plugin directive detected in ${entryCssPath}`
+      : hasInlinePluginDirective
+        ? '@plugin directive detected in inline style[type="text/tailwindcss"] block'
+        : null;
+
+    if (pluginReason) {
       return {
         profile: 'advanced',
-        reason:
-          '@plugin directive detected in inline style[type="text/tailwindcss"] block',
+        reason: pluginReason,
         workspaceRoot,
         configPath,
         entryCssPath,

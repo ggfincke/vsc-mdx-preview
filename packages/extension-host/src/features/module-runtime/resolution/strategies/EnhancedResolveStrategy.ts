@@ -1,7 +1,6 @@
 // packages/extension-host/src/features/module-runtime/resolution/strategies/EnhancedResolveStrategy.ts
 // node.js-style resolution using enhanced-resolve
 
-import type { Resolver } from 'enhanced-resolve';
 import { getBrowserResolver, getNodeResolver } from '../resolver-factory';
 import { createTaggedLogger } from '../../../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
@@ -22,20 +21,13 @@ const log = createTaggedLogger(LogTags.ENHANCED_RESOLVE);
 export class EnhancedResolveStrategy implements IResolutionStrategy {
   readonly name = 'EnhancedResolve';
 
-  private browserResolver: Resolver;
-  private nodeResolver: Resolver;
-
-  constructor() {
-    this.browserResolver = getBrowserResolver();
-    this.nodeResolver = getNodeResolver();
-  }
-
   resolve(
     specifier: string,
     context: ResolutionContext,
     mode: ResolutionMode
   ): ResolutionResult | null {
-    const resolver = mode === 'node' ? this.nodeResolver : this.browserResolver;
+    // fetch per call so resolver-factory singleton resets take effect
+    const resolver = mode === 'node' ? getNodeResolver() : getBrowserResolver();
 
     try {
       const resolved = resolver.resolveSync({}, context.baseDir, specifier);

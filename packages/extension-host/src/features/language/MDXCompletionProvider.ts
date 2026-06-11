@@ -68,12 +68,6 @@ function detectCompletionContext(
   return 'none';
 }
 
-// directive types derived from mdx-forge callout registry
-const DIRECTIVE_TYPES = VALID_CALLOUT_TYPES.map((type) => ({ type }));
-
-// GitHub-style alert types derived from mdx-forge
-const GITHUB_ALERT_TYPES = GITHUB_ALERT_TYPE_LIST.map((type) => ({ type }));
-
 // known frontmatter fields (common across MDX frameworks)
 const FRONTMATTER_FIELDS = [
   { field: 'title', description: 'Page title', snippet: 'title: $0' },
@@ -140,12 +134,20 @@ function buildGenericComponentItems(): vscode.CompletionItem[] {
   });
 }
 
+// memoized per-framework completion items (lazy build, reused across requests)
+const cachedFrameworkItems = new Map<FrameworkId, vscode.CompletionItem[]>();
+
 // build framework-specific component completion items from registry
 function buildFrameworkComponentItems(
   framework: FrameworkId
 ): vscode.CompletionItem[] {
   if (framework === 'generic') {
     return [];
+  }
+
+  const cachedItems = cachedFrameworkItems.get(framework);
+  if (cachedItems) {
+    return cachedItems;
   }
 
   const items: vscode.CompletionItem[] = [];
@@ -175,6 +177,7 @@ function buildFrameworkComponentItems(
     items.push(item);
   }
 
+  cachedFrameworkItems.set(framework, items);
   return items;
 }
 
@@ -182,8 +185,6 @@ function buildFrameworkComponentItems(
 function buildComponentCompletions(
   document: vscode.TextDocument
 ): vscode.CompletionItem[] {
-  const items: vscode.CompletionItem[] = [];
-
   // detect framework for context-aware suggestions
   let frameworkId: FrameworkId = 'generic';
   try {
@@ -194,13 +195,11 @@ function buildComponentCompletions(
     // fallback to generic
   }
 
-  // always include generic components (cached)
-  items.push(...cachedGenericItems);
-
-  // add framework-specific components
-  if (frameworkId !== 'generic') {
-    items.push(...buildFrameworkComponentItems(frameworkId));
-  }
+  // generic-only requests reuse the cached array; others append framework items
+  const items =
+    frameworkId === 'generic'
+      ? cachedGenericItems
+      : [...cachedGenericItems, ...buildFrameworkComponentItems(frameworkId)];
 
   log.debug(
     `Built ${items.length} component completions (framework: ${frameworkId})`
@@ -210,7 +209,7 @@ function buildComponentCompletions(
 
 // build directive type completions for ::: syntax
 function buildDirectiveCompletions(): vscode.CompletionItem[] {
-  return DIRECTIVE_TYPES.map(({ type }) => {
+  return VALID_CALLOUT_TYPES.map((type) => {
     const item = new vscode.CompletionItem(
       type,
       vscode.CompletionItemKind.Snippet
@@ -227,7 +226,7 @@ function buildDirectiveCompletions(): vscode.CompletionItem[] {
 
 // build GitHub alert completions for > [! syntax
 function buildGitHubAlertCompletions(): vscode.CompletionItem[] {
-  return GITHUB_ALERT_TYPES.map(({ type }) => {
+  return GITHUB_ALERT_TYPE_LIST.map((type) => {
     const item = new vscode.CompletionItem(
       type,
       vscode.CompletionItemKind.Snippet

@@ -51,9 +51,7 @@ export {
 export {
   type ModuleErrorCode,
   type ModuleErrorData,
-  MODULE_ERROR_LABELS,
   isModuleErrorData,
-  formatModuleErrorDisplay,
   MODULE_ERROR_SUGGESTIONS,
   getSuggestionsForCode,
   ModuleError,
