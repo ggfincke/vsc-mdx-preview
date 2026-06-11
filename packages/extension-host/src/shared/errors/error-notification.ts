@@ -61,16 +61,20 @@ export function shouldNotify(
   );
 }
 
+// format error for user display (structured errors via formatUserError)
+export function userDisplayMessage(error: Error): string {
+  return error instanceof ExtensionError || error instanceof ModuleError
+    ? formatUserError(error)
+    : error.message;
+}
+
 // show VS Code notification
 export function showNotification(
   error: ExtensionError | ModuleError | Error,
   severity: ErrorSeverity,
   context: ErrorContext
 ): void {
-  const message =
-    error instanceof ExtensionError || error instanceof ModuleError
-      ? formatUserError(error)
-      : error.message;
+  const message = userDisplayMessage(error);
 
   const prefix = getContextPrefix(context);
   const fullMessage = `${prefix}: ${message}`;
@@ -102,10 +106,7 @@ export function sendToWebview(
   handle: WebviewErrorHandle,
   context?: ErrorContext
 ): void {
-  const message =
-    error instanceof ExtensionError || error instanceof ModuleError
-      ? formatUserError(error)
-      : error.message;
+  const message = userDisplayMessage(error);
 
   const previewError: PreviewError = {
     message,

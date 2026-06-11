@@ -1,20 +1,13 @@
 // packages/extension-host/src/shared/utils/validation/index.ts
 // extension-host validators w/ logging & ValidationOptions
 
-export {
-  validateString,
-  validateBoolean,
-  validateNumber,
-  validateFunction,
-} from './primitives';
+export { validateString, validateBoolean, validateNumber } from './primitives';
 
 export { validateArray, validateObject, validateRecord } from './collections';
 
 export { validateUrl } from './url';
 
 export {
-  validateEnumValue,
-  validatePluginSpec,
   validateConfigSchema,
   type PluginSpecValue,
   type ConfigValidationResult,
@@ -24,7 +17,6 @@ export {
   type ValidationOptions,
   type LogFn,
   createOptionalValidator,
-  createPrimitiveValidator,
   formatContext,
   getLogger,
 } from '../validation-factory';

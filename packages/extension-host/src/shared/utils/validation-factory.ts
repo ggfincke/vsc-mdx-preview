@@ -33,53 +33,6 @@ export function getLogger(
   return opts?.log ?? defaultLog;
 }
 
-// type check function signature for primitive validators
-type TypeChecker<T> = (value: unknown) => value is T;
-
-// configuration for creating a primitive type validator
-export interface PrimitiveValidatorConfig<T> {
-  // type name for error messages (e.g., "string", "boolean")
-  typeName: string;
-  // type guard function
-  typeCheck: TypeChecker<T>;
-  // default log function (defaults to defaultWarn)
-  defaultLog?: LogFn;
-  // include value in log output (defaults to true)
-  logValue?: boolean;
-}
-
-// create a primitive type validator function
-export function createPrimitiveValidator<T>(
-  config: PrimitiveValidatorConfig<T>
-): (value: unknown, name: string, opts?: ValidationOptions) => T | undefined {
-  const {
-    typeName,
-    typeCheck,
-    defaultLog = defaultWarn,
-    logValue = true,
-  } = config;
-
-  return (
-    value: unknown,
-    name: string,
-    opts?: ValidationOptions
-  ): T | undefined => {
-    const log = getLogger(opts, defaultLog);
-    const ctx = formatContext(opts?.context);
-
-    if (!typeCheck(value)) {
-      if (logValue) {
-        log(`${ctx}${name} must be a ${typeName}`, value);
-      } else {
-        log(`${ctx}${name} must be a ${typeName}`);
-      }
-      return undefined;
-    }
-
-    return value;
-  };
-}
-
 // create a validator for optional values (undefined passes through w/o logging)
 export function createOptionalValidator<
   T,

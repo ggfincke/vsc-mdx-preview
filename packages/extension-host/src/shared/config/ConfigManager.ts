@@ -32,7 +32,7 @@ export class ConfigManager extends WithSubscribers<
   protected readonly logTag = LogTags.CONFIG_MANAGER;
 
   protected constructor() {
-    super(LogTags.CONFIG_MANAGER);
+    super();
     // handle VS Code configuration changes
     this.addDisposable(
       vscode.workspace.onDidChangeConfiguration((e) => {
@@ -51,11 +51,12 @@ export class ConfigManager extends WithSubscribers<
 
   // retrieve all config values as an object
   getAll(scope?: vscode.Uri): SettingTypes {
+    const config = vscode.workspace.getConfiguration('mdx-preview', scope);
     const result = {} as SettingTypes;
     for (const key of Object.keys(DEFAULTS) as SettingKey[]) {
-      (result as unknown as Record<string, unknown>)[key] = this.get(
+      (result as unknown as Record<string, unknown>)[key] = config.get(
         key,
-        scope
+        DEFAULTS[key]
       );
     }
     return result;
@@ -103,14 +104,6 @@ export class ConfigManager extends WithSubscribers<
         callback();
       }
     });
-  }
-
-  // determine if a specific setting affects the configuration change event
-  static affectsConfiguration(
-    event: vscode.ConfigurationChangeEvent,
-    key: SettingKey
-  ): boolean {
-    return event.affectsConfiguration(`mdx-preview.${key}`);
   }
 
   // dispatch configuration change notifications to subscribers
