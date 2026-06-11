@@ -36,14 +36,13 @@ export function createLazyValueLoader<T>(
 
   let status: LoaderStatus = 'idle';
   let cachedValue: T | null = null;
-  let hasCachedValue = false;
   let loadingPromise: Promise<T> | null = null;
   let lastError: unknown = null;
   // generation token prevents stale async completions from overwriting fresh state
   let generation = 0;
 
   function load(): Promise<T> {
-    if (status === 'loaded' && hasCachedValue) {
+    if (status === 'loaded') {
       return Promise.resolve(cachedValue as T);
     }
 
@@ -63,7 +62,6 @@ export function createLazyValueLoader<T>(
         if (generation === loadGeneration) {
           status = 'loaded';
           cachedValue = value;
-          hasCachedValue = true;
           loadingPromise = null;
           lastError = null;
           onLoaded?.(value);
@@ -96,7 +94,6 @@ export function createLazyValueLoader<T>(
     generation++;
     status = 'idle';
     cachedValue = null;
-    hasCachedValue = false;
     loadingPromise = null;
     lastError = null;
     onReset?.();

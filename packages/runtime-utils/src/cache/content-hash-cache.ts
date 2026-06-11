@@ -53,12 +53,6 @@ export class ContentHashCache<V> {
     return entry.value;
   }
 
-  // check if a value exists & hash matches (w/o updating LRU position)
-  hasValidEntry(key: string, contentHash: string): boolean {
-    const entry = this.cache.peek(key);
-    return entry !== undefined && entry.hash === contentHash;
-  }
-
   // set a value w/ its content hash
   setWithHash(key: string, contentHash: string, value: V): void {
     this.cache.set(key, { hash: contentHash, value });
@@ -74,19 +68,9 @@ export class ContentHashCache<V> {
     this.cache.clear();
   }
 
-  // clear all entries & call onEvict for each
-  clearWithEviction(): void {
-    this.cache.clearWithEviction();
-  }
-
   // entry count
   get size(): number {
     return this.cache.size;
-  }
-
-  // current memory usage in bytes
-  get memoryBytes(): number {
-    return this.cache.memoryBytes;
   }
 
   // update cache settings dynamically
@@ -98,10 +82,5 @@ export class ContentHashCache<V> {
       ttlMs: options.ttlMs,
       maxMemoryBytes: options.maxMemoryBytes,
     });
-  }
-
-  // remove expired entries proactively
-  pruneExpired(): number {
-    return this.cache.pruneExpired();
   }
 }

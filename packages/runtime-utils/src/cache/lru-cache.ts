@@ -242,13 +242,21 @@ export class LRUCache<K, V> {
   }
 
   private evictOverflow(): void {
-    while (this.countEvictable() > this._maxEntries) {
-      if (!this.evictOldestEvictable()) {
-        break;
+    // countEvictable <= size, so skip O(n) scan when under entry cap
+    if (this.cache.size > this._maxEntries) {
+      while (this.countEvictable() > this._maxEntries) {
+        if (!this.evictOldestEvictable()) {
+          break;
+        }
       }
     }
 
-    if (this._maxMemoryBytes && this._estimateSize) {
+    // evictable memory <= total, so skip O(n) scan when under memory cap
+    if (
+      this._maxMemoryBytes &&
+      this._estimateSize &&
+      this._currentMemoryBytes > this._maxMemoryBytes
+    ) {
       while (
         this.getEvictableMemory() > this._maxMemoryBytes &&
         this.countEvictable() > 0
