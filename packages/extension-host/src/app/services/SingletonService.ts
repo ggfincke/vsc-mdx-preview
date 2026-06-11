@@ -84,25 +84,28 @@ export abstract class SingletonService<
 // error handler for subscriber notifications (default logs to debug channel)
 type SubscriberErrorHandler = (error: unknown, subscriberIndex: number) => void;
 
-// interface for services that support subscription to state changes
-export interface ISubscribable<T> {
-  // subscribe to state change notifications
-  subscribe(callback: (data: T) => void): vscode.Disposable;
-}
-
-// pub/sub manager for service events (internal to WithSubscribers)
-class SubscriberManager<T> {
-  private subscribers = new Set<(data: T) => void>();
-  private readonly log: TaggedLogger;
+// abstract singleton base that adds subscribe/notify helpers for service events
+export abstract class WithSubscribers<
+  T extends SingletonService<T>,
+  EventData,
+> extends SingletonService<T> {
+  private readonly subscribers = new Set<(data: EventData) => void>();
   private readonly errorHandler?: SubscriberErrorHandler;
 
-  constructor(logTag: LogTag, errorHandler?: SubscriberErrorHandler) {
-    this.log = createTaggedLogger(logTag);
+  protected constructor(errorHandler?: SubscriberErrorHandler) {
+    super();
     this.errorHandler = errorHandler;
+
+    // clear subscribers during disposal even if subclass overrides onDispose
+    this.addDisposable({
+      dispose: () => {
+        this.subscribers.clear();
+      },
+    });
   }
 
-  // subscribe to notifications (returns disposable to unsubscribe)
-  subscribe(callback: (data: T) => void): vscode.Disposable {
+  // subscribe to service events (returns disposable to unsubscribe)
+  subscribe(callback: (data: EventData) => void): vscode.Disposable {
     this.subscribers.add(callback);
     return {
       dispose: () => {
@@ -111,8 +114,8 @@ class SubscriberManager<T> {
     };
   }
 
-  // notify all subscribers w/ the given data (errors caught & logged)
-  notify(data: T): void {
+  // notify current subscribers (errors caught & logged)
+  protected notifySubscribers(data: EventData): void {
     let index = 0;
     for (const callback of this.subscribers) {
       try {
@@ -126,46 +129,5 @@ class SubscriberManager<T> {
       }
       index++;
     }
-  }
-
-  // clear all subscribers (call in service disposal)
-  clear(): void {
-    this.subscribers.clear();
-  }
-}
-
-// abstract singleton base that adds subscribe/notify helpers for service events
-export abstract class WithSubscribers<T extends SingletonService<T>, EventData>
-  extends SingletonService<T>
-  implements ISubscribable<EventData>
-{
-  private readonly subscriberManager: SubscriberManager<EventData>;
-
-  protected constructor(
-    subscriberLogTag: LogTag,
-    errorHandler?: SubscriberErrorHandler
-  ) {
-    super();
-    this.subscriberManager = new SubscriberManager<EventData>(
-      subscriberLogTag,
-      errorHandler
-    );
-
-    // clear subscribers during disposal even if subclass overrides onDispose
-    this.addDisposable({
-      dispose: () => {
-        this.subscriberManager.clear();
-      },
-    });
-  }
-
-  // subscribe to service events
-  subscribe(callback: (data: EventData) => void): vscode.Disposable {
-    return this.subscriberManager.subscribe(callback);
-  }
-
-  // notify current subscribers
-  protected notifySubscribers(data: EventData): void {
-    this.subscriberManager.notify(data);
   }
 }
