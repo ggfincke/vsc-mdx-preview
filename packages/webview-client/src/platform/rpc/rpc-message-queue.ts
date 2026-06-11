@@ -1,11 +1,7 @@
 // packages/webview-client/src/platform/rpc/rpc-message-queue.ts
 // queued/optional message buffering & flush semantics for webview RPC
 
-import type {
-  TaggedLogger,
-  PreviewError,
-  TrustState,
-} from '@mdx-preview/contracts';
+import type { TaggedLogger, TrustState } from '@mdx-preview/contracts';
 import type {
   OptionalStateHandlers,
   PendingMessage,
@@ -14,6 +10,14 @@ import type {
   WebviewStateHandlers,
 } from './handler-factory';
 import { canAcceptContentMode } from './content-mode-guard';
+
+// typed map accessor centralizing the union narrowing (Map.get does not narrow by key)
+function getMsg<T extends QueuedMessageType>(
+  messages: Map<QueuedMessageType, PendingMessage>,
+  type: T
+): Extract<PendingMessage, { type: T }> | undefined {
+  return messages.get(type) as Extract<PendingMessage, { type: T }> | undefined;
+}
 
 export interface RpcMessageQueue {
   enqueueQueued: (message: PendingMessage) => void;
@@ -75,15 +79,16 @@ export function createRpcMessageQueue(
     const messages = new Map(pendingMessages);
     pendingMessages.clear();
 
-    const trustMessage = messages.get('trust');
+    const trustMessage = getMsg(messages, 'trust');
     if (trustMessage) {
       options.log.debug('Flushing trust state first');
-      setCurrentTrustState(trustMessage.payload as TrustState);
-      handlers.setTrustState(getCurrentTrustState() as TrustState);
+      const trust = trustMessage.payload;
+      setCurrentTrustState(trust);
+      handlers.setTrustState(trust);
     }
 
-    const safeMsg = messages.get('safe');
-    const trustedMsg = messages.get('trusted');
+    const safeMsg = getMsg(messages, 'safe');
+    const trustedMsg = getMsg(messages, 'trusted');
 
     if (safeMsg && trustedMsg) {
       options.log.warn(
@@ -93,25 +98,25 @@ export function createRpcMessageQueue(
         flushTrusted(handlers, trustedMsg.payload);
       } else {
         options.log.debug('Flushing safe content (safe mode active)');
-        handlers.setSafeContent((safeMsg.payload as { html: string }).html);
+        handlers.setSafeContent(safeMsg.payload.html);
       }
     } else if (trustedMsg) {
       flushTrusted(handlers, trustedMsg.payload);
     } else if (safeMsg) {
       options.log.debug('Flushing safe content');
-      handlers.setSafeContent((safeMsg.payload as { html: string }).html);
+      handlers.setSafeContent(safeMsg.payload.html);
     }
 
-    const errorMsg = messages.get('error');
+    const errorMsg = getMsg(messages, 'error');
     if (errorMsg) {
       options.log.debug('Flushing error');
-      handlers.setError(errorMsg.payload as PreviewError);
+      handlers.setError(errorMsg.payload);
     }
 
-    const staleMsg = messages.get('stale');
+    const staleMsg = getMsg(messages, 'stale');
     if (staleMsg) {
       options.log.debug('Flushing stale');
-      handlers.setStale(staleMsg.payload as boolean);
+      handlers.setStale(staleMsg.payload);
     }
   }
 
@@ -138,23 +143,17 @@ export function createRpcMessageQueue(
 
   function flushTrusted(
     handlers: WebviewStateHandlers,
-    payload: unknown
+    payload: Extract<PendingMessage, { type: 'trusted' }>['payload']
   ): void {
     if (!canAcceptContentMode(getCurrentTrustState(), 'trusted', options.log)) {
       return;
     }
 
-    const trustedPayload = payload as {
-      code: string;
-      entryFilePath: string;
-      dependencies: string[];
-    };
-
     options.log.debug('Flushing trusted content');
     handlers.setTrustedContent(
-      trustedPayload.code,
-      trustedPayload.entryFilePath,
-      trustedPayload.dependencies
+      payload.code,
+      payload.entryFilePath,
+      payload.dependencies
     );
   }
 

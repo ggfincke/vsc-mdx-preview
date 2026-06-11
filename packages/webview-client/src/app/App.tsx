@@ -88,6 +88,12 @@ function App() {
     }
   }, []);
 
+  // stable boundary handler keeps ErrorBoundary's window listeners registered once
+  const handleBoundaryError = useCallback(
+    (err: Error) => setError({ message: err.message, stack: err.stack }),
+    [setError]
+  );
+
   // compute Nextra layout class from metadata
   const nextraLayoutClass =
     nextraMeta?.layout === 'full'
@@ -95,12 +101,6 @@ function App() {
       : nextraMeta?.layout === 'raw'
         ? 'nextra-layout-raw'
         : '';
-
-  // render loading state during initial load
-  if (isLoading && !content && !error) {
-    log.debug('Rendering LoadingBar (initial loading)');
-    return <LoadingBar />;
-  }
 
   // render error state w/ unified ErrorDisplay component
   if (error) {
@@ -149,9 +149,7 @@ function App() {
     >
       <StaleIndicator isStale={isStale} />
       {!trustState.canExecute && <TrustBanner trustState={trustState} />}
-      <MDXErrorBoundary
-        onError={(err) => setError({ message: err.message, stack: err.stack })}
-      >
+      <MDXErrorBoundary onError={handleBoundaryError}>
         <div className={PREVIEW_CONTENT_CLASS}>
           {nextraMeta?.title && (
             <h1 className="nextra-page-title">{nextraMeta.title}</h1>

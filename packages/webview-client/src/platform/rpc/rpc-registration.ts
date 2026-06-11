@@ -6,7 +6,6 @@ import type { WebviewStateHandlers } from './handler-factory';
 
 export interface RpcRegistration {
   register: (handlers: WebviewStateHandlers) => void;
-  isInProgress: () => boolean;
 }
 
 interface CreateRpcRegistrationOptions {
@@ -72,6 +71,5 @@ export function createRpcRegistration(
 
   return {
     register,
-    isInProgress: () => registrationInProgress,
   };
 }
