@@ -22,7 +22,7 @@ export function useCodeBlockEnhancement(
 
   useLayoutEffect(() => {
     // only enhance when container is available & trigger is truthy (or not provided)
-    if (containerRef.current && (trigger !== undefined ? trigger : true)) {
+    if (containerRef.current && (trigger === undefined || trigger)) {
       enhanceCodeBlocks(containerRef.current);
     }
   }, [containerRef, trigger]);

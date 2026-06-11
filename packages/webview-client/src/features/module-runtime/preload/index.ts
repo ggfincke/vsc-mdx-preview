@@ -37,7 +37,6 @@ interface PreloadState {
   // generic shim tracking
   loadedGenericShims: Set<string>;
   genericShimsLoadPromise: Promise<void> | null;
-  lastGenericLoadResult: { loaded: string[]; failed: string[] } | null;
 }
 
 function createInitialState(): PreloadState {
@@ -47,7 +46,6 @@ function createInitialState(): PreloadState {
     lastShimLoadResult: null,
     loadedGenericShims: new Set<string>(),
     genericShimsLoadPromise: null,
-    lastGenericLoadResult: null,
   };
 }
 
@@ -163,8 +161,6 @@ export async function ensureGenericShims(
       toLoad,
       GENERIC_SHIM_LOADERS
     );
-
-    state.lastGenericLoadResult = result;
 
     // mark loaded shims
     for (const name of result.loaded) {

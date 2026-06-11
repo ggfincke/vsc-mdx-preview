@@ -49,5 +49,3 @@ export function PreviewContainer({
     </div>
   );
 }
-
-export default PreviewContainer;

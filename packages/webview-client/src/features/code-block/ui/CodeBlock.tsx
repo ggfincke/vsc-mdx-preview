@@ -77,5 +77,3 @@ function applyLineHighlighting(container: HTMLElement, lines: number[]): void {
     });
   });
 }
-
-export default enhanceCodeBlocks;

@@ -68,7 +68,7 @@ export function useSourceLineHighlight({
       return;
     }
 
-    if (trigger !== undefined ? !trigger : false) {
+    if (trigger !== undefined && !trigger) {
       return;
     }
 
@@ -192,5 +192,3 @@ export function useSourceLineHighlight({
     };
   }, [containerRef, trigger, enabled, onOpenSourceLine]);
 }
-
-export default useSourceLineHighlight;

@@ -1,7 +1,7 @@
 // packages/webview-client/src/features/theme/runtime/loader.ts
 // theme CSS loading & injection for preview & code blocks
 
-import { previewThemes, codeBlockThemes } from './css';
+import { previewThemes, codeBlockThemes } from '../data';
 import { StyleInjector, STYLE_IDS } from '../../../shared/utils/StyleInjector';
 import type { CodeBlockTheme, PreviewTheme } from '@mdx-preview/contracts';
 
@@ -42,12 +42,4 @@ function getEffectiveCodeBlockTheme(
 
   // auto mode: select based on light/dark
   return isLight ? 'github' : 'github-dark';
-}
-
-// remove all injected theme styles
-export function clearThemeStyles(): void {
-  StyleInjector.remove(STYLE_IDS.PREVIEW_THEME);
-  StyleInjector.remove(STYLE_IDS.CODE_BLOCK_THEME);
-  StyleInjector.removeDataAttribute('data-mpe-preview-theme');
-  StyleInjector.removeDataAttribute('data-mpe-code-block-theme');
 }

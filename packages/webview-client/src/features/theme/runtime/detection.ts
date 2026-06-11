@@ -37,8 +37,3 @@ export function onVSCodeThemeChange(
 
   return () => observer.disconnect();
 }
-
-// check if VS Code is using a dark theme
-export function isVSCodeDark(theme: VSCodeTheme): boolean {
-  return theme === 'dark' || theme === 'high-contrast';
-}

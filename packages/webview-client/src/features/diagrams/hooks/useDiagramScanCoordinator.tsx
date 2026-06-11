@@ -38,6 +38,34 @@ interface UseDiagramScanCoordinatorResult {
   scan: () => void;
 }
 
+// structural equality check so unchanged scans skip the state update
+// (renderElement identity is stable from module-const adapters)
+function areGroupsEqual(
+  prev: DiagramGroupState[],
+  next: DiagramGroupState[]
+): boolean {
+  if (prev.length !== next.length) {
+    return false;
+  }
+  return prev.every((prevGroup, i) => {
+    const nextGroup = next[i];
+    if (
+      prevGroup.adapterKey !== nextGroup.adapterKey ||
+      prevGroup.diagrams.length !== nextGroup.diagrams.length
+    ) {
+      return false;
+    }
+    return prevGroup.diagrams.every((prevDiagram, j) => {
+      const nextDiagram = nextGroup.diagrams[j];
+      return (
+        prevDiagram.el === nextDiagram.el &&
+        prevDiagram.id === nextDiagram.id &&
+        prevDiagram.code === nextDiagram.code
+      );
+    });
+  });
+}
+
 export function useDiagramScanCoordinator(
   containerRef: RefObject<HTMLElement | null>,
   options: UseDiagramScanCoordinatorOptions
@@ -66,8 +94,8 @@ export function useDiagramScanCoordinator(
       };
     });
 
-    // one state update per scan batch
-    setGroups(nextGroups);
+    // one state update per scan batch; keep prev state when structurally unchanged
+    setGroups((prev) => (areGroupsEqual(prev, nextGroups) ? prev : nextGroups));
   }, [adapters, containerRef, filterStale]);
 
   const scheduleScan = useCallback(() => {

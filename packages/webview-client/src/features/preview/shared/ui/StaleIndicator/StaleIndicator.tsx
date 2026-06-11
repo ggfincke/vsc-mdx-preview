@@ -26,5 +26,3 @@ export const StaleIndicator = memo(function StaleIndicator({
     </div>
   );
 });
-
-export default StaleIndicator;
