@@ -412,11 +412,14 @@ After sanitization, additional processing occurs:
 Use when operation **must fail** if not trusted:
 
 ```typescript
-import { requireTrustedMode, TrustError } from './security/validateTrust';
+import {
+  requireTrustedModeForDocument,
+  TrustError,
+} from './security/validateTrust';
 
-async function loadCustomPlugins(configPath: string) {
+async function loadCustomPlugins(configPath: string, docUri: vscode.Uri) {
   // Throws TrustError if not in Trusted Mode
-  requireTrustedMode('load custom MDX plugins');
+  requireTrustedModeForDocument(docUri, 'load custom MDX plugins');
 
   // Only reached if trusted
   return await loadPlugins(configPath);
@@ -469,15 +472,18 @@ const trustState = tryRequireTrustedModeForDocument(
 if (!trustState) return undefined; // gracefully refused, no throw
 ```
 
-Both `tryRequireTrustedMode(...)` and `tryRequireTrustedModeForDocument(...)` return `TrustState | undefined` and re-throw any non-`TrustError` exception. The optional callback runs once, before the function returns `undefined`, so callers can attach context-specific logging without writing their own `try/catch`.
+`tryRequireTrustedModeForDocument(...)` and `tryRequireWorkspaceTrusted(...)` return `TrustState | undefined` and re-throw any non-`TrustError` exception. The optional callback runs once, before the function returns `undefined`, so callers can attach context-specific logging without writing their own `try/catch`.
 
 ### TrustError Handling
 
 ```typescript
-import { TrustError } from './security/validateTrust';
+import {
+  requireTrustedModeForDocument,
+  TrustError,
+} from './security/validateTrust';
 
 try {
-  requireTrustedMode('execute user code');
+  requireTrustedModeForDocument(docUri, 'execute user code');
   executeCode();
 } catch (e) {
   if (e instanceof TrustError) {
@@ -520,7 +526,7 @@ When modifying security-sensitive code, verify:
 ### Trust Validation
 
 - [ ] Trust checks present before sensitive operations
-- [ ] Using `requireTrustedMode()` or `requireTrustedModeForDocument()` appropriately
+- [ ] Using `requireTrustedModeForDocument()` or `requireWorkspaceTrusted()` appropriately
 - [ ] Not caching trust state (always use `getState()`)
 
 ### Path Validation

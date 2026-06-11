@@ -3,7 +3,6 @@
 
 import {
   useCallback,
-  useEffect,
   useState,
   type ComponentType,
   type MouseEvent,
@@ -49,11 +48,13 @@ function App() {
   // evaluatedComponent kept in local state (not context) to avoid React #130 issue
   const [evaluatedComponent, setEvaluatedComponent] =
     useState<ComponentType | null>(null);
+  const [previousContent, setPreviousContent] = useState(content);
 
-  // clear evaluated component when content changes (new file or file modified)
-  useEffect(() => {
+  // clear evaluated component before painting changed content
+  if (previousContent !== content) {
+    setPreviousContent(content);
     setEvaluatedComponent(null);
-  }, [content]);
+  }
   const { shimSideRailEnabled, sourceLineHighlightColorMode, zoomLevel } =
     useUIFlags();
 

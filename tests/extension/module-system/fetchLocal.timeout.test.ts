@@ -20,7 +20,7 @@ const {
   mockReadFileAsync: vi.fn(),
   mockHandleByExtension: vi.fn(),
   mockResolver: {
-    resolveSync: vi.fn(),
+    resolveAsync: vi.fn(),
   },
 }));
 
@@ -65,7 +65,7 @@ describe('fetchLocal timeout delegation', () => {
     await fs.promises.writeFile(modulePath, 'export const value = 1;', 'utf-8');
 
     mockCheckFsPathAsync.mockResolvedValue(true);
-    mockResolver.resolveSync.mockReturnValue({
+    mockResolver.resolveAsync.mockResolvedValue({
       fsPath: modulePath,
       isBuiltInShim: false,
     });

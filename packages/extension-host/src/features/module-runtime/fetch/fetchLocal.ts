@@ -110,7 +110,7 @@ export async function fetchLocal(
 
     // use UnifiedResolver for all resolution (framework aliases, TypeScript, enhanced-resolve)
     const resolver = getUnifiedResolver();
-    const resolution = resolver.resolveSync(
+    const resolution = await resolver.resolveAsync(
       request,
       resolutionContext,
       'browser'

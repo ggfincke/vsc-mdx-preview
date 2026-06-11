@@ -546,7 +546,7 @@ sequenceDiagram
     Webview->>Extension: fetch("./Button", true, "/path/to/entry.mdx")
     Extension->>Extension: Validate request and trust
 
-    Extension->>Resolver: resolveSync("./Button", context)
+    Extension->>Resolver: resolveAsync("./Button", context)
     Resolver->>Resolver: Try 4 strategies in order
     Resolver-->>Extension: { fsPath, strategy }
 
@@ -957,7 +957,7 @@ Core modules are preloaded and protected from cache eviction:
 
 Framework-specific components are loaded on-demand:
 
-```typescript title="mdx-forge: src/browser/preload/shimLoader.ts"
+```typescript title="packages/webview-client/src/generated/preload/preload.generated.ts"
 // Docusaurus shims
 'npm://@mdx-preview/shims-docusaurus/Tabs';
 'npm://@mdx-preview/shims-docusaurus/TabItem';
@@ -1590,8 +1590,8 @@ if (trustState.canExecute) {
 }
 
 // Pattern 2: Throwing (when operation must fail)
-import { requireTrustedMode } from './security/validateTrust';
-requireTrustedMode('load plugins'); // Throws TrustError if not trusted
+import { requireTrustedModeForDocument } from './security/validateTrust';
+requireTrustedModeForDocument(documentUri, 'load plugins'); // Throws TrustError if not trusted
 ```
 
 ### Path Validation
