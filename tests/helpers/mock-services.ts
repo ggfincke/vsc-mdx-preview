@@ -28,7 +28,6 @@ export const mockTrustManager = {
   getState: vi.fn(() => ({ canExecute: false })),
   getStateForDocument: vi.fn(() => ({ canExecute: false })),
   canExecute: vi.fn(() => false),
-  getMode: vi.fn(() => 'safe'),
   subscribe: vi.fn(() => ({ dispose: vi.fn() })),
 };
 
@@ -43,7 +42,6 @@ export const mockErrorReporter = {
   reportSilent: vi.fn(),
   reportToUser: vi.fn(),
   reportConfigError: vi.fn(),
-  reportPluginError: vi.fn(),
   reportWebviewError: vi.fn(),
   reportWithActions: vi.fn(async () => {}),
 };
@@ -125,10 +123,6 @@ export function getServicesMockModule() {
     getErrorReporter: vi.fn(() => mockErrorReporter),
     getStatusBarManager: vi.fn(() => mockStatusBarManager),
     getMetaResolver: vi.fn(() => mockMetaResolver),
-    getOutputChannel: vi.fn(() => mockOutputChannel),
-    getService: vi.fn(),
-    hasService: vi.fn(() => false),
-    isServiceInitialized: vi.fn(() => false),
     ServiceRegistry: {},
     ServiceNames: {},
   };

@@ -55,8 +55,7 @@ describe('PreviewInitializer', () => {
     const watcherManager = initializer.createWatchers(
       '/workspace/custom.css',
       vi.fn(async () => undefined),
-      Promise.resolve(),
-      vi.fn()
+      Promise.resolve()
     );
 
     const names = watcherManager.getNames();
@@ -65,7 +64,6 @@ describe('PreviewInitializer', () => {
         'document',
         'dependency',
         'customCss',
-        'packageJson',
       ])
     );
   });

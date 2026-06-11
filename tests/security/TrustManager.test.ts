@@ -33,12 +33,7 @@ vi.mock('vscode', () => ({
   },
 }));
 
-import {
-  getSecurityMode,
-  SecurityMode,
-  TrustManager,
-} from '../../packages/extension-host/src/features/security/TrustManager';
-import type { TrustState } from '@mdx-preview/contracts';
+import { TrustManager } from '../../packages/extension-host/src/features/security/TrustManager';
 
 describe('TrustManager', () => {
   let trustManager: TrustManager;
@@ -113,16 +108,5 @@ describe('TrustManager', () => {
 
     expect(result.allowed).toBe(false);
     expect(result.reason).toContain('Unsupported document scheme');
-  });
-
-  it('maps blocked trust states to safe mode', () => {
-    const state: TrustState = {
-      workspaceTrusted: false,
-      scriptsEnabled: true,
-      canExecute: false,
-      openMdxLinksInPreview: true,
-    };
-
-    expect(getSecurityMode(state)).toBe(SecurityMode.Safe);
   });
 });

@@ -1,5 +1,5 @@
 // tests/webview/StyleInjector.test.ts
-// Unit tests for StyleInjector DOM reference caching
+// Unit tests for StyleInjector CSS injection
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
@@ -126,49 +126,5 @@ describe('StyleInjector', () => {
         'text/tailwindcss'
       );
     });
-  });
-
-  describe('injectModuleCss', () => {
-    it('should create a style element in document.head', async () => {
-      const StyleInjector = await getStyleInjector();
-
-      StyleInjector.injectModuleCss('module-1', '.test { color: red; }');
-
-      expect(mockHead.children.length).toBe(1);
-      expect(mockHead.children[0].getAttribute('data-module-id')).toBe(
-        'module-1'
-      );
-      expect(mockHead.children[0].textContent).toBe('.test { color: red; }');
-    });
-
-  });
-
-  describe('removeModuleCss', () => {
-    it('should remove specific module style', async () => {
-      const StyleInjector = await getStyleInjector();
-
-      StyleInjector.injectModuleCss('module-1', '.test { color: red; }');
-      StyleInjector.injectModuleCss('module-2', '.test2 { color: blue; }');
-      StyleInjector.removeModuleCss('module-1');
-
-      expect(mockHead.children.length).toBe(1);
-      expect(mockHead.children[0].getAttribute('data-module-id')).toBe(
-        'module-2'
-      );
-    });
-
-  });
-
-  describe('clear("modules")', () => {
-    it('should clear all module styles', async () => {
-      const StyleInjector = await getStyleInjector();
-
-      StyleInjector.injectModuleCss('module-1', '.test1 { color: red; }');
-      StyleInjector.injectModuleCss('module-2', '.test2 { color: blue; }');
-      StyleInjector.clear('modules');
-
-      expect(mockHead.children.length).toBe(0);
-    });
-
   });
 });
