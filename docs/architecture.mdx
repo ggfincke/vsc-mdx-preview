@@ -350,7 +350,8 @@ sequenceDiagram
 
 ### Preview Update & Refresh Orchestration
 
-`Preview.ts` now delegates update/refresh routing to explicit flow modules:
+`Preview.ts` delegates update routing to an explicit flow module and keeps
+refresh orchestration inline:
 
 - `runPreviewUpdateFlow(...)` (`preview-update-flow.ts`)
   - rendered-version skip gate (unless forced)
@@ -358,7 +359,8 @@ sequenceDiagram
   - source selection by update mode (`onType` vs disk/fs read)
   - `evaluateInWebview(...)` invocation
   - mark-rendered only after successful evaluation
-- `runPreviewRefreshFlow(...)` (`preview-refresh-flow.ts`)
+- `Preview.refreshWebview()`
+  - current-preview lookup through `PreviewManager`
   - panel refresh via `refreshPanel(...)`
   - forced update pass (`updateWebview(true)`)
 
@@ -377,7 +379,7 @@ sequenceDiagram
    - trusted: `engine.evaluateTrusted(...)`
    - safe: `engine.evaluateSafe(...)`
 4. Post-push artifacts: `postPushArtifacts(...)`
-   - shared frontmatter/runtime/meta push
+   - frontmatter theme override and Nextra meta push
    - trusted branch: dependency updates, optional component detection, `updatePreview`, async Tailwind process
    - safe branch: Tailwind channel clear + `updatePreviewSafe`
 
