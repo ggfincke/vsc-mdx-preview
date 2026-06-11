@@ -1,60 +1,70 @@
 // packages/contracts/src/themes/types.ts
 // shared theme type definitions for extension & webview packages
 
+// canonical theme arrays; data.ts re-exports them for consumers
+export const PREVIEW_THEMES = [
+  'github-light',
+  'github-dark',
+  'atom-dark',
+  'atom-light',
+  'atom-material',
+  'one-dark',
+  'one-light',
+  'solarized-dark',
+  'solarized-light',
+  'gothic',
+  'medium',
+  'monokai',
+  'newsprint',
+  'night',
+  'none',
+  'vue',
+] as const;
+
+export const CODE_BLOCK_THEMES = [
+  'auto',
+  'default',
+  'atom-dark',
+  'atom-light',
+  'atom-material',
+  'coy',
+  'darcula',
+  'dark',
+  'funky',
+  'github',
+  'github-dark',
+  'hopscotch',
+  'monokai',
+  'okaidia',
+  'one-dark',
+  'one-light',
+  'pen-paper-coffee',
+  'pojoaque',
+  'solarized-dark',
+  'solarized-light',
+  'twilight',
+  'vs',
+  'vue',
+  'xonokai',
+] as const;
+
+export const MERMAID_THEMES = [
+  'default',
+  'dark',
+  'forest',
+  'neutral',
+  'base',
+  'null',
+] as const;
+
 // available preview themes (markdown content styling)
-export type PreviewTheme =
-  | 'github-light'
-  | 'github-dark'
-  | 'atom-dark'
-  | 'atom-light'
-  | 'atom-material'
-  | 'one-dark'
-  | 'one-light'
-  | 'solarized-dark'
-  | 'solarized-light'
-  | 'gothic'
-  | 'medium'
-  | 'monokai'
-  | 'newsprint'
-  | 'night'
-  | 'none'
-  | 'vue';
+export type PreviewTheme = (typeof PREVIEW_THEMES)[number];
 
 // available mermaid diagram themes
-export type MermaidTheme =
-  | 'default'
-  | 'dark'
-  | 'forest'
-  | 'neutral'
-  | 'base'
-  | 'null';
+export type MermaidTheme = (typeof MERMAID_THEMES)[number];
 
 // available code block themes (syntax highlighting)
-export type CodeBlockTheme =
-  | 'auto'
-  | 'default'
-  | 'atom-dark'
-  | 'atom-light'
-  | 'atom-material'
-  | 'coy'
-  | 'darcula'
-  | 'dark'
-  | 'funky'
-  | 'github'
-  | 'github-dark'
-  | 'hopscotch'
-  | 'monokai'
-  | 'okaidia'
-  | 'one-dark'
-  | 'one-light'
-  | 'pen-paper-coffee'
-  | 'pojoaque'
-  | 'solarized-dark'
-  | 'solarized-light'
-  | 'twilight'
-  | 'vs'
-  | 'vue'
-  | 'xonokai';
+export type CodeBlockTheme = (typeof CODE_BLOCK_THEMES)[number];
 
 // mermaid icon pack as configured in settings
 // source is a workspace-relative or absolute path to an Iconify JSON file

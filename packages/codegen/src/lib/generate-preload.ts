@@ -78,26 +78,43 @@ function getComponentExportNames(entry: ComponentDefinition): string[] {
   return Array.from(exportNames);
 }
 
+type ImportBinding =
+  | { form: 'namespace' }
+  | { form: 'named'; importName: string }
+  | { form: 'default' };
+
+// classify how an entry binds to its module, shared by static & dynamic forms
+function getImportBinding(
+  entry: ComponentRegistryEntry,
+  relativeImport: string
+): ImportBinding {
+  if (entry.kind === 'barrel') {
+    return { form: 'namespace' };
+  }
+
+  if (
+    relativeImport.startsWith('mdx-forge/components/') ||
+    entry.importKind === 'named'
+  ) {
+    return { form: 'named', importName: entry.importName ?? entry.name };
+  }
+
+  return { form: 'default' };
+}
+
 function getImportStatement(
   entry: ComponentRegistryEntry,
   importVar: string,
   relativeImport: string
 ): string {
-  if (
-    entry.kind === 'component' &&
-    relativeImport.startsWith('mdx-forge/components/')
-  ) {
-    const importName = entry.importName ?? entry.name;
-    return `import { ${importName} as ${importVar} } from '${relativeImport}';`;
-  }
+  const binding = getImportBinding(entry, relativeImport);
 
-  if (entry.kind === 'barrel') {
+  if (binding.form === 'namespace') {
     return `import * as ${importVar} from '${relativeImport}';`;
   }
 
-  if (entry.importKind === 'named') {
-    const importName = entry.importName ?? entry.name;
-    return `import { ${importName} as ${importVar} } from '${relativeImport}';`;
+  if (binding.form === 'named') {
+    return `import { ${binding.importName} as ${importVar} } from '${relativeImport}';`;
   }
 
   return `import ${importVar} from '${relativeImport}';`;
@@ -107,24 +124,29 @@ function getDynamicImportExpression(
   entry: ComponentRegistryEntry,
   relativeImport: string
 ): string {
-  if (
-    entry.kind === 'component' &&
-    relativeImport.startsWith('mdx-forge/components/')
-  ) {
-    const importName = entry.importName ?? entry.name;
-    return `import('${relativeImport}').then(m => m.${importName})`;
-  }
+  const binding = getImportBinding(entry, relativeImport);
 
-  if (entry.kind === 'barrel') {
+  if (binding.form === 'namespace') {
     return `import('${relativeImport}')`;
   }
 
-  if (entry.importKind === 'named') {
-    const importName = entry.importName ?? entry.name;
-    return `import('${relativeImport}').then(m => m.${importName})`;
+  if (binding.form === 'named') {
+    return `import('${relativeImport}').then(m => m.${binding.importName})`;
   }
 
   return `import('${relativeImport}').then(m => m.default)`;
+}
+
+// build the unindented preloadEntry call text shared by all generators
+function buildPreloadCall(
+  entry: ComponentRegistryEntry,
+  varName: string,
+  aliasesJson: string
+): string {
+  const exports = isComponentEntry(entry)
+    ? `createComponentModule(${varName}, ${JSON.stringify(getComponentExportNames(entry))})`
+    : `createBarrelModule(${varName}, ${JSON.stringify(entry.exportNames)})`;
+  return `preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: ${exports}, aliases: ${aliasesJson} });`;
 }
 
 function capitalize(str: string): string {
@@ -160,25 +182,15 @@ function generateGenericPreloadFunction(
     importLines.push(getImportStatement(entry, importVar, relativeImport));
     const aliases = aliasesByPreloadId[buildPreloadId(entry)] ?? [];
     const aliasesJson = JSON.stringify(aliases);
+    const preloadCall = buildPreloadCall(entry, importVar, aliasesJson);
+    preloadLines.push(`  ${preloadCall}`);
 
     if (isComponentEntry(entry)) {
-      const exportNames = getComponentExportNames(entry);
-      const exportNamesJson = JSON.stringify(exportNames);
-      preloadLines.push(
-        `  preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createComponentModule(${importVar}, ${exportNamesJson}), aliases: ${aliasesJson} });`
-      );
-
       // register conditionally using static generic imports
       loaderEntries.push(
         `  '${entry.name}': async (registry: ModuleRegistry) => {
-    preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createComponentModule(${importVar}, ${exportNamesJson}), aliases: ${aliasesJson} });
+    ${preloadCall}
   }`
-      );
-    } else {
-      preloadLines.push(
-        `  preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createBarrelModule(${importVar}, ${JSON.stringify(
-          entry.exportNames
-        )}), aliases: ${aliasesJson} });`
       );
     }
   }
@@ -223,21 +235,7 @@ function generateFrameworkLoader(
     const varName = varNames[i];
     const aliases = aliasesByPreloadId[buildPreloadId(entry)] ?? [];
     const aliasesJson = JSON.stringify(aliases);
-
-    if (isComponentEntry(entry)) {
-      const exportNames = getComponentExportNames(entry);
-      preloadCalls.push(
-        `  preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createComponentModule(${varName}, ${JSON.stringify(
-          exportNames
-        )}), aliases: ${aliasesJson} });`
-      );
-    } else {
-      preloadCalls.push(
-        `  preloadEntry(registry, { id: '${buildPreloadId(entry)}', exports: createBarrelModule(${varName}, ${JSON.stringify(
-          entry.exportNames
-        )}), aliases: ${aliasesJson} });`
-      );
-    }
+    preloadCalls.push(`  ${buildPreloadCall(entry, varName, aliasesJson)}`);
   }
 
   return `// lazy-load ${framework} shims on demand
@@ -340,26 +338,23 @@ function buildShimAliases(): {
   const seenPreloadIds = new Set<string>();
 
   for (const entry of REGISTRY_ENTRIES) {
-    if (!seenPreloadIds.has(buildPreloadId(entry))) {
-      seenPreloadIds.add(buildPreloadId(entry));
-      preloadIds.push(buildPreloadId(entry));
+    const preloadId = buildPreloadId(entry);
+    if (!seenPreloadIds.has(preloadId)) {
+      seenPreloadIds.add(preloadId);
+      preloadIds.push(preloadId);
     }
 
     for (const specifier of entry.importSpecifiers) {
-      setAlias(aliases, specifier, buildPreloadId(entry));
+      setAlias(aliases, specifier, preloadId);
     }
 
-    setAlias(aliases, entry.shimPath, buildPreloadId(entry));
+    setAlias(aliases, entry.shimPath, preloadId);
 
     if (isComponentEntry(entry) && entry.exposeAsBareImport) {
-      setAlias(aliases, entry.name, buildPreloadId(entry));
+      setAlias(aliases, entry.name, preloadId);
       for (const alias of entry.aliases) {
-        setAlias(aliases, alias, buildPreloadId(entry));
-        setAlias(
-          aliases,
-          `${SHIM_PREFIX}/generic/${alias}`,
-          buildPreloadId(entry)
-        );
+        setAlias(aliases, alias, preloadId);
+        setAlias(aliases, `${SHIM_PREFIX}/generic/${alias}`, preloadId);
       }
     }
   }
