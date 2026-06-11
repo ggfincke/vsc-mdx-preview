@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-06-11
+
 ### Fixed
 
 - **Stale module resolution after dependency installs**: `Clear All Caches` and the `package.json` watcher now flush every resolution cache. Previously the file-stat cache and the (TTL-less) TypeScript path-mapping index survived a dependency install, so newly added modules could fail to resolve until the extension was restarted. A single `invalidateResolution()` now clears all five caches
