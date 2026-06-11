@@ -40,6 +40,8 @@ interface CompiledPathsIndex {
   absoluteBaseUrl: string;
   // cache key
   cacheKey: string;
+  // source paths object for identity fast path
+  sourcePaths: Record<string, string[]>;
 }
 
 // per-tsconfig compiled index cache
@@ -95,6 +97,7 @@ function compilePathsIndex(
     wildcardPatterns,
     absoluteBaseUrl,
     cacheKey: JSON.stringify(paths),
+    sourcePaths: paths,
   };
 }
 
@@ -109,6 +112,10 @@ function getCompiledIndex(
 
   const cached = compiledIndexCache.get(cacheKey);
   if (cached) {
+    // identity fast path: same paths object guarantees equal serialization
+    if (cached.sourcePaths === paths) {
+      return cached;
+    }
     // validate cache is still valid (paths haven't changed)
     const currentHash = JSON.stringify(paths);
     if (cached.cacheKey === currentHash) {

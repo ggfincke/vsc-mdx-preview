@@ -99,8 +99,7 @@ async function getRootDirectoryPathAsync(
 
 // clear all caches when workspace folders change
 export function handleDidChangeWorkspaceFolders(): void {
-  asyncRootDirectoryCache.clear();
-  realPathCache.clear();
+  clearPathSecurityCaches();
 }
 
 // ! async check if file path is inside workspace (security validation w/ symlink resolution)

@@ -13,17 +13,6 @@ export class TrustError extends Error {
   }
 }
 
-// require Trusted Mode for an operation - throw TrustError if not in Trusted Mode
-export function requireTrustedMode(operation: string): TrustState {
-  const trustState = getTrustManager().getState();
-  if (!trustState.canExecute) {
-    throw new TrustError(
-      `Operation blocked: ${operation} requires Trusted Mode`
-    );
-  }
-  return trustState;
-}
-
 // require Trusted Mode for a document-specific operation
 export function requireTrustedModeForDocument(
   docUri: vscode.Uri,
@@ -78,15 +67,6 @@ export function tryRequireTrustedModeForDocument(
     () => requireTrustedModeForDocument(docUri, operation),
     onTrustError
   );
-}
-
-// non-throwing trust check for general operations
-// return TrustState or invoke callback & return undefined on TrustError
-export function tryRequireTrustedMode(
-  operation: string,
-  onTrustError?: (error: TrustError) => void
-): TrustState | undefined {
-  return tryRequire(() => requireTrustedMode(operation), onTrustError);
 }
 
 // non-throwing workspace-trust check

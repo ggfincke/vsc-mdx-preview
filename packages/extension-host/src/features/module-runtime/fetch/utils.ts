@@ -18,9 +18,9 @@ let hasWarnedAboutCoreModules = false;
 // track all core modules used in current preview (for debug output)
 const usedCoreModules = new Set<string>();
 
-// node.js core modules that cannot be shimmed in browser runtime
-// return noop modules for rollup-plugin-node-builtins cases
-const UNSHIMMABLE_CORE_MODULES = new Set([
+// node.js core modules served as noop stubs in browser runtime
+const CORE_MODULES = new Set([
+  // cannot be shimmed (rollup-plugin-node-builtins cases)
   'dns',
   'dgram',
   'child_process',
@@ -31,11 +31,7 @@ const UNSHIMMABLE_CORE_MODULES = new Set([
   'repl',
   'tls',
   'crypto',
-]);
-
-// node.js core modules that could theoretically be shimmed
-// return noop for security/simplicity in webview context
-const SHIMMABLE_CORE_MODULES = new Set([
+  // could theoretically be shimmed; noop for security/simplicity in webview
   'process',
   'events',
   'util',
@@ -60,12 +56,6 @@ const SHIMMABLE_CORE_MODULES = new Set([
   'domain',
 ]);
 
-// combined set of all Node.js core modules for quick lookup
-const ALL_CORE_MODULES = new Set([
-  ...UNSHIMMABLE_CORE_MODULES,
-  ...SHIMMABLE_CORE_MODULES,
-]);
-
 // normalize module request by stripping `node:` prefix if present
 export function normalizeNodePrefix(request: string): string {
   return request.startsWith('node:') ? request.slice(5) : request;
@@ -74,7 +64,7 @@ export function normalizeNodePrefix(request: string): string {
 // check if module request is for a Node.js core module (handles both `node:fs` & `fs` forms)
 export function isCoreModule(request: string): boolean {
   const normalized = normalizeNodePrefix(request);
-  return ALL_CORE_MODULES.has(normalized);
+  return CORE_MODULES.has(normalized);
 }
 
 // build a noop result for core modules that can't be shimmed in browser

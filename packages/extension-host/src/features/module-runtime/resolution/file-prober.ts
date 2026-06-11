@@ -239,19 +239,13 @@ export async function probeFileAsync(
   }
 
   // check if base is a directory (from extension results if '' was included)
-  const baseResult = extensionResults.get(basePath);
-  const isDirectory = baseResult?.exists && baseResult.isDirectory;
-
-  // if basePath without extension wasn't checked, check it now
+  let baseResult = extensionResults.get(basePath);
   if (!baseResult) {
-    const stat = await batchStatAsync([basePath]);
-    const baseStat = stat.get(basePath);
-    if (baseStat?.exists && baseStat.isDirectory) {
-      const indexPaths = indexFiles.map((idx) => path.join(basePath, idx));
-      const indexResults = await batchStatAsync(indexPaths);
-      return findIndexFileInResults(basePath, indexFiles, indexResults);
-    }
-  } else if (isDirectory) {
+    // basePath w/o extension wasn't checked - stat it now
+    baseResult = (await batchStatAsync([basePath])).get(basePath);
+  }
+
+  if (baseResult?.exists && baseResult.isDirectory) {
     const indexPaths = indexFiles.map((idx) => path.join(basePath, idx));
     const indexResults = await batchStatAsync(indexPaths);
     return findIndexFileInResults(basePath, indexFiles, indexResults);

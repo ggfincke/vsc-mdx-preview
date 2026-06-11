@@ -45,13 +45,8 @@ for (const handler of handlers) {
 }
 
 // get the appropriate handler for a file extension (returns undefined if not found)
-export function getHandler(extname: string): FileTypeHandler | undefined {
+function getHandler(extname: string): FileTypeHandler | undefined {
   return handlerMap.get(extname.toLowerCase());
-}
-
-// check if we have a handler for this file type
-export function hasHandler(extname: string): boolean {
-  return handlerMap.has(extname.toLowerCase());
 }
 
 // handle a file based on its extension (returns FetchResult or undefined if no handler)

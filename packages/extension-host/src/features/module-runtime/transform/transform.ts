@@ -75,7 +75,7 @@ async function transformEntry(
   );
 
   if (isTypeScriptLanguage(languageId) && !useSucrase) {
-    code = transpileTypeScript(code, fsPath, preview);
+    code = transpileTypeScript(code, fsPath);
   }
 
   // I.1: capture ESM code before CommonJS transformation
@@ -113,7 +113,7 @@ async function transform(
 
   const useSucrase = preview.configuration.useSucraseTranspiler;
   if (isTypeScriptExtension(extname) && !useSucrase) {
-    code = transpileTypeScript(code, fsPath, preview);
+    code = transpileTypeScript(code, fsPath);
   }
 
   // I.1: capture ESM code before CommonJS transformation
