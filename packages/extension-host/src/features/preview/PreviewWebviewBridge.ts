@@ -75,6 +75,10 @@ export class PreviewWebviewBridge {
     if (frontmatter) {
       const frontmatterTheme =
         themeManager.extractThemeFromFrontmatter(frontmatter);
+      // no usable overrides -> base per-evaluation push already sent this state
+      if (!frontmatterTheme.previewTheme && !frontmatterTheme.codeBlockTheme) {
+        return;
+      }
       if (frontmatterTheme.previewTheme) {
         themeState = {
           ...themeState,

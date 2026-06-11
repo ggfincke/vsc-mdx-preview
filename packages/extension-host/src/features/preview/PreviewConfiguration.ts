@@ -112,7 +112,6 @@ export class PreviewConfiguration {
       newConfig.debounceDelay !== this._configuration.debounceDelay;
     const needsCssWatcherUpdate =
       newConfig.customCss !== this._configuration.customCss;
-    const oldCssPath = this._configuration.customCss;
 
     // recreate debounced function if delay changed
     if (needsDebounceRecreate) {
@@ -127,10 +126,8 @@ export class PreviewConfiguration {
     return {
       needsWebviewRefresh,
       needsRuntimeConfigPush,
-      needsDebounceRecreate,
       needsCssWatcherUpdate,
       scrollSyncChanged,
-      oldCssPath,
     };
   }
 }

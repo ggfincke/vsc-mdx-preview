@@ -13,14 +13,8 @@ import { ErrorContext } from '../../shared/errors/ErrorReporter';
 import { createOrShowPanel, refreshPanel } from './webview-manager';
 import { Preview } from './Preview';
 
-// open MDX preview for active editor document (create or reuse Preview instance)
-export async function openPreview(): Promise<void> {
-  log.debug('openPreview called');
-  if (!vscode.window.activeTextEditor) {
-    log.debug('No active text editor, aborting');
-    return;
-  }
-  const doc = vscode.window.activeTextEditor.document;
+// shared open-preview core: create-or-reuse Preview, show panel, update webview
+async function openPreviewForDoc(doc: vscode.TextDocument): Promise<void> {
   log.debug(`Opening preview for: ${doc.uri.fsPath}`);
   const manager = getPreviewManager();
   let currentPreview = manager.getCurrentPreview();
@@ -42,6 +36,17 @@ export async function openPreview(): Promise<void> {
     log.error('Failed to update preview', error);
     getErrorReporter().reportToUser(error, ErrorContext.Extension);
   }
+}
+
+// open MDX preview for active editor document (create or reuse Preview instance)
+export async function openPreview(): Promise<void> {
+  log.debug('openPreview called');
+  if (!vscode.window.activeTextEditor) {
+    log.debug('No active text editor, aborting');
+    return;
+  }
+  const doc = vscode.window.activeTextEditor.document;
+  await openPreviewForDoc(doc);
   log.debug('openPreview complete');
 }
 
@@ -62,27 +67,7 @@ export async function openPreviewFromUri(uri?: vscode.Uri): Promise<void> {
     return;
   }
 
-  log.debug(`Opening preview for: ${doc.uri.fsPath}`);
-  const manager = getPreviewManager();
-  let currentPreview = manager.getCurrentPreview();
-
-  if (!currentPreview) {
-    log.debug('Creating new Preview instance');
-    currentPreview = new Preview(doc);
-    manager.setCurrentPreview(currentPreview);
-  } else {
-    log.debug('Reusing existing Preview instance');
-    currentPreview.setDoc(doc);
-  }
-
-  await createOrShowPanel(currentPreview);
-
-  try {
-    await currentPreview.updateWebview();
-  } catch (error: unknown) {
-    log.error('Failed to update preview', error);
-    getErrorReporter().reportToUser(error, ErrorContext.Extension);
-  }
+  await openPreviewForDoc(doc);
 
   log.debug('openPreviewFromUri complete');
 }

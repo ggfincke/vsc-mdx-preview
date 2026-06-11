@@ -106,7 +106,6 @@ export class DependencyWatcher extends BaseWatcher {
             this.onChangeCallback(fsPath);
           },
           ignoreCreateEvents: true,
-          wrapErrors: true,
         });
         this.watchers.set(fsPath, watcher);
       }

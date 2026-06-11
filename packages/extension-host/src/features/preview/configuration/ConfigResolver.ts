@@ -155,13 +155,3 @@ export function onConfigChange(
 ): vscode.Disposable {
   return getCache().subscribe(callback);
 }
-
-// clear all cached configs (for testing or manual refresh)
-export function clearConfigCache(): void {
-  getCache().clear();
-}
-
-// get list of config file names (for schema registration)
-export function getConfigFileNames(): string[] {
-  return [...CONFIG_FILE_NAMES];
-}

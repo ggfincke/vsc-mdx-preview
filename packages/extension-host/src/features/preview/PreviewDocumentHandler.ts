@@ -12,13 +12,6 @@ import {
 import type { TypeScriptConfiguration, ResolvedConfig } from '../types';
 import { DocumentTracker, DependencyWatcher, WatcherManager } from './watchers';
 
-export interface DocumentState {
-  doc: vscode.TextDocument;
-  dependentFsPaths: Set<string>;
-  typescriptConfiguration?: TypeScriptConfiguration;
-  mdxPreviewConfig?: ResolvedConfig;
-}
-
 // actions provided by Preview for document event handling
 export interface PreviewActions {
   markStale: () => void;

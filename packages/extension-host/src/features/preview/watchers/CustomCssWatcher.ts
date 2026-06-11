@@ -66,7 +66,6 @@ export class CustomCssWatcher extends BaseWatcher {
       onDelete: () => {
         this.notifier?.setCustomCss?.('');
       },
-      wrapErrors: true,
     });
 
     this.log.debug('Watching custom CSS file');

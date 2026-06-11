@@ -129,8 +129,6 @@ function applyFrontmatterAndMeta(
     preview.pushThemeState(frontmatter);
   }
 
-  preview.pushRuntimeConfiguration();
-
   sendNextraMetaIfNeeded(context, frontmatter);
 }
 
@@ -181,10 +179,8 @@ function clearTailwindChannels(
   preview: Preview,
   webviewHandle: Preview['webviewHandle']
 ): void {
-  const tailwindRequestId = preview.nextTailwindRequestId();
-  if (!preview.isTailwindRequestCurrent(tailwindRequestId)) {
-    return;
-  }
+  // bump request id to invalidate in-flight Tailwind results
+  preview.nextTailwindRequestId();
 
   preview.updateTailwindWatchFiles([]);
   webviewHandle.setTailwindBrowserCss('');
