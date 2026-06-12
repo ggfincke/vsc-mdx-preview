@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-06-11
+
 ### Fixed
 
 - **Trusted Mode blank preview for `.md` files**: The evaluated MDX component was passed directly into a `useState` setter, so React invoked it as a state updater (`MDXContent(null)`). Layout-less `.md` output (CommonMark path with `useVscodeMarkdownStyles` off) exports raw `MDXContent`, which dereferences `props.components` — the crash happened during App's own render, above the error boundary, unmounting the React root and leaving a permanently blank panel with no error UI or logs. Components are now stored via an updater-safe closure
