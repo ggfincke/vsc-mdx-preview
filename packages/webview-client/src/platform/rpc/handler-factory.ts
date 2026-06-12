@@ -91,6 +91,8 @@ export type PendingMessage =
 interface QueuedHandlerFactoryOptions {
   onMessageReceived?: (message: PendingMessage) => void;
   shouldHandleDirectMessage?: (message: PendingMessage) => boolean;
+  shouldDeferDirectMessage?: (message: PendingMessage) => boolean;
+  onDirectMessageHandled?: (message: PendingMessage) => void;
 }
 
 // create factory context bound to module-level state
@@ -128,6 +130,9 @@ export function createHandlerFactories(
       const handlers = getHandlers();
       if (handlers) {
         if (options.shouldHandleDirectMessage?.(message) === false) {
+          if (options.shouldDeferDirectMessage?.(message) === true) {
+            enqueueFn(message);
+          }
           return;
         }
 
@@ -136,6 +141,7 @@ export function createHandlerFactories(
           ...a: THandlerArgs
         ) => void;
         handler(...handlerArgs);
+        options.onDirectMessageHandled?.(message);
         return;
       }
 

@@ -73,10 +73,12 @@ class ExtensionHandle implements ExtensionRPC {
   }
 
   // handshake to resolve when webview is ready
-  handshake(): void {
-    log.debug('handshake() called from webview!');
-    this.preview.completeHandshake();
-    log.debug('completeHandshake called');
+  handshake(handshakeId: number): void {
+    log.debug(`handshake() called from webview: ${handshakeId}`);
+    const accepted = this.preview.completeHandshake(handshakeId);
+    log.debug(
+      accepted ? 'completeHandshake accepted' : 'completeHandshake ignored'
+    );
   }
 
   // report performance metrics from webview

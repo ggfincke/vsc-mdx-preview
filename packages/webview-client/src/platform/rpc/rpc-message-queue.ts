@@ -94,14 +94,21 @@ export function createRpcMessageQueue(
       options.log.warn(
         'Both safe & trusted content queued - selecting based on trust'
       );
-      if (getCurrentTrustState()?.canExecute) {
+      const trustState = getCurrentTrustState();
+      if (!trustState) {
+        options.log.debug('Deferring queued preview content until trust state');
+        pendingMessages.set('safe', safeMsg);
+        pendingMessages.set('trusted', trustedMsg);
+      } else if (trustState.canExecute) {
         flushTrusted(handlers, trustedMsg.payload);
       } else {
         options.log.debug('Flushing safe content (safe mode active)');
         handlers.setSafeContent(safeMsg.payload.html);
       }
     } else if (trustedMsg) {
-      flushTrusted(handlers, trustedMsg.payload);
+      if (!flushTrusted(handlers, trustedMsg.payload)) {
+        pendingMessages.set('trusted', trustedMsg);
+      }
     } else if (safeMsg) {
       options.log.debug('Flushing safe content');
       handlers.setSafeContent(safeMsg.payload.html);
@@ -144,9 +151,15 @@ export function createRpcMessageQueue(
   function flushTrusted(
     handlers: WebviewStateHandlers,
     payload: Extract<PendingMessage, { type: 'trusted' }>['payload']
-  ): void {
-    if (!canAcceptContentMode(getCurrentTrustState(), 'trusted', options.log)) {
-      return;
+  ): boolean {
+    const trustState = getCurrentTrustState();
+    if (!trustState) {
+      options.log.debug('Deferring trusted content until trust state');
+      return false;
+    }
+
+    if (!canAcceptContentMode(trustState, 'trusted', options.log)) {
+      return true;
     }
 
     options.log.debug('Flushing trusted content');
@@ -155,6 +168,7 @@ export function createRpcMessageQueue(
       payload.entryFilePath,
       payload.dependencies
     );
+    return true;
   }
 
   function flush(): void {

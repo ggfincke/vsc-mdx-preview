@@ -56,10 +56,13 @@ describe('webview-rpc-client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+    document.head.innerHTML =
+      '<meta name="mdx-preview-handshake-id" content="42">';
     (globalThis as any).acquireVsCodeApi = acquireMock;
   });
 
   afterEach(() => {
+    document.head.innerHTML = '';
     delete (globalThis as any).acquireVsCodeApi;
   });
 
@@ -81,6 +84,7 @@ describe('webview-rpc-client', () => {
     expect(mockWrap).toHaveBeenCalledTimes(1);
     expect(mockExpose).toHaveBeenCalledTimes(1);
     expect(mockExtensionHandle.handshake).toHaveBeenCalledTimes(1);
+    expect(mockExtensionHandle.handshake).toHaveBeenCalledWith(42);
 
     module.ExtensionHandle.openExternal('https://example.com');
     expect(mockExtensionHandle.openExternal).toHaveBeenCalledWith(
@@ -179,6 +183,45 @@ describe('webview-rpc-client', () => {
       '/doc.mdx',
       ['/dep.ts']
     );
+    expect(handlers.setTrustedContent).toHaveBeenCalledWith(
+      'export default function Demo() {}',
+      '/doc.mdx',
+      ['/dep.ts']
+    );
+
+    scenario = await setupRpcScenario();
+    handlers = createStateHandlers();
+    scenario.module.registerWebviewHandlers(handlers as any);
+    scenario.exposedHandle.updatePreview(
+      'export default function Demo() {}',
+      '/doc.mdx',
+      ['/dep.ts']
+    );
+
+    expect(handlers.setTrustedContent).not.toHaveBeenCalled();
+
+    scenario.exposedHandle.setTrustState(createTrustState(true));
+
+    expect(handlers.setTrustState).toHaveBeenCalledWith(createTrustState(true));
+    expect(handlers.setTrustedContent).toHaveBeenCalledWith(
+      'export default function Demo() {}',
+      '/doc.mdx',
+      ['/dep.ts']
+    );
+
+    scenario = await setupRpcScenario();
+    handlers = createStateHandlers();
+    scenario.exposedHandle.updatePreview(
+      'export default function Demo() {}',
+      '/doc.mdx',
+      ['/dep.ts']
+    );
+    scenario.module.registerWebviewHandlers(handlers as any);
+
+    expect(handlers.setTrustedContent).not.toHaveBeenCalled();
+
+    scenario.exposedHandle.setTrustState(createTrustState(true));
+
     expect(handlers.setTrustedContent).toHaveBeenCalledWith(
       'export default function Demo() {}',
       '/doc.mdx',

@@ -86,7 +86,7 @@ async function waitForHandshakeAndPushBaseState(
   preview.onWebviewReady();
 
   log.debug('Sending trust state to webview');
-  webviewHandle.setTrustState(trustState);
+  await webviewHandle.setTrustState(trustState);
   preview.pushRuntimeConfiguration();
 
   const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);

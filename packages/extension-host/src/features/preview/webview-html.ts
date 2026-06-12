@@ -18,6 +18,7 @@ export function getWebviewAppHTML(
   webview: vscode.Webview,
   baseHref: string,
   nonce: string,
+  handshakeId: number,
   contentSecurityPolicy: string,
   styleConfiguration: StyleConfiguration,
   tailwindBrowserRuntimeEnabled: boolean
@@ -67,6 +68,7 @@ export function getWebviewAppHTML(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mdx-preview-handshake-id" content="${handshakeId}">
     <title>${EXTENSION_DISPLAY_NAME}</title>
     ${styleLink}
     <meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy}">
@@ -112,6 +114,7 @@ export function setPanelHTMLFromPreview(preview: Preview): void {
     panel.webview,
     previewBaseHref,
     nonce,
+    preview.getWebviewHandshakeId(),
     csp,
     styleConfiguration,
     preview.isTailwindBrowserRuntimeEnabled()

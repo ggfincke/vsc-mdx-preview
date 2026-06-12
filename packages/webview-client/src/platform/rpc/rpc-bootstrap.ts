@@ -37,6 +37,17 @@ interface RpcBootstrapOptions {
 
 declare const acquireVsCodeApi: AcquireVsCodeApi;
 
+function readHandshakeId(): number {
+  const raw = document
+    .querySelector('meta[name="mdx-preview-handshake-id"]')
+    ?.getAttribute('content');
+  const handshakeId = Number(raw);
+  if (!Number.isInteger(handshakeId) || handshakeId < 1) {
+    return 0;
+  }
+  return handshakeId;
+}
+
 class WebviewProxy implements Endpoint {
   constructor(
     private readonly vscodeApi: VsCodeApi,
@@ -87,7 +98,7 @@ export function bootstrapRpcWebviewSide(
   const extensionHandle = comlinkApi.wrap<ExtensionRPC>(endpoint);
 
   comlinkApi.expose(options.webviewHandle, endpoint);
-  extensionHandle.handshake();
+  extensionHandle.handshake(readHandshakeId());
 
   return {
     extensionHandle,

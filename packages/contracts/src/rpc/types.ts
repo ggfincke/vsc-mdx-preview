@@ -18,7 +18,7 @@ export type PreviewSourceLineReportResult = 'accepted' | 'ignored' | 'retry';
 
 // extension-exposed RPC methods
 export interface ExtensionRPC {
-  handshake(): void;
+  handshake(handshakeId: number): void;
   reportPerformance(evaluationDuration: number): void;
   fetch(
     request: string,

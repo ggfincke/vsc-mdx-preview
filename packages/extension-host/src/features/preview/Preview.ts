@@ -81,10 +81,23 @@ export class Preview {
   // handshake state
   webviewHandshakePromise!: Promise<void>;
   private resolveWebviewHandshakePromise!: () => void;
+  private webviewHandshakeId = 0;
+
+  getWebviewHandshakeId(): number {
+    return this.webviewHandshakeId;
+  }
 
   // public method for RPC handle to complete handshake
-  completeHandshake(): void {
+  completeHandshake(handshakeId: number): boolean {
+    if (handshakeId !== this.webviewHandshakeId) {
+      log.debug(
+        `Ignoring stale handshake: ${handshakeId} !== ${this.webviewHandshakeId}`
+      );
+      return false;
+    }
+
     this.resolveWebviewHandshakePromise();
+    return true;
   }
 
   // cancel pending handshake timeout (call when reusing panel to prevent stale timeouts)
@@ -169,9 +182,7 @@ export class Preview {
     );
 
     // initialize handshake
-    const handshake = this.initializer.createHandshake();
-    this.webviewHandshakePromise = handshake.promise;
-    this.resolveWebviewHandshakePromise = handshake.resolve;
+    this.initWebviewHandshakePromise();
 
     // create watchers w/ ready gate (callbacks wait for webview handshake, not started yet)
     this.watcherManager = this.initializer.createWatchers(
@@ -217,6 +228,7 @@ export class Preview {
   }
 
   initWebviewHandshakePromise(): void {
+    this.webviewHandshakeId += 1;
     const handshake = this.initializer.createHandshake();
     this.webviewHandshakePromise = handshake.promise;
     this.resolveWebviewHandshakePromise = handshake.resolve;

@@ -30,7 +30,7 @@ export async function postPushArtifacts(
     return;
   }
 
-  postSafeArtifacts(context, stageResult);
+  await postSafeArtifacts(context, stageResult);
 }
 
 async function postTrustedArtifacts(
@@ -47,7 +47,7 @@ async function postTrustedArtifacts(
   await detectAndPushUsedComponents(context);
 
   log.debug('Calling webviewHandle.updatePreview');
-  webviewHandle.updatePreview(
+  await webviewHandle.updatePreview(
     result.code,
     result.entryFilePath,
     result.dependencies
@@ -76,10 +76,10 @@ async function postTrustedArtifacts(
   );
 }
 
-function postSafeArtifacts(
+async function postSafeArtifacts(
   context: PreparedEvaluationContext,
   stageResult: SafeStageResult
-): void {
+): Promise<void> {
   const preview = context.preview;
   const { webviewHandle } = preview;
 
@@ -88,7 +88,7 @@ function postSafeArtifacts(
   applyFrontmatterAndMeta(context, stageResult.result.frontmatter);
 
   log.debug('Calling webviewHandle.updatePreviewSafe');
-  webviewHandle.updatePreviewSafe(stageResult.result.html);
+  await webviewHandle.updatePreviewSafe(stageResult.result.html);
   log.debug('updatePreviewSafe called');
   preview.syncEditorScrollToPreview();
 }
