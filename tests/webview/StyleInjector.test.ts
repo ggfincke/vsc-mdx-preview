@@ -6,9 +6,19 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 // Mock DOM elements
 class MockHTMLStyleElement {
   id = '';
-  textContent = '';
   parentNode: MockHTMLElement | null = null;
+  typeWhenTextContentWasSet: string | null = null;
   private attributes: Record<string, string> = {};
+  private text = '';
+
+  set textContent(value: string) {
+    this.typeWhenTextContentWasSet = this.getAttribute('type');
+    this.text = value;
+  }
+
+  get textContent(): string {
+    return this.text;
+  }
 
   setAttribute(name: string, value: string): void {
     this.attributes[name] = value;
@@ -123,6 +133,9 @@ describe('StyleInjector', () => {
       expect(mockHead.children.length).toBe(1);
       expect(mockHead.children[0].id).toBe('tailwind-browser-style');
       expect(mockHead.children[0].getAttribute('type')).toBe(
+        'text/tailwindcss'
+      );
+      expect(mockHead.children[0].typeWhenTextContentWasSet).toBe(
         'text/tailwindcss'
       );
     });
