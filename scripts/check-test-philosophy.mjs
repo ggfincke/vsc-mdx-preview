@@ -77,6 +77,7 @@ const CASE_COUNT_OVERRIDES = new Map([
   ['tests/extension/rpc-input-validation.test.ts', 7],
   ['tests/extension/config/TypeScriptConfigResolver.test.ts', 5],
   ['tests/extension/workspace-events.test.ts', 5],
+  ['tests/webview/App.test.ts', 5],
   ['tests/webview/shimLoader.test.ts', 5],
   ['tests/webview/SafePreview.test.ts', 7],
   ['tests/webview/source-line-highlight.test.ts', 7],
