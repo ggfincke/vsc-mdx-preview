@@ -16,7 +16,7 @@
       "outFiles": [
         "${workspaceFolder}/build/extension/**/*.js"
       ],
-      "preLaunchTask": "npm: watch"
+      "preLaunchTask": "npm: build:fast"
     },
     {
       "name": "Extension Tests",
@@ -29,7 +29,7 @@
       "outFiles": [
         "${workspaceFolder}/build/extension/**/*.js"
       ],
-      "preLaunchTask": "npm: watch"
+      "preLaunchTask": "npm: build:fast"
     }
   ]
 }

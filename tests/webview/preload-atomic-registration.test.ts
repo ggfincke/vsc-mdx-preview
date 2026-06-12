@@ -70,8 +70,15 @@ describe('preload atomic registration', () => {
     vi.resetModules();
   });
 
-  it('registers module exports and aliases in one atomic preload entry', () => {
-    preloadGenericShims(registry);
+  it('registers module exports and aliases in one atomic preload entry', async () => {
+    const preloadGeneric = vi.fn(preloadGenericShims);
+    const { initPreloadedModules } = await importPreloadWithMocks({
+      frameworkLoader: vi.fn(),
+      fallbackLoader: preloadGeneric,
+      cssLoader: vi.fn().mockResolvedValue(undefined),
+    });
+
+    initPreloadedModules(registry, {});
 
     const requireFromEntry = createSyncRequire('/workspace/docs/index.mdx');
     const byBareAlias = requireFromEntry('Callout') as Record<string, unknown>;
@@ -80,6 +87,7 @@ describe('preload atomic registration', () => {
     ) as Record<string, unknown>;
 
     expect(registry.has('npm://@mdx-preview/shims-generic/Callout')).toBe(true);
+    expect(preloadGeneric).toHaveBeenCalledWith(registry);
     expect(byBareAlias).toBe(byShimPath);
     expect(typeof byBareAlias.default).toBe('function');
   });

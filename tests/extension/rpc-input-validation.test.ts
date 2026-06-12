@@ -185,9 +185,9 @@ describe('RPC Input Validation', () => {
   });
 
   it('calls completeHandshake during handshake', () => {
-    handle.handshake();
+    handle.handshake(7);
 
-    expect(preview.completeHandshake).toHaveBeenCalled();
+    expect(preview.completeHandshake).toHaveBeenCalledWith(7);
   });
 
   it('rejects fetch requests when trusted execution is unavailable', async () => {

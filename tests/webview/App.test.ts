@@ -250,6 +250,39 @@ describe('App', () => {
     expect(mockTrustedPreviewRenderer).toHaveBeenCalledTimes(1);
   });
 
+  it('stores evaluated function components without invoking them as updaters', () => {
+    appState.trustState = { canExecute: true };
+    appState.content = {
+      mode: 'trusted',
+      code: 'export default function MDXContent() {}',
+      entryFilePath: '/workspace/doc.md',
+      dependencies: [],
+    };
+
+    const { container, root } = mountApp();
+
+    // raw MDXContent-style export: dereferences props & throws if called w/ null
+    // (regression: useState ran bare component fns as updaters -> blank root)
+    function FakeMdxContent(props: { components?: Record<string, unknown> }) {
+      const { wrapper } = { ...props.components };
+      void wrapper;
+      return createElement('div', null, 'mdx');
+    }
+
+    const readyProps = (mockTrustedPreviewRenderer.mock.calls.at(-1) as any[])[0];
+    act(() => {
+      readyProps.onComponentReady(FakeMdxContent);
+    });
+
+    const updatedProps = (mockTrustedPreviewRenderer.mock.calls.at(-1) as any[])[0];
+    expect(updatedProps.evaluatedComponent).toBe(FakeMdxContent);
+    expect(
+      container.querySelector('[data-testid="trusted-preview"]')
+    ).not.toBeNull();
+
+    unmountApp(root);
+  });
+
   it('opens external links on Ctrl/Cmd+click', () => {
     appState.trustState = { canExecute: true };
     appState.content = {

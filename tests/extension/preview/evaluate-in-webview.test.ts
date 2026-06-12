@@ -332,16 +332,53 @@ describe('evaluate-in-webview Tailwind routing', () => {
     expect(preview.webviewHandle.setShimSideRail).toHaveBeenCalledWith(false);
   });
 
-  it('syncs editor scroll after preview content is posted', async () => {
+  it('awaits webview pushes before downstream preview work', async () => {
     mockTrustedState();
     const trustedPreview = createPreview();
+    const events: string[] = [];
+    let resolveTrustState: (() => void) | undefined;
 
-    await evaluateInWebview(
+    trustedPreview.webviewHandle.setTrustState.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          events.push('setTrustState');
+          resolveTrustState = () => {
+            events.push('trustStateResolved');
+            resolve();
+          };
+        })
+    );
+    mockEngine.evaluateTrusted.mockImplementationOnce(async () => {
+      events.push('evaluateTrusted');
+      return {
+        code: 'export default function Demo() { return null; }',
+        entryFilePath: '/workspace/doc.mdx',
+        dependencies: [],
+        frontmatter: undefined,
+      };
+    });
+
+    const pending = evaluateInWebview(
       trustedPreview as unknown as MockPreview,
       '# doc',
       '/workspace/doc.mdx'
     );
 
+    for (let i = 0; i < 5 && !resolveTrustState; i++) {
+      await Promise.resolve();
+    }
+
+    expect(resolveTrustState).toBeDefined();
+    expect(mockEngine.evaluateTrusted).not.toHaveBeenCalled();
+
+    resolveTrustState?.();
+    await pending;
+
+    expect(events).toEqual([
+      'setTrustState',
+      'trustStateResolved',
+      'evaluateTrusted',
+    ]);
     expect(trustedPreview.syncEditorScrollToPreview).toHaveBeenCalledTimes(1);
     expect(
       trustedPreview.webviewHandle.updatePreview.mock.invocationCallOrder[0]

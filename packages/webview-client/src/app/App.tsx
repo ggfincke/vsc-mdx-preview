@@ -95,6 +95,14 @@ function App() {
     [setError]
   );
 
+  // closure wrap - a bare component fn passed to useState runs as an updater
+  // (MDXContent(null) throws above the boundary & unmounts the root)
+  const handleComponentReady = useCallback(
+    (component: ComponentType | null) =>
+      setEvaluatedComponent(() => component),
+    []
+  );
+
   // compute Nextra layout class from metadata
   const nextraLayoutClass =
     nextraMeta?.layout === 'full'
@@ -161,7 +169,7 @@ function App() {
             <TrustedPreviewRenderer
               content={content as TrustedPreviewContent}
               evaluatedComponent={evaluatedComponent}
-              onComponentReady={setEvaluatedComponent}
+              onComponentReady={handleComponentReady}
               onError={setError}
             />
           ) : null}

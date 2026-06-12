@@ -9,6 +9,7 @@ import {
   getConfigManager,
   getTrustManager,
   getErrorReporter,
+  getPreviewManager,
 } from '../../app/services';
 import { ErrorContext } from '../../shared/errors';
 import { EXTENSION_DISPLAY_NAME } from '../../shared/constants';
@@ -53,6 +54,12 @@ const toggleScripts = async (): Promise<void> => {
     !scriptsEnabled,
     vscode.ConfigurationTarget.Workspace
   );
+
+  try {
+    await getPreviewManager().refreshAllPreviews();
+  } catch (error) {
+    log.error('Failed to refresh previews after script toggle', error);
+  }
 
   const newState = scriptsEnabled ? 'disabled' : 'enabled';
   vscode.window.showInformationMessage(

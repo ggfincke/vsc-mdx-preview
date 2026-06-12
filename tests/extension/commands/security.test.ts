@@ -7,6 +7,7 @@ import {
   mockConfigManager,
   mockTrustManager,
   mockErrorReporter,
+  mockPreviewManager,
 } from '../../helpers/mock-services';
 
 const mockSelectSecurityPolicy = vi.fn();
@@ -74,6 +75,7 @@ describe('security commands', () => {
         false,
         vscode.ConfigurationTarget.Workspace
       );
+      expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalledTimes(1);
       expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('disabled'));
     });
 
@@ -89,8 +91,8 @@ describe('security commands', () => {
         true,
         vscode.ConfigurationTarget.Workspace
       );
+      expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalledTimes(1);
       expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('enabled'));
     });
-
   });
 });

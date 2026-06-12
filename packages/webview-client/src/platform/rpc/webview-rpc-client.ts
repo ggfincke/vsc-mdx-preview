@@ -47,7 +47,16 @@ function shouldHandleDirectMessage(message: PendingMessage): boolean {
     return true;
   }
 
+  if (!currentTrustState) {
+    log.debug('Deferring trusted content until trust state is received');
+    return false;
+  }
+
   return canAcceptContentMode(currentTrustState, 'trusted', log);
+}
+
+function shouldDeferDirectMessage(message: PendingMessage): boolean {
+  return message.type === 'trusted' && currentTrustState === null;
 }
 
 const queue = createRpcMessageQueue({
@@ -58,6 +67,12 @@ const queue = createRpcMessageQueue({
     currentTrustState = state;
   },
 });
+
+function flushAfterTrustState(message: PendingMessage): void {
+  if (message.type === 'trust') {
+    queue.flush();
+  }
+}
 
 const {
   createQueuedHandler,
@@ -70,6 +85,8 @@ const {
   {
     onMessageReceived: recordTrustState,
     shouldHandleDirectMessage,
+    shouldDeferDirectMessage,
+    onDirectMessageHandled: flushAfterTrustState,
   }
 );
 
@@ -286,8 +303,8 @@ function getInitializedExtensionHandle(): ExtensionHandle {
 }
 
 export const ExtensionHandle: ExtensionHandle = {
-  handshake(): void {
-    getInitializedExtensionHandle().handshake();
+  handshake(handshakeId: number): void {
+    getInitializedExtensionHandle().handshake(handshakeId);
   },
   reportPerformance(evaluationDuration: number): void {
     getInitializedExtensionHandle().reportPerformance(evaluationDuration);

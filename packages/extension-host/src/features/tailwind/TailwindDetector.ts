@@ -209,9 +209,9 @@ export class TailwindDetector {
       return commonResult;
     }
 
-    // fall back to full workspace scan if not found in common locations
-    log.debug('Entry CSS not in common locations, scanning workspace...');
-    const include = new vscode.RelativePattern(workspaceRoot, '**/*.css');
+    const scanRoot = this.resolveEntryCssScanRoot(workspaceRoot, entryDir);
+    log.debug(`Entry CSS not in common locations, scanning: ${scanRoot}`);
+    const include = new vscode.RelativePattern(scanRoot, '**/*.css');
     const exclude = '**/node_modules/**';
     const candidates = await vscode.workspace.findFiles(
       include,
@@ -229,6 +229,28 @@ export class TailwindDetector {
 
     this.entryCssCache.set(cacheKey, null);
     return null;
+  }
+
+  private resolveEntryCssScanRoot(
+    workspaceRoot: string,
+    entryDir: string | null
+  ): string {
+    if (!entryDir || entryDir === workspaceRoot) {
+      return workspaceRoot;
+    }
+
+    const packageRoot = findUp({
+      filename: 'package.json',
+      startDir: entryDir,
+      stopAt: workspaceRoot,
+      returnType: 'directory',
+    });
+
+    if (packageRoot && packageRoot !== workspaceRoot) {
+      return packageRoot;
+    }
+
+    return workspaceRoot;
   }
 
   // route workspace to browser or advanced Tailwind profile

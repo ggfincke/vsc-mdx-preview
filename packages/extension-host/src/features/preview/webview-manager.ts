@@ -78,6 +78,17 @@ export async function createOrShowPanel(
     );
     manager.setPanel(panel);
     manager.setPanelDoc(preview.doc);
+    log.debug('Initializing handshake promise');
+    preview.initWebviewHandshakePromise();
+    preview.webview = panel.webview;
+    log.debug('Initializing RPC extension side');
+    const webviewHandle = initRPCExtensionSide(
+      preview,
+      panel.webview,
+      disposables
+    );
+    preview.setWebviewHandle(webviewHandle);
+    log.debug('RPC initialized');
     log.debug('Panel created, setting HTML');
     setPanelHTMLFromPreview(preview);
 
@@ -118,18 +129,6 @@ export async function createOrShowPanel(
       null,
       disposables
     );
-
-    log.debug('Initializing handshake promise');
-    preview.initWebviewHandshakePromise();
-    preview.webview = panel.webview;
-    log.debug('Initializing RPC extension side');
-    const webviewHandle = initRPCExtensionSide(
-      preview,
-      panel.webview,
-      disposables
-    );
-    preview.setWebviewHandle(webviewHandle);
-    log.debug('RPC initialized');
   } else {
     log.debug(
       `Panel exists, panelDoc=${panelDoc?.uri.fsPath}, preview.doc=${preview.doc.uri.fsPath}`

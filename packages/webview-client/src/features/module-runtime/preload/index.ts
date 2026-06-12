@@ -52,17 +52,21 @@ function createInitialState(): PreloadState {
 const state = createInitialState();
 
 // initialize preloaded modules in the registry
-// load core modules eagerly, then generic & framework shims lazily
+// load core & generic modules eagerly, then framework shims lazily
 export function initPreloadedModules(
   registry: ModuleRegistry,
   vscodeMarkdownLayout: unknown
 ): void {
   preloadCoreModules(registry, vscodeMarkdownLayout);
-  // note: generic shims are now loaded on-demand via ensureGenericShims
-  // for conditional preloading optimization
-  // load generic CSS (always needed for fallback styling)
+  preloadGenericShims(registry);
+  for (const componentName of Object.keys(GENERIC_SHIM_LOADERS)) {
+    state.loadedGenericShims.add(componentName);
+  }
+
+  // generic aliases are required by every Trusted compile output
+  // load generic CSS for fallback styling
   loadFrameworkCss('generic');
-  log.debug('Core modules initialized (generic shims deferred)');
+  log.debug('Core modules initialized (generic shims preloaded)');
 }
 
 // load framework-specific shims on demand

@@ -19,6 +19,19 @@ export const STYLE_IDS = {
   TAILWIND_BROWSER_INPUT_CSS: 'mdx-preview-tailwind-browser-input-css',
 } as const;
 
+function applyAttributes(
+  styleEl: HTMLStyleElement,
+  attributes?: Record<string, string>
+): void {
+  if (!attributes) {
+    return;
+  }
+
+  for (const [name, value] of Object.entries(attributes)) {
+    styleEl.setAttribute(name, value);
+  }
+}
+
 // centralized style injection manager for theme, custom & Tailwind CSS
 class StyleInjectorImpl {
   // inject CSS w/ the given ID - creates or updates a <style> element in document.head
@@ -30,6 +43,7 @@ class StyleInjectorImpl {
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = id;
+      applyAttributes(styleEl, attributes);
 
       // handle insertion order (e.g., Tailwind before Custom CSS)
       if (insertBefore) {
@@ -42,15 +56,11 @@ class StyleInjectorImpl {
       } else {
         document.head.appendChild(styleEl);
       }
+    } else {
+      applyAttributes(styleEl, attributes);
     }
 
     styleEl.textContent = css;
-
-    if (attributes) {
-      for (const [name, value] of Object.entries(attributes)) {
-        styleEl.setAttribute(name, value);
-      }
-    }
 
     // set data attribute on document element if specified (for theme detection)
     if (dataAttribute) {
