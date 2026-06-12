@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Trusted Mode blank preview for `.md` files**: The evaluated MDX component was passed directly into a `useState` setter, so React invoked it as a state updater (`MDXContent(null)`). Layout-less `.md` output (CommonMark path with `useVscodeMarkdownStyles` off) exports raw `MDXContent`, which dereferences `props.components` — the crash happened during App's own render, above the error boundary, unmounting the React root and leaving a permanently blank panel with no error UI or logs. Components are now stored via an updater-safe closure
+- **Trusted Mode `Module not found` for builtin shims**: Trusted compile output unconditionally imports the builtin generic shims (`Callout`, `Alert`, …), but the webview only loaded them when the component detector found JSX usage — documents with no detected components failed evaluation. Generic shims are now preloaded eagerly at init
+- **Trusted content dropped on startup races**: Trusted content arriving before the trust state is deferred and flushed once trust arrives instead of being silently discarded; stale webview handshakes (from replaced panel HTML) are ignored via a handshake id, and the RPC listener is attached before the panel HTML is set so the first handshake cannot be missed
+- **Preview not refreshing after script toggle**: `Toggle Scripts` now refreshes open previews so the new mode takes effect immediately
+- **Tailwind entry-CSS scan crossing project boundaries**: The fallback scan is scoped to the entry document's package root instead of the whole workspace, so a preview no longer picks up a sibling project's `tailwind.css`
+
 ## [1.5.2] - 2026-06-11
 
 ### Fixed
