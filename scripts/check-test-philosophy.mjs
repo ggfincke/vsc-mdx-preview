@@ -43,6 +43,7 @@ const EXACT_ALLOWED = new Set([
   'tests/extension/preview/preview-update-flow.test.ts',
   'tests/extension/rpc-input-validation.test.ts',
   'tests/extension/security/checkFsPath.test.ts',
+  'tests/extension/tailwind/TailwindDetector.test.ts',
   'tests/extension/tailwind/TailwindProcessor.test.ts',
   'tests/extension/tailwind/evaluation-engine-tailwind.test.ts',
   'tests/extension/themes/IconPackResolver.test.ts',
