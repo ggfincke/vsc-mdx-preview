@@ -822,7 +822,7 @@
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^25.0.0",
     "@types/vscode": "1.90.0",
-    "@vscode/test-electron": "^2.3.0",
+    "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "^3.9.1",
     "concurrently": "^10.0.3",
     "dependency-cruiser": "^17.4.0",
