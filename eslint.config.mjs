@@ -28,6 +28,13 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
+          paths: [
+            {
+              name: 'gray-matter',
+              message:
+                'Use safeMatter from mdx-forge/compiler; raw gray-matter evals ---js frontmatter (CWE-94).',
+            },
+          ],
           patterns: [
             {
               group: ['**/webview-client/**'],

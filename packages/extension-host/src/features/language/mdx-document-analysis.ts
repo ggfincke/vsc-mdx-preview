@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMdx from 'remark-mdx';
-import matter from 'gray-matter';
+import { safeMatter } from 'mdx-forge/compiler';
 import type { Root } from 'mdast';
 import type { MdastPosition } from '../diagnostics/types';
 
@@ -32,13 +32,15 @@ export interface MdxDocumentAnalysis {
 
 // parse an MDX document & extract frontmatter, AST & line offset
 export function analyzeMdxDocument(text: string): MdxDocumentAnalysis {
-  const matterResult = matter(text);
+  // safeMatter neutralizes ---js / ---javascript eval (CWE-94); same shape as matter
+  const matterResult = safeMatter(text);
 
   // calculate line offset for AST positions (gray-matter strips frontmatter)
   // find the closing --- line in the original text to get exact offset
   let frontmatterLineOffset = 0;
   let frontmatterEndLine = 0;
-  const hasFrontmatter = Boolean(matterResult.matter);
+  // detect stripping directly: empty frontmatter strips but reports a falsy matter
+  const hasFrontmatter = matterResult.content !== text;
 
   if (hasFrontmatter) {
     const lines = text.split('\n');
