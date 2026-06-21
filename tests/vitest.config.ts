@@ -55,6 +55,20 @@ const mdxForgeAliases = [
     ),
   },
   {
+    find: 'mdx-forge/diagnostics/analyze',
+    replacement: resolveMdxForgePath(
+      'src/diagnostics/analyze/index.ts',
+      'dist/esm/diagnostics/analyze/index.js'
+    ),
+  },
+  {
+    find: 'mdx-forge/diagnostics',
+    replacement: resolveMdxForgePath(
+      'src/diagnostics/index.ts',
+      'dist/esm/diagnostics/index.js'
+    ),
+  },
+  {
     find: 'mdx-forge/components/registry',
     replacement: resolveMdxForgePath(
       'src/components/registry/index.ts',

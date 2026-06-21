@@ -2,6 +2,7 @@
 // type definitions for component diagnostics system
 
 import type * as vscode from 'vscode';
+import type { FrameworkId } from 'mdx-forge/components/registry';
 
 // source of a known component (builtin shims, framework shims, config, import, or unknown)
 export type ComponentSource =
@@ -59,4 +60,6 @@ export interface ComponentDetectionOptions {
   includePositions?: boolean;
   // detect imports
   detectImports?: boolean;
+  // resolved framework for shim-aware classification (defaults to generic)
+  framework?: FrameworkId;
 }

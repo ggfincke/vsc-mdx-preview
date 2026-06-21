@@ -10,7 +10,7 @@ const provider = new ComponentCodeActionsProvider();
 
 function createDiagnostic(
   name: string,
-  message = `Unknown component "${name}". Add to .mdx-previewrc.json or use a built-in shim.`
+  message = `Unknown component "${name}". Add it to .mdx-previewrc.json or use a built-in shim.`
 ): Diagnostic {
   const range = new Range(0, 0, 0, name.length);
   const diagnostic = new Diagnostic(

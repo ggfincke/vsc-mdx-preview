@@ -74,3 +74,55 @@ describe('detectComponents', () => {
     expect(custom?.range.end.character).toBe(19);
   });
 });
+
+describe('framework-aware classification', () => {
+  // CodeBlock is a docusaurus-only component & not a generic builtin
+  it('treats a framework-only component as known under its framework', async () => {
+    const result = await detectComponents(
+      '<CodeBlock>code</CodeBlock>\n',
+      {
+        detectImports: false,
+        includePositions: false,
+        framework: 'docusaurus',
+      },
+      new Set()
+    );
+    expect(getUnknownComponents(result).map((c) => c.name)).toEqual([]);
+  });
+
+  it('flags the same component as unknown under a generic document', async () => {
+    const result = await detectComponents(
+      '<CodeBlock>code</CodeBlock>\n',
+      { detectImports: false, includePositions: false },
+      new Set()
+    );
+    expect(getUnknownComponents(result).map((c) => c.name)).toEqual([
+      'CodeBlock',
+    ]);
+  });
+});
+
+describe('frontmatter safety & positions', () => {
+  it('does not evaluate ---js frontmatter on the detection path (D6 / CWE-94)', async () => {
+    const probe = globalThis as Record<string, unknown>;
+    const KEY = '__mdxPreviewDetectorPwned';
+    probe[KEY] = undefined;
+    await detectComponents(
+      `---js\n((globalThis['${KEY}'] = true), {})\n---\n<Frobnicate />\n`,
+      { detectImports: false, includePositions: true },
+      new Set()
+    );
+    expect(probe[KEY]).toBeUndefined();
+  });
+
+  it('lands the squiggle on the correct line past empty frontmatter', async () => {
+    const result = await detectComponents(
+      '---\n---\n<Frobnicate />\n',
+      { detectImports: false, includePositions: true },
+      new Set()
+    );
+    const found = result.components.find((c) => c.name === 'Frobnicate');
+    // <Frobnicate /> is on 0-based line 2 (original line 3)
+    expect(found?.range.start.line).toBe(2);
+  });
+});

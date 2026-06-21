@@ -8,7 +8,7 @@ import {
   astPositionToRange,
 } from '../language/mdx-document-analysis';
 import { parseEsmImports } from '../language/esm-imports';
-import { KNOWN_GENERIC_COMPONENTS } from 'mdx-forge/compiler';
+import { classifyComponentSource } from 'mdx-forge/diagnostics/analyze';
 import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
 import {
   ContentHashCache,
@@ -29,7 +29,7 @@ import { COMPONENT_CACHE_MAX_ENTRIES } from '../../shared/constants/runtime';
 import {
   getCanonicalComponentName,
   getGenericComponentSet,
-  isFrameworkComponent,
+  type FrameworkId,
 } from 'mdx-forge/components/registry';
 
 const log = createTaggedLogger(LogTags.COMPONENT_DETECTOR);
@@ -205,33 +205,18 @@ function extractImports(esmValue: string): Map<string, string> {
   return imports;
 }
 
-// determine component source based on name & imports
+// classify via the shared mdx-forge ladder (framework-accurate, single source)
 function determineComponentSource(
   name: string,
-  imports: Map<string, string>,
-  configComponents: Set<string>
+  importNames: ReadonlySet<string>,
+  configComponents: ReadonlySet<string>,
+  framework: FrameworkId
 ): ComponentSource {
-  // check if explicitly imported
-  if (imports.has(name)) {
-    return 'import';
-  }
-
-  // check if defined in config
-  if (configComponents.has(name)) {
-    return 'config';
-  }
-
-  // check if builtin generic component
-  if (KNOWN_GENERIC_COMPONENTS.has(name)) {
-    return 'builtin';
-  }
-
-  // check if framework shim
-  if (isFrameworkComponent(name)) {
-    return 'framework';
-  }
-
-  return 'unknown';
+  return classifyComponentSource(name, {
+    imports: importNames,
+    configComponents,
+    framework,
+  });
 }
 
 // detect JSX components in MDX text
@@ -244,6 +229,7 @@ export async function detectComponents(
   uri?: string
 ): Promise<ComponentDetectionResult> {
   const { includePositions = true, detectImports = true } = options;
+  const framework = options.framework ?? 'generic';
 
   // hoist hash so cache lookup & store share one full-text pass
   const hash = uri ? contentHash(mdxText) : undefined;
@@ -276,6 +262,9 @@ export async function detectComponents(
       });
     }
 
+    // hoist import names once so per-component classification is O(1)
+    const importNames = new Set(imports.keys());
+
     // second pass: detect JSX components
     visit(tree, (node) => {
       if (
@@ -298,7 +287,12 @@ export async function detectComponents(
         return;
       }
 
-      const source = determineComponentSource(name, imports, configComponents);
+      const source = determineComponentSource(
+        name,
+        importNames,
+        configComponents,
+        framework
+      );
 
       let range: vscode.Range;
       if (includePositions && jsxNode.position) {

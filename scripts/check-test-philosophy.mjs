@@ -15,6 +15,7 @@ const EXACT_ALLOWED = new Set([
   'tests/services/ServiceRegistry.circular.test.ts',
   'tests/services/ServiceRegistry.subsystem.test.ts',
   'tests/shared/constant-parity.test.ts',
+  'tests/shared/diagnostics-parity.test.ts',
   'tests/shared/duplicate-divergence.test.ts',
   'tests/shared/metadata-parity.test.ts',
   'tests/shared/utility-parity.test.ts',
@@ -28,6 +29,7 @@ const EXACT_ALLOWED = new Set([
   'tests/extension/deps/import-extractor.test.ts',
   'tests/extension/diagnostics/ComponentCodeActions.test.ts',
   'tests/extension/diagnostics/ComponentDetector.test.ts',
+  'tests/extension/diagnostics/ComponentDiagnostics.test.ts',
   'tests/extension/language/MDXCompletionProvider.test.ts',
   'tests/extension/language/MDXOutlineProvider.test.ts',
   'tests/extension/language/MDXSymbolProvider.test.ts',
@@ -66,6 +68,8 @@ const EXACT_ALLOWED = new Set([
 ]);
 
 const CASE_COUNT_OVERRIDES = new Map([
+  ['tests/extension/diagnostics/ComponentDetector.test.ts', 8],
+  ['tests/extension/diagnostics/ComponentDiagnostics.test.ts', 6],
   ['tests/resolution/unified-resolver.test.ts', 6],
   ['tests/shared/constant-parity.test.ts', 10],
   ['tests/shared/duplicate-divergence.test.ts', 5],

@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { writeFileSync } from 'fs';
-import { DIAGNOSTIC_CODES } from './ComponentDiagnostics';
+import { DIAGNOSTIC_CODES, readDiagnosticCode } from './ComponentDiagnostics';
 import type { UnknownComponentDiagnosticData } from '../types';
 import { KNOWN_GENERIC_COMPONENTS } from 'mdx-forge/compiler';
 import {
@@ -50,9 +50,9 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
   ): vscode.CodeAction[] {
     const actions: vscode.CodeAction[] = [];
 
-    // filter to only our diagnostics
+    // filter to only our diagnostics (code may be a clickable { value, target })
     const relevantDiagnostics = context.diagnostics.filter(
-      (d) => d.code === DIAGNOSTIC_CODES.UNKNOWN_COMPONENT
+      (d) => readDiagnosticCode(d) === DIAGNOSTIC_CODES.UNKNOWN_COMPONENT
     );
 
     for (const diagnostic of relevantDiagnostics) {
