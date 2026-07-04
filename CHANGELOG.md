@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-07-03
+
 ### Changed
 
 - **Diagnostics now run through the shared `mdx-forge` engine**: Unknown-component detection is sourced from `mdx-forge/diagnostics/analyze` rather than a duplicated in-extension classifier. The diagnostic code migrates from `mdx-preview/unknown-component` to the stable, click-through `MDXF001`
 - **Framework-accurate unknown-component warnings**: Component classification now respects the document's detected framework. A framework-only component (e.g. a Docusaurus `<CodeBlock>`) is recognized under that framework but flagged as unknown in a generic document — previously the check matched any framework. This is more correct and may surface new warnings in cross-framework documents
 - **Frontmatter diagnostics positions**: Empty frontmatter and gray-matter edge cases now keep diagnostics, symbols, and outline ranges aligned to the original document
 - **Dependencies**: `mdx-forge` ^0.6.2 -> ^0.7.1 across the root, extension-host, webview-client & codegen; refreshed the root and webview-client dependency sets, including Babel 8, Node 26 types, VS Code test-electron 3, dependency-cruiser 18, ESLint 10.6, Vite 8.1, React 19.2, Shiki 4.3, Tailwind 4.3, and `actions/checkout` v7
+- **CI bundle budget**: Raised the extension bundle-size threshold from 20 MB to 25 MB after the Shiki 4 refresh; the total build threshold remains 100 MB
 
 ### Security
 
