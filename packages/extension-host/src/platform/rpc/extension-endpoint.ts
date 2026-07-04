@@ -21,8 +21,7 @@ interface EventListenerObject {
   handleEvent(event: { data: unknown }): void;
 }
 type EventListenerOrEventListenerObject =
-  | EventListenerCallback
-  | EventListenerObject;
+  EventListenerCallback | EventListenerObject;
 
 class ExtensionEndpoint implements Endpoint {
   webview: vscode.Webview;

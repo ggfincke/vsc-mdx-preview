@@ -26,11 +26,7 @@ const log = createTaggedLogger(LogTags.COMPLETION_PROVIDER);
 
 // completion context types
 type CompletionContext =
-  | 'jsx-tag'
-  | 'directive'
-  | 'github-alert'
-  | 'frontmatter'
-  | 'none';
+  'jsx-tag' | 'directive' | 'github-alert' | 'frontmatter' | 'none';
 
 // context detection patterns
 const GITHUB_ALERT_PATTERN = />\s*\[!/;
