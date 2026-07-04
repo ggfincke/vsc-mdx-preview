@@ -20,9 +20,8 @@ const DIAGNOSTIC_SOURCE = EXTENSION_DISPLAY_NAME;
 
 // docs anchor backing the clickable diagnostic code
 const DOCS_URI =
-  'https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/configuration.md#components';
+  'https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/configuration.md#framework-and-component-settings';
 
-// single anchor for v1; per-code anchors land w/ the docs page
 export function docsUriForCode(_code: string): vscode.Uri {
   return vscode.Uri.parse(DOCS_URI);
 }
@@ -92,12 +91,17 @@ export function toVsDiagnostic(d: Diagnostic): vscode.Diagnostic {
     (diagnostic as vscode.Diagnostic & { data?: unknown }).data = d.data;
   }
 
-  diagnostic.relatedInformation = [
-    new vscode.DiagnosticRelatedInformation(
-      new vscode.Location(docsUriForCode(d.code), new vscode.Range(0, 0, 0, 0)),
-      'Learn about component mapping'
-    ),
-  ];
+  if (d.code === MDXF_CODES.UNKNOWN_COMPONENT) {
+    diagnostic.relatedInformation = [
+      new vscode.DiagnosticRelatedInformation(
+        new vscode.Location(
+          docsUriForCode(d.code),
+          new vscode.Range(0, 0, 0, 0)
+        ),
+        'Learn about component mapping'
+      ),
+    ];
+  }
 
   return diagnostic;
 }
@@ -106,8 +110,7 @@ export function toVsDiagnostic(d: Diagnostic): vscode.Diagnostic {
 export type DiagnosticProducer = 'analysis' | 'compile';
 
 // ! single owner for the 'mdx-components' collection
-// DiagnosticCollection.set replaces all items for a uri; merge producers here so
-// the future Source-A (compile) slice can coexist w/ Source-B (analysis)
+// merge producers here because DiagnosticCollection.set replaces uri items
 export class DiagnosticPublisher {
   private readonly byUri = new Map<
     string,

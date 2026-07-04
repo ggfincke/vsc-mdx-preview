@@ -22,9 +22,9 @@ import { resolveConfig } from '../preview/configuration/ConfigResolver';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { getErrorReporter, getFrameworkDetector } from '../../app/services';
 import { ErrorContext } from '../../shared/errors/ErrorReporter';
+import { SingletonService } from '../../app/services/SingletonService';
 
 const log = createTaggedLogger(LogTags.COMPONENT_DIAGNOSTICS);
-import { SingletonService } from '../../app/services/SingletonService';
 
 // re-export the code table & normalizer so the barrel & code actions stay stable
 export { DIAGNOSTIC_CODES, readDiagnosticCode } from './diagnostic-adapter';
@@ -35,17 +35,16 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
   protected static override instance: ComponentDiagnostics | undefined;
   protected readonly logTag = LogTags.COMPONENT_DIAGNOSTICS;
 
-  private diagnosticCollection: vscode.DiagnosticCollection;
   private publisher: DiagnosticPublisher;
   private documentTimers = new Map<string, NodeJS.Timeout>();
 
   protected constructor() {
     super();
 
-    this.diagnosticCollection =
+    const diagnosticCollection =
       vscode.languages.createDiagnosticCollection('mdx-components');
-    this.addDisposable(this.diagnosticCollection);
-    this.publisher = new DiagnosticPublisher(this.diagnosticCollection);
+    this.addDisposable(diagnosticCollection);
+    this.publisher = new DiagnosticPublisher(diagnosticCollection);
 
     // listen for document changes
     this.addDisposable(
@@ -82,7 +81,12 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       })
     );
 
-    // scan already open MDX documents
+    this.addDisposable(
+      getFrameworkDetector().subscribe(() => {
+        this.scheduleOpenDocumentUpdates();
+      })
+    );
+
     for (const document of vscode.workspace.textDocuments) {
       if (this.isMdxDocument(document)) {
         this.scheduleUpdate(document);
@@ -114,6 +118,14 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
     }, 500);
 
     this.documentTimers.set(uriString, timer);
+  }
+
+  private scheduleOpenDocumentUpdates(): void {
+    for (const document of vscode.workspace.textDocuments) {
+      if (this.isMdxDocument(document)) {
+        this.scheduleUpdate(document);
+      }
+    }
   }
 
   // update diagnostics for a document

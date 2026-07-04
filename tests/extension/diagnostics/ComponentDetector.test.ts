@@ -59,6 +59,17 @@ describe('detectComponents', () => {
     expect(unknown).toEqual([]);
   });
 
+  it('treats default plus named imports as known', async () => {
+    const result = await detectComponents(
+      "import Foo, { Bar } from './widgets';\n\n<Foo />\n<Bar />\n",
+      { detectImports: true, includePositions: false },
+      new Set()
+    );
+
+    const unknown = getUnknownComponents(result).map((c) => c.name);
+    expect(unknown).toEqual([]);
+  });
+
   it('includePositions returns the correct range for a known-line component', async () => {
     const result = await detectComponents(
       mdxSample,
@@ -124,5 +135,42 @@ describe('frontmatter safety & positions', () => {
     const found = result.components.find((c) => c.name === 'Frobnicate');
     // <Frobnicate /> is on 0-based line 2 (original line 3)
     expect(found?.range.start.line).toBe(2);
+  });
+
+  it('does not offset a BOM-only document as frontmatter', async () => {
+    const result = await detectComponents(
+      '\uFEFFintro\n\n---\n\n<Frobnicate />\n',
+      { detectImports: false, includePositions: true },
+      new Set()
+    );
+    const found = result.components.find((c) => c.name === 'Frobnicate');
+    expect(found?.range.start.line).toBe(4);
+  });
+
+  it('reclassifies cached components for each framework', async () => {
+    const source = '<CodeBlock>code</CodeBlock>\n';
+    const uri = 'file:///workspace/doc.mdx';
+
+    const docusaurus = await detectComponents(
+      source,
+      {
+        detectImports: false,
+        includePositions: false,
+        framework: 'docusaurus',
+      },
+      new Set(),
+      uri
+    );
+    const generic = await detectComponents(
+      source,
+      { detectImports: false, includePositions: false, framework: 'generic' },
+      new Set(),
+      uri
+    );
+
+    expect(getUnknownComponents(docusaurus).map((c) => c.name)).toEqual([]);
+    expect(getUnknownComponents(generic).map((c) => c.name)).toEqual([
+      'CodeBlock',
+    ]);
   });
 });

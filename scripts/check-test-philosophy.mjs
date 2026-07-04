@@ -68,8 +68,8 @@ const EXACT_ALLOWED = new Set([
 ]);
 
 const CASE_COUNT_OVERRIDES = new Map([
-  ['tests/extension/diagnostics/ComponentDetector.test.ts', 8],
-  ['tests/extension/diagnostics/ComponentDiagnostics.test.ts', 6],
+  ['tests/extension/diagnostics/ComponentDetector.test.ts', 11],
+  ['tests/extension/diagnostics/ComponentDiagnostics.test.ts', 7],
   ['tests/resolution/unified-resolver.test.ts', 6],
   ['tests/shared/constant-parity.test.ts', 10],
   ['tests/shared/duplicate-divergence.test.ts', 5],

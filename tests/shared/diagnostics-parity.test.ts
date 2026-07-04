@@ -38,6 +38,9 @@ describe('cross-repo diagnostics parity', () => {
       classifyComponentSource('Callout', { ...EMPTY, framework: 'generic' })
     ).toBe('builtin');
     expect(
+      classifyComponentSource('Alert', { ...EMPTY, framework: 'generic' })
+    ).toBe('builtin');
+    expect(
       classifyComponentSource('CodeBlock', {
         ...EMPTY,
         framework: 'docusaurus',

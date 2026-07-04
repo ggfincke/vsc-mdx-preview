@@ -37,6 +37,11 @@ export default tseslint.config(
           ],
           patterns: [
             {
+              group: ['gray-matter/*'],
+              message:
+                'Use safeMatter from mdx-forge/compiler; raw gray-matter evals ---js frontmatter (CWE-94).',
+            },
+            {
               group: ['**/webview-client/**'],
               message:
                 'Extension/shared code must not import from webview-client.',

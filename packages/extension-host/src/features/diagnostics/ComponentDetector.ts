@@ -15,10 +15,10 @@ import {
   extractErrorMessage,
 } from '@mdx-preview/runtime-utils';
 import type {
-  DetectedComponent,
   ComponentDetectionResult,
   ComponentDetectionOptions,
   ComponentSource,
+  DetectedComponent,
   MdxJsxElement,
   MdxjsEsmNode,
 } from '../types';
@@ -33,8 +33,6 @@ import {
 } from 'mdx-forge/components/registry';
 
 const log = createTaggedLogger(LogTags.COMPONENT_DETECTOR);
-
-// caching for parse results
 
 // cache for component detection results w/ content-hash validation
 const parseCache = new ContentHashCache<ComponentDetectionResult>({
@@ -51,10 +49,6 @@ function contentHash(str: string): string {
   }
   return (hash >>> 0).toString(16);
 }
-
-// types
-
-// using isFrameworkComponent() helper from shared instead of local Set
 
 // HTML element names (lowercase) - not components
 const HTML_ELEMENTS = new Set([
@@ -183,10 +177,13 @@ function isHtmlElement(name: string): boolean {
 }
 
 // extract component imports from ESM node (PascalCase local names only)
-function extractImports(esmValue: string): Map<string, string> {
+function extractImports(esmNode: MdxjsEsmNode): Map<string, string> {
   const imports = new Map<string, string>();
 
-  for (const parsed of parseEsmImports(esmValue)) {
+  for (const parsed of parseEsmImports(
+    esmNode.value,
+    esmNode.data?.estree ?? undefined
+  )) {
     if (parsed.defaultImport && isPascalCase(parsed.defaultImport)) {
       imports.set(parsed.defaultImport, parsed.path);
     }
@@ -205,8 +202,7 @@ function extractImports(esmValue: string): Map<string, string> {
   return imports;
 }
 
-// classify via the shared mdx-forge ladder (framework-accurate, single source)
-function determineComponentSource(
+function classifyComponent(
   name: string,
   importNames: ReadonlySet<string>,
   configComponents: ReadonlySet<string>,
@@ -239,7 +235,15 @@ export async function detectComponents(
     const cached = parseCache.getIfHashMatches(uri, hash);
     if (cached) {
       log.debug(`Cache hit for ${uri}`);
-      return cached;
+      return {
+        ...cached,
+        components: classifyComponents(
+          cached.components,
+          cached.imports,
+          configComponents,
+          framework
+        ),
+      };
     }
   }
 
@@ -248,24 +252,24 @@ export async function detectComponents(
   const errors: string[] = [];
 
   try {
-    // parse MDX w/ shared helper (handles frontmatter stripping & offset)
-    const { ast: tree, frontmatterLineOffset } = analyzeMdxDocument(mdxText);
+    const {
+      ast: tree,
+      frontmatterLineOffset,
+      frontmatterColumnOffset,
+    } = analyzeMdxDocument(mdxText);
 
-    // first pass: collect imports
     if (detectImports) {
       visit(tree, 'mdxjsEsm', (node) => {
         const esmNode = node as unknown as MdxjsEsmNode;
-        const nodeImports = extractImports(esmNode.value);
+        const nodeImports = extractImports(esmNode);
         for (const [name, path] of nodeImports) {
           imports.set(name, path);
         }
       });
     }
 
-    // hoist import names once so per-component classification is O(1)
     const importNames = new Set(imports.keys());
 
-    // second pass: detect JSX components
     visit(tree, (node) => {
       if (
         node.type !== 'mdxJsxFlowElement' &&
@@ -277,17 +281,15 @@ export async function detectComponents(
       const jsxNode = node as unknown as MdxJsxElement;
       const name = jsxNode.name;
 
-      // skip fragments (<></>) & HTML elements
       if (!name || isHtmlElement(name)) {
         return;
       }
 
-      // only track PascalCase components (React convention)
       if (!isPascalCase(name)) {
         return;
       }
 
-      const source = determineComponentSource(
+      const source = classifyComponent(
         name,
         importNames,
         configComponents,
@@ -296,9 +298,12 @@ export async function detectComponents(
 
       let range: vscode.Range;
       if (includePositions && jsxNode.position) {
-        range = astPositionToRange(jsxNode.position, frontmatterLineOffset);
+        range = astPositionToRange(
+          jsxNode.position,
+          frontmatterLineOffset,
+          frontmatterColumnOffset
+        );
       } else {
-        // fallback to start of file
         range = new vscode.Range(0, 0, 0, 0);
       }
 
@@ -326,6 +331,24 @@ export async function detectComponents(
   }
 
   return result;
+}
+
+function classifyComponents(
+  components: readonly DetectedComponent[],
+  imports: ReadonlyMap<string, string>,
+  configComponents: ReadonlySet<string>,
+  framework: FrameworkId
+): DetectedComponent[] {
+  const importNames = new Set(imports.keys());
+  return components.map((component) => ({
+    ...component,
+    source: classifyComponent(
+      component.name,
+      importNames,
+      configComponents,
+      framework
+    ),
+  }));
 }
 
 // get unknown components from detection result

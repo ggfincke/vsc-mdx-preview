@@ -1,8 +1,9 @@
 // tests/extension/diagnostics/ComponentDiagnostics.test.ts
-// adapter unit tests: code value-lock, code normalization, range/severity mapping, publisher merge
+// adapter tests: code locks, range mapping, composed update, publisher merge
 
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect } from 'vitest';
 import {
+  ComponentDiagnostics,
   DIAGNOSTIC_CODES,
   readDiagnosticCode,
 } from '../../../packages/extension-host/src/features/diagnostics/ComponentDiagnostics';
@@ -15,23 +16,27 @@ import {
 } from '../../../packages/extension-host/src/features/diagnostics/diagnostic-adapter';
 import { EXTENSION_DISPLAY_NAME } from '../../../packages/extension-host/src/shared/constants';
 import type { Diagnostic as MdxDiagnostic } from 'mdx-forge/diagnostics';
+import { createMockDocument } from '../../helpers/mock-document';
 import {
-  Diagnostic,
-  DiagnosticSeverity,
-  Range,
-  Uri,
-  languages,
-} from 'vscode';
+  mockConfigCache,
+  mockErrorReporter,
+} from '../../helpers/mock-services';
+import { Diagnostic, DiagnosticSeverity, Range, Uri, languages } from 'vscode';
 
 const sampleDiagnostic: MdxDiagnostic = {
   code: 'MDXF001',
   ruleId: 'unknown-component',
   severity: 'warning',
   source: 'mdx-forge',
-  message: 'Unknown component "Frobnicate". Add it to .mdx-previewrc.json or use a built-in shim.',
+  message:
+    'Unknown component "Frobnicate". Add it to .mdx-previewrc.json or use a built-in shim.',
   range: { start: { line: 3, column: 1 }, end: { line: 3, column: 12 } },
   data: { componentName: 'Frobnicate', suggestions: [] },
 };
+
+afterEach(() => {
+  ComponentDiagnostics.reset();
+});
 
 function withCode(code: unknown): Diagnostic {
   const d = new Diagnostic(
@@ -98,6 +103,30 @@ describe('toVsDiagnostic', () => {
       suggestions: [],
     });
     expect(vs.relatedInformation).toHaveLength(1);
+  });
+});
+
+describe('ComponentDiagnostics.updateDiagnostics', () => {
+  it('publishes one MDXF001 diagnostic for an unknown component', async () => {
+    mockConfigCache.get.mockReturnValue(null);
+
+    const service = ComponentDiagnostics.getInstance();
+    const document = createMockDocument('<Callout />\n<Frobnicate />\n');
+
+    await service.updateDiagnostics(document as any);
+
+    const diagnostics = service.getDiagnostics(document.uri);
+    expect(mockErrorReporter.reportSilent).not.toHaveBeenCalled();
+    expect(diagnostics).toHaveLength(1);
+    expect(readDiagnosticCode(diagnostics[0])).toBe(
+      DIAGNOSTIC_CODES.UNKNOWN_COMPONENT
+    );
+    expect(diagnostics[0].range.start.line).toBe(1);
+    expect(diagnostics[0].range.start.character).toBe(0);
+    expect((diagnostics[0] as unknown as { data: unknown }).data).toEqual({
+      componentName: 'Frobnicate',
+      suggestions: [],
+    });
   });
 });
 

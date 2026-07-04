@@ -4,6 +4,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ComponentCodeActionsProvider } from '../../../packages/extension-host/src/features/diagnostics/ComponentCodeActions';
 import { DIAGNOSTIC_CODES } from '../../../packages/extension-host/src/features/diagnostics/ComponentDiagnostics';
+import { analyzeUnknownComponents } from 'mdx-forge/diagnostics/analyze';
 import { Diagnostic, DiagnosticSeverity, Range, Uri, workspace } from 'vscode';
 
 const provider = new ComponentCodeActionsProvider();
@@ -13,11 +14,7 @@ function createDiagnostic(
   message = `Unknown component "${name}". Add it to .mdx-previewrc.json or use a built-in shim.`
 ): Diagnostic {
   const range = new Range(0, 0, 0, name.length);
-  const diagnostic = new Diagnostic(
-    range,
-    message,
-    DiagnosticSeverity.Warning
-  );
+  const diagnostic = new Diagnostic(range, message, DiagnosticSeverity.Warning);
   diagnostic.code = DIAGNOSTIC_CODES.UNKNOWN_COMPONENT;
   diagnostic.data = { componentName: name };
   return diagnostic;
@@ -103,5 +100,38 @@ describe('ComponentCodeActionsProvider', () => {
 
     expect(addAction?.command?.arguments?.[0]).toBe('note');
     expect(builtinAction?.edit?.edits[0]?.newText).toBe('Callout');
+  });
+
+  it('falls back from the current mdx-forge message when data is absent', () => {
+    const document = {
+      uri: Uri.file('/workspace/docs.mdx'),
+    } as any;
+    const [engineDiagnostic] = analyzeUnknownComponents(
+      [
+        {
+          name: 'note',
+          range: { start: { line: 1, column: 1 }, end: { line: 1, column: 5 } },
+        },
+      ],
+      {
+        imports: new Set(),
+        configComponents: new Set(),
+        framework: 'generic',
+      }
+    );
+
+    const diagnostic = createDiagnostic('ignored', engineDiagnostic.message);
+    delete diagnostic.data;
+    const actions = provider.provideCodeActions(
+      document,
+      new Range(0, 0, 0, 4),
+      { diagnostics: [diagnostic] },
+      {} as any
+    );
+
+    const addAction = actions.find((action) =>
+      action.title.includes('.mdx-previewrc.json')
+    );
+    expect(addAction?.command?.arguments?.[0]).toBe('note');
   });
 });
