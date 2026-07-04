@@ -35,6 +35,7 @@ import {
   getConfigManager,
   getTrustManager,
   getErrorReporter,
+  getComponentDiagnostics,
 } from '../app/services';
 import type { ServiceFactory, IService } from '../app/services/types';
 import { TailwindProcessor } from '../features/tailwind/TailwindProcessor';
@@ -298,6 +299,9 @@ export async function activate(
 
   // register component diagnostics code actions
   registerComponentCodeActions(context);
+
+  // initialize component diagnostics so MDXF001 squiggles publish
+  getComponentDiagnostics();
 
   // register language feature providers (symbols, completions)
   registerLanguageProviders(context);

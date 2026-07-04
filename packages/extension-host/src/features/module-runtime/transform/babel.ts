@@ -19,14 +19,14 @@ let prewarmComplete = false;
 
 // module-level cache for lazily-initialized config items (G.4 optimization)
 // config items are only created on first transformAsync() call
-let cachedBabelOptions: BabelCore.TransformOptions | null = null;
+let cachedBabelOptions: BabelCore.InputOptions | null = null;
 
 // lazily initialize Babel options on first use
 // config items are cached after first creation to avoid repeated require() calls
 // this defers the expensive createConfigItem() & require() calls until first transform
 async function getBabelOptions(
   babel: typeof BabelCore
-): Promise<BabelCore.TransformOptions> {
+): Promise<BabelCore.InputOptions> {
   if (cachedBabelOptions) {
     return cachedBabelOptions;
   }
@@ -35,21 +35,28 @@ async function getBabelOptions(
   cachedBabelOptions = {
     presets: [
       // ES modules -> CommonJS (required for webview Function() evaluation)
-      babel.createConfigItem([
-        require('@babel/preset-env'),
-        {
-          modules: 'commonjs',
-          // only transform modules, not syntax (Node 20+ handles rest)
-          targets: { node: 'current' },
-        },
-      ]),
+      babel.createConfigItemSync(
+        [
+          require('@babel/preset-env'),
+          {
+            modules: 'commonjs',
+            // only transform modules, not syntax (Node 20+ handles rest)
+            targets: { node: 'current' },
+          },
+        ],
+        { type: 'preset' }
+      ),
       // JSX transformation (required for React components)
-      babel.createConfigItem(require('@babel/preset-react')),
+      babel.createConfigItemSync(
+        [require('@babel/preset-react'), { runtime: 'classic' }],
+        { type: 'preset' }
+      ),
     ],
     plugins: [
       // stage-1 proposal: export default from (not native in Node/browsers)
-      babel.createConfigItem(
-        require('@babel/plugin-proposal-export-default-from')
+      babel.createConfigItemSync(
+        require('@babel/plugin-proposal-export-default-from'),
+        { type: 'plugin' }
       ),
     ],
     // explicit options for performance
@@ -97,7 +104,7 @@ export function resetPrewarmState(): void {
 
 export const transformAsync = async (
   code: string
-): Promise<BabelCore.BabelFileResult | null> => {
+): Promise<BabelCore.FileResult | null> => {
   const babel = await getBabel();
   const options = await getBabelOptions(babel);
   return babel.transformAsync(code, options);

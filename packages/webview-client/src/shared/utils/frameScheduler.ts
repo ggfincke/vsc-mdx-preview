@@ -2,8 +2,7 @@
 // rAF w/ setTimeout fallback for environments without requestAnimationFrame
 
 export type ScheduledFrame =
-  | { type: 'animation'; id: number }
-  | { type: 'timeout'; id: number };
+  { type: 'animation'; id: number } | { type: 'timeout'; id: number };
 
 export function scheduleFrame(callback: FrameRequestCallback): ScheduledFrame {
   if (typeof window.requestAnimationFrame === 'function') {

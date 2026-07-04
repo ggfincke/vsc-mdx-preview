@@ -85,11 +85,7 @@ export class ConfigError extends ExtensionError {
 
 // tailwind errors: install, version, config & plugin failures
 export type TailwindErrorCode =
-  | 'E500'
-  | 'E501'
-  | 'E520'
-  | 'TAILWIND_COMPILATION_ERROR'
-  | 'E562';
+  'E500' | 'E501' | 'E520' | 'TAILWIND_COMPILATION_ERROR' | 'E562';
 
 export class TailwindError extends ExtensionError {
   constructor(

@@ -1,33 +1,33 @@
 // packages/extension-host/src/features/diagnostics/ComponentDiagnostics.ts
-// manage VS Code diagnostics for unknown MDX components
+// thin adapter: mdx-forge analyze rules -> vscode diagnostics for MDX components
 
 import * as vscode from 'vscode';
 import {
   detectComponents,
-  getUnknownComponents,
   invalidateComponentCache,
 } from './ComponentDetector';
-import type {
-  DetectedComponent,
-  UnknownComponentDiagnosticData,
-} from '../types';
+import {
+  DiagnosticPublisher,
+  fromVsRange,
+  toVsDiagnostic,
+} from './diagnostic-adapter';
 import { LogTags } from '@mdx-preview/contracts';
+import {
+  analyzeUnknownComponents,
+  type ClassifyContext,
+  type DetectedComponent as MdxDetectedComponent,
+} from 'mdx-forge/diagnostics/analyze';
+import type { FrameworkId } from 'mdx-forge/components/registry';
 import { resolveConfig } from '../preview/configuration/ConfigResolver';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { getErrorReporter } from '../../app/services';
+import { getErrorReporter, getFrameworkDetector } from '../../app/services';
 import { ErrorContext } from '../../shared/errors/ErrorReporter';
-import { EXTENSION_DISPLAY_NAME } from '../../shared/constants';
-
-const log = createTaggedLogger(LogTags.COMPONENT_DIAGNOSTICS);
 import { SingletonService } from '../../app/services/SingletonService';
 
-// diagnostic codes for component issues
-export const DIAGNOSTIC_CODES = {
-  UNKNOWN_COMPONENT: 'mdx-preview/unknown-component',
-} as const;
+const log = createTaggedLogger(LogTags.COMPONENT_DIAGNOSTICS);
 
-// diagnostic source name
-const DIAGNOSTIC_SOURCE = EXTENSION_DISPLAY_NAME;
+// re-export the code table & normalizer so the barrel & code actions stay stable
+export { DIAGNOSTIC_CODES, readDiagnosticCode } from './diagnostic-adapter';
 
 // * ComponentDiagnostics service
 // manage DiagnosticCollection for MDX component issues
@@ -35,15 +35,16 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
   protected static override instance: ComponentDiagnostics | undefined;
   protected readonly logTag = LogTags.COMPONENT_DIAGNOSTICS;
 
-  private diagnosticCollection: vscode.DiagnosticCollection;
+  private publisher: DiagnosticPublisher;
   private documentTimers = new Map<string, NodeJS.Timeout>();
 
   protected constructor() {
     super();
 
-    this.diagnosticCollection =
+    const diagnosticCollection =
       vscode.languages.createDiagnosticCollection('mdx-components');
-    this.addDisposable(this.diagnosticCollection);
+    this.addDisposable(diagnosticCollection);
+    this.publisher = new DiagnosticPublisher(diagnosticCollection);
 
     // listen for document changes
     this.addDisposable(
@@ -80,7 +81,12 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       })
     );
 
-    // scan already open MDX documents
+    this.addDisposable(
+      getFrameworkDetector().subscribe(() => {
+        this.scheduleOpenDocumentUpdates();
+      })
+    );
+
     for (const document of vscode.workspace.textDocuments) {
       if (this.isMdxDocument(document)) {
         this.scheduleUpdate(document);
@@ -114,6 +120,14 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
     this.documentTimers.set(uriString, timer);
   }
 
+  private scheduleOpenDocumentUpdates(): void {
+    for (const document of vscode.workspace.textDocuments) {
+      if (this.isMdxDocument(document)) {
+        this.scheduleUpdate(document);
+      }
+    }
+  }
+
   // update diagnostics for a document
   async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
     if (!this.isMdxDocument(document)) {
@@ -129,24 +143,33 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
         config?.config.components ? Object.keys(config.config.components) : []
       );
 
+      // resolve framework so classification is shim-accurate
+      const framework = this.resolveFramework(document.uri);
+
       // detect components in the document (pass URI for caching)
       const result = await detectComponents(
         document.getText(),
-        { includePositions: true, detectImports: true },
+        { includePositions: true, detectImports: true, framework },
         configComponents,
         document.uri.toString()
       );
 
-      // get unknown components
-      const unknownComponents = getUnknownComponents(result);
-
-      // create diagnostics
-      const diagnostics = unknownComponents.map((component) =>
-        this.createDiagnostic(component)
+      // classify + build diagnostics in mdx-forge, then map to vscode
+      const detected: MdxDetectedComponent[] = result.components.map((c) => ({
+        name: c.name,
+        range: fromVsRange(c.range),
+      }));
+      const ctx: ClassifyContext = {
+        imports: new Set(result.imports.keys()),
+        configComponents,
+        framework,
+      };
+      const diagnostics = analyzeUnknownComponents(detected, ctx).map(
+        toVsDiagnostic
       );
 
-      // update collection
-      this.diagnosticCollection.set(document.uri, diagnostics);
+      // publish via the single collection owner (producer = analysis)
+      this.publisher.set(document.uri, 'analysis', diagnostics);
 
       log.debug(`Set ${diagnostics.length} diagnostics for ${document.uri}`);
     } catch (err) {
@@ -157,55 +180,28 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
     }
   }
 
-  // create a VS Code diagnostic from detected component
-  private createDiagnostic(component: DetectedComponent): vscode.Diagnostic {
-    const message = `Unknown component "${component.name}". Add to .mdx-previewrc.json or use a built-in shim.`;
-
-    const diagnostic = new vscode.Diagnostic(
-      component.range,
-      message,
-      vscode.DiagnosticSeverity.Warning
-    );
-
-    diagnostic.source = DIAGNOSTIC_SOURCE;
-    diagnostic.code = DIAGNOSTIC_CODES.UNKNOWN_COMPONENT;
-
-    // carry the component name structurally so code actions need not re-parse the message
-    // Diagnostic.data is runtime-supported but absent from @types/vscode 1.90; cast
-    const data: UnknownComponentDiagnosticData = {
-      componentName: component.name,
-    };
-    (diagnostic as vscode.Diagnostic & { data?: unknown }).data = data;
-
-    // add related info about available options
-    diagnostic.relatedInformation = [
-      new vscode.DiagnosticRelatedInformation(
-        new vscode.Location(
-          vscode.Uri.parse(
-            'https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/configuration.md#components'
-          ),
-          new vscode.Range(0, 0, 0, 0)
-        ),
-        'Learn about component mapping'
-      ),
-    ];
-
-    return diagnostic;
+  // resolve the document framework, falling back to generic
+  private resolveFramework(uri: vscode.Uri): FrameworkId {
+    try {
+      return getFrameworkDetector().getFramework(uri).framework;
+    } catch {
+      return 'generic';
+    }
   }
 
   // clear diagnostics for a document
   clearDiagnostics(uri: vscode.Uri): void {
-    this.diagnosticCollection.delete(uri);
+    this.publisher.delete(uri);
   }
 
   // clear all diagnostics
   clearAll(): void {
-    this.diagnosticCollection.clear();
+    this.publisher.clear();
   }
 
   // get diagnostics for a document
   getDiagnostics(uri: vscode.Uri): readonly vscode.Diagnostic[] {
-    return this.diagnosticCollection.get(uri) || [];
+    return this.publisher.get(uri);
   }
 
   // custom cleanup - clear all timers

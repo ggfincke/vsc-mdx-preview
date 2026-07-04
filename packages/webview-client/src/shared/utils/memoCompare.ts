@@ -23,10 +23,7 @@ export function fastStringEquals(a: string, b: string): boolean {
 
 // comparison strategy for a field
 type FieldStrategy<V> =
-  | 'shallow'
-  | 'array'
-  | 'skip'
-  | ((prev: V, next: V) => boolean);
+  'shallow' | 'array' | 'skip' | ((prev: V, next: V) => boolean);
 
 // type for field comparator configuration
 type FieldConfig<T> = {

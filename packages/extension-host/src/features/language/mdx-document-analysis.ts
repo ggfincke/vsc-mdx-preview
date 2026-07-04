@@ -1,12 +1,11 @@
 // packages/extension-host/src/features/language/mdx-document-analysis.ts
-// shared MDX document parsing & analysis (frontmatter, AST, offset calculation)
-// used by MDXSymbolProvider, MDXCompletionProvider & ComponentDetector
+// shared MDX document parsing & analysis (frontmatter, AST, offsets)
 
 import * as vscode from 'vscode';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMdx from 'remark-mdx';
-import matter from 'gray-matter';
+import { extractFrontmatter } from 'mdx-forge/compiler';
 import type { Root } from 'mdast';
 import type { MdastPosition } from '../diagnostics/types';
 
@@ -24,6 +23,8 @@ export interface MdxDocumentAnalysis {
   // number of lines to add to AST positions to get original document positions
   // accounts for frontmatter lines stripped by gray-matter
   frontmatterLineOffset: number;
+  // number of columns to add to first-line AST positions
+  frontmatterColumnOffset: number;
   // 0-based line number of the closing --- delimiter (0 if no frontmatter)
   frontmatterEndLine: number;
   // whether the document has frontmatter
@@ -32,33 +33,27 @@ export interface MdxDocumentAnalysis {
 
 // parse an MDX document & extract frontmatter, AST & line offset
 export function analyzeMdxDocument(text: string): MdxDocumentAnalysis {
-  const matterResult = matter(text);
+  const matterResult = extractFrontmatter(text);
+  const hasFrontmatter =
+    matterResult.bodyStartLine > 1 || matterResult.bodyStartColumn > 1;
+  const frontmatterLineOffset = hasFrontmatter
+    ? matterResult.bodyStartLine - 1
+    : 0;
+  const frontmatterColumnOffset = hasFrontmatter
+    ? matterResult.bodyStartColumn - 1
+    : 0;
+  const frontmatterEndLine = hasFrontmatter
+    ? matterResult.bodyStartLine - (matterResult.bodyStartColumn > 1 ? 1 : 2)
+    : 0;
 
-  // calculate line offset for AST positions (gray-matter strips frontmatter)
-  // find the closing --- line in the original text to get exact offset
-  let frontmatterLineOffset = 0;
-  let frontmatterEndLine = 0;
-  const hasFrontmatter = Boolean(matterResult.matter);
-
-  if (hasFrontmatter) {
-    const lines = text.split('\n');
-    for (let i = 1; i < lines.length; i++) {
-      if (lines[i].trim() === '---') {
-        frontmatterEndLine = i;
-        frontmatterLineOffset = i + 1;
-        break;
-      }
-    }
-  }
-
-  // parse stripped content to AST
   const ast = mdxParser.parse(matterResult.content) as Root;
 
   return {
     ast,
-    frontmatter: matterResult.data as Record<string, unknown>,
+    frontmatter: matterResult.frontmatter,
     content: matterResult.content,
     frontmatterLineOffset,
+    frontmatterColumnOffset,
     frontmatterEndLine,
     hasFrontmatter,
   };
@@ -98,12 +93,21 @@ export function astLineToDocumentLine(
 // convert a 1-based mdast position to a 0-based document Range (frontmatter-adjusted)
 export function astPositionToRange(
   position: MdastPosition,
-  frontmatterLineOffset: number
+  frontmatterLineOffset: number,
+  frontmatterColumnOffset = 0
 ): vscode.Range {
+  const startCharacter =
+    position.start.column -
+    1 +
+    (position.start.line === 1 ? frontmatterColumnOffset : 0);
+  const endCharacter =
+    position.end.column -
+    1 +
+    (position.end.line === 1 ? frontmatterColumnOffset : 0);
   return new vscode.Range(
     astLineToDocumentLine(position.start.line, frontmatterLineOffset),
-    position.start.column - 1,
+    startCharacter,
     astLineToDocumentLine(position.end.line, frontmatterLineOffset),
-    position.end.column - 1
+    endCharacter
   );
 }

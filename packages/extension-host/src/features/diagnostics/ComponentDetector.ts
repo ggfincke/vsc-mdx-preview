@@ -8,17 +8,17 @@ import {
   astPositionToRange,
 } from '../language/mdx-document-analysis';
 import { parseEsmImports } from '../language/esm-imports';
-import { KNOWN_GENERIC_COMPONENTS } from 'mdx-forge/compiler';
+import { classifyComponentSource } from 'mdx-forge/diagnostics/analyze';
 import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
 import {
   ContentHashCache,
   extractErrorMessage,
 } from '@mdx-preview/runtime-utils';
 import type {
-  DetectedComponent,
   ComponentDetectionResult,
   ComponentDetectionOptions,
   ComponentSource,
+  DetectedComponent,
   MdxJsxElement,
   MdxjsEsmNode,
 } from '../types';
@@ -29,12 +29,10 @@ import { COMPONENT_CACHE_MAX_ENTRIES } from '../../shared/constants/runtime';
 import {
   getCanonicalComponentName,
   getGenericComponentSet,
-  isFrameworkComponent,
+  type FrameworkId,
 } from 'mdx-forge/components/registry';
 
 const log = createTaggedLogger(LogTags.COMPONENT_DETECTOR);
-
-// caching for parse results
 
 // cache for component detection results w/ content-hash validation
 const parseCache = new ContentHashCache<ComponentDetectionResult>({
@@ -51,10 +49,6 @@ function contentHash(str: string): string {
   }
   return (hash >>> 0).toString(16);
 }
-
-// types
-
-// using isFrameworkComponent() helper from shared instead of local Set
 
 // HTML element names (lowercase) - not components
 const HTML_ELEMENTS = new Set([
@@ -183,10 +177,13 @@ function isHtmlElement(name: string): boolean {
 }
 
 // extract component imports from ESM node (PascalCase local names only)
-function extractImports(esmValue: string): Map<string, string> {
+function extractImports(esmNode: MdxjsEsmNode): Map<string, string> {
   const imports = new Map<string, string>();
 
-  for (const parsed of parseEsmImports(esmValue)) {
+  for (const parsed of parseEsmImports(
+    esmNode.value,
+    esmNode.data?.estree ?? undefined
+  )) {
     if (parsed.defaultImport && isPascalCase(parsed.defaultImport)) {
       imports.set(parsed.defaultImport, parsed.path);
     }
@@ -205,33 +202,17 @@ function extractImports(esmValue: string): Map<string, string> {
   return imports;
 }
 
-// determine component source based on name & imports
-function determineComponentSource(
+function classifyComponent(
   name: string,
-  imports: Map<string, string>,
-  configComponents: Set<string>
+  importNames: ReadonlySet<string>,
+  configComponents: ReadonlySet<string>,
+  framework: FrameworkId
 ): ComponentSource {
-  // check if explicitly imported
-  if (imports.has(name)) {
-    return 'import';
-  }
-
-  // check if defined in config
-  if (configComponents.has(name)) {
-    return 'config';
-  }
-
-  // check if builtin generic component
-  if (KNOWN_GENERIC_COMPONENTS.has(name)) {
-    return 'builtin';
-  }
-
-  // check if framework shim
-  if (isFrameworkComponent(name)) {
-    return 'framework';
-  }
-
-  return 'unknown';
+  return classifyComponentSource(name, {
+    imports: importNames,
+    configComponents,
+    framework,
+  });
 }
 
 // detect JSX components in MDX text
@@ -244,6 +225,7 @@ export async function detectComponents(
   uri?: string
 ): Promise<ComponentDetectionResult> {
   const { includePositions = true, detectImports = true } = options;
+  const framework = options.framework ?? 'generic';
 
   // hoist hash so cache lookup & store share one full-text pass
   const hash = uri ? contentHash(mdxText) : undefined;
@@ -253,7 +235,15 @@ export async function detectComponents(
     const cached = parseCache.getIfHashMatches(uri, hash);
     if (cached) {
       log.debug(`Cache hit for ${uri}`);
-      return cached;
+      return {
+        ...cached,
+        components: classifyComponents(
+          cached.components,
+          cached.imports,
+          configComponents,
+          framework
+        ),
+      };
     }
   }
 
@@ -262,21 +252,24 @@ export async function detectComponents(
   const errors: string[] = [];
 
   try {
-    // parse MDX w/ shared helper (handles frontmatter stripping & offset)
-    const { ast: tree, frontmatterLineOffset } = analyzeMdxDocument(mdxText);
+    const {
+      ast: tree,
+      frontmatterLineOffset,
+      frontmatterColumnOffset,
+    } = analyzeMdxDocument(mdxText);
 
-    // first pass: collect imports
     if (detectImports) {
       visit(tree, 'mdxjsEsm', (node) => {
         const esmNode = node as unknown as MdxjsEsmNode;
-        const nodeImports = extractImports(esmNode.value);
+        const nodeImports = extractImports(esmNode);
         for (const [name, path] of nodeImports) {
           imports.set(name, path);
         }
       });
     }
 
-    // second pass: detect JSX components
+    const importNames = new Set(imports.keys());
+
     visit(tree, (node) => {
       if (
         node.type !== 'mdxJsxFlowElement' &&
@@ -288,23 +281,29 @@ export async function detectComponents(
       const jsxNode = node as unknown as MdxJsxElement;
       const name = jsxNode.name;
 
-      // skip fragments (<></>) & HTML elements
       if (!name || isHtmlElement(name)) {
         return;
       }
 
-      // only track PascalCase components (React convention)
       if (!isPascalCase(name)) {
         return;
       }
 
-      const source = determineComponentSource(name, imports, configComponents);
+      const source = classifyComponent(
+        name,
+        importNames,
+        configComponents,
+        framework
+      );
 
       let range: vscode.Range;
       if (includePositions && jsxNode.position) {
-        range = astPositionToRange(jsxNode.position, frontmatterLineOffset);
+        range = astPositionToRange(
+          jsxNode.position,
+          frontmatterLineOffset,
+          frontmatterColumnOffset
+        );
       } else {
-        // fallback to start of file
         range = new vscode.Range(0, 0, 0, 0);
       }
 
@@ -332,6 +331,24 @@ export async function detectComponents(
   }
 
   return result;
+}
+
+function classifyComponents(
+  components: readonly DetectedComponent[],
+  imports: ReadonlyMap<string, string>,
+  configComponents: ReadonlySet<string>,
+  framework: FrameworkId
+): DetectedComponent[] {
+  const importNames = new Set(imports.keys());
+  return components.map((component) => ({
+    ...component,
+    source: classifyComponent(
+      component.name,
+      importNames,
+      configComponents,
+      framework
+    ),
+  }));
 }
 
 // get unknown components from detection result

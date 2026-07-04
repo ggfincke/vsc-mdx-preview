@@ -13,11 +13,7 @@ import type {
 
 // message types for queued handlers (can be buffered until React mounts)
 export type QueuedMessageType =
-  | 'trust'
-  | 'safe'
-  | 'trusted'
-  | 'error'
-  | 'stale';
+  'trust' | 'safe' | 'trusted' | 'error' | 'stale';
 
 // required state handlers that must be registered by App component
 export interface RequiredStateHandlers {

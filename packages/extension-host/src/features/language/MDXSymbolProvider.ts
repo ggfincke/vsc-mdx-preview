@@ -214,6 +214,7 @@ export function extractMDXSymbols(
     ast: tree,
     frontmatter: fmData,
     frontmatterLineOffset,
+    frontmatterColumnOffset,
     frontmatterEndLine,
   } = analyzeMdxDocument(text);
 
@@ -232,7 +233,11 @@ export function extractMDXSymbols(
   visit(tree, 'mdxjsEsm', (node) => {
     const esmNode = node as unknown as MdxjsEsmNode;
     if (esmNode.position) {
-      const range = astPositionToRange(esmNode.position, frontmatterLineOffset);
+      const range = astPositionToRange(
+        esmNode.position,
+        frontmatterLineOffset,
+        frontmatterColumnOffset
+      );
       esmNodes.push({ value: esmNode.value, range });
     }
   });
@@ -247,7 +252,11 @@ export function extractMDXSymbols(
   visit(tree, 'heading', (node) => {
     const heading = node as unknown as HeadingNode;
     if (heading.position) {
-      const range = astPositionToRange(heading.position, frontmatterLineOffset);
+      const range = astPositionToRange(
+        heading.position,
+        frontmatterLineOffset,
+        frontmatterColumnOffset
+      );
       headings.push({
         depth: heading.depth,
         text: extractHeadingText(heading.children),

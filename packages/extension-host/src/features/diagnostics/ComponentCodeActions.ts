@@ -4,7 +4,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { writeFileSync } from 'fs';
-import { DIAGNOSTIC_CODES } from './ComponentDiagnostics';
+import { DIAGNOSTIC_CODES, readDiagnosticCode } from './ComponentDiagnostics';
+import { docsUriForCode } from './diagnostic-adapter';
 import type { UnknownComponentDiagnosticData } from '../types';
 import { KNOWN_GENERIC_COMPONENTS } from 'mdx-forge/compiler';
 import {
@@ -28,8 +29,7 @@ const UNKNOWN_COMPONENT_MESSAGE_PATTERN = /^Unknown component "([^"]+)"/;
 // read component name from data first, then VS Code-preserved message text
 function readComponentName(diagnostic: vscode.Diagnostic): string | null {
   const data = (diagnostic as vscode.Diagnostic & { data?: unknown }).data as
-    | UnknownComponentDiagnosticData
-    | undefined;
+    UnknownComponentDiagnosticData | undefined;
   if (data && typeof data.componentName === 'string' && data.componentName) {
     return data.componentName;
   }
@@ -50,9 +50,9 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
   ): vscode.CodeAction[] {
     const actions: vscode.CodeAction[] = [];
 
-    // filter to only our diagnostics
+    // filter to only our diagnostics (code may be a clickable { value, target })
     const relevantDiagnostics = context.diagnostics.filter(
-      (d) => d.code === DIAGNOSTIC_CODES.UNKNOWN_COMPONENT
+      (d) => readDiagnosticCode(d) === DIAGNOSTIC_CODES.UNKNOWN_COMPONENT
     );
 
     for (const diagnostic of relevantDiagnostics) {
@@ -187,11 +187,7 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
     action.command = {
       title: 'Open documentation',
       command: 'vscode.open',
-      arguments: [
-        vscode.Uri.parse(
-          'https://github.com/ggfincke/vsc-mdx-preview/blob/main/docs/configuration.md#components'
-        ),
-      ],
+      arguments: [docsUriForCode(DIAGNOSTIC_CODES.UNKNOWN_COMPONENT)],
     };
 
     return action;

@@ -2,14 +2,12 @@
 // type definitions for component diagnostics system
 
 import type * as vscode from 'vscode';
+import type { FrameworkId } from 'mdx-forge/components/registry';
+import type { ComponentSource } from 'mdx-forge/diagnostics/analyze';
+import type { UnknownComponentData } from 'mdx-forge/diagnostics';
+import type { Program } from 'estree';
 
-// source of a known component (builtin shims, framework shims, config, import, or unknown)
-export type ComponentSource =
-  | 'builtin'
-  | 'framework'
-  | 'config'
-  | 'import'
-  | 'unknown';
+export type { ComponentSource };
 
 // detected JSX component in an MDX file
 export interface DetectedComponent {
@@ -23,12 +21,7 @@ export interface DetectedComponent {
   hasChildren: boolean;
 }
 
-// structured payload on vscode.Diagnostic.data for unknown-component diagnostics
-// lets code actions read the component name w/o re-parsing the message prose
-export interface UnknownComponentDiagnosticData {
-  // unknown component name
-  componentName: string;
-}
+export type UnknownComponentDiagnosticData = UnknownComponentData;
 
 // mdast position (1-based line, 1-based column)
 export interface MdastPosition {
@@ -41,6 +34,7 @@ export interface MdxjsEsmNode {
   type: 'mdxjsEsm';
   value: string;
   position?: MdastPosition;
+  data?: { estree?: Program | null };
 }
 
 // result of component detection
@@ -59,4 +53,6 @@ export interface ComponentDetectionOptions {
   includePositions?: boolean;
   // detect imports
   detectImports?: boolean;
+  // resolved framework for shim-aware classification (defaults to generic)
+  framework?: FrameworkId;
 }

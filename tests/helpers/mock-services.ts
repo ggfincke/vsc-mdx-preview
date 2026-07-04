@@ -35,6 +35,7 @@ export const mockFrameworkDetector = {
   getFramework: vi.fn(() => ({ framework: 'generic', confidence: 1 })),
   areShimsEnabled: vi.fn(() => true),
   getFrameworkDisplayName: vi.fn((id: string) => id),
+  subscribe: vi.fn(() => ({ dispose: vi.fn() })),
 };
 
 export const mockErrorReporter = {

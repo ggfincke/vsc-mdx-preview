@@ -44,7 +44,19 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
+          paths: [
+            {
+              name: 'gray-matter',
+              message:
+                'Use safeMatter from mdx-forge/compiler; raw gray-matter evals ---js frontmatter (CWE-94).',
+            },
+          ],
           patterns: [
+            {
+              group: ['gray-matter/*'],
+              message:
+                'Use safeMatter from mdx-forge/compiler; raw gray-matter evals ---js frontmatter (CWE-94).',
+            },
             {
               group: ['**/extension-host/**', '**/extension/**'],
               message: 'Webview code must not import from extension-host.',
