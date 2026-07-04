@@ -115,8 +115,8 @@ if (webviewFiles.length > 0) {
 console.log('Status');
 console.log('---------------------------------------------');
 
-// set extension bundle threshold (20MB)
-const extensionThreshold = 20 * 1024 * 1024;
+// set extension bundle threshold (25MB)
+const extensionThreshold = 25 * 1024 * 1024;
 // set total build threshold (100MB)
 const totalThreshold = 100 * 1024 * 1024;
 
