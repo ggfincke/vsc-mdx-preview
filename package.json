@@ -821,7 +821,7 @@
     "@types/babel__core": "^7.20.5",
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^26.1.0",
-    "@types/vscode": "1.90.0",
+    "@types/vscode": "1.125.0",
     "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "^3.9.2",
     "concurrently": "^10.0.3",
@@ -836,7 +836,7 @@
     "tsx": "^4.23.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.1",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "@babel/core": "^8.0.1",
