@@ -23,6 +23,15 @@ const buildOptions = {
   ],
   // VS Code extension host requires CommonJS
   format: 'cjs',
+  // esbuild lowers import.meta to an empty object in CJS output, so bundled ESM
+  // sources (e.g. @babel/core) crash in createRequire w/ undefined filename
+  // Shim import.meta.url w/ the CJS equivalent derived from __filename
+  banner: {
+    js: "const import_meta_url = require('node:url').pathToFileURL(__filename).href;",
+  },
+  define: {
+    'import.meta.url': 'import_meta_url',
+  },
   platform: 'node',
   target: 'node20',
   sourcemap: !production,
