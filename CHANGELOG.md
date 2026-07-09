@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-07-08
+
+### Fixed
+
+- **Preview crash from `import.meta.url` in the CJS extension bundle**: esbuild lowers `import.meta` to an empty object in CommonJS output, so bundled ESM sources (e.g. `@babel/core`'s config-file loader) crashed at preview time with `createRequire(import.meta.url)` receiving `undefined`. The extension build now defines `import.meta.url` as a banner-provided `file://` URL derived from `__filename`, and CI/release verify the shim is present in the bundle (#113, fixes #112)
+
 ## [1.6.0] - 2026-07-03
 
 ### Changed
