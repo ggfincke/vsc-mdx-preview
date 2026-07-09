@@ -55,6 +55,7 @@ esbuild.config.mjs
 package-lock.json
 
 # Claude/AI configuration
+.agents/**
 .claude/**
 
 # Scripts (development only)

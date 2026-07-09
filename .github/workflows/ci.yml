@@ -64,6 +64,9 @@ jobs:
       - name: Build extension
         run: npm run build
 
+      - name: Check import.meta.url CJS shim
+        run: npm run check:import-meta-shim
+
       - name: Bundle size check
         run: npm run size:report
 
