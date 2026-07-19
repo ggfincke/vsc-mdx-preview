@@ -370,6 +370,17 @@ class ExtensionHandle implements ExtensionRPC {
       return undefined;
     }
 
+    // workspace trust gate: rendering sends diagram source to a remote server
+    if (
+      !tryRequireWorkspaceTrusted('render PlantUML', (error) =>
+        log.warn(`renderPlantUml: blocked - ${error.message}`)
+      )
+    ) {
+      throw new Error(
+        'PlantUML rendering is disabled in untrusted workspaces because diagram source is sent to a remote render server. Trust this workspace to enable it.'
+      );
+    }
+
     const serverUrl = getConfigManager().get(SETTINGS.PLANTUML_SERVER);
     const endpoints = getPlantUmlRenderEndpoints(serverUrl);
     let lastError: unknown = null;

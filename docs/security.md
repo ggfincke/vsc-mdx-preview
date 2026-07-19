@@ -519,6 +519,19 @@ When in a remote environment, `getTrustManager().canUseTrustedMode()` returns:
 
 ---
 
+## Network Egress
+
+The extension makes **one category of outbound network request**: PlantUML rendering.
+
+- PlantUML code blocks are rendered by POSTing the **raw diagram source** to the server configured in `mdx-preview.diagrams.plantUmlServer` (default: the public [Kroki](https://kroki.io) service).
+- Rendering is **gated on Workspace Trust** — untrusted workspaces never send anything; the diagram slot shows an explanatory error instead.
+- The server setting is listed in `restrictedConfigurations`, so a repository's `.vscode/settings.json` cannot redirect it while the workspace is untrusted.
+- For private diagrams, point `plantUmlServer` at a self-hosted Kroki/PlantUML instance.
+
+No telemetry, analytics, crash reporting, or update checks are performed. All other rendering (Markdown/MDX, Mermaid, Graphviz, KaTeX, Shiki) happens locally.
+
+---
+
 ## Security Checklist for Developers
 
 When modifying security-sensitive code, verify:

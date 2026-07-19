@@ -80,7 +80,8 @@
       "description": "In Restricted Mode, MDX Preview renders content as static HTML only. JavaScript execution and custom components require a trusted workspace with scripts enabled.",
       "restrictedConfigurations": [
         "mdx-preview.preview.enableScripts",
-        "mdx-preview.diagrams.mermaidIconPacks"
+        "mdx-preview.diagrams.mermaidIconPacks",
+        "mdx-preview.diagrams.plantUmlServer"
       ]
     }
   },
@@ -580,7 +581,7 @@
         "mdx-preview.diagrams.plantUmlServer": {
           "type": "string",
           "default": "https://kroki.io",
-          "markdownDescription": "PlantUML rendering server URL. Supports Kroki (`https://kroki.io`) and compatible PlantUML servers.",
+          "markdownDescription": "PlantUML rendering server URL. Supports Kroki (`https://kroki.io`) and compatible PlantUML servers. **Diagram source is sent to this server** — point it at a self-hosted instance to keep diagrams private. Rendering only occurs in trusted workspaces.",
           "scope": "resource"
         },
         "mdx-preview.diagrams.mermaidIconPacks": {
