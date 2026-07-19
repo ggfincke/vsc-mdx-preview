@@ -10,6 +10,6 @@
   "dependencies": {
     "@mdx-preview/contracts": "*",
     "@mdx-preview/runtime-utils": "*",
-    "mdx-forge": "^0.7.1"
+    "mdx-forge": "^0.8.0"
   }
 }

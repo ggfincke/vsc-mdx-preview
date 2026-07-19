@@ -15,7 +15,6 @@ import { LogTags } from '@mdx-preview/contracts';
 import {
   analyzeUnknownComponents,
   type ClassifyContext,
-  type DetectedComponent as MdxDetectedComponent,
 } from 'mdx-forge/diagnostics/analyze';
 import type { FrameworkId } from 'mdx-forge/components/registry';
 import { resolveConfig } from '../preview/configuration/ConfigResolver';
@@ -155,10 +154,17 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
       );
 
       // classify + build diagnostics in mdx-forge, then map to vscode
-      const detected: MdxDetectedComponent[] = result.components.map((c) => ({
-        name: c.name,
-        range: fromVsRange(c.range),
-      }));
+      // inferred shape carries root/members/attributes for newer engines; 0.7.x ignores them
+      const detected = result.components.map((c) => {
+        const [root = c.name, ...members] = c.name.split('.');
+        return {
+          name: c.name,
+          root,
+          members,
+          attributes: [],
+          range: fromVsRange(c.range),
+        };
+      });
       const ctx: ClassifyContext = {
         imports: new Set(result.imports.keys()),
         configComponents,
