@@ -12,39 +12,43 @@ async function createRegistry() {
 
 describe('ModuleRegistry', () => {
   describe('style tracking', () => {
-    it('should add new style with refCount 1', async () => {
+    it('should track injected css bytes for a module', async () => {
       const registry = await createRegistry();
 
-      registry.markStyleInjected('style-1');
+      registry.trackStyleInjected('/a.css', 'body{color:red}');
 
-      expect(registry.hasInjectedStyle('style-1')).toBe(true);
+      expect(registry.hasInjectedStyle('/a.css')).toBe(true);
+      expect(registry.getInjectedCss('/a.css')).toBe('body{color:red}');
       expect(registry.getStats().styles).toBe(1);
     });
 
-    it('should move style to unreferenced when refCount hits 0', async () => {
+    // the cached module owns its style, so invalidation drops both
+    it('should untrack a style when its owning module is invalidated', async () => {
       const registry = await createRegistry();
 
-      registry.markStyleInjected('style-1');
-      registry.decrementStyleRef('style-1');
+      registry.set('/a.css', { id: '/a.css', exports: {}, loaded: true });
+      registry.trackStyleInjected('/a.css', 'body{color:red}');
 
-      expect(registry.hasInjectedStyle('style-1')).toBe(true);
-      expect(registry.getStats().styles).toBe(1);
+      registry.invalidate('/a.css');
+
+      expect(registry.hasInjectedStyle('/a.css')).toBe(false);
+      expect(registry.getStats().styles).toBe(0);
     });
 
-    it('should not evict referenced styles', async () => {
+    it('should not evict styles whose owning module is still cached', async () => {
       const registry = await createRegistry();
       registry.configureLRU({ maxStyles: 2 });
 
-      registry.markStyleInjected('style-1');
-      registry.markStyleInjected('style-2');
-      registry.markStyleInjected('style-3');
+      // a live owning module protects its style from capacity eviction
+      for (const id of ['/a.css', '/b.css', '/c.css']) {
+        registry.set(id, { id, exports: {}, loaded: true });
+        registry.trackStyleInjected(id, 'body{}');
+      }
 
-      // All should still exist (capacity exceeded but can't evict)
-      expect(registry.hasInjectedStyle('style-1')).toBe(true);
-      expect(registry.hasInjectedStyle('style-2')).toBe(true);
-      expect(registry.hasInjectedStyle('style-3')).toBe(true);
+      expect(registry.hasInjectedStyle('/a.css')).toBe(true);
+      expect(registry.hasInjectedStyle('/b.css')).toBe(true);
+      expect(registry.hasInjectedStyle('/c.css')).toBe(true);
     });
-
   });
 
   describe('dependency tracking', () => {

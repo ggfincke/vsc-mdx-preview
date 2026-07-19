@@ -110,6 +110,9 @@ describe('ComponentCodeActionsProvider', () => {
       [
         {
           name: 'note',
+          root: 'note',
+          members: [],
+          attributes: [],
           range: { start: { line: 1, column: 1 }, end: { line: 1, column: 5 } },
         },
       ],
