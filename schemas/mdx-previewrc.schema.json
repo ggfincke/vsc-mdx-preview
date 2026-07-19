@@ -159,7 +159,7 @@
             "enabled",
             "disabled"
           ],
-          "default": "enabled",
+          "default": "auto",
           "description": "Enable Tailwind CSS compilation in previews."
         },
         "configPath": {

@@ -33,7 +33,8 @@ export const DEFAULT_DIAGRAMS_MERMAID_ICON_PACKS: MermaidIconPackSetting[] = [];
 export const DEFAULT_USE_SUCRASE_TRANSPILER = false;
 
 // tailwind defaults
-export const DEFAULT_TAILWIND_ENABLED = 'enabled' as const;
+// auto: only compile when the project actually has Tailwind (preflight breaks non-Tailwind previews)
+export const DEFAULT_TAILWIND_ENABLED = 'auto' as const;
 export const DEFAULT_TAILWIND_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 export const DEFAULT_TAILWIND_MAX_CSS_FILES_TO_SEARCH = 500;
 export const DEFAULT_TAILWIND_CACHE_MAX_ENTRIES = 50;

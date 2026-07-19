@@ -6,6 +6,7 @@ import {
   TAILWIND_ENABLED_VALUES,
   UNKNOWN_BEHAVIOR_VALUES,
 } from './enums';
+import { DEFAULT_TAILWIND_ENABLED } from './defaults';
 
 // shared JSON schema for plugin specification items (remark & rehype)
 const PLUGIN_SPEC_ITEMS = {
@@ -118,7 +119,7 @@ export const MDX_PREVIEW_CONFIG_SCHEMA = {
         enabled: {
           type: 'string',
           enum: [...TAILWIND_ENABLED_VALUES],
-          default: 'enabled',
+          default: DEFAULT_TAILWIND_ENABLED,
           description: 'Enable Tailwind CSS compilation in previews.',
         },
         configPath: {
