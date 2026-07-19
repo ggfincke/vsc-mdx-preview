@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Tailwind processing now defaults to `"auto"`** (previously `"enabled"`): the preview compiles Tailwind only when the workspace has Tailwind input — a `tailwind.config.*` file, an entry CSS containing Tailwind directives (`@tailwind` / `@import "tailwindcss"`), or an inline `<style type="text/tailwindcss">` block. This stops Tailwind's preflight reset from restyling previews of projects that don't use Tailwind. **Migration:** if you relied on writing Tailwind classes in MDX without any Tailwind setup in the workspace, set `mdx-preview.tailwind.enabled` to `"enabled"` to restore the old behavior
+- **Safe Mode explainer moved to first preview open**: the one-time notification now appears when a preview is first opened (not at extension activation) and also covers trusted workspaces where scripts are disabled — including single-file windows with no folder open — with a direct Enable Scripts action
+- **Smaller install**: the extension package no longer ships unbundled per-package compiled sources, the demo GIF, or development docs (~20.7 MB -> ~8.3 MB)
+
+### Fixed
+
+- **Stale renders while typing**: evaluations now carry a monotonic token, so a slow compile can no longer finish late and overwrite a newer render (previously the preview could flicker back to an earlier state and stick until the next keystroke). Superseded compiles also no longer flash their errors over current content
+- **Preview lifecycle on panel close**: closing the preview panel now disposes its file watchers and related resources; previously they kept firing against the closed panel until the extension deactivated
+- **Blank panel on webview startup failure**: if the webview fails to initialize within 10 seconds, the extension now shows an error notification with a Retry action instead of leaving a silent blank panel — and if the webview finishes initializing late, the preview recovers and renders automatically
+- **Webview crash containment**: a root-level error boundary now catches render crashes anywhere in the preview app and shows a recovery screen instead of a permanently white panel
+- **Windows: dependency transpilation**: `node_modules` detection failed on Windows path separators, routing pre-built npm packages through the source-grade Babel pipeline (slow, and failing on some valid CJS packages); dependencies now use the intended fast path
+- **Windows: Sass imports**: SCSS `@use`/`@import` resolution built malformed `file://` URLs for drive-letter paths and paths containing spaces
+
+### Security
+
+- **PlantUML rendering is now gated on Workspace Trust**: rendering sends diagram source to the configured render server (`mdx-preview.diagrams.plantUmlServer`, default `https://kroki.io`), so untrusted workspaces no longer trigger any network egress — the diagram shows an explanatory message instead. The server setting is also now a restricted configuration, so a repository's workspace settings cannot redirect it while untrusted. Network egress is documented in [docs/security.md](docs/security.md)
+
 ## [1.6.1] - 2026-07-08
 
 ### Fixed

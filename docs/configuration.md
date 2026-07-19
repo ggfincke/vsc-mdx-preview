@@ -68,12 +68,18 @@ Icon packs require a trusted workspace. Each entry is `{ "name": "...", "source"
 
 | Setting                        | Type   | Default     | Description                                                   |
 | ------------------------------ | ------ | ----------- | ------------------------------------------------------------- |
-| `tailwind.enabled`             | string | `"enabled"` | Tailwind processing mode: `"auto"`, `"enabled"`, `"disabled"` |
+| `tailwind.enabled`             | string | `"auto"`    | Tailwind processing mode: `"auto"`, `"enabled"`, `"disabled"` |
 | `tailwind.maxFileSizeBytes`    | number | `10485760`  | Maximum file size scanned for Tailwind class extraction       |
 | `tailwind.maxCssFilesToSearch` | number | `500`       | Maximum CSS files searched for Tailwind entry points          |
 | `tailwind.cacheMaxEntries`     | number | `50`        | Maximum Tailwind compilation cache entries                    |
 | `tailwind.cacheTtlSeconds`     | number | `300`       | Tailwind cache TTL in seconds                                 |
 | `tailwind.compilationTimeout`  | number | `15000`     | Tailwind compilation timeout in milliseconds                  |
+
+`tailwind.enabled` modes:
+
+- `"auto"` (default since 1.7.0) — compile Tailwind only when the workspace has Tailwind input: a `tailwind.config.*` file, an entry CSS containing Tailwind directives (`@tailwind` / `@import "tailwindcss"`), or an inline `<style type="text/tailwindcss">` block in the document. Projects without Tailwind are left untouched (no preflight reset injected into previews).
+- `"enabled"` — always compile, falling back to the bundled `@import "tailwindcss"` when the project has no Tailwind entry. Use this to style MDX with Tailwind classes in a project that doesn't otherwise use Tailwind (the pre-1.7.0 default behavior).
+- `"disabled"` — never compile.
 
 ### Framework and Component Settings
 
