@@ -9,6 +9,7 @@ import { ThemeProvider } from '../features/theme/runtime';
 import { LightboxProvider } from '../app/state/LightboxContext';
 // import directly to avoid barrel export import chain issues
 import { WebviewStateProvider } from '../app/providers/WebviewStateProvider';
+import { RootErrorBoundary } from '../shared/ui/error-boundary/RootErrorBoundary';
 import { Lightbox } from '../features/lightbox/ui/Lightbox';
 import App from '../app/App';
 import '../app/styles/index.css';
@@ -39,13 +40,15 @@ log.debug('Creating React root...');
 const root = createRoot(container);
 log.debug('Rendering App with providers...');
 root.render(
-  <ThemeProvider>
-    <LightboxProvider>
-      <WebviewStateProvider>
-        <App />
-        <Lightbox />
-      </WebviewStateProvider>
-    </LightboxProvider>
-  </ThemeProvider>
+  <RootErrorBoundary>
+    <ThemeProvider>
+      <LightboxProvider>
+        <WebviewStateProvider>
+          <App />
+          <Lightbox />
+        </WebviewStateProvider>
+      </LightboxProvider>
+    </ThemeProvider>
+  </RootErrorBoundary>
 );
 log.debug('App rendered');

@@ -119,7 +119,8 @@ async function transform(
   // I.1: capture ESM code before CommonJS transformation
   const esmCode = code;
 
-  const isInNodeModules = fsPath.split(path.sep).includes('node_modules');
+  // split on both separators: callers may pass forward-slash-normalized paths on Windows
+  const isInNodeModules = fsPath.split(/[\\/]/).includes('node_modules');
   if (!isInNodeModules || isModule(code)) {
     const preferSucrase = isInNodeModules || useSucrase;
     log.debug(

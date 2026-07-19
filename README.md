@@ -26,13 +26,24 @@ A modern, actively maintained successor to the original [MDX Preview](https://ma
 - **TypeScript Preview** - Preview `.tsx`/`.ts` files that render to `#root`
 - **Safe/Trusted Modes** - Safe Mode for untrusted content, Trusted Mode for full rendering
 
+## Installation
+
+From the Marketplace: search for **"Modern MDX Preview"** in the Extensions view and install.
+
+From a `.vsix` file (pre-release builds ahead of the Marketplace):
+
+1. Download the `.vsix` from the [GitHub releases page](https://github.com/ggfincke/vsc-mdx-preview/releases)
+2. In VS Code: Extensions view -> `...` menu -> **Install from VSIX...**, or run `code --install-extension vsc-mdx-preview-<version>.vsix`
+
+The [MDX](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) extension is installed automatically for syntax highlighting (skipped if offline — install it manually if `.mdx` files show no coloring).
+
 ## Quick Start
 
-1. Install npm dependencies in your workspace (`npm install`)
+1. Open a workspace folder and install its npm dependencies (`npm install`)
 2. Open an `.mdx` or `.md` file
 3. Open Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) and run **"MDX: Open MDX Preview"**, or press `Cmd+K X` / `Ctrl+K X`
 
-Preview automatically updates as you type. The [MDX](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) extension is installed automatically for syntax highlighting.
+Preview automatically updates as you type. Previews start in **Safe Mode** (static HTML, no JavaScript); to render React components, trust the workspace and enable scripts when prompted (see [Security](#security)).
 
 ## Framework Support
 
@@ -146,7 +157,7 @@ See [Security](./docs/security.md) for the full security model.
 | `mdx-preview.preview.customCss`                | `""`                 | Path to custom CSS file                                     |
 | `mdx-preview.preview.mdx.customLayoutFilePath` | `""`                 | Path to custom layout file                                  |
 | `mdx-preview.framework`                        | `"auto"`             | Framework detection mode                                    |
-| `mdx-preview.tailwind.enabled`                 | `"enabled"`          | Tailwind CSS: `auto`, `enabled`, `disabled`                 |
+| `mdx-preview.tailwind.enabled`                 | `"auto"`             | Tailwind CSS: `auto`, `enabled`, `disabled`                 |
 | `mdx-preview.preview.mermaidTheme`             | `"default"`          | Mermaid diagram theme                                       |
 | `mdx-preview.preview.sourceLineHighlight`      | `true`               | Highlight rendered blocks by source line on hover           |
 | `mdx-preview.preview.sourceLineHighlightColor` | `"dependent"`        | Highlight color mode: `dependent`, `white`, `black`, `auto` |
@@ -156,13 +167,21 @@ See [Security](./docs/security.md) for the full security model.
 | `mdx-preview.framework.componentShims`         | `true`               | Enable framework component shims                            |
 | `mdx-preview.components.builtins`              | `true`               | Enable built-in component shims                             |
 | `mdx-preview.components.unknownBehavior`       | `"placeholder"`      | Unknown component handling: `strip`, `placeholder`, `raw`   |
-| `mdx-preview.diagrams.plantUmlServer`          | `"https://kroki.io"` | PlantUML server URL                                         |
+| `mdx-preview.diagrams.plantUmlServer`          | `"https://kroki.io"` | PlantUML render server (receives diagram source; trusted workspaces only) |
 | `mdx-preview.diagrams.mermaidIconPacks`        | `[]`                 | Iconify icon packs for Mermaid `architecture-beta` diagrams |
 | `mdx-preview.build.useSucraseTranspiler`       | `false`              | Use Sucrase instead of Babel                                |
 
 This table covers the most common settings. See [Configuration](./docs/configuration.md) for the full reference, including Tailwind tuning (`mdx-preview.tailwind.*`) and advanced options (`mdx-preview.advanced.*`).
 
-## Webview Limitations
+## Known Limitations
+
+Trusted Mode module loading:
+
+- **A workspace folder with installed `node_modules` is required for imports.** Previewing a lone `.mdx` file (no folder open) renders content, but imports resolve to empty placeholders.
+- **Components render with the bundled React 19.** Libraries relying on removed React 17/18 APIs (`ReactDOM.render`, `defaultProps` on function components, legacy context) may behave differently in the preview than in your app.
+- **Yarn PnP (Berry) workspaces are not supported** — dependencies must exist on disk in `node_modules` (npm, pnpm, and Yarn `node-modules` linker all work).
+- **Circular imports are reported as errors** rather than partially resolved, and very large barrel modules (200+ re-exports, e.g. `lodash-es`) may fail to load — import submodules directly instead.
+- **Editing transitively imported files** (a file imported by a file your MDX imports) may not refresh the preview — save the entry file or use **"MDX: Refresh Preview"**.
 
 VS Code webviews have some inherent limitations:
 

@@ -20,6 +20,8 @@ export interface PreviewUpdateFlowInput {
   text: string;
   entryFsDirectory: string | null;
   updateMode: UpdateModeValue;
+  // stale-evaluation guard: false once a newer update flow has started
+  isCurrent?: () => boolean;
   getDocumentTracker: () => RenderedVersionTracker | undefined;
   evaluate: (text: string, fsPath: string) => Promise<void>;
 }
@@ -94,6 +96,12 @@ export async function runPreviewUpdateFlow(
       await evaluate(sourceText, fsPath);
       break;
     }
+  }
+
+  // stale flow: a newer evaluation started mid-flight; don't rewind version tracking
+  if (input.isCurrent?.() === false) {
+    log.debug('Skipping markRendered - stale evaluation');
+    return;
   }
 
   docTracker?.markRendered(currentVersion);

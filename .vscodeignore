@@ -2,18 +2,23 @@
 .vscode/**
 .vscode-test/**
 
-# Build artifacts to exclude
+# Build artifacts to exclude (only extension.js bundle & webview-app are needed)
 build/extension/test/**
 build/**/*.map
-build/extension/extension/**
-build/extension/shared/**
-build/extension/shared-types/**
+build/extension/extension-host/**
+build/extension/contracts/**
+build/extension/runtime-utils/**
+build/extension/codegen/**
 build/extension/meta.json
+build/.tsbuildinfo
 build/webview-app/.vite/**
 !build/webview-app/.vite/manifest.json
 
 # Stale assets
 assets/old_icon.png
+
+# README embeds the GitHub raw URL for this - no need to ship it
+assets/example.gif
 
 # Source code (not needed - bundled into extension.js)
 packages/**
@@ -21,6 +26,7 @@ packages/**
 # Development documentation
 dev-docs/**
 CLAUDE.md
+AGENTS.md
 
 # Test files
 tests/**

@@ -12,6 +12,7 @@ import { ErrorContext } from '../../shared/errors/ErrorReporter';
 
 import { createOrShowPanel, refreshPanel } from './webview-manager';
 import { Preview } from './Preview';
+import { showSafeModeNotificationIfNeeded } from './safe-mode-notification';
 
 // shared open-preview core: create-or-reuse Preview, show panel, update webview
 async function openPreviewForDoc(doc: vscode.TextDocument): Promise<void> {
@@ -29,6 +30,12 @@ async function openPreviewForDoc(doc: vscode.TextDocument): Promise<void> {
   }
   log.debug('Calling createOrShowPanel');
   await createOrShowPanel(currentPreview);
+
+  // first-use explainer tied to actual preview usage, not extension activation
+  void showSafeModeNotificationIfNeeded().catch((error) => {
+    log.debug('Failed to show safe mode notification', error);
+  });
+
   log.debug('Calling updateWebview');
   try {
     await currentPreview.updateWebview();

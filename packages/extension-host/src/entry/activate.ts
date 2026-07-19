@@ -18,7 +18,8 @@ import {
 } from '../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { SETTINGS } from '../shared/config/ConfigManager';
-import { EXTENSION_DISPLAY_NAME } from '../shared/constants';
+import { setExtensionContext } from '../app/extension-context';
+import { showSafeModeNotificationIfNeeded } from '../features/preview/safe-mode-notification';
 
 const log = createTaggedLogger(LogTags.ACTIVATE);
 const themeLog = createTaggedLogger(LogTags.THEME);
@@ -53,45 +54,6 @@ import {
 import { registerLanguageProviders } from '../features/language';
 import { registerAllCommands } from '../features/commands';
 import { MetaResolver } from '../features/framework/nextra/MetaResolver';
-
-// show one-time safe mode notification in untrusted workspaces
-async function showSafeModeNotificationIfNeeded(
-  context: vscode.ExtensionContext
-): Promise<void> {
-  if (vscode.workspace.isTrusted) {
-    return;
-  }
-
-  // check if notification already shown for this workspace
-  const hasShownNotification = context.workspaceState.get<boolean>(
-    'mdx-preview.shownSafeModeNotification'
-  );
-
-  if (hasShownNotification) {
-    return;
-  }
-
-  const selection = await vscode.window.showInformationMessage(
-    `${EXTENSION_DISPLAY_NAME} is running in Safe Mode. JavaScript execution is disabled. Trust this workspace & enable scripts for full MDX rendering.`,
-    'Manage Trust',
-    'Learn More'
-  );
-
-  if (selection === 'Manage Trust') {
-    await vscode.commands.executeCommand('workbench.trust.manage');
-  } else if (selection === 'Learn More') {
-    await vscode.commands.executeCommand(
-      'workbench.action.openWalkthrough',
-      'ggfincke.vsc-mdx-preview#mdx-preview.gettingStarted'
-    );
-  }
-
-  // mark as shown for this workspace
-  await context.workspaceState.update(
-    'mdx-preview.shownSafeModeNotification',
-    true
-  );
-}
 
 // log unhandled rejections to output without interrupting the user w/ popups
 export function reportUnhandledPromiseRejection(reason: unknown): void {
@@ -170,7 +132,7 @@ function setupTrustHandlers(context: vscode.ExtensionContext): void {
       }
     } else {
       // show safe mode notification if trust was revoked
-      await showSafeModeNotificationIfNeeded(context);
+      await showSafeModeNotificationIfNeeded();
     }
   };
 
@@ -217,6 +179,9 @@ export async function activate(
   context: vscode.ExtensionContext
 ): Promise<void> {
   log.debug('Starting extension activation...');
+
+  // stash context for modules that need workspaceState outside activation
+  setExtensionContext(context);
 
   // handle unhandled promise rejections
   registerUnhandledRejectionHandler(context);
@@ -288,11 +253,6 @@ export async function activate(
   if (isDebugEnabled()) {
     showOutput();
   }
-
-  // show safe mode notification if in untrusted workspace
-  void showSafeModeNotificationIfNeeded(context).catch((error) => {
-    log.error('Failed to show safe mode notification', error);
-  });
 
   // set up trust event handlers
   setupTrustHandlers(context);

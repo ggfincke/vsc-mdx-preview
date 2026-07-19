@@ -243,6 +243,9 @@ The preview uses its own base styles. Your CSS might be overridden. Use more spe
 
 ### "Tailwind classes not working"
 
+> [!NOTE]
+> As of 1.7.0 the default for `mdx-preview.tailwind.enabled` is `"auto"` (previously `"enabled"`). In `auto` mode the preview compiles Tailwind only when it detects Tailwind input in your workspace: a `tailwind.config.*` file, an entry CSS file containing Tailwind directives (`@tailwind` / `@import "tailwindcss"`), or an inline `<style type="text/tailwindcss">` block. If you were using Tailwind classes in MDX **without any Tailwind setup in the project**, that implicit compilation no longer runs — set the setting to `"enabled"` to restore it.
+
 **Solutions:**
 
 **1. Verify Tailwind is installed**
@@ -251,11 +254,13 @@ The preview uses its own base styles. Your CSS might be overridden. Use more spe
 npm install tailwindcss
 ```
 
-**2. Check Tailwind config exists**
+**2. Check Tailwind input exists**
 
-Ensure `tailwind.config.js` or `tailwind.config.ts` exists in your project root.
+Auto-detection needs one of: `tailwind.config.js`/`tailwind.config.ts` in your project root, an entry CSS with Tailwind directives, or an inline `<style type="text/tailwindcss">` block.
 
-**3. Enable Tailwind processing**
+**3. Force Tailwind processing on**
+
+If detection misses your setup (or your project has no Tailwind input at all):
 
 ```json
 {

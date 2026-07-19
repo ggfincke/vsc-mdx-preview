@@ -1,6 +1,7 @@
 // packages/extension-host/src/features/preview/evaluate-in-webview.ts
 // evaluate MDX content in webview (orchestrates Trusted/Safe mode evaluation)
 
+import * as vscode from 'vscode';
 import { performance } from 'perf_hooks';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { ErrorContext } from '../../shared/errors';
@@ -8,6 +9,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { getErrorReporter, getFrameworkDetector } from '../../app/services';
 import { getEvaluationEngine } from './EvaluationEngine';
+import { HandshakeTimeoutError } from './PreviewInitializer';
 import { postPushArtifacts } from './evaluation/post-push-artifacts';
 import { prepareEvaluationContext } from './evaluation/prepare-evaluation-context';
 import type { PreparedEvaluationContext } from './evaluation/types';
@@ -15,13 +17,37 @@ import type { Preview } from './Preview';
 
 const log = createTaggedLogger(LogTags.EVALUATE);
 
+// dedupe: one visible handshake-failure notification at a time
+let handshakeNotificationVisible = false;
+
+// webview never booted, so an in-webview error goes nowhere; notify w/ recovery
+function notifyHandshakeTimeout(preview: Preview): void {
+  if (handshakeNotificationVisible) {
+    return;
+  }
+  handshakeNotificationVisible = true;
+  void vscode.window
+    .showErrorMessage(
+      'MDX Preview failed to initialize. The preview panel may be blank.',
+      'Retry'
+    )
+    .then((choice) => {
+      handshakeNotificationVisible = false;
+      if (choice === 'Retry') {
+        void preview.refreshWebview();
+      }
+    });
+}
+
 export default async function evaluateInWebview(
   preview: Preview,
   text: string,
-  fsPath: string
+  fsPath: string,
+  isCurrent?: () => boolean
 ): Promise<void> {
   log.debug(`evaluateInWebview called for: ${fsPath}`);
   const engine = getEvaluationEngine();
+  const stale = () => isCurrent?.() === false;
 
   try {
     const prepared = await prepareEvaluationContext(
@@ -41,6 +67,12 @@ export default async function evaluateInWebview(
 
     await waitForHandshakeAndPushBaseState(context);
 
+    // skip compile if a newer evaluation superseded this one during handshake
+    if (stale()) {
+      log.debug('evaluateInWebview: superseded before compile, skipping');
+      return;
+    }
+
     const stageResult = context.canExecute
       ? {
           kind: 'trusted' as const,
@@ -59,11 +91,25 @@ export default async function evaluateInWebview(
           ),
         };
 
+    // drop stale results: never push an older compile over a newer render
+    if (stale()) {
+      log.debug('evaluateInWebview: superseded after compile, dropping result');
+      return;
+    }
+
     await postPushArtifacts(context, stageResult);
 
     log.debug('evaluateInWebview complete');
   } catch (error: unknown) {
     log.debug(`ERROR: ${extractErrorMessage(error)}`);
+    // stale failure is not the user's current state - don't flash an old error
+    if (stale()) {
+      return;
+    }
+    if (error instanceof HandshakeTimeoutError) {
+      notifyHandshakeTimeout(preview);
+      return;
+    }
     getErrorReporter().report(error, {
       context: ErrorContext.Transpile,
       showInWebview: true,

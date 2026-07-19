@@ -105,10 +105,11 @@ export async function createOrShowPanel(
       () => {
         log.debug('Panel disposed');
         preview.active = false;
-        // reset rendered version to force re-render on reopen
-        preview.resetRenderedVersion();
         getOutlineProvider()?.clear();
         dispose();
+        // tear down watchers & release the instance; reopen builds a fresh Preview
+        preview.dispose();
+        getPreviewManager().setCurrentPreview(undefined);
       },
       null,
       disposables
