@@ -2,6 +2,7 @@
 // handler for SASS/SCSS files - compile to CSS using workspace's sass package
 
 import * as path from 'path';
+import { pathToFileURL } from 'url';
 import type { FetchResult } from '@mdx-preview/contracts';
 import { LogTags } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
@@ -140,7 +141,8 @@ export class SassHandler implements FileTypeHandler {
               if (resolved === false || resolved === undefined) {
                 return null;
               }
-              return new URL(`file://${resolved}`);
+              // pathToFileURL handles Windows drive letters & special chars
+              return pathToFileURL(resolved);
             },
           },
         ],
