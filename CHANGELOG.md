@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-07-19
+
 ### Changed
 
 - **Tailwind processing now defaults to `"auto"`** (previously `"enabled"`): the preview compiles Tailwind only when the workspace has Tailwind input — a `tailwind.config.*` file, an entry CSS containing Tailwind directives (`@tailwind` / `@import "tailwindcss"`), or an inline `<style type="text/tailwindcss">` block. This stops Tailwind's preflight reset from restyling previews of projects that don't use Tailwind. **Migration:** if you relied on writing Tailwind classes in MDX without any Tailwind setup in the workspace, set `mdx-preview.tailwind.enabled` to `"enabled"` to restore the old behavior
