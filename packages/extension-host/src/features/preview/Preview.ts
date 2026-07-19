@@ -72,6 +72,7 @@ export class Preview {
 
   // Tailwind request tracking (delegated to PreviewTailwindState)
   private tailwindState = new PreviewTailwindState();
+  private evaluationSeq = 0;
 
   // performance tracking (development only)
   private _performanceObserver?: PerformanceObserver;
@@ -96,7 +97,18 @@ export class Preview {
       return false;
     }
 
+    const arrivedAfterTimeout = this.initializer.consumeHandshakeTimeout();
     this.resolveWebviewHandshakePromise();
+    // race already settled rejected on timeout; re-arm so future updates succeed
+    this.webviewHandshakePromise = Promise.resolve();
+    this.watcherManager.setReadyGate(this.webviewHandshakePromise);
+
+    if (arrivedAfterTimeout) {
+      log.debug('Late handshake after timeout - re-rendering');
+      void this.updateWebview(true).catch((err) =>
+        log.error('Failed to render after late handshake', err)
+      );
+    }
     return true;
   }
 
@@ -232,6 +244,11 @@ export class Preview {
     const handshake = this.initializer.createHandshake();
     this.webviewHandshakePromise = handshake.promise;
     this.resolveWebviewHandshakePromise = handshake.resolve;
+    // keep the watcher gate on the live handshake, not a stale (possibly rejected) one
+    // (first call runs from the constructor before watcherManager exists; createWatchers seeds the gate)
+    if (this.watcherManager) {
+      this.watcherManager.setReadyGate(this.webviewHandshakePromise);
+    }
   }
 
   setDoc(doc: vscode.TextDocument): void {
@@ -343,17 +360,26 @@ export class Preview {
 
   // update webview w/ current document content (force bypasses version tracking)
   async updateWebview(force = false): Promise<void> {
+    // monotonic id: stale evaluations must not push over newer ones
+    const evaluationId = ++this.evaluationSeq;
+    const isCurrent = () => evaluationId === this.evaluationSeq;
+
     await runPreviewUpdateFlow({
       force,
       doc: this.doc,
       text: this.text,
       entryFsDirectory: this.entryFsDirectory,
       updateMode: this.configuration.updateMode,
+      isCurrent,
       getDocumentTracker: () =>
         this.watcherManager.get<DocumentTracker>('document'),
       evaluate: (content, targetFsPath) =>
-        evaluateInWebview(this, content, targetFsPath),
+        evaluateInWebview(this, content, targetFsPath, isCurrent),
     });
+
+    if (!isCurrent()) {
+      return;
+    }
     // refresh outline tree view after content update
     getOutlineProvider()?.update(this.doc);
   }
