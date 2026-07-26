@@ -14,7 +14,16 @@ import {
 import type { ModuleRegistry } from 'mdx-forge/browser/registry';
 
 export type PreloadedModuleId =
-  (typeof PRELOADED_MODULE_IDS)[keyof typeof PRELOADED_MODULE_IDS];
+  | (typeof PRELOADED_MODULE_IDS)[keyof typeof PRELOADED_MODULE_IDS]
+  | typeof JSX_DEV_RUNTIME_MODULE_ID;
+
+const JSX_DEV_RUNTIME_MODULE_ID = 'npm://react/jsx-dev-runtime@18';
+
+// production React leaves jsxDEV undefined, so reuse its production element factory
+const jsxDevRuntime = {
+  Fragment: jsxRuntime.Fragment,
+  jsxDEV: jsxRuntime.jsx,
+};
 
 const registeredPreloadAliases = new Map<string, string>();
 
@@ -132,6 +141,12 @@ export function preloadCoreModules(
     id: PRELOADED_MODULE_IDS.jsxRuntime,
     exports: jsxRuntime,
     aliases: ['react/jsx-runtime', 'npm://react/jsx-runtime'],
+  });
+
+  preloadEntry(registry, {
+    id: JSX_DEV_RUNTIME_MODULE_ID,
+    exports: jsxDevRuntime,
+    aliases: ['react/jsx-dev-runtime', 'npm://react/jsx-dev-runtime'],
   });
 
   // MDX React (must include useMDXComponents for MDX 3 compiled code to read context)
