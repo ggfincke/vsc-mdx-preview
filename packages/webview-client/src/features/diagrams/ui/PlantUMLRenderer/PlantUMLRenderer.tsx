@@ -20,7 +20,7 @@ export const PlantUMLRenderer = createDiagramRenderer<PlantUMLProps>({
   errorLabel: 'PlantUML render error',
   loadingText: 'Rendering diagram...',
   logTag: LogTags.PLANTUML_RENDERER,
-  useThemeValue: () => (useTheme().isDark ? 'dark' : 'light'),
+  useThemeValue: () => (useTheme().isPreviewContentLight ? 'light' : 'dark'),
   useCacheKeyValue: () => useTheme().plantUmlServer,
   sanitize: sanitizeSvg,
   render: async (props) => {

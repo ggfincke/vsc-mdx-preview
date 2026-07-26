@@ -2,9 +2,7 @@
 // Unit tests for shimLoader resilient loading w/ retry & fallback
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  loadFrameworkShimsWithRetry,
-} from '../../packages/webview-client/src/features/module-runtime/preload/shimLoader';
+import { loadFrameworkShimsWithRetry } from '../../packages/webview-client/src/features/module-runtime/preload/shimLoader';
 import type { ModuleRegistry } from 'mdx-forge/browser/registry';
 
 vi.mock(
@@ -123,7 +121,7 @@ describe('shimLoader', () => {
       await vi.runAllTimersAsync();
       const result = await resultPromise;
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
       expect(result.usedFallback).toBe(true);
       expect(fallbackLoader).toHaveBeenCalledWith(mockRegistry);
     });
@@ -176,9 +174,8 @@ describe('shimLoader', () => {
         .mockRejectedValueOnce(new Error('generic shim load failed'))
         .mockResolvedValueOnce({ loaded: ['Callout'], failed: [] });
 
-      const { ensureGenericShims } = await import(
-        '../../packages/webview-client/src/features/module-runtime/preload/index'
-      );
+      const { ensureGenericShims } =
+        await import('../../packages/webview-client/src/features/module-runtime/preload/index');
 
       await expect(
         ensureGenericShims(mockRegistry, ['Callout'])

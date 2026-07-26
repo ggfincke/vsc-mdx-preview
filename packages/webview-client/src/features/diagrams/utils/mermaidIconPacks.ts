@@ -149,6 +149,8 @@ export function registerDynamicIconPacks(
   mermaid: MermaidModule,
   packs: ResolvedMermaidIconPack[]
 ): void {
+  const activePackNames = new Set<string>();
+
   for (const pack of packs) {
     if (!pack || !pack.name) {
       continue;
@@ -159,6 +161,7 @@ export function registerDynamicIconPacks(
     }
     const fingerprint = getContentFingerprint(pack);
     if (registeredDynamicPacks.get(pack.name) === fingerprint) {
+      activePackNames.add(pack.name);
       continue;
     }
     const safe = sanitizeIconPack(pack);
@@ -172,6 +175,19 @@ export function registerDynamicIconPacks(
       },
     ]);
     registeredDynamicPacks.set(pack.name, fingerprint);
+    activePackNames.add(pack.name);
+  }
+
+  for (const name of registeredDynamicPacks.keys()) {
+    if (!activePackNames.has(name)) {
+      mermaid.default.registerIconPacks([
+        {
+          name,
+          icons: { prefix: name, icons: {} } as never,
+        },
+      ]);
+      registeredDynamicPacks.delete(name);
+    }
   }
 }
 

@@ -3,6 +3,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createRpcMessageQueue } from '../../packages/webview-client/src/platform/rpc/rpc-message-queue';
 
 const {
   mockWrap,
@@ -12,6 +13,8 @@ const {
   mockPostMessage,
   mockGetState,
   mockSetState,
+  mockLoadModuleSystem,
+  mockEnsureFrameworkShimsLoaded,
 } = vi.hoisted(() => {
   const mockPostMessage = vi.fn();
   const mockGetState = vi.fn();
@@ -35,6 +38,10 @@ const {
     getState: mockGetState,
     setState: mockSetState,
   }));
+  const mockEnsureFrameworkShimsLoaded = vi.fn(async () => undefined);
+  const mockLoadModuleSystem = vi.fn(async () => ({
+    ensureFrameworkShimsLoaded: mockEnsureFrameworkShimsLoaded,
+  }));
 
   return {
     mockWrap,
@@ -44,6 +51,8 @@ const {
     mockPostMessage,
     mockGetState,
     mockSetState,
+    mockLoadModuleSystem,
+    mockEnsureFrameworkShimsLoaded,
   };
 });
 
@@ -51,6 +60,13 @@ vi.mock('comlink', () => ({
   wrap: (...args: unknown[]) => mockWrap(...args),
   expose: (...args: unknown[]) => mockExpose(...args),
 }));
+
+vi.mock(
+  '../../packages/webview-client/src/platform/rpc/module-system-loader',
+  () => ({
+    loadModuleSystem: () => mockLoadModuleSystem(),
+  })
+);
 
 describe('webview-rpc-client', () => {
   beforeEach(() => {
@@ -74,7 +90,7 @@ describe('webview-rpc-client', () => {
     ).resolves.toBeTruthy();
   });
 
-  it('initRPCWebviewSide bootstraps extension handle and handshake path', async () => {
+  it('bootstraps RPC and exposes framework shim load failures', async () => {
     const module =
       await import('../../packages/webview-client/src/platform/rpc/webview-rpc-client');
 
@@ -97,9 +113,19 @@ describe('webview-rpc-client', () => {
     expect(mockExtensionHandle.reportPreviewSourceLine).toHaveBeenCalledWith(
       12
     );
+
+    const exposedHandle = mockExpose.mock.calls[0][0] as {
+      setFramework: (framework: string) => Promise<void>;
+    };
+    mockEnsureFrameworkShimsLoaded.mockRejectedValueOnce(
+      new Error('framework shim failed')
+    );
+    await expect(exposedHandle.setFramework('docusaurus')).rejects.toThrow(
+      'framework shim failed'
+    );
   });
 
-  it('registerWebviewHandlers flushes buffered queued and optional messages', async () => {
+  it('flushes buffered state and keeps only the latest preview outcome', async () => {
     const module =
       await import('../../packages/webview-client/src/platform/rpc/webview-rpc-client');
 
@@ -138,6 +164,49 @@ describe('webview-rpc-client', () => {
     expect(handlers.setSafeContent).toHaveBeenCalledWith('<p>safe</p>');
     expect(handlers.setSourceLineHighlight).toHaveBeenCalledWith(false);
     expect(handlers.setScrollSync).toHaveBeenCalledWith('previewToEditor');
+
+    handlers.setSafeContent.mockClear();
+    handlers.setError.mockClear();
+    const outcomeQueue = createRpcMessageQueue({
+      log: {
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      },
+      getHandlers: () => handlers,
+    });
+
+    outcomeQueue.enqueueQueued({
+      type: 'error',
+      payload: { message: 'older error' },
+    });
+    outcomeQueue.enqueueQueued({
+      type: 'safe',
+      payload: { html: '<p>newer content</p>' },
+    });
+    outcomeQueue.flush();
+
+    expect(handlers.setSafeContent).toHaveBeenCalledWith(
+      '<p>newer content</p>'
+    );
+    expect(handlers.setError).not.toHaveBeenCalled();
+
+    handlers.setSafeContent.mockClear();
+    outcomeQueue.enqueueQueued({
+      type: 'safe',
+      payload: { html: '<p>older content</p>' },
+    });
+    outcomeQueue.enqueueQueued({
+      type: 'error',
+      payload: { message: 'newer error' },
+    });
+    outcomeQueue.flush();
+
+    expect(handlers.setSafeContent).not.toHaveBeenCalled();
+    expect(handlers.setError).toHaveBeenCalledWith({
+      message: 'newer error',
+    });
   });
 
   it('gates trusted content for queued and direct handler paths', async () => {

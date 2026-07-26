@@ -104,6 +104,7 @@ export function createDiagramRenderer<
           id,
           codePreview: code.slice(0, 50),
         });
+        setError(null);
 
         const processed = await getDiagramResult(
           config.cacheFamily,

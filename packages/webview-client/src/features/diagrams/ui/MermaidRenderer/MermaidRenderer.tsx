@@ -1,7 +1,11 @@
 // packages/webview-client/src/features/diagrams/ui/MermaidRenderer/MermaidRenderer.tsx
 // lazy-loaded mermaid diagram renderer w/ error handling & source toggle
 
-import { LogTags } from '@mdx-preview/contracts';
+import {
+  LogTags,
+  MERMAID_THEMES,
+  type MermaidTheme,
+} from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
 import { useEffect } from 'react';
@@ -16,8 +20,12 @@ import {
 import './MermaidRenderer.css';
 
 // read the mermaid theme
-function useMermaidThemeValue(): string {
+function useMermaidThemeValue(): MermaidTheme {
   return useTheme().mermaidTheme;
+}
+
+function isMermaidTheme(theme: string): theme is MermaidTheme {
+  return MERMAID_THEMES.some((candidate) => candidate === theme);
 }
 
 // keep icon packs in sync & expose their content fingerprint to the cache
@@ -55,7 +63,8 @@ export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
   toDataTheme: (theme) => (isDarkMermaidTheme(theme) ? 'dark' : 'light'),
   render: async (_props, signal, mermaidTheme) => {
     const { code, id } = _props;
-    const isDark = isDarkMermaidTheme(mermaidTheme);
+    const theme = isMermaidTheme(mermaidTheme) ? mermaidTheme : 'default';
+    const isDark = isDarkMermaidTheme(theme);
 
     const mermaid = await loadMermaid();
 
@@ -66,14 +75,14 @@ export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
 
     // only re-initialize if theme or dark state changed (perf optimization)
     const needsReinit =
-      lastInitializedTheme !== mermaidTheme || lastInitializedDark !== isDark;
+      lastInitializedTheme !== theme || lastInitializedDark !== isDark;
 
     if (needsReinit) {
       // initialize mermaid w/ strict config (no foreignObject)
       // theme is controlled by user setting (mdx-preview.preview.mermaidTheme)
       mermaid.default.initialize({
         startOnLoad: false,
-        theme: mermaidTheme,
+        theme,
         securityLevel: 'strict',
         // disable HTML labels at the root so node labels render as pure SVG text
         // the flowchart-scoped flag is deprecated & ignored; mermaid's root
@@ -102,7 +111,7 @@ export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
           }
         `,
       });
-      lastInitializedTheme = mermaidTheme;
+      lastInitializedTheme = theme;
       lastInitializedDark = isDark;
     }
 

@@ -12,15 +12,16 @@ import {
   SHIM_LOAD_RETRY_DELAY_MS,
 } from '../../../app/constants';
 import type { ModuleRegistry } from 'mdx-forge/browser/registry';
-import type { Framework } from '@mdx-preview/contracts';
+import type { FrameworkId } from '@mdx-preview/contracts';
 
 // module-level tagged logger (avoids per-call allocation)
 const log = createTaggedLogger(LogTags.SHIM_LOADER);
 
 // result of shim loading attempt
 export interface ShimLoadResult {
+  // exact framework success, excluding generic fallback
   success: boolean;
-  framework: Framework;
+  framework: FrameworkId;
   failedShims: string[];
   usedFallback: boolean;
 }
@@ -74,7 +75,7 @@ async function retryLoad<T>(
 // load framework shims w/ retry & fallback to generic shims
 export async function loadFrameworkShimsWithRetry(
   registry: ModuleRegistry,
-  framework: Framework,
+  framework: FrameworkId,
   frameworkLoader: (registry: ModuleRegistry) => Promise<void>,
   genericFallbackLoader: (registry: ModuleRegistry) => void
 ): Promise<ShimLoadResult> {
@@ -110,7 +111,6 @@ export async function loadFrameworkShimsWithRetry(
   try {
     genericFallbackLoader(registry);
     result.usedFallback = true;
-    result.success = true;
     log.debug(`Generic fallback loaded for ${framework}`);
   } catch (fallbackError) {
     const errorMessage = extractErrorMessage(fallbackError);

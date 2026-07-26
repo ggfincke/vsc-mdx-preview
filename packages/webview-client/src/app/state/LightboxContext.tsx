@@ -6,6 +6,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   type ReactNode,
@@ -76,19 +77,27 @@ function useLightboxProviderValue(): LightboxContextValue {
   const [imageList, setImageList] = useState<LightboxImage[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const imageListRef = useRef<LightboxImage[]>([]);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeGenerationRef = useRef(0);
 
   const resetView = useCallback(() => {
     setZoomState(1);
     setOffsetState(DEFAULT_OFFSET);
   }, []);
 
+  const cancelPendingClose = useCallback(() => {
+    closeGenerationRef.current++;
+    if (closeTimerRef.current !== null) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => cancelPendingClose, [cancelPendingClose]);
+
   const openLightbox = useCallback(
-    (
-      src: string,
-      alt?: string,
-      list?: LightboxImage[],
-      index?: number
-    ) => {
+    (src: string, alt?: string, list?: LightboxImage[], index?: number) => {
+      cancelPendingClose();
       const images = list ?? [];
       setCurrentImage({ src, alt });
       setImageList(images);
@@ -97,20 +106,26 @@ function useLightboxProviderValue(): LightboxContextValue {
       resetView();
       setIsOpen(true);
     },
-    [resetView]
+    [cancelPendingClose, resetView]
   );
 
   const closeLightbox = useCallback(() => {
+    cancelPendingClose();
     setIsOpen(false);
     // delay clearing state to allow fade-out animation
-    setTimeout(() => {
+    const closeGeneration = closeGenerationRef.current;
+    closeTimerRef.current = setTimeout(() => {
+      if (closeGenerationRef.current !== closeGeneration) {
+        return;
+      }
+      closeTimerRef.current = null;
       setCurrentImage(null);
       setImageList([]);
       imageListRef.current = [];
       setCurrentIndex(0);
       resetView();
     }, 200);
-  }, [resetView]);
+  }, [cancelPendingClose, resetView]);
 
   const setZoom = useCallback((value: number) => {
     setZoomState(clampZoom(value));

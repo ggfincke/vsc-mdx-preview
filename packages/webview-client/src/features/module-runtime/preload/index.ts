@@ -110,7 +110,7 @@ export async function ensureFrameworkShims(
 
     state.lastShimLoadResult = shimResult;
 
-    if (shimResult.success) {
+    if (shimResult.success && !shimResult.usedFallback) {
       state.loadedFramework = framework;
     }
 
@@ -125,7 +125,7 @@ export async function ensureFrameworkShims(
     state.frameworkLoadPromise = null;
   }
   log.debug(
-    `${framework} shims loaded (success=${state.lastShimLoadResult?.success})`
+    `${framework} shim load completed (success=${state.lastShimLoadResult?.success})`
   );
 }
 

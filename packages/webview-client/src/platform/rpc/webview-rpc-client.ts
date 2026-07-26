@@ -211,15 +211,11 @@ class RPCWebviewHandle implements WebviewRPC {
     });
   }
 
-  setFramework(framework: Framework): void {
+  setFramework(framework: Framework): Promise<void> {
     log.debug(`setFramework called: ${framework}`);
-    void loadModuleSystem()
-      .then(({ ensureFrameworkShimsLoaded }) => {
-        ensureFrameworkShimsLoaded(framework);
-      })
-      .catch((err) => {
-        log.error(`Failed to load framework shims for ${framework}:`, err);
-      });
+    return loadModuleSystem().then(({ ensureFrameworkShimsLoaded }) => {
+      return ensureFrameworkShimsLoaded(framework);
+    });
   }
 
   setUsedComponents(components: string[]): void {

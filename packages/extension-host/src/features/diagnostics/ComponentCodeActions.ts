@@ -42,11 +42,8 @@ function readComponentName(diagnostic: vscode.Diagnostic): string | null {
 // prefer all paired tag-name ranges carried by the diagnostic
 function readTagNameRanges(diagnostic: vscode.Diagnostic): vscode.Range[] {
   const data = (diagnostic as vscode.Diagnostic & { data?: unknown }).data as
-    | UnknownComponentDiagnosticData
-    | undefined;
-  return data?.tagNameRanges?.length
-    ? data.tagNameRanges
-    : [diagnostic.range];
+    UnknownComponentDiagnosticData | undefined;
+  return data?.tagNameRanges?.length ? data.tagNameRanges : [diagnostic.range];
 }
 
 // code action provider for component diagnostics

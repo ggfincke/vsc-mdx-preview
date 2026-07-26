@@ -11,7 +11,7 @@ import './PreviewContainer.css';
 
 export interface PreviewContainerProps {
   // container ref
-  containerRef: RefObject<HTMLDivElement>;
+  containerRef: RefObject<HTMLDivElement | null>;
   // mode attribute
   mode: 'safe' | 'trusted';
   // image click handler

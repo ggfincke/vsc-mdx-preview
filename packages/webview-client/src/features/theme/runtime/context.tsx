@@ -3,7 +3,10 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { injectPreviewTheme, injectCodeBlockTheme } from './loader';
-import { DEFAULT_PLANTUML_SERVER } from '@mdx-preview/contracts';
+import {
+  DEFAULT_PLANTUML_SERVER,
+  isLightPreviewTheme,
+} from '@mdx-preview/contracts';
 import type {
   CodeBlockTheme,
   MermaidTheme,
@@ -23,6 +26,7 @@ interface ThemeContextValue {
   vsCodeTheme: VSCodeTheme;
   isDark: boolean;
   isHighContrast: boolean;
+  isPreviewContentLight: boolean;
   // preview theme (pushed from extension)
   previewTheme: PreviewTheme;
   codeBlockTheme: CodeBlockTheme;
@@ -50,7 +54,7 @@ function useThemeValue(): ThemeContextValue {
   const [mermaidIconPacks, setMermaidIconPacks] = useState<
     ResolvedMermaidIconPack[]
   >([]);
-  const [isLight, setIsLight] = useState(true);
+  const [isVSCodeLight, setIsVSCodeLight] = useState(true);
 
   // track VS Code theme changes (local detection for UI only)
   useEffect(() => {
@@ -64,15 +68,15 @@ function useThemeValue(): ThemeContextValue {
 
   // inject code block theme CSS when it changes
   useEffect(() => {
-    injectCodeBlockTheme(codeBlockTheme, isLight);
-  }, [codeBlockTheme, isLight]);
+    injectCodeBlockTheme(codeBlockTheme, isVSCodeLight);
+  }, [codeBlockTheme, isVSCodeLight]);
 
   // handler for setting preview theme state from extension
   const setPreviewThemeState = useCallback((state: WebviewThemeState) => {
     setPreviewTheme(state.previewTheme);
     setCodeBlockTheme(state.codeBlockTheme);
     setMermaidTheme(state.mermaidTheme);
-    setIsLight(state.isLight);
+    setIsVSCodeLight(state.isLight);
     setPlantUmlServer(state.plantUmlServer);
     setMermaidIconPacks(state.mermaidIconPacks);
   }, []);
@@ -82,6 +86,10 @@ function useThemeValue(): ThemeContextValue {
       vsCodeTheme,
       isDark: vsCodeTheme === 'dark' || vsCodeTheme === 'high-contrast',
       isHighContrast: vsCodeTheme === 'high-contrast',
+      isPreviewContentLight:
+        previewTheme === 'none'
+          ? isVSCodeLight
+          : isLightPreviewTheme(previewTheme),
       previewTheme,
       codeBlockTheme,
       mermaidTheme,
@@ -92,6 +100,7 @@ function useThemeValue(): ThemeContextValue {
     [
       vsCodeTheme,
       previewTheme,
+      isVSCodeLight,
       codeBlockTheme,
       mermaidTheme,
       plantUmlServer,

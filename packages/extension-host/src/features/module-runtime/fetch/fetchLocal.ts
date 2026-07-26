@@ -164,12 +164,7 @@ export async function fetchLocal(
 
     // image handlers only need the validated path to create a webview URI
     if ((IMAGE_EXTENSIONS as readonly string[]).includes(extname)) {
-      const imageResult = await handleByExtension(
-        '',
-        fsPath,
-        extname,
-        preview
-      );
+      const imageResult = await handleByExtension('', fsPath, extname, preview);
       if (imageResult) {
         return imageResult;
       }

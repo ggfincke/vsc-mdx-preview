@@ -102,7 +102,7 @@ describe('preload atomic registration', () => {
     expect(typeof tabs.default).toBe('function');
   });
 
-  it('retries framework shims after shim and fallback failure', async () => {
+  it('retries framework shims after a generic fallback', async () => {
     let shouldFail = true;
     const frameworkLoader = vi.fn(async () => {
       if (shouldFail) {
@@ -110,9 +110,7 @@ describe('preload atomic registration', () => {
         throw new Error('shim chunk failed');
       }
     });
-    const fallbackLoader = vi.fn(() => {
-      throw new Error('fallback failed');
-    });
+    const fallbackLoader = vi.fn();
     const cssLoader = vi.fn().mockResolvedValue(undefined);
     const { ensureFrameworkShims } = await importPreloadWithMocks({
       frameworkLoader,

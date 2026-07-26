@@ -113,8 +113,7 @@ export class SassHandler implements FileTypeHandler {
     const workspaceRoot =
       (preview.doc
         ? vscode.workspace.getWorkspaceFolder(preview.doc.uri)?.uri.fsPath
-        : undefined) ??
-      preview.entryFsDirectory;
+        : undefined) ?? preview.entryFsDirectory;
 
     // if no workspace root, return helpful message
     if (!workspaceRoot) {

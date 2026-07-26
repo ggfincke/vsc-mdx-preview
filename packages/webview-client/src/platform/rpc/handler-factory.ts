@@ -31,7 +31,7 @@ export interface RequiredStateHandlers {
 // optional state handlers that may or may not be registered
 export interface OptionalStateHandlers {
   setTheme?: (state: WebviewThemeState) => void;
-  setNextraMeta?: (meta: NextraPageMeta) => void;
+  setNextraMeta?: (meta: NextraPageMeta | null) => void;
   setSourceLineHighlight?: (enabled: boolean) => void;
   setSourceLineHighlightColor?: (mode: SourceLineHighlightColorValue) => void;
   setScrollSync?: (mode: PreviewScrollSyncValue) => void;
@@ -161,7 +161,7 @@ export function createHandlerFactories(
       const handlers = getHandlers();
       const handler = handlers?.[handlerKey];
       if (typeof handler === 'function') {
-        (handler as (...a: TArgs) => void)(...args);
+        Reflect.apply(handler, undefined, args);
         return;
       }
 

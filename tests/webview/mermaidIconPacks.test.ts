@@ -120,17 +120,21 @@ describe('registerDynamicIconPacks', () => {
     expect(registered).toHaveLength(0);
   });
 
-  it('skips unchanged pack content & registers changed content', () => {
+  it('tracks changed and removed pack content by fingerprint', () => {
     const { mermaid, registered } = makeMermaid();
     const original = pack('aws', '<path/>');
     registerDynamicIconPacks(mermaid, [original]);
     registerDynamicIconPacks(mermaid, [original]);
-    registerDynamicIconPacks(mermaid, [pack('aws', '<circle/>')]);
+    const changed = pack('aws', '<circle/>');
+    registerDynamicIconPacks(mermaid, [changed]);
+    registerDynamicIconPacks(mermaid, []);
+    registerDynamicIconPacks(mermaid, [changed]);
 
-    expect(registered.filter((r) => r.name === 'aws')).toHaveLength(2);
-    expect(
-      getRegisteredIcons(registered.filter((r) => r.name === 'aws')[1]).icons
-        .sample.body
-    ).toContain('circle');
+    const registrations = registered.filter((r) => r.name === 'aws');
+    expect(registrations).toHaveLength(4);
+    expect(getRegisteredIcons(registrations[2]).icons).toEqual({});
+    expect(getRegisteredIcons(registrations[3]).icons.sample.body).toContain(
+      'circle'
+    );
   });
 });

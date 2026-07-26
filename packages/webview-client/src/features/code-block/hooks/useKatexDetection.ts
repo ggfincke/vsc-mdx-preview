@@ -27,7 +27,7 @@ export function useKatexDetection(options: UseKatexDetectionOptions): void {
       html &&
       (html.includes('class="katex"') || html.includes('class="math'))
     ) {
-      loadKatexCss();
+      void loadKatexCss();
     }
   }, [html]);
 
@@ -36,7 +36,7 @@ export function useKatexDetection(options: UseKatexDetectionOptions): void {
     if (trigger && containerRef?.current) {
       const hasKatex = containerRef.current.querySelector('.katex, .math');
       if (hasKatex) {
-        loadKatexCss();
+        void loadKatexCss();
       }
     }
   }, [containerRef, trigger]);

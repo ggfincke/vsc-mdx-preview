@@ -21,7 +21,7 @@ export const GraphvizRenderer = createDiagramRenderer<GraphvizProps>({
   errorLabel: 'Graphviz render error',
   loadingText: 'Rendering diagram...',
   logTag: LogTags.GRAPHVIZ_RENDERER,
-  useThemeValue: () => (useTheme().isDark ? 'dark' : 'light'),
+  useThemeValue: () => (useTheme().isPreviewContentLight ? 'light' : 'dark'),
   sanitize: sanitizeSvg,
   extraDeps: (props) => [props.language],
   render: async (props, signal) => {

@@ -15,6 +15,11 @@ const HEADING_TAGS = new Set(['H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
 
 const PREVIEW_CONTAINER_SELECTOR = `.${SAFE_PREVIEW_CLASS}, .${TRUSTED_PREVIEW_CLASS}`;
 
+interface CollectedImage {
+  element: HTMLImageElement;
+  image: LightboxImage;
+}
+
 // find the preview container by traversing up from the clicked element
 function findPreviewContainer(el: HTMLElement): HTMLElement | null {
   return el.closest(PREVIEW_CONTAINER_SELECTOR) as HTMLElement | null;
@@ -30,8 +35,8 @@ function collectImagesInRange(
   container: HTMLElement,
   startAfter: Element | null,
   stopAt: Element | null
-): LightboxImage[] {
-  const list: LightboxImage[] = [];
+): CollectedImage[] {
+  const list: CollectedImage[] = [];
   const children = container.children;
   let inRange = !startAfter;
 
@@ -51,13 +56,19 @@ function collectImagesInRange(
       continue;
     }
 
-    // collect all imgs within this element (handles <p><img></p>, tables, etc.)
-    const imgs = child.querySelectorAll('img');
+    // include a direct img child plus nested images
+    const imgs = [
+      ...(child.tagName === 'IMG' ? [child as HTMLImageElement] : []),
+      ...child.querySelectorAll('img'),
+    ];
     for (const img of imgs) {
-      if (isValidImage(img as HTMLImageElement)) {
+      if (isValidImage(img)) {
         list.push({
-          src: (img as HTMLImageElement).src,
-          alt: (img as HTMLImageElement).alt || undefined,
+          element: img,
+          image: {
+            src: img.src,
+            alt: img.alt || undefined,
+          },
         });
       }
     }
@@ -101,7 +112,7 @@ function findSectionBoundaries(
 function collectSectionImageList(
   container: HTMLElement,
   clickedImg: HTMLImageElement
-): LightboxImage[] {
+): CollectedImage[] {
   const [sectionHeading, nextHeading] = findSectionBoundaries(
     container,
     clickedImg
@@ -126,11 +137,11 @@ export function useImageLightbox() {
         // collect gallery scoped to the section containing the clicked image
         const container = findPreviewContainer(img);
         if (container) {
-          const list = collectSectionImageList(container, img);
-          // find clicked image index in the section gallery
+          const collected = collectSectionImageList(container, img);
+          const list = collected.map(({ image }) => image);
           const clickedIndex = Math.max(
             0,
-            list.findIndex((item) => item.src === img.src)
+            collected.findIndex(({ element }) => element === img)
           );
           openLightbox(img.src, img.alt || undefined, list, clickedIndex);
         } else {

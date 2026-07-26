@@ -302,12 +302,16 @@ describe('diagram result cache', () => {
     expect(replacement.host.innerHTML).toBe(cachedMarkup);
   });
 
-  it('rerenders key changes & recovers after a failed key', async () => {
-    renderDiagram
-      .mockRejectedValueOnce(new Error('invalid source'))
-      .mockResolvedValueOnce('<svg data-source="valid"></svg>');
+  it('rerenders key changes & recovers from errors through the cache', async () => {
+    renderDiagram.mockImplementation(async ({ code }) => {
+      if (code === 'invalid') {
+        throw new Error('invalid source');
+      }
+      return `<svg data-source="${code}"></svg>`;
+    });
     const mounted = createMountedDiagram();
 
+    await renderMountedDiagram(mounted, 'valid', 'diagram');
     await renderMountedDiagram(mounted, 'invalid', 'diagram');
     expect(mounted.host.textContent).toContain('Diagram error: invalid source');
 
