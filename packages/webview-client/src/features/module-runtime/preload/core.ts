@@ -14,10 +14,7 @@ import {
 import type { ModuleRegistry } from 'mdx-forge/browser/registry';
 
 export type PreloadedModuleId =
-  | (typeof PRELOADED_MODULE_IDS)[keyof typeof PRELOADED_MODULE_IDS]
-  | typeof JSX_DEV_RUNTIME_MODULE_ID;
-
-const JSX_DEV_RUNTIME_MODULE_ID = 'npm://react/jsx-dev-runtime@18';
+  (typeof PRELOADED_MODULE_IDS)[keyof typeof PRELOADED_MODULE_IDS];
 
 // production React leaves jsxDEV undefined, so reuse its production element factory
 const jsxDevRuntime = {
@@ -144,7 +141,7 @@ export function preloadCoreModules(
   });
 
   preloadEntry(registry, {
-    id: JSX_DEV_RUNTIME_MODULE_ID,
+    id: PRELOADED_MODULE_IDS.jsxDevRuntime,
     exports: jsxDevRuntime,
     aliases: ['react/jsx-dev-runtime', 'npm://react/jsx-dev-runtime'],
   });
