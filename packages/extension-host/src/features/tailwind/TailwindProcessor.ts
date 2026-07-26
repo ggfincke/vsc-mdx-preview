@@ -52,6 +52,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   private scanner = new TailwindScanner();
   private cache: LRUCache<string, string>;
   private scanCache: ContentHashCache<string[]>;
+  private browserInputCache: LRUCache<string, string>;
   private compiler = new TailwindCompiler();
 
   protected constructor() {
@@ -62,6 +63,10 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     });
     this.scanCache = new ContentHashCache<string[]>({
       maxEntries: SCAN_CACHE_DEFAULT_MAX_ENTRIES,
+      ttlMs: STANDARD_CACHE_TTL_MS,
+    });
+    this.browserInputCache = new LRUCache<string, string>({
+      maxEntries: CACHE_DEFAULT_MAX_ENTRIES,
       ttlMs: STANDARD_CACHE_TTL_MS,
     });
   }
@@ -312,7 +317,8 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     this.cache.clear();
     log.debug('Cache cleared');
     this.scanCache.clear();
-    this.detector.invalidateVersionCache();
+    this.browserInputCache.clear();
+    this.detector.dispose();
   }
 
   // invalidate scan cache for a specific file or clear all
@@ -348,6 +354,24 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     entryCssPath: string | null,
     inlineTailwindStyles: string[]
   ): Promise<string> {
+    const normalizedInlineStyles = inlineTailwindStyles
+      .map((style) => style.trim())
+      .filter(Boolean);
+    const entryStamp = await this.getFileStamp(entryCssPath);
+    const inlineHash = crypto
+      .createHash('sha1')
+      .update(JSON.stringify(normalizedInlineStyles))
+      .digest('hex');
+    const cacheKey = JSON.stringify({
+      entryCssPath,
+      entryStamp,
+      inlineHash,
+    });
+    const cached = this.browserInputCache.get(cacheKey);
+    if (cached !== null) {
+      return cached;
+    }
+
     const segments: string[] = [];
 
     if (entryCssPath) {
@@ -359,17 +383,16 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       }
     }
 
-    for (const inlineCss of inlineTailwindStyles) {
-      if (inlineCss.trim()) {
-        segments.push(inlineCss.trim());
-      }
-    }
+    segments.push(...normalizedInlineStyles);
 
+    let inputCss: string;
     if (segments.length === 0) {
-      return '@import "tailwindcss";';
+      inputCss = '@import "tailwindcss";';
+    } else {
+      inputCss = segments.join('\n\n');
     }
-
-    return segments.join('\n\n');
+    this.browserInputCache.set(cacheKey, inputCss);
+    return inputCss;
   }
 
   private async buildCacheKey(

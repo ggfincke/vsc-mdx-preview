@@ -187,7 +187,7 @@ export async function fetchLocal(
       // read once, then sniff & decode the same bounded buffer
       const buffer = await raceTimeout(fs.promises.readFile(fsPath), {
         timeoutMs: MODULE_FETCH_TIMEOUT_MS,
-        timeoutMessage:
+        errorMessage:
           `Module fetch timed out after ${MODULE_FETCH_TIMEOUT_MS / 1000}s: ` +
           `${path.basename(fsPath)}`,
       });

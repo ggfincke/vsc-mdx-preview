@@ -1,6 +1,7 @@
 // packages/extension-host/src/features/tailwind/TailwindDetector.ts
 // detect Tailwind config, entry CSS, & workspace version w/ silent failures on missing files
 
+import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
@@ -29,6 +30,8 @@ const CONFIG_FILES = [
   'tailwind.config.mjs',
   'tailwind.config.cjs',
 ];
+const CONFIG_WATCH_PATTERN = '**/tailwind.config.{js,ts,mjs,cjs}';
+const CSS_WATCH_PATTERN = '**/*.css';
 
 const TAILWIND_IMPORT_RE = /@import\s+['"]tailwindcss(?:\/[^'"]+)?['"]/;
 const TAILWIND_DIRECTIVE_RE = /@tailwind\s+(base|components|utilities)\b/;
@@ -43,6 +46,11 @@ function isTailwindEntryCss(content: string | null): boolean {
 }
 const INLINE_TAILWIND_STYLE_RE =
   /<style\b[^>]*\btype\s*=\s*["']text\/tailwindcss["'][^>]*>([\s\S]*?)<\/style>/gi;
+
+interface EntryCssInspection {
+  stamp: string;
+  hasPluginDirective: boolean;
+}
 
 // common CSS file locations to check before doing a full workspace scan
 // ordered by likelihood based on typical project structures
@@ -112,11 +120,37 @@ export class TailwindDetector {
     logTag: LogTags.TAILWIND,
     maxEntries: DETECTOR_ENTRY_CSS_CACHE_MAX_ENTRIES,
   });
+  private entryCssInspectionCache = new LRUCache<string, EntryCssInspection>({
+    maxEntries: DETECTOR_ENTRY_CSS_CACHE_MAX_ENTRIES,
+  });
   // version cache has both TTL & max entries
   private versionCache = new LRUCache<string, TailwindVersionInfo>({
     maxEntries: DETECTOR_VERSION_CACHE_MAX_ENTRIES,
     ttlMs: STANDARD_CACHE_TTL_MS,
   });
+
+  constructor() {
+    const clearOnDetectionChange = {
+      onChange: (_eventPath: string, cache: { clear(): void }) => cache.clear(),
+      onCreate: (_eventPath: string, cache: { clear(): void }) => cache.clear(),
+      onDelete: (_eventPath: string, cache: { clear(): void }) => cache.clear(),
+    };
+    this.configCache.watchPath(CONFIG_WATCH_PATTERN, clearOnDetectionChange);
+    this.entryCssCache.watchPath(CSS_WATCH_PATTERN, {
+      onChange: (_eventPath, cache) => {
+        cache.clear();
+        this.entryCssInspectionCache.clear();
+      },
+      onCreate: (_eventPath, cache) => {
+        cache.clear();
+        this.entryCssInspectionCache.clear();
+      },
+      onDelete: (_eventPath, cache) => {
+        cache.clear();
+        this.entryCssInspectionCache.clear();
+      },
+    });
+  }
 
   resolveWorkspaceRoot(options: ResolveWorkspaceRootOptions): string | null {
     const { docUri, entryDir } = options;
@@ -157,6 +191,9 @@ export class TailwindDetector {
     const cacheKey = `${workspaceRoot ?? ''}::${entryDir ?? ''}`;
     const cachedConfig = this.configCache.get(cacheKey);
     if (cachedConfig !== undefined) {
+      if (cachedConfig === null) {
+        return null;
+      }
       if (cachedConfig && pathExists(cachedConfig)) {
         return cachedConfig;
       }
@@ -192,6 +229,9 @@ export class TailwindDetector {
     const cacheKey = `${workspaceRoot}::${entryDir ?? ''}`;
     const cachedEntryCss = this.entryCssCache.get(cacheKey);
     if (cachedEntryCss !== undefined) {
+      if (cachedEntryCss === null) {
+        return null;
+      }
       if (cachedEntryCss && pathExists(cachedEntryCss)) {
         return cachedEntryCss;
       }
@@ -295,9 +335,8 @@ export class TailwindDetector {
     // @plugin checks only matter w/o a config file, so compute them here
     let entryCssHasPluginDirective = false;
     if (entryCssPath) {
-      const entryCss = await readFileAsync(entryCssPath);
       entryCssHasPluginDirective =
-        entryCss !== null && TAILWIND_PLUGIN_DIRECTIVE_RE.test(entryCss);
+        await this.entryCssHasPluginDirective(entryCssPath);
     }
     const hasInlinePluginDirective = inlineTailwindStyles.some((styleText) =>
       TAILWIND_PLUGIN_DIRECTIVE_RE.test(styleText)
@@ -356,15 +395,48 @@ export class TailwindDetector {
       return;
     }
 
-    const pathSet = new Set(changedPaths);
+    if (
+      changedPaths.some((changedPath) =>
+        CONFIG_FILES.includes(path.basename(changedPath))
+      )
+    ) {
+      this.configCache.clear();
+    }
 
-    this.configCache.invalidateWhere((_, value) => {
-      return value !== null && pathSet.has(value);
-    });
+    if (
+      changedPaths.some((changedPath) => path.extname(changedPath) === '.css')
+    ) {
+      this.entryCssCache.clear();
+      this.entryCssInspectionCache.clear();
+    }
+  }
 
-    this.entryCssCache.invalidateWhere((_, value) => {
-      return value !== null && pathSet.has(value);
+  // inspect plugin directives only after a cheap entry-file stamp check
+  private async entryCssHasPluginDirective(
+    entryCssPath: string
+  ): Promise<boolean> {
+    let stamp: string;
+    try {
+      const stat = await fs.promises.stat(entryCssPath);
+      stamp = `${stat.mtimeMs}:${stat.ctimeMs}:${stat.size}`;
+    } catch {
+      const entryCss = await readFileAsync(entryCssPath);
+      return entryCss !== null && TAILWIND_PLUGIN_DIRECTIVE_RE.test(entryCss);
+    }
+
+    const cached = this.entryCssInspectionCache.get(entryCssPath);
+    if (cached?.stamp === stamp) {
+      return cached.hasPluginDirective;
+    }
+
+    const entryCss = await readFileAsync(entryCssPath);
+    const hasPluginDirective =
+      entryCss !== null && TAILWIND_PLUGIN_DIRECTIVE_RE.test(entryCss);
+    this.entryCssInspectionCache.set(entryCssPath, {
+      stamp,
+      hasPluginDirective,
     });
+    return hasPluginDirective;
   }
 
   // check common CSS file locations for Tailwind entry CSS
@@ -469,5 +541,12 @@ export class TailwindDetector {
       this.versionCache.clear();
       log.debug('All version caches invalidated');
     }
+  }
+
+  dispose(): void {
+    this.configCache.dispose();
+    this.entryCssCache.dispose();
+    this.entryCssInspectionCache.clear();
+    this.versionCache.clear();
   }
 }

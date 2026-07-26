@@ -37,6 +37,7 @@ import {
 } from '../../features/security/pathSecurity';
 import { MAX_FETCH_REQUEST_LENGTH } from '../../shared/constants';
 import { isValidModuleRequest } from '@mdx-preview/runtime-utils';
+import { AsyncLruCache } from '../../shared/utils/cache';
 import type {
   ExtensionRPC,
   FetchResult,
@@ -45,6 +46,7 @@ import type {
 
 // allowed URL schemes for openExternal
 const ALLOWED_EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
+const PLANTUML_CACHE_MAX_ENTRIES = 64;
 
 // validate fetch request for security
 function validateFetchRequest(request: string): boolean {
@@ -66,6 +68,10 @@ function validateFetchRequest(request: string): boolean {
 // RPC handle exposed to webview (methods callable via Comlink)
 class ExtensionHandle implements ExtensionRPC {
   preview: Preview;
+  private readonly plantUmlCache = new AsyncLruCache<string, string>({
+    maxEntries: PLANTUML_CACHE_MAX_ENTRIES,
+  });
+  private plantUmlServer: string | undefined;
 
   constructor(preview: Preview) {
     log.debug('ExtensionHandle created');
@@ -381,6 +387,24 @@ class ExtensionHandle implements ExtensionRPC {
       SETTINGS.PLANTUML_SERVER,
       this.preview.doc.uri
     );
+    if (
+      this.plantUmlServer !== undefined &&
+      this.plantUmlServer !== serverUrl
+    ) {
+      this.plantUmlCache.clear();
+    }
+    this.plantUmlServer = serverUrl;
+
+    const cacheKey = JSON.stringify([serverUrl, validCode]);
+    return this.plantUmlCache.getOrCreate(cacheKey, () =>
+      this.fetchPlantUml(validCode, serverUrl)
+    );
+  }
+
+  private async fetchPlantUml(
+    validCode: string,
+    serverUrl: string
+  ): Promise<string | undefined> {
     const endpoints = getPlantUmlRenderEndpoints(serverUrl);
     let lastError: unknown = null;
 

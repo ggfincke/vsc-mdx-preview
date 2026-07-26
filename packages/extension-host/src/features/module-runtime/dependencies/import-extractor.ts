@@ -127,7 +127,7 @@ function extractRequireSpecifiers(code: string): LocatedSpecifier[] {
 
     if (
       !code.startsWith('require', index) ||
-      /[\w$\.]/.test(code[index - 1] ?? '') ||
+      /[\w$.]/.test(code[index - 1] ?? '') ||
       /[\w$]/.test(code[index + 7] ?? '')
     ) {
       continue;

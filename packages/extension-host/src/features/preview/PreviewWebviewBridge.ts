@@ -24,6 +24,7 @@ export class PreviewWebviewBridge {
   private webviewHandle?: WebviewHandle;
   private webview?: vscode.Webview;
   private themeRequestSeq = 0;
+  private lastSentState = new Map<string, unknown>();
 
   // get a webview URI for a file system path
   getWebviewUri(fsPath: string): string | undefined {
@@ -49,7 +50,8 @@ export class PreviewWebviewBridge {
     watcherManager: WatcherManager
   ): void {
     this.themeRequestSeq += 1;
-    this.webviewHandle = handle;
+    this.resetLastSentState();
+    this.webviewHandle = this.createDeltaHandle(handle);
     const docTracker = watcherManager.get<DocumentTracker>('document');
     docTracker?.setNotifier(handle);
     const cssWatcher = watcherManager.get<CustomCssWatcher>('customCss');
@@ -59,6 +61,7 @@ export class PreviewWebviewBridge {
   // called after webview handshake completes to push initial configuration
   onWebviewReady(docUri: vscode.Uri): void {
     log.debug('onWebviewReady - pushing initial config');
+    this.resetLastSentState();
     this.pushThemeState(docUri);
   }
 
@@ -78,10 +81,6 @@ export class PreviewWebviewBridge {
     if (frontmatter) {
       const frontmatterTheme =
         themeManager.extractThemeFromFrontmatter(frontmatter);
-      // no usable overrides -> base per-evaluation push already sent this state
-      if (!frontmatterTheme.previewTheme && !frontmatterTheme.codeBlockTheme) {
-        return;
-      }
       if (frontmatterTheme.previewTheme) {
         themeState = {
           ...themeState,
@@ -179,7 +178,93 @@ export class PreviewWebviewBridge {
 
   dispose(): void {
     this.invalidateThemeRequests();
+    this.resetLastSentState();
     this.webviewHandle = undefined;
     this.webview = undefined;
+  }
+
+  // suppress unchanged single-value RPC state within one webview handshake
+  private createDeltaHandle(handle: WebviewHandle): WebviewHandle {
+    const deltaMethods = new Set([
+      'setTrustState',
+      'setFramework',
+      'setTailwindCss',
+      'setTailwindBrowserCss',
+      'setTheme',
+      'setSourceLineHighlight',
+      'setSourceLineHighlightColor',
+      'setScrollSync',
+      'setShimSideRail',
+    ]);
+
+    return new Proxy(handle, {
+      get: (target, property) => {
+        const value = Reflect.get(target, property, target);
+        if (
+          typeof property !== 'string' ||
+          !deltaMethods.has(property) ||
+          typeof value !== 'function'
+        ) {
+          return value;
+        }
+
+        return (nextValue: unknown) => {
+          if (
+            this.lastSentState.has(property) &&
+            this.isSameSentValue(
+              property,
+              this.lastSentState.get(property),
+              nextValue
+            )
+          ) {
+            return undefined;
+          }
+          this.lastSentState.set(property, nextValue);
+          return Reflect.apply(value, target, [nextValue]);
+        };
+      },
+    });
+  }
+
+  private isSameSentValue(
+    property: string,
+    previous: unknown,
+    next: unknown
+  ): boolean {
+    if (property !== 'setTheme') {
+      if (
+        previous !== null &&
+        next !== null &&
+        typeof previous === 'object' &&
+        typeof next === 'object'
+      ) {
+        return JSON.stringify(previous) === JSON.stringify(next);
+      }
+      return Object.is(previous, next);
+    }
+
+    const previousTheme = previous as WebviewThemeState;
+    const nextTheme = next as WebviewThemeState;
+    return (
+      previousTheme.previewTheme === nextTheme.previewTheme &&
+      previousTheme.codeBlockTheme === nextTheme.codeBlockTheme &&
+      previousTheme.mermaidTheme === nextTheme.mermaidTheme &&
+      previousTheme.isLight === nextTheme.isLight &&
+      previousTheme.plantUmlServer === nextTheme.plantUmlServer &&
+      previousTheme.mermaidIconPacks.length ===
+        nextTheme.mermaidIconPacks.length &&
+      previousTheme.mermaidIconPacks.every((pack, index) => {
+        const nextPack = nextTheme.mermaidIconPacks[index];
+        return (
+          nextPack !== undefined &&
+          pack.name === nextPack.name &&
+          pack.icons === nextPack.icons
+        );
+      })
+    );
+  }
+
+  private resetLastSentState(): void {
+    this.lastSentState.clear();
   }
 }

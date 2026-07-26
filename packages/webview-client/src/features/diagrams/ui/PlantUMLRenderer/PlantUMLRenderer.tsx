@@ -15,11 +15,13 @@ interface PlantUMLProps {
 
 // render a single PlantUML diagram w/ error handling
 export const PlantUMLRenderer = createDiagramRenderer<PlantUMLProps>({
+  cacheFamily: 'plantuml',
   classPrefix: 'mdx-preview-plantuml',
   errorLabel: 'PlantUML render error',
   loadingText: 'Rendering diagram...',
   logTag: LogTags.PLANTUML_RENDERER,
   useThemeValue: () => (useTheme().isDark ? 'dark' : 'light'),
+  useCacheKeyValue: () => useTheme().plantUmlServer,
   sanitize: sanitizeSvg,
   render: async (props) => {
     // render via extension host proxy (avoids CORS restrictions)

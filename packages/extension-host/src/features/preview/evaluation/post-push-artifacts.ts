@@ -140,9 +140,8 @@ function applyFrontmatterAndMeta(
 ): void {
   const { preview } = context;
 
-  if (frontmatter) {
-    preview.pushThemeState(frontmatter);
-  }
+  // always push the effective state so removing an override restores the base
+  preview.pushThemeState(frontmatter);
 
   sendNextraMetaIfNeeded(context, frontmatter);
 }

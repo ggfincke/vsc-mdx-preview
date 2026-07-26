@@ -36,6 +36,7 @@ const EXACT_ALLOWED = new Set([
   'tests/extension/language/MDXOutlineProvider.test.ts',
   'tests/extension/language/MDXSymbolProvider.test.ts',
   'tests/extension/errors/ErrorReporter.test.ts',
+  'tests/extension/preview/extension-rpc-handler.test.ts',
   'tests/extension/fetch/css-rewrite.test.ts',
   'tests/extension/fetch/fetch-local.test.ts',
   'tests/extension/fetch/sass-handler.test.ts',
@@ -75,7 +76,9 @@ const EXACT_ALLOWED = new Set([
 ]);
 
 const CASE_COUNT_OVERRIDES = new Map([
-  ['tests/extension/preview/evaluate-in-webview.test.ts', 5],
+  ['tests/extension/preview/PreviewWebviewBridge.test.ts', 6],
+  ['tests/extension/tailwind/TailwindProcessor.test.ts', 5],
+  ['tests/extension/preview/evaluate-in-webview.test.ts', 6],
   ['tests/extension/diagnostics/ComponentDetector.test.ts', 11],
   ['tests/extension/diagnostics/ComponentDiagnostics.test.ts', 7],
   ['tests/resolution/unified-resolver.test.ts', 6],

@@ -32,6 +32,18 @@ function applyAttributes(
   }
 }
 
+function hasMatchingAttributes(
+  styleEl: HTMLStyleElement,
+  attributes?: Record<string, string>
+): boolean {
+  return (
+    !attributes ||
+    Object.entries(attributes).every(
+      ([name, value]) => styleEl.getAttribute(name) === value
+    )
+  );
+}
+
 // centralized style injection manager for theme, custom & Tailwind CSS
 class StyleInjectorImpl {
   // inject CSS w/ the given ID - creates or updates a <style> element in document.head
@@ -39,6 +51,17 @@ class StyleInjectorImpl {
     const { insertBefore, dataAttribute, attributes } = options;
 
     let styleEl = document.getElementById(id) as HTMLStyleElement | null;
+
+    if (
+      styleEl &&
+      styleEl.textContent === css &&
+      hasMatchingAttributes(styleEl, attributes) &&
+      (!dataAttribute ||
+        document.documentElement.getAttribute(dataAttribute.name) ===
+          dataAttribute.value)
+    ) {
+      return;
+    }
 
     if (!styleEl) {
       styleEl = document.createElement('style');

@@ -42,19 +42,14 @@ export class WatchableCache<K, V> {
   }
 
   get(key: K): V | undefined {
-    const value = this.cache.get(key);
-    if (value === null) {
+    if (!this.cache.has(key)) {
       return undefined;
     }
-    return value;
+    return this.cache.get(key) as V;
   }
 
   peek(key: K): V | undefined {
-    const value = this.cache.peek(key);
-    if (value === null) {
-      return undefined;
-    }
-    return value;
+    return this.cache.peek(key);
   }
 
   has(key: K): boolean {

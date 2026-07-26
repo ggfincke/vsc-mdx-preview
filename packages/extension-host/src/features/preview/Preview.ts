@@ -78,6 +78,7 @@ export class Preview {
 
   // performance tracking (development only)
   private _performanceObserver?: PerformanceObserver;
+  private _tailwindWatchSet = '';
   private _evaluationDuration = 0;
   private _previewDuration = 0;
 
@@ -317,6 +318,12 @@ export class Preview {
   }
 
   updateTailwindWatchFiles(watchFiles: string[]): void {
+    // keep the existing watcher when the canonical path set is unchanged
+    const nextWatchSet = [...new Set(watchFiles)].sort().join('\0');
+    if (nextWatchSet === this._tailwindWatchSet) {
+      return;
+    }
+    this._tailwindWatchSet = nextWatchSet;
     // setup tailwind watcher directly via initializer (coordinator was removed)
     this.initializer.setupTailwindConfigWatcher(
       this.watcherManager,

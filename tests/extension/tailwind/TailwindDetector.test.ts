@@ -6,8 +6,15 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-const { mockFindFiles } = vi.hoisted(() => ({
+const { mockFindFiles, mockFindUp, mockWatchers } = vi.hoisted(() => ({
   mockFindFiles: vi.fn(),
+  mockFindUp: vi.fn(),
+  mockWatchers: [] as Array<{
+    pattern: string;
+    change?: (uri: { fsPath: string }) => void;
+    create?: (uri: { fsPath: string }) => void;
+    delete?: (uri: { fsPath: string }) => void;
+  }>,
 }));
 
 vi.mock('vscode', () => ({
@@ -22,8 +29,39 @@ vi.mock('vscode', () => ({
   },
   workspace: {
     findFiles: (...args: unknown[]) => mockFindFiles(...args),
+    createFileSystemWatcher: (pattern: string) => {
+      const watcher: (typeof mockWatchers)[number] = { pattern };
+      mockWatchers.push(watcher);
+      return {
+        onDidChange: (handler: (uri: { fsPath: string }) => void) => {
+          watcher.change = handler;
+        },
+        onDidCreate: (handler: (uri: { fsPath: string }) => void) => {
+          watcher.create = handler;
+        },
+        onDidDelete: (handler: (uri: { fsPath: string }) => void) => {
+          watcher.delete = handler;
+        },
+        dispose: vi.fn(),
+      };
+    },
   },
 }));
+
+vi.mock(
+  '../../../packages/extension-host/src/shared/utils/find-up',
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../packages/extension-host/src/shared/utils/find-up')
+      >();
+    mockFindUp.mockImplementation(actual.findUp);
+    return {
+      ...actual,
+      findUp: (...args: unknown[]) => mockFindUp(...args),
+    };
+  }
+);
 
 import { TailwindDetector } from '../../../packages/extension-host/src/features/tailwind/TailwindDetector';
 
@@ -69,6 +107,7 @@ function collectCssFiles(baseDir: string): Array<{ fsPath: string }> {
 describe('TailwindDetector entry CSS scan scope', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockWatchers.length = 0;
     mockFindFiles.mockImplementation(
       async (pattern: { base: string }, _exclude: string, maxResults: number) =>
         collectCssFiles(pattern.base).slice(0, maxResults)
@@ -136,5 +175,41 @@ describe('TailwindDetector entry CSS scan scope', () => {
       '**/node_modules/**',
       50
     );
+  });
+
+  it('reuses negative detection across edits and invalidates it on file events', async () => {
+    const workspaceRoot = makeTempDir();
+    const detector = new TailwindDetector();
+    const options = {
+      workspaceRoot,
+      entryDir: workspaceRoot,
+      maxCssFilesToSearch: 50,
+      mdxText: '# document',
+    };
+
+    await detector.detectProfile(options);
+    await detector.detectProfile(options);
+    await detector.detectProfile(options);
+
+    expect(mockFindUp).toHaveBeenCalledTimes(1);
+    expect(mockFindFiles).toHaveBeenCalledTimes(1);
+
+    const cssWatcher = mockWatchers.find(
+      (watcher) => watcher.pattern === '**/*.css'
+    );
+    cssWatcher?.create?.({ fsPath: path.join(workspaceRoot, 'new.css') });
+    await detector.detectProfile(options);
+    expect(mockFindFiles).toHaveBeenCalledTimes(2);
+
+    const configWatcher = mockWatchers.find((watcher) =>
+      watcher.pattern.includes('tailwind.config')
+    );
+    configWatcher?.delete?.({
+      fsPath: path.join(workspaceRoot, 'tailwind.config.ts'),
+    });
+    await detector.detectProfile(options);
+    expect(mockFindUp).toHaveBeenCalledTimes(2);
+
+    detector.dispose();
   });
 });

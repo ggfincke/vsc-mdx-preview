@@ -72,6 +72,7 @@ vi.mock('mdx-forge/compiler', () => ({
 }));
 
 import evaluateInWebview from '../../../packages/extension-host/src/features/preview/evaluate-in-webview';
+import { PreviewWebviewBridge } from '../../../packages/extension-host/src/features/preview/PreviewWebviewBridge';
 
 type MockPreview = ReturnType<typeof createPreview>;
 
@@ -87,6 +88,7 @@ function createPreview(): {
     setUsedComponents: ReturnType<typeof vi.fn>;
     setNextraMeta: ReturnType<typeof vi.fn>;
     setSourceLineHighlight: ReturnType<typeof vi.fn>;
+    setTheme: ReturnType<typeof vi.fn>;
     setSourceLineHighlightColor: ReturnType<typeof vi.fn>;
     setScrollSync: ReturnType<typeof vi.fn>;
     setShimSideRail: ReturnType<typeof vi.fn>;
@@ -124,6 +126,7 @@ function createPreview(): {
     setUsedComponents: vi.fn(),
     setNextraMeta: vi.fn(),
     setSourceLineHighlight: vi.fn(),
+    setTheme: vi.fn(),
     setSourceLineHighlightColor: vi.fn(),
     setScrollSync: vi.fn(),
     setShimSideRail: vi.fn(),
@@ -255,22 +258,10 @@ describe('evaluate-in-webview Tailwind routing', () => {
     expect(mockEngine.evaluateSafe).not.toHaveBeenCalled();
   });
 
-  it('warns once for advanced profile in Safe Mode and clears Tailwind CSS channels', async () => {
+  it('skips Tailwind discovery in Safe Mode and clears CSS channels', async () => {
     mockSafeState();
 
     const preview = createPreview();
-    preview.markTailwindFallbackReason
-      .mockReturnValueOnce(true)
-      .mockReturnValueOnce(false);
-    mockTailwindProcessor.detectProfile.mockResolvedValue({
-      profile: 'advanced',
-      reason: 'tailwind.config.* detected at /workspace/tailwind.config.ts',
-      workspaceRoot: '/workspace',
-      configPath: '/workspace/tailwind.config.ts',
-      entryCssPath: '/workspace/tailwind.css',
-      hasTailwindInput: true,
-      inlineTailwindStyles: [],
-    });
 
     await evaluateInWebview(
       preview as unknown as MockPreview,
@@ -283,14 +274,8 @@ describe('evaluate-in-webview Tailwind routing', () => {
       '/workspace/doc.mdx'
     );
 
-    expect(mockStatusBarMessage).toHaveBeenCalledTimes(1);
-    expect(mockStatusBarMessage).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'advanced config detected (tailwind.config.* detected at /workspace/tailwind.config.ts)'
-      ),
-      10000
-    );
-
+    expect(mockTailwindProcessor.detectProfile).not.toHaveBeenCalled();
+    expect(mockStatusBarMessage).not.toHaveBeenCalled();
     expect(preview.webviewHandle.setTailwindBrowserCss).toHaveBeenCalledWith(
       ''
     );
@@ -330,6 +315,49 @@ describe('evaluate-in-webview Tailwind routing', () => {
       'bidirectional'
     );
     expect(preview.webviewHandle.setShimSideRail).toHaveBeenCalledWith(false);
+  });
+
+  it('sends only content on a second evaluation with unchanged state', async () => {
+    mockTrustedState();
+    const preview = createPreview();
+    const rawHandle = preview.webviewHandle;
+    const bridge = new PreviewWebviewBridge();
+    bridge.setWebviewHandle(
+      rawHandle as never,
+      { get: vi.fn(() => undefined) } as never
+    );
+    preview.webviewHandle = bridge.getHandle() as typeof rawHandle;
+    preview.onWebviewReady.mockImplementation(() => {
+      bridge.onWebviewReady(preview.doc.uri as never);
+    });
+    preview.pushThemeState.mockImplementation((frontmatter) => {
+      bridge.pushThemeState(preview.doc.uri as never, frontmatter);
+    });
+    preview.pushRuntimeConfiguration.mockImplementation(() => {
+      bridge.pushRuntimeConfiguration(preview.runtimeConfiguration);
+    });
+
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# first',
+      '/workspace/doc.mdx'
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    vi.clearAllMocks();
+
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# second',
+      '/workspace/doc.mdx'
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(rawHandle.updatePreview).toHaveBeenCalledTimes(1);
+    expect(rawHandle.setTrustState).not.toHaveBeenCalled();
+    expect(rawHandle.setSourceLineHighlight).not.toHaveBeenCalled();
+    expect(rawHandle.setSourceLineHighlightColor).not.toHaveBeenCalled();
+    expect(rawHandle.setScrollSync).not.toHaveBeenCalled();
+    expect(rawHandle.setShimSideRail).not.toHaveBeenCalled();
   });
 
   it('awaits webview pushes before downstream preview work', async () => {

@@ -7,7 +7,6 @@ import { getUnifiedResolver } from '../../module-runtime/resolution/UnifiedResol
 import type { ResolutionContext, TextExtractor } from '../../types';
 import { FileScanValidator } from '../FileScanValidator';
 import { TAILWIND_DEPENDENCY_RESOLUTION_LIMIT } from '../constants';
-import { computeContentHash } from './content-hash';
 
 const resolveSemaphore = new Semaphore(TAILWIND_DEPENDENCY_RESOLUTION_LIMIT);
 
@@ -36,39 +35,42 @@ export class DependencyScanner {
       providedContext
     );
 
-    // read all dependency files in parallel using FileScanValidator
-    const fileContents = await this.validator.readValidFiles(
+    // check cheap file stamps before reading unchanged dependency contents
+    const fileStamps = await this.validator.getValidFileStamps(
       resolved,
       maxFileSizeBytes
     );
-
-    // extract classes from each file w/ optional caching
-    for (const [fsPath, content] of fileContents) {
-      const hash = computeContentHash(content);
-
-      // check cache first
+    const filesToRead: string[] = [];
+    for (const [fsPath, stamp] of fileStamps) {
       const cached = scanCache
-        ? scanCache.getIfHashMatches(fsPath, hash)
+        ? scanCache.getIfHashMatches(fsPath, stamp)
         : null;
       if (cached !== null) {
-        // use cached classes
         for (const cls of cached) {
           classSet.add(cls);
         }
+        scannedFiles.push(fsPath);
       } else {
-        // extract classes & cache the result
-        const fileClassSet = new Set<string>();
-        extractFromText(content, fileClassSet);
+        filesToRead.push(fsPath);
+      }
+    }
 
-        // add to main class set
-        for (const cls of fileClassSet) {
-          classSet.add(cls);
-        }
+    const fileContents = await this.validator.readValidFiles(
+      filesToRead,
+      maxFileSizeBytes
+    );
+    for (const [fsPath, content] of fileContents) {
+      const fileClassSet = new Set<string>();
+      extractFromText(content, fileClassSet);
 
-        // store in cache
-        scanCache?.setWithHash(fsPath, hash, Array.from(fileClassSet));
+      for (const cls of fileClassSet) {
+        classSet.add(cls);
       }
 
+      const stamp = fileStamps.get(fsPath);
+      if (stamp) {
+        scanCache?.setWithHash(fsPath, stamp, Array.from(fileClassSet));
+      }
       scannedFiles.push(fsPath);
     }
 

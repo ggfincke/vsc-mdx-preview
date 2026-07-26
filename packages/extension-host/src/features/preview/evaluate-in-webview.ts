@@ -19,6 +19,7 @@ const log = createTaggedLogger(LogTags.EVALUATE);
 
 // dedupe: one visible handshake-failure notification at a time
 let handshakeNotificationVisible = false;
+const readyHandshakeByPreview = new WeakMap<Preview, Promise<void>>();
 
 // webview never booted, so an in-webview error goes nowhere; notify w/ recovery
 function notifyHandshakeTimeout(preview: Preview): void {
@@ -115,6 +116,7 @@ export default async function evaluateInWebview(
       notifyHandshakeTimeout(preview);
       return;
     }
+    preview.pushThemeState();
     getErrorReporter().report(error, {
       context: ErrorContext.Transpile,
       showInWebview: true,
@@ -129,15 +131,19 @@ async function waitForHandshakeAndPushBaseState(
 ): Promise<boolean> {
   const { preview, trustState, isCurrent } = context;
   const { webviewHandle } = preview;
+  const handshakePromise = preview.webviewHandshakePromise;
 
   log.debug('Waiting for webviewHandshakePromise...');
-  await preview.webviewHandshakePromise;
+  await handshakePromise;
   log.debug('Handshake complete!');
 
   if (!isCurrent()) {
     return false;
   }
-  preview.onWebviewReady();
+  if (readyHandshakeByPreview.get(preview) !== handshakePromise) {
+    readyHandshakeByPreview.set(preview, handshakePromise);
+    preview.onWebviewReady();
+  }
 
   log.debug('Sending trust state to webview');
   await webviewHandle.setTrustState(trustState);

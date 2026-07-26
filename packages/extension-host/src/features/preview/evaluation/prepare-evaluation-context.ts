@@ -48,7 +48,7 @@ export async function prepareEvaluationContext(
   const shouldProcessTailwind = canExecute && tailwindEnabled;
   let tailwindProfileHint: TailwindProfileDetectionResult | undefined;
 
-  if (tailwindEnabled) {
+  if (shouldProcessTailwind) {
     tailwindProfileHint = await getTailwindProcessor().detectProfile({
       preview,
       mdxText: text,

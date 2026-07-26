@@ -16,9 +16,34 @@ export interface FileReadResult {
   content: string | null;
 }
 
+export interface FileStampResult {
+  fsPath: string;
+  stamp: string | null;
+}
+
 // validate files before scanning for Tailwind classes
 // consolidate file I/O & validation logic for testability
 export class FileScanValidator {
+  // stat files before reads so dependency scans can reuse unchanged results
+  async getFileStampIfValid(
+    fsPath: string,
+    maxBytes: number
+  ): Promise<string | null> {
+    try {
+      const stat = await fs.promises.stat(fsPath);
+      if (stat.size > maxBytes) {
+        log.debug(`Skipping large file: ${fsPath}`);
+        return null;
+      }
+      return `${stat.mtimeMs}:${stat.ctimeMs}:${stat.size}`;
+    } catch (err) {
+      log.debug(
+        `Skipping unreadable file: ${fsPath} (${extractErrorMessage(err)})`
+      );
+      return null;
+    }
+  }
+
   // read file content w/ size validation
   async readFileIfValid(
     fsPath: string,
@@ -84,6 +109,33 @@ export class FileScanValidator {
       }
     }
 
+    return results;
+  }
+
+  // stat multiple files in parallel w/ the same I/O bound as full reads
+  async getValidFileStamps(
+    fsPaths: string[],
+    maxBytes: number
+  ): Promise<Map<string, string>> {
+    const results = new Map<string, string>();
+    const stampPromises = fsPaths.map(
+      async (fsPath): Promise<FileStampResult> => {
+        await readSemaphore.acquire();
+        try {
+          const stamp = await this.getFileStampIfValid(fsPath, maxBytes);
+          return { fsPath, stamp };
+        } finally {
+          readSemaphore.release();
+        }
+      }
+    );
+
+    const stampResults = await Promise.all(stampPromises);
+    for (const { fsPath, stamp } of stampResults) {
+      if (stamp !== null) {
+        results.set(fsPath, stamp);
+      }
+    }
     return results;
   }
 }

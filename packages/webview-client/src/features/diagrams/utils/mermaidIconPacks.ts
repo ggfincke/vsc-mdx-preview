@@ -83,11 +83,34 @@ function sanitizeIconPack(
 // loaded locally (not via CDN) so it works offline & under the webview CSP
 let builtinRegistered = false;
 
-// names of dynamic packs already registered (avoid redundant re-registration)
-const registeredDynamicPacks = new Set<string>();
+// content fingerprints of dynamic packs already registered by name
+const registeredDynamicPacks = new Map<string, string>();
 
 // latest dynamic packs pushed from the host (read by the renderer at render time)
 let pendingDynamicPacks: ResolvedMermaidIconPack[] = [];
+
+const fingerprintCache = new WeakMap<object, string>();
+
+function getContentFingerprint(value: object): string {
+  const cached = fingerprintCache.get(value);
+  if (cached) {
+    return cached;
+  }
+
+  const serialized = JSON.stringify(value);
+  let first = 0x811c9dc5;
+  let second = 0x9e3779b9;
+  for (let i = 0; i < serialized.length; i++) {
+    const code = serialized.charCodeAt(i);
+    first = Math.imul(first ^ code, 0x01000193);
+    second = Math.imul(second ^ code, 0x85ebca6b);
+  }
+  const fingerprint = `${serialized.length}:${(first >>> 0).toString(16)}:${(
+    second >>> 0
+  ).toString(16)}`;
+  fingerprintCache.set(value, fingerprint);
+  return fingerprint;
+}
 
 // store the latest dynamic packs (called by the theme-value hook)
 export function setPendingDynamicPacks(packs: ResolvedMermaidIconPack[]): void {
@@ -99,6 +122,13 @@ export function getPendingDynamicPacks(): ResolvedMermaidIconPack[] {
   return pendingDynamicPacks;
 }
 
+// compact the complete pack payload into a stable content fingerprint
+export function getMermaidIconPacksFingerprint(
+  packs: ResolvedMermaidIconPack[]
+): string {
+  return getContentFingerprint(packs);
+}
+
 // register the bundled builtin icon pack on the given mermaid instance
 export function registerBuiltinIconPacks(mermaid: MermaidModule): void {
   if (builtinRegistered) {
@@ -107,24 +137,28 @@ export function registerBuiltinIconPacks(mermaid: MermaidModule): void {
   mermaid.default.registerIconPacks([
     {
       name: 'logos',
-      loader: () => logosIcons,
+      loader: async () => logosIcons,
     },
   ]);
   builtinRegistered = true;
 }
 
 // register user-configured icon packs pushed from the extension host
-// each pack is registered once by name (mermaid stores packs by name)
+// skip only unchanged name/content pairs so edited packs replace stored data
 export function registerDynamicIconPacks(
   mermaid: MermaidModule,
   packs: ResolvedMermaidIconPack[]
 ): void {
   for (const pack of packs) {
-    if (!pack || !pack.name || registeredDynamicPacks.has(pack.name)) {
+    if (!pack || !pack.name) {
       continue;
     }
     // reject the reserved builtin name & any non-prefix-token name
     if (pack.name === 'logos' || !DYNAMIC_PACK_NAME_RE.test(pack.name)) {
+      continue;
+    }
+    const fingerprint = getContentFingerprint(pack);
+    if (registeredDynamicPacks.get(pack.name) === fingerprint) {
       continue;
     }
     const safe = sanitizeIconPack(pack);
@@ -134,10 +168,10 @@ export function registerDynamicIconPacks(
     mermaid.default.registerIconPacks([
       {
         name: pack.name,
-        loader: () => safe as never,
+        icons: { ...safe, prefix: pack.name } as never,
       },
     ]);
-    registeredDynamicPacks.add(pack.name);
+    registeredDynamicPacks.set(pack.name, fingerprint);
   }
 }
 

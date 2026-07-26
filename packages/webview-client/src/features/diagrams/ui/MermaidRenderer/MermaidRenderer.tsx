@@ -11,16 +11,22 @@ import {
   registerDynamicIconPacks,
   setPendingDynamicPacks,
   getPendingDynamicPacks,
+  getMermaidIconPacksFingerprint,
 } from '../../utils/mermaidIconPacks';
 import './MermaidRenderer.css';
 
-// read mermaid theme & keep configured icon packs in sync for the renderer
+// read the mermaid theme
 function useMermaidThemeValue(): string {
-  const { mermaidTheme, mermaidIconPacks } = useTheme();
+  return useTheme().mermaidTheme;
+}
+
+// keep icon packs in sync & expose their content fingerprint to the cache
+function useMermaidIconPacksFingerprint(): string {
+  const { mermaidIconPacks } = useTheme();
   useEffect(() => {
     setPendingDynamicPacks(mermaidIconPacks);
   }, [mermaidIconPacks]);
-  return mermaidTheme;
+  return getMermaidIconPacksFingerprint(mermaidIconPacks);
 }
 
 // check if mermaid theme is dark (needs dark background)
@@ -39,11 +45,13 @@ interface MermaidProps {
 
 // render a single mermaid diagram w/ error handling
 export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
+  cacheFamily: 'mermaid',
   classPrefix: 'mdx-preview-mermaid',
   errorLabel: 'Mermaid parse error',
   loadingText: 'Loading diagram...',
   logTag: LogTags.MERMAID_RENDERER,
   useThemeValue: useMermaidThemeValue,
+  useCacheKeyValue: useMermaidIconPacksFingerprint,
   toDataTheme: (theme) => (isDarkMermaidTheme(theme) ? 'dark' : 'light'),
   render: async (_props, signal, mermaidTheme) => {
     const { code, id } = _props;

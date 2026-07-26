@@ -16,6 +16,7 @@ interface GraphvizProps {
 
 // render a single Graphviz diagram w/ error handling
 export const GraphvizRenderer = createDiagramRenderer<GraphvizProps>({
+  cacheFamily: 'graphviz',
   classPrefix: 'mdx-preview-graphviz',
   errorLabel: 'Graphviz render error',
   loadingText: 'Rendering diagram...',
