@@ -19,21 +19,48 @@ import {
   syncPreviewScrollFromActiveEditor,
 } from '../../packages/extension-host/src/features/preview/scroll-sync';
 
+const { mockWorkspaceLog } = vi.hoisted(() => ({
+  mockWorkspaceLog: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  createTaggedLogger: vi.fn(() => mockWorkspaceLog),
+}));
+
 describe('workspace-events', () => {
+  let saveCallback: ((event: { uri: vscode.Uri }) => void) | undefined;
+  let documentChangeCallback:
+    ((event: { document: vscode.TextDocument }) => void) | undefined;
   let visibleRangeCallback:
-    | ((event: { textEditor: vscode.TextEditor }) => void)
-    | undefined;
+    ((event: { textEditor: vscode.TextEditor }) => void) | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    saveCallback = undefined;
+    documentChangeCallback = undefined;
     visibleRangeCallback = undefined;
 
-    (vscode.workspace as any).onDidSaveTextDocument = vi.fn(() => ({
-      dispose: vi.fn(),
-    }));
-    (vscode.workspace as any).onDidChangeTextDocument = vi.fn(() => ({
-      dispose: vi.fn(),
-    }));
+    (vscode.workspace as any).onDidSaveTextDocument = vi.fn(
+      (callback: (event: { uri: vscode.Uri }) => void) => {
+        saveCallback = callback;
+        return { dispose: vi.fn() };
+      }
+    );
+    (vscode.workspace as any).onDidChangeTextDocument = vi.fn(
+      (callback: (event: { document: vscode.TextDocument }) => void) => {
+        documentChangeCallback = callback;
+        return { dispose: vi.fn() };
+      }
+    );
     (vscode.workspace as any).onDidChangeWorkspaceFolders = vi.fn(() => ({
       dispose: vi.fn(),
     }));
@@ -54,7 +81,7 @@ describe('workspace-events', () => {
     vi.useRealTimers();
   });
 
-  it('dispatches preview setting changes by action class', () => {
+  it('dispatches preview document & setting events safely', async () => {
     let changeCallback: ((affectedKeys: string[]) => void) | undefined;
     mockConfigManager.onDidChangeConfiguration.mockImplementation(
       (callback: (affectedKeys: string[]) => void) => {
@@ -63,15 +90,42 @@ describe('workspace-events', () => {
       }
     );
 
+    const saveError = new Error('save failed');
+    const changeError = new Error('change failed');
+    const handleDidSaveTextDocument = vi.fn().mockRejectedValue(saveError);
+    const handleDidChangeTextDocument = vi.fn().mockRejectedValue(changeError);
     const updateConfiguration = vi.fn();
     const updateWebview = vi.fn().mockResolvedValue(undefined);
     mockPreviewManager.getCurrentPreview.mockReturnValue({
+      handleDidSaveTextDocument,
+      handleDidChangeTextDocument,
       updateConfiguration,
       updateWebview,
     });
 
     const context = { subscriptions: [] as Array<{ dispose: () => void }> };
     initWorkspaceHandlers(context as any);
+
+    const uri = vscode.Uri.file('/workspace/test.mdx');
+    saveCallback?.({ uri });
+    documentChangeCallback?.({
+      document: { uri } as vscode.TextDocument,
+    });
+    await Promise.resolve();
+
+    expect(handleDidSaveTextDocument).toHaveBeenCalledWith(uri.fsPath);
+    expect(handleDidChangeTextDocument).toHaveBeenCalledWith(
+      uri.fsPath,
+      expect.objectContaining({ uri })
+    );
+    expect(mockWorkspaceLog.error).toHaveBeenCalledWith(
+      'Error handling document save',
+      saveError
+    );
+    expect(mockWorkspaceLog.error).toHaveBeenCalledWith(
+      'Error handling document change',
+      changeError
+    );
 
     expect(mockConfigManager.onDidChangeConfiguration).toHaveBeenCalledTimes(1);
     expect(PREVIEW_SETTING_ACTIONS[SETTINGS.USE_SUCRASE]).toBe('recompile');

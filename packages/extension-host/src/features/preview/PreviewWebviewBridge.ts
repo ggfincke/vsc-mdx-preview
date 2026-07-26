@@ -9,11 +9,13 @@ import { LogTags } from '@mdx-preview/contracts';
 const log = createTaggedLogger(LogTags.PREVIEW);
 import { getThemeManager } from '../../app/services';
 import { resolveMermaidIconPacks } from '../themes/IconPackResolver';
-import { DocumentTracker, CustomCssWatcher, WatcherManager } from './watchers';
+import type { DocumentTracker } from './watchers/DocumentTracker';
+import type { CustomCssWatcher } from './watchers/CustomCssWatcher';
+import type { WatcherManager } from './watchers/WatcherManager';
 import type { WebviewHandleType } from '../../platform/rpc/extension-endpoint';
-import type { PreviewRuntimeConfig } from '../types';
 import type {
   MermaidIconPackSetting,
+  PreviewRuntimeConfig,
   WebviewThemeState,
 } from '@mdx-preview/contracts';
 
@@ -144,14 +146,7 @@ export class PreviewWebviewBridge {
       return;
     }
 
-    this.webviewHandle.setSourceLineHighlight(
-      runtimeConfig.sourceLineHighlight
-    );
-    this.webviewHandle.setSourceLineHighlightColor(
-      runtimeConfig.sourceLineHighlightColor
-    );
-    this.webviewHandle.setScrollSync(runtimeConfig.scrollSync);
-    this.webviewHandle.setShimSideRail(runtimeConfig.shimSideRail);
+    this.webviewHandle.setRuntimeConfig(runtimeConfig);
   }
 
   // invalidate a module in the webview cache
@@ -191,10 +186,7 @@ export class PreviewWebviewBridge {
       'setTailwindCss',
       'setTailwindBrowserCss',
       'setTheme',
-      'setSourceLineHighlight',
-      'setSourceLineHighlightColor',
-      'setScrollSync',
-      'setShimSideRail',
+      'setRuntimeConfig',
     ]);
 
     return new Proxy(handle, {

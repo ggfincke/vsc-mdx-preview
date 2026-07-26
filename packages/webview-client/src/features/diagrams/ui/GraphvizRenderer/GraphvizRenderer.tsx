@@ -5,7 +5,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
 import { loadGraphvizInstance } from '../../utils/graphvizLoader';
-import { sanitizeSvg } from '../../utils/sanitizeSvg';
+import { sanitizeSvg } from '../../../../shared/utils/sanitizeSvg';
 import './GraphvizRenderer.css';
 
 interface GraphvizProps {

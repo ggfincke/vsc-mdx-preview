@@ -158,6 +158,7 @@ export {
   type SecurityPolicyValue,
   type SourceLineHighlightColorValue,
   type PreviewScrollSyncValue,
+  type PreviewRuntimeConfig,
   FRONTMATTER_OVERRIDES,
   FRONTMATTER_OVERRIDE_MAP,
   type FrontmatterOverrideDescriptor,

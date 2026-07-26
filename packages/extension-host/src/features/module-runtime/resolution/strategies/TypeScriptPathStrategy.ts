@@ -11,8 +11,8 @@ import {
   type ResolutionContext,
   type ResolutionResult,
   type ResolutionMode,
-  type IResolutionStrategy,
-} from '../../../types';
+} from '../../types/module-system';
+import type { IResolutionStrategy } from '../../types/resolver/strategies';
 import { buildResolutionResult } from '../resolution-builders';
 import { probeTypeScriptFile, probeTypeScriptFileAsync } from '../file-prober';
 

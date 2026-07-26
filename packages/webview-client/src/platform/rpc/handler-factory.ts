@@ -5,8 +5,7 @@ import type {
   TaggedLogger,
   NextraPageMeta,
   PreviewError,
-  PreviewScrollSyncValue,
-  SourceLineHighlightColorValue,
+  PreviewRuntimeConfig,
   TrustState,
   WebviewThemeState,
 } from '@mdx-preview/contracts';
@@ -32,11 +31,9 @@ export interface RequiredStateHandlers {
 export interface OptionalStateHandlers {
   setTheme?: (state: WebviewThemeState) => void;
   setNextraMeta?: (meta: NextraPageMeta | null) => void;
-  setSourceLineHighlight?: (enabled: boolean) => void;
-  setSourceLineHighlightColor?: (mode: SourceLineHighlightColorValue) => void;
-  setScrollSync?: (mode: PreviewScrollSyncValue) => void;
-  setShimSideRail?: (enabled: boolean) => void;
-  setZoom?: (level: number) => void;
+  setRuntimeConfig?: (config: PreviewRuntimeConfig) => void;
+  adjustZoom?: (delta: number) => void;
+  resetZoom?: () => void;
 }
 
 // combined state handlers interface (required + optional)
@@ -65,12 +62,15 @@ export interface OptionalHandlerConfig {
   methodName: string;
   // key in OptionalStateHandlers to call
   handlerKey: keyof OptionalStateHandlers;
+  // preserve operations or coalesce state to the latest value
+  queueMode?: 'latest' | 'all';
 }
 
-// pending optional message (buffer latest optional config until handlers mount)
+// buffer optional messages until handlers mount
 export interface PendingOptionalMessage {
   handlerKey: keyof OptionalStateHandlers;
   args: unknown[];
+  queueMode: 'latest' | 'all';
 }
 
 // pending message structure for the queue (discriminated union)
@@ -165,7 +165,11 @@ export function createHandlerFactories(
         return;
       }
 
-      enqueueOptionalFn?.({ handlerKey, args: [...args] });
+      enqueueOptionalFn?.({
+        handlerKey,
+        args: [...args],
+        queueMode: config.queueMode ?? 'latest',
+      });
     };
   }
 

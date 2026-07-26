@@ -22,7 +22,7 @@ import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../packages/webview-client/sr
 import {
   SAFE_PREVIEW_CLASS,
   TRUSTED_PREVIEW_CLASS,
-} from '../../packages/webview-client/src/features/preview/safe/security/previewClassNames';
+} from '../../packages/webview-client/src/shared/preview-constants';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 

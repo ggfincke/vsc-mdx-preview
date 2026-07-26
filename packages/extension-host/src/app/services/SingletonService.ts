@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { disposeCollection } from '../../shared/utils/disposable';
-import type { IService } from '../types';
+import type { IService } from './types';
 import type { LogTag, TaggedLogger } from '@mdx-preview/contracts';
 
 // abstract base class for singleton services w/ automatic lifecycle management

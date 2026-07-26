@@ -4,7 +4,8 @@
 import * as path from 'path';
 import { ContentHashCache, Semaphore } from '@mdx-preview/runtime-utils';
 import { getUnifiedResolver } from '../../module-runtime/resolution/UnifiedResolver';
-import type { ResolutionContext, TextExtractor } from '../../types';
+import type { ResolutionContext } from '../../module-runtime/types/module-system';
+import type { TextExtractor } from '../types/scanning';
 import { FileScanValidator } from '../FileScanValidator';
 import { TAILWIND_DEPENDENCY_RESOLUTION_LIMIT } from '../constants';
 

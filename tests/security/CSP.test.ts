@@ -10,7 +10,6 @@ import {
   generateNonce,
   getCSP,
 } from '../../packages/extension-host/src/features/security/CSP';
-import { SecurityPolicy } from '../../packages/extension-host/src/features/security/SecurityPolicy';
 import type { TrustState } from '../../packages/extension-host/src/features/security/TrustManager';
 
 function createMockWebview() {
@@ -71,12 +70,7 @@ describe('CSP', () => {
     };
 
     expect(
-      getCSP(
-        mockWebview as never,
-        'test-nonce',
-        trustState,
-        SecurityPolicy.Disabled
-      )
+      getCSP(mockWebview as never, 'test-nonce', trustState, 'disabled')
     ).toBe('');
   });
 
@@ -92,7 +86,7 @@ describe('CSP', () => {
       mockWebview as never,
       'test-nonce',
       trustState,
-      SecurityPolicy.Strict
+      'strict'
     );
 
     expect(csp).toMatch(/connect-src\s+https:\/\/file\+\.vscode-resource/);

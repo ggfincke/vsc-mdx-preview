@@ -9,7 +9,7 @@ import {
 import {
   SAFE_PREVIEW_CLASS,
   TRUSTED_PREVIEW_CLASS,
-} from '../../preview/safe/security/previewClassNames';
+} from '../../../shared/preview-constants';
 
 const HEADING_TAGS = new Set(['H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
 

@@ -8,7 +8,7 @@ import {
   mockFrameworkDetector,
   mockErrorReporter,
 } from '../../helpers/mock-services';
-import type { PreviewRuntimeConfig } from '../../../packages/extension-host/src/types';
+import type { PreviewRuntimeConfig } from '@mdx-preview/contracts';
 
 const {
   mockStatusBarMessage,
@@ -43,7 +43,7 @@ vi.mock(
 );
 
 vi.mock(
-  '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig',
+  '../../../packages/extension-host/src/features/preview/configuration/EffectivePreviewConfig',
   () => ({
     buildEffectivePreviewConfig: (...args: unknown[]) =>
       mockBuildEffectivePreviewConfig(...args),
@@ -87,11 +87,8 @@ function createPreview(): {
     updatePreview: ReturnType<typeof vi.fn>;
     setUsedComponents: ReturnType<typeof vi.fn>;
     setNextraMeta: ReturnType<typeof vi.fn>;
-    setSourceLineHighlight: ReturnType<typeof vi.fn>;
     setTheme: ReturnType<typeof vi.fn>;
-    setSourceLineHighlightColor: ReturnType<typeof vi.fn>;
-    setScrollSync: ReturnType<typeof vi.fn>;
-    setShimSideRail: ReturnType<typeof vi.fn>;
+    setRuntimeConfig: ReturnType<typeof vi.fn>;
   };
   runtimeConfiguration: PreviewRuntimeConfig;
   webviewHandshakePromise: Promise<void>;
@@ -125,21 +122,11 @@ function createPreview(): {
     updatePreview: vi.fn(),
     setUsedComponents: vi.fn(),
     setNextraMeta: vi.fn(),
-    setSourceLineHighlight: vi.fn(),
     setTheme: vi.fn(),
-    setSourceLineHighlightColor: vi.fn(),
-    setScrollSync: vi.fn(),
-    setShimSideRail: vi.fn(),
+    setRuntimeConfig: vi.fn(),
   };
   const pushRuntimeConfiguration = vi.fn(() => {
-    webviewHandle.setSourceLineHighlight(
-      runtimeConfiguration.sourceLineHighlight
-    );
-    webviewHandle.setSourceLineHighlightColor(
-      runtimeConfiguration.sourceLineHighlightColor
-    );
-    webviewHandle.setScrollSync(runtimeConfiguration.scrollSync);
-    webviewHandle.setShimSideRail(runtimeConfiguration.shimSideRail);
+    webviewHandle.setRuntimeConfig(runtimeConfiguration);
   });
 
   const preview = {
@@ -305,16 +292,12 @@ describe('evaluate-in-webview Tailwind routing', () => {
     );
 
     expect(preview.pushRuntimeConfiguration).toHaveBeenCalled();
-    expect(preview.webviewHandle.setSourceLineHighlight).toHaveBeenCalledWith(
-      false
-    );
-    expect(
-      preview.webviewHandle.setSourceLineHighlightColor
-    ).toHaveBeenCalledWith('white');
-    expect(preview.webviewHandle.setScrollSync).toHaveBeenCalledWith(
-      'bidirectional'
-    );
-    expect(preview.webviewHandle.setShimSideRail).toHaveBeenCalledWith(false);
+    expect(preview.webviewHandle.setRuntimeConfig).toHaveBeenCalledWith({
+      sourceLineHighlight: false,
+      sourceLineHighlightColor: 'white',
+      scrollSync: 'bidirectional',
+      shimSideRail: false,
+    });
   });
 
   it('sends only content on a second evaluation with unchanged state', async () => {
@@ -354,10 +337,7 @@ describe('evaluate-in-webview Tailwind routing', () => {
 
     expect(rawHandle.updatePreview).toHaveBeenCalledTimes(1);
     expect(rawHandle.setTrustState).not.toHaveBeenCalled();
-    expect(rawHandle.setSourceLineHighlight).not.toHaveBeenCalled();
-    expect(rawHandle.setSourceLineHighlightColor).not.toHaveBeenCalled();
-    expect(rawHandle.setScrollSync).not.toHaveBeenCalled();
-    expect(rawHandle.setShimSideRail).not.toHaveBeenCalled();
+    expect(rawHandle.setRuntimeConfig).not.toHaveBeenCalled();
   });
 
   it('awaits webview pushes before downstream preview work', async () => {
@@ -366,6 +346,9 @@ describe('evaluate-in-webview Tailwind routing', () => {
     const events: string[] = [];
     let resolveTrustState: (() => void) | undefined;
 
+    trustedPreview.pushRuntimeConfiguration.mockImplementation(() => {
+      events.push('setRuntimeConfig');
+    });
     trustedPreview.webviewHandle.setTrustState.mockImplementation(
       () =>
         new Promise<void>((resolve) => {
@@ -405,6 +388,7 @@ describe('evaluate-in-webview Tailwind routing', () => {
     expect(events).toEqual([
       'setTrustState',
       'trustStateResolved',
+      'setRuntimeConfig',
       'evaluateTrusted',
     ]);
     expect(trustedPreview.syncEditorScrollToPreview).toHaveBeenCalledTimes(1);

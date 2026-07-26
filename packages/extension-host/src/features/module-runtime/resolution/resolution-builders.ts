@@ -1,8 +1,10 @@
 // packages/extension-host/src/features/module-runtime/resolution/resolution-builders.ts
 // builder functions for constructing ResolutionResult objects consistently
 
-import type { ResolutionResult } from '../../types';
-import { ResolutionStrategy } from '../../types';
+import {
+  ResolutionStrategy,
+  type ResolutionResult,
+} from '../types/module-system';
 
 export interface IgnoredResolutionResult extends ResolutionResult {
   kind: 'ignored';

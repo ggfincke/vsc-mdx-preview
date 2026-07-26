@@ -7,9 +7,11 @@ import {
   buildCssResult,
 } from '../../../packages/extension-host/src/features/module-runtime/handlers/result-builders';
 import { CSS_EXTENSIONS } from '../../../packages/extension-host/src/shared/constants';
-import type { Preview } from '../../../packages/extension-host/src/features/preview/preview-manager';
+import type { ModuleExecutionContext } from '../../../packages/extension-host/src/features/module-runtime/types/handlers';
 
-const mockPreview = {} as Preview;
+const context = {
+  getWebviewUri: () => undefined,
+} as ModuleExecutionContext;
 
 describe('CSS handler', () => {
   const handler = createSimpleHandler(CSS_EXTENSIONS, buildCssResult);
@@ -21,7 +23,7 @@ describe('CSS handler', () => {
   it('returns css payload for basic stylesheet', async () => {
     const css = '.button { padding: 10px; color: blue; }';
     const fsPath = '/workspace/styles/main.css';
-    const result = await handler.handle(css, fsPath, mockPreview);
+    const result = await handler.handle(css, fsPath, context);
 
     expect(result).toEqual({
       fsPath,
@@ -41,7 +43,7 @@ describe('CSS handler', () => {
     const result = await handler.handle(
       css,
       '/workspace/styles/main.css',
-      mockPreview
+      context
     );
 
     expect(result.css).toBe(css);
@@ -57,10 +59,9 @@ describe('CSS handler', () => {
     const result = await handler.handle(
       invalidCss,
       '/workspace/styles/broken.css',
-      mockPreview
+      context
     );
 
     expect(result.css).toBe(invalidCss);
   });
-
 });

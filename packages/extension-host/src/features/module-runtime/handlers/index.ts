@@ -2,11 +2,13 @@
 // file type handler registry & dispatch for module fetching
 
 import type { FetchResult } from '@mdx-preview/contracts';
-import type { Preview } from '../../preview/preview-manager';
-import type { FileTypeHandler } from '../../types';
+import type {
+  FileTypeHandler,
+  ModuleExecutionContext,
+} from '../types/handlers';
 
 // re-export canonical type definition from types/
-export type { FileTypeHandler } from '../../types';
+export type { FileTypeHandler } from '../types/handlers';
 
 // import individual handlers
 import {
@@ -54,11 +56,11 @@ export async function handleByExtension(
   code: string,
   fsPath: string,
   extname: string,
-  preview: Preview
+  context: ModuleExecutionContext
 ): Promise<FetchResult | undefined> {
   const handler = getHandler(extname);
   if (handler) {
-    return handler.handle(code, fsPath, preview);
+    return handler.handle(code, fsPath, context);
   }
   return undefined;
 }

@@ -25,7 +25,11 @@ export function initWorkspaceHandlers(context: ExtensionContext): void {
       try {
         const currentPreview = getPreviewManager().getCurrentPreview();
         if (currentPreview) {
-          currentPreview.handleDidSaveTextDocument(event.uri.fsPath);
+          void Promise.resolve(
+            currentPreview.handleDidSaveTextDocument(event.uri.fsPath)
+          ).catch((error: unknown) => {
+            log.error('Error handling document save', error);
+          });
         }
       } catch (error: unknown) {
         log.error('Error handling document save', error);
@@ -39,10 +43,14 @@ export function initWorkspaceHandlers(context: ExtensionContext): void {
       try {
         const currentPreview = getPreviewManager().getCurrentPreview();
         if (currentPreview) {
-          currentPreview.handleDidChangeTextDocument(
-            event.document.uri.fsPath,
-            event.document
-          );
+          void Promise.resolve(
+            currentPreview.handleDidChangeTextDocument(
+              event.document.uri.fsPath,
+              event.document
+            )
+          ).catch((error: unknown) => {
+            log.error('Error handling document change', error);
+          });
         }
       } catch (error: unknown) {
         log.error('Error handling document change', error);

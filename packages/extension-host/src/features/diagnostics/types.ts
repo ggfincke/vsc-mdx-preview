@@ -5,7 +5,6 @@ import type * as vscode from 'vscode';
 import type { FrameworkId } from 'mdx-forge/components/registry';
 import type { ComponentSource } from 'mdx-forge/diagnostics/analyze';
 import type { UnknownComponentData } from 'mdx-forge/diagnostics';
-import type { Program } from 'estree';
 
 export type { ComponentSource };
 
@@ -26,20 +25,6 @@ export interface DetectedComponent {
 export type UnknownComponentDiagnosticData = UnknownComponentData & {
   tagNameRanges?: vscode.Range[];
 };
-
-// mdast position (1-based line, 1-based column)
-export interface MdastPosition {
-  start: { line: number; column: number };
-  end: { line: number; column: number };
-}
-
-// MDX ESM node (imports/exports)
-export interface MdxjsEsmNode {
-  type: 'mdxjsEsm';
-  value: string;
-  position?: MdastPosition;
-  data?: { estree?: Program | null };
-}
 
 // result of component detection
 export interface ComponentDetectionResult {

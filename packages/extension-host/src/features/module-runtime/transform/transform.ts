@@ -1,7 +1,7 @@
 // packages/extension-host/src/features/module-runtime/transform/transform.ts
 // transpile entry & dependency files using MDX, TypeScript, Babel, or Sucrase
 
-import { Preview } from '../../preview/preview-manager';
+import type { Preview } from '../../preview/preview-manager';
 import * as path from 'path';
 import isModule from 'is-module';
 import { createLazyImport } from '../../../shared/utils/lazy-import';
@@ -9,7 +9,7 @@ import { transpileWithFallback } from './selector';
 import {
   buildCompilerConfig,
   toMdxForgeCompilerConfig,
-} from '../../../shared/config/EffectivePreviewConfig';
+} from '../../preview/configuration/EffectivePreviewConfig';
 import { createTaggedLogger } from '../../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 
@@ -19,7 +19,8 @@ import {
   isTypeScriptExtension,
   isTypeScriptLanguage,
 } from './typescript-transpile';
-import type { CompilerConfig } from '../../types';
+import type { CompilerConfig } from '../../../shared/config/types';
+import type { ModuleExecutionContext } from '../types/handlers';
 
 // lazy load Trusted Mode compiler - only loaded when Trusted Mode is actually used
 const getCompileTrustedModule = createLazyImport(
@@ -27,9 +28,9 @@ const getCompileTrustedModule = createLazyImport(
 );
 
 // re-export canonical type definitions from types/
-export type { TransformEntryResult, TransformResult } from '../../types';
+export type { TransformEntryResult, TransformResult } from '../types/transpile';
 
-import type { TransformEntryResult, TransformResult } from '../../types';
+import type { TransformEntryResult, TransformResult } from '../types/transpile';
 
 // compile MDX via Trusted Mode (shared by entry & dependency transforms)
 async function compileMdxTrusted(
@@ -95,13 +96,13 @@ async function transformEntry(
 async function transform(
   code: string,
   fsPath: string,
-  preview: Preview
+  context: ModuleExecutionContext
 ): Promise<TransformResult> {
   const extname = path.extname(fsPath).toLowerCase();
   if (/\.mdx?$/i.test(extname)) {
     // for dependencies, we only need the code (frontmatter is ignored)
     const compilerConfig = buildCompilerConfig({
-      docUri: preview.doc.uri,
+      docUri: context.documentUri,
       docFsPath: fsPath,
     });
     const mdxResult = await compileMdxTrusted(code, {
@@ -111,7 +112,7 @@ async function transform(
     code = mdxResult.code;
   }
 
-  const useSucrase = preview.configuration.useSucraseTranspiler;
+  const useSucrase = context.useSucraseTranspiler;
   if (isTypeScriptExtension(extname) && !useSucrase) {
     code = transpileTypeScript(code, fsPath);
   }

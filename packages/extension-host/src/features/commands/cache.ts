@@ -3,13 +3,11 @@
 
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
-import { invalidateResolution } from '../module-runtime/resolution/resolver-factory';
-import { clearSassCache } from '../module-runtime/handlers';
-import { clearUnmanagedCaches } from '../../app/lifecycle/cache-subsystem';
+import { clearExtensionCaches } from '../../app/lifecycle/cache-subsystem';
 import { getPreviewManager } from '../../app/services';
 import { notifyInfo } from '../../shared/errors';
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from '../types';
+import type { CommandDefinition } from './types';
 
 const log = createTaggedLogger(LogTags.CMD);
 
@@ -17,19 +15,14 @@ const log = createTaggedLogger(LogTags.CMD);
 const clearAllCaches = async (): Promise<void> => {
   log.debug('clearAllCaches command triggered');
 
-  // extension-side caches (resolver & sass)
-  invalidateResolution();
-  clearSassCache();
-
-  // additional unmanaged caches (components, path security)
-  clearUnmanagedCaches();
+  clearExtensionCaches();
 
   // webview-side caches (via RPC to all active previews)
   const previewManager = getPreviewManager();
   await previewManager.clearAllWebviewCaches();
 
   notifyInfo(
-    'All caches cleared (resolver, Sass, components, security, webview modules).'
+    'All caches cleared (resolution, transforms, config, Tailwind, icons, & webview modules).'
   );
 };
 

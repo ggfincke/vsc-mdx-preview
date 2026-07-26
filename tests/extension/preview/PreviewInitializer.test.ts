@@ -5,25 +5,36 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PreviewInitializer } from '../../../packages/extension-host/src/features/preview/PreviewInitializer';
 import { WatcherManager } from '../../../packages/extension-host/src/features/preview/watchers/WatcherManager';
 import { WEBVIEW_HANDSHAKE_TIMEOUT_MS } from '../../../packages/extension-host/src/shared/constants';
-import type { ResolvedConfig } from '../../../packages/extension-host/src/types';
 import {
   mockTailwindProcessor,
   mockConfigManager,
   mockConfigCache,
 } from '../../helpers/mock-services';
 
-const { configHandlers, typescriptConfigHandlers } = vi.hoisted(() => ({
+const {
+  configHandlers,
+  mockGetConfigCandidatePaths,
+  typescriptConfigHandlers,
+} = vi.hoisted(() => ({
   configHandlers: [] as Array<(event: { configPath: string }) => void>,
+  mockGetConfigCandidatePaths: vi.fn(),
   typescriptConfigHandlers: [] as Array<(configPath: string) => void>,
 }));
 
 vi.mock(
-  '../../../packages/extension-host/src/features/preview/configuration',
+  '../../../packages/extension-host/src/features/preview/configuration/ConfigResolver',
   () => ({
+    getConfigCandidatePaths: mockGetConfigCandidatePaths,
     onConfigChange: (handler: (event: { configPath: string }) => void) => {
       configHandlers.push(handler);
       return { dispose: vi.fn() };
     },
+  })
+);
+
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/configuration/TypeScriptConfigResolver',
+  () => ({
     onTypeScriptConfigChange: (handler: (configPath: string) => void) => {
       typescriptConfigHandlers.push(handler);
       return { dispose: vi.fn() };
@@ -35,6 +46,10 @@ describe('PreviewInitializer', () => {
   beforeEach(() => {
     configHandlers.length = 0;
     typescriptConfigHandlers.length = 0;
+    mockGetConfigCandidatePaths.mockReturnValue([
+      '/workspace/.mdx-previewrc.json',
+      '/workspace/.mdx-previewrc',
+    ]);
   });
 
   afterEach(() => {
@@ -74,21 +89,15 @@ describe('PreviewInitializer', () => {
     );
   });
 
-  it('sets up config watcher when config is available', () => {
+  it('subscribes file previews to valid & unresolved config candidates', () => {
     const initializer = new PreviewInitializer();
     const watcherManager = new WatcherManager();
     const onConfigChanged = vi.fn();
 
-    const config: ResolvedConfig = {
-      configPath: '/workspace/.mdx-previewrc.json',
-      configDir: '/workspace',
-      config: {},
-    };
-
     initializer.setupConfigWatcher(
       watcherManager,
       'file',
-      config,
+      '/workspace/doc.mdx',
       onConfigChanged
     );
 
@@ -98,7 +107,34 @@ describe('PreviewInitializer', () => {
     configHandlers[0]({ configPath: '/workspace/other.json' });
     expect(onConfigChanged).not.toHaveBeenCalled();
 
-    configHandlers[0]({ configPath: config.configPath });
+    configHandlers[0]({ configPath: '/workspace/.mdx-previewrc.json' });
     expect(onConfigChanged).toHaveBeenCalledTimes(1);
+
+    mockGetConfigCandidatePaths.mockReturnValue([
+      '/workspace/docs/.mdx-previewrc.json',
+      '/workspace/docs/.mdx-previewrc',
+      '/workspace/.mdx-previewrc.json',
+      '/workspace/.mdx-previewrc',
+    ]);
+    const unresolvedWatcherManager = new WatcherManager();
+    const onUnresolvedConfigChanged = vi.fn();
+
+    initializer.setupConfigWatcher(
+      unresolvedWatcherManager,
+      'file',
+      '/workspace/docs/doc.mdx',
+      onUnresolvedConfigChanged
+    );
+
+    configHandlers[1]({
+      configPath: '/workspace/other/.mdx-previewrc.json',
+    });
+    expect(onUnresolvedConfigChanged).not.toHaveBeenCalled();
+
+    configHandlers[1]({
+      configPath: '/workspace/docs/.mdx-previewrc.json',
+    });
+    configHandlers[1]({ configPath: '/workspace/.mdx-previewrc' });
+    expect(onUnresolvedConfigChanged).toHaveBeenCalledTimes(2);
   });
 });

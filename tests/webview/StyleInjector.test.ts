@@ -162,7 +162,7 @@ describe('StyleInjector', () => {
       );
     });
 
-    it('does not mutate an existing identical style', async () => {
+    it('reuses existing styles & updates only changed CSS', async () => {
       const StyleInjector = await getStyleInjector();
       const options = {
         attributes: {
@@ -184,6 +184,19 @@ describe('StyleInjector', () => {
       expect(mockHead.children).toHaveLength(1);
       expect(mockHead.children[0].textContentSetCount).toBe(1);
       expect(mockHead.children[0].attributeSetCount).toBe(1);
+
+      const style = mockHead.children[0];
+      StyleInjector.inject(
+        'tailwind-browser-style',
+        '@import "updated.css";',
+        options
+      );
+
+      expect(mockHead.children).toHaveLength(1);
+      expect(mockHead.children[0]).toBe(style);
+      expect(style.textContent).toBe('@import "updated.css";');
+      expect(style.textContentSetCount).toBe(2);
+      expect(style.attributeSetCount).toBe(2);
     });
   });
 });

@@ -1,7 +1,6 @@
 // packages/extension-host/src/features/module-runtime/fetch/fetchLocal.ts
 // browser-optimized module fetcher w/ ESM exports support & dependency resolution
 
-import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Preview } from '../../preview/preview-manager';
@@ -11,7 +10,7 @@ import {
   ErrorContext,
   createModuleNotFoundError,
 } from '../../../shared/errors';
-import { getErrorReporter, getFrameworkDetector } from '../../../app/services';
+import { getErrorReporter } from '../../../app/services';
 import { createTaggedLogger } from '../../../shared/logging/logger';
 import { type FetchResult, LogTags } from '@mdx-preview/contracts';
 import {
@@ -24,7 +23,8 @@ import {
 // import from extracted modules
 import { getUnifiedResolver } from '../resolution/UnifiedResolver';
 import { isIgnoredResolution } from '../resolution/resolution-builders';
-import type { ResolutionContext } from '../../types';
+import { buildResolutionContext } from '../resolution/resolution-context';
+import type { ModuleExecutionContext } from '../types/handlers';
 import {
   normalizeNodePrefix,
   isCoreModule,
@@ -87,20 +87,17 @@ export async function fetchLocal(
       return buildNoopResult(normalizedRequest);
     }
 
-    // build resolution context for UnifiedResolver
-    const frameworkDetector = getFrameworkDetector();
-    const frameworkInfo = frameworkDetector.getFramework(preview.doc.uri);
-    const shimsEnabled = frameworkDetector.areShimsEnabled(preview.doc.uri);
-    const workspaceRoot =
-      vscode.workspace.getWorkspaceFolder(preview.doc.uri)?.uri.fsPath ??
-      entryFsDirectory;
-
-    const resolutionContext: ResolutionContext = {
+    const resolutionContext = buildResolutionContext({
       baseDir: path.dirname(parentId),
       tsConfig: preview.typescriptConfiguration,
-      framework: frameworkInfo.framework,
-      workspaceRoot,
-      shimsEnabled,
+      documentUri: preview.doc.uri,
+      entryFsDirectory,
+    });
+    const executionContext: ModuleExecutionContext = {
+      documentUri: preview.doc.uri,
+      entryFsDirectory,
+      useSucraseTranspiler: preview.configuration.useSucraseTranspiler,
+      getWebviewUri: (fsPath) => preview.getWebviewUri(fsPath),
     };
 
     // use UnifiedResolver for all resolution (framework aliases, TypeScript, enhanced-resolve)
@@ -164,7 +161,12 @@ export async function fetchLocal(
 
     // image handlers only need the validated path to create a webview URI
     if ((IMAGE_EXTENSIONS as readonly string[]).includes(extname)) {
-      const imageResult = await handleByExtension('', fsPath, extname, preview);
+      const imageResult = await handleByExtension(
+        '',
+        fsPath,
+        extname,
+        executionContext
+      );
       if (imageResult) {
         return imageResult;
       }
@@ -197,10 +199,15 @@ export async function fetchLocal(
     }
 
     // dispatch to appropriate file type handler
-    let result = await handleByExtension(code, fsPath, extname, preview);
+    let result = await handleByExtension(
+      code,
+      fsPath,
+      extname,
+      executionContext
+    );
     if (!result) {
       // fallback for unknown file types - treat as script
-      result = await getScriptHandler().handle(code, fsPath, preview);
+      result = await getScriptHandler().handle(code, fsPath, executionContext);
     }
 
     // check dependency count (prevents combinatorial explosion)

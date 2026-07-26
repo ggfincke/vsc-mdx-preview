@@ -298,7 +298,7 @@ The extension distinguishes between **Services** and **Subsystems** for lifecycl
 **Current Subsystems:**
 
 - `ResolverSubsystem` - Module resolution strategies, cached file system, stat/compiled caches
-- `CacheSubsystem` - Component detection cache, path security caches, and other unmanaged caches
+- `CacheSubsystem` - Authoritative invalidator registry for resolver/security, transform, config, framework/Nextra, Tailwind/Sass, component, & icon-pack caches. `MDX: Clear All Caches` runs the registry without creating lazy services, then clears active webview module/style/dependency caches.
 
 ### Preview Management
 
@@ -1316,12 +1316,15 @@ The extension currently contributes 20 VS Code commands organized by category.
 
 | Command ID                            | Description                                        |
 | ------------------------------------- | -------------------------------------------------- |
-| `mdx-preview.commands.clearAllCaches` | Clear all caches (resolver, Sass, webview modules) |
+| `mdx-preview.commands.clearAllCaches` | Clear registered extension & webview caches       |
 
 The `clearAllCaches` command clears:
 
-1. **Extension-side caches**: Resolver cache, Sass module cache, component detection cache, path security caches
+1. **Extension-side caches**: Resolution/path security, TypeScript & preview config, Babel/PostCSS, Sass/Tailwind, framework/Nextra metadata, component detection, & Mermaid icon packs
 2. **Webview-side caches**: Module cache, style cache, dependency tracker (via RPC)
+
+The extension cache registry checks service initialization state, so manual
+clearing never creates an otherwise-unused lazy service.
 
 ### Config Info Commands
 

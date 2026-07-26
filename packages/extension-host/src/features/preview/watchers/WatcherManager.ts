@@ -7,7 +7,7 @@ import { LogTags } from '@mdx-preview/contracts';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.WATCHER_MANAGER);
-import type { IWatcher } from '../../types';
+import type { IWatcher } from '../types/watcher';
 
 // coordinate all watchers w/ unified lifecycle management
 export class WatcherManager implements Disposable {

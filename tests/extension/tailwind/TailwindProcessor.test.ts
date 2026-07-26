@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { TailwindProcessor } from '../../../packages/extension-host/src/features/tailwind/TailwindProcessor';
-import type { TailwindConfig } from '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig';
+import type { TailwindConfig } from '../../../packages/extension-host/src/shared/config/types';
 import type { TrustState } from '@mdx-preview/contracts';
 import { createMockPreview } from '../../helpers/mock-preview';
 import {
@@ -150,6 +150,18 @@ describe('TailwindProcessor', () => {
     expect(result.profile).toBe('advanced');
     expect(result.css).toBe('/* compiled */');
     expect(result.watchFiles).toEqual([configPath, cssPath].sort());
+    expect(scanner.scan).toHaveBeenCalledWith(
+      '# Test',
+      expect.objectContaining({
+        resolutionContext: {
+          baseDir: tempDir,
+          tsConfig: undefined,
+          framework: 'generic',
+          workspaceRoot: tempDir,
+          shimsEnabled: true,
+        },
+      })
+    );
   });
 
   it('uses browser profile when workspace is CSS-first', async () => {

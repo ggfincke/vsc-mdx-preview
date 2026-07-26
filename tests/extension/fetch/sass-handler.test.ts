@@ -4,7 +4,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Preview } from '../../../packages/extension-host/src/features/preview/preview-manager';
+import type { ModuleExecutionContext } from '../../../packages/extension-host/src/features/module-runtime/types/handlers';
 
 const { mockGet } = vi.hoisted(() => ({
   mockGet: vi.fn(),
@@ -48,13 +48,16 @@ describe('SassHandler module runtime integration', () => {
       }),
     });
     const fsPath = path.join(workspaceRoot, 'styles', 'main.scss');
-    const preview = {
-      doc: { uri: vscode.Uri.file(path.join(workspaceRoot, 'docs', 'entry.mdx')) },
+    const context: ModuleExecutionContext = {
+      documentUri: vscode.Uri.file(
+        path.join(workspaceRoot, 'docs', 'entry.mdx')
+      ),
       entryFsDirectory: path.join(workspaceRoot, 'docs'),
+      useSucraseTranspiler: false,
       getWebviewUri: (resourcePath: string) => `webview:${resourcePath}`,
-    } as Preview;
+    };
 
-    const result = await new SassHandler().handle('', fsPath, preview);
+    const result = await new SassHandler().handle('', fsPath, context);
 
     expect(mockGet).toHaveBeenCalledWith(workspaceRoot);
     expect(result.css).toContain(

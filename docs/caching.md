@@ -7,19 +7,24 @@ describes all caches, their invalidation triggers, and troubleshooting guidance.
 
 ### Extension-Side Caches (Node.js)
 
-| Cache              | Location                               | Type                  | TTL | Max  | Invalidation Trigger               |
-| ------------------ | -------------------------------------- | --------------------- | --- | ---- | ---------------------------------- |
-| Resolver FS        | resolver-factory.ts                    | CachedInputFileSystem | 30s | -    | PackageJsonWatcher, manual command |
-| File Prober Stats  | file-prober.ts                         | LRUCache              | 5s  | 1000 | Auto-expires                       |
-| TS Path Index      | TypeScriptPathStrategy.ts              | Map                   | -   | -    | tsconfig.json watcher              |
-| TypeScript Config  | TypeScriptConfigResolver.ts            | PathCache             | -   | 50   | tsconfig.json watcher              |
-| MDX Preview Config | ConfigCache.ts                         | PathCache             | -   | 100  | .mdx-previewrc.json watcher        |
-| Babel Options      | babel.ts                               | Singleton             | -   | 1    | Never (extension lifetime)         |
-| Sass Module        | SassHandler.ts                         | Map                   | -   | -    | PackageJsonWatcher, manual command |
-| Tailwind CSS       | TailwindProcessor.ts                   | LRUCache              | 5m  | 50   | Auto-expires, manual command       |
-| Tailwind Scan      | TailwindProcessor.ts (scanCache field) | ContentHashCache      | 5m  | 200  | DependencyWatcher, auto-expires    |
-| Framework          | FrameworkDetector.ts                   | PathCache             | -   | -    | PackageJsonWatcher                 |
-| Root Directory     | checkFsPath.ts                         | Map                   | -   | -    | Workspace folder changes           |
+| Cache               | Location                               | Type                  | TTL | Max   | Invalidation Trigger                       |
+| ------------------- | -------------------------------------- | --------------------- | --- | ----- | ------------------------------------------ |
+| Resolver FS         | resolver-factory.ts                    | CachedInputFileSystem | 30s | -     | PackageJsonWatcher, manual command         |
+| File Prober Stats   | file-prober.ts                         | LRUCache              | 5s  | 1000  | Resolution invalidation, auto-expires      |
+| TS Path Index       | TypeScriptPathStrategy.ts              | Map                   | -   | -     | Resolution invalidation, manual command    |
+| Path Security       | checkFsPath.ts                         | LRUCache              | 5m  | 200   | Workspace changes, resolution invalidation |
+| TypeScript Config   | TypeScriptConfigResolver.ts            | PathCache             | -   | 50    | tsconfig.json watcher, manual command      |
+| MDX Preview Config  | ConfigCache.ts                         | PathCache             | -   | 100   | Config watcher, manual command             |
+| Babel Options       | babel.ts                               | Singleton             | -   | 1     | Manual command                             |
+| PostCSS Module      | TailwindCompiler.ts                    | Singleton             | -   | 1     | Manual command                             |
+| Sass Module         | SassHandler.ts                         | Map                   | -   | -     | PackageJsonWatcher, manual command         |
+| Tailwind Results    | TailwindProcessor.ts                   | LRUCache              | 5m  | 50    | Auto-expires, manual command               |
+| Tailwind Scan       | TailwindProcessor.ts (scanCache field) | ContentHashCache      | 5m  | 200   | DependencyWatcher, manual command          |
+| Tailwind Detection  | TailwindDetector.ts                    | PathCache + LRU       | 5m  | 10-20 | File watchers, manual command              |
+| Framework           | FrameworkDetector.ts                   | PathCache + Map       | -   | 100   | PackageJsonWatcher, manual command         |
+| Nextra Metadata     | MetaResolver.ts                        | PathCache             | -   | 100   | \_meta.json watcher, manual command        |
+| Component Detection | ComponentDetector.ts                   | ContentHashCache      | 5m  | 50    | Content hash, manual command               |
+| Mermaid Icon Packs  | IconPackResolver.ts                    | LRUCache              | 5m  | 64    | File stamp, auto-expires, manual command   |
 
 > The Tailwind CSS cache TTL (5m) and max entries (50) are the defaults of `mdx-preview.tailwind.cacheTtlSeconds` and `mdx-preview.tailwind.cacheMaxEntries` and can be overridden in settings; related Tailwind limits are `mdx-preview.tailwind.compilationTimeout` (15s) and `mdx-preview.tailwind.maxFileSizeBytes` (10MB).
 
@@ -42,7 +47,7 @@ describes all caches, their invalidation triggers, and troubleshooting guidance.
 
 ### Manual Invalidation
 
-- **`MDX: Clear All Caches` command** - Clears all extension and webview caches
+- **`MDX: Clear All Caches` command** - Runs the extension cache-invalidator registry for resolution/path security, TypeScript & preview config, Babel/PostCSS, Sass/Tailwind, framework/Nextra metadata, component detection, and Mermaid icon packs; then clears active webview module, style, and dependency caches. Lazy services are cleared only when already initialized.
 - **`MDX: Refresh Preview` command** - Clears webview caches for the active preview
 
 ## Tailwind Cache Key Composition

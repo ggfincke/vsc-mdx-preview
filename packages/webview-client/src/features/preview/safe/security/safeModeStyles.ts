@@ -1,21 +1,13 @@
 // packages/webview-client/src/features/preview/safe/security/safeModeStyles.ts
 // safe mode placeholder styles
 
-import { SAFE_PREVIEW_CLASS } from './previewClassNames';
+import { SAFE_PREVIEW_CLASS } from '../../../../shared/preview-constants';
+import {
+  STYLE_IDS,
+  StyleInjector,
+} from '../../../../shared/utils/StyleInjector';
 
-const STYLE_ID = 'mdx-safe-mode-styles';
-
-// ensure safe mode placeholder styles are present in the document
-// styles JSX placeholders & expression placeholders w/ dashed borders
-// to indicate they couldn't be rendered in Safe Mode
-export function ensureSafeModeStyles(): void {
-  if (document.getElementById(STYLE_ID)) {
-    return;
-  }
-
-  const style = document.createElement('style');
-  style.id = STYLE_ID;
-  style.textContent = `
+const SAFE_MODE_CSS = `
     .mdx-jsx-placeholder,
     .mdx-expression-placeholder {
       display: inline-block;
@@ -34,5 +26,10 @@ export function ensureSafeModeStyles(): void {
       padding: 16px;
     }
   `;
-  document.head.appendChild(style);
+
+// ensure safe mode placeholder styles are present in the document
+// styles JSX placeholders & expression placeholders w/ dashed borders
+// to indicate they couldn't be rendered in Safe Mode
+export function ensureSafeModeStyles(): void {
+  StyleInjector.inject(STYLE_IDS.SAFE_MODE, SAFE_MODE_CSS);
 }

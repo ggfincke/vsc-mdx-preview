@@ -20,6 +20,8 @@ function createPreview() {
   } as unknown as ConstructorParameters<typeof ExtensionHandle>[0];
 }
 
+const openPreview = vi.fn(async () => {});
+
 describe('ExtensionHandle PlantUML rendering', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,7 +61,7 @@ describe('ExtensionHandle PlantUML rendering', () => {
       });
     vi.stubGlobal('fetch', fetchMock);
 
-    const handle = new ExtensionHandle(createPreview());
+    const handle = new ExtensionHandle(createPreview(), openPreview);
     const first = handle.renderPlantUml('Alice -> Bob');
     const concurrent = handle.renderPlantUml('Alice -> Bob');
 

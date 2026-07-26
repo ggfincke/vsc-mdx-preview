@@ -4,15 +4,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockThemeManager } from '../../helpers/mock-services';
 
-vi.mock(
-  '../../../packages/extension-host/src/features/preview/watchers',
-  () => ({
-    DocumentTracker: class {},
-    CustomCssWatcher: class {},
-    WatcherManager: class {},
-  })
-);
-
 import { PreviewWebviewBridge } from '../../../packages/extension-host/src/features/preview/PreviewWebviewBridge';
 
 function createMockHandle() {
@@ -22,10 +13,9 @@ function createMockHandle() {
     setTailwindCss: vi.fn(),
     setTailwindBrowserCss: vi.fn(),
     setTheme: vi.fn(),
-    setSourceLineHighlight: vi.fn(),
-    setSourceLineHighlightColor: vi.fn(),
-    setScrollSync: vi.fn(),
-    setShimSideRail: vi.fn(),
+    setRuntimeConfig: vi.fn(),
+    adjustZoom: vi.fn(),
+    resetZoom: vi.fn(),
     scrollToLine: vi.fn(),
     invalidate: vi.fn(async () => {}),
     clearAllCaches: vi.fn(async () => {}),
@@ -112,10 +102,12 @@ describe('PreviewWebviewBridge', () => {
       shimSideRail: false,
     });
 
-    expect(handle.setSourceLineHighlight).toHaveBeenCalledWith(false);
-    expect(handle.setSourceLineHighlightColor).toHaveBeenCalledWith('white');
-    expect(handle.setScrollSync).toHaveBeenCalledWith('bidirectional');
-    expect(handle.setShimSideRail).toHaveBeenCalledWith(false);
+    expect(handle.setRuntimeConfig).toHaveBeenCalledWith({
+      sourceLineHighlight: false,
+      sourceLineHighlightColor: 'white',
+      scrollSync: 'bidirectional',
+      shimSideRail: false,
+    });
 
     bridge.scrollToLine(42);
     expect(handle.scrollToLine).toHaveBeenCalledWith(42);
@@ -146,15 +138,12 @@ describe('PreviewWebviewBridge', () => {
     deltaHandle.setTailwindCss('');
     deltaHandle.setTailwindCss('');
     bridge.pushRuntimeConfiguration(runtimeConfig);
-    bridge.pushRuntimeConfiguration(runtimeConfig);
+    bridge.pushRuntimeConfiguration({ ...runtimeConfig });
 
     expect(handle.setTrustState).toHaveBeenCalledTimes(1);
     expect(handle.setTailwindBrowserCss).toHaveBeenCalledTimes(1);
     expect(handle.setTailwindCss).toHaveBeenCalledTimes(1);
-    expect(handle.setSourceLineHighlight).toHaveBeenCalledTimes(1);
-    expect(handle.setSourceLineHighlightColor).toHaveBeenCalledTimes(1);
-    expect(handle.setScrollSync).toHaveBeenCalledTimes(1);
-    expect(handle.setShimSideRail).toHaveBeenCalledTimes(1);
+    expect(handle.setRuntimeConfig).toHaveBeenCalledTimes(1);
 
     bridge.onWebviewReady(mockDocUri as never);
     deltaHandle.setTrustState(trustState);

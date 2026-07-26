@@ -17,16 +17,18 @@ const log = createTaggedLogger(LogTags.PREVIEW);
 import { refreshPanel } from './webview-manager';
 import evaluateInWebview from './evaluate-in-webview';
 import { getOutlineProvider } from '../language';
-import type { ResolvedConfig, TypeScriptConfiguration } from '../types';
-import type { WatcherManager, DocumentTracker } from './watchers';
+import type { ResolvedConfig } from '../../shared/config/types';
+import type { TypeScriptConfiguration } from '../module-runtime/types/module-system';
+import type { WatcherManager } from './watchers/WatcherManager';
+import type { DocumentTracker } from './watchers/DocumentTracker';
 
 // extracted modules
-import {
-  PreviewConfiguration,
-  type StyleConfiguration,
-  type ConfigurationState,
-  type PreviewRuntimeConfig,
-} from './PreviewConfiguration';
+import { PreviewConfiguration } from './PreviewConfiguration';
+import type {
+  ConfigurationState,
+  PreviewRuntimeConfig,
+} from '../../shared/config/types';
+import type { StyleConfiguration } from './types/preview';
 import {
   PreviewWebviewBridge,
   type WebviewHandle,
@@ -294,7 +296,7 @@ export class Preview {
     this.initializer.setupConfigWatcher(
       this.watcherManager,
       this.doc.uri.scheme,
-      this.documentHandler.mdxPreviewConfig,
+      this.doc.uri.fsPath,
       () => {
         this.documentHandler.reloadMdxConfig();
         this.refreshWebview().catch((err) =>

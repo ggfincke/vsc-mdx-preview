@@ -8,10 +8,7 @@ import type {
   PreviewError,
   NextraPageMeta,
 } from '../preview';
-import type {
-  PreviewScrollSyncValue,
-  SourceLineHighlightColorValue,
-} from '../config';
+import type { PreviewRuntimeConfig } from '../config';
 import type { WebviewThemeState } from '../themes';
 
 export type PreviewSourceLineReportResult = 'accepted' | 'ignored' | 'retry';
@@ -61,11 +58,9 @@ export interface WebviewRPC {
   setTailwindBrowserCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
   setNextraMeta(meta: NextraPageMeta | null): void;
-  setSourceLineHighlight(enabled: boolean): void;
-  setSourceLineHighlightColor(mode: SourceLineHighlightColorValue): void;
-  setScrollSync(mode: PreviewScrollSyncValue): void;
+  setRuntimeConfig(config: PreviewRuntimeConfig): void;
   scrollToLine(line: number): void;
-  setShimSideRail(enabled: boolean): void;
-  setZoom(level: number): void;
+  adjustZoom(delta: number): void;
+  resetZoom(): void;
   getExportableHtml(): Promise<string>;
 }

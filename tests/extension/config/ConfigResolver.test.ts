@@ -20,22 +20,17 @@ const {
   mockWatchConfigCandidate: vi.fn(),
 }));
 
-vi.mock(
-  '../../../packages/extension-host/src/shared/utils/find-up',
-  () => ({
-    findUp: mockFindUp,
-    createWorkspaceStopPredicate: mockCreateWorkspaceStopPredicate,
-  })
-);
+vi.mock('../../../packages/extension-host/src/shared/utils/find-up', () => ({
+  findUp: mockFindUp,
+  createWorkspaceStopPredicate: mockCreateWorkspaceStopPredicate,
+}));
 
-vi.mock(
-  '../../../packages/extension-host/src/shared/utils/file-utils',
-  () => ({
-    readJsonSync: mockReadJsonSync,
-  })
-);
+vi.mock('../../../packages/extension-host/src/shared/utils/file-utils', () => ({
+  readJsonSync: mockReadJsonSync,
+}));
 
 import {
+  getConfigCandidatePaths,
   resolveConfig,
 } from '../../../packages/extension-host/src/features/preview/configuration/ConfigResolver';
 
@@ -47,6 +42,7 @@ configCache.watchConfigCandidate = mockWatchConfigCandidate;
 describe('ConfigResolver', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCreateWorkspaceStopPredicate.mockReturnValue(() => false);
     mockConfigCache.get.mockReturnValue(undefined);
     mockConfigCache.hasWatcher.mockReturnValue(false);
   });
@@ -78,7 +74,17 @@ describe('ConfigResolver', () => {
     });
 
     it('returns null & caches when no config file found', () => {
+      mockCreateWorkspaceStopPredicate.mockReturnValue(
+        (dir: string) => dir === '/workspace'
+      );
       mockFindUp.mockReturnValue(undefined);
+
+      expect(getConfigCandidatePaths('/workspace/docs/doc.mdx')).toEqual([
+        '/workspace/docs/.mdx-previewrc.json',
+        '/workspace/docs/.mdx-previewrc',
+        '/workspace/.mdx-previewrc.json',
+        '/workspace/.mdx-previewrc',
+      ]);
 
       const result = resolveConfig('/workspace/doc.mdx');
 

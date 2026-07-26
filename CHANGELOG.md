@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Preview runtime updates are atomic**: trust, link behavior, PlantUML settings, and other runtime flags now cross the extension/webview boundary as one configuration object; unchanged theme, flag, Tailwind, and icon channels are no longer resent on every edit
+- **Cache clearing is exhaustive**: the Clear All Caches command now invalidates resolution, Sass, component, TypeScript, Babel, PostCSS, icon, preview-config, Tailwind, framework, and Nextra metadata caches without eagerly creating unused services
+- **Zoom has one persisted owner**: zoom commands now adjust the webview's persisted zoom value directly, so the first zoom after a reload no longer jumps from stale extension state
+
+### Fixed
+
+- **Document and configuration lifecycle**: switching between documents with equal version numbers renders immediately; resource-scoped settings refresh for the new document; missing, malformed, created, repaired, or deleted preview configs invalidate correctly; tsconfig changes refresh parsed preview state; compilation/presentation settings invalidate every affected preview
+- **Safe configuration edits**: the Add to Config quick fix targets the nearest applicable config and never replaces malformed JSON with an empty object; async save, workspace, dependency, debounce, and startup-handshake failures are contained at their event boundaries
+- **Multi-root styling and settings**: custom CSS resolves from the document's workspace folder and clears when emptied; trust, link, and PlantUML settings use the document resource; stale async theme/icon work cannot overwrite a newer preview state
+- **Component diagnostics**: unknown-component ranges cover only the tag name, preserving children during quick fixes; HTML-name collisions such as `<Table />` and dotted members such as `<Tabs.Tab />` are analyzed correctly
+- **Trusted module loading**: relative imports inside npm packages, React-17-style JSX/TSX, binary image imports, `browser: false`, arbitrary TypeScript path wildcards, baseUrl-sensitive path caches, mixed ESM/CommonJS dependencies, builtin subpaths, uppercase TypeScript extensions, and package paths resembling `node_modules` now resolve through the intended paths
+- **Workspace-aware module assets**: aliases and Sass resolve from the owning workspace root; imported CSS/Sass URLs resolve from the stylesheet; package/lockfile creation and deletion invalidate negative resolution state; the cold fetch path uses async resolution and avoids redundant file access
+- **Nextra metadata**: lookup cannot escape the workspace or confuse prefix siblings; creation, deletion, empty metadata, and sibling changes update every affected preview and clear stale webview state
+- **Webview recovery and links**: pre-registration messages preserve real event order; diagram renderers recover after invalid source; relative MDX links can open in preview; failed framework fallbacks retry real chunks; changed Mermaid icon packs re-register; diagram contrast follows the preview theme; KaTeX CSS failures no longer replace usable content
+- **Lightbox and rendered errors**: direct-child images join galleries, delayed close work cannot erase a newly opened image, and Error-like objects render their message instead of `[object Object]`
+
+### Performance
+
+- **Tailwind work is content-aware**: negative detection results are cached, Safe Mode skips irrelevant discovery, and unchanged browser-profile input no longer retriggers Tailwind compilation
+- **Diagram results are cached**: unchanged Mermaid, Graphviz, and PlantUML diagrams reuse bounded results across document edits
+- **Preview updates send only changed channels**: accepted edits avoid repeatedly serializing unchanged configuration, theme, Tailwind, and icon payloads
+
 ## [1.7.0] - 2026-07-19
 
 ### Changed

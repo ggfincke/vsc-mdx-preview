@@ -21,6 +21,11 @@ let prewarmComplete = false;
 // config items are only created on first transformAsync() call
 let cachedBabelOptions: BabelCore.InputOptions | null = null;
 
+// clear lazily-created Babel options
+export function clearBabelConfigCache(): void {
+  cachedBabelOptions = null;
+}
+
 // lazily initialize Babel options on first use
 // config items are cached after first creation to avoid repeated require() calls
 // this defers the expensive createConfigItem() & require() calls until first transform

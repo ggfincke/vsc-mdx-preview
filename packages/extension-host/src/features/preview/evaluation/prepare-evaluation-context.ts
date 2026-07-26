@@ -8,11 +8,11 @@ import { getTailwindProcessor, getTrustManager } from '../../../app/services';
 import {
   buildEffectivePreviewConfig,
   toCompilerConfig,
-} from '../../../shared/config/EffectivePreviewConfig';
+} from '../configuration/EffectivePreviewConfig';
 import { EXTENSION_DISPLAY_NAME } from '../../../shared/constants';
 import type { EvaluationEngine } from '../EvaluationEngine';
 import type { Preview } from '../Preview';
-import type { TailwindProfileDetectionResult } from '../../types';
+import type { TailwindProfileDetectionResult } from '../../tailwind/types/detector';
 import type {
   PreparedEvaluationContext,
   PreparedEvaluationResult,

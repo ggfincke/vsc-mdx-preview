@@ -3,23 +3,16 @@
 
 import * as vscode from 'vscode';
 import debounce from 'lodash.debounce';
+import type { SecurityPolicyValue } from '@mdx-preview/contracts';
 import { getConfigManager } from '../../app/services';
-import { SecurityPolicy } from '../security/SecurityPolicy';
 import { readPreviewConfigurationState } from '../../shared/config/preview-settings';
 import type {
-  StyleConfiguration,
   ConfigurationState,
   PreviewRuntimeConfig,
-  ConfigChangeResult,
-} from '../types';
+} from '../../shared/config/types';
+import type { ConfigChangeResult, StyleConfiguration } from './types/preview';
 
-// re-export canonical type definitions from types/
-export type {
-  StyleConfiguration,
-  ConfigurationState,
-  PreviewRuntimeConfig,
-  ConfigChangeResult,
-} from '../types';
+export type { ConfigChangeResult, StyleConfiguration } from './types/preview';
 
 function projectRuntimeConfiguration(
   configuration: ConfigurationState
@@ -70,7 +63,7 @@ export class PreviewConfiguration {
     };
   }
 
-  get securityConfiguration(): { securityPolicy: SecurityPolicy } {
+  get securityConfiguration(): { securityPolicy: SecurityPolicyValue } {
     return { securityPolicy: this._configuration.securityPolicy };
   }
 

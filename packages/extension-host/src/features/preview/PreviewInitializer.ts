@@ -8,16 +8,17 @@ import { LogTags } from '@mdx-preview/contracts';
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.PREVIEW);
 import { WEBVIEW_HANDSHAKE_TIMEOUT_MS } from '../../shared/constants';
+import { DocumentTracker } from './watchers/DocumentTracker';
+import { CustomCssWatcher } from './watchers/CustomCssWatcher';
+import { DependencyWatcher } from './watchers/DependencyWatcher';
+import { EventSubscriptionWatcher } from './watchers/EventSubscriptionWatcher';
+import { TailwindConfigWatcher } from './watchers/TailwindConfigWatcher';
+import { WatcherManager } from './watchers/WatcherManager';
 import {
-  DocumentTracker,
-  CustomCssWatcher,
-  DependencyWatcher,
-  EventSubscriptionWatcher,
-  TailwindConfigWatcher,
-  WatcherManager,
-} from './watchers';
-import { onConfigChange, onTypeScriptConfigChange } from './configuration';
-import type { ResolvedConfig } from '../types';
+  getConfigCandidatePaths,
+  onConfigChange,
+} from './configuration/ConfigResolver';
+import { onTypeScriptConfigChange } from './configuration/TypeScriptConfigResolver';
 import { getTailwindProcessor } from '../../app/services';
 
 export interface HandshakeResult {
@@ -144,24 +145,23 @@ export class PreviewInitializer {
   setupConfigWatcher(
     watcherManager: WatcherManager,
     docScheme: string,
-    mdxPreviewConfig: ResolvedConfig | undefined,
+    documentPath: string,
     onConfigChanged: () => void
   ): void {
     // always remove existing config watcher first
     watcherManager.unregister('config');
 
-    // only set up watcher for file scheme documents w/ valid config
-    if (docScheme !== 'file' || !mdxPreviewConfig) {
+    if (docScheme !== 'file') {
       return;
     }
 
-    const configPath = mdxPreviewConfig.configPath;
+    const configCandidatePaths = new Set(getConfigCandidatePaths(documentPath));
 
     const configSubscriptionWatcher = new EventSubscriptionWatcher({
       logTag: LogTags.CONFIG_SUBSCRIPTION,
       subscribe: () =>
         onConfigChange((event) => {
-          if (event.configPath === configPath) {
+          if (configCandidatePaths.has(event.configPath)) {
             log.debug('MDX config file changed, reloading...');
             onConfigChanged();
           }

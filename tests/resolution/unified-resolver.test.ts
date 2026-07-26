@@ -21,7 +21,7 @@ import { NOOP_MODULE } from '../../packages/extension-host/src/features/module-r
 import {
   ResolutionStrategy,
   type ResolutionContext,
-} from '../../packages/extension-host/src/types';
+} from '../../packages/extension-host/src/features/module-runtime/types/module-system';
 
 describe('UnifiedResolver', () => {
   let resolver: UnifiedResolver;

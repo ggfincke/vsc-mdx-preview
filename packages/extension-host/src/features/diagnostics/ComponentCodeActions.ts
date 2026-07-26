@@ -7,7 +7,7 @@ import { writeFileSync } from 'fs';
 import { findConfigFile } from '../preview/configuration/ConfigResolver';
 import { DIAGNOSTIC_CODES, readDiagnosticCode } from './ComponentDiagnostics';
 import { docsUriForCode } from './diagnostic-adapter';
-import type { UnknownComponentDiagnosticData } from '../types';
+import type { UnknownComponentDiagnosticData } from './types';
 import { KNOWN_GENERIC_COMPONENTS } from 'mdx-forge/compiler';
 import {
   getCanonicalComponentName,

@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { TextDecoder } from 'util';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { readFileAsync } from '../../shared/utils/file-utils';
+import { readFileRequiredAsync } from '../../shared/utils/file-utils';
 import { LogTags, type UpdateModeValue } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.PREVIEW);
@@ -66,19 +66,7 @@ export async function runPreviewUpdateFlow(
         break;
       }
 
-      let readError: unknown;
-      const savedText = await readFileAsync(fsPath, 'utf8', {
-        onError: (error) => {
-          readError = error;
-        },
-      });
-
-      if (savedText === null) {
-        throw readError instanceof Error
-          ? readError
-          : new Error(`Failed to read file: ${fsPath}`);
-      }
-
+      const savedText = await readFileRequiredAsync(fsPath, 'utf8');
       await evaluate(savedText, fsPath);
       break;
     }

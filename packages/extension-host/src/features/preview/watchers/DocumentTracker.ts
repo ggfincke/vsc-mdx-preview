@@ -2,7 +2,7 @@
 // track document versions & stale state for preview updates
 
 import type { WebviewRPC } from '@mdx-preview/contracts';
-import type { IWatcher } from '../../types';
+import type { IWatcher } from '../types/watcher';
 
 // webview handle w/ setStale method
 type StaleNotifier = Pick<WebviewRPC, 'setStale'>;

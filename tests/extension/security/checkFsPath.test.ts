@@ -18,6 +18,7 @@ import {
   checkFsPathAsync,
   handleDidChangeWorkspaceFolders,
 } from '../../../packages/extension-host/src/features/module-runtime/security/checkFsPath';
+import { isPathWithin } from '../../../packages/extension-host/src/shared/utils/path-utils';
 
 function createWorkspaceFolder(fsPath: string) {
   return {
@@ -75,5 +76,10 @@ describe('checkFsPathAsync', () => {
     await expect(
       checkFsPathAsync('/workspace/src', '../../../etc/passwd')
     ).resolves.toBe(false);
+
+    expect(isPathWithin('/workspace/app/docs', '/workspace/app')).toBe(true);
+    expect(isPathWithin('/workspace/app-two', '/workspace/app')).toBe(false);
+    expect(isPathWithin('/workspace/app', '/workspace/app')).toBe(true);
+    expect(isPathWithin('/workspace/app', '/workspace/app', false)).toBe(false);
   });
 });

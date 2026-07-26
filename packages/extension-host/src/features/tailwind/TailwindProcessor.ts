@@ -7,8 +7,7 @@ import * as path from 'path';
 import { performance } from 'perf_hooks';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { SingletonService } from '../../app/services/SingletonService';
-import { getErrorReporter, getFrameworkDetector } from '../../app/services';
-import type { ResolutionContext } from '../types';
+import { getErrorReporter } from '../../app/services';
 import { ErrorContext, ErrorSeverity } from '../../shared/errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
@@ -26,6 +25,7 @@ import {
   LRUCache,
   normalizeError,
 } from '@mdx-preview/runtime-utils';
+import { buildResolutionContext } from '../module-runtime/resolution/resolution-context';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
 
@@ -35,14 +35,14 @@ export type {
   TailwindProfileOptions,
   TailwindProcessOptions,
   TailwindProcessResult,
-} from '../types';
+} from './types/processor';
 
 import type {
-  TailwindProfileDetectionResult,
   TailwindProfileOptions,
   TailwindProcessOptions,
   TailwindProcessResult,
-} from '../types';
+} from './types/processor';
+import type { TailwindProfileDetectionResult } from './types/detector';
 
 export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   protected static override instance: TailwindProcessor | undefined;
@@ -196,18 +196,13 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       ? path.dirname(configPath)
       : (workspaceRoot ?? preview.entryFsDirectory);
 
-    // build ResolutionContext for Tailwind scanning (parity w/ module-system)
-    const frameworkDetector = getFrameworkDetector();
-    const frameworkInfo = frameworkDetector.getFramework(preview.doc.uri);
-    const shimsEnabled = frameworkDetector.areShimsEnabled(preview.doc.uri);
-
-    const resolutionContext: ResolutionContext = {
+    const resolutionContext = buildResolutionContext({
       baseDir: preview.entryFsDirectory ?? path.dirname(entryFilePath),
       tsConfig: preview.typescriptConfiguration,
-      framework: frameworkInfo.framework,
+      documentUri: preview.doc.uri,
+      entryFsDirectory: preview.entryFsDirectory,
       workspaceRoot: workspaceRoot ?? preview.entryFsDirectory ?? undefined,
-      shimsEnabled,
-    };
+    });
 
     const scanStart = performance.now();
     const scanResult = await this.scanner.scan(mdxText, {
@@ -312,12 +307,18 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     this.detector.invalidateDetectionCaches(changedPaths);
   }
 
-  // custom cleanup - clear caches
-  protected override onDispose(): void {
+  // clear every Tailwind result & detection cache
+  clearCaches(): void {
     this.cache.clear();
-    log.debug('Cache cleared');
     this.scanCache.clear();
     this.browserInputCache.clear();
+    this.detector.clearCaches();
+    log.debug('Caches cleared');
+  }
+
+  // custom cleanup - clear caches
+  protected override onDispose(): void {
+    this.clearCaches();
     this.detector.dispose();
   }
 

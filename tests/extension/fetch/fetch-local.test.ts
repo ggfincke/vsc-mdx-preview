@@ -43,7 +43,10 @@ function createPreview(tempDir: string): Preview {
     entryFsDirectory: tempDir,
     dependentFsPaths: new Set<string>(),
     typescriptConfiguration: undefined,
-    configuration: { updateMode: 'onSave' },
+    configuration: {
+      updateMode: 'onSave',
+      useSucraseTranspiler: false,
+    },
     doc: { uri: { fsPath: path.join(tempDir, 'entry.mdx') } },
     getWebviewUri: (fsPath: string) => `webview:${fsPath}`,
     webviewHandle: {},
@@ -58,13 +61,11 @@ describe('fetchLocal', () => {
       path.join(os.tmpdir(), 'mdx-preview-fetch-local-')
     );
     mockCheckFsPathAsync.mockResolvedValue(true);
-    mockResolver.resolveAsync.mockImplementation(
-      async (request: string) => ({
-        fsPath: path.join(tempDir, request.replace(/^\.\//, '')),
-        isBuiltInShim: false,
-        specifier: request,
-      })
-    );
+    mockResolver.resolveAsync.mockImplementation(async (request: string) => ({
+      fsPath: path.join(tempDir, request.replace(/^\.\//, '')),
+      isBuiltInShim: false,
+      specifier: request,
+    }));
     mockFrameworkDetector.getFramework.mockReturnValue({
       framework: 'generic',
       confidence: 1,
@@ -104,6 +105,18 @@ describe('fetchLocal', () => {
       });
     }
     expect(readSpy).not.toHaveBeenCalled();
+    expect(mockResolver.resolveAsync).toHaveBeenNthCalledWith(
+      1,
+      './image.png',
+      {
+        baseDir: tempDir,
+        tsConfig: undefined,
+        framework: 'generic',
+        workspaceRoot: tempDir,
+        shimsEnabled: true,
+      },
+      'browser'
+    );
   });
 
   it('still rejects a non-image binary after its single read', async () => {

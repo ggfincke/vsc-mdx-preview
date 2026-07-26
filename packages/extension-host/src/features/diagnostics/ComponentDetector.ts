@@ -3,34 +3,32 @@
 
 import * as vscode from 'vscode';
 import { visit } from 'unist-util-visit';
-import {
-  analyzeMdxDocument,
-  astPositionToRange,
-} from '../language/mdx-document-analysis';
-import { parseEsmImports } from '../language/esm-imports';
 import { classifyComponentSource } from 'mdx-forge/diagnostics/analyze';
 import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
 import {
   ContentHashCache,
   extractErrorMessage,
 } from '@mdx-preview/runtime-utils';
-import type {
-  ComponentDetectionResult,
-  ComponentDetectionOptions,
-  ComponentSource,
-  DetectedComponent,
-  MdxJsxElement,
-  MdxjsEsmNode,
-} from '../types';
-import { createTaggedLogger } from '../../shared/logging/logger';
-import { COMPONENT_CACHE_MAX_ENTRIES } from '../../shared/constants/runtime';
-
-// use shared component registry as single source of truth
 import {
   getCanonicalComponentName,
   getGenericComponentSet,
   type FrameworkId,
 } from 'mdx-forge/components/registry';
+import type { MdxJsxElement } from 'mdx-forge/compiler';
+import {
+  analyzeMdxDocument,
+  astPositionToRange,
+} from '../../shared/mdx-analysis/document-analysis';
+import { parseEsmImports } from '../../shared/mdx-analysis/esm-imports';
+import type { MdxjsEsmNode } from '../../shared/mdx-analysis/types';
+import type {
+  ComponentDetectionResult,
+  ComponentDetectionOptions,
+  ComponentSource,
+  DetectedComponent,
+} from './types';
+import { createTaggedLogger } from '../../shared/logging/logger';
+import { COMPONENT_CACHE_MAX_ENTRIES } from '../../shared/constants/runtime';
 
 const log = createTaggedLogger(LogTags.COMPONENT_DETECTOR);
 

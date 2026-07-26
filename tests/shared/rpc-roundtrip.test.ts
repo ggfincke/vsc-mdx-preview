@@ -131,7 +131,8 @@ function connectRpcAdapters() {
   const webviewRemote = initRPCExtensionSide(
     preview,
     bus.webview as unknown as Parameters<typeof initRPCExtensionSide>[1],
-    bus.disposables as Parameters<typeof initRPCExtensionSide>[2]
+    bus.disposables as Parameters<typeof initRPCExtensionSide>[2],
+    vi.fn(async () => {})
   );
 
   bootstrapRpcWebviewSide({
@@ -139,10 +140,9 @@ function connectRpcAdapters() {
     webviewHandle,
     acquireVsCodeApiFn: () => bus.vscodeApi,
     comlinkApi: comlink,
-    eventTarget:
-      bus.windowEventTarget as Parameters<
-        typeof bootstrapRpcWebviewSide
-      >[0]['eventTarget'],
+    eventTarget: bus.windowEventTarget as Parameters<
+      typeof bootstrapRpcWebviewSide
+    >[0]['eventTarget'],
   });
 
   return {

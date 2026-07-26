@@ -9,7 +9,7 @@ import { notifyInfo } from '../../shared/errors';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { CommandNames } from './command-names';
 import authoringGuideText from './data/authoring-guide.md';
-import type { CommandDefinition } from '../types';
+import type { CommandDefinition } from './types';
 
 const log = createTaggedLogger(LogTags.CMD);
 

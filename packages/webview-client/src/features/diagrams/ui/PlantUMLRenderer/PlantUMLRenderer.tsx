@@ -5,7 +5,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
 import { ExtensionHandle } from '../../../../platform/rpc/webview-rpc-client';
-import { sanitizeSvg } from '../../utils/sanitizeSvg';
+import { sanitizeSvg } from '../../../../shared/utils/sanitizeSvg';
 import './PlantUMLRenderer.css';
 
 interface PlantUMLProps {

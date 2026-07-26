@@ -2,8 +2,10 @@
 // handler for JavaScript/TypeScript files - delegate to transform.ts
 
 import type { FetchResult } from '@mdx-preview/contracts';
-import type { Preview } from '../../preview/preview-manager';
-import type { FileTypeHandler } from './index';
+import type {
+  FileTypeHandler,
+  ModuleExecutionContext,
+} from '../types/handlers';
 import { transform } from '../transform/transform';
 import { extractImportSpecifiers } from '../dependencies/import-extractor';
 import { buildScriptResult } from './result-builders';
@@ -17,14 +19,14 @@ export class ScriptHandler implements FileTypeHandler {
   async handle(
     code: string,
     fsPath: string,
-    preview: Preview
+    context: ModuleExecutionContext
   ): Promise<FetchResult> {
     // transform the code (handles MDX, TypeScript, JSX, etc.)
     // I.1: get both esmCode & final code from transform
     const { code: transformedCode, esmCode } = await transform(
       code,
       fsPath,
-      preview
+      context
     );
 
     // retain source imports & append helpers emitted by the transpiler

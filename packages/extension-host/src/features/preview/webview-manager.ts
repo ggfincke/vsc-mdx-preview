@@ -3,14 +3,14 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { LogTags } from '@mdx-preview/contracts';
 
-import { Preview } from './preview-manager';
 import { initRPCExtensionSide } from '../../platform/rpc/extension-endpoint';
 import { getPreviewManager } from '../../app/services';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { WEBVIEW_BUILD_DIR } from '../../shared/constants';
-import { LogTags } from '@mdx-preview/contracts';
 import { getOutlineProvider } from '../language';
+import type { Preview } from './Preview';
 import { ensureWebviewResourcesReady } from './webview-resources';
 import { setPanelHTMLFromPreview } from './webview-html';
 
@@ -32,7 +32,8 @@ function dispose(): void {
 }
 
 export async function createOrShowPanel(
-  preview: Preview
+  preview: Preview,
+  openPreview: () => Promise<void>
 ): Promise<vscode.WebviewPanel> {
   log.debug('createOrShowPanel called');
 
@@ -85,7 +86,8 @@ export async function createOrShowPanel(
     const webviewHandle = initRPCExtensionSide(
       preview,
       panel.webview,
-      disposables
+      disposables,
+      openPreview
     );
     preview.setWebviewHandle(webviewHandle);
     log.debug('RPC initialized');

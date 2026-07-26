@@ -5,12 +5,15 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import type { UpdateModeValue } from '@mdx-preview/contracts';
 import {
-  resolveTypescriptConfig,
   findTsConfig,
-  resolveConfig,
-} from './configuration';
-import type { TypeScriptConfiguration, ResolvedConfig } from '../types';
-import { DocumentTracker, DependencyWatcher, WatcherManager } from './watchers';
+  resolveTypescriptConfig,
+} from './configuration/TypeScriptConfigResolver';
+import { resolveConfig } from './configuration/ConfigResolver';
+import type { TypeScriptConfiguration } from '../module-runtime/types/module-system';
+import type { ResolvedConfig } from '../../shared/config/types';
+import { DocumentTracker } from './watchers/DocumentTracker';
+import { DependencyWatcher } from './watchers/DependencyWatcher';
+import { WatcherManager } from './watchers/WatcherManager';
 
 // actions provided by Preview for document event handling
 export interface PreviewActions {

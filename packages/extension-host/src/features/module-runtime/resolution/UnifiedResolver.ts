@@ -15,11 +15,11 @@ import {
 } from './strategies';
 import {
   ResolutionStrategy,
-  type IResolutionStrategy,
   type ResolutionContext,
   type ResolutionResult,
   type ResolutionMode,
-} from '../../types';
+} from '../types/module-system';
+import type { IResolutionStrategy } from '../types/resolver/strategies';
 
 // module-level tagged logger for unified resolver
 const log = createTaggedLogger(LogTags.UNIFIED_RESOLVER);

@@ -15,7 +15,7 @@ import { findUp } from '../../../shared/utils/find-up';
 import { PathCache } from '../../../shared/utils/cache';
 
 // import consolidated type from centralized types
-import type { TypeScriptConfiguration } from '../../types';
+import type { TypeScriptConfiguration } from '../../module-runtime/types/module-system';
 
 // max 50 tsconfig caches (typical monorepo has fewer)
 const TSCONFIG_CACHE_MAX_ENTRIES = 50;

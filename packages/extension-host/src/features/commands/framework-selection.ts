@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
+import { FRAMEWORK_IDS, LogTags } from '@mdx-preview/contracts';
 import {
   getConfigManager,
   getFrameworkDetector,
@@ -16,7 +16,7 @@ import {
 } from '@mdx-preview/contracts';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from '../types';
+import type { CommandDefinition } from './types';
 
 const log = createTaggedLogger(LogTags.FRAMEWORK);
 
@@ -54,9 +54,7 @@ const selectFramework = async (): Promise<void> => {
           : `(detected: ${detectedDisplayName})`,
       value: 'auto',
     },
-    ...(
-      ['generic', 'docusaurus', 'nextjs', 'starlight', 'nextra'] as const
-    ).map((id) => ({
+    ...FRAMEWORK_IDS.map((id) => ({
       label: FRAMEWORK_METADATA[id].pickerLabel,
       description: currentSetting === id ? '(current)' : undefined,
       value: id,

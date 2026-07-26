@@ -1,45 +1,29 @@
 // scripts/check-generated-files.mjs
-// check that auto-generated files only exist in allowed directories
-// & that all expected generated files are present
+// enforce exact generated-file manifest membership & output presence
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { GENERATED_TS_FILES } from './generated-files.mjs';
+import {
+  compareGeneratedOutputSets,
+  GENERATED_HEADER_FILES,
+  GENERATED_OUTPUTS,
+} from './generated-files.mjs';
 import { collectFiles } from './lib/file-walk.mjs';
 import { IGNORED_DIRECTORIES } from './lib/ignore.mjs';
 
-const ALLOWED_PATTERNS = ['packages/webview-client/src/generated/'];
 const HEADER = '// AUTO-GENERATED FILE - DO NOT EDIT';
-const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx']);
-
-function checkExpectedFiles(rootDir) {
-  const missing = [];
-
-  for (const expectedFile of GENERATED_TS_FILES) {
-    const absolutePath = join(rootDir, expectedFile);
-    if (!existsSync(absolutePath)) {
-      missing.push(expectedFile);
-      continue;
-    }
-
-    // verify it has the expected header
-    const content = readFileSync(absolutePath, 'utf-8');
-    const firstLine = content.split(/\r?\n/, 1)[0]?.trim() ?? '';
-    if (!firstLine.startsWith(HEADER)) {
-      missing.push(
-        `${expectedFile} (exists but missing AUTO-GENERATED header)`
-      );
-    }
-  }
-
-  return missing;
-}
+const SOURCE_EXTENSIONS = new Set([
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+]);
 
 try {
   const rootDir = process.cwd();
-  let hasFailures = false;
 
-  // phase 1: scan for generated files in unexpected locations
   const sourceFiles = collectFiles({
     rootDir,
     extensions: SOURCE_EXTENSIONS,
@@ -47,66 +31,51 @@ try {
     pathMode: 'relative',
   });
 
-  const generatedFiles = [];
-  const violations = [];
+  const actualGeneratedFiles = sourceFiles.filter((file) => {
+    const content = readFileSync(join(rootDir, file), 'utf-8');
+    const firstLine = content.split(/\r?\n/, 1)[0]?.trim() ?? '';
+    return firstLine.startsWith(HEADER);
+  });
+  const { missing, extra } = compareGeneratedOutputSets(
+    GENERATED_HEADER_FILES,
+    actualGeneratedFiles
+  );
+  const missingNonHeaderOutputs = GENERATED_OUTPUTS.filter(
+    (output) =>
+      !output.hasGeneratedHeader && !existsSync(join(rootDir, output.path))
+  ).map((output) => output.path);
 
-  for (const file of sourceFiles) {
-    const fileContent = readFileSync(file, 'utf-8');
-    const firstLine = fileContent.split(/\r?\n/, 1)[0]?.trim() ?? '';
-    if (!firstLine.startsWith(HEADER)) {
-      continue;
-    }
-
-    generatedFiles.push(file);
-    const isAllowed = ALLOWED_PATTERNS.some((pattern) =>
-      file.startsWith(pattern)
-    );
-    if (!isAllowed) {
-      violations.push(file);
-    }
-  }
-
-  if (violations.length > 0) {
-    console.error('Generated files found in unexpected locations:');
-    for (const file of violations) {
-      console.error(`  - ${file}`);
-    }
-    console.error('\nAllowed locations:');
-    for (const pattern of ALLOWED_PATTERNS) {
-      console.error(`  - ${pattern}`);
-    }
-    hasFailures = true;
-  }
-
-  // phase 2: verify expected files exist w/ correct headers
-  const missing = checkExpectedFiles(rootDir);
   if (missing.length > 0) {
-    console.error('\nExpected generated files missing or invalid:');
+    console.error('Expected generated files missing or missing their header:');
     for (const file of missing) {
       console.error(`  - ${file}`);
     }
-    console.error('\nRun "npm run prebuild" to regenerate.');
-    hasFailures = true;
+  }
+  if (extra.length > 0) {
+    console.error('Generated files missing from the output manifest:');
+    for (const file of extra) {
+      console.error(`  - ${file}`);
+    }
+  }
+  if (missingNonHeaderOutputs.length > 0) {
+    console.error('Generated or synced outputs missing:');
+    for (const file of missingNonHeaderOutputs) {
+      console.error(`  - ${file}`);
+    }
   }
 
-  if (hasFailures) {
-    process.exit(1);
-  }
-
-  // phase 3: report success
-  // normally unreachable (phase 2 fails first); tripwire against ignore-set
-  // or walker drift silently emptying the phase-1 scan
-  if (generatedFiles.length === 0) {
-    console.error(
-      'No generated files found — expected at least ' +
-        `${GENERATED_TS_FILES.length}. Something is wrong.`
-    );
+  if (
+    missing.length > 0 ||
+    extra.length > 0 ||
+    missingNonHeaderOutputs.length > 0
+  ) {
+    console.error('\nRun "npm run prebuild" to regenerate expected outputs.');
     process.exit(1);
   }
 
   console.log(
-    `All ${generatedFiles.length} generated file(s) are in allowed locations ` +
-      `(${GENERATED_TS_FILES.length} expected, ${generatedFiles.length} found).`
+    `Generated output manifest matches exactly: ${actualGeneratedFiles.length} ` +
+      `header-generated files, ${GENERATED_OUTPUTS.length} total outputs.`
   );
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);

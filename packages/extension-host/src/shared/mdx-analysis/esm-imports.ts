@@ -1,5 +1,5 @@
-// packages/extension-host/src/features/language/esm-imports.ts
-// shared MDX ESM import/export parsing for diagnostics & symbol display
+// packages/extension-host/src/shared/mdx-analysis/esm-imports.ts
+// parse MDX ESM imports & describe import/export statements
 
 import type {
   ImportDeclaration,

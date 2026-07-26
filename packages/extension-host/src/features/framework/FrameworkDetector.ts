@@ -19,10 +19,10 @@ import { readJsonSync, pathExists } from '../../shared/utils/file-utils';
 const log = createTaggedLogger(LogTags.FRAMEWORK);
 import { findUp } from '../../shared/utils/find-up';
 import { PathCache } from '../../shared/utils/cache';
-import type { FrameworkInfo } from '../types';
+import type { FrameworkInfo } from './types';
 
 // re-export canonical type definition from types/
-export type { FrameworkInfo } from '../types';
+export type { FrameworkInfo } from './types';
 
 // framework detection rules
 interface FrameworkRule {
@@ -279,10 +279,16 @@ export class FrameworkDetector extends WithSubscribers<
     log.debug('Cache invalidated for:', workspaceRoot);
   }
 
+  // clear detection results & package lookup memoization
+  clearCaches(): void {
+    this.cache.clear();
+    this.packageJsonDirMemo.clear();
+    log.debug('All caches invalidated');
+  }
+
   // invalidate all caches & notify subscribers
   private invalidateAllCaches(): void {
-    this.cache.clear();
-    log.debug('All caches invalidated');
+    this.clearCaches();
 
     // notify subscribers w/ current framework for active editor
     const editor = vscode.window.activeTextEditor;
@@ -323,6 +329,7 @@ export class FrameworkDetector extends WithSubscribers<
 
   // clear file watcher, cache & subscriptions on dispose
   protected override onDispose(): void {
+    this.packageJsonDirMemo.clear();
     this.cache.dispose();
   }
 }

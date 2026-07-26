@@ -1,20 +1,17 @@
-// packages/extension-host/src/shared/config/EffectivePreviewConfig.ts
-// unified config object merging VS Code settings + config file + frontmatter
-// precedence: frontmatter > config file > VS Code settings
+// packages/extension-host/src/features/preview/configuration/EffectivePreviewConfig.ts
+// merge VS Code, config-file, & frontmatter settings by precedence
 
-import { getConfigManager, getThemeManager } from '../../app/services';
-import { resolveConfig } from '../../features/preview/configuration/ConfigResolver';
-import { mapSettingsToPreviewConfiguration } from './preview-settings';
-import { SETTINGS } from './ConfigManager';
-import type { PreviewTheme, CodeBlockTheme } from '../../features/themes/types';
-
-// import consolidated types from centralized types
+import type { CodeBlockTheme, PreviewTheme } from '@mdx-preview/contracts';
+import type { CompilerConfig as MdxForgeCompilerConfig } from 'mdx-forge/compiler';
+import { getConfigManager, getThemeManager } from '../../../app/services';
+import { mapSettingsToPreviewConfiguration } from '../../../shared/config/preview-settings';
+import { SETTINGS } from '../../../shared/config/ConfigManager';
 import type {
   EffectivePreviewConfig,
   BuildEffectiveConfigOptions,
   CompilerConfig,
-} from '../types';
-import type { CompilerConfig as MdxForgeCompilerConfig } from 'mdx-forge/compiler';
+} from '../../../shared/config/types';
+import { resolveConfig } from './ConfigResolver';
 
 // config file can only disable a boolean setting (force false), never enable it
 function fileCanOnlyDisable(

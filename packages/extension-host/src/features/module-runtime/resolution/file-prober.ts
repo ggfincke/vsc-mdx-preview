@@ -13,10 +13,16 @@ import {
   STAT_CACHE_TTL_MS,
   STAT_CACHE_MAX_ENTRIES,
 } from '../../../shared/constants';
-import type { StatResult, FileProbingOptions } from '../../types';
+import type {
+  StatResult,
+  FileProbingOptions,
+} from '../types/resolver/file-prober';
 
 // re-export canonical type definitions from types/
-export type { StatResult, FileProbingOptions } from '../../types';
+export type {
+  StatResult,
+  FileProbingOptions,
+} from '../types/resolver/file-prober';
 
 // stat cache (LRU w/ TTL for file stat results)
 

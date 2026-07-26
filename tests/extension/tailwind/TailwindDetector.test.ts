@@ -6,15 +6,23 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-const { mockFindFiles, mockFindUp, mockWatchers } = vi.hoisted(() => ({
+const {
+  mockFindFiles,
+  mockFindUp,
+  mockGetWorkspaceFolder,
+  mockWatchers,
+  mockWorkspaceFolders,
+} = vi.hoisted(() => ({
   mockFindFiles: vi.fn(),
   mockFindUp: vi.fn(),
+  mockGetWorkspaceFolder: vi.fn(),
   mockWatchers: [] as Array<{
     pattern: string;
     change?: (uri: { fsPath: string }) => void;
     create?: (uri: { fsPath: string }) => void;
     delete?: (uri: { fsPath: string }) => void;
   }>,
+  mockWorkspaceFolders: vi.fn(),
 }));
 
 vi.mock('vscode', () => ({
@@ -29,6 +37,10 @@ vi.mock('vscode', () => ({
   },
   workspace: {
     findFiles: (...args: unknown[]) => mockFindFiles(...args),
+    getWorkspaceFolder: (...args: unknown[]) => mockGetWorkspaceFolder(...args),
+    get workspaceFolders() {
+      return mockWorkspaceFolders();
+    },
     createFileSystemWatcher: (pattern: string) => {
       const watcher: (typeof mockWatchers)[number] = { pattern };
       mockWatchers.push(watcher);
@@ -108,10 +120,29 @@ describe('TailwindDetector entry CSS scan scope', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockWatchers.length = 0;
+    mockGetWorkspaceFolder.mockReturnValue(undefined);
+    mockWorkspaceFolders.mockReturnValue(undefined);
     mockFindFiles.mockImplementation(
       async (pattern: { base: string }, _exclude: string, maxResults: number) =>
         collectCssFiles(pattern.base).slice(0, maxResults)
     );
+  });
+
+  it('matches entry directories by path boundary', () => {
+    mockWorkspaceFolders.mockReturnValue([
+      { uri: { fsPath: '/workspace/site' } },
+      { uri: { fsPath: '/workspace/site-other' } },
+    ]);
+    const detector = new TailwindDetector();
+
+    expect(
+      detector.resolveWorkspaceRoot({
+        docUri: { scheme: 'untitled' } as never,
+        entryDir: '/workspace/site-other/docs',
+      })
+    ).toBe('/workspace/site-other');
+
+    detector.dispose();
   });
 
   afterEach(() => {

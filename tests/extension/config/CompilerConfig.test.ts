@@ -5,8 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   EffectivePreviewConfig,
   ResolvedConfig,
-} from '../../../packages/extension-host/src/types';
-import { mockConfigManager, mockThemeManager } from '../../helpers/mock-services';
+} from '../../../packages/extension-host/src/shared/config/types';
+import {
+  mockConfigManager,
+  mockThemeManager,
+} from '../../helpers/mock-services';
 
 const { mockResolveConfig } = vi.hoisted(() => ({
   mockResolveConfig: vi.fn(),
@@ -23,9 +26,8 @@ import {
   buildCompilerConfig,
   buildEffectivePreviewConfig,
   toCompilerConfig,
-} from '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig';
+} from '../../../packages/extension-host/src/features/preview/configuration/EffectivePreviewConfig';
 import { DEFAULTS } from '../../../packages/extension-host/src/shared/config/setting-keys';
-import { SecurityPolicy } from '../../../packages/extension-host/src/features/security/SecurityPolicy';
 import { SETTINGS_DEFAULTS } from '@mdx-preview/contracts';
 
 const DOC_URI = {
@@ -179,8 +181,8 @@ describe('CompilerConfig helpers', () => {
   it('derives extension defaults from shared contract defaults', () => {
     const expectedSecurityPolicy =
       (SETTINGS_DEFAULTS['preview.security'] as string) === 'disabled'
-        ? SecurityPolicy.Disabled
-        : SecurityPolicy.Strict;
+        ? 'disabled'
+        : 'strict';
 
     expect(Object.keys(DEFAULTS).sort()).toEqual(
       Object.keys(SETTINGS_DEFAULTS).sort()

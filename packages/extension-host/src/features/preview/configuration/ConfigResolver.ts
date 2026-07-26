@@ -15,7 +15,10 @@ import {
 } from '../../../shared/utils/find-up';
 
 // import consolidated types from centralized types
-import type { MdxPreviewConfig, ResolvedConfig } from '../../types';
+import type {
+  MdxPreviewConfig,
+  ResolvedConfig,
+} from '../../../shared/config/types';
 import { LogTags } from '@mdx-preview/contracts';
 
 // module-level tagged logger
@@ -39,7 +42,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
   const configPath = findConfigFile(documentDir);
   if (!configPath) {
     cache.set(documentDir, null);
-    setupCandidateWatchers(documentDir);
+    setupCandidateWatchers(documentPath);
     return null;
   }
 
@@ -55,7 +58,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
       configPath
     );
     cache.set(documentDir, null);
-    setupCandidateWatchers(documentDir);
+    setupCandidateWatchers(documentPath);
     return null;
   }
 
@@ -71,7 +74,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
       configPath
     );
     cache.set(documentDir, null);
-    setupCandidateWatchers(documentDir);
+    setupCandidateWatchers(documentPath);
     return null;
   }
 
@@ -109,14 +112,15 @@ export function findConfigFile(startDir: string): string | undefined {
   return result;
 }
 
-// watch every path that could become the nearest config
-function setupCandidateWatchers(startDir: string): void {
+// list every config path relevant to a document through its workspace root
+export function getConfigCandidatePaths(documentPath: string): string[] {
+  const candidatePaths: string[] = [];
   const shouldStop = createWorkspaceStopPredicate();
-  let currentDir = startDir;
+  let currentDir = path.dirname(documentPath);
 
   while (currentDir) {
     for (const filename of CONFIG_FILE_NAMES) {
-      setupConfigWatcher(path.join(currentDir, filename), true);
+      candidatePaths.push(path.join(currentDir, filename));
     }
 
     if (shouldStop(currentDir)) {
@@ -128,6 +132,15 @@ function setupCandidateWatchers(startDir: string): void {
       break;
     }
     currentDir = parentDir;
+  }
+
+  return candidatePaths;
+}
+
+// watch every path that could become the nearest config
+function setupCandidateWatchers(documentPath: string): void {
+  for (const candidatePath of getConfigCandidatePaths(documentPath)) {
+    setupConfigWatcher(candidatePath, true);
   }
 }
 

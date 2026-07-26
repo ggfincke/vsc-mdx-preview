@@ -3,7 +3,7 @@
 
 import * as path from 'path';
 import { describe, expect, it, vi } from 'vitest';
-import type { Preview } from '../../../packages/extension-host/src/features/preview/preview-manager';
+import type { ModuleExecutionContext } from '../../../packages/extension-host/src/features/module-runtime/types/handlers';
 import {
   buildCssResult,
   createSimpleHandler,
@@ -16,7 +16,7 @@ describe('CSS reference rewriting', () => {
     const getWebviewUri = vi.fn(
       (resourcePath: string) => `webview:${resourcePath}`
     );
-    const preview = { getWebviewUri } as Preview;
+    const context = { getWebviewUri } as ModuleExecutionContext;
     const css = `
       /* url('../ignored-comment.png') */
       .label { content: "url('../ignored-string.png')"; }
@@ -32,7 +32,7 @@ describe('CSS reference rewriting', () => {
     const result = await createSimpleHandler(
       CSS_EXTENSIONS,
       buildCssResult
-    ).handle(css, fsPath, preview);
+    ).handle(css, fsPath, context);
 
     expect(result.css).toContain(
       `url('webview:${path.join('/workspace', 'images', 'hero.png')}?size=2#top')`

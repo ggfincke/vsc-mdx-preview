@@ -3,8 +3,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockReadFileAsync, mockWorkspaceReadFile } = vi.hoisted(() => ({
-  mockReadFileAsync: vi.fn(),
+const { mockReadFileRequiredAsync, mockWorkspaceReadFile } = vi.hoisted(() => ({
+  mockReadFileRequiredAsync: vi.fn(),
   mockWorkspaceReadFile: vi.fn(),
 }));
 
@@ -17,7 +17,8 @@ vi.mock('vscode', () => ({
 }));
 
 vi.mock('../../../packages/extension-host/src/shared/utils/file-utils', () => ({
-  readFileAsync: (...args: unknown[]) => mockReadFileAsync(...args),
+  readFileRequiredAsync: (...args: unknown[]) =>
+    mockReadFileRequiredAsync(...args),
 }));
 
 import { runPreviewUpdateFlow } from '../../../packages/extension-host/src/features/preview/preview-update-flow';
@@ -37,7 +38,7 @@ function createDoc(overrides: Partial<any> = {}) {
 describe('runPreviewUpdateFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockReadFileAsync.mockResolvedValue('# saved');
+    mockReadFileRequiredAsync.mockResolvedValue('# saved');
     mockWorkspaceReadFile.mockResolvedValue(
       new TextEncoder().encode('# remote')
     );
@@ -129,12 +130,25 @@ describe('runPreviewUpdateFlow', () => {
       evaluate,
     });
 
-    expect(mockReadFileAsync).toHaveBeenCalledWith(
+    expect(mockReadFileRequiredAsync).toHaveBeenCalledWith(
       '/workspace/doc.mdx',
-      'utf8',
-      expect.any(Object)
+      'utf8'
     );
     expect(evaluate).toHaveBeenCalledWith('# saved', '/workspace/doc.mdx');
+
+    const readError = new Error('disk unavailable');
+    mockReadFileRequiredAsync.mockRejectedValueOnce(readError);
+
+    await expect(
+      runPreviewUpdateFlow({
+        doc: createDoc(),
+        text: '# in-memory',
+        entryFsDirectory: '/workspace',
+        updateMode: 'onSave',
+        getDocumentTracker: () => undefined,
+        evaluate: vi.fn(),
+      })
+    ).rejects.toBe(readError);
   });
 
   it('marks rendered only after successful evaluation', async () => {

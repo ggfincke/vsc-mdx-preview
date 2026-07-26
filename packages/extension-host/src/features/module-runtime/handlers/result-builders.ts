@@ -3,8 +3,10 @@
 
 import * as path from 'path';
 import type { FetchResult } from '@mdx-preview/contracts';
-import type { Preview } from '../../preview/preview-manager';
-import type { FileTypeHandler } from './index';
+import type {
+  FileTypeHandler,
+  ModuleExecutionContext,
+} from '../types/handlers';
 
 interface CssReplacement {
   end: number;
@@ -57,7 +59,7 @@ function findCssIdentifierEnd(css: string, start: number): number {
 function rewriteCssReference(
   reference: string,
   fsPath: string,
-  preview: Preview
+  context: ModuleExecutionContext
 ): string {
   if (
     !reference ||
@@ -75,7 +77,7 @@ function rewriteCssReference(
     suffixStart === -1 ? reference : reference.slice(0, suffixStart);
   const suffix = suffixStart === -1 ? '' : reference.slice(suffixStart);
   const resolvedPath = path.resolve(path.dirname(fsPath), resourcePath);
-  const webviewUri = preview.getWebviewUri?.(resolvedPath);
+  const webviewUri = context.getWebviewUri(resolvedPath);
   return webviewUri ? `${webviewUri}${suffix}` : reference;
 }
 
@@ -177,7 +179,7 @@ function collectCssReplacements(css: string): CssReplacement[] {
 function rewriteCssReferences(
   css: string,
   fsPath: string,
-  preview: Preview
+  context: ModuleExecutionContext
 ): string {
   const replacements = collectCssReplacements(css);
   let rewritten = '';
@@ -186,7 +188,7 @@ function rewriteCssReferences(
   for (const replacement of replacements) {
     rewritten +=
       css.slice(cursor, replacement.start) +
-      rewriteCssReference(replacement.value, fsPath, preview);
+      rewriteCssReference(replacement.value, fsPath, context);
     cursor = replacement.end;
   }
 
@@ -197,11 +199,11 @@ function rewriteCssReferences(
 export function buildCssResult(
   fsPath: string,
   css: string,
-  preview?: Preview
+  context?: ModuleExecutionContext
 ): FetchResult {
   return {
     fsPath,
-    css: preview ? rewriteCssReferences(css, fsPath, preview) : css,
+    css: context ? rewriteCssReferences(css, fsPath, context) : css,
     code: '',
     dependencies: [],
   };
@@ -235,16 +237,20 @@ export function buildScriptResult(
 // create a simple handler that delegates directly to a builder function
 export function createSimpleHandler(
   extensions: readonly string[],
-  builderFn: (fsPath: string, code: string, preview: Preview) => FetchResult
+  builderFn: (
+    fsPath: string,
+    code: string,
+    context: ModuleExecutionContext
+  ) => FetchResult
 ): FileTypeHandler {
   return {
     extensions: [...extensions],
     async handle(
       code: string,
       fsPath: string,
-      preview: Preview
+      context: ModuleExecutionContext
     ): Promise<FetchResult> {
-      return builderFn(fsPath, code, preview);
+      return builderFn(fsPath, code, context);
     },
   };
 }

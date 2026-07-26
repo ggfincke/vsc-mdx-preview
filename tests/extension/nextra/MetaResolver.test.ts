@@ -157,6 +157,13 @@ describe('MetaResolver', () => {
     const resolver = MetaResolver.getInstance();
     expect(resolver.resolveNextraMeta(firstMdxPath, workspaceRoot)).toBeNull();
     expect(resolver.resolveNextraMeta(secondMdxPath, workspaceRoot)).toBeNull();
+    const trackedTargets = (resolver as any).metaWatchTargets.size;
+    const trackedDocuments = (resolver as any).documentPathsByCacheKey.size;
+    resolver.clearCaches();
+    expect((resolver as any).metaWatchTargets.size).toBe(trackedTargets);
+    expect((resolver as any).documentPathsByCacheKey.size).toBe(
+      trackedDocuments
+    );
 
     writeFile(metaPath, JSON.stringify({ page: 'Created' }));
     watchers.get(metaPath)?.create?.(vscode.Uri.file(metaPath));

@@ -134,8 +134,9 @@ describe('webview-rpc-client', () => {
     const exposedHandle = mockExpose.mock.calls[0][0] as {
       setTrustState: (state: unknown) => void;
       updatePreviewSafe: (html: string) => void;
-      setSourceLineHighlight: (enabled: boolean) => void;
-      setScrollSync: (mode: string) => void;
+      setRuntimeConfig: (config: unknown) => void;
+      adjustZoom: (delta: number) => void;
+      resetZoom: () => void;
     };
 
     exposedHandle.setTrustState({
@@ -145,25 +146,62 @@ describe('webview-rpc-client', () => {
       openMdxLinksInPreview: false,
     });
     exposedHandle.updatePreviewSafe('<p>safe</p>');
-    exposedHandle.setSourceLineHighlight(false);
-    exposedHandle.setScrollSync('previewToEditor');
+    exposedHandle.setRuntimeConfig({
+      sourceLineHighlight: true,
+      sourceLineHighlightColor: 'dependent',
+      scrollSync: 'off',
+      shimSideRail: true,
+    });
+    exposedHandle.setRuntimeConfig({
+      sourceLineHighlight: false,
+      sourceLineHighlightColor: 'white',
+      scrollSync: 'previewToEditor',
+      shimSideRail: false,
+    });
+    exposedHandle.adjustZoom(0.1);
+    exposedHandle.adjustZoom(0.1);
+    exposedHandle.resetZoom();
+    exposedHandle.adjustZoom(-0.1);
 
+    const zoomEvents: string[] = [];
     const handlers = {
       setTrustState: vi.fn(),
       setSafeContent: vi.fn(),
       setTrustedContent: vi.fn(),
       setError: vi.fn(),
       setStale: vi.fn(),
-      setSourceLineHighlight: vi.fn(),
-      setScrollSync: vi.fn(),
+      setRuntimeConfig: vi.fn(),
+      adjustZoom: vi.fn((delta: number) => {
+        zoomEvents.push(`adjust:${delta}`);
+      }),
+      resetZoom: vi.fn(() => {
+        zoomEvents.push('reset');
+      }),
     };
 
     module.registerWebviewHandlers(handlers as any);
 
     expect(handlers.setTrustState).toHaveBeenCalledTimes(1);
     expect(handlers.setSafeContent).toHaveBeenCalledWith('<p>safe</p>');
-    expect(handlers.setSourceLineHighlight).toHaveBeenCalledWith(false);
-    expect(handlers.setScrollSync).toHaveBeenCalledWith('previewToEditor');
+    expect(handlers.setRuntimeConfig).toHaveBeenCalledTimes(1);
+    expect(handlers.setRuntimeConfig).toHaveBeenCalledWith({
+      sourceLineHighlight: false,
+      sourceLineHighlightColor: 'white',
+      scrollSync: 'previewToEditor',
+      shimSideRail: false,
+    });
+    expect(handlers.setTrustState.mock.invocationCallOrder[0]).toBeLessThan(
+      handlers.setSafeContent.mock.invocationCallOrder[0]
+    );
+    expect(handlers.setSafeContent.mock.invocationCallOrder[0]).toBeLessThan(
+      handlers.setRuntimeConfig.mock.invocationCallOrder[0]
+    );
+    expect(zoomEvents).toEqual([
+      'adjust:0.1',
+      'adjust:0.1',
+      'reset',
+      'adjust:-0.1',
+    ]);
 
     handlers.setSafeContent.mockClear();
     handlers.setError.mockClear();
@@ -343,6 +381,6 @@ function createStateHandlers() {
     setTrustedContent: vi.fn(),
     setError: vi.fn(),
     setStale: vi.fn(),
-    setSourceLineHighlight: vi.fn(),
+    setRuntimeConfig: vi.fn(),
   };
 }

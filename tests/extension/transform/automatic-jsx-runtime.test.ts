@@ -2,7 +2,7 @@
 // verify JSX dependencies use the automatic runtime in every transpiler path
 
 import { describe, expect, it, vi } from 'vitest';
-import type { Preview } from '../../../packages/extension-host/src/features/preview/preview-manager';
+import type { ModuleExecutionContext } from '../../../packages/extension-host/src/features/module-runtime/types/handlers';
 import { ScriptHandler } from '../../../packages/extension-host/src/features/module-runtime/handlers/ScriptHandler';
 
 const cases = [
@@ -34,14 +34,16 @@ const cases = [
   },
 ];
 
-function createPreview(useSucrase: boolean): Preview {
+function createContext(useSucrase: boolean): ModuleExecutionContext {
   return {
-    configuration: { useSucraseTranspiler: useSucrase },
-    doc: {
-      languageId: 'javascriptreact',
-      uri: { scheme: 'file', fsPath: '/workspace/entry.mdx' },
-    },
-  } as Preview;
+    documentUri: {
+      scheme: 'file',
+      fsPath: '/workspace/entry.mdx',
+    } as ModuleExecutionContext['documentUri'],
+    entryFsDirectory: '/workspace',
+    useSucraseTranspiler: useSucrase,
+    getWebviewUri: () => undefined,
+  };
 }
 
 describe('automatic JSX runtime', () => {
@@ -51,7 +53,7 @@ describe('automatic JSX runtime', () => {
       const result = await new ScriptHandler().handle(
         code,
         fsPath,
-        createPreview(useSucrase)
+        createContext(useSucrase)
       );
 
       expect(result.dependencies).toContain('react/jsx-runtime');
@@ -96,7 +98,7 @@ describe('automatic JSX runtime', () => {
       const result = await new ScriptHandler().handle(
         'export const answer: number = 42;',
         '/workspace/value.TS',
-        createPreview(useSucrase)
+        createContext(useSucrase)
       );
 
       expect(result.code).not.toContain(': number');

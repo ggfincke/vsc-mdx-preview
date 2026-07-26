@@ -4,7 +4,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
+import {
+  LogTags,
+  SETTINGS_DEFAULTS,
+  STANDARD_CACHE_TTL_MS,
+} from '@mdx-preview/contracts';
 import { LRUCache, extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { getNodeResolver } from '../module-runtime/resolution/resolver-factory';
@@ -13,7 +17,7 @@ import {
   readFileAsync,
   readJsonSync,
 } from '../../shared/utils/file-utils';
-import { toAbsolutePath } from '../../shared/utils/path-utils';
+import { isPathWithin, toAbsolutePath } from '../../shared/utils/path-utils';
 import { findUp } from '../../shared/utils/find-up';
 import { PathCache } from '../../shared/utils/cache';
 import {
@@ -99,7 +103,7 @@ export type {
   ResolveConfigPathOptions,
   ResolveEntryCssPathOptions,
   DetectTailwindProfileOptions,
-} from '../types';
+} from './types/detector';
 
 import type {
   TailwindVersionInfo,
@@ -108,7 +112,7 @@ import type {
   ResolveConfigPathOptions,
   ResolveEntryCssPathOptions,
   DetectTailwindProfileOptions,
-} from '../types';
+} from './types/detector';
 
 export class TailwindDetector {
   // use LRUCache to prevent unbounded memory growth in large workspaces
@@ -166,7 +170,7 @@ export class TailwindDetector {
       const folders = vscode.workspace.workspaceFolders;
       if (folders) {
         for (const folder of folders) {
-          if (entryDir.startsWith(folder.uri.fsPath)) {
+          if (isPathWithin(entryDir, folder.uri.fsPath)) {
             return folder.uri.fsPath;
           }
         }
@@ -220,7 +224,11 @@ export class TailwindDetector {
   async resolveEntryCssPath(
     options: ResolveEntryCssPathOptions
   ): Promise<string | null> {
-    const { workspaceRoot, entryDir, maxCssFilesToSearch = 500 } = options;
+    const {
+      workspaceRoot,
+      entryDir,
+      maxCssFilesToSearch = SETTINGS_DEFAULTS['tailwind.maxCssFilesToSearch'],
+    } = options;
 
     if (!workspaceRoot) {
       return null;
@@ -302,7 +310,7 @@ export class TailwindDetector {
       entryDir,
       configOverride,
       configDir,
-      maxCssFilesToSearch = 500,
+      maxCssFilesToSearch = SETTINGS_DEFAULTS['tailwind.maxCssFilesToSearch'],
       mdxText,
     } = options;
 
@@ -543,10 +551,16 @@ export class TailwindDetector {
     }
   }
 
-  dispose(): void {
-    this.configCache.dispose();
-    this.entryCssCache.dispose();
+  clearCaches(): void {
+    this.configCache.clear();
+    this.entryCssCache.clear();
     this.entryCssInspectionCache.clear();
     this.versionCache.clear();
+  }
+
+  dispose(): void {
+    this.clearCaches();
+    this.configCache.dispose();
+    this.entryCssCache.dispose();
   }
 }

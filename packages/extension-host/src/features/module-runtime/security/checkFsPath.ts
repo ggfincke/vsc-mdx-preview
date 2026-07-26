@@ -12,8 +12,8 @@ export { PathAccessDeniedError } from '../../../shared/errors';
 
 // use shared path utilities
 import {
-  isPathInside,
-  isPathInsideAsync,
+  isPathWithin,
+  isPathWithinAsync,
   resolveRealPath,
   normalizePathForComparison,
 } from '../../../shared/utils/path-utils';
@@ -74,11 +74,11 @@ async function getRootDirectoryPathAsync(
     const effectiveFolderPath =
       realFolderPath || path.normalize(folder.uri.fsPath);
 
-    // use sync isPathInside if paths don't exist (for unit tests)
+    // use sync containment if paths don't exist (for unit tests)
     const isInside =
       realFolderPath && realEntryDir
-        ? await isPathInsideAsync(effectiveEntryDir, effectiveFolderPath)
-        : isPathInside(effectiveEntryDir, effectiveFolderPath);
+        ? await isPathWithinAsync(effectiveEntryDir, effectiveFolderPath, false)
+        : isPathWithin(effectiveEntryDir, effectiveFolderPath, false);
 
     if (isInside) {
       matchingFolders.push(effectiveFolderPath);
@@ -118,15 +118,10 @@ export async function checkFsPathAsync(
   if (!realFsPath) {
     // file doesn't exist yet - use normalized path for check
     // handle the case of checking a path before it's created
-    const normalized = normalizePathForComparison(path.normalize(fsPath));
-    const normalizedRoot = normalizePathForComparison(rootDirectory);
-    const relative = path.relative(normalizedRoot, normalized);
-    return (
-      !!relative && !relative.startsWith('..') && !path.isAbsolute(relative)
-    );
+    return isPathWithin(fsPath, rootDirectory, false);
   }
 
-  return isPathInsideAsync(realFsPath, rootDirectory);
+  return isPathWithinAsync(realFsPath, rootDirectory, false);
 }
 
 // clear all path security caches (for testing & disposal)

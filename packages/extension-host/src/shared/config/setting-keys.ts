@@ -1,11 +1,11 @@
 // packages/extension-host/src/shared/config/setting-keys.ts
-// setting key constants & types, extracted to avoid circular deps w/ logger
+// canonical extension setting keys & value types
 
-import { SecurityPolicy } from '../../features/security/SecurityPolicy';
 import {
   type FrameworkSetting,
   type MermaidIconPackSetting,
   type PreviewScrollSyncValue,
+  type SecurityPolicyValue,
   type SourceLineHighlightColorValue,
   type TailwindEnabledValue,
   type UnknownBehaviorValue,
@@ -23,7 +23,7 @@ export interface SettingTypes {
   'preview.debounceDelay': number;
   'preview.enableScripts': boolean;
   'preview.openMdxLinksInPreview': boolean;
-  'preview.security': SecurityPolicy;
+  'preview.security': SecurityPolicyValue;
   'preview.useVscodeMarkdownStyles': boolean;
   'preview.useWhiteBackground': boolean;
   'preview.customCss': string;
@@ -55,8 +55,8 @@ export interface SettingTypes {
 
 const DEFAULT_SECURITY_POLICY =
   (SETTINGS_DEFAULTS['preview.security'] as string) === 'disabled'
-    ? SecurityPolicy.Disabled
-    : SecurityPolicy.Strict;
+    ? 'disabled'
+    : 'strict';
 
 // default values for all settings
 export const DEFAULTS: SettingTypes = {

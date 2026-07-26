@@ -76,6 +76,7 @@ function flushAfterTrustState(message: PendingMessage): void {
 
 const {
   createQueuedHandler,
+  createOptionalHandler,
   buildSimpleQueuedHandlers,
   buildOptionalHandlers,
 } = createHandlerFactories(
@@ -115,15 +116,25 @@ const simpleQueuedHandlers = buildSimpleQueuedHandlers(
 
 // optional handlers (all follow the same name-as-key pattern)
 const optionalHandlers = buildOptionalHandlers(
-  [
-    'setTheme',
-    'setNextraMeta',
-    'setSourceLineHighlight',
-    'setSourceLineHighlightColor',
-    'setScrollSync',
-    'setShimSideRail',
-    'setZoom',
-  ],
+  ['setTheme', 'setNextraMeta', 'setRuntimeConfig'],
+  log
+);
+
+const adjustZoom = createOptionalHandler<[number]>(
+  {
+    methodName: 'adjustZoom',
+    handlerKey: 'adjustZoom',
+    queueMode: 'all',
+  },
+  log
+);
+
+const resetZoom = createOptionalHandler<[]>(
+  {
+    methodName: 'resetZoom',
+    handlerKey: 'resetZoom',
+    queueMode: 'all',
+  },
   log
 );
 
@@ -174,11 +185,9 @@ class RPCWebviewHandle implements WebviewRPC {
   // optional handlers
   setTheme = optionalHandlers.setTheme;
   setNextraMeta = optionalHandlers.setNextraMeta;
-  setSourceLineHighlight = optionalHandlers.setSourceLineHighlight;
-  setSourceLineHighlightColor = optionalHandlers.setSourceLineHighlightColor;
-  setScrollSync = optionalHandlers.setScrollSync;
-  setShimSideRail = optionalHandlers.setShimSideRail;
-  setZoom = optionalHandlers.setZoom;
+  setRuntimeConfig = optionalHandlers.setRuntimeConfig;
+  adjustZoom = adjustZoom;
+  resetZoom = resetZoom;
 
   // direct handlers (execute immediately, no queuing)
   setCustomCss(css: string): void {

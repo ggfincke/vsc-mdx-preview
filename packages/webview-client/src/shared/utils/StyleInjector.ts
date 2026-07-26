@@ -15,6 +15,7 @@ export const STYLE_IDS = {
   PREVIEW_THEME: 'mpe-preview-theme',
   CODE_BLOCK_THEME: 'mpe-code-block-theme',
   CUSTOM_CSS: 'mdx-preview-custom-css',
+  SAFE_MODE: 'mdx-safe-mode-styles',
   TAILWIND_CSS: 'mdx-preview-tailwind-css',
   TAILWIND_BROWSER_INPUT_CSS: 'mdx-preview-tailwind-browser-input-css',
 } as const;

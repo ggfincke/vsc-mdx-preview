@@ -6,7 +6,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { Semaphore, extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { TAILWIND_FILE_READ_LIMIT } from './constants';
-import { readFileAsync } from '../../shared/utils/file-utils';
+import { readFileRequiredAsync } from '../../shared/utils/file-utils';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
 const readSemaphore = new Semaphore(TAILWIND_FILE_READ_LIMIT);
@@ -56,22 +56,7 @@ export class FileScanValidator {
         return null;
       }
 
-      let readError: unknown;
-      const content = await readFileAsync(fsPath, 'utf-8', {
-        onError: (error) => {
-          readError = error;
-        },
-      });
-
-      if (content === null) {
-        const reason =
-          readError !== undefined
-            ? extractErrorMessage(readError)
-            : 'Unknown read error';
-        log.debug(`Skipping unreadable file: ${fsPath} (${reason})`);
-      }
-
-      return content;
+      return await readFileRequiredAsync(fsPath, 'utf-8');
     } catch (err) {
       log.debug(
         `Skipping unreadable file: ${fsPath} (${extractErrorMessage(err)})`

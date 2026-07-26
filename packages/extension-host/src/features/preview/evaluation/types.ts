@@ -5,8 +5,8 @@ import type { TrustState } from '@mdx-preview/contracts';
 import type {
   CompilerConfig,
   EffectivePreviewConfig,
-  TailwindProfileDetectionResult,
-} from '../../types';
+} from '../../../shared/config/types';
+import type { TailwindProfileDetectionResult } from '../../tailwind/types/detector';
 import type {
   EvaluationEngine,
   SafeEvaluationResult,

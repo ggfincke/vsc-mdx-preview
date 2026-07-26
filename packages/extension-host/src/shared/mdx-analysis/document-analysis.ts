@@ -1,5 +1,5 @@
-// packages/extension-host/src/features/language/mdx-document-analysis.ts
-// shared MDX document parsing & analysis (frontmatter, AST, offsets)
+// packages/extension-host/src/shared/mdx-analysis/document-analysis.ts
+// parse MDX documents & map AST positions to document coordinates
 
 import * as vscode from 'vscode';
 import { unified } from 'unified';
@@ -7,7 +7,7 @@ import remarkParse from 'remark-parse';
 import remarkMdx from 'remark-mdx';
 import { extractFrontmatter } from 'mdx-forge/compiler';
 import type { Root } from 'mdast';
-import type { MdastPosition } from '../diagnostics/types';
+import type { MdastPosition } from './types';
 
 // reusable parser instance (stateless, safe to share across calls)
 const mdxParser = unified().use(remarkParse).use(remarkMdx);

@@ -270,6 +270,12 @@ export class MetaResolver extends SingletonService<MetaResolver> {
     }
   }
 
+  // clear resolved metadata while preserving armed watcher tracking
+  clearCaches(): void {
+    this.metaCache.clear();
+    log.debug('Caches cleared');
+  }
+
   // clean up all file watchers & caches on dispose
   protected override onDispose(): void {
     this.metaCache.dispose();

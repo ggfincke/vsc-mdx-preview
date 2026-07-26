@@ -6,7 +6,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { TailwindError } from '../../shared/errors';
 import { MAX_INLINE_SOURCE_CHUNK_SIZE } from './constants';
 import { loadModuleWithEsmFallback } from '../../shared/utils/lazy-import';
-import { readFileAsync } from '../../shared/utils/file-utils';
+import { readFileRequiredAsync } from '../../shared/utils/file-utils';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
 
@@ -16,6 +16,11 @@ type PostCSSFn = typeof import('postcss').default;
 
 // module-level cache for lazy-loaded PostCSS function
 let postcssInstance: PostCSSFn | null = null;
+
+// clear the lazy PostCSS module
+export function clearPostCSSCache(): void {
+  postcssInstance = null;
+}
 
 // lazy-load postcss only when Tailwind compilation is needed
 // follows the same CJS/ESM fallback pattern as Tailwind plugin loading
@@ -76,23 +81,7 @@ export class TailwindCompiler {
 
   private async loadInputCss(options: TailwindCompileOptions): Promise<string> {
     if (options.entryCssPath) {
-      let readError: unknown;
-      const entryCss = await readFileAsync(options.entryCssPath, 'utf-8', {
-        onError: (error) => {
-          readError = error;
-        },
-      });
-
-      if (entryCss === null) {
-        throw readError instanceof Error
-          ? readError
-          : new TailwindError(
-              `Failed to read Tailwind CSS entry file: ${options.entryCssPath}`,
-              'E562',
-              'config'
-            );
-      }
-      return entryCss;
+      return readFileRequiredAsync(options.entryCssPath, 'utf-8');
     }
 
     // v4: skip preflight to avoid overriding markdown styles in previews

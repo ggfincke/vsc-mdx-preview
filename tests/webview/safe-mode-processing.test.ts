@@ -7,8 +7,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSafeModeProcessing } from '../../packages/webview-client/src/features/preview/safe/hooks/useSafeModeProcessing';
+import { STYLE_IDS } from '../../packages/webview-client/src/shared/utils/StyleInjector';
 
-const SAFE_MODE_STYLE_ID = 'mdx-safe-mode-styles';
+const SAFE_MODE_STYLE_ID = STYLE_IDS.SAFE_MODE;
 
 interface HarnessProps {
   html: string;
@@ -74,13 +75,30 @@ describe('useSafeModeProcessing', () => {
       .forEach((node) => node.remove());
   });
 
-  it('injects sanitized HTML into container', async () => {
+  it('injects sanitized HTML & reuses the Safe Mode style', async () => {
     const { host, rerender, unmount } = createMount();
 
     await rerender('<h1>Hello</h1><p>World</p>');
 
     expect(host.querySelector('h1')?.textContent).toBe('Hello');
     expect(host.querySelector('p')?.textContent).toBe('World');
+    expect(SAFE_MODE_STYLE_ID).toBe('mdx-safe-mode-styles');
+
+    const safeModeStyle = document.getElementById(SAFE_MODE_STYLE_ID);
+    const safeModeCss = safeModeStyle?.textContent;
+    expect(safeModeStyle).toBeInstanceOf(HTMLStyleElement);
+    expect(safeModeCss).toContain('.mdx-jsx-placeholder,');
+    expect(safeModeCss).toContain('.mdx-expression-placeholder');
+    expect(safeModeCss).toContain('.mdx-safe-preview');
+
+    if (safeModeStyle) {
+      safeModeStyle.textContent = 'stale';
+    }
+    await rerender('<h2>Updated</h2>');
+
+    expect(document.getElementById(SAFE_MODE_STYLE_ID)).toBe(safeModeStyle);
+    expect(safeModeStyle?.textContent).toBe(safeModeCss);
+    expect(document.querySelectorAll(`#${SAFE_MODE_STYLE_ID}`)).toHaveLength(1);
 
     await unmount();
   });

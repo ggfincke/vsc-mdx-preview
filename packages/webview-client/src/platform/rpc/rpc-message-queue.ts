@@ -3,7 +3,6 @@
 
 import type { TaggedLogger, TrustState } from '@mdx-preview/contracts';
 import type {
-  OptionalStateHandlers,
   PendingMessage,
   PendingOptionalMessage,
   QueuedMessageType,
@@ -53,10 +52,7 @@ export function createRpcMessageQueue(
 ): RpcMessageQueue {
   const pendingMessages = new Map<QueuedMessageType, PendingMessage>();
   let pendingPreviewOutcome: PendingPreviewOutcome | null = null;
-  const pendingOptionalMessages = new Map<
-    keyof OptionalStateHandlers,
-    PendingOptionalMessage
-  >();
+  let pendingOptionalMessages: PendingOptionalMessage[] = [];
   let fallbackTrustState: TrustState | null = null;
 
   function getCurrentTrustState(): TrustState | null {
@@ -88,13 +84,21 @@ export function createRpcMessageQueue(
   }
 
   function enqueueOptional(message: PendingOptionalMessage): void {
-    const hadPrevious = pendingOptionalMessages.has(message.handlerKey);
+    const previousCount = pendingOptionalMessages.length;
+    if (message.queueMode === 'latest') {
+      pendingOptionalMessages = pendingOptionalMessages.filter(
+        (pending) => pending.handlerKey !== message.handlerKey
+      );
+    }
+    const hadPrevious =
+      message.queueMode === 'latest' &&
+      pendingOptionalMessages.length !== previousCount;
     options.log.debug(
       `Enqueueing optional message: ${String(message.handlerKey)}${
         hadPrevious ? ' (replacing previous)' : ''
       }`
     );
-    pendingOptionalMessages.set(message.handlerKey, message);
+    pendingOptionalMessages.push(message);
   }
 
   function flushQueued(handlers: WebviewStateHandlers): void {
@@ -139,17 +143,17 @@ export function createRpcMessageQueue(
 
   function flushOptional(handlers: WebviewStateHandlers): void {
     options.log.debug(
-      `flushPendingOptionalMessages: ${pendingOptionalMessages.size} pending`
+      `flushPendingOptionalMessages: ${pendingOptionalMessages.length} pending`
     );
-    if (pendingOptionalMessages.size === 0) {
+    if (pendingOptionalMessages.length === 0) {
       return;
     }
 
-    const messages = new Map(pendingOptionalMessages);
-    pendingOptionalMessages.clear();
+    const messages = pendingOptionalMessages;
+    pendingOptionalMessages = [];
 
-    for (const [handlerKey, message] of messages) {
-      const handler = handlers[handlerKey];
+    for (const message of messages) {
+      const handler = handlers[message.handlerKey];
       if (typeof handler !== 'function') {
         continue;
       }
@@ -194,7 +198,7 @@ export function createRpcMessageQueue(
   function pendingCounts(): { queued: number; optional: number } {
     return {
       queued: pendingMessages.size + (pendingPreviewOutcome === null ? 0 : 1),
-      optional: pendingOptionalMessages.size,
+      optional: pendingOptionalMessages.length,
     };
   }
 

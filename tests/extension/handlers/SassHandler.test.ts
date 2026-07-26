@@ -2,7 +2,7 @@
 // focused tests for SASS handler critical behavior
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Preview } from '../../../packages/extension-host/src/features/preview/preview-manager';
+import type { ModuleExecutionContext } from '../../../packages/extension-host/src/features/module-runtime/types/handlers';
 
 const { mockGet, mockClear } = vi.hoisted(() => ({
   mockGet: vi.fn(),
@@ -34,10 +34,13 @@ import {
   clearSassCache,
 } from '../../../packages/extension-host/src/features/module-runtime/handlers/SassHandler';
 
-function createMockPreview(entryFsDirectory: string): Preview {
+function createContext(entryFsDirectory: string): ModuleExecutionContext {
   return {
     entryFsDirectory,
-  } as Preview;
+    documentUri: {} as ModuleExecutionContext['documentUri'],
+    useSucraseTranspiler: false,
+    getWebviewUri: () => undefined,
+  };
 }
 
 describe('SassHandler', () => {
@@ -58,7 +61,7 @@ describe('SassHandler', () => {
     const result = await handler.handle(
       '',
       '/tmp/styles/main.scss',
-      createMockPreview('')
+      createContext('')
     );
 
     expect(result.css).toContain('SCSS/Sass Support Not Available');
@@ -76,7 +79,7 @@ describe('SassHandler', () => {
     const result = await handler.handle(
       '',
       fsPath,
-      createMockPreview('/workspace')
+      createContext('/workspace')
     );
 
     expect(compileAsync).toHaveBeenCalledTimes(1);
@@ -100,7 +103,7 @@ describe('SassHandler', () => {
     const result = await handler.handle(
       '',
       '/workspace/styles/main.scss',
-      createMockPreview('/workspace')
+      createContext('/workspace')
     );
 
     expect(result.css).toContain('SCSS Compilation Error');
@@ -108,5 +111,4 @@ describe('SassHandler', () => {
     expect(result.css).toContain('main.scss');
     expect(result.code).toBe('');
   });
-
 });

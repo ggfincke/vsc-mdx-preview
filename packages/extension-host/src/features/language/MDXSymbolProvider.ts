@@ -9,9 +9,12 @@ import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import {
   analyzeMdxDocument,
   astPositionToRange,
-} from './mdx-document-analysis';
-import { describeEsmStatement } from './esm-imports';
-import type { MdastPosition, MdxjsEsmNode } from '../diagnostics/types';
+} from '../../shared/mdx-analysis/document-analysis';
+import { describeEsmStatement } from '../../shared/mdx-analysis/esm-imports';
+import type {
+  MdastPosition,
+  MdxjsEsmNode,
+} from '../../shared/mdx-analysis/types';
 
 const log = createTaggedLogger(LogTags.SYMBOL_PROVIDER);
 
