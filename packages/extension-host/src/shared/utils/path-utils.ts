@@ -88,10 +88,22 @@ export function resolvePathWithFallbacks(
   return null;
 }
 
-// check if a child path is inside a parent path (security utility)
-export function isPathInside(childPath: string, parentPath: string): boolean {
-  const relative = path.relative(parentPath, childPath);
-  return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+// check if a path is a parent boundary or descendant
+export function isPathWithin(
+  targetPath: string,
+  parentPath: string,
+  allowEqual = true
+): boolean {
+  const normalizedTarget = normalizePathForComparison(targetPath);
+  const normalizedParent = normalizePathForComparison(parentPath);
+  const relative = path.relative(normalizedParent, normalizedTarget);
+  return (
+    (allowEqual && relative === '') ||
+    (relative !== '..' &&
+      !relative.startsWith(`..${path.sep}`) &&
+      relative !== '' &&
+      !path.isAbsolute(relative))
+  );
 }
 
 // resolve real path w/ symlink resolution (async)
@@ -113,24 +125,24 @@ export function normalizePathForComparison(filePath: string): string {
   return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
 }
 
-// async version of isPathInside w/ symlink resolution & case normalization
+// resolve symlinks before checking the canonical containment predicate
 // ! use this for security-critical path checks
-export async function isPathInsideAsync(
-  childPath: string,
-  parentPath: string
+export async function isPathWithinAsync(
+  targetPath: string,
+  parentPath: string,
+  allowEqual = true
 ): Promise<boolean> {
   // resolve symlinks for both paths
-  const realChild = await resolveRealPath(childPath);
+  const realTarget = await resolveRealPath(targetPath);
   const realParent = await resolveRealPath(parentPath);
 
-  if (!realChild || !realParent) {
+  if (!realTarget || !realParent) {
     return false;
   }
 
   // normalize for case-insensitive filesystems (Windows)
-  const normChild = normalizePathForComparison(realChild);
+  const normTarget = normalizePathForComparison(realTarget);
   const normParent = normalizePathForComparison(realParent);
 
-  const relative = path.relative(normParent, normChild);
-  return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+  return isPathWithin(normTarget, normParent, allowEqual);
 }

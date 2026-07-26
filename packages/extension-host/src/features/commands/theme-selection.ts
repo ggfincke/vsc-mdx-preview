@@ -19,11 +19,11 @@ import {
   type PreviewTheme,
   type CodeBlockTheme,
   type MermaidTheme,
-} from '../themes';
+} from '../themes/types';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import type { SettingKey } from '../../shared/config/ConfigManager';
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from '../types';
+import type { CommandDefinition } from './types';
 
 const log = createTaggedLogger(LogTags.THEME);
 

@@ -6,12 +6,17 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { FrameworkDetector } from '../../../packages/extension-host/src/features/framework/FrameworkDetector';
-import { Uri } from 'vscode';
-import { mockConfigManager } from '../../helpers/mock-services';
+import * as vscode from 'vscode';
+import {
+  mockConfigManager,
+  mockPreviewManager,
+} from '../../helpers/mock-services';
 
 const tempDirs: string[] = [];
 
 afterEach(() => {
+  vscode.workspace.workspaceFolders = [];
+  (vscode.window as any).activeTextEditor = undefined;
   while (tempDirs.length > 0) {
     const dir = tempDirs.pop();
     if (dir) {
@@ -100,7 +105,9 @@ describe('FrameworkDetector', () => {
     mockConfigManager.get.mockReturnValue('starlight');
 
     const detector = FrameworkDetector.getInstance();
-    const result = detector.getFramework(Uri.file('/workspace/docs.mdx'));
+    const result = detector.getFramework(
+      vscode.Uri.file('/workspace/docs.mdx')
+    );
 
     expect(result.framework).toBe('starlight');
     expect(result.detected).toBe(false);
@@ -108,6 +115,63 @@ describe('FrameworkDetector', () => {
     // facade delegates to canonical metadata (FW-THIN-DELEGATION)
     expect(detector.getFrameworkDisplayName('starlight')).toBe('Starlight');
     expect(detector.getFrameworkDisplayName('docusaurus')).toBe('Docusaurus');
-  });
 
+    detector.dispose();
+    mockConfigManager.get.mockReturnValue('auto');
+    let onFrameworkSettingChange: (() => void) | undefined;
+    mockConfigManager.onDidChangeKey.mockImplementation((_key, callback) => {
+      onFrameworkSettingChange = callback;
+      return { dispose: vi.fn() };
+    });
+    const workspaceRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-fw-')
+    );
+    tempDirs.push(workspaceRoot);
+    const packagePath = path.join(workspaceRoot, 'package.json');
+    fs.writeFileSync(packagePath, '{"dependencies":{}}', 'utf-8');
+    const docUri = vscode.Uri.file(path.join(workspaceRoot, 'page.mdx'));
+    vscode.workspace.workspaceFolders = [
+      { uri: vscode.Uri.file(workspaceRoot) },
+    ];
+    (vscode.window as any).activeTextEditor = {
+      document: { uri: docUri },
+    };
+    let onPackageChange: ((uri: vscode.Uri) => void) | undefined;
+    vi.spyOn(vscode.workspace, 'createFileSystemWatcher').mockReturnValue({
+      onDidChange: (callback) => {
+        onPackageChange = callback;
+        return { dispose: vi.fn() };
+      },
+      onDidCreate: vi.fn(() => ({ dispose: vi.fn() })),
+      onDidDelete: vi.fn(() => ({ dispose: vi.fn() })),
+      dispose: vi.fn(),
+    } as never);
+    const packageDetector = FrameworkDetector.getInstance();
+    const subscriber = vi.fn();
+    packageDetector.subscribe(subscriber);
+
+    expect(packageDetector.getFramework(docUri).framework).toBe('generic');
+    fs.writeFileSync(
+      packagePath,
+      JSON.stringify({ dependencies: { nextra: '^4.0.0' } }),
+      'utf-8'
+    );
+    onPackageChange?.(vscode.Uri.file(packagePath));
+
+    expect(subscriber).toHaveBeenCalledTimes(1);
+    expect(packageDetector.getFramework(docUri).framework).toBe('nextra');
+
+    (vscode.window as any).activeTextEditor = undefined;
+    mockPreviewManager.getCurrentPreview.mockReturnValue({
+      doc: { uri: docUri },
+    });
+    mockConfigManager.get.mockReturnValue('starlight');
+    onFrameworkSettingChange?.();
+
+    expect(subscriber).toHaveBeenCalledTimes(2);
+    expect(subscriber).toHaveBeenLastCalledWith({
+      framework: 'starlight',
+      detected: false,
+    });
+  });
 });

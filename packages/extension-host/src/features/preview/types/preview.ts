@@ -2,12 +2,6 @@
 // type definitions for preview system
 
 import type * as vscode from 'vscode';
-import type {
-  TailwindEnabledValue,
-  UpdateModeValue,
-} from '@mdx-preview/contracts';
-import type { SecurityPolicy } from '../../security/types/csp';
-import type { PreviewRuntimeConfig } from '../../../shared/config/types';
 
 // webview app URIs (loaded from Vite manifest)
 export interface WebviewAppUris {
@@ -22,20 +16,6 @@ export interface StyleConfiguration {
   useWhiteBackground: boolean;
 }
 
-// complete preview configuration state
-export interface ConfigurationState extends PreviewRuntimeConfig {
-  updateMode: UpdateModeValue;
-  debounceDelay: number;
-  useVscodeMarkdownStyles: boolean;
-  useWhiteBackground: boolean;
-  customLayoutFilePath: string;
-  customCss: string;
-  plantUmlServer: string;
-  useSucraseTranspiler: boolean;
-  securityPolicy: SecurityPolicy;
-  tailwindEnabled: TailwindEnabledValue;
-}
-
 // result of configuration change detection
 export interface ConfigChangeResult {
   needsWebviewRefresh: boolean;
@@ -43,14 +23,3 @@ export interface ConfigChangeResult {
   needsCssWatcherUpdate: boolean;
   scrollSyncChanged: boolean;
 }
-
-// re-export canonical preview state types from runtime modules
-export type { HandshakeResult } from '../PreviewInitializer';
-export type {
-  TrustedEvaluationResult,
-  SafeEvaluationResult,
-  TailwindProcessParams,
-} from '../EvaluationEngine';
-
-// webview handle type re-exported for convenience
-export type { WebviewHandleType as WebviewHandle } from '../../../platform/rpc/extension-endpoint';

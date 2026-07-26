@@ -27,7 +27,7 @@ export const DEFAULT_SOURCE_LINE_HIGHLIGHT_COLOR = 'dependent' as const;
 export const DEFAULT_PREVIEW_SCROLL_SYNC = 'off' as const;
 export const DEFAULT_SHIM_SIDE_RAIL = true;
 export const DEFAULT_DIAGRAMS_PLANTUML_SERVER = DEFAULT_PLANTUML_SERVER;
-export const DEFAULT_DIAGRAMS_MERMAID_ICON_PACKS: MermaidIconPackSetting[] = [];
+const DEFAULT_DIAGRAMS_MERMAID_ICON_PACKS: MermaidIconPackSetting[] = [];
 
 // build defaults
 export const DEFAULT_USE_SUCRASE_TRANSPILER = false;
@@ -51,7 +51,7 @@ export const DEFAULT_COMPONENTS_UNKNOWN_BEHAVIOR = 'placeholder' as const;
 
 // advanced defaults
 export const DEFAULT_WATCHER_DEBOUNCE_MS = STANDARD_WATCHER_DEBOUNCE_MS;
-export const DEFAULT_DEBUG_OUTPUT = false;
+const DEFAULT_DEBUG_OUTPUT = false;
 
 // default map for all settings (keys match ConfigManager SettingKey)
 export const SETTINGS_DEFAULTS = {

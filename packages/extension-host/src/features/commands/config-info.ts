@@ -13,11 +13,14 @@ import {
   getErrorReporter,
 } from '../../app/services';
 import { resolveConfig } from '../preview/configuration/ConfigResolver';
-import { buildEffectivePreviewConfig } from '../../shared/config/EffectivePreviewConfig';
-import type { ResolvedConfig, EffectivePreviewConfig } from '../types';
+import { buildEffectivePreviewConfig } from '../preview/configuration/EffectivePreviewConfig';
+import type {
+  EffectivePreviewConfig,
+  ResolvedConfig,
+} from '../../shared/config/types';
 import { extractFrontmatter } from 'mdx-forge/compiler';
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from '../types';
+import type { CommandDefinition } from './types';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import type { SettingKey } from '../../shared/config/ConfigManager';
 

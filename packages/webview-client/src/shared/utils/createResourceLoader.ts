@@ -60,22 +60,10 @@ export function createResourceLoader(
     return loader.load();
   }
 
-  function isLoaded(): boolean {
-    return loader.isLoaded();
-  }
-
-  function isLoading(): boolean {
-    return loader.isLoading();
-  }
-
-  function reset(): void {
-    loader.reset();
-  }
-
   return {
     load,
-    isLoaded,
-    isLoading,
-    reset,
+    isLoaded: loader.isLoaded,
+    isLoading: loader.isLoading,
+    reset: loader.reset,
   };
 }

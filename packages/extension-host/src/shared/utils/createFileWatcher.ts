@@ -3,6 +3,7 @@
 // debouncing owned by BaseWatcher.createDebouncedHandler()
 
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { createTaggedLogger } from '../logging/logger';
 import { type LogTag, LogTags } from '@mdx-preview/contracts';
 
@@ -26,6 +27,28 @@ export interface FileWatcherConfig {
   enableEventLogging?: boolean;
   // use log tag for debug logging (e.g., LogTags.TS_CONFIG, LogTags.CSS)
   logTag?: LogTag;
+}
+
+// build an exact-file RelativePattern w/o treating path text as glob syntax
+export function createExactFileWatcherPattern(
+  filePath: string
+): vscode.RelativePattern {
+  const absolutePath = path.resolve(filePath);
+  const basenamePattern = path
+    .basename(absolutePath)
+    .replace(/[[\]{}*?]/g, (character) => {
+      if (character === '[') {
+        return '[[]';
+      }
+      if (character === ']') {
+        return '[]]';
+      }
+      return `[${character}]`;
+    });
+  return new vscode.RelativePattern(
+    vscode.Uri.file(path.dirname(absolutePath)),
+    basenamePattern
+  );
 }
 
 // create a VS Code file system watcher w/ standard error handling

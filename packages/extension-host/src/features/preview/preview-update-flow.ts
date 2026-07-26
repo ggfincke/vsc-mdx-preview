@@ -4,14 +4,14 @@
 import * as vscode from 'vscode';
 import { TextDecoder } from 'util';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { readFileAsync } from '../../shared/utils/file-utils';
+import { readFileRequiredAsync } from '../../shared/utils/file-utils';
 import { LogTags, type UpdateModeValue } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.PREVIEW);
 
 interface RenderedVersionTracker {
-  hasRenderedVersion(version: number): boolean;
-  markRendered(version: number): void;
+  hasRenderedVersion(documentUri: string, version: number): boolean;
+  markRendered(documentUri: string, version: number): void;
 }
 
 export interface PreviewUpdateFlowInput {
@@ -45,9 +45,10 @@ export async function runPreviewUpdateFlow(
   log.debug(`updateWebview scheme=${scheme}, fsPath=${fsPath}`);
 
   const currentVersion = doc.version;
+  const documentUri = uri.toString();
   const docTracker = getDocumentTracker();
 
-  if (!force && docTracker?.hasRenderedVersion(currentVersion)) {
+  if (!force && docTracker?.hasRenderedVersion(documentUri, currentVersion)) {
     log.debug('Skipping update - same version');
     return;
   }
@@ -65,19 +66,7 @@ export async function runPreviewUpdateFlow(
         break;
       }
 
-      let readError: unknown;
-      const savedText = await readFileAsync(fsPath, 'utf8', {
-        onError: (error) => {
-          readError = error;
-        },
-      });
-
-      if (savedText === null) {
-        throw readError instanceof Error
-          ? readError
-          : new Error(`Failed to read file: ${fsPath}`);
-      }
-
+      const savedText = await readFileRequiredAsync(fsPath, 'utf8');
       await evaluate(savedText, fsPath);
       break;
     }
@@ -104,5 +93,5 @@ export async function runPreviewUpdateFlow(
     return;
   }
 
-  docTracker?.markRendered(currentVersion);
+  docTracker?.markRendered(documentUri, currentVersion);
 }

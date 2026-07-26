@@ -3,25 +3,33 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { Preview } from '../../preview/preview-manager';
+import * as vscode from 'vscode';
+import type { Preview } from '../../preview/preview-manager';
 import { checkFsPathAsync } from '../security/checkFsPath';
 import {
   PathAccessDeniedError,
   ErrorContext,
   createModuleNotFoundError,
 } from '../../../shared/errors';
-import { getErrorReporter, getFrameworkDetector } from '../../../app/services';
+import { getErrorReporter } from '../../../app/services';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { type FetchResult, LogTags } from '@mdx-preview/contracts';
+import {
+  type FetchResult,
+  LogTags,
+  type ModuleDependencyKind,
+} from '@mdx-preview/contracts';
 import {
   MAX_MODULE_FILE_SIZE_BYTES,
   MAX_DEPENDENCIES_PER_MODULE,
   MODULE_FETCH_TIMEOUT_MS,
+  IMAGE_EXTENSIONS,
 } from '../../../shared/constants';
 
 // import from extracted modules
 import { getUnifiedResolver } from '../resolution/UnifiedResolver';
-import type { ResolutionContext } from '../../types';
+import { isIgnoredResolution } from '../resolution/resolution-builders';
+import { buildResolutionContext } from '../resolution/resolution-context';
+import type { ModuleExecutionContext } from '../types/handlers';
 import {
   normalizeNodePrefix,
   isCoreModule,
@@ -29,8 +37,11 @@ import {
   NOOP_MODULE,
 } from './utils';
 import { handleByExtension, getScriptHandler } from '../handlers';
-import { readFileAsync } from '../../../shared/utils/file-utils';
-import { normalizePathSeparators } from '../../../shared/utils/path-utils';
+import { raceTimeout } from '../../../shared/utils/async-utils';
+import {
+  normalizePathForComparison,
+  normalizePathSeparators,
+} from '../../../shared/utils/path-utils';
 
 // module-level tagged logger for module fetcher
 const log = createTaggedLogger(LogTags.MODULE_SYSTEM);
@@ -55,29 +66,87 @@ const BINARY_SIGNATURES: readonly number[][] = [
   [0x00, 0x00, 0x00],
 ];
 
-// check if a file is binary by reading magic bytes
-async function isBinaryFile(filePath: string): Promise<boolean> {
-  let fd: fs.promises.FileHandle | null = null;
-  try {
-    fd = await fs.promises.open(filePath, 'r');
-    const buffer = Buffer.alloc(8);
-    await fd.read(buffer, 0, 8, 0);
-    return BINARY_SIGNATURES.some((sig) =>
-      sig.every((byte, i) => buffer[i] === byte)
-    );
-  } catch {
-    // if we can't read the file, assume it's not binary
-    return false;
-  } finally {
-    await fd?.close();
+// sniff binary signatures from the buffer used for source decoding
+function isBinaryBuffer(buffer: Buffer): boolean {
+  return BINARY_SIGNATURES.some((signature) =>
+    signature.every((byte, index) => buffer[index] === byte)
+  );
+}
+
+// reject source buffers before allocation crosses the module limit
+function enforceModuleSize(fsPath: string, size: number): void {
+  if (size <= MAX_MODULE_FILE_SIZE_BYTES) {
+    return;
   }
+
+  const sizeMB = (size / 1024 / 1024).toFixed(2);
+  const limitMB = (MAX_MODULE_FILE_SIZE_BYTES / 1024 / 1024).toFixed(0);
+  throw new Error(
+    `Module "${path.basename(fsPath)}" is ${sizeMB}MB, exceeds ${limitMB}MB limit`
+  );
+}
+
+// open once, validate size from the handle, & read at most the observed size
+async function readModuleFile(
+  fsPath: string,
+  includeContents: boolean
+): Promise<Buffer | null> {
+  const fileHandle = await fs.promises.open(fsPath, 'r');
+  try {
+    const stats = await fileHandle.stat();
+    enforceModuleSize(fsPath, stats.size);
+    if (!includeContents) {
+      return null;
+    }
+
+    const buffer = Buffer.alloc(stats.size);
+    let offset = 0;
+    while (offset < buffer.length) {
+      const { bytesRead } = await fileHandle.read(
+        buffer,
+        offset,
+        buffer.length - offset,
+        offset
+      );
+      if (bytesRead === 0) {
+        break;
+      }
+      offset += bytesRead;
+    }
+    return buffer.subarray(0, offset);
+  } finally {
+    await fileHandle.close();
+  }
+}
+
+// find any open document whose normalized filesystem path matches the module
+function findOpenDocument(fsPath: string): vscode.TextDocument | undefined {
+  const normalizedFsPath = normalizePathForComparison(fsPath);
+  return vscode.workspace.textDocuments.find(
+    (document) =>
+      normalizePathForComparison(document.uri.fsPath) === normalizedFsPath
+  );
+}
+
+// apply the fetch timeout across open, stat, bounded read, & close
+function readModuleFileWithTimeout(
+  fsPath: string,
+  includeContents: boolean
+): Promise<Buffer | null> {
+  return raceTimeout(readModuleFile(fsPath, includeContents), {
+    timeoutMs: MODULE_FETCH_TIMEOUT_MS,
+    errorMessage:
+      `Module fetch timed out after ${MODULE_FETCH_TIMEOUT_MS / 1000}s: ` +
+      `${path.basename(fsPath)}`,
+  });
 }
 
 export async function fetchLocal(
   request: string,
   isBare: boolean,
   parentId: string,
-  preview: Preview
+  preview: Preview,
+  dependencyKind: ModuleDependencyKind = 'require'
 ): Promise<FetchResult | undefined> {
   try {
     const entryFsDirectory = preview.entryFsDirectory;
@@ -95,17 +164,18 @@ export async function fetchLocal(
       return buildNoopResult(normalizedRequest);
     }
 
-    // build resolution context for UnifiedResolver
-    const frameworkDetector = getFrameworkDetector();
-    const frameworkInfo = frameworkDetector.getFramework(preview.doc.uri);
-    const shimsEnabled = frameworkDetector.areShimsEnabled(preview.doc.uri);
-
-    const resolutionContext: ResolutionContext = {
+    const resolutionContext = buildResolutionContext({
       baseDir: path.dirname(parentId),
       tsConfig: preview.typescriptConfiguration,
-      framework: frameworkInfo.framework,
-      workspaceRoot: entryFsDirectory,
-      shimsEnabled,
+      documentUri: preview.doc.uri,
+      entryFsDirectory,
+      dependencyKind,
+    });
+    const executionContext: ModuleExecutionContext = {
+      documentUri: preview.doc.uri,
+      entryFsDirectory,
+      useSucraseTranspiler: preview.configuration.useSucraseTranspiler,
+      getWebviewUri: (fsPath) => preview.getWebviewUri(fsPath),
     };
 
     // use UnifiedResolver for all resolution (framework aliases, TypeScript, enhanced-resolve)
@@ -120,6 +190,15 @@ export async function fetchLocal(
       throw createModuleNotFoundError(request, resolutionContext.baseDir);
     }
 
+    if (isIgnoredResolution(resolution)) {
+      log.debug(`Browser field ignored: ${request}`);
+      return {
+        fsPath: resolution.fsPath,
+        code: NOOP_MODULE,
+        dependencies: [],
+      };
+    }
+
     // if it's a built-in shim, return empty result (webview has this preloaded)
     if (resolution.isBuiltInShim) {
       log.debug(`Built-in shim: ${request} -> ${resolution.fsPath}`);
@@ -130,77 +209,69 @@ export async function fetchLocal(
       };
     }
 
-    let fsPath = resolution.fsPath;
+    const diskFsPath = resolution.fsPath;
 
-    if (!(await checkFsPathAsync(entryFsDirectory, fsPath))) {
+    if (!(await checkFsPathAsync(entryFsDirectory, diskFsPath))) {
       // fallback check for core modules that resolved to paths outside allowed directories
       if (isCoreModule(request)) {
         return buildNoopResult(normalizedRequest);
       }
-      throw new PathAccessDeniedError(fsPath);
+      throw new PathAccessDeniedError(diskFsPath);
     }
 
-    preview.dependentFsPaths.add(fsPath);
+    preview.dependentFsPaths.add(diskFsPath);
 
-    // check file size before reading (prevents memory exhaustion)
-    const stats = await fs.promises.stat(fsPath);
-    if (stats.size > MAX_MODULE_FILE_SIZE_BYTES) {
-      const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
-      const limitMB = (MAX_MODULE_FILE_SIZE_BYTES / 1024 / 1024).toFixed(0);
-      throw new Error(
-        `Module "${path.basename(fsPath)}" is ${sizeMB}MB, exceeds ${limitMB}MB limit`
-      );
-    }
+    const extname = path.extname(diskFsPath).toLowerCase();
+    const fsPath =
+      path.sep === '\\' ? normalizePathSeparators(diskFsPath) : diskFsPath;
 
-    // check for binary files before reading as text
-    if (await isBinaryFile(fsPath)) {
-      const ext = path.extname(fsPath).toLowerCase();
-      throw new Error(
-        `Cannot import binary file "${path.basename(fsPath)}" (${ext}). ` +
-          `Binary files like images should be referenced via URL or data URI.`
+    // image handlers only need the validated path to create a webview URI
+    if ((IMAGE_EXTENSIONS as readonly string[]).includes(extname)) {
+      await readModuleFileWithTimeout(diskFsPath, false);
+      const imageResult = await handleByExtension(
+        '',
+        fsPath,
+        extname,
+        executionContext
       );
+      if (imageResult) {
+        return imageResult;
+      }
     }
 
     let code: string;
-    // in onType mode, use in-memory document if available
-    if (
-      preview.configuration.updateMode === 'onType' &&
-      preview.editingDoc &&
-      preview.editingDoc.uri.fsPath === fsPath
-    ) {
-      code = preview.editingDoc.getText();
+    const openDocument =
+      preview.configuration.updateMode === 'onType'
+        ? findOpenDocument(diskFsPath)
+        : undefined;
+    if (openDocument) {
+      code = openDocument.getText();
+      enforceModuleSize(diskFsPath, Buffer.byteLength(code, 'utf8'));
     } else {
-      // read module from disk w/ timeout guard
-      let readError: unknown;
-      const readCode = await readFileAsync(fsPath, 'utf-8', {
-        timeoutMs: MODULE_FETCH_TIMEOUT_MS,
-        timeoutMessage:
-          `Module fetch timed out after ${MODULE_FETCH_TIMEOUT_MS / 1000}s: ` +
-          `${path.basename(fsPath)}`,
-        onError: (error) => {
-          readError = error;
-        },
-      });
-
-      if (readCode === null) {
-        throw readError instanceof Error
-          ? readError
-          : new Error(`Failed to read module: ${path.basename(fsPath)}`);
+      const buffer = await readModuleFileWithTimeout(diskFsPath, true);
+      if (!buffer) {
+        throw new Error(`Module "${path.basename(fsPath)}" could not be read`);
       }
-      code = readCode;
-    }
 
-    const extname = path.extname(fsPath);
-    if (path.sep === '\\') {
-      // always return forward slash paths for resolution (https://github.com/xyc/vscode-mdx-preview/issues/13)
-      fsPath = normalizePathSeparators(fsPath);
+      if (isBinaryBuffer(buffer)) {
+        throw new Error(
+          `Cannot import binary file "${path.basename(fsPath)}" (${extname}). ` +
+            `Binary files like images should be referenced via URL or data URI.`
+        );
+      }
+      code = buffer.toString('utf-8');
     }
 
     // dispatch to appropriate file type handler
-    let result = await handleByExtension(code, fsPath, extname, preview);
+    let result = await handleByExtension(
+      code,
+      fsPath,
+      extname,
+      executionContext
+    );
     if (!result) {
       // fallback for unknown file types - treat as script
-      result = await getScriptHandler().handle(code, fsPath, preview);
+      result = await getScriptHandler().handle(code, fsPath, executionContext);
     }
 
     // check dependency count (prevents combinatorial explosion)

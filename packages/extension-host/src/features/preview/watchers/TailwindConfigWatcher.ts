@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import { BaseWatcher } from './BaseWatcher';
 import { LogTags, STANDARD_DEBOUNCE_MS } from '@mdx-preview/contracts';
+import { createExactFileWatcherPattern } from '../../../shared/utils/createFileWatcher';
 
 export class TailwindConfigWatcher extends BaseWatcher {
   protected readonly logTag = LogTags.TAILWIND_WATCHER;
@@ -44,17 +45,20 @@ export class TailwindConfigWatcher extends BaseWatcher {
     for (const file of this.watchFiles) {
       this.log.debug(`Creating watcher for: ${file}`);
       // use createFileWatcher from base class w/ error wrapping
-      const watcher = this.createFileWatcher(file, {
-        onChange: (uri) => {
-          this.queueChange(uri.fsPath);
-        },
-        onCreate: (uri) => {
-          this.queueChange(uri.fsPath);
-        },
-        onDelete: (uri) => {
-          this.queueChange(uri.fsPath);
-        },
-      });
+      const watcher = this.createFileWatcher(
+        createExactFileWatcherPattern(file),
+        {
+          onChange: (uri) => {
+            this.queueChange(uri.fsPath);
+          },
+          onCreate: (uri) => {
+            this.queueChange(uri.fsPath);
+          },
+          onDelete: (uri) => {
+            this.queueChange(uri.fsPath);
+          },
+        }
+      );
       this.watchers.push(watcher);
     }
     this.log.debug(`Watching ${this.watchFiles.length} file(s)`);

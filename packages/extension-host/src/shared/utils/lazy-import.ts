@@ -42,6 +42,8 @@ export function createKeyedLazyImport<T>(options: KeyedLazyImportOptions<T>): {
     options;
   const cache = new Map<string, T | null>();
   const loading = new Map<string, Promise<T | null>>();
+  const keyGenerations = new Map<string, number>();
+  let generation = 0;
 
   return {
     async get(key: string): Promise<T | null> {
@@ -56,13 +58,21 @@ export function createKeyedLazyImport<T>(options: KeyedLazyImportOptions<T>): {
         return existing;
       }
 
-      // start loading
-      const promise = loadFn(key)
+      const loadGeneration = generation;
+      const keyGeneration = keyGenerations.get(key) ?? 0;
+      const isCurrentLoad = (): boolean =>
+        generation === loadGeneration &&
+        (keyGenerations.get(key) ?? 0) === keyGeneration &&
+        loading.get(key) === promise;
+
+      const promise = Promise.resolve()
+        .then(() => loadFn(key))
         .then((mod) => {
-          // validate if provided
           if (mod !== null && validate && !validate(mod)) {
             onValidationFailed?.(key, mod);
-            cache.set(key, null);
+            if (isCurrentLoad()) {
+              cache.set(key, null);
+            }
             return null;
           }
 
@@ -70,16 +80,22 @@ export function createKeyedLazyImport<T>(options: KeyedLazyImportOptions<T>): {
             onLoaded?.(key, mod);
           }
 
-          cache.set(key, mod);
+          if (isCurrentLoad()) {
+            cache.set(key, mod);
+          }
           return mod;
         })
         .catch((error) => {
           onLoadFailed?.(key, error);
-          cache.set(key, null);
+          if (isCurrentLoad()) {
+            cache.set(key, null);
+          }
           return null;
         })
         .finally(() => {
-          loading.delete(key);
+          if (loading.get(key) === promise) {
+            loading.delete(key);
+          }
         });
 
       loading.set(key, promise);
@@ -87,11 +103,14 @@ export function createKeyedLazyImport<T>(options: KeyedLazyImportOptions<T>): {
     },
 
     clear(): void {
+      generation += 1;
       cache.clear();
       loading.clear();
+      keyGenerations.clear();
     },
 
     clearKey(key: string): void {
+      keyGenerations.set(key, (keyGenerations.get(key) ?? 0) + 1);
       cache.delete(key);
       loading.delete(key);
     },

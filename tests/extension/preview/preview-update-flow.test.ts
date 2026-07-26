@@ -3,8 +3,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockReadFileAsync, mockWorkspaceReadFile } = vi.hoisted(() => ({
-  mockReadFileAsync: vi.fn(),
+const { mockReadFileRequiredAsync, mockWorkspaceReadFile } = vi.hoisted(() => ({
+  mockReadFileRequiredAsync: vi.fn(),
   mockWorkspaceReadFile: vi.fn(),
 }));
 
@@ -17,7 +17,8 @@ vi.mock('vscode', () => ({
 }));
 
 vi.mock('../../../packages/extension-host/src/shared/utils/file-utils', () => ({
-  readFileAsync: (...args: unknown[]) => mockReadFileAsync(...args),
+  readFileRequiredAsync: (...args: unknown[]) =>
+    mockReadFileRequiredAsync(...args),
 }));
 
 import { runPreviewUpdateFlow } from '../../../packages/extension-host/src/features/preview/preview-update-flow';
@@ -27,6 +28,7 @@ function createDoc(overrides: Partial<any> = {}) {
     uri: {
       scheme: 'file',
       fsPath: '/workspace/doc.mdx',
+      toString: () => 'file:///workspace/doc.mdx',
     },
     version: 7,
     ...overrides,
@@ -36,16 +38,18 @@ function createDoc(overrides: Partial<any> = {}) {
 describe('runPreviewUpdateFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockReadFileAsync.mockResolvedValue('# saved');
+    mockReadFileRequiredAsync.mockResolvedValue('# saved');
     mockWorkspaceReadFile.mockResolvedValue(
       new TextEncoder().encode('# remote')
     );
   });
 
-  it('skips evaluation when rendered version already exists and force is false', async () => {
+  it('skips an already rendered document but renders a same-version document switch', async () => {
     const evaluate = vi.fn(async () => {});
     const docTracker = {
-      hasRenderedVersion: vi.fn(() => true),
+      hasRenderedVersion: vi.fn(
+        (documentUri: string) => documentUri === 'file:///workspace/doc.mdx'
+      ),
       markRendered: vi.fn(),
     };
 
@@ -61,6 +65,28 @@ describe('runPreviewUpdateFlow', () => {
 
     expect(evaluate).not.toHaveBeenCalled();
     expect(docTracker.markRendered).not.toHaveBeenCalled();
+
+    await runPreviewUpdateFlow({
+      force: false,
+      doc: createDoc({
+        uri: {
+          scheme: 'file',
+          fsPath: '/workspace/second.mdx',
+          toString: () => 'file:///workspace/second.mdx',
+        },
+      }),
+      text: '# second',
+      entryFsDirectory: '/workspace',
+      updateMode: 'onType',
+      getDocumentTracker: () => docTracker,
+      evaluate,
+    });
+
+    expect(evaluate).toHaveBeenCalledWith('# second', '/workspace/second.mdx');
+    expect(docTracker.markRendered).toHaveBeenCalledWith(
+      'file:///workspace/second.mdx',
+      7
+    );
   });
 
   it('routes file + onType to in-memory text', async () => {
@@ -81,7 +107,10 @@ describe('runPreviewUpdateFlow', () => {
     });
 
     expect(evaluate).toHaveBeenCalledWith('# in-memory', '/workspace/doc.mdx');
-    expect(docTracker.markRendered).toHaveBeenCalledWith(7);
+    expect(docTracker.markRendered).toHaveBeenCalledWith(
+      'file:///workspace/doc.mdx',
+      7
+    );
   });
 
   it('routes file + onSave/manual to disk read text', async () => {
@@ -101,12 +130,25 @@ describe('runPreviewUpdateFlow', () => {
       evaluate,
     });
 
-    expect(mockReadFileAsync).toHaveBeenCalledWith(
+    expect(mockReadFileRequiredAsync).toHaveBeenCalledWith(
       '/workspace/doc.mdx',
-      'utf8',
-      expect.any(Object)
+      'utf8'
     );
     expect(evaluate).toHaveBeenCalledWith('# saved', '/workspace/doc.mdx');
+
+    const readError = new Error('disk unavailable');
+    mockReadFileRequiredAsync.mockRejectedValueOnce(readError);
+
+    await expect(
+      runPreviewUpdateFlow({
+        doc: createDoc(),
+        text: '# in-memory',
+        entryFsDirectory: '/workspace',
+        updateMode: 'onSave',
+        getDocumentTracker: () => undefined,
+        evaluate: vi.fn(),
+      })
+    ).rejects.toBe(readError);
   });
 
   it('marks rendered only after successful evaluation', async () => {

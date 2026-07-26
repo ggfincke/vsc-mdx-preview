@@ -2,6 +2,7 @@
 // ! validate file paths are inside workspace folders (prevents path traversal attacks)
 
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import * as path from 'path';
 import { STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
 import { LRUCache } from '@mdx-preview/runtime-utils';
@@ -12,8 +13,8 @@ export { PathAccessDeniedError } from '../../../shared/errors';
 
 // use shared path utilities
 import {
-  isPathInside,
-  isPathInsideAsync,
+  isPathWithin,
+  isPathWithinAsync,
   resolveRealPath,
   normalizePathForComparison,
 } from '../../../shared/utils/path-utils';
@@ -24,24 +25,81 @@ const asyncRootDirectoryCache = new LRUCache<string, string>({
   ttlMs: STANDARD_CACHE_TTL_MS,
 });
 
-// cache for resolved real paths (symlink resolution)
-const realPathCache = new LRUCache<string, string>({
+// resolved path bound to the followed target identity
+interface RealPathCacheEntry {
+  realPath: string;
+  device: number;
+  inode: number;
+}
+
+// cache resolved paths alongside the current followed-file identity
+const realPathCache = new LRUCache<string, RealPathCacheEntry>({
   maxEntries: PATH_CACHE_MAX_ENTRIES,
   ttlMs: STANDARD_CACHE_TTL_MS,
 });
 
-// get cached real path (async w/ caching)
+// read the identity reached through every symlink in the requested path
+async function getFileIdentity(
+  filePath: string
+): Promise<{ device: number; inode: number } | null> {
+  try {
+    const stats = await fs.promises.stat(filePath);
+    return { device: stats.dev, inode: stats.ino };
+  } catch {
+    return null;
+  }
+}
+
+// compare identities from the requested path & resolved target
+function isSameFileIdentity(
+  left: { device: number; inode: number },
+  right: { device: number; inode: number }
+): boolean {
+  return left.device === right.device && left.inode === right.inode;
+}
+
+// bind a realpath to a matching identity even if a symlink moves mid-resolution
+async function resolveCurrentRealPath(
+  filePath: string
+): Promise<RealPathCacheEntry | null> {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const realPath = await resolveRealPath(filePath);
+    if (!realPath) {
+      return null;
+    }
+
+    const [requestedIdentity, resolvedIdentity] = await Promise.all([
+      getFileIdentity(filePath),
+      getFileIdentity(realPath),
+    ]);
+    if (
+      requestedIdentity &&
+      resolvedIdentity &&
+      isSameFileIdentity(requestedIdentity, resolvedIdentity)
+    ) {
+      return { realPath, ...requestedIdentity };
+    }
+  }
+  return null;
+}
+
+// get cached real path after validating its current target identity
 async function getCachedRealPath(filePath: string): Promise<string | null> {
   const cacheKey = normalizePathForComparison(filePath);
   const cached = realPathCache.get(cacheKey);
   if (cached !== null) {
-    return cached;
+    const identity = await getFileIdentity(filePath);
+    if (identity && isSameFileIdentity(identity, cached)) {
+      return cached.realPath;
+    }
+    realPathCache.delete(cacheKey);
   }
-  const realPath = await resolveRealPath(filePath);
-  if (realPath) {
-    realPathCache.set(cacheKey, realPath);
+
+  const entry = await resolveCurrentRealPath(filePath);
+  if (entry) {
+    realPathCache.set(cacheKey, entry);
   }
-  return realPath;
+  return entry?.realPath ?? null;
 }
 
 // get root directory path for entry file (async w/ symlink resolution)
@@ -74,11 +132,11 @@ async function getRootDirectoryPathAsync(
     const effectiveFolderPath =
       realFolderPath || path.normalize(folder.uri.fsPath);
 
-    // use sync isPathInside if paths don't exist (for unit tests)
+    // use sync containment if paths don't exist (for unit tests)
     const isInside =
       realFolderPath && realEntryDir
-        ? await isPathInsideAsync(effectiveEntryDir, effectiveFolderPath)
-        : isPathInside(effectiveEntryDir, effectiveFolderPath);
+        ? await isPathWithinAsync(effectiveEntryDir, effectiveFolderPath, false)
+        : isPathWithin(effectiveEntryDir, effectiveFolderPath, false);
 
     if (isInside) {
       matchingFolders.push(effectiveFolderPath);
@@ -118,15 +176,10 @@ export async function checkFsPathAsync(
   if (!realFsPath) {
     // file doesn't exist yet - use normalized path for check
     // handle the case of checking a path before it's created
-    const normalized = normalizePathForComparison(path.normalize(fsPath));
-    const normalizedRoot = normalizePathForComparison(rootDirectory);
-    const relative = path.relative(normalizedRoot, normalized);
-    return (
-      !!relative && !relative.startsWith('..') && !path.isAbsolute(relative)
-    );
+    return isPathWithin(fsPath, rootDirectory, false);
   }
 
-  return isPathInsideAsync(realFsPath, rootDirectory);
+  return isPathWithinAsync(realFsPath, rootDirectory, false);
 }
 
 // clear all path security caches (for testing & disposal)

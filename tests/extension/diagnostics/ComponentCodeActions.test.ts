@@ -1,8 +1,46 @@
 // tests/extension/diagnostics/ComponentCodeActions.test.ts
 // unit tests for component code actions
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { ComponentCodeActionsProvider } from '../../../packages/extension-host/src/features/diagnostics/ComponentCodeActions';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { mockErrorReporter } from '../../helpers/mock-services';
+
+const {
+  mockFindUp,
+  mockReadJsonSync,
+  mockWriteFileSync,
+} = vi.hoisted(() => ({
+  mockFindUp: vi.fn(),
+  mockReadJsonSync: vi.fn(),
+  mockWriteFileSync: vi.fn(),
+}));
+
+vi.mock(
+  '../../../packages/extension-host/src/shared/utils/find-up',
+  () => ({
+    findUp: mockFindUp,
+    createWorkspaceStopPredicate: vi.fn(() => () => false),
+  })
+);
+
+vi.mock(
+  '../../../packages/extension-host/src/shared/utils/file-utils',
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import('../../../packages/extension-host/src/shared/utils/file-utils')
+    >()),
+    readJsonSync: mockReadJsonSync,
+  })
+);
+
+vi.mock('fs', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('fs')>()),
+  writeFileSync: mockWriteFileSync,
+}));
+
+import {
+  addComponentToConfig,
+  ComponentCodeActionsProvider,
+} from '../../../packages/extension-host/src/features/diagnostics/ComponentCodeActions';
 import { DIAGNOSTIC_CODES } from '../../../packages/extension-host/src/features/diagnostics/ComponentDiagnostics';
 import { analyzeUnknownComponents } from 'mdx-forge/diagnostics/analyze';
 import { Diagnostic, DiagnosticSeverity, Range, Uri, workspace } from 'vscode';
@@ -11,21 +49,33 @@ const provider = new ComponentCodeActionsProvider();
 
 function createDiagnostic(
   name: string,
-  message = `Unknown component "${name}". Add it to .mdx-previewrc.json or use a built-in shim.`
+  message = `Unknown component "${name}". Add it to .mdx-previewrc.json or use a built-in shim.`,
+  tagNameRanges?: Range[]
 ): Diagnostic {
-  const range = new Range(0, 0, 0, name.length);
+  const range = tagNameRanges?.[0] ?? new Range(0, 0, 0, name.length);
   const diagnostic = new Diagnostic(range, message, DiagnosticSeverity.Warning);
   diagnostic.code = DIAGNOSTIC_CODES.UNKNOWN_COMPONENT;
-  diagnostic.data = { componentName: name };
+  diagnostic.data = { componentName: name, tagNameRanges };
   return diagnostic;
 }
 
 describe('ComponentCodeActionsProvider', () => {
   beforeEach(() => {
     workspace.workspaceFolders = [{ uri: Uri.file('/workspace') }];
+    mockFindUp.mockReturnValue(undefined);
   });
 
   it('returns quick fixes for unknown components', () => {
+    const source = '<note>important children</note>';
+    const tagNameRanges = [
+      new Range(0, 1, 0, 5),
+      new Range(
+        0,
+        source.lastIndexOf('note'),
+        0,
+        source.lastIndexOf('note') + 4
+      ),
+    ];
     const document = {
       uri: Uri.file('/workspace/docs.mdx'),
     } as any;
@@ -33,7 +83,7 @@ describe('ComponentCodeActionsProvider', () => {
     const actions = provider.provideCodeActions(
       document,
       new Range(0, 0, 0, 4),
-      { diagnostics: [createDiagnostic('note')] },
+      { diagnostics: [createDiagnostic('note', undefined, tagNameRanges)] },
       {} as any
     );
 
@@ -52,54 +102,65 @@ describe('ComponentCodeActionsProvider', () => {
     expect(addAction?.command?.command).toBe(
       'mdx-preview.addComponentToConfig'
     );
-    expect(builtinAction?.edit?.edits[0]?.newText).toBe('Callout');
+    expect(builtinAction?.edit?.edits).toEqual([
+      { uri: document.uri, range: tagNameRanges[0], newText: 'Callout' },
+      { uri: document.uri, range: tagNameRanges[1], newText: 'Callout' },
+    ]);
+    const updated = [...(builtinAction?.edit?.edits ?? [])]
+      .sort(
+        (left, right) =>
+          right.range.start.character - left.range.start.character
+      )
+      .reduce(
+        (text, edit) =>
+          text.slice(0, edit.range.start.character) +
+          edit.newText +
+          text.slice(edit.range.end.character),
+        source
+      );
+    expect(updated).toBe('<Callout>important children</Callout>');
     expect(learnAction?.command?.command).toBe('vscode.open');
   });
 
-  it('reads component name from structured data ignoring message prose', () => {
+  it('targets the nearest config found from a nested document', () => {
+    const configPath = '/workspace/packages/docs/.mdx-previewrc.json';
+    mockFindUp.mockReturnValue(configPath);
     const document = {
-      uri: Uri.file('/workspace/docs.mdx'),
+      uri: Uri.file('/workspace/packages/docs/content/page.mdx'),
     } as any;
 
-    const diagnostic = createDiagnostic('note', 'totally different prose');
     const actions = provider.provideCodeActions(
       document,
       new Range(0, 0, 0, 4),
-      { diagnostics: [diagnostic] },
+      { diagnostics: [createDiagnostic('Widget')] },
       {} as any
     );
 
-    expect(actions).toHaveLength(3);
-    const builtinAction = actions.find((action) =>
-      action.title.includes('Use built-in')
-    );
-    expect(builtinAction?.edit?.edits[0]?.newText).toBe('Callout');
-  });
-
-  it('falls back to message text when diagnostic data is absent', () => {
-    const document = {
-      uri: Uri.file('/workspace/docs.mdx'),
-    } as any;
-
-    const diagnostic = createDiagnostic('note');
-    delete diagnostic.data;
-    const actions = provider.provideCodeActions(
-      document,
-      new Range(0, 0, 0, 4),
-      { diagnostics: [diagnostic] },
-      {} as any
-    );
-
-    expect(actions).toHaveLength(3);
     const addAction = actions.find((action) =>
       action.title.includes('.mdx-previewrc.json')
     );
-    const builtinAction = actions.find((action) =>
-      action.title.includes('Use built-in')
+    expect(addAction?.command?.arguments).toEqual(['Widget', configPath]);
+    expect(mockFindUp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startDir: '/workspace/packages/docs/content',
+      })
     );
+  });
 
-    expect(addAction?.command?.arguments?.[0]).toBe('note');
-    expect(builtinAction?.edit?.edits[0]?.newText).toBe('Callout');
+  it('refuses to overwrite malformed config JSON', async () => {
+    const configPath = '/workspace/.mdx-previewrc.json';
+    mockReadJsonSync.mockReturnValue(null);
+
+    await addComponentToConfig('Widget', configPath);
+
+    expect(mockWriteFileSync).not.toHaveBeenCalled();
+    expect(mockErrorReporter.reportToUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 'CONFIG_PARSE_ERROR',
+        configPath,
+      }),
+      expect.anything()
+    );
   });
 
   it('falls back from the current mdx-forge message when data is absent', () => {

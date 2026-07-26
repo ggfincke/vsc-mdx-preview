@@ -29,6 +29,12 @@ function extractErrorStack(error: unknown): string | undefined {
   if (isError(error)) {
     return error.stack;
   }
+  if (error !== null && typeof error === 'object' && 'stack' in error) {
+    const stack = (error as { stack?: unknown }).stack;
+    if (typeof stack === 'string') {
+      return stack;
+    }
+  }
   return undefined;
 }
 
@@ -37,7 +43,12 @@ export function normalizeError(error: unknown): Error {
   if (isError(error)) {
     return error;
   }
-  return new Error(String(error));
+  const normalized = new Error(extractErrorMessage(error));
+  const stack = extractErrorStack(error);
+  if (stack !== undefined) {
+    normalized.stack = stack;
+  }
+  return normalized;
 }
 
 // extracted error information w/ message & optional stack trace

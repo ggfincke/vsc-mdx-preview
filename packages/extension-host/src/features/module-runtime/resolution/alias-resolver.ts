@@ -72,7 +72,7 @@ export function resolveAlias(
   if (isGenericComponent(request)) {
     const canonical = getCanonicalComponentName(request);
     if (canonical) {
-      return `${SHIM_PREFIX}generic/${canonical}`;
+      return `${SHIM_PREFIX}/generic/${canonical}`;
     }
   }
 

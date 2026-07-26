@@ -5,10 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as vscode from 'vscode';
 import {
   mockConfigManager,
+  mockFrameworkDetector,
   mockPreviewManager,
 } from '../helpers/mock-services';
 import { initWorkspaceHandlers } from '../../packages/extension-host/src/app/workspace-events';
-import { SETTINGS } from '../../packages/extension-host/src/shared/config';
+import {
+  PREVIEW_SETTING_ACTIONS,
+  SETTINGS,
+} from '../../packages/extension-host/src/shared/config';
 import {
   disposeEditorPreviewScrollSync,
   handlePreviewSourceLineReport,
@@ -16,21 +20,54 @@ import {
   syncPreviewScrollFromActiveEditor,
 } from '../../packages/extension-host/src/features/preview/scroll-sync';
 
+const { mockWorkspaceLog } = vi.hoisted(() => ({
+  mockWorkspaceLog: {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock('../../packages/extension-host/src/shared/logging/logger', () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  createTaggedLogger: vi.fn(() => mockWorkspaceLog),
+}));
+
 describe('workspace-events', () => {
+  let saveCallback: ((event: { uri: vscode.Uri }) => void) | undefined;
+  let documentChangeCallback:
+    ((event: { document: vscode.TextDocument }) => void) | undefined;
   let visibleRangeCallback:
-    | ((event: { textEditor: vscode.TextEditor }) => void)
-    | undefined;
+    ((event: { textEditor: vscode.TextEditor }) => void) | undefined;
+  let frameworkChangeCallback: (() => void) | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    saveCallback = undefined;
+    documentChangeCallback = undefined;
     visibleRangeCallback = undefined;
+    frameworkChangeCallback = undefined;
+    mockFrameworkDetector.subscribe.mockImplementation((callback) => {
+      frameworkChangeCallback = callback;
+      return { dispose: vi.fn() };
+    });
 
-    (vscode.workspace as any).onDidSaveTextDocument = vi.fn(() => ({
-      dispose: vi.fn(),
-    }));
-    (vscode.workspace as any).onDidChangeTextDocument = vi.fn(() => ({
-      dispose: vi.fn(),
-    }));
+    (vscode.workspace as any).onDidSaveTextDocument = vi.fn(
+      (callback: (event: { uri: vscode.Uri }) => void) => {
+        saveCallback = callback;
+        return { dispose: vi.fn() };
+      }
+    );
+    (vscode.workspace as any).onDidChangeTextDocument = vi.fn(
+      (callback: (event: { document: vscode.TextDocument }) => void) => {
+        documentChangeCallback = callback;
+        return { dispose: vi.fn() };
+      }
+    );
     (vscode.workspace as any).onDidChangeWorkspaceFolders = vi.fn(() => ({
       dispose: vi.fn(),
     }));
@@ -51,37 +88,78 @@ describe('workspace-events', () => {
     vi.useRealTimers();
   });
 
-  it('subscribes preview update handler to runtime config keys', () => {
-    let changeCallback: (() => void) | undefined;
-    mockConfigManager.onDidChangeKey.mockImplementation(
-      (_keys: string[], callback: () => void) => {
+  it('dispatches preview document & setting events safely', async () => {
+    let changeCallback: ((affectedKeys: string[]) => void) | undefined;
+    mockConfigManager.onDidChangeConfiguration.mockImplementation(
+      (callback: (affectedKeys: string[]) => void) => {
         changeCallback = callback;
         return { dispose: vi.fn() };
       }
     );
 
+    const saveError = new Error('save failed');
+    const changeError = new Error('change failed');
+    const handleDidSaveTextDocument = vi.fn().mockRejectedValue(saveError);
+    const handleDidChangeTextDocument = vi.fn().mockRejectedValue(changeError);
     const updateConfiguration = vi.fn();
+    const updateWebview = vi.fn().mockResolvedValue(undefined);
     mockPreviewManager.getCurrentPreview.mockReturnValue({
+      handleDidSaveTextDocument,
+      handleDidChangeTextDocument,
       updateConfiguration,
+      updateWebview,
     });
 
     const context = { subscriptions: [] as Array<{ dispose: () => void }> };
     initWorkspaceHandlers(context as any);
 
-    expect(mockConfigManager.onDidChangeKey).toHaveBeenCalledTimes(1);
-    expect(mockConfigManager.onDidChangeKey).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        SETTINGS.SOURCE_LINE_HIGHLIGHT,
-        SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR,
-        SETTINGS.SCROLL_SYNC,
-        SETTINGS.SHIM_SIDE_RAIL,
-      ]),
-      expect.any(Function)
-    );
-    expect(context.subscriptions.length).toBe(5);
+    const uri = vscode.Uri.file('/workspace/test.mdx');
+    saveCallback?.({ uri });
+    documentChangeCallback?.({
+      document: { uri } as vscode.TextDocument,
+    });
+    await Promise.resolve();
 
-    changeCallback?.();
+    expect(handleDidSaveTextDocument).toHaveBeenCalledWith(uri.fsPath);
+    expect(handleDidChangeTextDocument).toHaveBeenCalledWith(
+      uri.fsPath,
+      expect.objectContaining({ uri })
+    );
+    expect(mockWorkspaceLog.error).toHaveBeenCalledWith(
+      'Error handling document save',
+      saveError
+    );
+    expect(mockWorkspaceLog.error).toHaveBeenCalledWith(
+      'Error handling document change',
+      changeError
+    );
+
+    expect(mockConfigManager.onDidChangeConfiguration).toHaveBeenCalledTimes(1);
+    expect(PREVIEW_SETTING_ACTIONS[SETTINGS.USE_SUCRASE]).toBe('recompile');
+    expect(context.subscriptions.length).toBe(6);
+
+    // runtime-push key: config update only, no forced recompile
+    changeCallback?.([SETTINGS.PREVIEW_THEME]);
     expect(updateConfiguration).toHaveBeenCalledTimes(1);
+    expect(updateWebview).not.toHaveBeenCalled();
+
+    // recompile key: config update + forced webview update
+    changeCallback?.([SETTINGS.USE_SUCRASE]);
+    expect(updateConfiguration).toHaveBeenCalledTimes(2);
+    expect(updateWebview).toHaveBeenCalledWith(true);
+
+    // link behavior has one owner & pushes trust state without compilation
+    changeCallback?.([SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW]);
+    expect(updateConfiguration).toHaveBeenCalledTimes(2);
+    expect(updateWebview).toHaveBeenCalledTimes(1);
+
+    // framework detector owns both package & manual transition refreshes
+    frameworkChangeCallback?.();
+    expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalledTimes(1);
+
+    // unrelated key: no preview work at all
+    changeCallback?.(['debugOutput']);
+    expect(updateConfiguration).toHaveBeenCalledTimes(2);
   });
 
   it('live-syncs the preview to the focused editor line when enabled', () => {

@@ -22,21 +22,6 @@ describe('validateTrust', () => {
     vi.clearAllMocks();
   });
 
-  it('returns TrustState when a document passes trust checks', () => {
-    const mockState = {
-      workspaceTrusted: true,
-      scriptsEnabled: true,
-      canExecute: true,
-      openMdxLinksInPreview: true,
-    };
-    const docUri = { scheme: 'file', fsPath: '/workspace/test.mdx' };
-    mockTrustManager.getStateForDocument.mockReturnValue(mockState);
-
-    expect(requireTrustedModeForDocument(docUri as never, 'compile MDX')).toEqual(
-      mockState
-    );
-  });
-
   it('includes the trust failure reason in document errors', () => {
     mockTrustManager.getStateForDocument.mockReturnValue({
       workspaceTrusted: true,

@@ -3,23 +3,16 @@
 
 import * as vscode from 'vscode';
 import debounce from 'lodash.debounce';
+import type { SecurityPolicyValue } from '@mdx-preview/contracts';
 import { getConfigManager } from '../../app/services';
-import { SecurityPolicy } from '../security/SecurityPolicy';
 import { readPreviewConfigurationState } from '../../shared/config/preview-settings';
 import type {
-  StyleConfiguration,
   ConfigurationState,
   PreviewRuntimeConfig,
-  ConfigChangeResult,
-} from '../types';
+} from '../../shared/config/types';
+import type { ConfigChangeResult, StyleConfiguration } from './types/preview';
 
-// re-export canonical type definitions from types/
-export type {
-  StyleConfiguration,
-  ConfigurationState,
-  PreviewRuntimeConfig,
-  ConfigChangeResult,
-} from '../types';
+export type { ConfigChangeResult, StyleConfiguration } from './types/preview';
 
 function projectRuntimeConfiguration(
   configuration: ConfigurationState
@@ -70,7 +63,7 @@ export class PreviewConfiguration {
     };
   }
 
-  get securityConfiguration(): { securityPolicy: SecurityPolicy } {
+  get securityConfiguration(): { securityPolicy: SecurityPolicyValue } {
     return { securityPolicy: this._configuration.securityPolicy };
   }
 
@@ -82,10 +75,30 @@ export class PreviewConfiguration {
     return this._debouncedUpdateWebview;
   }
 
+  // re-read resource-scoped settings when a preview changes documents
+  setDocument(
+    docUri: vscode.Uri,
+    updateWebviewFn: () => void
+  ): ConfigChangeResult {
+    return this.applyConfiguration(docUri, updateWebviewFn, true);
+  }
+
   // update configuration from VS Code settings (returns change info for caller)
   updateConfiguration(
     docUri: vscode.Uri,
     updateWebviewFn: () => void
+  ): ConfigChangeResult {
+    return this.applyConfiguration(docUri, updateWebviewFn, false);
+  }
+
+  dispose(): void {
+    this._debouncedUpdateWebview.cancel();
+  }
+
+  private applyConfiguration(
+    docUri: vscode.Uri,
+    updateWebviewFn: () => void,
+    recreateDebouncer: boolean
   ): ConfigChangeResult {
     const configManager = getConfigManager();
     const newConfig = readPreviewConfigurationState(configManager, docUri);
@@ -109,12 +122,14 @@ export class PreviewConfiguration {
       previousRuntimeConfig.scrollSync !== nextRuntimeConfig.scrollSync;
 
     const needsDebounceRecreate =
+      recreateDebouncer ||
       newConfig.debounceDelay !== this._configuration.debounceDelay;
     const needsCssWatcherUpdate =
       newConfig.customCss !== this._configuration.customCss;
 
-    // recreate debounced function if delay changed
+    // replace pending work when the resource or delay changes
     if (needsDebounceRecreate) {
+      this._debouncedUpdateWebview.cancel();
       this._debouncedUpdateWebview = debounce(
         updateWebviewFn,
         newConfig.debounceDelay

@@ -2,7 +2,7 @@
 // verify that no dependencies are npm-linked (symlinked)
 // prevents shipping local symlinks instead of real npm installs
 
-import { lstatSync, readdirSync } from 'node:fs';
+import { lstatSync } from 'node:fs';
 import { join } from 'node:path';
 
 const NODE_MODULES = 'node_modules';

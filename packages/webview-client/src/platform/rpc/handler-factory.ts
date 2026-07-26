@@ -3,10 +3,10 @@
 
 import type {
   TaggedLogger,
+  ModuleDependency,
   NextraPageMeta,
   PreviewError,
-  PreviewScrollSyncValue,
-  SourceLineHighlightColorValue,
+  PreviewRuntimeConfig,
   TrustState,
   WebviewThemeState,
 } from '@mdx-preview/contracts';
@@ -22,7 +22,7 @@ export interface RequiredStateHandlers {
   setTrustedContent: (
     code: string,
     entryFilePath: string,
-    dependencies: string[]
+    dependencies: ModuleDependency[]
   ) => void;
   setError: (error: PreviewError) => void;
   setStale: (isStale: boolean) => void;
@@ -31,12 +31,10 @@ export interface RequiredStateHandlers {
 // optional state handlers that may or may not be registered
 export interface OptionalStateHandlers {
   setTheme?: (state: WebviewThemeState) => void;
-  setNextraMeta?: (meta: NextraPageMeta) => void;
-  setSourceLineHighlight?: (enabled: boolean) => void;
-  setSourceLineHighlightColor?: (mode: SourceLineHighlightColorValue) => void;
-  setScrollSync?: (mode: PreviewScrollSyncValue) => void;
-  setShimSideRail?: (enabled: boolean) => void;
-  setZoom?: (level: number) => void;
+  setNextraMeta?: (meta: NextraPageMeta | null) => void;
+  setRuntimeConfig?: (config: PreviewRuntimeConfig) => void;
+  adjustZoom?: (delta: number) => void;
+  resetZoom?: () => void;
 }
 
 // combined state handlers interface (required + optional)
@@ -65,12 +63,15 @@ export interface OptionalHandlerConfig {
   methodName: string;
   // key in OptionalStateHandlers to call
   handlerKey: keyof OptionalStateHandlers;
+  // preserve operations or coalesce state to the latest value
+  queueMode?: 'latest' | 'all';
 }
 
-// pending optional message (buffer latest optional config until handlers mount)
+// buffer optional messages until handlers mount
 export interface PendingOptionalMessage {
   handlerKey: keyof OptionalStateHandlers;
   args: unknown[];
+  queueMode: 'latest' | 'all';
 }
 
 // pending message structure for the queue (discriminated union)
@@ -79,7 +80,11 @@ export type PendingMessage =
   | { type: 'safe'; payload: { html: string } }
   | {
       type: 'trusted';
-      payload: { code: string; entryFilePath: string; dependencies: string[] };
+      payload: {
+        code: string;
+        entryFilePath: string;
+        dependencies: ModuleDependency[];
+      };
     }
   | { type: 'error'; payload: PreviewError }
   | { type: 'stale'; payload: boolean };
@@ -161,11 +166,15 @@ export function createHandlerFactories(
       const handlers = getHandlers();
       const handler = handlers?.[handlerKey];
       if (typeof handler === 'function') {
-        (handler as (...a: TArgs) => void)(...args);
+        Reflect.apply(handler, undefined, args);
         return;
       }
 
-      enqueueOptionalFn?.({ handlerKey, args: [...args] });
+      enqueueOptionalFn?.({
+        handlerKey,
+        args: [...args],
+        queueMode: config.queueMode ?? 'latest',
+      });
     };
   }
 

@@ -2,8 +2,11 @@
 // content security policy generation for Safe Mode (no eval) & Trusted Mode (w/ eval)
 
 import * as vscode from 'vscode';
+import {
+  DEFAULT_PREVIEW_SECURITY_POLICY,
+  type SecurityPolicyValue,
+} from '@mdx-preview/contracts';
 import type { TrustState } from './TrustManager';
-import { SecurityPolicy } from './SecurityPolicy';
 
 // generate cryptographically secure nonce
 export function generateNonce(): string {
@@ -44,10 +47,10 @@ export function getCSP(
   webview: vscode.Webview,
   nonce: string,
   trustState: TrustState,
-  securityPolicy: SecurityPolicy = SecurityPolicy.Strict
+  securityPolicy: SecurityPolicyValue = DEFAULT_PREVIEW_SECURITY_POLICY
 ): string {
   // if user explicitly disabled CSP (not recommended)
-  if (securityPolicy === SecurityPolicy.Disabled) {
+  if (securityPolicy === 'disabled') {
     return '';
   }
 

@@ -1,9 +1,12 @@
 // tests/webview/preload-atomic-registration.test.ts
 // preload atomic registration test coverage
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setPreloadEntries } from 'mdx-forge/browser';
-import { registry } from 'mdx-forge/browser';
-import { createSyncRequire } from 'mdx-forge/browser';
+import {
+  createSyncRequire,
+  PRELOADED_MODULE_IDS,
+  registry,
+  setPreloadEntries,
+} from 'mdx-forge/browser';
 import {
   loadDocusaurusShims,
   preloadGenericShims,
@@ -92,17 +95,35 @@ describe('preload atomic registration', () => {
     expect(typeof byBareAlias.default).toBe('function');
   });
 
-  it('supports dynamic framework shim alias registration through the same entry model', async () => {
-    await loadDocusaurusShims(registry);
+  it('restores core, generic, & unchanged framework shims after cache clear', async () => {
+    const preloadGeneric = vi.fn(preloadGenericShims);
+    const frameworkLoader = vi.fn(loadDocusaurusShims);
+    const {
+      ensureFrameworkShims,
+      getRequestedFramework,
+      initPreloadedModules,
+    } = await importPreloadWithMocks({
+      frameworkLoader,
+      fallbackLoader: preloadGeneric,
+      cssLoader: vi.fn().mockResolvedValue(undefined),
+    });
 
-    const requireFromEntry = createSyncRequire('/workspace/docs/index.mdx');
-    const tabs = requireFromEntry('@theme/Tabs') as Record<string, unknown>;
+    initPreloadedModules(registry, {});
+    await ensureFrameworkShims(registry, 'docusaurus');
+    registry.clear();
 
+    initPreloadedModules(registry, {});
+    expect(getRequestedFramework()).toBe('docusaurus');
+    await ensureFrameworkShims(registry, 'docusaurus');
+
+    expect(registry.has(PRELOADED_MODULE_IDS.react)).toBe(true);
+    expect(registry.has('npm://@mdx-preview/shims-generic/Callout')).toBe(true);
     expect(registry.has('npm://@mdx-preview/shims-docusaurus/Tabs')).toBe(true);
-    expect(typeof tabs.default).toBe('function');
+    expect(preloadGeneric).toHaveBeenCalledTimes(2);
+    expect(frameworkLoader).toHaveBeenCalledTimes(2);
   });
 
-  it('retries framework shims after shim and fallback failure', async () => {
+  it('retries framework shims after a generic fallback', async () => {
     let shouldFail = true;
     const frameworkLoader = vi.fn(async () => {
       if (shouldFail) {
@@ -110,9 +131,7 @@ describe('preload atomic registration', () => {
         throw new Error('shim chunk failed');
       }
     });
-    const fallbackLoader = vi.fn(() => {
-      throw new Error('fallback failed');
-    });
+    const fallbackLoader = vi.fn();
     const cssLoader = vi.fn().mockResolvedValue(undefined);
     const { ensureFrameworkShims } = await importPreloadWithMocks({
       frameworkLoader,

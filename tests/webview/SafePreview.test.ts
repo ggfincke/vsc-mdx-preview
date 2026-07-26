@@ -7,6 +7,7 @@ import { createElement, act, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import DOMPurify from 'dompurify';
 import { DOMPURIFY_CONFIG } from '../../packages/webview-client/src/features/preview/safe/security/allowlist';
+import { sanitizeSvg } from '../../packages/webview-client/src/shared/utils/sanitizeSvg';
 
 // stub heavy diagram coordinator so usePreviewSetup keeps the real lightbox handler
 vi.mock(
@@ -48,14 +49,15 @@ describe('SafePreview sanitization', () => {
   });
 
   it('strips script and foreignObject content from SVG payloads', () => {
-    const result = DOMPurify.sanitize(
-      '<svg><script>alert(1)</script><foreignObject><div onclick="xss()">test</div></foreignObject></svg>',
-      DOMPURIFY_CONFIG
-    );
+    const payload =
+      '<svg><script>alert(1)</script><foreignObject><div onclick="xss()">test</div></foreignObject></svg>';
+    const result = DOMPurify.sanitize(payload, DOMPURIFY_CONFIG);
+    const diagramResult = sanitizeSvg(payload);
 
     expect(result).not.toContain('<script');
     expect(result).not.toContain('foreignObject');
     expect(result).not.toContain('onclick');
+    expect(diagramResult).toBe(result);
   });
 
   it('strips dangerous protocols from links', () => {
@@ -89,12 +91,10 @@ describe('SafePreview sanitization', () => {
 
   // pin WC-3: clicking an img inside the safe preview opens the lightbox
   it('opens the lightbox when an img inside the safe preview is clicked', async () => {
-    const { SafePreviewRenderer } = await import(
-      '../../packages/webview-client/src/features/preview/safe/SafePreview'
-    );
-    const { LightboxProvider, useLightbox } = await import(
-      '../../packages/webview-client/src/app/state/LightboxContext'
-    );
+    const { SafePreviewRenderer } =
+      await import('../../packages/webview-client/src/features/preview/safe/SafePreview');
+    const { LightboxProvider, useLightbox } =
+      await import('../../packages/webview-client/src/app/state/LightboxContext');
 
     let openedSrc: string | null = null;
     function LightboxProbe() {

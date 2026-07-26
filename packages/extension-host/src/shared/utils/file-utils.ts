@@ -1,6 +1,6 @@
 // packages/extension-host/src/shared/utils/file-utils.ts
-// centralized file I/O utilities that return null/undefined on failure
-// optional debug logging keeps errors consistent for troubleshooting
+// centralized file I/O utilities for optional & required reads
+// optional debug logging keeps failures consistent for troubleshooting
 
 import * as fs from 'fs';
 import { createTaggedLogger } from '../logging/logger';
@@ -90,6 +90,28 @@ export function pathExists(filePath: string): boolean {
 
 // asynchronous file operations
 
+// read a file asynchronously & preserve failures for required callers
+export async function readFileRequiredAsync(
+  filePath: string,
+  encoding: BufferEncoding = 'utf-8',
+  options?: Omit<FileOptions, 'onError'>
+): Promise<string> {
+  const readPromise = fs.promises.readFile(filePath, encoding);
+  const timeoutMs = options?.timeoutMs;
+
+  if (timeoutMs === undefined) {
+    return readPromise;
+  }
+
+  const timeoutMessage =
+    options?.timeoutMessage ??
+    `Read timed out after ${timeoutMs}ms: ${filePath}`;
+  return raceTimeout(readPromise, {
+    timeoutMs,
+    errorMessage: timeoutMessage,
+  });
+}
+
 // safely read a file asynchronously, returning null on any failure
 export async function readFileAsync(
   filePath: string,
@@ -97,34 +119,8 @@ export async function readFileAsync(
   options?: FileOptions
 ): Promise<string | null> {
   try {
-    const readPromise = fs.promises.readFile(filePath, encoding);
-    const timeoutMs = options?.timeoutMs;
-
-    if (timeoutMs === undefined) {
-      return await readPromise;
-    }
-
-    const timeoutMessage =
-      options?.timeoutMessage ??
-      `Read timed out after ${timeoutMs}ms: ${filePath}`;
-    return await raceTimeout(readPromise, {
-      timeoutMs,
-      errorMessage: timeoutMessage,
-    });
+    return await readFileRequiredAsync(filePath, encoding, options);
   } catch (err) {
     return handleFileError(err, filePath, 'read', options);
   }
-}
-
-// safely read & parse a JSON file asynchronously
-export async function readJsonAsync<T = unknown>(
-  filePath: string,
-  options?: FileOptions
-): Promise<T | null> {
-  const content = await readFileAsync(filePath, 'utf-8', options);
-  if (content === null) {
-    return null;
-  }
-
-  return parseJsonSafe<T>(content, filePath, options);
 }

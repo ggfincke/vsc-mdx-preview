@@ -72,7 +72,10 @@ vi.mock(
 );
 
 import ExtensionHandle from '../../packages/extension-host/src/platform/rpc/extension-rpc-handler';
+import { fetchLocal } from '../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal';
 import { MAX_FETCH_REQUEST_LENGTH } from '../../packages/extension-host/src/shared/constants';
+
+const openPreview = vi.fn(async () => {});
 
 function createMockPreview(fsPath = '/workspace/test.mdx', active = true) {
   return {
@@ -96,7 +99,7 @@ describe('RPC Input Validation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     preview = createMockPreview();
-    handle = new ExtensionHandle(preview);
+    handle = new ExtensionHandle(preview, openPreview);
     mockVscode.workspace.openTextDocument.mockResolvedValue({});
     mockVscode.window.showTextDocument.mockResolvedValue({});
     mockHandlePreviewSourceLineReport.mockReturnValue('accepted');
@@ -120,7 +123,7 @@ describe('RPC Input Validation', () => {
     expect(preview.evaluationDuration).toBe(150);
   });
 
-  it('rejects malicious path-like RPC inputs (null bytes, traversal)', async () => {
+  it('rejects unsafe paths & delegates valid preview navigation', async () => {
     const result = await handle.fetch('react\0.malicious', false, '/entry.mdx');
 
     expect(result).toBeUndefined();
@@ -133,6 +136,26 @@ describe('RPC Input Validation', () => {
 
     expect(mockVscode.workspace.openTextDocument).not.toHaveBeenCalled();
     expect(mockErrorReporter.report).toHaveBeenCalledTimes(2);
+
+    const navigationPreview = {
+      ...createMockPreview('/workspace/docs/test.mdx'),
+      entryFsDirectory: '/workspace/docs',
+    } as ReturnType<typeof createMockPreview>;
+    const navigationHandle = new ExtensionHandle(
+      navigationPreview,
+      openPreview
+    );
+
+    await navigationHandle.openPreview('linked.mdx');
+
+    expect(mockVscode.workspace.openTextDocument).toHaveBeenCalledWith(
+      '/workspace/docs/linked.mdx'
+    );
+    expect(mockVscode.window.showTextDocument).toHaveBeenCalledWith(
+      {},
+      { preview: false }
+    );
+    expect(openPreview).toHaveBeenCalledTimes(1);
   });
 
   it('gates openDocument on workspace trust', async () => {
@@ -141,7 +164,7 @@ describe('RPC Input Validation', () => {
       ...createMockPreview('/workspace/docs/test.mdx'),
       entryFsDirectory: '/workspace/docs',
     } as ReturnType<typeof createMockPreview>;
-    const docHandle = new ExtensionHandle(docPreview);
+    const docHandle = new ExtensionHandle(docPreview, openPreview);
 
     mockTrustManager.getState.mockReturnValue({
       workspaceTrusted: false,
@@ -190,7 +213,28 @@ describe('RPC Input Validation', () => {
     expect(preview.completeHandshake).toHaveBeenCalledWith(7);
   });
 
-  it('rejects fetch requests when trusted execution is unavailable', async () => {
+  it('validates fetch kinds & requires trusted execution', async () => {
+    const invalidKind = await handle.fetch(
+      './module.ts',
+      false,
+      '/entry.mdx',
+      'invalid' as never
+    );
+
+    expect(invalidKind).toBeUndefined();
+    expect(fetchLocal).not.toHaveBeenCalled();
+
+    await handle.fetch('./module.ts', false, '/entry.mdx', 'import');
+
+    expect(fetchLocal).toHaveBeenCalledWith(
+      './module.ts',
+      false,
+      '/entry.mdx',
+      preview,
+      'import'
+    );
+    vi.mocked(fetchLocal).mockClear();
+
     mockTrustManager.getStateForDocument.mockReturnValue({
       workspaceTrusted: false,
       scriptsEnabled: true,
@@ -198,9 +242,15 @@ describe('RPC Input Validation', () => {
       openMdxLinksInPreview: true,
     });
 
-    const result = await handle.fetch('./module.ts', false, '/entry.mdx');
+    const result = await handle.fetch(
+      './module.ts',
+      false,
+      '/entry.mdx',
+      'require'
+    );
 
     expect(result).toBeUndefined();
+    expect(fetchLocal).not.toHaveBeenCalled();
   });
 
   it('handles safe commands and rejects unsafe external URLs', () => {
@@ -235,7 +285,8 @@ describe('RPC Input Validation', () => {
     expect(mockSuppressEditorScrollSync).not.toHaveBeenCalled();
 
     handle = new ExtensionHandle(
-      createMockPreview('/workspace/test.mdx', false)
+      createMockPreview('/workspace/test.mdx', false),
+      openPreview
     );
     await handle.openSourceLine(12);
 
@@ -243,7 +294,7 @@ describe('RPC Input Validation', () => {
     expect(mockSuppressEditorScrollSync).not.toHaveBeenCalled();
 
     preview = createMockPreview();
-    handle = new ExtensionHandle(preview);
+    handle = new ExtensionHandle(preview, openPreview);
     let resolveShow: ((value: unknown) => void) | undefined;
     mockVscode.window.showTextDocument.mockImplementationOnce(
       () =>

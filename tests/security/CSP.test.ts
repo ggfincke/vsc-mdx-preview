@@ -10,7 +10,6 @@ import {
   generateNonce,
   getCSP,
 } from '../../packages/extension-host/src/features/security/CSP';
-import { SecurityPolicy } from '../../packages/extension-host/src/features/security/SecurityPolicy';
 import type { TrustState } from '../../packages/extension-host/src/features/security/TrustManager';
 
 function createMockWebview() {
@@ -31,15 +30,13 @@ describe('CSP', () => {
     mockWebview = createMockWebview();
   });
 
-  it('generates 32-character hexadecimal nonces', () => {
-    const nonce = generateNonce();
+  it('generates distinct 32-character hexadecimal nonces', () => {
+    const first = generateNonce();
+    const second = generateNonce();
 
-    expect(nonce).toHaveLength(32);
-    expect(/^[0-9a-f]+$/.test(nonce)).toBe(true);
-  });
-
-  it('generates distinct nonces for repeated calls', () => {
-    expect(generateNonce()).not.toBe(generateNonce());
+    expect(first).toHaveLength(32);
+    expect(/^[0-9a-f]+$/.test(first)).toBe(true);
+    expect(first).not.toBe(second);
   });
 
   it('includes unsafe-eval when explicitly enabled', () => {
@@ -71,12 +68,7 @@ describe('CSP', () => {
     };
 
     expect(
-      getCSP(
-        mockWebview as never,
-        'test-nonce',
-        trustState,
-        SecurityPolicy.Disabled
-      )
+      getCSP(mockWebview as never, 'test-nonce', trustState, 'disabled')
     ).toBe('');
   });
 
@@ -92,7 +84,7 @@ describe('CSP', () => {
       mockWebview as never,
       'test-nonce',
       trustState,
-      SecurityPolicy.Strict
+      'strict'
     );
 
     expect(csp).toMatch(/connect-src\s+https:\/\/file\+\.vscode-resource/);

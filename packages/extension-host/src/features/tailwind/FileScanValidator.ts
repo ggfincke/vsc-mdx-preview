@@ -6,7 +6,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { Semaphore, extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { TAILWIND_FILE_READ_LIMIT } from './constants';
-import { readFileAsync } from '../../shared/utils/file-utils';
+import { readFileRequiredAsync } from '../../shared/utils/file-utils';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
 const readSemaphore = new Semaphore(TAILWIND_FILE_READ_LIMIT);
@@ -16,9 +16,34 @@ export interface FileReadResult {
   content: string | null;
 }
 
+export interface FileStampResult {
+  fsPath: string;
+  stamp: string | null;
+}
+
 // validate files before scanning for Tailwind classes
 // consolidate file I/O & validation logic for testability
 export class FileScanValidator {
+  // stat files before reads so dependency scans can reuse unchanged results
+  async getFileStampIfValid(
+    fsPath: string,
+    maxBytes: number
+  ): Promise<string | null> {
+    try {
+      const stat = await fs.promises.stat(fsPath);
+      if (stat.size > maxBytes) {
+        log.debug(`Skipping large file: ${fsPath}`);
+        return null;
+      }
+      return `${stat.mtimeMs}:${stat.ctimeMs}:${stat.size}`;
+    } catch (err) {
+      log.debug(
+        `Skipping unreadable file: ${fsPath} (${extractErrorMessage(err)})`
+      );
+      return null;
+    }
+  }
+
   // read file content w/ size validation
   async readFileIfValid(
     fsPath: string,
@@ -31,22 +56,7 @@ export class FileScanValidator {
         return null;
       }
 
-      let readError: unknown;
-      const content = await readFileAsync(fsPath, 'utf-8', {
-        onError: (error) => {
-          readError = error;
-        },
-      });
-
-      if (content === null) {
-        const reason =
-          readError !== undefined
-            ? extractErrorMessage(readError)
-            : 'Unknown read error';
-        log.debug(`Skipping unreadable file: ${fsPath} (${reason})`);
-      }
-
-      return content;
+      return await readFileRequiredAsync(fsPath, 'utf-8');
     } catch (err) {
       log.debug(
         `Skipping unreadable file: ${fsPath} (${extractErrorMessage(err)})`
@@ -84,6 +94,33 @@ export class FileScanValidator {
       }
     }
 
+    return results;
+  }
+
+  // stat multiple files in parallel w/ the same I/O bound as full reads
+  async getValidFileStamps(
+    fsPaths: string[],
+    maxBytes: number
+  ): Promise<Map<string, string>> {
+    const results = new Map<string, string>();
+    const stampPromises = fsPaths.map(
+      async (fsPath): Promise<FileStampResult> => {
+        await readSemaphore.acquire();
+        try {
+          const stamp = await this.getFileStampIfValid(fsPath, maxBytes);
+          return { fsPath, stamp };
+        } finally {
+          readSemaphore.release();
+        }
+      }
+    );
+
+    const stampResults = await Promise.all(stampPromises);
+    for (const { fsPath, stamp } of stampResults) {
+      if (stamp !== null) {
+        results.set(fsPath, stamp);
+      }
+    }
     return results;
   }
 }

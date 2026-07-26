@@ -8,9 +8,13 @@ import {
   LogTags,
   createTaggedLoggerFactory,
 } from '@mdx-preview/contracts';
-// import from setting-keys (not ConfigManager) to avoid circular deps
-import { SETTINGS } from '../config/setting-keys';
+
 import { EXTENSION_DISPLAY_NAME } from '../constants';
+
+export interface DebugConfigSource {
+  getDebugOutput(): boolean;
+  onDidChangeDebugOutput(callback: () => void): vscode.Disposable;
+}
 
 // debug logging state (mutable for reactive updates)
 let debugEnabled = false;
@@ -33,37 +37,25 @@ export function isDebugEnabled(): boolean {
   return debugEnabled;
 }
 
-// initialize logging w/ ConfigManager subscription
-// call after ConfigManager is registered in ServiceRegistry
-export function initLogging(): vscode.Disposable {
+// initialize logging w/ reactive debug config
+export function initLogging(debugConfig: DebugConfigSource): vscode.Disposable {
   // set activation time for elapsed tracking
   activationTime = Date.now();
 
-  // avoid circular import by using dynamic require
-  // ConfigManager is already registered by this point
-
-  const { getConfigManager } =
-    require('../../app/services') as typeof import('../../app/services');
-
-  const configManager = getConfigManager();
-
   // read initial value from setting
-  debugEnabled = configManager.get(SETTINGS.DEBUG_OUTPUT);
+  debugEnabled = debugConfig.getDebugOutput();
 
   // subscribe to setting changes
-  const subscription = configManager.onDidChangeKey(
-    SETTINGS.DEBUG_OUTPUT,
-    () => {
-      debugEnabled = configManager.get(SETTINGS.DEBUG_OUTPUT);
+  const subscription = debugConfig.onDidChangeDebugOutput(() => {
+    debugEnabled = debugConfig.getDebugOutput();
 
-      if (debugEnabled) {
-        createTaggedLogger(LogTags.LOGGING).info(
-          'Debug output enabled via settings'
-        );
-        showOutput();
-      }
+    if (debugEnabled) {
+      createTaggedLogger(LogTags.LOGGING).info(
+        'Debug output enabled via settings'
+      );
+      showOutput();
     }
-  );
+  });
 
   return {
     dispose: () => {
@@ -157,14 +149,6 @@ export function error(message: string, data?: unknown): void {
 // show output channel to user
 export function showOutput(): void {
   getOutputChannel().show();
-}
-
-// dispose output channel (call during extension deactivation)
-export function disposeOutputChannel(): void {
-  if (outputChannel) {
-    outputChannel.dispose();
-    outputChannel = undefined;
-  }
 }
 
 // create variadic wrapper that adapts variadic calls to (message, data) format

@@ -13,10 +13,9 @@ import {
 } from '../../utils/stackTraceParser';
 import type { StackFrame } from '../../utils/stackTraceParser';
 import { copyToClipboard } from '../../utils/clipboard';
-import { isModuleErrorData } from '@mdx-preview/contracts';
+import { isModuleErrorData, ModuleError } from '@mdx-preview/contracts';
 import { normalizeError } from '@mdx-preview/runtime-utils';
 import type { ModuleErrorData } from '@mdx-preview/contracts';
-import { ModuleError } from '../../../features/module-runtime/errors';
 import { ExtensionHandle } from '../../../platform/rpc/webview-rpc-client';
 
 // type for Error objects that may have moduleError attached (from PreviewError)

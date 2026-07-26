@@ -2,15 +2,15 @@
 // post-evaluation artifact pushes & shared side effects
 
 import * as vscode from 'vscode';
-import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
+import { LogTags, type NextraPageMeta } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
+import { extractNextraFrontmatter } from 'mdx-forge/compiler';
 import { getFrameworkDetector, getMetaResolver } from '../../../app/services';
+import { createTaggedLogger } from '../../../shared/logging/logger';
 import {
   detectComponents,
   getUsedGenericComponents,
 } from '../../diagnostics/ComponentDetector';
-import { extractNextraFrontmatter } from 'mdx-forge/compiler';
 import type { Preview } from '../Preview';
 import type {
   EvaluationStageResult,
@@ -40,12 +40,21 @@ async function postTrustedArtifacts(
   const preview = context.preview;
   const { webviewHandle } = preview;
   const { result } = stageResult;
+  const dependencySpecifiers = [
+    ...new Set(result.dependencies.map(({ specifier }) => specifier)),
+  ];
 
-  preview.updateDependencies(result.dependencies);
+  if (!context.isCurrent()) {
+    return;
+  }
+  preview.updateDependencies(dependencySpecifiers);
   applyFrontmatterAndMeta(context, result.frontmatter);
 
   await detectAndPushUsedComponents(context);
 
+  if (!context.isCurrent()) {
+    return;
+  }
   log.debug('Calling webviewHandle.updatePreview');
   await webviewHandle.updatePreview(
     result.code,
@@ -53,6 +62,9 @@ async function postTrustedArtifacts(
     result.dependencies
   );
   log.debug('updatePreview called');
+  if (!context.isCurrent()) {
+    return;
+  }
   preview.syncEditorScrollToPreview();
 
   if (!context.tailwindEnabled) {
@@ -66,7 +78,7 @@ async function postTrustedArtifacts(
     {
       mdxText: context.text,
       entryFilePath: result.entryFilePath,
-      entryFileDependencies: result.dependencies,
+      entryFileDependencies: dependencySpecifiers,
       trustState: context.trustState,
       tailwindConfig: context.effectiveConfig.tailwind,
       profileHint: context.tailwindProfileHint,
@@ -83,6 +95,9 @@ async function postSafeArtifacts(
   const preview = context.preview;
   const { webviewHandle } = preview;
 
+  if (!context.isCurrent()) {
+    return;
+  }
   clearTailwindChannels(context.preview, webviewHandle);
 
   applyFrontmatterAndMeta(context, stageResult.result.frontmatter);
@@ -90,6 +105,9 @@ async function postSafeArtifacts(
   log.debug('Calling webviewHandle.updatePreviewSafe');
   await webviewHandle.updatePreviewSafe(stageResult.result.html);
   log.debug('updatePreviewSafe called');
+  if (!context.isCurrent()) {
+    return;
+  }
   preview.syncEditorScrollToPreview();
 }
 
@@ -104,10 +122,10 @@ async function detectAndPushUsedComponents(
       context.text,
       { detectImports: true },
       new Set(),
-      preview.doc.uri.toString()
+      context.documentIdentity
     );
     const usedGenericComponents = getUsedGenericComponents(detectionResult);
-    if (usedGenericComponents.length === 0) {
+    if (usedGenericComponents.length === 0 || !context.isCurrent()) {
       return;
     }
 
@@ -125,9 +143,8 @@ function applyFrontmatterAndMeta(
 ): void {
   const { preview } = context;
 
-  if (frontmatter) {
-    preview.pushThemeState(frontmatter);
-  }
+  // always push the effective state so removing an override restores the base
+  preview.pushThemeState(frontmatter);
 
   sendNextraMetaIfNeeded(context, frontmatter);
 }
@@ -138,40 +155,34 @@ function sendNextraMetaIfNeeded(
 ): void {
   const preview = context.preview;
   const { webviewHandle } = preview;
+  let snapshot: NextraPageMeta | null = null;
 
   try {
     const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
-    if (frameworkInfo.framework !== 'nextra') {
-      return;
+    if (frameworkInfo.framework === 'nextra') {
+      const workspaceFolder = vscode.workspace.getWorkspaceFolder(
+        preview.doc.uri
+      );
+      if (workspaceFolder) {
+        const metaFromJson = getMetaResolver().resolveNextraMeta(
+          context.fsPath,
+          workspaceFolder.uri.fsPath
+        );
+
+        const metaFromFrontmatter = extractNextraFrontmatter(frontmatter ?? {});
+        const mergedMeta = getMetaResolver().mergeNextraMeta(
+          metaFromJson,
+          metaFromFrontmatter
+        );
+        snapshot = Object.keys(mergedMeta).length > 0 ? mergedMeta : null;
+      }
     }
-
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(
-      preview.doc.uri
-    );
-    if (!workspaceFolder) {
-      return;
-    }
-
-    const metaFromJson = getMetaResolver().resolveNextraMeta(
-      context.fsPath,
-      workspaceFolder.uri.fsPath
-    );
-
-    const metaFromFrontmatter = extractNextraFrontmatter(frontmatter ?? {});
-    const mergedMeta = getMetaResolver().mergeNextraMeta(
-      metaFromJson,
-      metaFromFrontmatter
-    );
-
-    if (Object.keys(mergedMeta).length === 0) {
-      return;
-    }
-
-    log.debug('Sending Nextra meta to webview:', mergedMeta);
-    webviewHandle.setNextraMeta(mergedMeta);
   } catch (err) {
     log.debug(`Error resolving Nextra meta: ${extractErrorMessage(err)}`);
   }
+
+  log.debug('Sending Nextra meta to webview:', snapshot);
+  webviewHandle.setNextraMeta(snapshot);
 }
 
 // clear Tailwind CSS channels when Tailwind is disabled or in Safe Mode

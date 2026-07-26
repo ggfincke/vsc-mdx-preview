@@ -2,12 +2,15 @@
 // handler for SASS/SCSS files - compile to CSS using workspace's sass package
 
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { pathToFileURL } from 'url';
 import type { FetchResult } from '@mdx-preview/contracts';
 import { LogTags } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
-import type { Preview } from '../../preview/preview-manager';
-import type { FileTypeHandler } from './index';
+import type {
+  FileTypeHandler,
+  ModuleExecutionContext,
+} from '../types/handlers';
 import { getBrowserResolver } from '../resolution/resolver-factory';
 import { buildCssResult } from './result-builders';
 import { createTaggedLogger } from '../../../shared/logging/logger';
@@ -75,7 +78,10 @@ ${body}
 }
 
 // generate helpful CSS comment when sass is not available
-function buildSassNotInstalledResult(fsPath: string): FetchResult {
+function buildSassNotInstalledResult(
+  fsPath: string,
+  context: ModuleExecutionContext
+): FetchResult {
   const fileName = path.basename(fsPath);
   const body = `   The file "${fileName}" could not be compiled because the 'sass'
    package is not installed in your workspace.
@@ -94,7 +100,7 @@ function buildSassNotInstalledResult(fsPath: string): FetchResult {
     'MDX Preview: SCSS/Sass Support Not Available',
     body
   );
-  return buildCssResult(fsPath, helpfulCss);
+  return buildCssResult(fsPath, helpfulCss, context);
 }
 
 // handler for .scss & .sass files - compile SASS/SCSS to CSS using workspace's sass
@@ -104,14 +110,16 @@ export class SassHandler implements FileTypeHandler {
   async handle(
     _code: string,
     fsPath: string,
-    preview: Preview
+    context: ModuleExecutionContext
   ): Promise<FetchResult> {
-    const workspaceRoot = preview.entryFsDirectory;
+    const workspaceRoot =
+      vscode.workspace.getWorkspaceFolder(context.documentUri)?.uri.fsPath ??
+      context.entryFsDirectory;
 
     // if no workspace root, return helpful message
     if (!workspaceRoot) {
       log.debug('No workspace root available');
-      return buildSassNotInstalledResult(fsPath);
+      return buildSassNotInstalledResult(fsPath, context);
     }
 
     // try to load sass from workspace
@@ -122,7 +130,7 @@ export class SassHandler implements FileTypeHandler {
       log.warn(
         `sass not installed in workspace, returning help message for ${fsPath}`
       );
-      return buildSassNotInstalledResult(fsPath);
+      return buildSassNotInstalledResult(fsPath, context);
     }
 
     // compile SCSS using workspace's sass
@@ -148,7 +156,7 @@ export class SassHandler implements FileTypeHandler {
         ],
       });
 
-      return buildCssResult(fsPath, result.css);
+      return buildCssResult(fsPath, result.css, context);
     } catch (error: unknown) {
       // sass compilation error - return error as CSS comment for visibility
       const errorMessage = extractErrorMessage(error);
@@ -165,7 +173,7 @@ ${indentedError}`;
         body
       );
       log.warn(`Compilation error for ${fsPath}: ${errorMessage}`);
-      return buildCssResult(fsPath, errorCss);
+      return buildCssResult(fsPath, errorCss, context);
     }
   }
 }

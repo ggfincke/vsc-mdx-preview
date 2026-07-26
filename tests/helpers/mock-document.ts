@@ -7,10 +7,12 @@ export interface MockDocumentOptions {
   fsPath?: string;
   languageId?: string;
   scheme?: string;
+  version?: number;
 }
 
 export interface MockDocument {
   uri: Uri;
+  version: number;
   languageId: string;
   getText(): string;
   fileName: string;
@@ -29,6 +31,7 @@ export function createMockDocument(
     fsPath = '/workspace/test.mdx',
     languageId = 'mdx',
     scheme = 'file',
+    version = 1,
   } = options;
   const lines = content.split('\n');
   const uri =
@@ -36,6 +39,7 @@ export function createMockDocument(
 
   return {
     uri,
+    version,
     languageId,
     getText: () => content,
     fileName: fsPath,

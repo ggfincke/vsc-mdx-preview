@@ -13,12 +13,14 @@ import { HandshakeTimeoutError } from './PreviewInitializer';
 import { postPushArtifacts } from './evaluation/post-push-artifacts';
 import { prepareEvaluationContext } from './evaluation/prepare-evaluation-context';
 import type { PreparedEvaluationContext } from './evaluation/types';
+import type { DocumentAnalysisIdentity } from '../../shared/mdx-analysis/document-analysis';
 import type { Preview } from './Preview';
 
 const log = createTaggedLogger(LogTags.EVALUATE);
 
 // dedupe: one visible handshake-failure notification at a time
 let handshakeNotificationVisible = false;
+const readyHandshakeByPreview = new WeakMap<Preview, Promise<void>>();
 
 // webview never booted, so an in-webview error goes nowhere; notify w/ recovery
 function notifyHandshakeTimeout(preview: Preview): void {
@@ -43,20 +45,33 @@ export default async function evaluateInWebview(
   preview: Preview,
   text: string,
   fsPath: string,
-  isCurrent?: () => boolean
+  isCurrent?: () => boolean,
+  documentIdentity: DocumentAnalysisIdentity = {
+    uri: preview.doc.uri.toString(),
+    version: preview.doc.version,
+  }
 ): Promise<void> {
   log.debug(`evaluateInWebview called for: ${fsPath}`);
   const engine = getEvaluationEngine();
   const stale = () => isCurrent?.() === false;
+  const current = () => !stale();
 
   try {
     const prepared = await prepareEvaluationContext(
       preview,
       text,
       fsPath,
-      engine
+      engine,
+      current,
+      documentIdentity
     );
+    if (prepared.kind === 'superseded') {
+      return;
+    }
     if (prepared.kind === 'refresh-required') {
+      if (stale()) {
+        return;
+      }
       await preview.refreshWebview();
       return;
     }
@@ -65,10 +80,7 @@ export default async function evaluateInWebview(
 
     performance.mark('preview/start');
 
-    await waitForHandshakeAndPushBaseState(context);
-
-    // skip compile if a newer evaluation superseded this one during handshake
-    if (stale()) {
+    if (!(await waitForHandshakeAndPushBaseState(context))) {
       log.debug('evaluateInWebview: superseded before compile, skipping');
       return;
     }
@@ -110,6 +122,7 @@ export default async function evaluateInWebview(
       notifyHandshakeTimeout(preview);
       return;
     }
+    preview.pushThemeState();
     getErrorReporter().report(error, {
       context: ErrorContext.Transpile,
       showInWebview: true,
@@ -121,25 +134,36 @@ export default async function evaluateInWebview(
 
 async function waitForHandshakeAndPushBaseState(
   context: PreparedEvaluationContext
-): Promise<void> {
-  const { preview, trustState } = context;
+): Promise<boolean> {
+  const { preview, trustState, isCurrent } = context;
   const { webviewHandle } = preview;
+  const handshakePromise = preview.webviewHandshakePromise;
 
   log.debug('Waiting for webviewHandshakePromise...');
-  await preview.webviewHandshakePromise;
+  await handshakePromise;
   log.debug('Handshake complete!');
 
-  preview.onWebviewReady();
+  if (!isCurrent()) {
+    return false;
+  }
+  if (readyHandshakeByPreview.get(preview) !== handshakePromise) {
+    readyHandshakeByPreview.set(preview, handshakePromise);
+    preview.onWebviewReady();
+  }
 
   log.debug('Sending trust state to webview');
   await webviewHandle.setTrustState(trustState);
+  if (!isCurrent()) {
+    return false;
+  }
   preview.pushRuntimeConfiguration();
 
   const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
   if (frameworkInfo.framework === 'generic') {
-    return;
+    return true;
   }
 
   log.debug(`Sending framework to webview: ${frameworkInfo.framework}`);
   webviewHandle.setFramework(frameworkInfo.framework);
+  return true;
 }

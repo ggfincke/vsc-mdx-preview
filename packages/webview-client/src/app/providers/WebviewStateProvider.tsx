@@ -35,13 +35,7 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
   const { setSafeContent, setTrustedContent, setError, setNextraMeta } =
     usePreview();
   const { setStale, setIsLoading } = useLoading();
-  const {
-    setSourceLineHighlight,
-    setSourceLineHighlightColor,
-    setScrollSync,
-    setShimSideRail,
-    setZoomLevel,
-  } = useUIFlags();
+  const { setRuntimeConfig, adjustZoom, resetZoom } = useUIFlags();
   const { setPreviewThemeState } = useTheme();
 
   const initializedRef = useRef(false);
@@ -65,11 +59,9 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
       setStale,
       setTheme: setPreviewThemeState,
       setNextraMeta,
-      setSourceLineHighlight,
-      setSourceLineHighlightColor,
-      setScrollSync,
-      setShimSideRail,
-      setZoom: setZoomLevel,
+      setRuntimeConfig,
+      adjustZoom,
+      resetZoom,
     });
     log.debug('Handlers registered');
   }, [
@@ -81,11 +73,9 @@ function HandlerRegistrar({ children }: HandlerRegistrarProps) {
     setIsLoading,
     setPreviewThemeState,
     setNextraMeta,
-    setSourceLineHighlight,
-    setSourceLineHighlightColor,
-    setScrollSync,
-    setShimSideRail,
-    setZoomLevel,
+    setRuntimeConfig,
+    adjustZoom,
+    resetZoom,
   ]);
 
   return <>{children}</>;

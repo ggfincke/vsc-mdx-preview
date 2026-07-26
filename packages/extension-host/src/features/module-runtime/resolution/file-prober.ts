@@ -13,10 +13,16 @@ import {
   STAT_CACHE_TTL_MS,
   STAT_CACHE_MAX_ENTRIES,
 } from '../../../shared/constants';
-import type { StatResult, FileProbingOptions } from '../../types';
+import type {
+  StatResult,
+  FileProbingOptions,
+} from '../types/resolver/file-prober';
 
 // re-export canonical type definitions from types/
-export type { StatResult, FileProbingOptions } from '../../types';
+export type {
+  StatResult,
+  FileProbingOptions,
+} from '../types/resolver/file-prober';
 
 // stat cache (LRU w/ TTL for file stat results)
 
@@ -143,7 +149,12 @@ export function shouldSkipPath(
   basePath: string,
   skipNodeModules: boolean
 ): boolean {
-  return skipNodeModules && basePath.includes('node_modules');
+  return skipNodeModules && isNodeModulesPath(basePath);
+}
+
+// match node_modules as a complete path segment on either platform
+export function isNodeModulesPath(filePath: string): boolean {
+  return filePath.split(/[\\/]+/).includes('node_modules');
 }
 
 // find first matching index file from stat results (async batched)

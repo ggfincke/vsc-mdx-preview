@@ -3,7 +3,7 @@
 
 import { ServiceRegistry } from './ServiceRegistry';
 import { ServiceNames, type ServiceName } from './service-names';
-import type { IService } from '../types';
+import type { IService } from './types';
 
 // import service types for typed convenience functions
 import type { ConfigManager } from '../../shared/config/ConfigManager';

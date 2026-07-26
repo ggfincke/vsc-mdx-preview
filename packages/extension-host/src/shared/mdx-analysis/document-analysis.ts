@@ -1,16 +1,22 @@
-// packages/extension-host/src/features/language/mdx-document-analysis.ts
-// shared MDX document parsing & analysis (frontmatter, AST, offsets)
+// packages/extension-host/src/shared/mdx-analysis/document-analysis.ts
+// parse MDX documents & map AST positions to document coordinates
 
 import * as vscode from 'vscode';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMdx from 'remark-mdx';
 import { extractFrontmatter } from 'mdx-forge/compiler';
+import { LRUCache } from '@mdx-preview/runtime-utils';
 import type { Root } from 'mdast';
-import type { MdastPosition } from '../diagnostics/types';
+import type { MdastPosition } from './types';
 
 // reusable parser instance (stateless, safe to share across calls)
 const mdxParser = unified().use(remarkParse).use(remarkMdx);
+
+export interface DocumentAnalysisIdentity {
+  uri: string;
+  version: number;
+}
 
 // parsed MDX document w/ frontmatter data & line offset for AST positions
 export interface MdxDocumentAnalysis {
@@ -31,8 +37,29 @@ export interface MdxDocumentAnalysis {
   hasFrontmatter: boolean;
 }
 
+interface CachedDocumentAnalysis {
+  version: number;
+  analysis: MdxDocumentAnalysis;
+}
+
+const analysisCache = new LRUCache<string, CachedDocumentAnalysis>({
+  maxEntries: 50,
+  maxMemoryBytes: 64 * 1024 * 1024,
+  estimateSize: ({ analysis }) => analysis.content.length * 4,
+});
+
 // parse an MDX document & extract frontmatter, AST & line offset
-export function analyzeMdxDocument(text: string): MdxDocumentAnalysis {
+export function analyzeMdxDocument(
+  text: string,
+  identity?: DocumentAnalysisIdentity
+): MdxDocumentAnalysis {
+  if (identity) {
+    const cached = analysisCache.get(identity.uri);
+    if (cached?.version === identity.version) {
+      return cached.analysis;
+    }
+  }
+
   const matterResult = extractFrontmatter(text);
   const hasFrontmatter =
     matterResult.bodyStartLine > 1 || matterResult.bodyStartColumn > 1;
@@ -48,7 +75,7 @@ export function analyzeMdxDocument(text: string): MdxDocumentAnalysis {
 
   const ast = mdxParser.parse(matterResult.content) as Root;
 
-  return {
+  const analysis = {
     ast,
     frontmatter: matterResult.frontmatter,
     content: matterResult.content,
@@ -57,6 +84,24 @@ export function analyzeMdxDocument(text: string): MdxDocumentAnalysis {
     frontmatterEndLine,
     hasFrontmatter,
   };
+
+  // share ASTs only among read-only consumers for the exact document version
+  if (identity) {
+    analysisCache.set(identity.uri, {
+      version: identity.version,
+      analysis,
+    });
+  }
+
+  return analysis;
+}
+
+export function invalidateMdxAnalysisCache(uri: string): void {
+  analysisCache.delete(uri);
+}
+
+export function clearMdxAnalysisCache(): void {
+  analysisCache.clear();
 }
 
 // frontmatter boundary check via TextDocument.lineAt (no full-text materialisation)

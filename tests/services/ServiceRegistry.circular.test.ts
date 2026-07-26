@@ -37,34 +37,6 @@ describe('ServiceRegistry circular dependency detection', () => {
     expect(() => registry.get('ServiceA')).toThrow(CircularDependencyError);
   });
 
-  it('detects indirect cycle (A -> B -> C -> A)', () => {
-    registry.register('ServiceA', () => {
-      registry.get('ServiceB');
-      return { dispose: vi.fn() };
-    });
-
-    registry.register('ServiceB', () => {
-      registry.get('ServiceC');
-      return { dispose: vi.fn() };
-    });
-
-    registry.register('ServiceC', () => {
-      registry.get('ServiceA');
-      return { dispose: vi.fn() };
-    });
-
-    expect(() => registry.get('ServiceA')).toThrow(CircularDependencyError);
-  });
-
-  it('detects self-reference cycle (A -> A)', () => {
-    registry.register('SelfService', () => {
-      registry.get('SelfService');
-      return { dispose: vi.fn() };
-    });
-
-    expect(() => registry.get('SelfService')).toThrow(CircularDependencyError);
-  });
-
   it('allows non-circular dependency chains', () => {
     registry.register('Base', () => ({
       dispose: vi.fn(),

@@ -22,6 +22,7 @@ export const mockConfigManager = {
   inspect: vi.fn(),
   onDidChangeConfiguration: vi.fn(() => ({ dispose: vi.fn() })),
   onDidChangeKey: vi.fn(() => ({ dispose: vi.fn() })),
+  onDidChangeConfiguration: vi.fn(() => ({ dispose: vi.fn() })),
 };
 
 export const mockTrustManager = {
@@ -76,6 +77,7 @@ export const mockConfigCache = {
   clear: vi.fn(),
   hasWatcher: vi.fn(() => false),
   watchConfigPath: vi.fn(),
+  watchConfigCandidate: vi.fn(() => ({ dispose: vi.fn() })),
   unwatchConfigPath: vi.fn(),
   invalidate: vi.fn(),
   notifyChange: vi.fn(),
@@ -90,6 +92,7 @@ export const mockTailwindProcessor = {
   invalidateVersionCache: vi.fn(),
   invalidateDetectionCaches: vi.fn(),
   invalidateScanCache: vi.fn(),
+  onDidChangeDetectionInputs: vi.fn(() => ({ dispose: vi.fn() })),
 };
 
 export const mockStatusBarManager = {

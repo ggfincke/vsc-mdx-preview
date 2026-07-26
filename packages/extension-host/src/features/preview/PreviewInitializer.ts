@@ -8,16 +8,18 @@ import { LogTags } from '@mdx-preview/contracts';
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.PREVIEW);
 import { WEBVIEW_HANDSHAKE_TIMEOUT_MS } from '../../shared/constants';
+import { DocumentTracker } from './watchers/DocumentTracker';
+import { CustomCssWatcher } from './watchers/CustomCssWatcher';
+import { DependencyWatcher } from './watchers/DependencyWatcher';
+import { EventSubscriptionWatcher } from './watchers/EventSubscriptionWatcher';
+import { TailwindConfigWatcher } from './watchers/TailwindConfigWatcher';
+import { WatcherManager } from './watchers/WatcherManager';
 import {
-  DocumentTracker,
-  CustomCssWatcher,
-  DependencyWatcher,
-  EventSubscriptionWatcher,
-  TailwindConfigWatcher,
-  WatcherManager,
-} from './watchers';
-import { onConfigChange } from './configuration';
-import type { ResolvedConfig } from '../types';
+  getConfigCandidatePaths,
+  onConfigChange,
+  watchConfigCandidates,
+} from './configuration/ConfigResolver';
+import { onTypeScriptConfigChange } from './configuration/TypeScriptConfigResolver';
 import { getTailwindProcessor } from '../../app/services';
 
 export interface HandshakeResult {
@@ -144,31 +146,62 @@ export class PreviewInitializer {
   setupConfigWatcher(
     watcherManager: WatcherManager,
     docScheme: string,
-    mdxPreviewConfig: ResolvedConfig | undefined,
+    documentPath: string,
     onConfigChanged: () => void
   ): void {
     // always remove existing config watcher first
     watcherManager.unregister('config');
 
-    // only set up watcher for file scheme documents w/ valid config
-    if (docScheme !== 'file' || !mdxPreviewConfig) {
+    if (docScheme !== 'file') {
       return;
     }
 
-    const configPath = mdxPreviewConfig.configPath;
+    const configCandidatePaths = new Set(getConfigCandidatePaths(documentPath));
 
     const configSubscriptionWatcher = new EventSubscriptionWatcher({
       logTag: LogTags.CONFIG_SUBSCRIPTION,
-      subscribe: () =>
-        onConfigChange((event) => {
-          if (event.configPath === configPath) {
+      subscribe: () => {
+        const candidateWatch = watchConfigCandidates(documentPath);
+        const changeSubscription = onConfigChange((event) => {
+          if (configCandidatePaths.has(event.configPath)) {
             log.debug('MDX config file changed, reloading...');
             onConfigChanged();
           }
-        }),
+        });
+        return {
+          dispose: () => {
+            changeSubscription.dispose();
+            candidateWatch.dispose();
+          },
+        };
+      },
     });
 
     watcherManager.register('config', configSubscriptionWatcher);
+    configSubscriptionWatcher.start();
+  }
+
+  setupTypeScriptConfigWatcher(
+    watcherManager: WatcherManager,
+    docScheme: string,
+    onConfigChanged: () => void
+  ): void {
+    watcherManager.unregister('typescriptConfig');
+
+    if (docScheme !== 'file') {
+      return;
+    }
+
+    const configSubscriptionWatcher = new EventSubscriptionWatcher({
+      logTag: LogTags.TS_CONFIG,
+      subscribe: () =>
+        onTypeScriptConfigChange(() => {
+          log.debug('TypeScript config file changed, reloading...');
+          onConfigChanged();
+        }),
+    });
+
+    watcherManager.register('typescriptConfig', configSubscriptionWatcher);
     configSubscriptionWatcher.start();
   }
 
@@ -232,5 +265,46 @@ export class PreviewInitializer {
 
     watcherManager.register('tailwind', tailwindWatcher);
     tailwindWatcher.start();
+  }
+
+  // subscribe empty Tailwind profiles to config & entry CSS creation
+  setupTailwindDetectionWatcher(
+    watcherManager: WatcherManager,
+    docScheme: string,
+    workspaceRoot: string | undefined,
+    onChange: (changedPaths: string[]) => void,
+    isAlreadyWatched: (changedPath: string) => boolean
+  ): void {
+    watcherManager.unregister('tailwindDetection');
+
+    if (docScheme !== 'file' || !workspaceRoot) {
+      return;
+    }
+
+    const detectionWatcher = new EventSubscriptionWatcher({
+      logTag: LogTags.TAILWIND_WATCHER,
+      subscribe: () =>
+        getTailwindProcessor().onDidChangeDetectionInputs(
+          workspaceRoot,
+          (changedPaths) => {
+            const newDetectionInputs = changedPaths.filter(
+              (changedPath) => !isAlreadyWatched(changedPath)
+            );
+            if (newDetectionInputs.length === 0) {
+              return;
+            }
+            log.debug('Tailwind detection input created, reloading...');
+            getTailwindProcessor().invalidateVersionCache(workspaceRoot);
+            onChange(newDetectionInputs);
+          }
+        ),
+    });
+
+    watcherManager.register('tailwindDetection', detectionWatcher);
+    detectionWatcher.start();
+  }
+
+  dispose(): void {
+    this.cancelHandshakeTimeout();
   }
 }

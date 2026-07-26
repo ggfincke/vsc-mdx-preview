@@ -22,6 +22,8 @@ export {
 
 export { MDX_PREVIEW_CONFIG_SCHEMA } from './schema';
 
+export type { PreviewRuntimeConfig } from './types';
+
 export {
   FRONTMATTER_OVERRIDES,
   FRONTMATTER_OVERRIDE_MAP,

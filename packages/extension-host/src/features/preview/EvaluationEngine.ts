@@ -3,12 +3,16 @@
 
 import * as fs from 'fs';
 import { transformEntry } from '../module-runtime/transform/transform';
-import { extractImportSpecifiers } from '../module-runtime/dependencies/import-extractor';
+import { extractModuleDependencies } from '../module-runtime/dependencies/import-extractor';
 import { createLazyImport } from '../../shared/utils/lazy-import';
 import { createSingleton } from '../../shared/utils/singleton-factory';
 import { raceTimeout } from '../../shared/utils/async-utils';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
+import {
+  LogTags,
+  SETTINGS_DEFAULTS,
+  type ModuleDependency,
+} from '@mdx-preview/contracts';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.ENGINE);
@@ -20,15 +24,11 @@ const getCompileSafeModule = createLazyImport(
 import { ErrorContext } from '../../shared/errors';
 import { getTailwindProcessor, getErrorReporter } from '../../app/services';
 import { MDX_COMPILATION_TIMEOUT_MS } from '../../shared/constants';
-import { DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS } from '@mdx-preview/contracts';
-import { toMdxForgeCompilerConfig } from '../../shared/config/EffectivePreviewConfig';
+import { toMdxForgeCompilerConfig } from './configuration/EffectivePreviewConfig';
 import type { Preview, WebviewHandle } from './preview-manager';
 import type { TrustState } from '@mdx-preview/contracts';
-import type {
-  CompilerConfig,
-  TailwindConfig,
-  TailwindProfileDetectionResult,
-} from '../types';
+import type { CompilerConfig, TailwindConfig } from '../../shared/config/types';
+import type { TailwindProfileDetectionResult } from '../tailwind/types/detector';
 
 // result of evaluating MDX in Trusted Mode
 export interface TrustedEvaluationResult {
@@ -37,7 +37,7 @@ export interface TrustedEvaluationResult {
   // resolved file path
   entryFilePath: string;
   // extracted dependencies
-  dependencies: string[];
+  dependencies: ModuleDependency[];
   // parsed frontmatter
   frontmatter: Record<string, unknown> | undefined;
 }
@@ -94,8 +94,10 @@ export class EvaluationEngine {
     const entryFilePath = await fs.promises.realpath(fsPath);
 
     // extract dependencies from ESM code (before CommonJS conversion for better parsing)
-    const dependencies = await extractImportSpecifiers(esmCode);
-    log.debug(`Dependencies: ${dependencies.join(', ')}`);
+    const dependencies = await extractModuleDependencies(esmCode);
+    log.debug(
+      `Dependencies: ${dependencies.map(({ specifier }) => specifier).join(', ')}`
+    );
 
     return {
       code,
@@ -137,7 +139,7 @@ export class EvaluationEngine {
 
       const compilationTimeout =
         params.tailwindConfig.compilationTimeout ??
-        DEFAULT_TAILWIND_COMPILATION_TIMEOUT_MS;
+        SETTINGS_DEFAULTS['tailwind.compilationTimeout'];
 
       const result = await raceTimeout(
         getTailwindProcessor().process({

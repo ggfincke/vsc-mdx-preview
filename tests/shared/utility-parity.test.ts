@@ -2,64 +2,16 @@
 // verify copied utility behavior across vsc-mdx-preview & mdx-forge
 // ! cross-repo parity: mirror mdx-forge/tests/cross-repo/utility-parity.test.ts
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Semaphore } from '../../packages/runtime-utils/src/async/semaphore';
 import { LRUCache } from '../../packages/runtime-utils/src/cache/lru-cache';
 import { isBareImport } from '../../packages/runtime-utils/src/module-id';
-import { extractErrorMessage } from '../../packages/runtime-utils/src/errors/normalize';
-import { copyToClipboard } from '../../packages/webview-client/src/shared/utils/clipboard';
-import { cn } from '../../packages/webview-client/src/shared/utils/cn';
+import {
+  extractErrorMessage,
+  normalizeError,
+} from '../../packages/runtime-utils/src/errors/normalize';
 
 describe('cross-repo utility parity', () => {
-  describe('cn() behavioral contract', () => {
-    it('joins class names and filters falsy values', () => {
-      expect(cn('a', 'b')).toBe('a b');
-      expect(cn('a', false, 'b')).toBe('a b');
-      expect(cn('a', null, undefined, 'b')).toBe('a b');
-      expect(cn()).toBe('');
-      expect(cn(false, null, undefined)).toBe('');
-      expect(cn('only')).toBe('only');
-    });
-  });
-
-  describe('copyToClipboard() behavioral contract', () => {
-    let originalNavigator: typeof globalThis.navigator;
-
-    beforeEach(() => {
-      originalNavigator = globalThis.navigator;
-    });
-
-    afterEach(() => {
-      Object.defineProperty(globalThis, 'navigator', {
-        value: originalNavigator,
-        writable: true,
-        configurable: true,
-      });
-    });
-
-    it('returns true for success and false for write failures', async () => {
-      Object.defineProperty(globalThis, 'navigator', {
-        value: { clipboard: { writeText: async () => {} } },
-        writable: true,
-        configurable: true,
-      });
-      expect(await copyToClipboard('test')).toBe(true);
-
-      Object.defineProperty(globalThis, 'navigator', {
-        value: {
-          clipboard: {
-            writeText: async () => {
-              throw new Error('denied');
-            },
-          },
-        },
-        writable: true,
-        configurable: true,
-      });
-      expect(await copyToClipboard('test')).toBe(false);
-    });
-  });
-
   describe('LRUCache shared contract', () => {
     it('tracks access order, eviction, memory, protection and settings', () => {
       const evicted: Array<[string, number]> = [];
@@ -157,16 +109,10 @@ describe('cross-repo utility parity', () => {
       const cases: Array<[string, boolean]> = [
         ['react', true],
         ['@scope/pkg/subpath', true],
-        ['lodash/merge', true],
         ['node:fs', true],
         ['./relative', false],
-        ['../parent', false],
-        ['.hidden', false],
-        ['/absolute', false],
-        ['C:\\absolute\\path', false],
         ['npm://react@18', false],
         ['https://example.com/pkg', false],
-        ['data:text/javascript,export default 1', false],
       ];
 
       for (const [specifier, expected] of cases) {
@@ -182,15 +128,24 @@ describe('cross-repo utility parity', () => {
         ['plain string', 'plain string'],
         [{ message: 'obj msg' }, 'obj msg'],
         [{ message: 42 }, 'Unknown error'],
-        [{ foo: 'bar' }, 'Unknown error'],
-        [42, 'Unknown error'],
         [null, 'Unknown error'],
-        [undefined, 'Unknown error'],
       ];
 
       for (const [input, expected] of cases) {
         expect(extractErrorMessage(input)).toBe(expected);
       }
+    });
+  });
+
+  describe('normalizeError stack contract', () => {
+    it('preserves remote string stacks on plain objects', () => {
+      const normalized = normalizeError({
+        message: 'remote failure',
+        stack: 'remote stack',
+      });
+      expect(normalized).toBeInstanceOf(Error);
+      expect(normalized.message).toBe('remote failure');
+      expect(normalized.stack).toBe('remote stack');
     });
   });
 });

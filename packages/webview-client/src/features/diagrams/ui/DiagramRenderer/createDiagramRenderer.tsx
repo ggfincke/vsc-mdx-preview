@@ -9,6 +9,7 @@ import {
   useAsyncEffect,
   type CancellationSignal,
 } from '../../../../shared/hooks';
+import { getDiagramResult } from '../../utils/diagramResultCache';
 
 // stable shared classes so diagram-shared.css targets one set of selectors
 // instead of hard-coding every per-renderer prefix; prefix classes are kept
@@ -34,6 +35,8 @@ export interface DiagramRendererBaseProps {
 
 // configuration for creating a diagram renderer component
 export interface DiagramRendererConfig<P extends DiagramRendererBaseProps> {
+  // stable adapter family for cache isolation
+  cacheFamily: string;
   // CSS class prefix (e.g., 'mdx-preview-mermaid')
   classPrefix: string;
   // error message prefix (e.g., 'Mermaid parse error')
@@ -53,6 +56,10 @@ export interface DiagramRendererConfig<P extends DiagramRendererBaseProps> {
   sanitize?: (svg: string) => string;
   // hook called inside component body to extract theme value
   useThemeValue: () => string;
+  // optional hook for renderer state beyond theme (e.g. icon packs or server)
+  useCacheKeyValue?: () => string;
+  // include the renderer DOM id when generated SVG ids depend on it
+  includeIdInCacheKey?: boolean;
   // convert theme value to data-theme attribute (default: identity)
   toDataTheme?: (themeValue: string) => string;
   // extra deps for useAsyncEffect beyond [code, id, themeValue]
@@ -66,11 +73,19 @@ export function createDiagramRenderer<
   const log = createTaggedLogger(config.logTag);
   const prefix = config.classPrefix;
   const resolveDataTheme = config.toDataTheme ?? ((v: string) => v);
+  const useCacheKeyValue = config.useCacheKeyValue ?? (() => '');
 
   function DiagramRenderer(props: P) {
     const { code, id } = props;
     const containerRef = useRef<HTMLDivElement>(null);
+    const renderedResultRef = useRef<string | null>(null);
     const themeValue = config.useThemeValue();
+    const cacheKeyValue = useCacheKeyValue();
+    const resultCacheKey = JSON.stringify(
+      config.includeIdInCacheKey
+        ? [code, themeValue, cacheKeyValue, id]
+        : [code, themeValue, cacheKeyValue]
+    );
     const dataTheme = resolveDataTheme(themeValue);
     const [error, setError] = useState<string | null>(null);
     const [showSource, setShowSource] = useState(false);
@@ -78,6 +93,13 @@ export function createDiagramRenderer<
 
     const toggleSource = useCallback(() => {
       setShowSource((prev) => !prev);
+    }, []);
+
+    const setContainerRef = useCallback((container: HTMLDivElement | null) => {
+      containerRef.current = container;
+      if (container && renderedResultRef.current !== null) {
+        container.innerHTML = renderedResultRef.current;
+      }
     }, []);
 
     const extraDeps = config.extraDeps?.(props) ?? [];
@@ -88,19 +110,35 @@ export function createDiagramRenderer<
           id,
           codePreview: code.slice(0, 50),
         });
+        setError(null);
 
-        const svg = await config.render(props, signal, themeValue);
+        const processed = await getDiagramResult(
+          config.cacheFamily,
+          resultCacheKey,
+          () =>
+            config.render(
+              props,
+              {
+                // shared work must finish when one of its consumers unmounts
+                isCancelled: () => false,
+              },
+              themeValue
+            ),
+          config.sanitize
+        );
 
-        if (signal.isCancelled() || !containerRef.current) {
+        if (signal.isCancelled()) {
           return;
         }
 
-        const processed = config.sanitize ? config.sanitize(svg) : svg;
-        containerRef.current.innerHTML = processed;
+        renderedResultRef.current = processed;
+        if (containerRef.current) {
+          containerRef.current.innerHTML = processed;
+        }
         setError(null);
         log.debug('render complete', { id });
       },
-      [code, id, themeValue, ...extraDeps],
+      [id, resultCacheKey, ...extraDeps],
       {
         onError: (err) => {
           const message =
@@ -150,7 +188,7 @@ export function createDiagramRenderer<
           </div>
         )}
         <div
-          ref={containerRef}
+          ref={setContainerRef}
           className={cn(`${prefix}-diagram`, SHARED.surface)}
           data-theme={dataTheme}
           style={{ visibility: isLoading ? 'hidden' : 'visible' }}

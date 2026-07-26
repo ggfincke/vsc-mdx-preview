@@ -35,12 +35,10 @@ export class PackageJsonWatcher extends BaseWatcher {
 
   protected async onStart(): Promise<void> {
     // watch package.json files in workspace
-    // ignoreCreateEvents: new package.json doesn't affect existing resolution
-    // ignoreDeleteEvents: deletion doesn't affect resolution until next resolve
     this.packageJsonWatcher = this.createFileWatcher('**/package.json', {
-      ignoreCreateEvents: true,
-      ignoreDeleteEvents: true,
       onChange: (uri) => this.handleChange(uri, 'package.json'),
+      onCreate: (uri) => this.handleChange(uri, 'package.json'),
+      onDelete: (uri) => this.handleChange(uri, 'package.json'),
       enableEventLogging: false,
     });
 
@@ -48,9 +46,9 @@ export class PackageJsonWatcher extends BaseWatcher {
     this.lockFileWatcher = this.createFileWatcher(
       '**/{package-lock.json,yarn.lock,pnpm-lock.yaml}',
       {
-        ignoreCreateEvents: true,
-        ignoreDeleteEvents: true,
         onChange: (uri) => this.handleChange(uri, 'lock file'),
+        onCreate: (uri) => this.handleChange(uri, 'lock file'),
+        onDelete: (uri) => this.handleChange(uri, 'lock file'),
         enableEventLogging: false,
       }
     );

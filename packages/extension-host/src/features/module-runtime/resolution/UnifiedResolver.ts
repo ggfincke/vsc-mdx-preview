@@ -7,6 +7,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { isNpmModuleId } from '@mdx-preview/runtime-utils';
 import { createResettableSingleton } from '../../../shared/utils/singleton-factory';
 import { buildShimResolutionResult } from './resolution-builders';
+import { isNodeModulesPath } from './file-prober';
 import {
   getTypeScriptPathStrategy,
   getEnhancedResolveStrategy,
@@ -14,11 +15,11 @@ import {
 } from './strategies';
 import {
   ResolutionStrategy,
-  type IResolutionStrategy,
   type ResolutionContext,
   type ResolutionResult,
   type ResolutionMode,
-} from '../../types';
+} from '../types/module-system';
+import type { IResolutionStrategy } from '../types/resolver/strategies';
 
 // module-level tagged logger for unified resolver
 const log = createTaggedLogger(LogTags.UNIFIED_RESOLVER);
@@ -37,13 +38,16 @@ interface StrategyDescriptor {
   readonly preferAsync: boolean;
 }
 
-// precomputed strategy chains (only 3 possible shapes)
+// precomputed strategy chains
 const RELATIVE_CHAIN: readonly StrategyDescriptor[] = [
   { getStrategy: getFileProbeStrategy, preferAsync: true },
 ];
+const NODE_MODULE_RELATIVE_CHAIN: readonly StrategyDescriptor[] = [
+  { getStrategy: getEnhancedResolveStrategy, preferAsync: true },
+];
 const BARE_TS_CHAIN: readonly StrategyDescriptor[] = [
   { getStrategy: getTypeScriptPathStrategy, preferAsync: true },
-  { getStrategy: getEnhancedResolveStrategy, preferAsync: false },
+  { getStrategy: getEnhancedResolveStrategy, preferAsync: true },
 ];
 const BARE_CHAIN: readonly StrategyDescriptor[] = [BARE_TS_CHAIN[1]];
 
@@ -58,7 +62,9 @@ function pickChain(
   context: ResolutionContext
 ): readonly StrategyDescriptor[] {
   if (isRelativeImport(specifier)) {
-    return RELATIVE_CHAIN;
+    return isNodeModulesPath(context.baseDir)
+      ? NODE_MODULE_RELATIVE_CHAIN
+      : RELATIVE_CHAIN;
   }
   return context.tsConfig ? BARE_TS_CHAIN : BARE_CHAIN;
 }

@@ -25,7 +25,11 @@ export interface CopyWithFeedbackOptions {
   originalContent?: string;
   // duration ms
   duration?: number;
+  // cancel pending feedback during owner cleanup
+  signal?: AbortSignal;
 }
+
+const feedbackCleanups = new WeakMap<HTMLElement, () => void>();
 
 // copy text & apply visual feedback to a DOM element
 // used for DOM-based copy buttons (e.g., enhanceCodeBlocks)
@@ -39,26 +43,48 @@ export async function copyWithFeedback(
     copiedContent,
     originalContent,
     duration = CODE_COPY_FEEDBACK_DURATION_MS,
+    signal,
   } = options;
 
   const success = await copyToClipboard(text);
   if (!success) {
     return false;
   }
+  if (signal?.aborted || !element.isConnected) {
+    return true;
+  }
+
+  feedbackCleanups.get(element)?.();
 
   // apply visual feedback
   element.classList.add(copiedClassName);
 
+  const original = originalContent ?? element.innerHTML;
   if (copiedContent !== undefined) {
-    const original = originalContent ?? element.innerHTML;
     element.innerHTML = copiedContent;
-    setTimeout(() => {
-      element.innerHTML = original;
-      element.classList.remove(copiedClassName);
-    }, duration);
-  } else {
-    setTimeout(() => element.classList.remove(copiedClassName), duration);
   }
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const cleanup = (): void => {
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+    signal?.removeEventListener('abort', cleanup);
+    if (feedbackCleanups.get(element) === cleanup) {
+      feedbackCleanups.delete(element);
+    }
+    if (element.isConnected) {
+      if (copiedContent !== undefined) {
+        element.innerHTML = original;
+      }
+      element.classList.remove(copiedClassName);
+    }
+  };
+
+  feedbackCleanups.set(element, cleanup);
+  signal?.addEventListener('abort', cleanup, { once: true });
+  timer = setTimeout(cleanup, duration);
 
   return true;
 }

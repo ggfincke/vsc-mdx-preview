@@ -12,15 +12,12 @@ import {
   mockErrorReporter,
 } from '../../helpers/mock-services';
 
-const {
-  mockRaceTimeout,
-  mockTransformEntry,
-  mockExtractImportSpecifiers,
-} = vi.hoisted(() => ({
-  mockRaceTimeout: vi.fn(),
-  mockTransformEntry: vi.fn(),
-  mockExtractImportSpecifiers: vi.fn(),
-}));
+const { mockRaceTimeout, mockTransformEntry, mockExtractModuleDependencies } =
+  vi.hoisted(() => ({
+    mockRaceTimeout: vi.fn(),
+    mockTransformEntry: vi.fn(),
+    mockExtractModuleDependencies: vi.fn(),
+  }));
 
 vi.mock(
   '../../../packages/extension-host/src/shared/utils/async-utils',
@@ -39,7 +36,7 @@ vi.mock(
 vi.mock(
   '../../../packages/extension-host/src/features/module-runtime/dependencies/import-extractor',
   () => ({
-    extractImportSpecifiers: mockExtractImportSpecifiers,
+    extractModuleDependencies: mockExtractModuleDependencies,
   })
 );
 
@@ -63,7 +60,13 @@ describe('EvaluationEngine timeout behavior', () => {
       esmCode: 'import x from "x"',
       frontmatter: undefined,
     });
-    mockExtractImportSpecifiers.mockResolvedValue(['x']);
+    mockExtractModuleDependencies.mockResolvedValue([
+      {
+        specifier: 'x',
+        kind: 'import',
+        runtimeRequest: '\0mdx-forge:import\0x',
+      },
+    ]);
     mockTailwindProcessor.process.mockResolvedValue({
       profile: 'advanced',
       enabled: true,
@@ -101,7 +104,14 @@ describe('EvaluationEngine timeout behavior', () => {
       frontmatter: { title: 'Doc' },
     };
     mockRaceTimeout.mockResolvedValueOnce(resolvedTransformResult);
-    mockExtractImportSpecifiers.mockResolvedValueOnce(['react']);
+    const dependencies = [
+      {
+        specifier: 'react',
+        kind: 'import' as const,
+        runtimeRequest: '\0mdx-forge:import\0react',
+      },
+    ];
+    mockExtractModuleDependencies.mockResolvedValueOnce(dependencies);
     const realpathSpy = vi
       .spyOn(fs.promises, 'realpath')
       .mockResolvedValue('/workspace/resolved/doc.mdx' as any);
@@ -117,10 +127,10 @@ describe('EvaluationEngine timeout behavior', () => {
     expect(result).toEqual({
       code: 'compiled',
       entryFilePath: '/workspace/resolved/doc.mdx',
-      dependencies: ['react'],
+      dependencies,
       frontmatter: { title: 'Doc' },
     });
-    expect(mockExtractImportSpecifiers).toHaveBeenCalledWith(
+    expect(mockExtractModuleDependencies).toHaveBeenCalledWith(
       'import React from "react"'
     );
 

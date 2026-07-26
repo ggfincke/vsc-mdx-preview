@@ -4,3 +4,4 @@
 export { WatchableCache } from './WatchableCache';
 export type { WatchEventType, WatchHandlers } from './WatchableCache';
 export { PathCache } from './PathCache';
+export { AsyncLruCache } from './AsyncLruCache';

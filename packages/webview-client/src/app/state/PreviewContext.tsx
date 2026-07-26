@@ -4,7 +4,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { PreviewContent, PreviewError } from '../types';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
-import type { NextraPageMeta } from '@mdx-preview/contracts';
+import type { ModuleDependency, NextraPageMeta } from '@mdx-preview/contracts';
 import { LogTags } from '@mdx-preview/contracts';
 import { createContextProvider } from '../providers/createContextProvider';
 
@@ -15,7 +15,7 @@ interface PreviewContextValue {
   setTrustedContent: (
     code: string,
     entryFilePath: string,
-    dependencies: string[]
+    dependencies: ModuleDependency[]
   ) => void;
   setError: (error: PreviewError) => void;
   clearError: () => void;
@@ -30,8 +30,9 @@ const log = createTaggedLogger(LogTags.PREVIEW_CONTEXT);
 function usePreviewProviderValue(): PreviewContextValue {
   const [content, setContent] = useState<PreviewContent | null>(null);
   const [error, setErrorState] = useState<PreviewError | null>(null);
-  const [nextraMeta, setNextraMetaState] =
-    useState<NextraPageMeta | null>(null);
+  const [nextraMeta, setNextraMetaState] = useState<NextraPageMeta | null>(
+    null
+  );
 
   const setSafeContent = useCallback((html: string) => {
     log.debug(`setSafeContent called, html length: ${html.length}`);
@@ -40,7 +41,7 @@ function usePreviewProviderValue(): PreviewContextValue {
   }, []);
 
   const setTrustedContent = useCallback(
-    (code: string, entryFilePath: string, dependencies: string[]) => {
+    (code: string, entryFilePath: string, dependencies: ModuleDependency[]) => {
       log.debug(
         `setTrustedContent called, code length: ${code.length}, path: ${entryFilePath}`
       );

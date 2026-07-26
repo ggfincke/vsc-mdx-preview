@@ -25,7 +25,7 @@ const log = createTaggedLogger(LogTags.ACTIVATE);
 const themeLog = createTaggedLogger(LogTags.THEME);
 const watcherLog = createTaggedLogger(LogTags.WATCHER);
 import { StatusBarManager } from '../features/preview/StatusBarManager';
-import { ThemeManager } from '../features/themes';
+import { ThemeManager } from '../features/themes/ThemeManager';
 import { FrameworkDetector } from '../features/framework/FrameworkDetector';
 import {
   ServiceRegistry,
@@ -47,10 +47,8 @@ import { clearSassCache } from '../features/module-runtime/handlers';
 import { registerResolverSubsystem } from '../features/module-runtime/resolution/resolver-subsystem';
 import { registerCacheSubsystem } from '../app/lifecycle/cache-subsystem';
 import { ConfigManager, ConfigCache } from '../shared/config';
-import {
-  ComponentDiagnostics,
-  registerComponentCodeActions,
-} from '../features/diagnostics';
+import { ComponentDiagnostics } from '../features/diagnostics/ComponentDiagnostics';
+import { registerComponentCodeActions } from '../features/diagnostics/ComponentCodeActions';
 import { registerLanguageProviders } from '../features/language';
 import { registerAllCommands } from '../features/commands';
 import { MetaResolver } from '../features/framework/nextra/MetaResolver';
@@ -206,7 +204,14 @@ export async function activate(
   ]);
 
   // initialize logging w/ reactive debug setting (after ConfigManager)
-  context.subscriptions.push(initLogging());
+  const configManager = getConfigManager();
+  context.subscriptions.push(
+    initLogging({
+      getDebugOutput: () => configManager.get(SETTINGS.DEBUG_OUTPUT),
+      onDidChangeDebugOutput: (callback) =>
+        configManager.onDidChangeKey(SETTINGS.DEBUG_OUTPUT, callback),
+    })
+  );
 
   // StatusBarManager depends on TrustManager, FrameworkDetector, PreviewManager
   // COMPONENT_DIAGNOSTICS: unknown component warnings; META_RESOLVER: Nextra _meta.json

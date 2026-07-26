@@ -5,12 +5,15 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import type { UpdateModeValue } from '@mdx-preview/contracts';
 import {
-  resolveTypescriptConfig,
   findTsConfig,
-  resolveConfig,
-} from './configuration';
-import type { TypeScriptConfiguration, ResolvedConfig } from '../types';
-import { DocumentTracker, DependencyWatcher, WatcherManager } from './watchers';
+  resolveTypescriptConfig,
+} from './configuration/TypeScriptConfigResolver';
+import { resolveConfig } from './configuration/ConfigResolver';
+import type { TypeScriptConfiguration } from '../module-runtime/types/module-system';
+import type { ResolvedConfig } from '../../shared/config/types';
+import { DocumentTracker } from './watchers/DocumentTracker';
+import { DependencyWatcher } from './watchers/DependencyWatcher';
+import { WatcherManager } from './watchers/WatcherManager';
 
 // actions provided by Preview for document event handling
 export interface PreviewActions {
@@ -27,7 +30,6 @@ export class PreviewDocumentHandler {
   private _dependentFsPaths: Set<string> = new Set();
   private _typescriptConfiguration?: TypeScriptConfiguration;
   private _mdxPreviewConfig?: ResolvedConfig;
-  private _editingDoc?: vscode.TextDocument;
 
   get doc(): vscode.TextDocument {
     return this._doc;
@@ -47,10 +49,6 @@ export class PreviewDocumentHandler {
 
   get mdxPreviewConfig(): ResolvedConfig | undefined {
     return this._mdxPreviewConfig;
-  }
-
-  get editingDoc(): vscode.TextDocument | undefined {
-    return this._editingDoc;
   }
 
   // set actions for document event handling (called once after construction)
@@ -114,6 +112,13 @@ export class PreviewDocumentHandler {
     this._mdxPreviewConfig = resolveConfig(this._doc.uri.fsPath) ?? undefined;
   }
 
+  reloadTypescriptConfig(): void {
+    const configFile = findTsConfig(this.entryFsDirectory ?? '');
+    this._typescriptConfiguration = configFile
+      ? (resolveTypescriptConfig(configFile) ?? undefined)
+      : undefined;
+  }
+
   // reset rendered version tracking (called when panel is disposed to force re-render)
   resetRenderedVersion(watcherManager: WatcherManager): void {
     const docTracker = watcherManager.get<DocumentTracker>('document');
@@ -136,7 +141,7 @@ export class PreviewDocumentHandler {
   // handle text document change event
   async handleDidChangeTextDocument(
     fsPath: string,
-    doc: vscode.TextDocument,
+    _doc: vscode.TextDocument,
     active: boolean,
     updateMode: UpdateModeValue
   ): Promise<void> {
@@ -147,8 +152,6 @@ export class PreviewDocumentHandler {
     if (!this._dependentFsPaths.has(fsPath)) {
       return;
     }
-
-    this._editingDoc = doc;
 
     switch (updateMode) {
       case 'onType': {

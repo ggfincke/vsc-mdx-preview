@@ -1,6 +1,8 @@
 // packages/webview-client/src/app/types.ts
 // shared types for MDX Preview webview
 
+import type { ModuleDependency } from '@mdx-preview/contracts';
+
 // re-export shared types from @mdx-preview/contracts
 export type { PreviewError, TrustState } from '@mdx-preview/contracts';
 
@@ -9,7 +11,7 @@ export interface TrustedPreviewContent {
   mode: 'trusted';
   code: string;
   entryFilePath: string;
-  dependencies: string[];
+  dependencies: ModuleDependency[];
 }
 
 // preview content for Safe Mode

@@ -19,7 +19,7 @@ import {
   GITHUB_ALERT_TYPES as GITHUB_ALERT_TYPE_LIST,
 } from 'mdx-forge/compiler';
 import { getFrameworkDetector } from '../../app/services';
-import { isDocumentLineInFrontmatter } from './mdx-document-analysis';
+import { isDocumentLineInFrontmatter } from '../../shared/mdx-analysis/document-analysis';
 import { EXTENSION_DISPLAY_NAME } from '../../shared/constants';
 
 const log = createTaggedLogger(LogTags.COMPLETION_PROVIDER);

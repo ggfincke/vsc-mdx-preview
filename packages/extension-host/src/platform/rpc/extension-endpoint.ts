@@ -4,12 +4,12 @@
 import * as comlink from 'comlink';
 import type { Endpoint, Remote } from 'comlink';
 import * as vscode from 'vscode';
+import type { WebviewRPC } from '@mdx-preview/contracts';
+import { LogTags } from '@mdx-preview/contracts';
 
 import ExtensionHandle from './extension-rpc-handler';
-import { Preview } from '../../features/preview/preview-manager';
-import type { WebviewRPC } from '@mdx-preview/contracts';
+import type { Preview } from '../../features/preview/Preview';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.RPC_EXT);
 
@@ -78,14 +78,15 @@ export type WebviewHandleType = Remote<WebviewRPC>;
 export function initRPCExtensionSide(
   preview: Preview,
   webview: vscode.Webview,
-  disposables: vscode.Disposable[]
+  disposables: vscode.Disposable[],
+  openPreview: () => Promise<void>
 ): WebviewHandleType {
   log.debug('initRPCExtensionSide called');
   const extensionEndpoint = new ExtensionEndpoint(webview, disposables);
 
   // webview to extension calls
   log.debug('Creating ExtensionHandle');
-  const handle = new ExtensionHandle(preview);
+  const handle = new ExtensionHandle(preview, openPreview);
   log.debug('Exposing ExtensionHandle via comlink');
   comlink.expose(handle, extensionEndpoint);
 

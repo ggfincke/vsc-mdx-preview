@@ -48,12 +48,6 @@ function withCode(code: unknown): Diagnostic {
   return d;
 }
 
-describe('DIAGNOSTIC_CODES value-lock', () => {
-  it('pins UNKNOWN_COMPONENT to MDXF001 (sourced from mdx-forge)', () => {
-    expect(DIAGNOSTIC_CODES.UNKNOWN_COMPONENT).toBe('MDXF001');
-  });
-});
-
 describe('readDiagnosticCode', () => {
   it('normalizes clickable, string, numeric & absent codes', () => {
     expect(readDiagnosticCode(withCode({ value: 'MDXF001' }))).toBe('MDXF001');
@@ -80,17 +74,13 @@ describe('range conversion', () => {
   });
 });
 
-describe('toVsSeverity', () => {
-  it('maps every mdx-forge severity to the LSP level', () => {
+describe('toVsDiagnostic', () => {
+  it('maps message, severity, source, range, data & a clickable code', () => {
     expect(toVsSeverity('error')).toBe(DiagnosticSeverity.Error);
     expect(toVsSeverity('warning')).toBe(DiagnosticSeverity.Warning);
     expect(toVsSeverity('info')).toBe(DiagnosticSeverity.Information);
     expect(toVsSeverity('hint')).toBe(DiagnosticSeverity.Hint);
-  });
-});
 
-describe('toVsDiagnostic', () => {
-  it('maps message, severity, source, range, data & a clickable code', () => {
     const vs = toVsDiagnostic(sampleDiagnostic);
     expect(vs.severity).toBe(DiagnosticSeverity.Warning);
     expect(vs.source).toBe(EXTENSION_DISPLAY_NAME);
@@ -107,25 +97,31 @@ describe('toVsDiagnostic', () => {
 });
 
 describe('ComponentDiagnostics.updateDiagnostics', () => {
-  it('publishes one MDXF001 diagnostic for an unknown component', async () => {
+  it('publishes MDXF001 diagnostics on both paired tag-name tokens', async () => {
     mockConfigCache.get.mockReturnValue(null);
 
     const service = ComponentDiagnostics.getInstance();
-    const document = createMockDocument('<Callout />\n<Frobnicate />\n');
+    const document = createMockDocument(
+      '<Frobnicate>\nimportant children\n</Frobnicate>\n'
+    );
 
     await service.updateDiagnostics(document as any);
 
     const diagnostics = service.getDiagnostics(document.uri);
     expect(mockErrorReporter.reportSilent).not.toHaveBeenCalled();
-    expect(diagnostics).toHaveLength(1);
-    expect(readDiagnosticCode(diagnostics[0])).toBe(
-      DIAGNOSTIC_CODES.UNKNOWN_COMPONENT
-    );
-    expect(diagnostics[0].range.start.line).toBe(1);
-    expect(diagnostics[0].range.start.character).toBe(0);
+    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics.map(readDiagnosticCode)).toEqual([
+      DIAGNOSTIC_CODES.UNKNOWN_COMPONENT,
+      DIAGNOSTIC_CODES.UNKNOWN_COMPONENT,
+    ]);
+    expect(diagnostics.map((diagnostic) => diagnostic.range)).toEqual([
+      new Range(0, 1, 0, 11),
+      new Range(2, 2, 2, 12),
+    ]);
     expect((diagnostics[0] as unknown as { data: unknown }).data).toEqual({
       componentName: 'Frobnicate',
       suggestions: [],
+      tagNameRanges: [new Range(0, 1, 0, 11), new Range(2, 2, 2, 12)],
     });
   });
 });

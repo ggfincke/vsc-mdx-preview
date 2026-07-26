@@ -4,7 +4,7 @@
 import type * as vscode from 'vscode';
 import type { LogTag } from '@mdx-preview/contracts';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import type { IWatcher } from '../../types';
+import type { IWatcher } from '../types/watcher';
 
 export interface EventSubscriptionConfig {
   // log tag for debug output

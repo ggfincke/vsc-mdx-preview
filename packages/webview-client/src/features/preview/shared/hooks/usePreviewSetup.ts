@@ -18,7 +18,7 @@ interface PreviewSetupOptions {
 
 interface PreviewSetupResult {
   // preview container ref
-  containerRef: RefObject<HTMLDivElement>;
+  containerRef: RefObject<HTMLDivElement | null>;
   // image click handler for lightbox
   handleImageClick: (e: MouseEvent | React.MouseEvent) => void;
   // render diagram portals

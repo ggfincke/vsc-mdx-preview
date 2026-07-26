@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/mdx-forge/src/components/registry/shim-config.ts
+// Source: mdx-forge/src/components/registry/shim-config.ts
 // packages/webview-client/src/generated/framework-css/frameworkCssLoader.ts
 // load framework CSS only when that framework shims are used
 
