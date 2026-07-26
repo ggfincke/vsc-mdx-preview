@@ -82,6 +82,7 @@ export class PreviewDocumentHandler {
   // set the document & resolve related configurations
   setDoc(doc: vscode.TextDocument, watcherManager: WatcherManager): void {
     this._doc = doc;
+    this._editingDoc = undefined;
     this._dependentFsPaths = new Set([doc.uri.fsPath]);
 
     const configFile = findTsConfig(this.entryFsDirectory ?? '');
@@ -112,6 +113,13 @@ export class PreviewDocumentHandler {
   // update the MDX preview config (called after config file change)
   reloadMdxConfig(): void {
     this._mdxPreviewConfig = resolveConfig(this._doc.uri.fsPath) ?? undefined;
+  }
+
+  reloadTypescriptConfig(): void {
+    const configFile = findTsConfig(this.entryFsDirectory ?? '');
+    this._typescriptConfiguration = configFile
+      ? (resolveTypescriptConfig(configFile) ?? undefined)
+      : undefined;
   }
 
   // reset rendered version tracking (called when panel is disposed to force re-render)

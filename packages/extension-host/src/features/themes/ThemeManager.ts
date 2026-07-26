@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { WithSubscribers } from '../../app/services/SingletonService';
-import { getConfigManager } from '../../app/services';
+import { getConfigManager, getPreviewManager } from '../../app/services';
 import { LogTags, FRONTMATTER_OVERRIDE_MAP } from '@mdx-preview/contracts';
 import { SETTINGS, THEME_KEYS } from '../../shared/config';
 import type {
@@ -39,6 +39,15 @@ export class ThemeManager extends WithSubscribers<
 
   protected constructor() {
     super();
+    this.addDisposable(
+      this.subscribe(() => {
+        const preview = getPreviewManager().getCurrentPreview();
+        if (preview?.active) {
+          preview.pushThemeState();
+        }
+      })
+    );
+
     // listen to VS Code theme changes
     this.addDisposable(
       vscode.window.onDidChangeActiveColorTheme(() => {
@@ -78,7 +87,11 @@ export class ThemeManager extends WithSubscribers<
 
   // check if VS Code is currently using a light theme
   isLightTheme(): boolean {
-    return vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light;
+    const kind = vscode.window.activeColorTheme.kind;
+    return (
+      kind === vscode.ColorThemeKind.Light ||
+      kind === vscode.ColorThemeKind.HighContrastLight
+    );
   }
 
   // get the effective preview theme considering auto-switching

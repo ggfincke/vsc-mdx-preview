@@ -107,25 +107,31 @@ describe('toVsDiagnostic', () => {
 });
 
 describe('ComponentDiagnostics.updateDiagnostics', () => {
-  it('publishes one MDXF001 diagnostic for an unknown component', async () => {
+  it('publishes MDXF001 diagnostics on both paired tag-name tokens', async () => {
     mockConfigCache.get.mockReturnValue(null);
 
     const service = ComponentDiagnostics.getInstance();
-    const document = createMockDocument('<Callout />\n<Frobnicate />\n');
+    const document = createMockDocument(
+      '<Frobnicate>\nimportant children\n</Frobnicate>\n'
+    );
 
     await service.updateDiagnostics(document as any);
 
     const diagnostics = service.getDiagnostics(document.uri);
     expect(mockErrorReporter.reportSilent).not.toHaveBeenCalled();
-    expect(diagnostics).toHaveLength(1);
-    expect(readDiagnosticCode(diagnostics[0])).toBe(
-      DIAGNOSTIC_CODES.UNKNOWN_COMPONENT
-    );
-    expect(diagnostics[0].range.start.line).toBe(1);
-    expect(diagnostics[0].range.start.character).toBe(0);
+    expect(diagnostics).toHaveLength(2);
+    expect(diagnostics.map(readDiagnosticCode)).toEqual([
+      DIAGNOSTIC_CODES.UNKNOWN_COMPONENT,
+      DIAGNOSTIC_CODES.UNKNOWN_COMPONENT,
+    ]);
+    expect(diagnostics.map((diagnostic) => diagnostic.range)).toEqual([
+      new Range(0, 1, 0, 11),
+      new Range(2, 2, 2, 12),
+    ]);
     expect((diagnostics[0] as unknown as { data: unknown }).data).toEqual({
       componentName: 'Frobnicate',
       suggestions: [],
+      tagNameRanges: [new Range(0, 1, 0, 11), new Range(2, 2, 2, 12)],
     });
   });
 });

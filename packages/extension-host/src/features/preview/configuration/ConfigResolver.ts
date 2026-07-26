@@ -39,6 +39,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
   const configPath = findConfigFile(documentDir);
   if (!configPath) {
     cache.set(documentDir, null);
+    setupCandidateWatchers(documentDir);
     return null;
   }
 
@@ -54,6 +55,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
       configPath
     );
     cache.set(documentDir, null);
+    setupCandidateWatchers(documentDir);
     return null;
   }
 
@@ -69,6 +71,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
       configPath
     );
     cache.set(documentDir, null);
+    setupCandidateWatchers(documentDir);
     return null;
   }
 
@@ -88,7 +91,7 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
 }
 
 // find config file by walking up directory tree (uses shared find-up utility)
-function findConfigFile(startDir: string): string | undefined {
+export function findConfigFile(startDir: string): string | undefined {
   log.debug(`Searching for config starting at: ${startDir}`);
 
   const result = findUp({
@@ -106,6 +109,28 @@ function findConfigFile(startDir: string): string | undefined {
   return result;
 }
 
+// watch every path that could become the nearest config
+function setupCandidateWatchers(startDir: string): void {
+  const shouldStop = createWorkspaceStopPredicate();
+  let currentDir = startDir;
+
+  while (currentDir) {
+    for (const filename of CONFIG_FILE_NAMES) {
+      setupConfigWatcher(path.join(currentDir, filename), true);
+    }
+
+    if (shouldStop(currentDir)) {
+      break;
+    }
+
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      break;
+    }
+    currentDir = parentDir;
+  }
+}
+
 // validate config structure using centralized validation
 function validateConfig(config: unknown): string[] {
   const result = validateConfigSchema(config, { context: 'config' });
@@ -113,7 +138,7 @@ function validateConfig(config: unknown): string[] {
 }
 
 // setup file watcher for config file changes
-function setupConfigWatcher(configPath: string): void {
+function setupConfigWatcher(configPath: string, candidate = false): void {
   const cache = getConfigCache();
 
   // already watching
@@ -121,7 +146,7 @@ function setupConfigWatcher(configPath: string): void {
     return;
   }
 
-  cache.watchConfigPath(configPath, {
+  const handlers = {
     onChange: () => {
       log.debug(`File changed: ${configPath}`);
       cache.invalidate(configPath);
@@ -136,9 +161,14 @@ function setupConfigWatcher(configPath: string): void {
       log.debug(`File deleted: ${configPath}`);
       cache.invalidate(configPath);
       cache.notifyChange(configPath, ConfigChangeType.FileDeleted);
-      cache.unwatchConfigPath(configPath);
     },
-  });
+  };
+
+  if (candidate) {
+    cache.watchConfigCandidate(configPath, handlers);
+  } else {
+    cache.watchConfigPath(configPath, handlers);
+  }
 }
 
 // subscribe to config file changes

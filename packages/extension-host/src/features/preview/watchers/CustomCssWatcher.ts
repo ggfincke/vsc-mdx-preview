@@ -85,9 +85,18 @@ export class CustomCssWatcher extends BaseWatcher {
 
   // resolve CSS path (relative to workspace or absolute)
   private resolvePath(cssPath: string): string | null {
+    const documentWorkspace = this.documentDirectory
+      ? vscode.workspace.getWorkspaceFolder(
+          vscode.Uri.file(this.documentDirectory)
+        )
+      : undefined;
     return resolvePathWithFallbacks({
       inputPath: cssPath,
-      primaryDir: this.workspaceFolders?.[0]?.uri.fsPath,
+      primaryDir:
+        documentWorkspace?.uri.fsPath ??
+        (this.documentDirectory
+          ? undefined
+          : this.workspaceFolders?.[0]?.uri.fsPath),
       fallbackDirs: [this.documentDirectory],
     });
   }
@@ -98,7 +107,7 @@ export class CustomCssWatcher extends BaseWatcher {
       logger: this.log,
       logOnError: true,
     });
-    if (cssContent) {
+    if (cssContent !== null) {
       this.notifier?.setCustomCss?.(cssContent);
       this.log.debug(
         `Loaded custom CSS: ${cssPath} (${cssContent.length} chars)`

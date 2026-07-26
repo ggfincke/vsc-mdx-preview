@@ -24,7 +24,8 @@ export async function prepareEvaluationContext(
   preview: Preview,
   text: string,
   fsPath: string,
-  engine: EvaluationEngine
+  engine: EvaluationEngine,
+  isCurrent: () => boolean
 ): Promise<PreparedEvaluationResult> {
   const trustState = getTrustManager().getStateForDocument(preview.doc.uri);
   log.debug(formatTrustStateForDebug(trustState));
@@ -54,6 +55,10 @@ export async function prepareEvaluationContext(
       tailwindConfig: effectiveConfig.tailwind,
     });
 
+    if (!isCurrent()) {
+      return { kind: 'superseded' };
+    }
+
     if (tailwindProfileHint.profile === 'advanced') {
       const fallbackReason = tailwindProfileHint.reason;
       const fallbackKey = canExecute
@@ -66,17 +71,24 @@ export async function prepareEvaluationContext(
       preview.clearTailwindFallbackReason();
     }
   } else {
+    if (!isCurrent()) {
+      return { kind: 'superseded' };
+    }
     preview.clearTailwindFallbackReason();
   }
 
   const needsBrowserRuntime =
     tailwindProfileHint?.profile === 'browser' && shouldProcessTailwind;
+  if (!isCurrent()) {
+    return { kind: 'superseded' };
+  }
   if (preview.setTailwindBrowserRuntimeEnabled(needsBrowserRuntime)) {
     return { kind: 'refresh-required' };
   }
 
   const context: PreparedEvaluationContext = {
     preview,
+    isCurrent,
     text,
     fsPath,
     engine,

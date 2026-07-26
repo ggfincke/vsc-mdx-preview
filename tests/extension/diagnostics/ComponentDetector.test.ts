@@ -8,6 +8,7 @@ import {
   getUsedGenericComponents,
   clearComponentCache,
 } from '../../../packages/extension-host/src/features/diagnostics/ComponentDetector';
+import { Range } from 'vscode';
 
 const mdxSample = `
 import { Foo } from './Foo';
@@ -59,18 +60,29 @@ describe('detectComponents', () => {
     expect(unknown).toEqual([]);
   });
 
-  it('treats default plus named imports as known', async () => {
+  it('treats imports & member-expression roots as known components', async () => {
     const result = await detectComponents(
-      "import Foo, { Bar } from './widgets';\n\n<Foo />\n<Bar />\n",
+      "import Foo, { Bar } from './widgets';\nimport * as Tabs from './tabs';\n\n<Foo />\n<Bar />\n<Tabs.Tab />\n<Table />\n",
       { detectImports: true, includePositions: false },
       new Set()
     );
 
     const unknown = getUnknownComponents(result).map((c) => c.name);
-    expect(unknown).toEqual([]);
+    expect(unknown).not.toEqual(
+      expect.arrayContaining(['Foo', 'Bar', 'Tabs.Tab'])
+    );
+    expect(result.components.map((component) => component.name)).toEqual([
+      'Foo',
+      'Bar',
+      'Tabs.Tab',
+      'Table',
+    ]);
+    expect(
+      result.components.find((component) => component.name === 'Tabs.Tab')
+    ).toMatchObject({ source: 'import' });
   });
 
-  it('includePositions returns the correct range for a known-line component', async () => {
+  it('returns only tag-name ranges for paired & self-closing elements', async () => {
     const result = await detectComponents(
       mdxSample,
       { detectImports: true, includePositions: true },
@@ -80,9 +92,24 @@ describe('detectComponents', () => {
     const custom = result.components.find((c) => c.name === 'CustomComponent');
     expect(custom).toBeDefined();
     expect(custom?.range.start.line).toBe(8);
-    expect(custom?.range.start.character).toBe(0);
+    expect(custom?.range.start.character).toBe(1);
     expect(custom?.range.end.line).toBe(8);
-    expect(custom?.range.end.character).toBe(19);
+    expect(custom?.range.end.character).toBe(16);
+    expect(custom?.tagNameRanges).toEqual([new Range(8, 1, 8, 16)]);
+
+    const paired = await detectComponents(
+      '<Frobnicate>\nimportant children\n</Frobnicate>\n<Widget />\n',
+      { detectImports: false, includePositions: true },
+      new Set()
+    );
+
+    expect(paired.components[0].tagNameRanges).toEqual([
+      new Range(0, 1, 0, 11),
+      new Range(2, 2, 2, 12),
+    ]);
+    expect(paired.components[1].tagNameRanges).toEqual([
+      new Range(3, 1, 3, 7),
+    ]);
   });
 });
 

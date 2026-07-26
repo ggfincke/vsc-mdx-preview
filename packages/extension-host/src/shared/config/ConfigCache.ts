@@ -91,6 +91,14 @@ export class ConfigCache extends WithSubscribers<
     this.cache.watchPath(configPath, handlers);
   }
 
+  // watch a path that may not contain a valid config yet
+  watchConfigCandidate(
+    configPath: string,
+    handlers: Parameters<PathCache<CacheWrapper>['watchPath']>[1]
+  ): void {
+    this.cache.watchPath(configPath, handlers);
+  }
+
   // unregister a watcher for a config path
   unwatchConfigPath(configPath: string): void {
     this.cache.unwatchPath(configPath);

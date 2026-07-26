@@ -16,7 +16,7 @@ import {
   TailwindConfigWatcher,
   WatcherManager,
 } from './watchers';
-import { onConfigChange } from './configuration';
+import { onConfigChange, onTypeScriptConfigChange } from './configuration';
 import type { ResolvedConfig } from '../types';
 import { getTailwindProcessor } from '../../app/services';
 
@@ -172,6 +172,30 @@ export class PreviewInitializer {
     configSubscriptionWatcher.start();
   }
 
+  setupTypeScriptConfigWatcher(
+    watcherManager: WatcherManager,
+    docScheme: string,
+    onConfigChanged: () => void
+  ): void {
+    watcherManager.unregister('typescriptConfig');
+
+    if (docScheme !== 'file') {
+      return;
+    }
+
+    const configSubscriptionWatcher = new EventSubscriptionWatcher({
+      logTag: LogTags.TS_CONFIG,
+      subscribe: () =>
+        onTypeScriptConfigChange(() => {
+          log.debug('TypeScript config file changed, reloading...');
+          onConfigChanged();
+        }),
+    });
+
+    watcherManager.register('typescriptConfig', configSubscriptionWatcher);
+    configSubscriptionWatcher.start();
+  }
+
   // setup custom CSS file watcher via WatcherManager
   setupCustomCssWatcher(
     watcherManager: WatcherManager,
@@ -232,5 +256,9 @@ export class PreviewInitializer {
 
     watcherManager.register('tailwind', tailwindWatcher);
     tailwindWatcher.start();
+  }
+
+  dispose(): void {
+    this.cancelHandshakeTimeout();
   }
 }

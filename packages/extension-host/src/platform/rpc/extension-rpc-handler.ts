@@ -377,7 +377,10 @@ class ExtensionHandle implements ExtensionRPC {
       );
     }
 
-    const serverUrl = getConfigManager().get(SETTINGS.PLANTUML_SERVER);
+    const serverUrl = getConfigManager().get(
+      SETTINGS.PLANTUML_SERVER,
+      this.preview.doc.uri
+    );
     const endpoints = getPlantUmlRenderEndpoints(serverUrl);
     let lastError: unknown = null;
 

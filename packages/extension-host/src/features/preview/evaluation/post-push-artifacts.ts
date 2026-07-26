@@ -41,11 +41,17 @@ async function postTrustedArtifacts(
   const { webviewHandle } = preview;
   const { result } = stageResult;
 
+  if (!context.isCurrent()) {
+    return;
+  }
   preview.updateDependencies(result.dependencies);
   applyFrontmatterAndMeta(context, result.frontmatter);
 
   await detectAndPushUsedComponents(context);
 
+  if (!context.isCurrent()) {
+    return;
+  }
   log.debug('Calling webviewHandle.updatePreview');
   await webviewHandle.updatePreview(
     result.code,
@@ -53,6 +59,9 @@ async function postTrustedArtifacts(
     result.dependencies
   );
   log.debug('updatePreview called');
+  if (!context.isCurrent()) {
+    return;
+  }
   preview.syncEditorScrollToPreview();
 
   if (!context.tailwindEnabled) {
@@ -83,6 +92,9 @@ async function postSafeArtifacts(
   const preview = context.preview;
   const { webviewHandle } = preview;
 
+  if (!context.isCurrent()) {
+    return;
+  }
   clearTailwindChannels(context.preview, webviewHandle);
 
   applyFrontmatterAndMeta(context, stageResult.result.frontmatter);
@@ -90,6 +102,9 @@ async function postSafeArtifacts(
   log.debug('Calling webviewHandle.updatePreviewSafe');
   await webviewHandle.updatePreviewSafe(stageResult.result.html);
   log.debug('updatePreviewSafe called');
+  if (!context.isCurrent()) {
+    return;
+  }
   preview.syncEditorScrollToPreview();
 }
 
@@ -107,7 +122,7 @@ async function detectAndPushUsedComponents(
       preview.doc.uri.toString()
     );
     const usedGenericComponents = getUsedGenericComponents(detectionResult);
-    if (usedGenericComponents.length === 0) {
+    if (usedGenericComponents.length === 0 || !context.isCurrent()) {
       return;
     }
 

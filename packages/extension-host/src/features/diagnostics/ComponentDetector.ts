@@ -50,130 +50,55 @@ function contentHash(str: string): string {
   return (hash >>> 0).toString(16);
 }
 
-// HTML element names (lowercase) - not components
-const HTML_ELEMENTS = new Set([
-  'a',
-  'abbr',
-  'address',
-  'area',
-  'article',
-  'aside',
-  'audio',
-  'b',
-  'base',
-  'bdi',
-  'bdo',
-  'blockquote',
-  'body',
-  'br',
-  'button',
-  'canvas',
-  'caption',
-  'cite',
-  'code',
-  'col',
-  'colgroup',
-  'data',
-  'datalist',
-  'dd',
-  'del',
-  'details',
-  'dfn',
-  'dialog',
-  'div',
-  'dl',
-  'dt',
-  'em',
-  'embed',
-  'fieldset',
-  'figcaption',
-  'figure',
-  'footer',
-  'form',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'head',
-  'header',
-  'hgroup',
-  'hr',
-  'html',
-  'i',
-  'iframe',
-  'img',
-  'input',
-  'ins',
-  'kbd',
-  'label',
-  'legend',
-  'li',
-  'link',
-  'main',
-  'map',
-  'mark',
-  'menu',
-  'meta',
-  'meter',
-  'nav',
-  'noscript',
-  'object',
-  'ol',
-  'optgroup',
-  'option',
-  'output',
-  'p',
-  'picture',
-  'pre',
-  'progress',
-  'q',
-  'rp',
-  'rt',
-  'ruby',
-  's',
-  'samp',
-  'script',
-  'section',
-  'select',
-  'slot',
-  'small',
-  'source',
-  'span',
-  'strong',
-  'style',
-  'sub',
-  'summary',
-  'sup',
-  'svg',
-  'table',
-  'tbody',
-  'td',
-  'template',
-  'textarea',
-  'tfoot',
-  'th',
-  'thead',
-  'time',
-  'title',
-  'tr',
-  'track',
-  'u',
-  'ul',
-  'var',
-  'video',
-  'wbr',
-]);
-
 // check if name is PascalCase (React component convention)
 function isPascalCase(name: string): boolean {
   return /^[A-Z][a-zA-Z0-9]*$/.test(name);
 }
 
-// check if name is an HTML element
-function isHtmlElement(name: string): boolean {
-  return HTML_ELEMENTS.has(name.toLowerCase());
+// classify member expressions by the identifier JSX resolves at runtime
+function getComponentRoot(name: string): string {
+  return name.split('.')[0] ?? name;
+}
+
+// lowercase roots are JSX intrinsics regardless of the HTML registry
+function isIntrinsic(name: string): boolean {
+  return /^[a-z]/.test(getComponentRoot(name));
+}
+
+// narrow an element position to its opening & optional closing name tokens
+function getTagNameRanges(
+  documentLines: readonly string[],
+  elementRange: vscode.Range,
+  name: string
+): vscode.Range[] {
+  const openingRange = new vscode.Range(
+    elementRange.start.line,
+    elementRange.start.character + 1,
+    elementRange.start.line,
+    elementRange.start.character + 1 + name.length
+  );
+  const ranges = [openingRange];
+  const endLine = documentLines[elementRange.end.line] ?? '';
+  const beforeElementEnd = endLine.slice(0, elementRange.end.character);
+  const closingStart = beforeElementEnd.lastIndexOf(`</${name}`);
+
+  if (closingStart >= 0) {
+    const closingSuffix = beforeElementEnd.slice(
+      closingStart + name.length + 2
+    );
+    if (/^\s*>$/.test(closingSuffix)) {
+      ranges.push(
+        new vscode.Range(
+          elementRange.end.line,
+          closingStart + 2,
+          elementRange.end.line,
+          closingStart + 2 + name.length
+        )
+      );
+    }
+  }
+
+  return ranges;
 }
 
 // extract component imports from ESM node (PascalCase local names only)
@@ -269,6 +194,7 @@ export async function detectComponents(
     }
 
     const importNames = new Set(imports.keys());
+    const documentLines = includePositions ? mdxText.split(/\r?\n/) : [];
 
     visit(tree, (node) => {
       if (
@@ -281,35 +207,41 @@ export async function detectComponents(
       const jsxNode = node as unknown as MdxJsxElement;
       const name = jsxNode.name;
 
-      if (!name || isHtmlElement(name)) {
+      if (!name || isIntrinsic(name)) {
         return;
       }
 
-      if (!isPascalCase(name)) {
+      const root = getComponentRoot(name);
+      if (!isPascalCase(root)) {
         return;
       }
 
       const source = classifyComponent(
-        name,
+        root,
         importNames,
         configComponents,
         framework
       );
 
       let range: vscode.Range;
+      let tagNameRanges: vscode.Range[];
       if (includePositions && jsxNode.position) {
-        range = astPositionToRange(
+        const elementRange = astPositionToRange(
           jsxNode.position,
           frontmatterLineOffset,
           frontmatterColumnOffset
         );
+        tagNameRanges = getTagNameRanges(documentLines, elementRange, name);
+        range = tagNameRanges[0];
       } else {
         range = new vscode.Range(0, 0, 0, 0);
+        tagNameRanges = [range];
       }
 
       components.push({
         name,
         range,
+        tagNameRanges,
         source,
         hasChildren: jsxNode.children && jsxNode.children.length > 0,
       });
@@ -343,7 +275,7 @@ function classifyComponents(
   return components.map((component) => ({
     ...component,
     source: classifyComponent(
-      component.name,
+      getComponentRoot(component.name),
       importNames,
       configComponents,
       framework
@@ -394,5 +326,3 @@ export function clearComponentCache(): void {
   parseCache.clear();
   log.debug('Cache cleared');
 }
-
-// isPascalCase, isHtmlElement, extractImports are internal helpers

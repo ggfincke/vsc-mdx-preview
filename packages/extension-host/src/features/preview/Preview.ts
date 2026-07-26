@@ -49,6 +49,8 @@ export type { StyleConfiguration, WebviewHandle };
 export class Preview {
   active = false;
   private _webview?: vscode.Webview;
+  private disposed = false;
+  private documentUri?: string;
 
   get webview(): vscode.Webview | undefined {
     return this._webview;
@@ -90,7 +92,7 @@ export class Preview {
 
   // public method for RPC handle to complete handshake
   completeHandshake(handshakeId: number): boolean {
-    if (handshakeId !== this.webviewHandshakeId) {
+    if (this.disposed || handshakeId !== this.webviewHandshakeId) {
       log.debug(
         `Ignoring stale handshake: ${handshakeId} !== ${this.webviewHandshakeId}`
       );
@@ -240,6 +242,9 @@ export class Preview {
   }
 
   initWebviewHandshakePromise(): void {
+    if (this.disposed) {
+      return;
+    }
     this.webviewHandshakeId += 1;
     const handshake = this.initializer.createHandshake();
     this.webviewHandshakePromise = handshake.promise;
@@ -252,8 +257,35 @@ export class Preview {
   }
 
   setDoc(doc: vscode.TextDocument): void {
+    if (this.disposed) {
+      return;
+    }
+    const nextDocumentUri = doc.uri.toString();
+    const documentChanged =
+      this.documentUri !== undefined && this.documentUri !== nextDocumentUri;
+    this.documentUri = nextDocumentUri;
+    this.evaluationSeq += 1;
+    this.webviewBridge.invalidateThemeRequests();
+    if (documentChanged) {
+      this.tailwindState.resetForDocument();
+    }
+    this.configManager.setDocument(doc.uri, () => this.updateWebview());
     this.documentHandler.setDoc(doc, this.watcherManager);
     this.setupConfigWatcher();
+    this.setupTypeScriptConfigWatcher();
+    this.initializer.setupCustomCssWatcher(
+      this.watcherManager,
+      this.configuration.customCss,
+      this.entryFsDirectory,
+      this.webviewBridge.getHandle()
+    );
+    if (documentChanged) {
+      this.updateTailwindWatchFiles([]);
+    }
+    this.pushRuntimeConfiguration();
+    if (documentChanged) {
+      resetPreviewScrollSync(this);
+    }
   }
 
   private setupConfigWatcher(): void {
@@ -266,6 +298,19 @@ export class Preview {
         this.documentHandler.reloadMdxConfig();
         this.refreshWebview().catch((err) =>
           log.error('Failed to refresh after config change', err)
+        );
+      }
+    );
+  }
+
+  private setupTypeScriptConfigWatcher(): void {
+    this.initializer.setupTypeScriptConfigWatcher(
+      this.watcherManager,
+      this.doc.uri.scheme,
+      () => {
+        this.documentHandler.reloadTypescriptConfig();
+        this.updateWebview(true).catch((err) =>
+          log.error('Failed to refresh after TypeScript config change', err)
         );
       }
     );
@@ -360,6 +405,9 @@ export class Preview {
 
   // update webview w/ current document content (force bypasses version tracking)
   async updateWebview(force = false): Promise<void> {
+    if (this.disposed) {
+      return;
+    }
     // monotonic id: stale evaluations must not push over newer ones
     const evaluationId = ++this.evaluationSeq;
     const isCurrent = () => evaluationId === this.evaluationSeq;
@@ -386,6 +434,9 @@ export class Preview {
 
   async refreshWebview(): Promise<void> {
     log.debug('refreshWebview called');
+    if (this.disposed) {
+      return;
+    }
     const currentPreview = getPreviewManager().getCurrentPreview();
     if (!currentPreview) {
       return;
@@ -416,6 +467,9 @@ export class Preview {
   }
 
   updateConfiguration(): void {
+    if (this.disposed) {
+      return;
+    }
     const result = this.configManager.updateConfiguration(this.doc.uri, () =>
       this.updateWebview()
     );
@@ -451,9 +505,19 @@ export class Preview {
 
   // dispose of resources held by this preview
   dispose(): void {
+    if (this.disposed) {
+      return;
+    }
+    this.disposed = true;
+    this.evaluationSeq += 1;
+    this.tailwindState.resetForDocument();
     this._performanceObserver?.disconnect();
     this._performanceObserver = undefined;
+    this.configManager.dispose();
+    this.initializer.dispose();
     disposeScrollSyncForPreview(this);
     this.watcherManager.dispose();
+    this.webviewBridge.dispose();
+    this._webview = undefined;
   }
 }

@@ -8,7 +8,10 @@ import {
   mockPreviewManager,
 } from '../helpers/mock-services';
 import { initWorkspaceHandlers } from '../../packages/extension-host/src/app/workspace-events';
-import { SETTINGS } from '../../packages/extension-host/src/shared/config';
+import {
+  PREVIEW_SETTING_ACTIONS,
+  SETTINGS,
+} from '../../packages/extension-host/src/shared/config';
 import {
   disposeEditorPreviewScrollSync,
   handlePreviewSourceLineReport,
@@ -51,37 +54,42 @@ describe('workspace-events', () => {
     vi.useRealTimers();
   });
 
-  it('subscribes preview update handler to runtime config keys', () => {
-    let changeCallback: (() => void) | undefined;
-    mockConfigManager.onDidChangeKey.mockImplementation(
-      (_keys: string[], callback: () => void) => {
+  it('dispatches preview setting changes by action class', () => {
+    let changeCallback: ((affectedKeys: string[]) => void) | undefined;
+    mockConfigManager.onDidChangeConfiguration.mockImplementation(
+      (callback: (affectedKeys: string[]) => void) => {
         changeCallback = callback;
         return { dispose: vi.fn() };
       }
     );
 
     const updateConfiguration = vi.fn();
+    const updateWebview = vi.fn().mockResolvedValue(undefined);
     mockPreviewManager.getCurrentPreview.mockReturnValue({
       updateConfiguration,
+      updateWebview,
     });
 
     const context = { subscriptions: [] as Array<{ dispose: () => void }> };
     initWorkspaceHandlers(context as any);
 
-    expect(mockConfigManager.onDidChangeKey).toHaveBeenCalledTimes(1);
-    expect(mockConfigManager.onDidChangeKey).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        SETTINGS.SOURCE_LINE_HIGHLIGHT,
-        SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR,
-        SETTINGS.SCROLL_SYNC,
-        SETTINGS.SHIM_SIDE_RAIL,
-      ]),
-      expect.any(Function)
-    );
+    expect(mockConfigManager.onDidChangeConfiguration).toHaveBeenCalledTimes(1);
+    expect(PREVIEW_SETTING_ACTIONS[SETTINGS.USE_SUCRASE]).toBe('recompile');
     expect(context.subscriptions.length).toBe(5);
 
-    changeCallback?.();
+    // runtime-push key: config update only, no forced recompile
+    changeCallback?.([SETTINGS.PREVIEW_THEME]);
     expect(updateConfiguration).toHaveBeenCalledTimes(1);
+    expect(updateWebview).not.toHaveBeenCalled();
+
+    // recompile key: config update + forced webview update
+    changeCallback?.([SETTINGS.USE_SUCRASE]);
+    expect(updateConfiguration).toHaveBeenCalledTimes(2);
+    expect(updateWebview).toHaveBeenCalledWith(true);
+
+    // unrelated key: no preview work at all
+    changeCallback?.(['debugOutput']);
+    expect(updateConfiguration).toHaveBeenCalledTimes(2);
   });
 
   it('live-syncs the preview to the focused editor line when enabled', () => {

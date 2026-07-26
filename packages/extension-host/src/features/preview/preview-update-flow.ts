@@ -10,8 +10,8 @@ import { LogTags, type UpdateModeValue } from '@mdx-preview/contracts';
 const log = createTaggedLogger(LogTags.PREVIEW);
 
 interface RenderedVersionTracker {
-  hasRenderedVersion(version: number): boolean;
-  markRendered(version: number): void;
+  hasRenderedVersion(documentUri: string, version: number): boolean;
+  markRendered(documentUri: string, version: number): void;
 }
 
 export interface PreviewUpdateFlowInput {
@@ -45,9 +45,10 @@ export async function runPreviewUpdateFlow(
   log.debug(`updateWebview scheme=${scheme}, fsPath=${fsPath}`);
 
   const currentVersion = doc.version;
+  const documentUri = uri.toString();
   const docTracker = getDocumentTracker();
 
-  if (!force && docTracker?.hasRenderedVersion(currentVersion)) {
+  if (!force && docTracker?.hasRenderedVersion(documentUri, currentVersion)) {
     log.debug('Skipping update - same version');
     return;
   }
@@ -104,5 +105,5 @@ export async function runPreviewUpdateFlow(
     return;
   }
 
-  docTracker?.markRendered(currentVersion);
+  docTracker?.markRendered(documentUri, currentVersion);
 }

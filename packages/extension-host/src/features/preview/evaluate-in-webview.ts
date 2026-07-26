@@ -48,15 +48,23 @@ export default async function evaluateInWebview(
   log.debug(`evaluateInWebview called for: ${fsPath}`);
   const engine = getEvaluationEngine();
   const stale = () => isCurrent?.() === false;
+  const current = () => !stale();
 
   try {
     const prepared = await prepareEvaluationContext(
       preview,
       text,
       fsPath,
-      engine
+      engine,
+      current
     );
+    if (prepared.kind === 'superseded') {
+      return;
+    }
     if (prepared.kind === 'refresh-required') {
+      if (stale()) {
+        return;
+      }
       await preview.refreshWebview();
       return;
     }
@@ -65,10 +73,7 @@ export default async function evaluateInWebview(
 
     performance.mark('preview/start');
 
-    await waitForHandshakeAndPushBaseState(context);
-
-    // skip compile if a newer evaluation superseded this one during handshake
-    if (stale()) {
+    if (!(await waitForHandshakeAndPushBaseState(context))) {
       log.debug('evaluateInWebview: superseded before compile, skipping');
       return;
     }
@@ -121,25 +126,32 @@ export default async function evaluateInWebview(
 
 async function waitForHandshakeAndPushBaseState(
   context: PreparedEvaluationContext
-): Promise<void> {
-  const { preview, trustState } = context;
+): Promise<boolean> {
+  const { preview, trustState, isCurrent } = context;
   const { webviewHandle } = preview;
 
   log.debug('Waiting for webviewHandshakePromise...');
   await preview.webviewHandshakePromise;
   log.debug('Handshake complete!');
 
+  if (!isCurrent()) {
+    return false;
+  }
   preview.onWebviewReady();
 
   log.debug('Sending trust state to webview');
   await webviewHandle.setTrustState(trustState);
+  if (!isCurrent()) {
+    return false;
+  }
   preview.pushRuntimeConfiguration();
 
   const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
   if (frameworkInfo.framework === 'generic') {
-    return;
+    return true;
   }
 
   log.debug(`Sending framework to webview: ${frameworkInfo.framework}`);
   webviewHandle.setFramework(frameworkInfo.framework);
+  return true;
 }

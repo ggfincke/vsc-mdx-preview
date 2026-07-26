@@ -16,6 +16,7 @@ import type { Preview } from '../Preview';
 
 export interface PreparedEvaluationContext {
   preview: Preview;
+  isCurrent: () => boolean;
   text: string;
   fsPath: string;
   engine: EvaluationEngine;
@@ -30,6 +31,9 @@ export interface PreparedEvaluationContext {
 export type PreparedEvaluationResult =
   | {
       kind: 'refresh-required';
+    }
+  | {
+      kind: 'superseded';
     }
   | {
       kind: 'ready';

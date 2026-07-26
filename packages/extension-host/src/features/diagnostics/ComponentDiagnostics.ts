@@ -153,26 +153,44 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
         document.uri.toString()
       );
 
-      // classify + build diagnostics in mdx-forge, then map to vscode
-      // inferred shape carries root/members/attributes for newer engines; 0.7.x ignores them
-      const detected = result.components.map((c) => {
-        const [root = c.name, ...members] = c.name.split('.');
-        return {
-          name: c.name,
-          root,
-          members,
-          attributes: [],
-          range: fromVsRange(c.range),
-        };
-      });
       const ctx: ClassifyContext = {
         imports: new Set(result.imports.keys()),
         configComponents,
         framework,
       };
-      const diagnostics = analyzeUnknownComponents(detected, ctx).map(
-        toVsDiagnostic
-      );
+
+      // build diagnostics per unknown tag-name token w/o spanning children
+      const diagnostics = result.components.flatMap((component) => {
+        if (component.source !== 'unknown') {
+          return [];
+        }
+
+        const [root = component.name, ...members] = component.name.split('.');
+        return component.tagNameRanges.flatMap((range) =>
+          analyzeUnknownComponents(
+            [
+              {
+                name: component.name,
+                root,
+                members,
+                attributes: [],
+                range: fromVsRange(range),
+              },
+            ],
+            ctx
+          ).map((diagnostic) => {
+            const vsDiagnostic = toVsDiagnostic(diagnostic);
+            const diagnosticWithData = vsDiagnostic as vscode.Diagnostic & {
+              data?: Record<string, unknown>;
+            };
+            diagnosticWithData.data = {
+              ...diagnosticWithData.data,
+              tagNameRanges: component.tagNameRanges,
+            };
+            return vsDiagnostic;
+          })
+        );
+      });
 
       // publish via the single collection owner (producer = analysis)
       this.publisher.set(document.uri, 'analysis', diagnostics);

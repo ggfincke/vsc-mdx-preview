@@ -82,10 +82,30 @@ export class PreviewConfiguration {
     return this._debouncedUpdateWebview;
   }
 
+  // re-read resource-scoped settings when a preview changes documents
+  setDocument(
+    docUri: vscode.Uri,
+    updateWebviewFn: () => void
+  ): ConfigChangeResult {
+    return this.applyConfiguration(docUri, updateWebviewFn, true);
+  }
+
   // update configuration from VS Code settings (returns change info for caller)
   updateConfiguration(
     docUri: vscode.Uri,
     updateWebviewFn: () => void
+  ): ConfigChangeResult {
+    return this.applyConfiguration(docUri, updateWebviewFn, false);
+  }
+
+  dispose(): void {
+    this._debouncedUpdateWebview.cancel();
+  }
+
+  private applyConfiguration(
+    docUri: vscode.Uri,
+    updateWebviewFn: () => void,
+    recreateDebouncer: boolean
   ): ConfigChangeResult {
     const configManager = getConfigManager();
     const newConfig = readPreviewConfigurationState(configManager, docUri);
@@ -109,12 +129,14 @@ export class PreviewConfiguration {
       previousRuntimeConfig.scrollSync !== nextRuntimeConfig.scrollSync;
 
     const needsDebounceRecreate =
+      recreateDebouncer ||
       newConfig.debounceDelay !== this._configuration.debounceDelay;
     const needsCssWatcherUpdate =
       newConfig.customCss !== this._configuration.customCss;
 
-    // recreate debounced function if delay changed
+    // replace pending work when the resource or delay changes
     if (needsDebounceRecreate) {
+      this._debouncedUpdateWebview.cancel();
       this._debouncedUpdateWebview = debounce(
         updateWebviewFn,
         newConfig.debounceDelay

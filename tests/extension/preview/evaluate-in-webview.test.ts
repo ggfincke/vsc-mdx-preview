@@ -402,4 +402,76 @@ describe('evaluate-in-webview Tailwind routing', () => {
       safePreview.syncEditorScrollToPreview.mock.invocationCallOrder[0]
     );
   });
+
+  it('drops a slow trusted result after a newer evaluation publishes', async () => {
+    mockTrustedState();
+    const preview = createPreview();
+    let resolveOld:
+      | ((result: {
+          code: string;
+          entryFilePath: string;
+          dependencies: string[];
+          frontmatter: undefined;
+        }) => void)
+      | undefined;
+
+    mockEngine.evaluateTrusted
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveOld = resolve;
+          })
+      )
+      .mockResolvedValueOnce({
+        code: 'NEW',
+        entryFilePath: '/workspace/new.mdx',
+        dependencies: ['/workspace/new.tsx'],
+        frontmatter: undefined,
+      });
+
+    let evaluationToken = 1;
+    const oldEvaluation = evaluateInWebview(
+      preview as unknown as MockPreview,
+      'OLD',
+      '/workspace/old.mdx',
+      () => evaluationToken === 1
+    );
+
+    for (
+      let i = 0;
+      i < 10 && mockEngine.evaluateTrusted.mock.calls.length === 0;
+      i++
+    ) {
+      await Promise.resolve();
+    }
+    expect(resolveOld).toBeDefined();
+
+    evaluationToken = 2;
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      'NEW',
+      '/workspace/new.mdx',
+      () => evaluationToken === 2
+    );
+
+    resolveOld!({
+      code: 'OLD',
+      entryFilePath: '/workspace/old.mdx',
+      dependencies: ['/workspace/old.tsx'],
+      frontmatter: undefined,
+    });
+    await oldEvaluation;
+
+    expect(preview.webviewHandle.updatePreview).toHaveBeenCalledTimes(1);
+    expect(preview.webviewHandle.updatePreview).toHaveBeenCalledWith(
+      'NEW',
+      '/workspace/new.mdx',
+      ['/workspace/new.tsx']
+    );
+    expect(preview.updateDependencies).toHaveBeenCalledTimes(1);
+    expect(preview.updateDependencies).toHaveBeenCalledWith([
+      '/workspace/new.tsx',
+    ]);
+    expect(mockErrorReporter.report).not.toHaveBeenCalled();
+  });
 });

@@ -23,6 +23,7 @@ export type WebviewHandle = WebviewHandleType;
 export class PreviewWebviewBridge {
   private webviewHandle?: WebviewHandle;
   private webview?: vscode.Webview;
+  private themeRequestSeq = 0;
 
   // get a webview URI for a file system path
   getWebviewUri(fsPath: string): string | undefined {
@@ -47,6 +48,7 @@ export class PreviewWebviewBridge {
     handle: WebviewHandle,
     watcherManager: WatcherManager
   ): void {
+    this.themeRequestSeq += 1;
     this.webviewHandle = handle;
     const docTracker = watcherManager.get<DocumentTracker>('document');
     docTracker?.setNotifier(handle);
@@ -65,7 +67,8 @@ export class PreviewWebviewBridge {
     docUri: vscode.Uri,
     frontmatter?: Record<string, unknown>
   ): void {
-    if (!this.webviewHandle) {
+    const webviewHandle = this.webviewHandle;
+    if (!webviewHandle) {
       return;
     }
     const themeManager = getThemeManager();
@@ -96,14 +99,23 @@ export class PreviewWebviewBridge {
     // resolve configured mermaid icon packs (async file reads) then push
     const iconPackConfig =
       themeManager.getThemeConfiguration(docUri).mermaidIconPacks;
-    void this.pushThemeStateWithIconPacks(themeState, iconPackConfig, docUri);
+    const requestId = ++this.themeRequestSeq;
+    void this.pushThemeStateWithIconPacks(
+      themeState,
+      iconPackConfig,
+      docUri,
+      requestId,
+      webviewHandle
+    );
   }
 
   // resolve icon pack files & send the final theme state to the webview
   private async pushThemeStateWithIconPacks(
     themeState: WebviewThemeState,
     iconPackConfig: MermaidIconPackSetting[],
-    docUri: vscode.Uri
+    docUri: vscode.Uri,
+    requestId: number,
+    webviewHandle: WebviewHandle
   ): Promise<void> {
     const mermaidIconPacks = await resolveMermaidIconPacks(
       iconPackConfig,
@@ -111,7 +123,10 @@ export class PreviewWebviewBridge {
     );
     const finalState: WebviewThemeState = { ...themeState, mermaidIconPacks };
 
-    if (!this.webviewHandle) {
+    if (
+      requestId !== this.themeRequestSeq ||
+      webviewHandle !== this.webviewHandle
+    ) {
       return;
     }
     // redact pack payloads (may contain file-derived content) from logs
@@ -122,7 +137,7 @@ export class PreviewWebviewBridge {
         iconCount: Object.keys(pack.icons.icons).length,
       })),
     });
-    this.webviewHandle.setTheme(finalState);
+    webviewHandle.setTheme(finalState);
   }
 
   pushRuntimeConfiguration(runtimeConfig: PreviewRuntimeConfig): void {
@@ -156,5 +171,15 @@ export class PreviewWebviewBridge {
 
   scrollToLine(line: number): void {
     this.webviewHandle?.scrollToLine(line);
+  }
+
+  invalidateThemeRequests(): void {
+    this.themeRequestSeq += 1;
+  }
+
+  dispose(): void {
+    this.invalidateThemeRequests();
+    this.webviewHandle = undefined;
+    this.webview = undefined;
   }
 }

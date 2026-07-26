@@ -1,5 +1,5 @@
 // tests/extension/config/ConfigResolver.test.ts
-// config file resolution — determines what plugins can execute
+// config file resolution determines what plugins can execute
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
@@ -7,17 +7,17 @@ import {
   mockErrorReporter,
 } from '../../helpers/mock-services';
 
-// mock file-system & validation utilities (hoisted for vi.mock factory access)
+// mock file-system utilities
 const {
   mockFindUp,
   mockCreateWorkspaceStopPredicate,
   mockReadJsonSync,
-  mockValidateConfigSchema,
+  mockWatchConfigCandidate,
 } = vi.hoisted(() => ({
   mockFindUp: vi.fn(),
   mockCreateWorkspaceStopPredicate: vi.fn(() => () => false),
   mockReadJsonSync: vi.fn(),
-  mockValidateConfigSchema: vi.fn(() => ({ errors: [] as string[] })),
+  mockWatchConfigCandidate: vi.fn(),
 }));
 
 vi.mock(
@@ -35,31 +35,14 @@ vi.mock(
   })
 );
 
-vi.mock(
-  '../../../packages/extension-host/src/shared/utils/validation',
-  () => ({
-    validateConfigSchema: mockValidateConfigSchema,
-  })
-);
-
-vi.mock(
-  '../../../packages/extension-host/src/shared/errors',
-  () => ({
-    ConfigError: class ConfigError extends Error {
-      constructor(
-        message: string,
-        public code: string,
-        public configPath: string
-      ) {
-        super(message);
-      }
-    },
-  })
-);
-
 import {
   resolveConfig,
 } from '../../../packages/extension-host/src/features/preview/configuration/ConfigResolver';
+
+const configCache = mockConfigCache as typeof mockConfigCache & {
+  watchConfigCandidate: typeof mockWatchConfigCandidate;
+};
+configCache.watchConfigCandidate = mockWatchConfigCandidate;
 
 describe('ConfigResolver', () => {
   beforeEach(() => {
@@ -69,18 +52,29 @@ describe('ConfigResolver', () => {
   });
 
   describe('resolveConfig()', () => {
-    it('returns cached result on cache hit', () => {
-      const cached = {
-        config: {},
-        configPath: '/a/.mdx-previewrc.json',
-        configDir: '/a',
-      };
-      mockConfigCache.get.mockReturnValue(cached);
+    it('rejects schema-invalid config at the resolver boundary', () => {
+      const configPath = '/workspace/.mdx-previewrc.json';
+      mockFindUp.mockReturnValue(configPath);
+      mockReadJsonSync.mockReturnValue({
+        tailwind: { enabled: 'sometimes' },
+      });
 
-      const result = resolveConfig('/a/doc.mdx');
+      const result = resolveConfig('/workspace/doc.mdx');
 
-      expect(result).toBe(cached);
-      expect(mockFindUp).not.toHaveBeenCalled();
+      expect(result).toBeNull();
+      expect(mockErrorReporter.reportConfigError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'CONFIG_VALIDATION_ERROR',
+          configPath,
+        }),
+        configPath
+      );
+      expect(mockConfigCache.set).toHaveBeenCalledWith('/workspace', null);
+      expect(mockConfigCache.watchConfigPath).not.toHaveBeenCalled();
+      expect(mockWatchConfigCandidate).toHaveBeenCalledWith(
+        configPath,
+        expect.any(Object)
+      );
     });
 
     it('returns null & caches when no config file found', () => {
@@ -94,13 +88,12 @@ describe('ConfigResolver', () => {
 
     it('returns parsed config when file found & valid', () => {
       mockFindUp.mockReturnValue('/workspace/.mdx-previewrc.json');
-      mockReadJsonSync.mockReturnValue({ plugins: { remark: [] } });
-      mockValidateConfigSchema.mockReturnValue({ errors: [] });
+      mockReadJsonSync.mockReturnValue({ remarkPlugins: [] });
 
       const result = resolveConfig('/workspace/src/doc.mdx');
 
       expect(result).toEqual({
-        config: { plugins: { remark: [] } },
+        config: { remarkPlugins: [] },
         configPath: '/workspace/.mdx-previewrc.json',
         configDir: '/workspace',
       });
@@ -116,6 +109,5 @@ describe('ConfigResolver', () => {
       expect(result).toBeNull();
       expect(mockErrorReporter.reportConfigError).toHaveBeenCalled();
     });
-
   });
 });

@@ -118,19 +118,54 @@ export const PREVIEW_RUNTIME_CONFIG_KEYS: readonly SettingKey[] = [
   SETTINGS.SHIM_SIDE_RAIL,
 ] as const;
 
-export const PREVIEW_CONFIG_KEYS: readonly SettingKey[] = [
-  SETTINGS.UPDATE_MODE,
-  SETTINGS.DEBOUNCE_DELAY,
-  SETTINGS.USE_VSCODE_MARKDOWN_STYLES,
-  SETTINGS.USE_WHITE_BACKGROUND,
-  SETTINGS.CUSTOM_CSS,
-  SETTINGS.CUSTOM_LAYOUT_PATH,
-  SETTINGS.SECURITY,
-  SETTINGS.PLANTUML_SERVER,
-  SETTINGS.TAILWIND_ENABLED,
-  SETTINGS.USE_SUCRASE,
-  ...PREVIEW_RUNTIME_CONFIG_KEYS,
-] as const;
+export type PreviewSettingAction =
+  | 'recompile'
+  | 'runtime-push'
+  | 'css-watcher-recreation'
+  | 'full-webview-refresh';
+
+type PreviewResourceSettingKey = Exclude<
+  SettingKey,
+  typeof SETTINGS.DEBUG_OUTPUT | typeof SETTINGS.WATCHER_DEBOUNCE_MS
+>;
+
+// route every resource-scoped setting that changes compilation or presentation
+export const PREVIEW_SETTING_ACTIONS = {
+  [SETTINGS.ENABLE_SCRIPTS]: 'full-webview-refresh',
+  [SETTINGS.UPDATE_MODE]: 'runtime-push',
+  [SETTINGS.DEBOUNCE_DELAY]: 'runtime-push',
+  [SETTINGS.SECURITY]: 'full-webview-refresh',
+  [SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW]: 'recompile',
+  [SETTINGS.USE_SUCRASE]: 'recompile',
+  [SETTINGS.USE_VSCODE_MARKDOWN_STYLES]: 'full-webview-refresh',
+  [SETTINGS.USE_WHITE_BACKGROUND]: 'full-webview-refresh',
+  [SETTINGS.CUSTOM_LAYOUT_PATH]: 'full-webview-refresh',
+  [SETTINGS.CUSTOM_CSS]: 'css-watcher-recreation',
+  [SETTINGS.TAILWIND_ENABLED]: 'full-webview-refresh',
+  [SETTINGS.TAILWIND_MAX_FILE_SIZE]: 'recompile',
+  [SETTINGS.TAILWIND_MAX_CSS_FILES]: 'recompile',
+  [SETTINGS.TAILWIND_CACHE_MAX_ENTRIES]: 'recompile',
+  [SETTINGS.TAILWIND_CACHE_TTL]: 'recompile',
+  [SETTINGS.TAILWIND_COMPILATION_TIMEOUT]: 'recompile',
+  [SETTINGS.PREVIEW_THEME]: 'runtime-push',
+  [SETTINGS.CODE_BLOCK_THEME]: 'runtime-push',
+  [SETTINGS.MERMAID_THEME]: 'runtime-push',
+  [SETTINGS.AUTO_THEME]: 'runtime-push',
+  [SETTINGS.PLANTUML_SERVER]: 'runtime-push',
+  [SETTINGS.MERMAID_ICON_PACKS]: 'runtime-push',
+  [SETTINGS.FRAMEWORK]: 'recompile',
+  [SETTINGS.FRAMEWORK_SHIMS]: 'recompile',
+  [SETTINGS.COMPONENTS_BUILTINS]: 'recompile',
+  [SETTINGS.COMPONENTS_UNKNOWN_BEHAVIOR]: 'recompile',
+  [SETTINGS.SOURCE_LINE_HIGHLIGHT]: 'runtime-push',
+  [SETTINGS.SOURCE_LINE_HIGHLIGHT_COLOR]: 'runtime-push',
+  [SETTINGS.SCROLL_SYNC]: 'runtime-push',
+  [SETTINGS.SHIM_SIDE_RAIL]: 'runtime-push',
+} as const satisfies Record<PreviewResourceSettingKey, PreviewSettingAction>;
+
+export const PREVIEW_CONFIG_KEYS: readonly SettingKey[] = Object.keys(
+  PREVIEW_SETTING_ACTIONS
+) as SettingKey[];
 
 export const TAILWIND_KEYS: readonly SettingKey[] = [
   SETTINGS.TAILWIND_ENABLED,

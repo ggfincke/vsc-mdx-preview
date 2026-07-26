@@ -2,6 +2,7 @@
 // resolve TypeScript configuration from tsconfig.json using get-tsconfig (lightweight)
 
 import * as path from 'path';
+import type * as vscode from 'vscode';
 import { parseTsconfig } from 'get-tsconfig';
 import { createTaggedLogger } from '../../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
@@ -24,6 +25,13 @@ const configCache = new PathCache<TypeScriptConfiguration | null>({
   logTag: LogTags.TS_CONFIG,
   maxEntries: TSCONFIG_CACHE_MAX_ENTRIES,
 });
+const configChangeListeners = new Set<(configFile: string) => void>();
+
+function notifyConfigChange(configFile: string): void {
+  for (const listener of configChangeListeners) {
+    listener(configFile);
+  }
+}
 
 // find tsconfig.json by walking up the directory tree (uses shared find-up utility)
 export function findTsConfig(directory: string): string | undefined {
@@ -46,16 +54,17 @@ function setupConfigWatcher(configFile: string): void {
     onChange: () => {
       log.debug(`tsconfig.json changed: ${configFile}`);
       configCache.delete(cacheKey);
+      notifyConfigChange(configFile);
     },
     onCreate: () => {
       log.debug('tsconfig.json created: ' + configFile);
       configCache.delete(cacheKey);
+      notifyConfigChange(configFile);
     },
     onDelete: () => {
       log.debug(`tsconfig.json deleted: ${configFile}`);
       configCache.delete(cacheKey);
-      // clean up watcher for deleted file
-      configCache.unwatchPath(configFile);
+      notifyConfigChange(configFile);
     },
   });
   log.debug(`Watching: ${configFile}`);
@@ -114,5 +123,15 @@ export function clearTsConfigCache(): void {
 // dispose all config file watchers (called during extension deactivation)
 export function disposeConfigWatchers(): void {
   configCache.dispose();
+  configChangeListeners.clear();
   log.debug('Config watchers disposed');
+}
+
+export function onTypeScriptConfigChange(
+  listener: (configFile: string) => void
+): vscode.Disposable {
+  configChangeListeners.add(listener);
+  return {
+    dispose: () => configChangeListeners.delete(listener),
+  };
 }

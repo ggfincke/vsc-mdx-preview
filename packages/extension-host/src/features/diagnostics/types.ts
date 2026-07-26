@@ -13,15 +13,19 @@ export type { ComponentSource };
 export interface DetectedComponent {
   // component name
   name: string;
-  // source range
+  // opening tag-name range
   range: vscode.Range;
+  // opening & optional closing tag-name ranges
+  tagNameRanges: vscode.Range[];
   // component source
   source: ComponentSource;
   // has children
   hasChildren: boolean;
 }
 
-export type UnknownComponentDiagnosticData = UnknownComponentData;
+export type UnknownComponentDiagnosticData = UnknownComponentData & {
+  tagNameRanges?: vscode.Range[];
+};
 
 // mdast position (1-based line, 1-based column)
 export interface MdastPosition {

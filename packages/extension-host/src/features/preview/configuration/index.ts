@@ -10,4 +10,5 @@ export {
   resolveTypescriptConfig,
   findTsConfig,
   clearTsConfigCache,
+  onTypeScriptConfigChange,
 } from './TypeScriptConfigResolver';

@@ -27,6 +27,7 @@ function createDoc(overrides: Partial<any> = {}) {
     uri: {
       scheme: 'file',
       fsPath: '/workspace/doc.mdx',
+      toString: () => 'file:///workspace/doc.mdx',
     },
     version: 7,
     ...overrides,
@@ -42,10 +43,12 @@ describe('runPreviewUpdateFlow', () => {
     );
   });
 
-  it('skips evaluation when rendered version already exists and force is false', async () => {
+  it('skips an already rendered document but renders a same-version document switch', async () => {
     const evaluate = vi.fn(async () => {});
     const docTracker = {
-      hasRenderedVersion: vi.fn(() => true),
+      hasRenderedVersion: vi.fn(
+        (documentUri: string) => documentUri === 'file:///workspace/doc.mdx'
+      ),
       markRendered: vi.fn(),
     };
 
@@ -61,6 +64,28 @@ describe('runPreviewUpdateFlow', () => {
 
     expect(evaluate).not.toHaveBeenCalled();
     expect(docTracker.markRendered).not.toHaveBeenCalled();
+
+    await runPreviewUpdateFlow({
+      force: false,
+      doc: createDoc({
+        uri: {
+          scheme: 'file',
+          fsPath: '/workspace/second.mdx',
+          toString: () => 'file:///workspace/second.mdx',
+        },
+      }),
+      text: '# second',
+      entryFsDirectory: '/workspace',
+      updateMode: 'onType',
+      getDocumentTracker: () => docTracker,
+      evaluate,
+    });
+
+    expect(evaluate).toHaveBeenCalledWith('# second', '/workspace/second.mdx');
+    expect(docTracker.markRendered).toHaveBeenCalledWith(
+      'file:///workspace/second.mdx',
+      7
+    );
   });
 
   it('routes file + onType to in-memory text', async () => {
@@ -81,7 +106,10 @@ describe('runPreviewUpdateFlow', () => {
     });
 
     expect(evaluate).toHaveBeenCalledWith('# in-memory', '/workspace/doc.mdx');
-    expect(docTracker.markRendered).toHaveBeenCalledWith(7);
+    expect(docTracker.markRendered).toHaveBeenCalledWith(
+      'file:///workspace/doc.mdx',
+      7
+    );
   });
 
   it('routes file + onSave/manual to disk read text', async () => {

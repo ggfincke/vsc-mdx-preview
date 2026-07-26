@@ -6,10 +6,15 @@ import { PreviewInitializer } from '../../../packages/extension-host/src/feature
 import { WatcherManager } from '../../../packages/extension-host/src/features/preview/watchers/WatcherManager';
 import { WEBVIEW_HANDSHAKE_TIMEOUT_MS } from '../../../packages/extension-host/src/shared/constants';
 import type { ResolvedConfig } from '../../../packages/extension-host/src/types';
-import { mockTailwindProcessor, mockConfigManager, mockConfigCache } from '../../helpers/mock-services';
+import {
+  mockTailwindProcessor,
+  mockConfigManager,
+  mockConfigCache,
+} from '../../helpers/mock-services';
 
-const { configHandlers } = vi.hoisted(() => ({
+const { configHandlers, typescriptConfigHandlers } = vi.hoisted(() => ({
   configHandlers: [] as Array<(event: { configPath: string }) => void>,
+  typescriptConfigHandlers: [] as Array<(configPath: string) => void>,
 }));
 
 vi.mock(
@@ -19,12 +24,17 @@ vi.mock(
       configHandlers.push(handler);
       return { dispose: vi.fn() };
     },
+    onTypeScriptConfigChange: (handler: (configPath: string) => void) => {
+      typescriptConfigHandlers.push(handler);
+      return { dispose: vi.fn() };
+    },
   })
 );
 
 describe('PreviewInitializer', () => {
   beforeEach(() => {
     configHandlers.length = 0;
+    typescriptConfigHandlers.length = 0;
   });
 
   afterEach(() => {
@@ -60,11 +70,7 @@ describe('PreviewInitializer', () => {
 
     const names = watcherManager.getNames();
     expect(names).toEqual(
-      expect.arrayContaining([
-        'document',
-        'dependency',
-        'customCss',
-      ])
+      expect.arrayContaining(['document', 'dependency', 'customCss'])
     );
   });
 
@@ -95,5 +101,4 @@ describe('PreviewInitializer', () => {
     configHandlers[0]({ configPath: config.configPath });
     expect(onConfigChanged).toHaveBeenCalledTimes(1);
   });
-
 });

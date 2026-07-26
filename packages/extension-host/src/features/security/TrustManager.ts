@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { WithSubscribers } from '../../app/services/SingletonService';
-import { getConfigManager } from '../../app/services';
+import { getConfigManager, getPreviewManager } from '../../app/services';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { type TrustState, LogTags } from '@mdx-preview/contracts';
 
@@ -46,19 +46,39 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
 
     // listen for configuration changes via centralized dispatcher
     this.addDisposable(
-      getConfigManager().onDidChangeKey(SETTINGS.ENABLE_SCRIPTS, () => {
+      getConfigManager().onDidChangeConfiguration((affectedKeys) => {
+        const scriptsChanged = affectedKeys.includes(SETTINGS.ENABLE_SCRIPTS);
+        const linkBehaviorChanged = affectedKeys.includes(
+          SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW
+        );
+        if (!scriptsChanged && !linkBehaviorChanged) {
+          return;
+        }
+
         this.notifyTrustStateChange();
+        if (linkBehaviorChanged) {
+          const preview = getPreviewManager().getCurrentPreview();
+          if (preview?.active) {
+            void preview.updateWebview(true).catch((error) => {
+              log.error('Failed to update preview link behavior', error);
+            });
+          }
+        }
       })
     );
   }
 
   // get current trust state (always reads fresh values, don't cache)
-  getState(): TrustState {
+  getState(docUri?: vscode.Uri): TrustState {
     // fresh read every time (don't rely on cached values)
     const workspaceTrusted = vscode.workspace.isTrusted;
-    const scriptsEnabled = getConfigManager().get(SETTINGS.ENABLE_SCRIPTS);
+    const scriptsEnabled = getConfigManager().get(
+      SETTINGS.ENABLE_SCRIPTS,
+      docUri
+    );
     const openMdxLinksInPreview = getConfigManager().get(
-      SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW
+      SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW,
+      docUri
     );
 
     return {
@@ -70,13 +90,13 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
   }
 
   // check if code execution allowed (convenience for getState().canExecute)
-  canExecute(): boolean {
-    return this.getState().canExecute;
+  canExecute(docUri?: vscode.Uri): boolean {
+    return this.getState(docUri).canExecute;
   }
 
   // check if Trusted Mode can be used for specific document (validates 4 security rules)
   canUseTrustedMode(docUri: vscode.Uri): TrustedModeCheck {
-    return this.canUseTrustedModeForState(this.getState(), docUri);
+    return this.canUseTrustedModeForState(this.getState(docUri), docUri);
   }
 
   // evaluate the 4 Trusted Mode rules against an already-computed state
@@ -128,7 +148,7 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
 
   // get full trust state for specific document (includes document-specific checks)
   getStateForDocument(docUri: vscode.Uri): TrustState {
-    const baseState = this.getState();
+    const baseState = this.getState(docUri);
     const modeCheck = this.canUseTrustedModeForState(baseState, docUri);
 
     if (!modeCheck.allowed) {
@@ -144,6 +164,7 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
 
   // notify subscribers of trust state change
   private notifyTrustStateChange(): void {
-    this.notifySubscribers(this.getState());
+    const docUri = getPreviewManager().getCurrentPreview()?.doc.uri;
+    this.notifySubscribers(this.getState(docUri));
   }
 }

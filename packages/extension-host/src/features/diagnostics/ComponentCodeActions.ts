@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { writeFileSync } from 'fs';
+import { findConfigFile } from '../preview/configuration/ConfigResolver';
 import { DIAGNOSTIC_CODES, readDiagnosticCode } from './ComponentDiagnostics';
 import { docsUriForCode } from './diagnostic-adapter';
 import type { UnknownComponentDiagnosticData } from '../types';
@@ -17,10 +18,10 @@ import { ConfigError, ErrorContext } from '../../shared/errors';
 import { LogTags } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { CommandNames } from '../commands/command-names';
-
-const log = createTaggedLogger(LogTags.COMPONENT_CODE_ACTIONS);
 import { getErrorReporter } from '../../app/services';
 import { readJsonSync } from '../../shared/utils/file-utils';
+
+const log = createTaggedLogger(LogTags.COMPONENT_CODE_ACTIONS);
 
 // config file name
 const CONFIG_FILE_NAME = '.mdx-previewrc.json';
@@ -36,6 +37,16 @@ function readComponentName(diagnostic: vscode.Diagnostic): string | null {
 
   const match = UNKNOWN_COMPONENT_MESSAGE_PATTERN.exec(diagnostic.message);
   return match?.[1] ?? null;
+}
+
+// prefer all paired tag-name ranges carried by the diagnostic
+function readTagNameRanges(diagnostic: vscode.Diagnostic): vscode.Range[] {
+  const data = (diagnostic as vscode.Diagnostic & { data?: unknown }).data as
+    | UnknownComponentDiagnosticData
+    | undefined;
+  return data?.tagNameRanges?.length
+    ? data.tagNameRanges
+    : [diagnostic.range];
 }
 
 // code action provider for component diagnostics
@@ -101,7 +112,9 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
       return null;
     }
 
-    const configPath = path.join(workspaceFolder.uri.fsPath, CONFIG_FILE_NAME);
+    const configPath =
+      findConfigFile(path.dirname(document.uri.fsPath)) ??
+      path.join(workspaceFolder.uri.fsPath, CONFIG_FILE_NAME);
     const action = new vscode.CodeAction(
       `Add "${componentName}" to ${CONFIG_FILE_NAME}`,
       vscode.CodeActionKind.QuickFix
@@ -139,9 +152,11 @@ export class ComponentCodeActionsProvider implements vscode.CodeActionProvider {
 
     action.diagnostics = [diagnostic];
 
-    // create edit to replace component name w/ the suggestion
+    // replace only tag names so paired element children survive
     action.edit = new vscode.WorkspaceEdit();
-    action.edit.replace(document.uri, diagnostic.range, suggestion);
+    for (const range of readTagNameRanges(diagnostic)) {
+      action.edit.replace(document.uri, range, suggestion);
+    }
 
     return action;
   }
@@ -202,9 +217,22 @@ export async function addComponentToConfig(
   log.debug(`Adding ${componentName} to ${configPath}`);
 
   try {
-    // read existing config or start w/ empty object
-    const config: Record<string, unknown> =
-      readJsonSync<Record<string, unknown>>(configPath) ?? {};
+    // only create fresh config when the target does not exist
+    let readError: unknown;
+    const existingConfig = readJsonSync<Record<string, unknown>>(configPath, {
+      onError: (error) => {
+        readError = error;
+      },
+    });
+    const missing =
+      readError instanceof Error &&
+      (readError as NodeJS.ErrnoException).code === 'ENOENT';
+    const config: Record<string, unknown> | null = missing
+      ? {}
+      : existingConfig;
+    if (config === null) {
+      throw new Error(`Malformed JSON in ${configPath}; update refused`);
+    }
 
     // ensure components object exists
     if (!config.components || typeof config.components !== 'object') {

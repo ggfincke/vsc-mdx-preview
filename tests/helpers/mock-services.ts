@@ -22,6 +22,7 @@ export const mockConfigManager = {
   inspect: vi.fn(),
   onDidChangeConfiguration: vi.fn(() => ({ dispose: vi.fn() })),
   onDidChangeKey: vi.fn(() => ({ dispose: vi.fn() })),
+  onDidChangeConfiguration: vi.fn(() => ({ dispose: vi.fn() })),
 };
 
 export const mockTrustManager = {
