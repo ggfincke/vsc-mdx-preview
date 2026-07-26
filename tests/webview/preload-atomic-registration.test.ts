@@ -7,6 +7,7 @@ import {
   registry,
   setPreloadEntries,
 } from 'mdx-forge/browser';
+import { preloadCoreModules } from '../../packages/webview-client/src/features/module-runtime/preload/core';
 import {
   loadDocusaurusShims,
   preloadGenericShims,
@@ -93,6 +94,35 @@ describe('preload atomic registration', () => {
     expect(preloadGeneric).toHaveBeenCalledWith(registry);
     expect(byBareAlias).toBe(byShimPath);
     expect(typeof byBareAlias.default).toBe('function');
+
+    preloadCoreModules(registry, {});
+    const jsxDevRuntime = requireFromEntry('react/jsx-dev-runtime') as Record<
+      string,
+      unknown
+    >;
+    const jsxDEV = jsxDevRuntime.jsxDEV as (...args: unknown[]) => {
+      type: unknown;
+      props: Record<string, unknown>;
+    };
+
+    expect(registry.has(PRELOADED_MODULE_IDS.jsxDevRuntime)).toBe(true);
+    expect(typeof jsxDEV).toBe('function');
+
+    const element = jsxDEV(
+      'div',
+      { children: 'preview' },
+      undefined,
+      false,
+      {
+        fileName: '/workspace/docs/index.mdx',
+        lineNumber: 1,
+        columnNumber: 1,
+      },
+      undefined
+    );
+
+    expect(element.type).toBe('div');
+    expect(element.props.children).toBe('preview');
   });
 
   it('restores core, generic, & unchanged framework shims after cache clear', async () => {
