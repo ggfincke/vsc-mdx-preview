@@ -3,7 +3,10 @@
 
 import * as path from 'path';
 import { pathExists } from './file-utils';
-import { normalizePathForComparison } from './path-utils';
+import { isPathWithin, normalizePathForComparison } from './path-utils';
+
+// containment predicates exclude matches; other stop forms include them
+const stopBeforeCheckPredicates = new WeakSet<(dir: string) => boolean>();
 
 // options for findUp
 export interface FindUpOptions {
@@ -30,8 +33,15 @@ export function findUp(options: FindUpOptions): string | undefined {
 
   // build stop predicate
   const shouldStop = buildStopPredicate(stopAt);
+  const stopBeforeCheck =
+    typeof stopAt === 'function' && stopBeforeCheckPredicates.has(stopAt);
 
   while (currentDir) {
+    // containment predicates exclude the first directory outside the boundary
+    if (stopBeforeCheck && shouldStop(currentDir)) {
+      break;
+    }
+
     // check each filename in order (first match wins)
     for (const name of filenames) {
       const candidate = path.join(currentDir, name);
@@ -40,9 +50,8 @@ export function findUp(options: FindUpOptions): string | undefined {
       }
     }
 
-    // check stop conditions AFTER checking for file
-    // (so we still find files AT the stop boundary)
-    if (shouldStop(currentDir)) {
+    // named boundaries & ordinary predicates include the matching directory
+    if (!stopBeforeCheck && shouldStop(currentDir)) {
       break;
     }
 
@@ -96,7 +105,7 @@ export function createWorkspaceStopPredicate(): (dir: string) => boolean {
 export function createContainmentStopPredicate(
   parentDir: string
 ): (dir: string) => boolean {
-  const normalizedParent = normalizePathForComparison(parentDir);
-  return (dir: string) =>
-    !normalizePathForComparison(dir).startsWith(normalizedParent);
+  const predicate = (dir: string) => !isPathWithin(dir, parentDir);
+  stopBeforeCheckPredicates.add(predicate);
+  return predicate;
 }

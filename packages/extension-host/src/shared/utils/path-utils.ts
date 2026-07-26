@@ -88,10 +88,27 @@ export function resolvePathWithFallbacks(
   return null;
 }
 
-// check if a child path is inside a parent path (security utility)
+// check if a path is a parent boundary or one of its descendants
+export function isPathWithin(targetPath: string, parentPath: string): boolean {
+  const normalizedTarget = normalizePathForComparison(targetPath);
+  const normalizedParent = normalizePathForComparison(parentPath);
+  const relative = path.relative(normalizedParent, normalizedTarget);
+  return (
+    relative === '' ||
+    (relative !== '..' &&
+      !relative.startsWith(`..${path.sep}`) &&
+      !path.isAbsolute(relative))
+  );
+}
+
+// check if a child path is strictly inside a parent path (security utility)
 export function isPathInside(childPath: string, parentPath: string): boolean {
-  const relative = path.relative(parentPath, childPath);
-  return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+  const normalizedChild = normalizePathForComparison(childPath);
+  const normalizedParent = normalizePathForComparison(parentPath);
+  return (
+    path.relative(normalizedParent, normalizedChild) !== '' &&
+    isPathWithin(normalizedChild, normalizedParent)
+  );
 }
 
 // resolve real path w/ symlink resolution (async)
@@ -131,6 +148,5 @@ export async function isPathInsideAsync(
   const normChild = normalizePathForComparison(realChild);
   const normParent = normalizePathForComparison(realParent);
 
-  const relative = path.relative(normParent, normChild);
-  return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+  return isPathInside(normChild, normParent);
 }

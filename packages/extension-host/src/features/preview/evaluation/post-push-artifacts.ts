@@ -177,12 +177,10 @@ function sendNextraMetaIfNeeded(
       metaFromFrontmatter
     );
 
-    if (Object.keys(mergedMeta).length === 0) {
-      return;
-    }
+    const snapshot = Object.keys(mergedMeta).length > 0 ? mergedMeta : null;
 
-    log.debug('Sending Nextra meta to webview:', mergedMeta);
-    webviewHandle.setNextraMeta(mergedMeta);
+    log.debug('Sending Nextra meta to webview:', snapshot);
+    webviewHandle.setNextraMeta(snapshot);
   } catch (err) {
     log.debug(`Error resolving Nextra meta: ${extractErrorMessage(err)}`);
   }

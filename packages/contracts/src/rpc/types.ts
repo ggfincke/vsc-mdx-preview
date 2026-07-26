@@ -60,7 +60,7 @@ export interface WebviewRPC {
   setTailwindCss(css: string): void;
   setTailwindBrowserCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
-  setNextraMeta(meta: NextraPageMeta): void;
+  setNextraMeta(meta: NextraPageMeta | null): void;
   setSourceLineHighlight(enabled: boolean): void;
   setSourceLineHighlightColor(mode: SourceLineHighlightColorValue): void;
   setScrollSync(mode: PreviewScrollSyncValue): void;
