@@ -7,16 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.5] - 2026-07-26
+
+Includes [#118](https://github.com/ggfincke/vsc-mdx-preview/pull/118),
+[#119](https://github.com/ggfincke/vsc-mdx-preview/pull/119),
+[#120](https://github.com/ggfincke/vsc-mdx-preview/pull/120),
+[#121](https://github.com/ggfincke/vsc-mdx-preview/pull/121), and
+[#122](https://github.com/ggfincke/vsc-mdx-preview/pull/122).
+
 ### Changed
 
 - **Preview runtime updates are atomic**: source-line highlighting, highlight color, scroll synchronization, and shim side rail now cross the extension/webview boundary as one configuration object; unchanged runtime config, theme, Tailwind, and icon channels are no longer resent on every edit
 - **Shared MDX analysis is versioned**: diagnostics, symbols, component detection, and preview evaluation reuse one bounded AST/frontmatter result only for the exact document URI and version, with explicit change and cache-clear invalidation
 - **Cache clearing is exhaustive**: the Clear All Caches command now invalidates resolution, Sass, component, TypeScript, Babel, PostCSS, icon, preview-config, Tailwind, framework, and Nextra metadata caches without eagerly creating unused services
 - **Zoom has one persisted owner**: zoom commands now adjust the webview's persisted zoom value directly, so the first zoom after a reload no longer jumps from stale extension state
+- **Runtime dependencies**: `mdx-forge` ^0.8.0 -> ^0.9.1, `enhanced-resolve` 5.24.1 -> 5.24.3, PostCSS 8.5.16 -> 8.5.23, KaTeX 0.17.0 -> 0.18.1, Sass 1.101.0 -> 1.102.0, and React / React DOM 19.2.7 -> 19.2.8
 
 ### Fixed
 
-- **Conditional package exports**: Trusted Mode preserves whether each dependency came from ESM import syntax or CommonJS `require()`, selects the matching browser/node export condition, and keeps distinct runtime identities when one module uses both branches of the same package; literal dynamic imports in CommonJS preserve enumerable named exports plus the whole default export, while computed dynamic imports retain native semantics
+- **Trusted JSX development runtime**: dependencies compiled against `react/jsx-dev-runtime` now resolve a production-compatible `jsxDEV` preload backed by React's production element factory instead of failing module resolution or calling React's undefined production export
+- **Conditional package exports**: Trusted Mode structurally tracks whether each dependency came from ESM import syntax or CommonJS `require()`, admits escaped require candidates, closes scanner statement boundaries, selects the matching browser/node export condition, and keeps distinct runtime identities when one module uses both branches of the same package; literal dynamic imports in CommonJS preserve enumerable named exports plus the whole default export, while computed dynamic imports retain native semantics; legacy preload aliases remain available and core/framework preloads restore after cache clearing
 - **Unsaved dependency edits**: on-type module fetches read each matching open dependency buffer, so multiple dirty imports participate in the same preview instead of only the active preview document
 - **Module-load race fencing**: cleared Sass and keyed lazy-import loads cannot repopulate newer cache generations, and cached real paths are reused only while the followed symlink target retains the same filesystem identity
 - **Watcher creation and bounds**: exact config and Tailwind watchers escape glob syntax and release by reference count; newly created preview configs, Tailwind configs, and qualifying Tailwind CSS inputs refresh affected previews
@@ -26,16 +36,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Component diagnostics**: unknown-component ranges cover only the tag name, preserving children during quick fixes; HTML-name collisions such as `<Table />` and dotted members such as `<Tabs.Tab />` are analyzed correctly
 - **Trusted module loading**: relative imports inside npm packages, React-17-style JSX/TSX, binary image imports, `browser: false`, arbitrary TypeScript path wildcards, baseUrl-sensitive path caches, mixed ESM/CommonJS dependencies, builtin subpaths, uppercase TypeScript extensions, and package paths resembling `node_modules` now resolve through the intended paths
 - **Workspace-aware module assets**: aliases and Sass resolve from the owning workspace root; imported CSS/Sass URLs resolve from the stylesheet; package/lockfile creation and deletion invalidate negative resolution state; the cold fetch path uses async resolution and avoids redundant file access
-- **Nextra metadata**: lookup cannot escape the workspace or confuse prefix siblings; creation, deletion, empty metadata, and sibling changes update every affected preview and clear stale webview state
+- **Nextra metadata**: lookup cannot escape the workspace or confuse prefix siblings; creation, deletion, empty metadata, and sibling changes update every affected preview and clear stale webview state; absent metadata now has an explicit `null` contract
 - **Webview recovery and links**: pre-registration messages preserve real event order; diagram renderers recover after invalid source; relative MDX links can open in preview; failed framework fallbacks retry real chunks; changed Mermaid icon packs re-register; diagram contrast follows the preview theme; KaTeX CSS failures no longer replace usable content
 - **Bounded webview interactions**: code-copy and source-line behavior delegate from stable roots across Safe Mode replacements, and Mermaid cache keys include render IDs so reused SVG cannot reference another diagram instance's generated IDs
 - **Lightbox and rendered errors**: direct-child images join galleries, delayed close work cannot erase a newly opened image, and Error-like objects render their message instead of `[object Object]`
+
+### Security
+
+- **Dependency advisories cleared**: transitive `shell-quote` 1.8.4 -> 1.9.0 and `brace-expansion` 5.0.7 -> 5.0.8 updates remove the quadratic-complexity and unbounded-expansion advisories, with `concurrently` 10.0.3 -> 10.0.4 carrying the corrected dependency tree; the production dependency audit reports zero vulnerabilities
 
 ### Performance
 
 - **Tailwind work is content-aware**: negative detection results are cached, Safe Mode skips irrelevant discovery, and unchanged browser-profile input no longer retriggers Tailwind compilation
 - **Diagram results are cached**: unchanged Mermaid, Graphviz, and PlantUML diagrams reuse bounded results across document edits
 - **Preview updates send only changed channels**: accepted edits avoid repeatedly serializing unchanged configuration, theme, Tailwind, and icon payloads
+
+### Infrastructure
+
+- **TypeScript 7 compiler bridge**: repository `tsc` commands now use the TypeScript 7.0.2 native CLI while the TypeScript 6.0.3 compatibility package remains available to `typescript-eslint` and compiler-API consumers, keeping one authoritative TS7 build without breaking tooling peers
+- **Architecture consolidation**: defaults, framework, logging, path, resolution, and read contracts now have canonical owners with an exact generated-output manifest; Safe Mode styles use the shared style injector; root/app/shared/feature type hubs, shared-to-feature edges, dead barrels, and circular-import workarounds were removed; cross-repository parity checks were realigned, the mocked RPC boundary was replaced by a real Comlink round trip, and low-value tests were pruned while retaining regression coverage
+- **Build and test tooling**: `@vscode/test-electron` 3.0.0 -> 3.1.0, ESLint 10.6.0 -> 10.8.0, Prettier 3.9.4 -> 3.9.6, `typescript-eslint` 8.62.1 -> 8.65.0, `@vitejs/plugin-react` 6.0.3 -> 6.0.4, and `actions/setup-node` v6 -> v7
 
 ## [1.7.0] - 2026-07-19
 
