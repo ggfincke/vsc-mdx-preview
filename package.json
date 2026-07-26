@@ -824,6 +824,7 @@
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^26.1.0",
     "@types/vscode": "1.90.0",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.9.2",
     "concurrently": "^10.0.3",
@@ -836,7 +837,7 @@
     "prettier": "^3.9.6",
     "sass": "^1.102.0",
     "tsx": "^4.23.0",
-    "typescript": "^6.0.3",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.65.0",
     "vitest": "^4.1.9"
   },
