@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/mdx-forge/src/components/registry/registry-data.ts
+// Source: mdx-forge/src/components/registry/registry-data.ts
 
 import type { ModuleRegistry } from 'mdx-forge/browser/registry';
 import {

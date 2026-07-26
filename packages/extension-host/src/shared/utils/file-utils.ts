@@ -115,16 +115,3 @@ export async function readFileAsync(
     return handleFileError(err, filePath, 'read', options);
   }
 }
-
-// safely read & parse a JSON file asynchronously
-export async function readJsonAsync<T = unknown>(
-  filePath: string,
-  options?: FileOptions
-): Promise<T | null> {
-  const content = await readFileAsync(filePath, 'utf-8', options);
-  if (content === null) {
-    return null;
-  }
-
-  return parseJsonSafe<T>(content, filePath, options);
-}

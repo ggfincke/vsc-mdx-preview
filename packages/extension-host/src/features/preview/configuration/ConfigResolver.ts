@@ -24,16 +24,11 @@ const log = createTaggedLogger(LogTags.CONFIG);
 // config file names to search for (in order of priority)
 const CONFIG_FILE_NAMES = ['.mdx-previewrc.json', '.mdx-previewrc'];
 
-// get ConfigCache instance via service locator
-function getCache() {
-  return getConfigCache();
-}
-
 // find & parse .mdx-previewrc.json config file for document
 // search from document's directory upward to workspace root
 export function resolveConfig(documentPath: string): ResolvedConfig | null {
   const documentDir = path.dirname(documentPath);
-  const cache = getCache();
+  const cache = getConfigCache();
 
   // check cache first (use get + undefined check instead of has + get for efficiency)
   const cached = cache.get(documentDir);
@@ -119,7 +114,7 @@ function validateConfig(config: unknown): string[] {
 
 // setup file watcher for config file changes
 function setupConfigWatcher(configPath: string): void {
-  const cache = getCache();
+  const cache = getConfigCache();
 
   // already watching
   if (cache.hasWatcher(configPath)) {
@@ -153,5 +148,5 @@ export function onConfigChange(
     event: import('../../../shared/config/ConfigCache').ConfigChangeEvent
   ) => void
 ): vscode.Disposable {
-  return getCache().subscribe(callback);
+  return getConfigCache().subscribe(callback);
 }

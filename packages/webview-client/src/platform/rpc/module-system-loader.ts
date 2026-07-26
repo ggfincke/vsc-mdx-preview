@@ -22,7 +22,3 @@ const moduleSystemLoader = createModuleSystemLoader();
 export function loadModuleSystem(): Promise<ModuleSystem> {
   return moduleSystemLoader.load();
 }
-
-export function resetModuleSystemLoader(): void {
-  moduleSystemLoader.reset();
-}

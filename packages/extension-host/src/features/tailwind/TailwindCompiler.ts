@@ -30,12 +30,6 @@ async function getPostCSS(): Promise<PostCSSFn> {
   return postcssInstance;
 }
 
-// clear postcss cache (for testing or cache refresh scenarios)
-export function clearPostCSSCache(): void {
-  postcssInstance = null;
-  log.debug('PostCSS cache cleared');
-}
-
 // PostCSS plugin factory type
 // a function that accepts options & returns a PostCSS plugin object
 type PostCSSPluginFactory = (options?: unknown) => {
@@ -146,24 +140,16 @@ export class TailwindCompiler {
   }
 
   private async loadTailwindPlugin(): Promise<PostCSSPluginFactory> {
-    return this.loadModule('@tailwindcss/postcss');
-  }
-
-  private async loadModule(id: string): Promise<PostCSSPluginFactory> {
+    const id = '@tailwindcss/postcss';
     const plugin = await loadModuleWithEsmFallback<unknown>(id);
-    return this.validatePluginModule(plugin, id);
-  }
-
-  // validate loaded module is a valid PostCSS plugin factory & throw TailwindError if not a function
-  private validatePluginModule(mod: unknown, id: string): PostCSSPluginFactory {
-    if (typeof mod !== 'function') {
+    if (typeof plugin !== 'function') {
       throw new TailwindError(
         `Module "${id}" must export a function (PostCSS plugin factory). ` +
-          `Got ${typeof mod} instead.`,
+          `Got ${typeof plugin} instead.`,
         'E562',
         'config'
       );
     }
-    return mod as PostCSSPluginFactory;
+    return plugin as PostCSSPluginFactory;
   }
 }

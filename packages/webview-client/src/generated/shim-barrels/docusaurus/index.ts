@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/mdx-forge/src/components/registry/shim-config.ts
+// Source: mdx-forge/src/components/registry/shim-config.ts
 // generated/shim-barrels/docusaurus/index.ts
 
 export { Tabs, TabItem } from 'mdx-forge/components/docusaurus';

@@ -16,7 +16,6 @@ import {
   PREVIEW_THEME_LABELS,
   CODE_BLOCK_THEME_LABELS,
   MERMAID_THEME_LABELS,
-  PRELOADED_MODULE_IDS,
   FRAMEWORK_IDS,
 } from '@mdx-preview/contracts';
 import { CODE_COPY_FEEDBACK_DURATION_MS } from '../../packages/webview-client/src/app/constants';
@@ -73,40 +72,6 @@ describe('cross-repo constant parity', () => {
     // must match: mdx-forge/src/components/internal/constants.ts
     // see: mdx-forge/tests/components/constants-contract.test.ts
     expect(CODE_COPY_FEEDBACK_DURATION_MS).toBe(2000);
-  });
-});
-
-describe('preloaded module ID parity (Finding 15)', () => {
-  // ! cross-repo parity: mdx-forge/src/browser/types.ts declares its own PRELOADED_MODULE_IDS
-  // these canonical values must stay in sync across both repos
-
-  it('PRELOADED_MODULE_IDS keys match expected canonical set', () => {
-    const expectedKeys = [
-      'react',
-      'reactDom',
-      'reactDomClient',
-      'jsxRuntime',
-      'mdxReact',
-      'vscodeLayout',
-    ];
-    expect(Object.keys(PRELOADED_MODULE_IDS).sort()).toEqual(
-      expectedKeys.sort()
-    );
-  });
-
-  it('PRELOADED_MODULE_IDS values match mdx-forge canonical values', () => {
-    // these exact strings are declared in mdx-forge/src/browser/types.ts
-    // if mdx-forge changes these, this test must be updated
-    expect(PRELOADED_MODULE_IDS.react).toBe('npm://react@18');
-    expect(PRELOADED_MODULE_IDS.reactDom).toBe('npm://react-dom@18');
-    expect(PRELOADED_MODULE_IDS.reactDomClient).toBe(
-      'npm://react-dom/client@18'
-    );
-    expect(PRELOADED_MODULE_IDS.jsxRuntime).toBe('npm://react/jsx-runtime@18');
-    expect(PRELOADED_MODULE_IDS.mdxReact).toBe('npm://@mdx-js/react@3');
-    expect(PRELOADED_MODULE_IDS.vscodeLayout).toBe(
-      'npm://vscode-markdown-layout@0.1.0'
-    );
   });
 });
 

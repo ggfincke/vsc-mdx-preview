@@ -6,9 +6,15 @@ import * as ReactDOM from 'react-dom';
 import * as ReactDOMClient from 'react-dom/client';
 import * as jsxRuntime from 'react/jsx-runtime';
 import { MDXProvider, useMDXComponents } from '@mdx-js/react';
-import { PRELOADED_MODULE_IDS } from '@mdx-preview/contracts';
-import { registerPreloadEntries, type PreloadEntry } from 'mdx-forge/browser';
+import {
+  PRELOADED_MODULE_IDS,
+  registerPreloadEntries,
+  type PreloadEntry,
+} from 'mdx-forge/browser';
 import type { ModuleRegistry } from 'mdx-forge/browser/registry';
+
+export type PreloadedModuleId =
+  (typeof PRELOADED_MODULE_IDS)[keyof typeof PRELOADED_MODULE_IDS];
 
 export interface LayoutOptions {
   forceLightTheme?: boolean;

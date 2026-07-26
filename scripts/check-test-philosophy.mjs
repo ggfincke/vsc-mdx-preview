@@ -18,6 +18,8 @@ const EXACT_ALLOWED = new Set([
   'tests/shared/diagnostics-parity.test.ts',
   'tests/shared/duplicate-divergence.test.ts',
   'tests/shared/metadata-parity.test.ts',
+  // real Comlink round-trip protects the blank-preview transport boundary
+  'tests/shared/rpc-roundtrip.test.ts',
   'tests/shared/utility-parity.test.ts',
   'tests/extension/activate.unhandled-rejection.test.ts',
   'tests/extension/commands/security.test.ts',

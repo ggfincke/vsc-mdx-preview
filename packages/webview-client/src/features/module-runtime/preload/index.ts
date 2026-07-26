@@ -1,14 +1,9 @@
 // packages/webview-client/src/features/module-runtime/preload/index.ts
 // preload orchestration for core modules & shim registry
 
-import {
-  type FrameworkId,
-  LogTags,
-  PRELOADED_MODULE_IDS,
-} from '@mdx-preview/contracts';
+import { type FrameworkId, LogTags } from '@mdx-preview/contracts';
 import type { ModuleRegistry } from 'mdx-forge/browser/registry';
 import { preloadCoreModules } from './core';
-import { PRELOADED_SHIM_IDS } from '../../../generated/preload/aliases.generated';
 import {
   preloadGenericShims,
   GENERIC_SHIM_LOADERS,
@@ -23,7 +18,6 @@ import {
 } from './shimLoader';
 
 export { fallbackLayoutModule } from './core';
-export { PRELOADED_SHIM_IDS } from '../../../generated/preload/aliases.generated';
 
 // module-level tagged logger (avoids per-call allocation)
 const log = createTaggedLogger(LogTags.PRELOAD);
@@ -183,9 +177,4 @@ export async function ensureGenericShims(
   } finally {
     state.genericShimsLoadPromise = null;
   }
-}
-
-// get list of all IDs that should be preserved during module reset
-export function getPreservedIds(): string[] {
-  return [...Object.values(PRELOADED_MODULE_IDS), ...PRELOADED_SHIM_IDS];
 }

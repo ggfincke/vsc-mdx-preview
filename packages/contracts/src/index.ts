@@ -28,9 +28,6 @@ export {
   SHIM_LOAD_RETRY_DELAY_MS,
 } from './runtime';
 
-// core preloaded module IDs
-export { PRELOADED_MODULE_IDS, type PreloadedModuleId } from './runtime';
-
 // diagram constants
 export { DEFAULT_PLANTUML_SERVER } from './diagrams';
 

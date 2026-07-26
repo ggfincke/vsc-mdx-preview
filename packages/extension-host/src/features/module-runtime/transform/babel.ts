@@ -91,17 +91,6 @@ export async function prewarmBabel(): Promise<void> {
   }
 }
 
-// check if Babel is prewarmed
-export function isBabelPrewarmed(): boolean {
-  return prewarmComplete;
-}
-
-// reset prewarm state for tests
-export function resetPrewarmState(): void {
-  prewarmStarted = false;
-  prewarmComplete = false;
-}
-
 export const transformAsync = async (
   code: string
 ): Promise<BabelCore.FileResult | null> => {
@@ -109,8 +98,3 @@ export const transformAsync = async (
   const options = await getBabelOptions(babel);
   return babel.transformAsync(code, options);
 };
-
-// clear cached Babel config (for testing or hot reload scenarios)
-export function clearBabelConfigCache(): void {
-  cachedBabelOptions = null;
-}

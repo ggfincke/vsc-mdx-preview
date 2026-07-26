@@ -159,14 +159,6 @@ export function showOutput(): void {
   getOutputChannel().show();
 }
 
-// dispose output channel (call during extension deactivation)
-export function disposeOutputChannel(): void {
-  if (outputChannel) {
-    outputChannel.dispose();
-    outputChannel = undefined;
-  }
-}
-
 // create variadic wrapper that adapts variadic calls to (message, data) format
 function createVariadicWrapper(
   logFn: (message: string, data?: unknown) => void

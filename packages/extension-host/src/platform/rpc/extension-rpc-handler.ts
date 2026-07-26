@@ -277,11 +277,7 @@ class ExtensionHandle implements ExtensionRPC {
     const targetUri = vscode.Uri.file(securePathResult.resolvedPath);
     if (
       !tryRequireTrustedModeForDocument(targetUri, 'open preview', (error) =>
-        reportTrustViolationError(
-          securePathResult.resolvedPath,
-          error.message,
-          'openPreview'
-        )
+        reportTrustViolationError(securePathResult.resolvedPath, error.message)
       )
     ) {
       return;

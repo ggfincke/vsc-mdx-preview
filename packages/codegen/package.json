@@ -5,6 +5,7 @@
   "type": "module",
   "license": "GPL-3.0-or-later",
   "dependencies": {
+    "@mdx-preview/contracts": "*",
     "@mdx-preview/runtime-utils": "*",
     "mdx-forge": "^0.8.0"
   }

@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/mdx-forge/src/components/registry/shim-config.ts
+// Source: mdx-forge/src/components/registry/shim-config.ts
 // generated/shim-barrels/nextra/index.ts
 
 export { Callout } from 'mdx-forge/components/nextra';
