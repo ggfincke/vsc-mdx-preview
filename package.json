@@ -849,7 +849,7 @@
     "@tailwindcss/postcss": "^4.3.2",
     "ajv": "^8.20.0",
     "comlink": "^4.4.1",
-    "enhanced-resolve": "^5.24.1",
+    "enhanced-resolve": "^5.24.3",
     "es-module-lexer": "^2.3.0",
     "get-tsconfig": "^4.14.0",
     "hast-util-from-html-isomorphic": "^2.0.0",
