@@ -22,13 +22,11 @@ const log = createTaggedLogger(LogTags.TYPESCRIPT);
 // compiled pattern index (compile once per tsconfig, O(1) exact matches, O(m) wildcards)
 
 interface CompiledPathPattern {
-  originalPattern: string;
   targets: string[];
-  isWildcard: boolean;
-  // pattern w/o '/*' suffix
+  // pattern text before the star
   prefix: string;
-  // prefix w/ slash
-  prefixWithSlash: string;
+  // pattern text after the star
+  suffix: string;
 }
 
 interface CompiledPathsIndex {
@@ -38,8 +36,8 @@ interface CompiledPathsIndex {
   wildcardPatterns: CompiledPathPattern[];
   // absolute base URL
   absoluteBaseUrl: string;
-  // cache key
-  cacheKey: string;
+  // serialized base URL + paths identity
+  cacheIdentity: string;
   // source paths object for identity fast path
   sourcePaths: Record<string, string[]>;
 }
@@ -58,6 +56,14 @@ export function getCompiledIndexCacheSize(): number {
   return compiledIndexCache.size;
 }
 
+// include the normalized base URL in the compiled representation identity
+function createCacheIdentity(
+  paths: Record<string, string[]>,
+  absoluteBaseUrl: string
+): string {
+  return JSON.stringify([absoluteBaseUrl, paths]);
+}
+
 // compile tsconfig paths into an indexed data structure
 function compilePathsIndex(
   paths: Record<string, string[]>,
@@ -67,15 +73,12 @@ function compilePathsIndex(
   const wildcardPatterns: CompiledPathPattern[] = [];
 
   for (const [pattern, targets] of Object.entries(paths)) {
-    if (pattern.endsWith('/*')) {
-      // wildcard pattern: pre-compute prefix for matching
-      const prefix = pattern.slice(0, -2);
+    const starIndex = pattern.indexOf('*');
+    if (starIndex !== -1 && starIndex === pattern.lastIndexOf('*')) {
       wildcardPatterns.push({
-        originalPattern: pattern,
         targets,
-        isWildcard: true,
-        prefix,
-        prefixWithSlash: prefix + '/',
+        prefix: pattern.slice(0, starIndex),
+        suffix: pattern.slice(starIndex + 1),
       });
     } else {
       // exact pattern: pre-resolve target paths
@@ -96,7 +99,7 @@ function compilePathsIndex(
     exactMatches,
     wildcardPatterns,
     absoluteBaseUrl,
-    cacheKey: JSON.stringify(paths),
+    cacheIdentity: createCacheIdentity(paths, absoluteBaseUrl),
     sourcePaths: paths,
   };
 }
@@ -107,18 +110,22 @@ function getCompiledIndex(
   absoluteBaseUrl: string,
   configPath: string | undefined
 ): CompiledPathsIndex {
-  // use configPath as primary cache key (stable across calls)
-  const cacheKey = configPath ?? absoluteBaseUrl;
+  const normalizedConfigPath = configPath
+    ? normalizePathSeparators(path.normalize(configPath))
+    : null;
+  const cacheKey = JSON.stringify([normalizedConfigPath, absoluteBaseUrl]);
 
   const cached = compiledIndexCache.get(cacheKey);
   if (cached) {
-    // identity fast path: same paths object guarantees equal serialization
-    if (cached.sourcePaths === paths) {
+    // object identity is safe only when the normalized base URL also matches
+    if (
+      cached.sourcePaths === paths &&
+      cached.absoluteBaseUrl === absoluteBaseUrl
+    ) {
       return cached;
     }
-    // validate cache is still valid (paths haven't changed)
-    const currentHash = JSON.stringify(paths);
-    if (cached.cacheKey === currentHash) {
+    const currentIdentity = createCacheIdentity(paths, absoluteBaseUrl);
+    if (cached.cacheIdentity === currentIdentity) {
       return cached;
     }
   }
@@ -141,7 +148,21 @@ function computeAbsoluteBaseUrl(
   const absolutePath = path.isAbsolute(baseUrl)
     ? baseUrl
     : path.join(configDir, baseUrl);
-  return normalizePathSeparators(absolutePath);
+  return normalizePathSeparators(path.normalize(absolutePath));
+}
+
+// substitute the captured text at a target's optional single star
+function resolveTarget(
+  target: string,
+  captured: string,
+  absoluteBaseUrl: string
+): string {
+  const starIndex = target.indexOf('*');
+  const substituted =
+    starIndex === -1
+      ? target
+      : `${target.slice(0, starIndex)}${captured}${target.slice(starIndex + 1)}`;
+  return normalizePathSeparators(path.join(absoluteBaseUrl, substituted));
 }
 
 // optimized pattern matching using compiled index
@@ -159,21 +180,18 @@ function matchTsPathsOptimized(
   // O(m): check wildcard patterns (sorted by specificity)
   for (const pattern of index.wildcardPatterns) {
     if (
-      specifier.startsWith(pattern.prefixWithSlash) ||
-      specifier === pattern.prefix
+      !specifier.startsWith(pattern.prefix) ||
+      !specifier.endsWith(pattern.suffix) ||
+      specifier.length < pattern.prefix.length + pattern.suffix.length
     ) {
-      const suffix =
-        specifier === pattern.prefix
-          ? ''
-          : specifier.slice(pattern.prefix.length + 1);
-
-      return pattern.targets.map((target) => {
-        const targetPath = target.endsWith('/*') ? target.slice(0, -2) : target;
-        return normalizePathSeparators(
-          path.join(index.absoluteBaseUrl, targetPath, suffix)
-        );
-      });
+      continue;
     }
+
+    const captureEnd = specifier.length - pattern.suffix.length;
+    const captured = specifier.slice(pattern.prefix.length, captureEnd);
+    return pattern.targets.map((target) =>
+      resolveTarget(target, captured, index.absoluteBaseUrl)
+    );
   }
 
   return null;

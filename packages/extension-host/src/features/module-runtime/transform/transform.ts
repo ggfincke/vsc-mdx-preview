@@ -97,7 +97,7 @@ async function transform(
   fsPath: string,
   preview: Preview
 ): Promise<TransformResult> {
-  const extname = path.extname(fsPath);
+  const extname = path.extname(fsPath).toLowerCase();
   if (/\.mdx?$/i.test(extname)) {
     // for dependencies, we only need the code (frontmatter is ignored)
     const compilerConfig = buildCompilerConfig({

@@ -5,13 +5,15 @@ import { describe, it, expect } from 'vitest';
 import { transformAsync } from '../../packages/extension-host/src/features/module-runtime/transform/babel';
 
 describe('transformAsync()', () => {
-  it('transforms JSX to React.createElement calls', async () => {
+  it('transforms JSX via the automatic runtime (BH-MR-2)', async () => {
     const code = `const element = <div className="test">Hello</div>;`;
 
     const result = await transformAsync(code);
 
     expect(result).not.toBeNull();
-    expect(result!.code).toContain('React.createElement');
+    // automatic runtime: jsx() calls from react/jsx-runtime, no React global
+    expect(result!.code).toContain('react/jsx-runtime');
+    expect(result!.code).not.toContain('React.createElement');
     expect(result!.code).toContain('"div"');
     expect(result!.code).toContain('className');
   });

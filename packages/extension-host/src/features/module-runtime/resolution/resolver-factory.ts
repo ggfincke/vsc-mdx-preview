@@ -12,6 +12,7 @@ import {
   NODE_RESOLVE_EXTENSIONS,
 } from '../../../shared/constants';
 import { createResettableSingleton } from '../../../shared/utils/singleton-factory';
+import { clearPathSecurityCaches } from '../security/checkFsPath';
 import { clearStatCache } from './file-prober';
 import { clearCompiledIndexCache } from './strategies/TypeScriptPathStrategy';
 
@@ -111,6 +112,7 @@ export function invalidateResolution(): void {
   clearResolverCache();
   clearStatCache();
   clearCompiledIndexCache();
+  clearPathSecurityCaches();
 
   log.debug('Resolution fully invalidated');
 }

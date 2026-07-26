@@ -143,7 +143,12 @@ export function shouldSkipPath(
   basePath: string,
   skipNodeModules: boolean
 ): boolean {
-  return skipNodeModules && basePath.includes('node_modules');
+  return skipNodeModules && isNodeModulesPath(basePath);
+}
+
+// match node_modules as a complete path segment on either platform
+export function isNodeModulesPath(filePath: string): boolean {
+  return filePath.split(/[\\/]+/).includes('node_modules');
 }
 
 // find first matching index file from stat results (async batched)

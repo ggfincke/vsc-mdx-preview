@@ -1,6 +1,7 @@
 // packages/extension-host/src/features/module-runtime/fetch/utils.ts
 // shared utilities for module fetching & resolution
 
+import { builtinModules } from 'node:module';
 import { createTaggedLogger } from '../../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 
@@ -19,42 +20,7 @@ let hasWarnedAboutCoreModules = false;
 const usedCoreModules = new Set<string>();
 
 // node.js core modules served as noop stubs in browser runtime
-const CORE_MODULES = new Set([
-  // cannot be shimmed (rollup-plugin-node-builtins cases)
-  'dns',
-  'dgram',
-  'child_process',
-  'cluster',
-  'module',
-  'net',
-  'readline',
-  'repl',
-  'tls',
-  'crypto',
-  // could theoretically be shimmed; noop for security/simplicity in webview
-  'process',
-  'events',
-  'util',
-  'os',
-  'fs',
-  'path',
-  'buffer',
-  'url',
-  'string_decoder',
-  'punycode',
-  'querystring',
-  'stream',
-  'http',
-  'https',
-  'assert',
-  'constants',
-  'timers',
-  'console',
-  'vm',
-  'zlib',
-  'tty',
-  'domain',
-]);
+const CORE_MODULES = new Set(builtinModules.map(normalizeNodePrefix));
 
 // normalize module request by stripping `node:` prefix if present
 export function normalizeNodePrefix(request: string): string {
@@ -64,7 +30,8 @@ export function normalizeNodePrefix(request: string): string {
 // check if module request is for a Node.js core module (handles both `node:fs` & `fs` forms)
 export function isCoreModule(request: string): boolean {
   const normalized = normalizeNodePrefix(request);
-  return CORE_MODULES.has(normalized);
+  const rootModule = normalized.split('/', 1)[0];
+  return CORE_MODULES.has(normalized) || CORE_MODULES.has(rootModule);
 }
 
 // build a noop result for core modules that can't be shimmed in browser

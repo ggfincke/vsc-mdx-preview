@@ -12,7 +12,10 @@ import {
   type ResolutionMode,
   type IResolutionStrategy,
 } from '../../../types';
-import { buildResolutionResult } from '../resolution-builders';
+import {
+  buildIgnoredResolutionResult,
+  buildResolutionResult,
+} from '../resolution-builders';
 
 // module-level tagged logger for enhanced-resolve strategy
 const log = createTaggedLogger(LogTags.ENHANCED_RESOLVE);
@@ -31,7 +34,14 @@ export class EnhancedResolveStrategy implements IResolutionStrategy {
 
     try {
       const resolved = resolver.resolveSync({}, context.baseDir, specifier);
-      if (resolved) {
+      if (resolved === false) {
+        log.debug(`${specifier} -> ignored by browser field`);
+        return buildIgnoredResolutionResult(
+          specifier,
+          ResolutionStrategy.EnhancedResolve
+        );
+      }
+      if (typeof resolved === 'string') {
         log.debug(`${specifier} -> ${resolved}`);
         return buildResolutionResult(
           resolved,

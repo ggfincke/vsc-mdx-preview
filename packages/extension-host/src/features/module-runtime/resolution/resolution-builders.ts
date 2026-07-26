@@ -4,6 +4,10 @@
 import type { ResolutionResult } from '../../types';
 import { ResolutionStrategy } from '../../types';
 
+export interface IgnoredResolutionResult extends ResolutionResult {
+  kind: 'ignored';
+}
+
 // build a standard ResolutionResult for non-shim modules
 export function buildResolutionResult(
   fsPath: string,
@@ -16,6 +20,27 @@ export function buildResolutionResult(
     specifier,
     strategy,
   };
+}
+
+// build a virtual result for modules disabled by package browser mappings
+export function buildIgnoredResolutionResult(
+  specifier: string,
+  strategy: ResolutionStrategy
+): IgnoredResolutionResult {
+  return {
+    fsPath: `/externalModules/${specifier}`,
+    isBuiltInShim: false,
+    specifier,
+    strategy,
+    kind: 'ignored',
+  };
+}
+
+// identify ignored results before callers touch their virtual filesystem path
+export function isIgnoredResolution(
+  result: ResolutionResult
+): result is IgnoredResolutionResult {
+  return 'kind' in result && result.kind === 'ignored';
 }
 
 // build a ResolutionResult for built-in shim modules

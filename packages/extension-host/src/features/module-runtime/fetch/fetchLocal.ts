@@ -1,6 +1,7 @@
 // packages/extension-host/src/features/module-runtime/fetch/fetchLocal.ts
 // browser-optimized module fetcher w/ ESM exports support & dependency resolution
 
+import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Preview } from '../../preview/preview-manager';
@@ -17,10 +18,12 @@ import {
   MAX_MODULE_FILE_SIZE_BYTES,
   MAX_DEPENDENCIES_PER_MODULE,
   MODULE_FETCH_TIMEOUT_MS,
+  IMAGE_EXTENSIONS,
 } from '../../../shared/constants';
 
 // import from extracted modules
 import { getUnifiedResolver } from '../resolution/UnifiedResolver';
+import { isIgnoredResolution } from '../resolution/resolution-builders';
 import type { ResolutionContext } from '../../types';
 import {
   normalizeNodePrefix,
@@ -29,7 +32,7 @@ import {
   NOOP_MODULE,
 } from './utils';
 import { handleByExtension, getScriptHandler } from '../handlers';
-import { readFileAsync } from '../../../shared/utils/file-utils';
+import { raceTimeout } from '../../../shared/utils/async-utils';
 import { normalizePathSeparators } from '../../../shared/utils/path-utils';
 
 // module-level tagged logger for module fetcher
@@ -55,22 +58,11 @@ const BINARY_SIGNATURES: readonly number[][] = [
   [0x00, 0x00, 0x00],
 ];
 
-// check if a file is binary by reading magic bytes
-async function isBinaryFile(filePath: string): Promise<boolean> {
-  let fd: fs.promises.FileHandle | null = null;
-  try {
-    fd = await fs.promises.open(filePath, 'r');
-    const buffer = Buffer.alloc(8);
-    await fd.read(buffer, 0, 8, 0);
-    return BINARY_SIGNATURES.some((sig) =>
-      sig.every((byte, i) => buffer[i] === byte)
-    );
-  } catch {
-    // if we can't read the file, assume it's not binary
-    return false;
-  } finally {
-    await fd?.close();
-  }
+// sniff binary signatures from the buffer used for source decoding
+function isBinaryBuffer(buffer: Buffer): boolean {
+  return BINARY_SIGNATURES.some((signature) =>
+    signature.every((byte, index) => buffer[index] === byte)
+  );
 }
 
 export async function fetchLocal(
@@ -99,12 +91,15 @@ export async function fetchLocal(
     const frameworkDetector = getFrameworkDetector();
     const frameworkInfo = frameworkDetector.getFramework(preview.doc.uri);
     const shimsEnabled = frameworkDetector.areShimsEnabled(preview.doc.uri);
+    const workspaceRoot =
+      vscode.workspace.getWorkspaceFolder(preview.doc.uri)?.uri.fsPath ??
+      entryFsDirectory;
 
     const resolutionContext: ResolutionContext = {
       baseDir: path.dirname(parentId),
       tsConfig: preview.typescriptConfiguration,
       framework: frameworkInfo.framework,
-      workspaceRoot: entryFsDirectory,
+      workspaceRoot,
       shimsEnabled,
     };
 
@@ -118,6 +113,15 @@ export async function fetchLocal(
 
     if (!resolution) {
       throw createModuleNotFoundError(request, resolutionContext.baseDir);
+    }
+
+    if (isIgnoredResolution(resolution)) {
+      log.debug(`Browser field ignored: ${request}`);
+      return {
+        fsPath: resolution.fsPath,
+        code: NOOP_MODULE,
+        dependencies: [],
+      };
     }
 
     // if it's a built-in shim, return empty result (webview has this preloaded)
@@ -152,13 +156,23 @@ export async function fetchLocal(
       );
     }
 
-    // check for binary files before reading as text
-    if (await isBinaryFile(fsPath)) {
-      const ext = path.extname(fsPath).toLowerCase();
-      throw new Error(
-        `Cannot import binary file "${path.basename(fsPath)}" (${ext}). ` +
-          `Binary files like images should be referenced via URL or data URI.`
+    const extname = path.extname(fsPath).toLowerCase();
+    if (path.sep === '\\') {
+      // always return forward slash paths for resolution (https://github.com/xyc/vscode-mdx-preview/issues/13)
+      fsPath = normalizePathSeparators(fsPath);
+    }
+
+    // image handlers only need the validated path to create a webview URI
+    if ((IMAGE_EXTENSIONS as readonly string[]).includes(extname)) {
+      const imageResult = await handleByExtension(
+        '',
+        fsPath,
+        extname,
+        preview
       );
+      if (imageResult) {
+        return imageResult;
+      }
     }
 
     let code: string;
@@ -170,30 +184,21 @@ export async function fetchLocal(
     ) {
       code = preview.editingDoc.getText();
     } else {
-      // read module from disk w/ timeout guard
-      let readError: unknown;
-      const readCode = await readFileAsync(fsPath, 'utf-8', {
+      // read once, then sniff & decode the same bounded buffer
+      const buffer = await raceTimeout(fs.promises.readFile(fsPath), {
         timeoutMs: MODULE_FETCH_TIMEOUT_MS,
         timeoutMessage:
           `Module fetch timed out after ${MODULE_FETCH_TIMEOUT_MS / 1000}s: ` +
           `${path.basename(fsPath)}`,
-        onError: (error) => {
-          readError = error;
-        },
       });
 
-      if (readCode === null) {
-        throw readError instanceof Error
-          ? readError
-          : new Error(`Failed to read module: ${path.basename(fsPath)}`);
+      if (isBinaryBuffer(buffer)) {
+        throw new Error(
+          `Cannot import binary file "${path.basename(fsPath)}" (${extname}). ` +
+            `Binary files like images should be referenced via URL or data URI.`
+        );
       }
-      code = readCode;
-    }
-
-    const extname = path.extname(fsPath);
-    if (path.sep === '\\') {
-      // always return forward slash paths for resolution (https://github.com/xyc/vscode-mdx-preview/issues/13)
-      fsPath = normalizePathSeparators(fsPath);
+      code = buffer.toString('utf-8');
     }
 
     // dispatch to appropriate file type handler

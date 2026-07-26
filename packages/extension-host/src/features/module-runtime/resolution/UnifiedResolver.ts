@@ -7,6 +7,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { isNpmModuleId } from '@mdx-preview/runtime-utils';
 import { createResettableSingleton } from '../../../shared/utils/singleton-factory';
 import { buildShimResolutionResult } from './resolution-builders';
+import { isNodeModulesPath } from './file-prober';
 import {
   getTypeScriptPathStrategy,
   getEnhancedResolveStrategy,
@@ -37,9 +38,12 @@ interface StrategyDescriptor {
   readonly preferAsync: boolean;
 }
 
-// precomputed strategy chains (only 3 possible shapes)
+// precomputed strategy chains
 const RELATIVE_CHAIN: readonly StrategyDescriptor[] = [
   { getStrategy: getFileProbeStrategy, preferAsync: true },
+];
+const NODE_MODULE_RELATIVE_CHAIN: readonly StrategyDescriptor[] = [
+  { getStrategy: getEnhancedResolveStrategy, preferAsync: false },
 ];
 const BARE_TS_CHAIN: readonly StrategyDescriptor[] = [
   { getStrategy: getTypeScriptPathStrategy, preferAsync: true },
@@ -58,7 +62,9 @@ function pickChain(
   context: ResolutionContext
 ): readonly StrategyDescriptor[] {
   if (isRelativeImport(specifier)) {
-    return RELATIVE_CHAIN;
+    return isNodeModulesPath(context.baseDir)
+      ? NODE_MODULE_RELATIVE_CHAIN
+      : RELATIVE_CHAIN;
   }
   return context.tsConfig ? BARE_TS_CHAIN : BARE_CHAIN;
 }

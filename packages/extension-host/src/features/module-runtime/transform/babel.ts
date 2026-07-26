@@ -48,7 +48,7 @@ async function getBabelOptions(
       ),
       // JSX transformation (required for React components)
       babel.createConfigItemSync(
-        [require('@babel/preset-react'), { runtime: 'classic' }],
+        [require('@babel/preset-react'), { runtime: 'automatic' }],
         { type: 'preset' }
       ),
     ],
