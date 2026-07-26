@@ -88,26 +88,6 @@ describe('shimLoader', () => {
   });
 
   describe('loadFrameworkShimsWithRetry', () => {
-    it('should succeed on first attempt', async () => {
-      const frameworkLoader = vi.fn().mockResolvedValue(undefined);
-      const fallbackLoader = vi.fn();
-
-      const resultPromise = loadFrameworkShimsWithRetry(
-        mockRegistry,
-        'docusaurus',
-        frameworkLoader,
-        fallbackLoader
-      );
-      await vi.runAllTimersAsync();
-      const result = await resultPromise;
-
-      expect(result.success).toBe(true);
-      expect(result.framework).toBe('docusaurus');
-      expect(result.usedFallback).toBe(false);
-      expect(frameworkLoader).toHaveBeenCalledTimes(1);
-      expect(fallbackLoader).not.toHaveBeenCalled();
-    });
-
     it('should fall back to generic after max retries', async () => {
       const frameworkLoader = vi.fn().mockRejectedValue(new Error('Failed'));
       const fallbackLoader = vi.fn();

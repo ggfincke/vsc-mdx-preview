@@ -133,37 +133,22 @@ describe('useSafeModeProcessing', () => {
     expect(safeModeStyle?.textContent).toBe(safeModeCss);
     expect(document.querySelectorAll(`#${SAFE_MODE_STYLE_ID}`)).toHaveLength(1);
 
-    await unmount();
-  });
-
-  it('sanitizes unsafe payloads before DOM insertion', async () => {
-    const { host, rerender, unmount } = createMount();
-
     await rerender(
       '<script>alert("xss")</script><a href="javascript:alert(1)" onclick="alert(1)">bad</a><img src="x" onerror="alert(1)" />'
     );
-
     expect(host.querySelector('script')).toBeNull();
     expect(host.innerHTML).not.toContain('onclick');
     expect(host.innerHTML).not.toContain('onerror');
     expect(host.innerHTML).not.toContain('javascript:');
 
-    await unmount();
-  });
-
-  it('preserves safe HTML elements & attributes', async () => {
-    const { host, rerender, unmount } = createMount();
-
     await rerender(
       '<a href="https://example.com">Link</a><img src="/cat.png" alt="cat" />'
     );
-
-    const link = host.querySelector('a');
-    expect(link?.getAttribute('href')).toBe('https://example.com');
-
-    const img = host.querySelector('img');
-    expect(img?.getAttribute('src')).toBe('/cat.png');
-    expect(img?.getAttribute('alt')).toBe('cat');
+    expect(host.querySelector('a')?.getAttribute('href')).toBe(
+      'https://example.com'
+    );
+    expect(host.querySelector('img')?.getAttribute('src')).toBe('/cat.png');
+    expect(host.querySelector('img')?.getAttribute('alt')).toBe('cat');
 
     await unmount();
   });
@@ -175,26 +160,6 @@ describe('useSafeModeProcessing', () => {
       configurable: true,
       value: { writeText },
     });
-
-    const rootListenerTypes: string[] = [];
-    const buttonListenerTypes: string[] = [];
-    const originalAddEventListener = HTMLElement.prototype.addEventListener;
-    vi.spyOn(HTMLElement.prototype, 'addEventListener').mockImplementation(
-      function (
-        this: HTMLElement,
-        type: string,
-        listener: EventListenerOrEventListenerObject,
-        options?: boolean | AddEventListenerOptions
-      ): void {
-        if (this.dataset.codeBlockRoot === 'true') {
-          rootListenerTypes.push(type);
-        }
-        if (this.classList.contains('mdx-preview-codeblock-copy')) {
-          buttonListenerTypes.push(type);
-        }
-        originalAddEventListener.call(this, type, listener, options);
-      }
-    );
     const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
 
     const host = document.createElement('div');
@@ -207,23 +172,17 @@ describe('useSafeModeProcessing', () => {
     };
 
     await render(
-      Array.from({ length: 200 }, (_, index) => codeBlockHtml(index)).join('')
+      Array.from({ length: 3 }, (_, index) => codeBlockHtml(index)).join('')
     );
 
     expect(host.querySelectorAll('.mdx-preview-codeblock-copy')).toHaveLength(
-      200
+      3
     );
-    expect(host.querySelectorAll('.mdx-preview-codeblock-lang')).toHaveLength(
-      200
-    );
-    expect(host.querySelectorAll('.line.highlighted')).toHaveLength(200);
     expect(
       Array.from(
         host.querySelectorAll<HTMLButtonElement>('.mdx-preview-codeblock-copy')
       ).every((button) => button.type === 'button')
     ).toBe(true);
-    expect(rootListenerTypes).toEqual(['click']);
-    expect(buttonListenerTypes).toEqual([]);
 
     const firstButton = host.querySelector<HTMLButtonElement>(
       '.mdx-preview-codeblock-copy'

@@ -14,10 +14,6 @@ const context = {} as ModuleExecutionContext;
 describe('JSON handler', () => {
   const handler = createSimpleHandler(JSON_EXTENSIONS, buildModuleExportResult);
 
-  it('should handle .json extension', () => {
-    expect(handler.extensions).toContain('.json');
-  });
-
   it('wraps JSON content as module export', async () => {
     const json = '{"name":"mdx-preview","enabled":true}';
     const fsPath = '/path/to/config.json';
@@ -27,15 +23,9 @@ describe('JSON handler', () => {
     expect(result.code).toBe(`module.exports = ${json}`);
     expect(result.dependencies).toEqual([]);
     expect(result.fsPath).toBe(fsPath);
-  });
 
-  it('handles empty object', async () => {
-    const json = '{}';
-    const fsPath = '/path/to/empty.json';
-
-    const result = await handler.handle(json, fsPath, context);
-
-    expect(result.code).toBe('module.exports = {}');
+    const empty = await handler.handle('{}', '/path/to/empty.json', context);
+    expect(empty.code).toBe('module.exports = {}');
   });
 
   it('does not validate JSON syntax', async () => {

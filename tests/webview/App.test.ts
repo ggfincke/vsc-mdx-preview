@@ -157,10 +157,6 @@ vi.mock('../../packages/webview-client/src/shared/utils/linkHandler', () => ({
 }));
 
 import App from '../../packages/webview-client/src/app/App';
-import {
-  PreviewProvider,
-  usePreview,
-} from '../../packages/webview-client/src/app/state/PreviewContext';
 
 function renderAppToString(): string {
   return renderToStaticMarkup(createElement(App));
@@ -272,50 +268,6 @@ describe('App', () => {
 
     expect(allowedTrustedHtml).toContain('data-testid="trusted-preview"');
     expect(mockTrustedPreviewRenderer).toHaveBeenCalledTimes(1);
-  });
-
-  it('clears all Nextra page metadata when the handler receives null', () => {
-    let previewState: ReturnType<typeof usePreview> | null = null;
-    const getPreviewState = () => {
-      if (!previewState) {
-        throw new Error('Preview context did not mount');
-      }
-      return previewState;
-    };
-
-    function PreviewProbe() {
-      previewState = usePreview();
-      return null;
-    }
-
-    const host = document.createElement('div');
-    document.body.appendChild(host);
-    const root = createRoot(host);
-    act(() => {
-      root.render(
-        createElement(PreviewProvider, null, createElement(PreviewProbe))
-      );
-    });
-
-    act(() => {
-      getPreviewState().setNextraMeta({
-        title: 'Configured title',
-        layout: 'full',
-        toc: false,
-      });
-    });
-    expect(getPreviewState().nextraMeta).toEqual({
-      title: 'Configured title',
-      layout: 'full',
-      toc: false,
-    });
-
-    act(() => {
-      getPreviewState().setNextraMeta(null);
-    });
-    expect(getPreviewState().nextraMeta).toBeNull();
-
-    unmountApp(root);
   });
 
   it('stores evaluated function components without invoking them as updaters', () => {

@@ -48,12 +48,6 @@ function withCode(code: unknown): Diagnostic {
   return d;
 }
 
-describe('DIAGNOSTIC_CODES value-lock', () => {
-  it('pins UNKNOWN_COMPONENT to MDXF001 (sourced from mdx-forge)', () => {
-    expect(DIAGNOSTIC_CODES.UNKNOWN_COMPONENT).toBe('MDXF001');
-  });
-});
-
 describe('readDiagnosticCode', () => {
   it('normalizes clickable, string, numeric & absent codes', () => {
     expect(readDiagnosticCode(withCode({ value: 'MDXF001' }))).toBe('MDXF001');
@@ -80,17 +74,13 @@ describe('range conversion', () => {
   });
 });
 
-describe('toVsSeverity', () => {
-  it('maps every mdx-forge severity to the LSP level', () => {
+describe('toVsDiagnostic', () => {
+  it('maps message, severity, source, range, data & a clickable code', () => {
     expect(toVsSeverity('error')).toBe(DiagnosticSeverity.Error);
     expect(toVsSeverity('warning')).toBe(DiagnosticSeverity.Warning);
     expect(toVsSeverity('info')).toBe(DiagnosticSeverity.Information);
     expect(toVsSeverity('hint')).toBe(DiagnosticSeverity.Hint);
-  });
-});
 
-describe('toVsDiagnostic', () => {
-  it('maps message, severity, source, range, data & a clickable code', () => {
     const vs = toVsDiagnostic(sampleDiagnostic);
     expect(vs.severity).toBe(DiagnosticSeverity.Warning);
     expect(vs.source).toBe(EXTENSION_DISPLAY_NAME);

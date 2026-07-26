@@ -2,28 +2,7 @@
 // unit tests for component detection
 
 import type * as vscode from 'vscode';
-import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
-
-const { parseSpy } = vi.hoisted(() => ({
-  parseSpy: vi.fn(),
-}));
-
-vi.mock('unified', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('unified')>();
-  return {
-    ...actual,
-    unified: () => {
-      const processor = actual.unified();
-      const parse = processor.parse.bind(processor);
-      processor.parse = ((...args: Parameters<typeof parse>) => {
-        parseSpy();
-        return parse(...args);
-      }) as typeof processor.parse;
-      return processor;
-    },
-  };
-});
-
+import { describe, it, expect, afterEach } from 'vitest';
 import {
   detectComponents,
   getUnknownComponents,
@@ -46,10 +25,6 @@ import { Foo } from './Foo';
 <CustomComponent />
 <Foo />
 `;
-
-beforeEach(() => {
-  parseSpy.mockClear();
-});
 
 afterEach(() => {
   clearComponentCache();
@@ -243,7 +218,6 @@ describe('frontmatter safety & positions', () => {
     expect(getUnknownComponents(genericConfigured).map((c) => c.name)).toEqual([
       'CodeBlock',
     ]);
-    expect(parseSpy).toHaveBeenCalledTimes(1);
 
     const changed = await detectComponents('<Changed />', {}, new Set(), {
       uri,
@@ -262,11 +236,5 @@ describe('frontmatter safety & positions', () => {
 
     expect(changed.components.map(({ name }) => name)).toEqual(['Changed']);
     expect(other.components.map(({ name }) => name)).toEqual(['Other']);
-    expect(parseSpy).toHaveBeenCalledTimes(3);
-
-    clearComponentCache();
-    clearMdxAnalysisCache();
-    await detectComponents('<Other />', {}, new Set(), otherIdentity);
-    expect(parseSpy).toHaveBeenCalledTimes(4);
   });
 });

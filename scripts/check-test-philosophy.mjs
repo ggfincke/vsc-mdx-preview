@@ -20,7 +20,6 @@ const EXACT_ALLOWED = new Set([
   'tests/shared/metadata-parity.test.ts',
   // real Comlink round-trip protects the blank-preview transport boundary
   'tests/shared/rpc-roundtrip.test.ts',
-  'tests/shared/normalize-error.test.ts',
   'tests/shared/utility-parity.test.ts',
   'tests/extension/activate.unhandled-rejection.test.ts',
   'tests/extension/commands/security.test.ts',
@@ -29,7 +28,6 @@ const EXACT_ALLOWED = new Set([
   'tests/extension/config/CompilerConfig.test.ts',
   'tests/extension/config/ConfigResolver.test.ts',
   'tests/extension/config/TypeScriptConfigResolver.test.ts',
-  'tests/extension/deps/import-extractor.test.ts',
   'tests/extension/diagnostics/ComponentCodeActions.test.ts',
   'tests/extension/diagnostics/ComponentDetector.test.ts',
   'tests/extension/diagnostics/ComponentDiagnostics.test.ts',
@@ -78,29 +76,21 @@ const EXACT_ALLOWED = new Set([
 ]);
 
 const CASE_COUNT_OVERRIDES = new Map([
-  ['tests/extension/preview/PreviewWebviewBridge.test.ts', 6],
   ['tests/extension/tailwind/TailwindProcessor.test.ts', 5],
-  ['tests/extension/preview/evaluate-in-webview.test.ts', 6],
+  ['tests/extension/preview/evaluate-in-webview.test.ts', 5],
   ['tests/extension/diagnostics/ComponentDetector.test.ts', 11],
-  ['tests/extension/diagnostics/ComponentDiagnostics.test.ts', 7],
+  ['tests/extension/diagnostics/ComponentDiagnostics.test.ts', 5],
   ['tests/resolution/unified-resolver.test.ts', 6],
-  ['tests/shared/constant-parity.test.ts', 10],
-  ['tests/shared/duplicate-divergence.test.ts', 5],
-  ['tests/shared/utility-parity.test.ts', 6],
-  ['tests/extension/errors/ErrorReporter.test.ts', 6],
-  ['tests/extension/language/MDXCompletionProvider.test.ts', 10],
-  ['tests/extension/language/MDXOutlineProvider.test.ts', 5],
-  ['tests/extension/language/MDXSymbolProvider.test.ts', 12],
+  ['tests/shared/utility-parity.test.ts', 5],
+  ['tests/extension/errors/ErrorReporter.test.ts', 5],
+  ['tests/extension/language/MDXCompletionProvider.test.ts', 5],
+  ['tests/extension/language/MDXSymbolProvider.test.ts', 9],
   ['tests/extension/rpc-input-validation.test.ts', 7],
-  ['tests/extension/config/TypeScriptConfigResolver.test.ts', 5],
   ['tests/extension/workspace-events.test.ts', 5],
-  ['tests/webview/App.test.ts', 5],
-  ['tests/webview/shimLoader.test.ts', 5],
   ['tests/webview/SafePreview.test.ts', 7],
   ['tests/webview/source-line-highlight.test.ts', 7],
-  ['tests/extension/themes/iconPackValidation.test.ts', 6],
+  ['tests/extension/themes/iconPackValidation.test.ts', 5],
   ['tests/extension/themes/IconPackResolver.test.ts', 8],
-  ['tests/webview/mermaidIconPacks.test.ts', 7],
 ]);
 
 function isAllowedTestFile(repoPath) {

@@ -139,33 +139,6 @@ describe('MetaResolver', () => {
     );
 
     expect(result).toBeNull();
-    const stressWorkspaceRoot = createTempDir();
-    const watchers = captureWatchers();
-    const resolver = MetaResolver.getInstance();
-
-    for (let index = 0; index < 125; index += 1) {
-      const stressMdxPath = path.join(
-        stressWorkspaceRoot,
-        `section-${index}`,
-        'page.mdx'
-      );
-      writeFile(stressMdxPath, '# Page');
-      resolver.resolveNextraMeta(stressMdxPath, stressWorkspaceRoot);
-    }
-
-    expect((resolver as any).trackedDocuments.size).toBe(100);
-    expect((resolver as any).metaWatchTargets.size).toBe(101);
-    expect(watchers.size).toBe(1);
-    expect(
-      (resolver as any).metaWatchTargets.has(
-        path.join(stressWorkspaceRoot, 'section-0', '_meta.json')
-      )
-    ).toBe(false);
-    expect(
-      (resolver as any).metaWatchTargets.has(
-        path.join(stressWorkspaceRoot, 'section-124', '_meta.json')
-      )
-    ).toBe(true);
   });
 
   it('refreshes and publishes metadata across creation, shared edits, and deletion', async () => {

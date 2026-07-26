@@ -12,16 +12,6 @@ async function createRegistry() {
 
 describe('ModuleRegistry', () => {
   describe('style tracking', () => {
-    it('should track injected css bytes for a module', async () => {
-      const registry = await createRegistry();
-
-      registry.trackStyleInjected('/a.css', 'body{color:red}');
-
-      expect(registry.hasInjectedStyle('/a.css')).toBe(true);
-      expect(registry.getInjectedCss('/a.css')).toBe('body{color:red}');
-      expect(registry.getStats().styles).toBe(1);
-    });
-
     // the cached module owns its style, so invalidation drops both
     it('should untrack a style when its owning module is invalidated', async () => {
       const registry = await createRegistry();

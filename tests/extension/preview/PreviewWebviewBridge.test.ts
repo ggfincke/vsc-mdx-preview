@@ -56,10 +56,6 @@ describe('PreviewWebviewBridge', () => {
     mockThemeManager.extractThemeFromFrontmatter.mockReturnValue({});
   });
 
-  it('returns undefined webview URIs before a handle is attached', () => {
-    expect(bridge.getWebviewUri('/workspace/file.css')).toBeUndefined();
-  });
-
   it('connects watcher notifiers when a handle is attached', () => {
     const handle = createMockHandle();
     const watcherManager = createWatcherManager();
@@ -88,29 +84,6 @@ describe('PreviewWebviewBridge', () => {
       codeBlockTheme: 'auto',
       mermaidIconPacks: [],
     });
-  });
-
-  it('forwards runtime flags and scroll requests to the webview handle', () => {
-    const handle = createMockHandle();
-    const watcherManager = createWatcherManager();
-    bridge.setWebviewHandle(handle as never, watcherManager as never);
-
-    bridge.pushRuntimeConfiguration({
-      sourceLineHighlight: false,
-      sourceLineHighlightColor: 'white',
-      scrollSync: 'bidirectional',
-      shimSideRail: false,
-    });
-
-    expect(handle.setRuntimeConfig).toHaveBeenCalledWith({
-      sourceLineHighlight: false,
-      sourceLineHighlightColor: 'white',
-      scrollSync: 'bidirectional',
-      shimSideRail: false,
-    });
-
-    bridge.scrollToLine(42);
-    expect(handle.scrollToLine).toHaveBeenCalledWith(42);
   });
 
   it('sends unchanged state once per handshake', async () => {

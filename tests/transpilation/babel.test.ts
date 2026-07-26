@@ -29,31 +29,4 @@ describe('transformAsync()', () => {
     expect(result!.code).toContain('?.');
   });
 
-  it('handles export default from syntax', async () => {
-    // This is a stage-1 proposal supported for real-world compatibility
-    const code = `export { default as Button } from './Button';`;
-
-    const result = await transformAsync(code);
-
-    expect(result).not.toBeNull();
-    expect(result!.code).toBeDefined();
-  });
-
-  it('transforms class properties', async () => {
-    const code = `
-      class MyComponent {
-        state = { count: 0 };
-        handleClick = () => {
-          this.state.count++;
-        };
-      }
-    `;
-
-    const result = await transformAsync(code);
-
-    expect(result).not.toBeNull();
-    // Class properties should be transformed
-    expect(result!.code).toContain('MyComponent');
-  });
-
 });

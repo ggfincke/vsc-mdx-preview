@@ -44,14 +44,21 @@ describe('ErrorReporter', () => {
 
   it('shows user-facing errors for error severity', () => {
     const showErrorMessage = vi.spyOn(vscode.window, 'showErrorMessage');
+    const reporter = ErrorReporter.getInstance();
 
-    ErrorReporter.getInstance().report(new Error('err'), {
+    reporter.report(new Error('err'), {
       context: ErrorContext.Extension,
       severity: ErrorSeverity.Error,
     });
 
     expect(showErrorMessage).toHaveBeenCalledWith(
       expect.stringContaining('err')
+    );
+
+    showErrorMessage.mockClear();
+    reporter.reportToUser(new Error('user-facing'), ErrorContext.Extension);
+    expect(showErrorMessage).toHaveBeenCalledWith(
+      expect.stringContaining('user-facing')
     );
   });
 
@@ -100,19 +107,6 @@ describe('ErrorReporter', () => {
     expect(showErrorMessage).not.toHaveBeenCalled();
     expect(showWarningMessage).not.toHaveBeenCalled();
     expect(mockLogDebug).toHaveBeenCalled();
-  });
-
-  it('routes reportToUser through an error notification', () => {
-    const showErrorMessage = vi.spyOn(vscode.window, 'showErrorMessage');
-
-    ErrorReporter.getInstance().reportToUser(
-      new Error('user-facing'),
-      ErrorContext.Extension
-    );
-
-    expect(showErrorMessage).toHaveBeenCalledWith(
-      expect.stringContaining('user-facing')
-    );
   });
 
   it('executes selected reportWithActions callbacks', async () => {

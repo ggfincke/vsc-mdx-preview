@@ -14,12 +14,6 @@ function createContext(uri: string | undefined): ModuleExecutionContext {
 describe('ImageHandler', () => {
   const handler = new ImageHandler();
 
-  it('should handle common image extensions', () => {
-    expect(handler.extensions).toEqual(
-      expect.arrayContaining(['.png', '.jpg', '.jpeg', '.gif', '.svg'])
-    );
-  });
-
   it('wraps webview URI as module export', async () => {
     const webviewUri = 'vscode-resource:/workspace/assets/logo.png';
     const fsPath = '/workspace/assets/logo.png';

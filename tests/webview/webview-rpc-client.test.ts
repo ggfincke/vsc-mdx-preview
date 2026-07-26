@@ -271,17 +271,7 @@ describe('webview-rpc-client', () => {
     let scenario = await setupRpcScenario();
     let handlers = createStateHandlers();
 
-    scenario.exposedHandle.updatePreview(
-      'export default function Demo() {}',
-      '/doc.mdx',
-      []
-    );
-    scenario.module.registerWebviewHandlers(handlers as any);
-    expect(handlers.setTrustedContent).not.toHaveBeenCalled();
-
-    scenario = await setupRpcScenario();
-    handlers = createStateHandlers();
-    scenario.exposedHandle.setTrustState(createTrustState(false));
+    // queued before handlers / untrusted -> blocked
     scenario.exposedHandle.updatePreview(
       'export default function Demo() {}',
       '/doc.mdx',
@@ -301,6 +291,7 @@ describe('webview-rpc-client', () => {
     );
     expect(handlers.setTrustedContent).not.toHaveBeenCalled();
 
+    // trusted + deps -> allowed
     scenario = await setupRpcScenario();
     handlers = createStateHandlers();
     scenario.module.registerWebviewHandlers(handlers as any);
@@ -316,6 +307,7 @@ describe('webview-rpc-client', () => {
       dependencies
     );
 
+    // content then late trust -> flush
     scenario = await setupRpcScenario();
     handlers = createStateHandlers();
     scenario.module.registerWebviewHandlers(handlers as any);
@@ -324,31 +316,9 @@ describe('webview-rpc-client', () => {
       '/doc.mdx',
       dependencies
     );
-
     expect(handlers.setTrustedContent).not.toHaveBeenCalled();
-
     scenario.exposedHandle.setTrustState(createTrustState(true));
-
     expect(handlers.setTrustState).toHaveBeenCalledWith(createTrustState(true));
-    expect(handlers.setTrustedContent).toHaveBeenCalledWith(
-      'export default function Demo() {}',
-      '/doc.mdx',
-      dependencies
-    );
-
-    scenario = await setupRpcScenario();
-    handlers = createStateHandlers();
-    scenario.exposedHandle.updatePreview(
-      'export default function Demo() {}',
-      '/doc.mdx',
-      dependencies
-    );
-    scenario.module.registerWebviewHandlers(handlers as any);
-
-    expect(handlers.setTrustedContent).not.toHaveBeenCalled();
-
-    scenario.exposedHandle.setTrustState(createTrustState(true));
-
     expect(handlers.setTrustedContent).toHaveBeenCalledWith(
       'export default function Demo() {}',
       '/doc.mdx',

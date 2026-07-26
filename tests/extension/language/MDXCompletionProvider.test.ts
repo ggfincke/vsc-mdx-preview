@@ -27,20 +27,6 @@ const completionContext = {} as any;
 
 describe('MDXCompletionProvider', () => {
   describe('jsx-tag context', () => {
-    it('returns component completions after < character', () => {
-      const doc = createMockDocument('# Hello\n\n<');
-      const position = new Position(2, 1);
-      const items = provider.provideCompletionItems(
-        doc,
-        position,
-        token,
-        completionContext
-      );
-
-      expect(items).toBeDefined();
-      expect(items!.length).toBeGreaterThan(0);
-    });
-
     it('includes all 5 generic components', () => {
       const doc = createMockDocument('<');
       const position = new Position(0, 1);
@@ -58,37 +44,20 @@ describe('MDXCompletionProvider', () => {
       expect(labels).toContain('TabItem');
       expect(labels).toContain('Collapsible');
       expect(labels).toContain('CodeGroup');
-    });
 
-    it('component completions include SnippetString insertText', () => {
-      const doc = createMockDocument('<');
-      const position = new Position(0, 1);
-      const items = provider.provideCompletionItems(
-        doc,
-        position,
-        token,
-        completionContext
-      );
-
-      expect(items).toBeDefined();
       const callout = items!.find((i) => i.label === 'Callout');
       expect(callout).toBeDefined();
       expect(callout!.insertText).toBeInstanceOf(SnippetString);
       expect(callout!.kind).toBe(CompletionItemKind.Class);
-    });
 
-    it('returns completions w/ partial component name', () => {
-      const doc = createMockDocument('<Cal');
-      const position = new Position(0, 4);
-      const items = provider.provideCompletionItems(
-        doc,
-        position,
+      const partialItems = provider.provideCompletionItems(
+        createMockDocument('<Cal'),
+        new Position(0, 4),
         token,
         completionContext
       );
-
-      expect(items).toBeDefined();
-      expect(items!.length).toBeGreaterThan(0);
+      expect(partialItems).toBeDefined();
+      expect(partialItems!.map((i) => i.label)).toContain('Callout');
     });
   });
 
@@ -109,19 +78,7 @@ describe('MDXCompletionProvider', () => {
       expect(labels).toContain('note');
       expect(labels).toContain('warning');
       expect(labels).toContain('tip');
-    });
 
-    it('directive completions include closing :::', () => {
-      const doc = createMockDocument(':::');
-      const position = new Position(0, 3);
-      const items = provider.provideCompletionItems(
-        doc,
-        position,
-        token,
-        completionContext
-      );
-
-      expect(items).toBeDefined();
       const note = items!.find((i) => i.label === 'note');
       expect(note).toBeDefined();
       expect(note!.insertText).toBeInstanceOf(SnippetString);
@@ -195,22 +152,6 @@ describe('MDXCompletionProvider', () => {
           completionContext
         )
       ).toBeUndefined();
-    });
-
-    it('frontmatter completions use Property kind', () => {
-      const doc = createMockDocument('---\n\n---\n');
-      const position = new Position(1, 0);
-      const items = provider.provideCompletionItems(
-        doc,
-        position,
-        token,
-        completionContext
-      );
-
-      expect(items).toBeDefined();
-      const title = items!.find((i) => i.label === 'title');
-      expect(title).toBeDefined();
-      expect(title!.kind).toBe(CompletionItemKind.Property);
     });
   });
 

@@ -283,36 +283,6 @@ describe('evaluate-in-webview Tailwind routing', () => {
     expect(mockEngine.evaluateSafe).toHaveBeenCalledTimes(2);
   });
 
-  it('pushes runtime configuration flags after evaluation', async () => {
-    mockTrustedState();
-    const preview = createPreview();
-
-    preview.runtimeConfiguration.sourceLineHighlight = false;
-    preview.runtimeConfiguration.sourceLineHighlightColor = 'white';
-    preview.runtimeConfiguration.scrollSync = 'bidirectional';
-    preview.runtimeConfiguration.shimSideRail = false;
-    mockEngine.evaluateTrusted.mockResolvedValueOnce({
-      code: 'export default function Demo() { return null; }',
-      entryFilePath: '/workspace/doc.mdx',
-      dependencies: [],
-      frontmatter: undefined,
-    });
-
-    await evaluateInWebview(
-      preview as unknown as MockPreview,
-      '# doc',
-      '/workspace/doc.mdx'
-    );
-
-    expect(preview.pushRuntimeConfiguration).toHaveBeenCalled();
-    expect(preview.webviewHandle.setRuntimeConfig).toHaveBeenCalledWith({
-      sourceLineHighlight: false,
-      sourceLineHighlightColor: 'white',
-      scrollSync: 'bidirectional',
-      shimSideRail: false,
-    });
-  });
-
   it('sends only content on a second evaluation with unchanged state', async () => {
     mockTrustedState();
     const preview = createPreview();

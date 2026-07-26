@@ -70,16 +70,11 @@ describe('PreviewInitializer', () => {
     vi.useRealTimers();
   });
 
-  it('resolves handshake when resolve is called', async () => {
-    const initializer = new PreviewInitializer();
-    const { promise, resolve } = initializer.createHandshake();
-
-    resolve();
-
-    await expect(promise).resolves.toBeUndefined();
-  });
-
   it('rejects handshake after timeout', async () => {
+    const resolved = new PreviewInitializer().createHandshake();
+    resolved.resolve();
+    await expect(resolved.promise).resolves.toBeUndefined();
+
     vi.useFakeTimers();
     const initializer = new PreviewInitializer();
     const { promise } = initializer.createHandshake();

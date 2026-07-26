@@ -7,7 +7,6 @@ import {
   SymbolTreeItem,
 } from '../../../packages/extension-host/src/features/language/MDXOutlineProvider';
 import { clearMdxAnalysisCache } from '../../../packages/extension-host/src/shared/mdx-analysis/document-analysis';
-import { SymbolKind, TreeItemCollapsibleState, ThemeIcon } from 'vscode';
 import { createMockDocument } from '../../helpers/mock-document';
 
 describe('MDXOutlineProvider', () => {
@@ -46,42 +45,18 @@ describe('MDXOutlineProvider', () => {
     expect(h3Children[0].label).toBe('Grandchild');
   });
 
-  it('fires onDidChangeTreeData on update', () => {
+  it('fires onDidChangeTreeData on update and clear', () => {
     const provider = new MDXOutlineProvider();
     const handler = vi.fn();
     provider.onDidChangeTreeData(handler);
 
     const doc = createMockDocument('# Test\n');
     provider.update(doc);
-
-    expect(handler).toHaveBeenCalled();
-  });
-
-  it('clears symbols & fires change event', () => {
-    const provider = new MDXOutlineProvider();
-    const doc = createMockDocument('# Test\n');
-    provider.update(doc);
+    expect(handler).toHaveBeenCalledTimes(1);
     expect(provider.getChildren().length).toBeGreaterThan(0);
 
-    const handler = vi.fn();
-    provider.onDidChangeTreeData(handler);
     provider.clear();
-
     expect(provider.getChildren()).toEqual([]);
-    expect(handler).toHaveBeenCalled();
-  });
-
-  it('tree items have correct icon & navigation command', () => {
-    const provider = new MDXOutlineProvider();
-    const doc = createMockDocument('# Heading\n');
-    provider.update(doc);
-
-    const items = provider.getChildren();
-    const item = items[0];
-
-    expect(item.iconPath).toBeInstanceOf(ThemeIcon);
-    expect((item.iconPath as ThemeIcon).id).toBe('symbol-string');
-    expect(item.command).toBeDefined();
-    expect(item.command!.command).toBe('vscode.open');
+    expect(handler).toHaveBeenCalledTimes(2);
   });
 });

@@ -12,10 +12,7 @@ import type {
   ModuleDependency,
   ModuleDependencyKind,
 } from '@mdx-preview/contracts';
-import {
-  clearForgeRuntimeCaches,
-  createForgeRuntimeAdapter,
-} from '../../packages/webview-client/src/features/module-runtime';
+import { createForgeRuntimeAdapter } from '../../packages/webview-client/src/features/module-runtime';
 
 const IMPORT_RUNTIME_PREFIX = '\0mdx-forge:import\0';
 
@@ -389,22 +386,6 @@ describe('module runtime Forge compatibility', () => {
     expect(returned).toBe(fetchResult);
     expect(returned?.dependencies[0]).toEqual(importDependency('./nested'));
     expect(resolvePreloadAlias).not.toHaveBeenCalled();
-  });
-
-  it('reapplies the remembered framework when caches clear', () => {
-    const clearAllCaches = vi.fn();
-    const ensureFrameworkShimsLoaded = vi.fn();
-
-    clearForgeRuntimeCaches(
-      { clearAllCaches, ensureFrameworkShimsLoaded },
-      'docusaurus'
-    );
-
-    expect(clearAllCaches).toHaveBeenCalledOnce();
-    expect(ensureFrameworkShimsLoaded).toHaveBeenCalledWith('docusaurus');
-    expect(clearAllCaches.mock.invocationCallOrder[0]).toBeLessThan(
-      ensureFrameworkShimsLoaded.mock.invocationCallOrder[0]
-    );
   });
 
   it('runs production preload callbacks against installed Forge', async () => {

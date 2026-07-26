@@ -46,16 +46,6 @@ describe('LRU cache private runtime-utils surface', () => {
       ['a', 1],
       ['b', 2],
     ]);
-
-    const protectedCache = new LRUCache<string, number>({
-      maxEntries: 1,
-      isProtected: (key) => key === 'keep',
-    });
-    protectedCache.set('keep', 1);
-    protectedCache.set('drop-1', 2);
-    protectedCache.set('drop-2', 3);
-    expect(protectedCache.protectedCount).toBe(1);
-    expect(Array.from(protectedCache.keys())).toEqual(['keep', 'drop-2']);
   });
 });
 

@@ -95,6 +95,10 @@ describe('mdx-forge metadata contract', () => {
   describe('callout type contract', () => {
     it('CALLOUT_TITLES values match the supported display labels', () => {
       expect(CALLOUT_TITLES).toEqual(expectedContract.titles);
+      expect([...VALID_CALLOUT_TYPES].sort()).toEqual(
+        Object.keys(CALLOUT_TITLES).sort()
+      );
+      expect(VALID_CALLOUT_TYPES).toHaveLength(17);
     });
   });
 
@@ -111,51 +115,11 @@ describe('mdx-forge metadata contract', () => {
     });
   });
 
-  describe('VALID_CALLOUT_TYPES contract', () => {
-    it('VALID_CALLOUT_TYPES has exactly 17 expected types', () => {
-      expect([...VALID_CALLOUT_TYPES].sort()).toEqual([
-        'attention',
-        'bug',
-        'caution',
-        'danger',
-        'example',
-        'failure',
-        'hint',
-        'important',
-        'info',
-        'note',
-        'question',
-        'quote',
-        'success',
-        'summary',
-        'tip',
-        'todo',
-        'warning',
-      ]);
-    });
-  });
-
   describe('icon collection key contract', () => {
     it('icon collections expose the expected keys', () => {
-      expect(Object.keys(CALLOUT_ICONS).sort()).toEqual([
-        'attention',
-        'bug',
-        'caution',
-        'danger',
-        'example',
-        'failure',
-        'hint',
-        'important',
-        'info',
-        'note',
-        'question',
-        'quote',
-        'success',
-        'summary',
-        'tip',
-        'todo',
-        'warning',
-      ]);
+      expect(Object.keys(CALLOUT_ICONS).sort()).toEqual(
+        Object.keys(CALLOUT_TITLES).sort()
+      );
       expect(Object.keys(GITHUB_ICONS).sort()).toEqual([
         'arrowRight',
         'check',
