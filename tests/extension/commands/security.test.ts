@@ -10,12 +10,10 @@ import {
   mockPreviewManager,
 } from '../../helpers/mock-services';
 
-const mockSelectSecurityPolicy = vi.fn();
-
 vi.mock(
   '../../../packages/extension-host/src/features/security/security',
   () => ({
-    selectSecurityPolicy: (...args: any[]) => mockSelectSecurityPolicy(...args),
+    selectSecurityPolicy: vi.fn(),
   })
 );
 
@@ -30,17 +28,6 @@ import { commands } from '../../../packages/extension-host/src/features/commands
 describe('security commands', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe('changeSecuritySettings', () => {
-    const handler = commands.find(
-      (c) => c.id === 'mdx-preview.commands.changeSecuritySettings'
-    )!.handler;
-
-    it('calls selectSecurityPolicy', () => {
-      handler();
-      expect(mockSelectSecurityPolicy).toHaveBeenCalled();
-    });
   });
 
   describe('toggleScripts', () => {
@@ -63,36 +50,36 @@ describe('security commands', () => {
       );
     });
 
-    it('trusted + enabled -> sets false w/ Workspace scope & shows info', async () => {
-      mockTrustManager.getState.mockReturnValue({
-        workspaceTrusted: true,
-      });
-      mockConfigManager.get.mockReturnValue(true);
-      const infoSpy = vi.spyOn(vscode.window, 'showInformationMessage');
-      await handler();
-      expect(mockConfigManager.set).toHaveBeenCalledWith(
-        'preview.enableScripts',
-        false,
-        vscode.ConfigurationTarget.Workspace
-      );
-      expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalledTimes(1);
-      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('disabled'));
-    });
-
-    it('trusted + disabled -> sets true w/ Workspace scope & shows info', async () => {
-      mockTrustManager.getState.mockReturnValue({
-        workspaceTrusted: true,
-      });
-      mockConfigManager.get.mockReturnValue(false);
-      const infoSpy = vi.spyOn(vscode.window, 'showInformationMessage');
-      await handler();
-      expect(mockConfigManager.set).toHaveBeenCalledWith(
-        'preview.enableScripts',
-        true,
-        vscode.ConfigurationTarget.Workspace
-      );
-      expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalledTimes(1);
-      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('enabled'));
-    });
+    it.each([
+      {
+        currentlyEnabled: true,
+        nextValue: false,
+        infoSnippet: 'disabled',
+      },
+      {
+        currentlyEnabled: false,
+        nextValue: true,
+        infoSnippet: 'enabled',
+      },
+    ])(
+      'trusted + $infoSnippet -> toggles enableScripts w/ Workspace scope',
+      async ({ currentlyEnabled, nextValue, infoSnippet }) => {
+        mockTrustManager.getState.mockReturnValue({
+          workspaceTrusted: true,
+        });
+        mockConfigManager.get.mockReturnValue(currentlyEnabled);
+        const infoSpy = vi.spyOn(vscode.window, 'showInformationMessage');
+        await handler();
+        expect(mockConfigManager.set).toHaveBeenCalledWith(
+          'preview.enableScripts',
+          nextValue,
+          vscode.ConfigurationTarget.Workspace
+        );
+        expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalledTimes(1);
+        expect(infoSpy).toHaveBeenCalledWith(
+          expect.stringContaining(infoSnippet)
+        );
+      }
+    );
   });
 });

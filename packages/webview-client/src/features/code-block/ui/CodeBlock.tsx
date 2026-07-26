@@ -4,6 +4,9 @@
 import { copyWithFeedback } from '../../../shared/utils/clipboard';
 import './CodeBlock.css';
 
+export const CODE_BLOCK_COPY_SELECTOR = '.mdx-preview-codeblock-copy';
+export const CODE_BLOCK_CONTAINER_SELECTOR = '.mdx-preview-codeblock-shiki';
+
 // keep copy/check SVGs local so code-block enhancement does not depend on shim internals
 // ! cross-repo duplicate; keep byte-identical w/ mdx-forge GITHUB_ICONS.copy/.check
 const COPY_ICONS = {
@@ -25,7 +28,6 @@ export function enhanceCodeBlocks(container: HTMLElement): void {
       return;
     }
 
-    const code = shikiContainer.getAttribute('data-code') || '';
     const lang = shikiContainer.getAttribute('data-language') || '';
     const highlightLines = shikiContainer.getAttribute('data-highlight-lines');
 
@@ -36,13 +38,7 @@ export function enhanceCodeBlocks(container: HTMLElement): void {
     copyBtn.setAttribute('title', 'Copy code');
     copyBtn.innerHTML = COPY_ICONS.copy;
 
-    copyBtn.addEventListener('click', () => {
-      void copyWithFeedback(code, copyBtn, {
-        copiedContent: COPY_ICONS.check,
-        originalContent: COPY_ICONS.copy,
-      });
-    });
-
+    copyBtn.type = 'button';
     shikiContainer.appendChild(copyBtn);
 
     // add language badge if language is specified
@@ -59,6 +55,26 @@ export function enhanceCodeBlocks(container: HTMLElement): void {
       applyLineHighlighting(shikiContainer as HTMLElement, lineNumbers);
     }
   });
+}
+
+export async function copyEnhancedCodeBlock(
+  button: HTMLButtonElement,
+  signal: AbortSignal
+): Promise<boolean> {
+  const codeContainer = button.closest(CODE_BLOCK_CONTAINER_SELECTOR);
+  if (!codeContainer) {
+    return false;
+  }
+
+  return copyWithFeedback(
+    codeContainer.getAttribute('data-code') || '',
+    button,
+    {
+      copiedContent: COPY_ICONS.check,
+      originalContent: COPY_ICONS.copy,
+      signal,
+    }
+  );
 }
 
 // apply highlighting to specific lines in code block

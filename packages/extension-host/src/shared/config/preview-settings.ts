@@ -4,8 +4,7 @@
 import type * as vscode from 'vscode';
 import { SETTINGS } from './ConfigManager';
 import type { ConfigManager, SettingTypes } from './ConfigManager';
-import type { ConfigurationState } from '../types';
-import type { PreviewRuntimeConfig } from './types';
+import type { ConfigurationState, PreviewRuntimeConfig } from './types';
 
 // map full settings snapshot to preview configuration state
 export function mapSettingsToPreviewConfiguration(

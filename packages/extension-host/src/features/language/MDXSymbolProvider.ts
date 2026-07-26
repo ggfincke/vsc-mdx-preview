@@ -9,9 +9,12 @@ import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import {
   analyzeMdxDocument,
   astPositionToRange,
-} from './mdx-document-analysis';
-import { describeEsmStatement } from './esm-imports';
-import type { MdastPosition, MdxjsEsmNode } from '../diagnostics/types';
+} from '../../shared/mdx-analysis/document-analysis';
+import { describeEsmStatement } from '../../shared/mdx-analysis/esm-imports';
+import type {
+  MdastPosition,
+  MdxjsEsmNode,
+} from '../../shared/mdx-analysis/types';
 
 const log = createTaggedLogger(LogTags.SYMBOL_PROVIDER);
 
@@ -209,6 +212,10 @@ function createEsmSymbols(
 export function extractMDXSymbols(
   document: vscode.TextDocument
 ): vscode.DocumentSymbol[] {
+  const documentIdentity = {
+    uri: document.uri.toString(),
+    version: document.version,
+  };
   const text = document.getText();
   const {
     ast: tree,
@@ -216,7 +223,7 @@ export function extractMDXSymbols(
     frontmatterLineOffset,
     frontmatterColumnOffset,
     frontmatterEndLine,
-  } = analyzeMdxDocument(text);
+  } = analyzeMdxDocument(text, documentIdentity);
 
   const symbols: vscode.DocumentSymbol[] = [];
 

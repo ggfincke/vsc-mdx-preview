@@ -1,18 +1,26 @@
 // packages/codegen/src/cli/generate-settings.ts
-// sync package.json setting defaults & enums from contracts sources
+// sync package.json defaults & ordered enum descriptors
 
 import * as fs from 'fs';
-import * as path from 'path';
 import { SETTINGS_DEFAULTS } from '@mdx-preview/contracts';
 import {
   type PackageJson,
   type SettingProperty,
-  SETTINGS_ENUM_MAP,
+  SETTINGS_ENUM_DESCRIPTORS,
 } from '../lib/codegen-utils';
+import {
+  getGeneratedOutput,
+  loadGeneratedOutputManifest,
+  resolveGeneratedOutputPath,
+} from '../lib/generated-output-manifest';
 import { getRootDir } from './cli-utils';
 
 const ROOT_DIR = getRootDir(import.meta.url);
-const PACKAGE_JSON_PATH = path.join(ROOT_DIR, 'package.json');
+const OUTPUT_MANIFEST = loadGeneratedOutputManifest(ROOT_DIR);
+const PACKAGE_JSON_PATH = resolveGeneratedOutputPath(
+  ROOT_DIR,
+  getGeneratedOutput(OUTPUT_MANIFEST, 'settings.packageManifest')
+);
 
 function loadPackageJson(): PackageJson {
   return JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, 'utf-8')) as PackageJson;
@@ -45,9 +53,10 @@ function syncDefaults(properties: Record<string, SettingProperty>): void {
 }
 
 function syncEnums(properties: Record<string, SettingProperty>): void {
-  for (const [key, values] of Object.entries(SETTINGS_ENUM_MAP)) {
+  for (const [key, entries] of Object.entries(SETTINGS_ENUM_DESCRIPTORS)) {
     const property = ensureProperty(properties, key);
-    property.enum = [...values];
+    property.enum = entries.map(({ value }) => value);
+    property.enumDescriptions = entries.map(({ description }) => description);
   }
 }
 

@@ -8,11 +8,12 @@ import { getTailwindProcessor, getTrustManager } from '../../../app/services';
 import {
   buildEffectivePreviewConfig,
   toCompilerConfig,
-} from '../../../shared/config/EffectivePreviewConfig';
+} from '../configuration/EffectivePreviewConfig';
 import { EXTENSION_DISPLAY_NAME } from '../../../shared/constants';
+import type { DocumentAnalysisIdentity } from '../../../shared/mdx-analysis/document-analysis';
 import type { EvaluationEngine } from '../EvaluationEngine';
 import type { Preview } from '../Preview';
-import type { TailwindProfileDetectionResult } from '../../types';
+import type { TailwindProfileDetectionResult } from '../../tailwind/types/detector';
 import type {
   PreparedEvaluationContext,
   PreparedEvaluationResult,
@@ -24,7 +25,9 @@ export async function prepareEvaluationContext(
   preview: Preview,
   text: string,
   fsPath: string,
-  engine: EvaluationEngine
+  engine: EvaluationEngine,
+  isCurrent: () => boolean,
+  documentIdentity: DocumentAnalysisIdentity
 ): Promise<PreparedEvaluationResult> {
   const trustState = getTrustManager().getStateForDocument(preview.doc.uri);
   log.debug(formatTrustStateForDebug(trustState));
@@ -47,12 +50,16 @@ export async function prepareEvaluationContext(
   const shouldProcessTailwind = canExecute && tailwindEnabled;
   let tailwindProfileHint: TailwindProfileDetectionResult | undefined;
 
-  if (tailwindEnabled) {
+  if (shouldProcessTailwind) {
     tailwindProfileHint = await getTailwindProcessor().detectProfile({
       preview,
       mdxText: text,
       tailwindConfig: effectiveConfig.tailwind,
     });
+
+    if (!isCurrent()) {
+      return { kind: 'superseded' };
+    }
 
     if (tailwindProfileHint.profile === 'advanced') {
       const fallbackReason = tailwindProfileHint.reason;
@@ -66,17 +73,25 @@ export async function prepareEvaluationContext(
       preview.clearTailwindFallbackReason();
     }
   } else {
+    if (!isCurrent()) {
+      return { kind: 'superseded' };
+    }
     preview.clearTailwindFallbackReason();
   }
 
   const needsBrowserRuntime =
     tailwindProfileHint?.profile === 'browser' && shouldProcessTailwind;
+  if (!isCurrent()) {
+    return { kind: 'superseded' };
+  }
   if (preview.setTailwindBrowserRuntimeEnabled(needsBrowserRuntime)) {
     return { kind: 'refresh-required' };
   }
 
   const context: PreparedEvaluationContext = {
     preview,
+    isCurrent,
+    documentIdentity,
     text,
     fsPath,
     engine,

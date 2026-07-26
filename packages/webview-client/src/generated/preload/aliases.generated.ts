@@ -1,5 +1,5 @@
 // AUTO-GENERATED FILE - DO NOT EDIT
-// Source: packages/mdx-forge/src/components/registry/registry-data.ts
+// Source: mdx-forge/src/components/registry/registry-data.ts
 
 // canonical shim preload IDs (used for cache resets)
 export const PRELOADED_SHIM_IDS: string[] = [

@@ -3,177 +3,92 @@
 
 import * as vscode from 'vscode';
 import { visit } from 'unist-util-visit';
-import {
-  analyzeMdxDocument,
-  astPositionToRange,
-} from '../language/mdx-document-analysis';
-import { parseEsmImports } from '../language/esm-imports';
 import { classifyComponentSource } from 'mdx-forge/diagnostics/analyze';
-import { LogTags, STANDARD_CACHE_TTL_MS } from '@mdx-preview/contracts';
-import {
-  ContentHashCache,
-  extractErrorMessage,
-} from '@mdx-preview/runtime-utils';
-import type {
-  ComponentDetectionResult,
-  ComponentDetectionOptions,
-  ComponentSource,
-  DetectedComponent,
-  MdxJsxElement,
-  MdxjsEsmNode,
-} from '../types';
-import { createTaggedLogger } from '../../shared/logging/logger';
-import { COMPONENT_CACHE_MAX_ENTRIES } from '../../shared/constants/runtime';
-
-// use shared component registry as single source of truth
+import { LogTags } from '@mdx-preview/contracts';
+import { extractErrorMessage, LRUCache } from '@mdx-preview/runtime-utils';
 import {
   getCanonicalComponentName,
   getGenericComponentSet,
   type FrameworkId,
 } from 'mdx-forge/components/registry';
+import type { MdxJsxElement } from 'mdx-forge/compiler';
+import {
+  analyzeMdxDocument,
+  astPositionToRange,
+  invalidateMdxAnalysisCache,
+  type DocumentAnalysisIdentity,
+} from '../../shared/mdx-analysis/document-analysis';
+import { parseEsmImports } from '../../shared/mdx-analysis/esm-imports';
+import type { MdxjsEsmNode } from '../../shared/mdx-analysis/types';
+import type {
+  ComponentDetectionResult,
+  ComponentDetectionOptions,
+  ComponentSource,
+  DetectedComponent,
+} from './types';
+import { createTaggedLogger } from '../../shared/logging/logger';
+import { COMPONENT_CACHE_MAX_ENTRIES } from '../../shared/constants/runtime';
 
 const log = createTaggedLogger(LogTags.COMPONENT_DETECTOR);
 
-// cache for component detection results w/ content-hash validation
-const parseCache = new ContentHashCache<ComponentDetectionResult>({
-  maxEntries: COMPONENT_CACHE_MAX_ENTRIES,
-  ttlMs: STANDARD_CACHE_TTL_MS,
-});
-
-// fast djb2 hash for content-based cache invalidation
-// return hex string for ContentHashCache compatibility
-function contentHash(str: string): string {
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
-  }
-  return (hash >>> 0).toString(16);
+interface CachedDetectionResult {
+  version: number;
+  result: ComponentDetectionResult;
 }
 
-// HTML element names (lowercase) - not components
-const HTML_ELEMENTS = new Set([
-  'a',
-  'abbr',
-  'address',
-  'area',
-  'article',
-  'aside',
-  'audio',
-  'b',
-  'base',
-  'bdi',
-  'bdo',
-  'blockquote',
-  'body',
-  'br',
-  'button',
-  'canvas',
-  'caption',
-  'cite',
-  'code',
-  'col',
-  'colgroup',
-  'data',
-  'datalist',
-  'dd',
-  'del',
-  'details',
-  'dfn',
-  'dialog',
-  'div',
-  'dl',
-  'dt',
-  'em',
-  'embed',
-  'fieldset',
-  'figcaption',
-  'figure',
-  'footer',
-  'form',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'head',
-  'header',
-  'hgroup',
-  'hr',
-  'html',
-  'i',
-  'iframe',
-  'img',
-  'input',
-  'ins',
-  'kbd',
-  'label',
-  'legend',
-  'li',
-  'link',
-  'main',
-  'map',
-  'mark',
-  'menu',
-  'meta',
-  'meter',
-  'nav',
-  'noscript',
-  'object',
-  'ol',
-  'optgroup',
-  'option',
-  'output',
-  'p',
-  'picture',
-  'pre',
-  'progress',
-  'q',
-  'rp',
-  'rt',
-  'ruby',
-  's',
-  'samp',
-  'script',
-  'section',
-  'select',
-  'slot',
-  'small',
-  'source',
-  'span',
-  'strong',
-  'style',
-  'sub',
-  'summary',
-  'sup',
-  'svg',
-  'table',
-  'tbody',
-  'td',
-  'template',
-  'textarea',
-  'tfoot',
-  'th',
-  'thead',
-  'time',
-  'title',
-  'tr',
-  'track',
-  'u',
-  'ul',
-  'var',
-  'video',
-  'wbr',
-]);
+const parseCache = new LRUCache<string, CachedDetectionResult>({
+  maxEntries: COMPONENT_CACHE_MAX_ENTRIES,
+});
 
 // check if name is PascalCase (React component convention)
 function isPascalCase(name: string): boolean {
   return /^[A-Z][a-zA-Z0-9]*$/.test(name);
 }
 
-// check if name is an HTML element
-function isHtmlElement(name: string): boolean {
-  return HTML_ELEMENTS.has(name.toLowerCase());
+// classify member expressions by the identifier JSX resolves at runtime
+function getComponentRoot(name: string): string {
+  return name.split('.')[0] ?? name;
+}
+
+// lowercase roots are JSX intrinsics regardless of the HTML registry
+function isIntrinsic(name: string): boolean {
+  return /^[a-z]/.test(getComponentRoot(name));
+}
+
+// narrow an element position to its opening & optional closing name tokens
+function getTagNameRanges(
+  documentLines: readonly string[],
+  elementRange: vscode.Range,
+  name: string
+): vscode.Range[] {
+  const openingRange = new vscode.Range(
+    elementRange.start.line,
+    elementRange.start.character + 1,
+    elementRange.start.line,
+    elementRange.start.character + 1 + name.length
+  );
+  const ranges = [openingRange];
+  const endLine = documentLines[elementRange.end.line] ?? '';
+  const beforeElementEnd = endLine.slice(0, elementRange.end.character);
+  const closingStart = beforeElementEnd.lastIndexOf(`</${name}`);
+
+  if (closingStart >= 0) {
+    const closingSuffix = beforeElementEnd.slice(
+      closingStart + name.length + 2
+    );
+    if (/^\s*>$/.test(closingSuffix)) {
+      ranges.push(
+        new vscode.Range(
+          elementRange.end.line,
+          closingStart + 2,
+          elementRange.end.line,
+          closingStart + 2 + name.length
+        )
+      );
+    }
+  }
+
+  return ranges;
 }
 
 // extract component imports from ESM node (PascalCase local names only)
@@ -216,34 +131,26 @@ function classifyComponent(
 }
 
 // detect JSX components in MDX text
-// pass uri parameter to enable caching of parse results
 export async function detectComponents(
   mdxText: string,
   options: ComponentDetectionOptions = {},
   configComponents: Set<string> = new Set(),
-  // optional: document URI for caching
-  uri?: string
+  identity?: DocumentAnalysisIdentity
 ): Promise<ComponentDetectionResult> {
   const { includePositions = true, detectImports = true } = options;
   const framework = options.framework ?? 'generic';
 
-  // hoist hash so cache lookup & store share one full-text pass
-  const hash = uri ? contentHash(mdxText) : undefined;
-
-  // check cache if URI is provided
-  if (uri && hash !== undefined) {
-    const cached = parseCache.getIfHashMatches(uri, hash);
-    if (cached) {
-      log.debug(`Cache hit for ${uri}`);
-      return {
-        ...cached,
-        components: classifyComponents(
-          cached.components,
-          cached.imports,
-          configComponents,
-          framework
-        ),
-      };
+  if (identity) {
+    const cached = parseCache.get(identity.uri);
+    if (cached?.version === identity.version) {
+      log.debug(`Cache hit for ${identity.uri}`);
+      return prepareDetectionResult(
+        cached.result,
+        includePositions,
+        detectImports,
+        configComponents,
+        framework
+      );
     }
   }
 
@@ -256,19 +163,17 @@ export async function detectComponents(
       ast: tree,
       frontmatterLineOffset,
       frontmatterColumnOffset,
-    } = analyzeMdxDocument(mdxText);
+    } = analyzeMdxDocument(mdxText, identity);
 
-    if (detectImports) {
-      visit(tree, 'mdxjsEsm', (node) => {
-        const esmNode = node as unknown as MdxjsEsmNode;
-        const nodeImports = extractImports(esmNode);
-        for (const [name, path] of nodeImports) {
-          imports.set(name, path);
-        }
-      });
-    }
+    visit(tree, 'mdxjsEsm', (node) => {
+      const esmNode = node as unknown as MdxjsEsmNode;
+      const nodeImports = extractImports(esmNode);
+      for (const [name, path] of nodeImports) {
+        imports.set(name, path);
+      }
+    });
 
-    const importNames = new Set(imports.keys());
+    const documentLines = mdxText.split(/\r?\n/);
 
     visit(tree, (node) => {
       if (
@@ -281,36 +186,35 @@ export async function detectComponents(
       const jsxNode = node as unknown as MdxJsxElement;
       const name = jsxNode.name;
 
-      if (!name || isHtmlElement(name)) {
+      if (!name || isIntrinsic(name)) {
         return;
       }
 
-      if (!isPascalCase(name)) {
+      const root = getComponentRoot(name);
+      if (!isPascalCase(root)) {
         return;
       }
-
-      const source = classifyComponent(
-        name,
-        importNames,
-        configComponents,
-        framework
-      );
 
       let range: vscode.Range;
-      if (includePositions && jsxNode.position) {
-        range = astPositionToRange(
+      let tagNameRanges: vscode.Range[];
+      if (jsxNode.position) {
+        const elementRange = astPositionToRange(
           jsxNode.position,
           frontmatterLineOffset,
           frontmatterColumnOffset
         );
+        tagNameRanges = getTagNameRanges(documentLines, elementRange, name);
+        range = tagNameRanges[0];
       } else {
         range = new vscode.Range(0, 0, 0, 0);
+        tagNameRanges = [range];
       }
 
       components.push({
         name,
         range,
-        source,
+        tagNameRanges,
+        source: 'unknown',
         hasChildren: jsxNode.children && jsxNode.children.length > 0,
       });
     });
@@ -322,33 +226,56 @@ export async function detectComponents(
     errors.push(message);
   }
 
-  const result = { components, imports, errors };
+  const result: ComponentDetectionResult = { components, imports, errors };
 
-  // store in cache if URI is provided
-  if (uri && hash !== undefined) {
-    parseCache.setWithHash(uri, hash, result);
-    log.debug(`Cached result for ${uri}`);
+  if (identity) {
+    parseCache.set(identity.uri, {
+      version: identity.version,
+      result,
+    });
+    log.debug(`Cached result for ${identity.uri}`);
   }
 
-  return result;
+  return prepareDetectionResult(
+    result,
+    includePositions,
+    detectImports,
+    configComponents,
+    framework
+  );
 }
 
-function classifyComponents(
-  components: readonly DetectedComponent[],
-  imports: ReadonlyMap<string, string>,
+function prepareDetectionResult(
+  result: ComponentDetectionResult,
+  includePositions: boolean,
+  detectImports: boolean,
   configComponents: ReadonlySet<string>,
   framework: FrameworkId
-): DetectedComponent[] {
+): ComponentDetectionResult {
+  const imports = detectImports ? new Map(result.imports) : new Map();
   const importNames = new Set(imports.keys());
-  return components.map((component) => ({
-    ...component,
-    source: classifyComponent(
-      component.name,
-      importNames,
-      configComponents,
-      framework
-    ),
-  }));
+  return {
+    components: result.components.map((component) => {
+      const range = includePositions
+        ? component.range
+        : new vscode.Range(0, 0, 0, 0);
+      return {
+        ...component,
+        range,
+        tagNameRanges: includePositions
+          ? [...component.tagNameRanges]
+          : [range],
+        source: classifyComponent(
+          getComponentRoot(component.name),
+          importNames,
+          configComponents,
+          framework
+        ),
+      };
+    }),
+    imports,
+    errors: [...result.errors],
+  };
 }
 
 // get unknown components from detection result
@@ -383,7 +310,9 @@ export function getUsedGenericComponents(
 // invalidate cached component detection for a specific document
 // call this when a document is closed or externally modified
 export function invalidateComponentCache(uri: string): void {
-  if (parseCache.delete(uri)) {
+  const invalidated = parseCache.delete(uri);
+  invalidateMdxAnalysisCache(uri);
+  if (invalidated) {
     log.debug(`Invalidated cache for ${uri}`);
   }
 }
@@ -394,5 +323,3 @@ export function clearComponentCache(): void {
   parseCache.clear();
   log.debug('Cache cleared');
 }
-
-// isPascalCase, isHtmlElement, extractImports are internal helpers

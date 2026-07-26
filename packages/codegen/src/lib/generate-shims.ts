@@ -10,7 +10,7 @@ import { isBareImport } from '@mdx-preview/runtime-utils';
 import { normalizeImportPath, createGeneratedHeader } from './codegen-utils';
 
 const GENERATED_HEADER = createGeneratedHeader(
-  'packages/mdx-forge/src/components/registry/shim-config.ts'
+  'mdx-forge/src/components/registry/shim-config.ts'
 );
 
 export interface GenerateShimsOptions {

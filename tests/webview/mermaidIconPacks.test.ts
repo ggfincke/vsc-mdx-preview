@@ -18,11 +18,19 @@ import type { MermaidModule } from '../../packages/webview-client/src/features/d
 import type { ResolvedMermaidIconPack } from '../../packages/contracts/src/index';
 
 function makeMermaid() {
-  const registered: Array<{ name: string; loader: () => unknown }> = [];
+  const registered: Array<{
+    name: string;
+    loader?: () => unknown;
+    icons?: unknown;
+  }> = [];
   const mermaid = {
     default: {
       registerIconPacks: (
-        packs: Array<{ name: string; loader: () => unknown }>
+        packs: Array<{
+          name: string;
+          loader?: () => unknown;
+          icons?: unknown;
+        }>
       ) => {
         registered.push(...packs);
       },
@@ -33,6 +41,17 @@ function makeMermaid() {
 
 function pack(name: string, body: string): ResolvedMermaidIconPack {
   return { name, icons: { icons: { sample: { body } } } };
+}
+
+function getRegisteredIcons(registration: {
+  loader?: () => unknown;
+  icons?: unknown;
+}): {
+  icons: Record<string, { body: string }>;
+} {
+  return (registration.icons ?? registration.loader?.()) as {
+    icons: Record<string, { body: string }>;
+  };
 }
 
 beforeEach(() => {
@@ -49,66 +68,69 @@ describe('registerBuiltinIconPacks', () => {
 });
 
 describe('registerDynamicIconPacks', () => {
-  it('sanitizes icon bodies, stripping <image> & external refs', () => {
+  it('sanitizes icon bodies across XSS vectors & preserves safe markup', () => {
     const { mermaid, registered } = makeMermaid();
     registerDynamicIconPacks(mermaid, [
       pack('aws', '<image href="https://evil.example/x"/><path d="M0 0"/>'),
     ]);
-    const reg = registered.find((r) => r.name === 'aws');
-    expect(reg).toBeDefined();
-    const out = reg!.loader() as { icons: Record<string, { body: string }> };
-    expect(out.icons.sample.body).not.toContain('<image');
-    expect(out.icons.sample.body).not.toContain('evil.example');
-    expect(out.icons.sample.body).toContain('path');
-  });
+    const imageOut = getRegisteredIcons(
+      registered.find((r) => r.name === 'aws')!
+    );
+    expect(imageOut.icons.sample.body).not.toContain('<image');
+    expect(imageOut.icons.sample.body).not.toContain('evil.example');
+    expect(imageOut.icons.sample.body).toContain('path');
 
-  it('strips style attributes (CSS url() beacon vector)', () => {
-    const { mermaid, registered } = makeMermaid();
+    registered.length = 0;
     registerDynamicIconPacks(mermaid, [
       pack(
         'aws',
         '<rect style="mask-image:url(https://evil.example/x)"/><path d="M0 0"/>'
       ),
     ]);
-    const out = registered.find((r) => r.name === 'aws')!.loader() as {
-      icons: Record<string, { body: string }>;
-    };
-    expect(out.icons.sample.body).not.toContain('evil.example');
-    expect(out.icons.sample.body).not.toContain('style');
-    expect(out.icons.sample.body).toContain('path');
-  });
+    const styleOut = getRegisteredIcons(
+      registered.find((r) => r.name === 'aws')!
+    );
+    expect(styleOut.icons.sample.body).not.toContain('evil.example');
+    expect(styleOut.icons.sample.body).not.toContain('style');
+    expect(styleOut.icons.sample.body).toContain('path');
 
-  it('preserves safe vector markup through sanitization', () => {
-    const { mermaid, registered } = makeMermaid();
+    registered.length = 0;
     registerDynamicIconPacks(mermaid, [
       pack('icons', '<circle cx="12" cy="12" r="10"/><path d="M2 2"/>'),
     ]);
-    const out = registered.find((r) => r.name === 'icons')!.loader() as {
-      icons: Record<string, { body: string }>;
-    };
-    expect(out.icons.sample.body).toContain('circle');
-    expect(out.icons.sample.body).toContain('path');
+    const safeOut = getRegisteredIcons(
+      registered.find((r) => r.name === 'icons')!
+    );
+    expect(safeOut.icons.sample.body).toContain('circle');
+    expect(safeOut.icons.sample.body).toContain('path');
   });
 
-  it('skips the reserved name "logos"', () => {
-    const { mermaid, registered } = makeMermaid();
-    registerDynamicIconPacks(mermaid, [pack('logos', '<path/>')]);
-    expect(registered.find((r) => r.name === 'logos')).toBeUndefined();
-  });
-
-  it('skips invalid pack names', () => {
+  it('skips reserved and invalid pack names', () => {
     const { mermaid, registered } = makeMermaid();
     registerDynamicIconPacks(mermaid, [
+      pack('logos', '<path/>'),
       pack('has space', '<path/>'),
       pack('evil:prefix', '<path/>'),
     ]);
+    expect(registered.find((r) => r.name === 'logos')).toBeUndefined();
     expect(registered).toHaveLength(0);
   });
 
-  it('registers each pack name only once', () => {
+  it('tracks changed and removed pack content by fingerprint', () => {
     const { mermaid, registered } = makeMermaid();
-    registerDynamicIconPacks(mermaid, [pack('aws', '<path/>')]);
-    registerDynamicIconPacks(mermaid, [pack('aws', '<path/>')]);
-    expect(registered.filter((r) => r.name === 'aws')).toHaveLength(1);
+    const original = pack('aws', '<path/>');
+    registerDynamicIconPacks(mermaid, [original]);
+    registerDynamicIconPacks(mermaid, [original]);
+    const changed = pack('aws', '<circle/>');
+    registerDynamicIconPacks(mermaid, [changed]);
+    registerDynamicIconPacks(mermaid, []);
+    registerDynamicIconPacks(mermaid, [changed]);
+
+    const registrations = registered.filter((r) => r.name === 'aws');
+    expect(registrations).toHaveLength(4);
+    expect(getRegisteredIcons(registrations[2]).icons).toEqual({});
+    expect(getRegisteredIcons(registrations[3]).icons.sample.body).toContain(
+      'circle'
+    );
   });
 });

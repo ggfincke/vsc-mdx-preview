@@ -86,10 +86,8 @@ describe('validateIconifyPack', () => {
       },
     });
     expect(Object.keys(mixed!.icons)).toEqual(['good']);
-  });
 
-  it('preserves geometry & flip transforms', () => {
-    const out = validateIconifyPack({
+    const geometry = validateIconifyPack({
       icons: {
         i: {
           body: '<path/>',
@@ -103,7 +101,7 @@ describe('validateIconifyPack', () => {
         },
       },
     });
-    expect(out!.icons.i).toEqual({
+    expect(geometry!.icons.i).toEqual({
       body: '<path/>',
       width: 1,
       height: 2,

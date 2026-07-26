@@ -6,5 +6,8 @@
   "license": "GPL-3.0-or-later",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@mdx-preview/contracts": "*"
   }
 }

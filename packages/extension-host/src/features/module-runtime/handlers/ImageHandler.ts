@@ -2,8 +2,10 @@
 // handler for image files - convert to webview URI
 
 import type { FetchResult } from '@mdx-preview/contracts';
-import type { Preview } from '../../preview/preview-manager';
-import type { FileTypeHandler } from './index';
+import type {
+  FileTypeHandler,
+  ModuleExecutionContext,
+} from '../types/handlers';
 import { createTransformError } from '../../../shared/errors';
 import { buildModuleExportResult } from './result-builders';
 import { IMAGE_EXTENSIONS } from '../../../shared/constants';
@@ -15,9 +17,9 @@ export class ImageHandler implements FileTypeHandler {
   async handle(
     _code: string,
     fsPath: string,
-    preview: Preview
+    context: ModuleExecutionContext
   ): Promise<FetchResult> {
-    const webviewUri = preview.getWebviewUri(fsPath);
+    const webviewUri = context.getWebviewUri(fsPath);
 
     if (!webviewUri) {
       throw createTransformError(

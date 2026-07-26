@@ -3,6 +3,8 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ModuleDependency } from '@mdx-preview/contracts';
+import { createRpcMessageQueue } from '../../packages/webview-client/src/platform/rpc/rpc-message-queue';
 
 const {
   mockWrap,
@@ -12,6 +14,8 @@ const {
   mockPostMessage,
   mockGetState,
   mockSetState,
+  mockLoadModuleSystem,
+  mockEnsureFrameworkShimsLoaded,
 } = vi.hoisted(() => {
   const mockPostMessage = vi.fn();
   const mockGetState = vi.fn();
@@ -35,6 +39,10 @@ const {
     getState: mockGetState,
     setState: mockSetState,
   }));
+  const mockEnsureFrameworkShimsLoaded = vi.fn(async () => undefined);
+  const mockLoadModuleSystem = vi.fn(async () => ({
+    ensureFrameworkShimsLoaded: mockEnsureFrameworkShimsLoaded,
+  }));
 
   return {
     mockWrap,
@@ -44,6 +52,8 @@ const {
     mockPostMessage,
     mockGetState,
     mockSetState,
+    mockLoadModuleSystem,
+    mockEnsureFrameworkShimsLoaded,
   };
 });
 
@@ -51,6 +61,13 @@ vi.mock('comlink', () => ({
   wrap: (...args: unknown[]) => mockWrap(...args),
   expose: (...args: unknown[]) => mockExpose(...args),
 }));
+
+vi.mock(
+  '../../packages/webview-client/src/platform/rpc/module-system-loader',
+  () => ({
+    loadModuleSystem: () => mockLoadModuleSystem(),
+  })
+);
 
 describe('webview-rpc-client', () => {
   beforeEach(() => {
@@ -74,7 +91,7 @@ describe('webview-rpc-client', () => {
     ).resolves.toBeTruthy();
   });
 
-  it('initRPCWebviewSide bootstraps extension handle and handshake path', async () => {
+  it('bootstraps RPC and exposes framework shim load failures', async () => {
     const module =
       await import('../../packages/webview-client/src/platform/rpc/webview-rpc-client');
 
@@ -90,6 +107,18 @@ describe('webview-rpc-client', () => {
     expect(mockExtensionHandle.openExternal).toHaveBeenCalledWith(
       'https://example.com'
     );
+    await module.ExtensionHandle.fetch(
+      'conditional-package',
+      true,
+      '/entry.js',
+      'import'
+    );
+    expect(mockExtensionHandle.fetch).toHaveBeenCalledWith(
+      'conditional-package',
+      true,
+      '/entry.js',
+      'import'
+    );
 
     await expect(
       module.ExtensionHandle.reportPreviewSourceLine(12)
@@ -97,9 +126,19 @@ describe('webview-rpc-client', () => {
     expect(mockExtensionHandle.reportPreviewSourceLine).toHaveBeenCalledWith(
       12
     );
+
+    const exposedHandle = mockExpose.mock.calls[0][0] as {
+      setFramework: (framework: string) => Promise<void>;
+    };
+    mockEnsureFrameworkShimsLoaded.mockRejectedValueOnce(
+      new Error('framework shim failed')
+    );
+    await expect(exposedHandle.setFramework('docusaurus')).rejects.toThrow(
+      'framework shim failed'
+    );
   });
 
-  it('registerWebviewHandlers flushes buffered queued and optional messages', async () => {
+  it('flushes buffered state and keeps only the latest preview outcome', async () => {
     const module =
       await import('../../packages/webview-client/src/platform/rpc/webview-rpc-client');
 
@@ -108,8 +147,9 @@ describe('webview-rpc-client', () => {
     const exposedHandle = mockExpose.mock.calls[0][0] as {
       setTrustState: (state: unknown) => void;
       updatePreviewSafe: (html: string) => void;
-      setSourceLineHighlight: (enabled: boolean) => void;
-      setScrollSync: (mode: string) => void;
+      setRuntimeConfig: (config: unknown) => void;
+      adjustZoom: (delta: number) => void;
+      resetZoom: () => void;
     };
 
     exposedHandle.setTrustState({
@@ -119,42 +159,119 @@ describe('webview-rpc-client', () => {
       openMdxLinksInPreview: false,
     });
     exposedHandle.updatePreviewSafe('<p>safe</p>');
-    exposedHandle.setSourceLineHighlight(false);
-    exposedHandle.setScrollSync('previewToEditor');
+    exposedHandle.setRuntimeConfig({
+      sourceLineHighlight: true,
+      sourceLineHighlightColor: 'dependent',
+      scrollSync: 'off',
+      shimSideRail: true,
+    });
+    exposedHandle.setRuntimeConfig({
+      sourceLineHighlight: false,
+      sourceLineHighlightColor: 'white',
+      scrollSync: 'previewToEditor',
+      shimSideRail: false,
+    });
+    exposedHandle.adjustZoom(0.1);
+    exposedHandle.adjustZoom(0.1);
+    exposedHandle.resetZoom();
+    exposedHandle.adjustZoom(-0.1);
 
+    const zoomEvents: string[] = [];
     const handlers = {
       setTrustState: vi.fn(),
       setSafeContent: vi.fn(),
       setTrustedContent: vi.fn(),
       setError: vi.fn(),
       setStale: vi.fn(),
-      setSourceLineHighlight: vi.fn(),
-      setScrollSync: vi.fn(),
+      setRuntimeConfig: vi.fn(),
+      adjustZoom: vi.fn((delta: number) => {
+        zoomEvents.push(`adjust:${delta}`);
+      }),
+      resetZoom: vi.fn(() => {
+        zoomEvents.push('reset');
+      }),
     };
 
     module.registerWebviewHandlers(handlers as any);
 
     expect(handlers.setTrustState).toHaveBeenCalledTimes(1);
     expect(handlers.setSafeContent).toHaveBeenCalledWith('<p>safe</p>');
-    expect(handlers.setSourceLineHighlight).toHaveBeenCalledWith(false);
-    expect(handlers.setScrollSync).toHaveBeenCalledWith('previewToEditor');
+    expect(handlers.setRuntimeConfig).toHaveBeenCalledTimes(1);
+    expect(handlers.setRuntimeConfig).toHaveBeenCalledWith({
+      sourceLineHighlight: false,
+      sourceLineHighlightColor: 'white',
+      scrollSync: 'previewToEditor',
+      shimSideRail: false,
+    });
+    expect(handlers.setTrustState.mock.invocationCallOrder[0]).toBeLessThan(
+      handlers.setSafeContent.mock.invocationCallOrder[0]
+    );
+    expect(handlers.setSafeContent.mock.invocationCallOrder[0]).toBeLessThan(
+      handlers.setRuntimeConfig.mock.invocationCallOrder[0]
+    );
+    expect(zoomEvents).toEqual([
+      'adjust:0.1',
+      'adjust:0.1',
+      'reset',
+      'adjust:-0.1',
+    ]);
+
+    handlers.setSafeContent.mockClear();
+    handlers.setError.mockClear();
+    const outcomeQueue = createRpcMessageQueue({
+      log: {
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      },
+      getHandlers: () => handlers,
+    });
+
+    outcomeQueue.enqueueQueued({
+      type: 'error',
+      payload: { message: 'older error' },
+    });
+    outcomeQueue.enqueueQueued({
+      type: 'safe',
+      payload: { html: '<p>newer content</p>' },
+    });
+    outcomeQueue.flush();
+
+    expect(handlers.setSafeContent).toHaveBeenCalledWith(
+      '<p>newer content</p>'
+    );
+    expect(handlers.setError).not.toHaveBeenCalled();
+
+    handlers.setSafeContent.mockClear();
+    outcomeQueue.enqueueQueued({
+      type: 'safe',
+      payload: { html: '<p>older content</p>' },
+    });
+    outcomeQueue.enqueueQueued({
+      type: 'error',
+      payload: { message: 'newer error' },
+    });
+    outcomeQueue.flush();
+
+    expect(handlers.setSafeContent).not.toHaveBeenCalled();
+    expect(handlers.setError).toHaveBeenCalledWith({
+      message: 'newer error',
+    });
   });
 
   it('gates trusted content for queued and direct handler paths', async () => {
+    const dependencies: ModuleDependency[] = [
+      {
+        specifier: '/dep.ts',
+        kind: 'import',
+        runtimeRequest: '\0mdx-forge:import\0/dep.ts',
+      },
+    ];
     let scenario = await setupRpcScenario();
     let handlers = createStateHandlers();
 
-    scenario.exposedHandle.updatePreview(
-      'export default function Demo() {}',
-      '/doc.mdx',
-      []
-    );
-    scenario.module.registerWebviewHandlers(handlers as any);
-    expect(handlers.setTrustedContent).not.toHaveBeenCalled();
-
-    scenario = await setupRpcScenario();
-    handlers = createStateHandlers();
-    scenario.exposedHandle.setTrustState(createTrustState(false));
+    // queued before handlers / untrusted -> blocked
     scenario.exposedHandle.updatePreview(
       'export default function Demo() {}',
       '/doc.mdx',
@@ -174,6 +291,7 @@ describe('webview-rpc-client', () => {
     );
     expect(handlers.setTrustedContent).not.toHaveBeenCalled();
 
+    // trusted + deps -> allowed
     scenario = await setupRpcScenario();
     handlers = createStateHandlers();
     scenario.module.registerWebviewHandlers(handlers as any);
@@ -181,51 +299,30 @@ describe('webview-rpc-client', () => {
     scenario.exposedHandle.updatePreview(
       'export default function Demo() {}',
       '/doc.mdx',
-      ['/dep.ts']
+      dependencies
     );
     expect(handlers.setTrustedContent).toHaveBeenCalledWith(
       'export default function Demo() {}',
       '/doc.mdx',
-      ['/dep.ts']
+      dependencies
     );
 
+    // content then late trust -> flush
     scenario = await setupRpcScenario();
     handlers = createStateHandlers();
     scenario.module.registerWebviewHandlers(handlers as any);
     scenario.exposedHandle.updatePreview(
       'export default function Demo() {}',
       '/doc.mdx',
-      ['/dep.ts']
+      dependencies
     );
-
     expect(handlers.setTrustedContent).not.toHaveBeenCalled();
-
     scenario.exposedHandle.setTrustState(createTrustState(true));
-
     expect(handlers.setTrustState).toHaveBeenCalledWith(createTrustState(true));
     expect(handlers.setTrustedContent).toHaveBeenCalledWith(
       'export default function Demo() {}',
       '/doc.mdx',
-      ['/dep.ts']
-    );
-
-    scenario = await setupRpcScenario();
-    handlers = createStateHandlers();
-    scenario.exposedHandle.updatePreview(
-      'export default function Demo() {}',
-      '/doc.mdx',
-      ['/dep.ts']
-    );
-    scenario.module.registerWebviewHandlers(handlers as any);
-
-    expect(handlers.setTrustedContent).not.toHaveBeenCalled();
-
-    scenario.exposedHandle.setTrustState(createTrustState(true));
-
-    expect(handlers.setTrustedContent).toHaveBeenCalledWith(
-      'export default function Demo() {}',
-      '/doc.mdx',
-      ['/dep.ts']
+      dependencies
     );
   });
 });
@@ -235,7 +332,7 @@ interface ExposedHandle {
   updatePreview: (
     code: string,
     entryFilePath: string,
-    dependencies: string[]
+    dependencies: ModuleDependency[]
   ) => void;
 }
 
@@ -274,6 +371,6 @@ function createStateHandlers() {
     setTrustedContent: vi.fn(),
     setError: vi.fn(),
     setStale: vi.fn(),
-    setSourceLineHighlight: vi.fn(),
+    setRuntimeConfig: vi.fn(),
   };
 }

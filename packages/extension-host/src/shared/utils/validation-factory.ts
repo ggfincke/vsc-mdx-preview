@@ -2,10 +2,9 @@
 // factory utilities for creating type validators w/ consistent boilerplate handling
 
 import { createTaggedLogger } from '../logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
+import { LogTags, type LogFn } from '@mdx-preview/contracts';
 
-// log function type for validation errors
-export type LogFn = (message: string, data?: unknown) => void;
+export type { LogFn } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.CONFIG);
 

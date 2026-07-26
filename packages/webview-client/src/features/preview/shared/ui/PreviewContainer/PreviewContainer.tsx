@@ -2,16 +2,16 @@
 // shared container component for SafePreview & TrustedPreview
 
 import type { ReactNode, RefObject, MouseEvent } from 'react';
-import { cn } from '../../../../../shared/utils/cn';
 import {
   SAFE_PREVIEW_CLASS,
   TRUSTED_PREVIEW_CLASS,
-} from '../../../safe/security/previewClassNames';
+} from '../../../../../shared/preview-constants';
+import { cn } from '../../../../../shared/utils/cn';
 import './PreviewContainer.css';
 
 export interface PreviewContainerProps {
   // container ref
-  containerRef: RefObject<HTMLDivElement>;
+  containerRef: RefObject<HTMLDivElement | null>;
   // mode attribute
   mode: 'safe' | 'trusted';
   // image click handler

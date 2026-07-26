@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "outputs": [
+    {
+      "id": "settings.packageManifest",
+      "generator": "settings",
+      "path": "package.json",
+      "format": "json",
+      "mode": "synced",
+      "hasGeneratedHeader": false
+    },
+    {
+      "id": "preload.modules",
+      "generator": "preload",
+      "path": "packages/webview-client/src/generated/preload/preload.generated.ts",
+      "format": "typescript",
+      "mode": "generated",
+      "hasGeneratedHeader": true
+    },
+    {
+      "id": "preload.aliases",
+      "generator": "preload",
+      "path": "packages/webview-client/src/generated/preload/aliases.generated.ts",
+      "format": "typescript",
+      "mode": "generated",
+      "hasGeneratedHeader": true
+    },
+    {
+      "id": "shims.frameworkCss",
+      "generator": "shims",
+      "path": "packages/webview-client/src/generated/framework-css/frameworkCssLoader.ts",
+      "format": "typescript",
+      "mode": "generated",
+      "hasGeneratedHeader": true
+    },
+    {
+      "id": "shims.generic",
+      "generator": "shims",
+      "path": "packages/webview-client/src/generated/shim-barrels/generic/index.ts",
+      "format": "typescript",
+      "mode": "generated",
+      "hasGeneratedHeader": true
+    },
+    {
+      "id": "shims.docusaurus",
+      "generator": "shims",
+      "path": "packages/webview-client/src/generated/shim-barrels/docusaurus/index.ts",
+      "format": "typescript",
+      "mode": "generated",
+      "hasGeneratedHeader": true
+    },
+    {
+      "id": "shims.starlight",
+      "generator": "shims",
+      "path": "packages/webview-client/src/generated/shim-barrels/starlight/index.ts",
+      "format": "typescript",
+      "mode": "generated",
+      "hasGeneratedHeader": true
+    },
+    {
+      "id": "shims.nextra",
+      "generator": "shims",
+      "path": "packages/webview-client/src/generated/shim-barrels/nextra/index.ts",
+      "format": "typescript",
+      "mode": "generated",
+      "hasGeneratedHeader": true
+    },
+    {
+      "id": "shims.nextjs",
+      "generator": "shims",
+      "path": "packages/webview-client/src/generated/shim-barrels/nextjs/index.ts",
+      "format": "typescript",
+      "mode": "generated",
+      "hasGeneratedHeader": true
+    },
+    {
+      "id": "schema.config",
+      "generator": "schema",
+      "path": "schemas/mdx-previewrc.schema.json",
+      "format": "json",
+      "mode": "generated",
+      "hasGeneratedHeader": false
+    }
+  ]
+}

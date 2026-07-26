@@ -1,7 +1,11 @@
 // packages/extension-host/src/features/module-runtime/types/module-system.ts
 // type definitions for the module system
 
-import type { FetchResult, FrameworkId } from '@mdx-preview/contracts';
+import type {
+  FetchResult,
+  FrameworkId,
+  ModuleDependencyKind,
+} from '@mdx-preview/contracts';
 
 // re-export shared types
 export type { FetchResult, FrameworkId };
@@ -31,6 +35,8 @@ export interface ResolutionContext {
   workspaceRoot?: string;
   // shims enabled
   shimsEnabled?: boolean;
+  // package export condition selected by authored syntax
+  dependencyKind?: ModuleDependencyKind;
 }
 
 // result of a successful resolution

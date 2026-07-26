@@ -9,12 +9,11 @@ import {
   type ComponentRegistryEntry,
   type FrameworkId,
 } from 'mdx-forge/components/registry';
-import { isBareImport } from '@mdx-preview/runtime-utils';
 import { normalizeImportPath, createGeneratedHeader } from './codegen-utils';
-import { buildPreloadId, buildWebviewImport } from './registry-host-metadata';
+import { buildPreloadId } from './registry-host-metadata';
 
 const GENERATED_HEADER = createGeneratedHeader(
-  'packages/mdx-forge/src/components/registry/registry-data.ts'
+  'mdx-forge/src/components/registry/registry-data.ts'
 );
 
 export interface GeneratePreloadOptions {
@@ -38,25 +37,8 @@ function isComponentEntry(
   return entry.kind === 'component';
 }
 
-function getRelativeWebviewImport(
-  entry: ComponentRegistryEntry,
-  options: GeneratePreloadOptions
-): string {
-  const webviewImport = buildWebviewImport(entry);
-
-  // framework shims now come from the extracted doc-components library
-  if (webviewImport.startsWith('features/shims/')) {
-    return `mdx-forge/components/${entry.framework}`;
-  }
-
-  // bare package imports should pass through untouched
-  if (isBareImport(webviewImport)) {
-    return webviewImport;
-  }
-
-  const absoluteTarget = path.resolve(options.webviewSrcDir, webviewImport);
-  const relative = path.relative(options.outputDir, absoluteTarget);
-  return normalizeImportPath(relative);
+function getRelativeWebviewImport(entry: ComponentRegistryEntry): string {
+  return `mdx-forge/components/${entry.framework}`;
 }
 
 function toImportVarName(entry: ComponentRegistryEntry): string {
@@ -169,7 +151,6 @@ function groupEntriesByFramework(
 
 function generateGenericPreloadFunction(
   entries: ComponentRegistryEntry[],
-  options: GeneratePreloadOptions,
   aliasesByPreloadId: Readonly<Record<string, readonly string[]>>
 ): { imports: string[]; func: string; loaders: string } {
   const importLines: string[] = [];
@@ -178,7 +159,7 @@ function generateGenericPreloadFunction(
 
   for (const entry of entries) {
     const importVar = toImportVarName(entry);
-    const relativeImport = getRelativeWebviewImport(entry, options);
+    const relativeImport = getRelativeWebviewImport(entry);
     importLines.push(getImportStatement(entry, importVar, relativeImport));
     const aliases = aliasesByPreloadId[buildPreloadId(entry)] ?? [];
     const aliasesJson = JSON.stringify(aliases);
@@ -211,7 +192,6 @@ ${loaderEntries.join(',\n')}
 function generateFrameworkLoader(
   framework: FrameworkId,
   entries: ComponentRegistryEntry[],
-  options: GeneratePreloadOptions,
   aliasesByPreloadId: Readonly<Record<string, readonly string[]>>
 ): string {
   const funcName = `load${capitalize(framework)}Shims`;
@@ -222,7 +202,7 @@ function generateFrameworkLoader(
 
   for (const entry of entries) {
     const varName = toImportVarName(entry);
-    const relativeImport = getRelativeWebviewImport(entry, options);
+    const relativeImport = getRelativeWebviewImport(entry);
     const dynamicImport = getDynamicImportExpression(entry, relativeImport);
     importPromises.push(`    ${dynamicImport}`);
     varNames.push(varName);
@@ -271,11 +251,7 @@ export function generatePreloadTs(options: GeneratePreloadOptions): string {
     imports: genericImports,
     func: genericFunc,
     loaders: genericLoaders,
-  } = generateGenericPreloadFunction(
-    genericEntries,
-    options,
-    aliasesByPreloadId
-  );
+  } = generateGenericPreloadFunction(genericEntries, aliasesByPreloadId);
 
   // generate framework loaders (dynamic imports)
   const frameworkLoaders: string[] = [];
@@ -283,7 +259,7 @@ export function generatePreloadTs(options: GeneratePreloadOptions): string {
     const entries = grouped.get(framework) ?? [];
     if (entries.length > 0) {
       frameworkLoaders.push(
-        generateFrameworkLoader(framework, entries, options, aliasesByPreloadId)
+        generateFrameworkLoader(framework, entries, aliasesByPreloadId)
       );
     }
   }

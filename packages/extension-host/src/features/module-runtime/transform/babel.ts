@@ -21,6 +21,11 @@ let prewarmComplete = false;
 // config items are only created on first transformAsync() call
 let cachedBabelOptions: BabelCore.InputOptions | null = null;
 
+// clear lazily-created Babel options
+export function clearBabelConfigCache(): void {
+  cachedBabelOptions = null;
+}
+
 // lazily initialize Babel options on first use
 // config items are cached after first creation to avoid repeated require() calls
 // this defers the expensive createConfigItem() & require() calls until first transform
@@ -48,7 +53,7 @@ async function getBabelOptions(
       ),
       // JSX transformation (required for React components)
       babel.createConfigItemSync(
-        [require('@babel/preset-react'), { runtime: 'classic' }],
+        [require('@babel/preset-react'), { runtime: 'automatic' }],
         { type: 'preset' }
       ),
     ],
@@ -91,17 +96,6 @@ export async function prewarmBabel(): Promise<void> {
   }
 }
 
-// check if Babel is prewarmed
-export function isBabelPrewarmed(): boolean {
-  return prewarmComplete;
-}
-
-// reset prewarm state for tests
-export function resetPrewarmState(): void {
-  prewarmStarted = false;
-  prewarmComplete = false;
-}
-
 export const transformAsync = async (
   code: string
 ): Promise<BabelCore.FileResult | null> => {
@@ -109,8 +103,3 @@ export const transformAsync = async (
   const options = await getBabelOptions(babel);
   return babel.transformAsync(code, options);
 };
-
-// clear cached Babel config (for testing or hot reload scenarios)
-export function clearBabelConfigCache(): void {
-  cachedBabelOptions = null;
-}

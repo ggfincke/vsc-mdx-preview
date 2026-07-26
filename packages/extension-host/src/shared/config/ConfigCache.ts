@@ -2,21 +2,24 @@
 // lifecycle-managed config cache preserving missing vs no-config state
 
 import * as path from 'path';
-import { createTaggedLogger } from '../logging/logger';
+import type * as vscode from 'vscode';
 import { LogTags } from '@mdx-preview/contracts';
 import { WithSubscribers } from '../../app/services/SingletonService';
-import type { ResolvedConfig } from '../types';
+import { createTaggedLogger } from '../logging/logger';
+import { ConfigChangeType } from './types';
+import type {
+  ConfigChangeEvent,
+  ConfigChangeCallback,
+  ResolvedConfig,
+} from './types';
 import { PathCache } from '../utils/cache';
 import { CONFIG_CACHE_MAX_ENTRIES } from '../constants/runtime';
+import { isPathWithin } from '../utils/path-utils';
 
 const log = createTaggedLogger(LogTags.CONFIG_CACHE);
 
-// re-export canonical type definitions from types/
-export { ConfigChangeType } from '../types';
-export type { ConfigChangeEvent, ConfigChangeCallback } from '../types';
-
-import { ConfigChangeType } from '../types';
-import type { ConfigChangeEvent } from '../types';
+export { ConfigChangeType };
+export type { ConfigChangeEvent, ConfigChangeCallback };
 
 // wrapper to distinguish "not cached" from "cached as null"
 interface CacheWrapper {
@@ -69,7 +72,7 @@ export class ConfigCache extends WithSubscribers<
     this.cache.invalidateWhere(
       (cachedDir, wrapper) =>
         wrapper.config?.configPath === configPath ||
-        cachedDir.startsWith(configDir)
+        isPathWithin(cachedDir, configDir)
     );
   }
 
@@ -91,9 +94,29 @@ export class ConfigCache extends WithSubscribers<
     this.cache.watchPath(configPath, handlers);
   }
 
+  // watch a path that may not contain a valid config yet
+  watchConfigCandidate(
+    configPath: string,
+    handlers: Parameters<PathCache<CacheWrapper>['watchPath']>[1]
+  ): vscode.Disposable {
+    return this.cache.retainFile(configPath, handlers);
+  }
+
   // unregister a watcher for a config path
   unwatchConfigPath(configPath: string): void {
     this.cache.unwatchPath(configPath);
+  }
+
+  get retainedConfigPathCount(): number {
+    return this.cache.retainedPathCount;
+  }
+
+  get entryCount(): number {
+    return this.cache.size;
+  }
+
+  get watcherCount(): number {
+    return this.cache.watcherCount;
   }
 
   // dispatch config change notifications to subscribers

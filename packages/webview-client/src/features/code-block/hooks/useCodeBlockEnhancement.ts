@@ -2,7 +2,11 @@
 // enhance Shiki code blocks w/ copy buttons & language badges
 
 import { useLayoutEffect, type RefObject } from 'react';
-import { enhanceCodeBlocks } from '../ui/CodeBlock';
+import {
+  CODE_BLOCK_COPY_SELECTOR,
+  copyEnhancedCodeBlock,
+  enhanceCodeBlocks,
+} from '../ui/CodeBlock';
 
 interface UseCodeBlockEnhancementOptions {
   // container element ref
@@ -23,7 +27,35 @@ export function useCodeBlockEnhancement(
   useLayoutEffect(() => {
     // only enhance when container is available & trigger is truthy (or not provided)
     if (containerRef.current && (trigger === undefined || trigger)) {
-      enhanceCodeBlocks(containerRef.current);
+      const container = containerRef.current;
+      const feedbackControllers = new Map<HTMLButtonElement, AbortController>();
+
+      const onClick = (event: MouseEvent): void => {
+        if (!(event.target instanceof Element)) {
+          return;
+        }
+
+        const button = event.target.closest<HTMLButtonElement>(
+          CODE_BLOCK_COPY_SELECTOR
+        );
+        if (!button || !container.contains(button)) {
+          return;
+        }
+
+        feedbackControllers.get(button)?.abort();
+        const controller = new AbortController();
+        feedbackControllers.set(button, controller);
+        void copyEnhancedCodeBlock(button, controller.signal);
+      };
+
+      enhanceCodeBlocks(container);
+      container.addEventListener('click', onClick);
+
+      return () => {
+        container.removeEventListener('click', onClick);
+        feedbackControllers.forEach((controller) => controller.abort());
+        feedbackControllers.clear();
+      };
     }
   }, [containerRef, trigger]);
 }

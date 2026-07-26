@@ -6,10 +6,9 @@ import type * as vscode from 'vscode';
 import type {
   CodeBlockTheme,
   FrameworkId,
-  PreviewScrollSyncValue,
+  PreviewRuntimeConfig,
   PreviewTheme,
   SecurityPolicyValue,
-  SourceLineHighlightColorValue,
   TailwindEnabledValue,
   UnknownBehaviorValue,
   UpdateModeValue,
@@ -22,6 +21,7 @@ import type {
 
 // Re-export shared types for convenience
 export type {
+  PreviewRuntimeConfig,
   SecurityPolicyValue,
   PreviewScrollSyncValue,
   TailwindEnabledValue,
@@ -40,6 +40,33 @@ export interface TailwindConfig {
   // from config file
   configPath?: string;
 }
+
+export interface ConfigurationState extends PreviewRuntimeConfig {
+  updateMode: UpdateModeValue;
+  debounceDelay: number;
+  useVscodeMarkdownStyles: boolean;
+  useWhiteBackground: boolean;
+  customLayoutFilePath: string;
+  customCss: string;
+  plantUmlServer: string;
+  useSucraseTranspiler: boolean;
+  securityPolicy: SecurityPolicyValue;
+  tailwindEnabled: TailwindEnabledValue;
+}
+
+export enum ConfigChangeType {
+  FileChanged = 'fileChanged',
+  FileDeleted = 'fileDeleted',
+  FileCreated = 'fileCreated',
+}
+
+export interface ConfigChangeEvent {
+  type: ConfigChangeType;
+  configPath: string;
+  timestamp: number;
+}
+
+export type ConfigChangeCallback = (event: ConfigChangeEvent) => void;
 
 // framework-specific options
 export interface FrameworkOptions {
@@ -83,13 +110,6 @@ export interface ResolvedConfig {
   configPath: string;
   // config directory
   configDir: string;
-}
-
-export interface PreviewRuntimeConfig {
-  sourceLineHighlight: boolean;
-  sourceLineHighlightColor: SourceLineHighlightColorValue;
-  scrollSync: PreviewScrollSyncValue;
-  shimSideRail: boolean;
 }
 
 // unified effective preview configuration

@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { LRUCache } from '@mdx-preview/runtime-utils';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { isPathInsideAsync } from '../../shared/utils/path-utils';
+import { isPathWithinAsync } from '../../shared/utils/path-utils';
 import {
   LogTags,
   STANDARD_CACHE_TTL_MS,
@@ -37,6 +37,11 @@ const cache = new LRUCache<string, CacheEntry>({
   maxEntries: MAX_PACK_ENTRIES,
   ttlMs: STANDARD_CACHE_TTL_MS,
 });
+
+// clear validated icon pack entries
+export function clearIconPackCache(): void {
+  cache.clear();
+}
 
 // base directory a relative source resolves against (workspace folder for the
 // doc, falling back to the document's own directory)
@@ -139,7 +144,7 @@ export async function resolveMermaidIconPacks(
         }
         absPath = path.resolve(base, entry.source);
         // confine relative sources to the base dir (realpath defeats ../ & symlink escape)
-        if (!(await isPathInsideAsync(absPath, base))) {
+        if (!(await isPathWithinAsync(absPath, base, false))) {
           log.warn(
             `Skipping mermaid icon pack "${entry.name}": source escapes the workspace folder`
           );

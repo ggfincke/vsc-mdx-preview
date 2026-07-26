@@ -45,4 +45,10 @@ export class PreviewTailwindState {
   clearFallbackReason(): void {
     this.fallbackReason = null;
   }
+
+  resetForDocument(): void {
+    this.requestId += 1;
+    this.browserRuntimeEnabled = false;
+    this.fallbackReason = null;
+  }
 }

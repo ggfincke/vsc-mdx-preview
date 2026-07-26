@@ -48,7 +48,7 @@ function resolveMdxNode(
   }
 
   // function component or string - create element
-  if (typeof v === 'function' || typeof v === 'string') {
+  if (isMdxComponent(v) || typeof v === 'string') {
     return createElement(v, props);
   }
 
@@ -58,6 +58,10 @@ function resolveMdxNode(
     `Invalid MDX export. Expected function or React element, got: ${typeof v}` +
       (keys ? ` (keys: ${keys})` : '')
   );
+}
+
+function isMdxComponent(value: unknown): value is ComponentType {
+  return typeof value === 'function';
 }
 
 interface TrustedPreviewRendererProps {
@@ -105,7 +109,10 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
         content.entryFilePath,
         content.dependencies
       );
-      return component as ComponentType;
+      if (!isMdxComponent(component)) {
+        throw new Error('MDX module did not evaluate to a React component');
+      }
+      return component;
     },
     [content.code, content.entryFilePath, content.dependencies],
     {

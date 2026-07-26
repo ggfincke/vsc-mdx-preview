@@ -5,7 +5,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createElement, act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { renderToStaticMarkup } from 'react-dom/server';
 
 const { asyncBehavior } = vi.hoisted(() => ({
   asyncBehavior: {
@@ -131,36 +130,20 @@ describe('TrustedPreviewRenderer', () => {
     document.body.innerHTML = '';
   });
 
-  it('shows evaluating state when component is not available', () => {
-    const { container, root } = mountRenderer({
-      content,
-      evaluatedComponent: null,
-      onComponentReady: vi.fn(),
-      onError: vi.fn(),
-    });
-
-    expect(container.textContent).toContain('Evaluating');
-    unmountRenderer(root);
-  });
-
-  it('renders function component exports', () => {
+  it('unwraps nested default exports', () => {
     const DemoComponent = () => createElement('div', null, 'Rendered Demo');
-    const { container, root } = mountRenderer({
+    const { container: fnContainer, root: fnRoot } = mountRenderer({
       content,
       evaluatedComponent: DemoComponent as any,
       onComponentReady: vi.fn(),
       onError: vi.fn(),
     });
+    expect(
+      fnContainer.querySelector('[data-preview-mode="trusted"]')
+    ).toBeTruthy();
+    expect(fnContainer.textContent).toContain('Rendered Demo');
+    unmountRenderer(fnRoot);
 
-    const previewRoot = container.querySelector(
-      '[data-preview-mode="trusted"]'
-    );
-    expect(previewRoot).toBeTruthy();
-    expect(container.textContent).toContain('Rendered Demo');
-    unmountRenderer(root);
-  });
-
-  it('unwraps nested default exports', () => {
     const NestedComponent = () => createElement('div', null, 'Nested Render');
     const nested = { default: { default: NestedComponent } };
     const { container, root } = mountRenderer({
@@ -174,7 +157,16 @@ describe('TrustedPreviewRenderer', () => {
     unmountRenderer(root);
   });
 
-  it('calls onError with normalized message when async evaluation fails', () => {
+  it('shows evaluating state and reports async evaluation failures', () => {
+    const { container, root: evaluatingRoot } = mountRenderer({
+      content,
+      evaluatedComponent: null,
+      onComponentReady: vi.fn(),
+      onError: vi.fn(),
+    });
+    expect(container.textContent).toContain('Evaluating');
+    unmountRenderer(evaluatingRoot);
+
     const onError = vi.fn();
     asyncBehavior.mode = 'error';
     asyncBehavior.error = new Error('module evaluation failed');

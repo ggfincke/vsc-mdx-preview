@@ -5,7 +5,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
 import { ExtensionHandle } from '../../../../platform/rpc/webview-rpc-client';
-import { sanitizeSvg } from '../../utils/sanitizeSvg';
+import { sanitizeSvg } from '../../../../shared/utils/sanitizeSvg';
 import './PlantUMLRenderer.css';
 
 interface PlantUMLProps {
@@ -15,11 +15,13 @@ interface PlantUMLProps {
 
 // render a single PlantUML diagram w/ error handling
 export const PlantUMLRenderer = createDiagramRenderer<PlantUMLProps>({
+  cacheFamily: 'plantuml',
   classPrefix: 'mdx-preview-plantuml',
   errorLabel: 'PlantUML render error',
   loadingText: 'Rendering diagram...',
   logTag: LogTags.PLANTUML_RENDERER,
-  useThemeValue: () => (useTheme().isDark ? 'dark' : 'light'),
+  useThemeValue: () => (useTheme().isPreviewContentLight ? 'light' : 'dark'),
+  useCacheKeyValue: () => useTheme().plantUmlServer,
   sanitize: sanitizeSvg,
   render: async (props) => {
     // render via extension host proxy (avoids CORS restrictions)

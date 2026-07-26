@@ -4,11 +4,11 @@
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import type * as vscode from 'vscode';
 import { performance } from 'perf_hooks';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { SingletonService } from '../../app/services/SingletonService';
-import { getErrorReporter, getFrameworkDetector } from '../../app/services';
-import type { ResolutionContext } from '../types';
+import { getErrorReporter } from '../../app/services';
 import { ErrorContext, ErrorSeverity } from '../../shared/errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
@@ -26,6 +26,7 @@ import {
   LRUCache,
   normalizeError,
 } from '@mdx-preview/runtime-utils';
+import { buildResolutionContext } from '../module-runtime/resolution/resolution-context';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
 
@@ -35,14 +36,14 @@ export type {
   TailwindProfileOptions,
   TailwindProcessOptions,
   TailwindProcessResult,
-} from '../types';
+} from './types/processor';
 
 import type {
-  TailwindProfileDetectionResult,
   TailwindProfileOptions,
   TailwindProcessOptions,
   TailwindProcessResult,
-} from '../types';
+} from './types/processor';
+import type { TailwindProfileDetectionResult } from './types/detector';
 
 export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   protected static override instance: TailwindProcessor | undefined;
@@ -52,6 +53,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   private scanner = new TailwindScanner();
   private cache: LRUCache<string, string>;
   private scanCache: ContentHashCache<string[]>;
+  private browserInputCache: LRUCache<string, string>;
   private compiler = new TailwindCompiler();
 
   protected constructor() {
@@ -62,6 +64,10 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     });
     this.scanCache = new ContentHashCache<string[]>({
       maxEntries: SCAN_CACHE_DEFAULT_MAX_ENTRIES,
+      ttlMs: STANDARD_CACHE_TTL_MS,
+    });
+    this.browserInputCache = new LRUCache<string, string>({
+      maxEntries: CACHE_DEFAULT_MAX_ENTRIES,
       ttlMs: STANDARD_CACHE_TTL_MS,
     });
   }
@@ -191,18 +197,13 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       ? path.dirname(configPath)
       : (workspaceRoot ?? preview.entryFsDirectory);
 
-    // build ResolutionContext for Tailwind scanning (parity w/ module-system)
-    const frameworkDetector = getFrameworkDetector();
-    const frameworkInfo = frameworkDetector.getFramework(preview.doc.uri);
-    const shimsEnabled = frameworkDetector.areShimsEnabled(preview.doc.uri);
-
-    const resolutionContext: ResolutionContext = {
+    const resolutionContext = buildResolutionContext({
       baseDir: preview.entryFsDirectory ?? path.dirname(entryFilePath),
       tsConfig: preview.typescriptConfiguration,
-      framework: frameworkInfo.framework,
+      documentUri: preview.doc.uri,
+      entryFsDirectory: preview.entryFsDirectory,
       workspaceRoot: workspaceRoot ?? preview.entryFsDirectory ?? undefined,
-      shimsEnabled,
-    };
+    });
 
     const scanStart = performance.now();
     const scanResult = await this.scanner.scan(mdxText, {
@@ -307,12 +308,27 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     this.detector.invalidateDetectionCaches(changedPaths);
   }
 
+  // subscribe previews to newly created Tailwind config or entry CSS inputs
+  onDidChangeDetectionInputs(
+    workspaceRoot: string,
+    callback: (changedPaths: string[]) => void
+  ): vscode.Disposable {
+    return this.detector.onDidChangeDetectionInputs(workspaceRoot, callback);
+  }
+
+  // clear every Tailwind result & detection cache
+  clearCaches(): void {
+    this.cache.clear();
+    this.scanCache.clear();
+    this.browserInputCache.clear();
+    this.detector.clearCaches();
+    log.debug('Caches cleared');
+  }
+
   // custom cleanup - clear caches
   protected override onDispose(): void {
-    this.cache.clear();
-    log.debug('Cache cleared');
-    this.scanCache.clear();
-    this.detector.invalidateVersionCache();
+    this.clearCaches();
+    this.detector.dispose();
   }
 
   // invalidate scan cache for a specific file or clear all
@@ -348,6 +364,24 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     entryCssPath: string | null,
     inlineTailwindStyles: string[]
   ): Promise<string> {
+    const normalizedInlineStyles = inlineTailwindStyles
+      .map((style) => style.trim())
+      .filter(Boolean);
+    const entryStamp = await this.getFileStamp(entryCssPath);
+    const inlineHash = crypto
+      .createHash('sha1')
+      .update(JSON.stringify(normalizedInlineStyles))
+      .digest('hex');
+    const cacheKey = JSON.stringify({
+      entryCssPath,
+      entryStamp,
+      inlineHash,
+    });
+    const cached = this.browserInputCache.get(cacheKey);
+    if (cached !== null) {
+      return cached;
+    }
+
     const segments: string[] = [];
 
     if (entryCssPath) {
@@ -359,17 +393,16 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       }
     }
 
-    for (const inlineCss of inlineTailwindStyles) {
-      if (inlineCss.trim()) {
-        segments.push(inlineCss.trim());
-      }
-    }
+    segments.push(...normalizedInlineStyles);
 
+    let inputCss: string;
     if (segments.length === 0) {
-      return '@import "tailwindcss";';
+      inputCss = '@import "tailwindcss";';
+    } else {
+      inputCss = segments.join('\n\n');
     }
-
-    return segments.join('\n\n');
+    this.browserInputCache.set(cacheKey, inputCss);
+    return inputCss;
   }
 
   private async buildCacheKey(

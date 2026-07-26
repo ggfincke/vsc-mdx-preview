@@ -4,14 +4,13 @@
 import type { Framework } from '../frameworks';
 import type {
   FetchResult,
+  ModuleDependency,
+  ModuleDependencyKind,
   TrustState,
   PreviewError,
   NextraPageMeta,
 } from '../preview';
-import type {
-  PreviewScrollSyncValue,
-  SourceLineHighlightColorValue,
-} from '../config';
+import type { PreviewRuntimeConfig } from '../config';
 import type { WebviewThemeState } from '../themes';
 
 export type PreviewSourceLineReportResult = 'accepted' | 'ignored' | 'retry';
@@ -23,7 +22,8 @@ export interface ExtensionRPC {
   fetch(
     request: string,
     isBare: boolean,
-    parentId: string
+    parentId: string,
+    kind?: ModuleDependencyKind
   ): Promise<FetchResult | undefined>;
   openSettings(settingId?: string): void;
   manageTrust(): void;
@@ -48,7 +48,7 @@ export interface WebviewRPC {
   updatePreview(
     code: string,
     entryFilePath: string,
-    entryFileDependencies: string[]
+    entryFileDependencies: ModuleDependency[]
   ): void;
   updatePreviewSafe(html: string): void;
   showPreviewError(error: PreviewError): void;
@@ -60,12 +60,10 @@ export interface WebviewRPC {
   setTailwindCss(css: string): void;
   setTailwindBrowserCss(css: string): void;
   setTheme(state: WebviewThemeState): void;
-  setNextraMeta(meta: NextraPageMeta): void;
-  setSourceLineHighlight(enabled: boolean): void;
-  setSourceLineHighlightColor(mode: SourceLineHighlightColorValue): void;
-  setScrollSync(mode: PreviewScrollSyncValue): void;
+  setNextraMeta(meta: NextraPageMeta | null): void;
+  setRuntimeConfig(config: PreviewRuntimeConfig): void;
   scrollToLine(line: number): void;
-  setShimSideRail(enabled: boolean): void;
-  setZoom(level: number): void;
+  adjustZoom(delta: number): void;
+  resetZoom(): void;
   getExportableHtml(): Promise<string>;
 }

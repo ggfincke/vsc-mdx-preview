@@ -2,17 +2,17 @@
 // preview command handlers for opening & refreshing previews
 
 import * as vscode from 'vscode';
-import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 
-// module-level tagged logger
-const log = createTaggedLogger(LogTags.PREVIEW);
+import { createTaggedLogger } from '../../shared/logging/logger';
 import { getPreviewManager, getErrorReporter } from '../../app/services';
 import { ErrorContext } from '../../shared/errors/ErrorReporter';
-
 import { createOrShowPanel, refreshPanel } from './webview-manager';
 import { Preview } from './Preview';
 import { showSafeModeNotificationIfNeeded } from './safe-mode-notification';
+
+// module-level tagged logger
+const log = createTaggedLogger(LogTags.PREVIEW);
 
 // shared open-preview core: create-or-reuse Preview, show panel, update webview
 async function openPreviewForDoc(doc: vscode.TextDocument): Promise<void> {
@@ -29,7 +29,7 @@ async function openPreviewForDoc(doc: vscode.TextDocument): Promise<void> {
     currentPreview.setDoc(doc);
   }
   log.debug('Calling createOrShowPanel');
-  await createOrShowPanel(currentPreview);
+  await createOrShowPanel(currentPreview, openPreview);
 
   // first-use explainer tied to actual preview usage, not extension activation
   void showSafeModeNotificationIfNeeded().catch((error) => {

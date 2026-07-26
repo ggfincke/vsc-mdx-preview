@@ -12,11 +12,16 @@ const {
   mockSetError,
   mockClearError,
   mockOpenExternal,
+  mockOpenDocument,
+  mockOpenPreview,
   mockClassifyLink,
   mockTrustedPreviewRenderer,
 } = vi.hoisted(() => ({
   appState: {
-    trustState: { canExecute: false },
+    trustState: {
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    } as any,
     content: null as any,
     error: null as any,
     isLoading: false,
@@ -29,8 +34,14 @@ const {
   mockSetError: vi.fn(),
   mockClearError: vi.fn(),
   mockOpenExternal: vi.fn(),
+  mockOpenDocument: vi.fn(async () => undefined),
+  mockOpenPreview: vi.fn(async () => undefined),
   mockClassifyLink: vi.fn((href: string) =>
-    href.startsWith('http') ? 'external' : 'anchor'
+    href.startsWith('http')
+      ? 'external'
+      : href.startsWith('#')
+        ? 'anchor'
+        : 'relative-file'
   ),
   mockTrustedPreviewRenderer: vi.fn(() =>
     createElement('div', { 'data-testid': 'trusted-preview' }, 'trusted')
@@ -65,6 +76,7 @@ vi.mock('../../packages/webview-client/src/app/state', () => ({
   useUIFlags: () => ({
     shimSideRailEnabled: appState.shimSideRailEnabled,
     sourceLineHighlightColorMode: appState.sourceLineHighlightColorMode,
+    zoomLevel: 1,
   }),
 }));
 
@@ -134,6 +146,8 @@ vi.mock(
   () => ({
     ExtensionHandle: {
       openExternal: (...args: any[]) => mockOpenExternal(...args),
+      openDocument: (relativePath: string) => mockOpenDocument(relativePath),
+      openPreview: (relativePath: string) => mockOpenPreview(relativePath),
     },
   })
 );
@@ -177,7 +191,10 @@ describe('App', () => {
       globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
     ).IS_REACT_ACT_ENVIRONMENT = true;
     vi.clearAllMocks();
-    appState.trustState = { canExecute: false };
+    appState.trustState = {
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    };
     appState.content = null;
     appState.error = null;
     appState.isLoading = false;
@@ -188,7 +205,7 @@ describe('App', () => {
     appState.previewTheme = 'none';
   });
 
-  it('renders initial loading state when loading and no content', () => {
+  it('renders initial loading and error states', () => {
     appState.isLoading = true;
     appState.content = null;
     appState.error = null;
@@ -196,22 +213,22 @@ describe('App', () => {
     const html = renderAppToString();
 
     expect(html).toContain('data-testid="loading-bar"');
-  });
-
-  it('renders error state with ErrorDisplay', () => {
     appState.error = {
       message: 'Compilation failed',
       type: 'compile',
     };
 
-    const html = renderAppToString();
+    const errorHtml = renderAppToString();
 
-    expect(html).toContain('data-testid="error-display"');
-    expect(html).toContain('Compilation failed');
+    expect(errorHtml).toContain('data-testid="error-display"');
+    expect(errorHtml).toContain('Compilation failed');
   });
 
   it('renders preview content according to trust state', () => {
-    appState.trustState = { canExecute: false };
+    appState.trustState = {
+      canExecute: false,
+      openMdxLinksInPreview: true,
+    };
     appState.isStale = true;
     appState.content = {
       mode: 'safe',
@@ -242,7 +259,10 @@ describe('App', () => {
     expect(blockedTrustedHtml).toContain('data-testid="trust-banner"');
     expect(mockTrustedPreviewRenderer).not.toHaveBeenCalled();
 
-    appState.trustState = { canExecute: true };
+    appState.trustState = {
+      canExecute: true,
+      openMdxLinksInPreview: true,
+    };
 
     const allowedTrustedHtml = renderAppToString();
 
@@ -251,7 +271,10 @@ describe('App', () => {
   });
 
   it('stores evaluated function components without invoking them as updaters', () => {
-    appState.trustState = { canExecute: true };
+    appState.trustState = {
+      canExecute: true,
+      openMdxLinksInPreview: true,
+    };
     appState.content = {
       mode: 'trusted',
       code: 'export default function MDXContent() {}',
@@ -269,12 +292,16 @@ describe('App', () => {
       return createElement('div', null, 'mdx');
     }
 
-    const readyProps = (mockTrustedPreviewRenderer.mock.calls.at(-1) as any[])[0];
+    const readyProps = (
+      mockTrustedPreviewRenderer.mock.calls.at(-1) as any[]
+    )[0];
     act(() => {
       readyProps.onComponentReady(FakeMdxContent);
     });
 
-    const updatedProps = (mockTrustedPreviewRenderer.mock.calls.at(-1) as any[])[0];
+    const updatedProps = (
+      mockTrustedPreviewRenderer.mock.calls.at(-1) as any[]
+    )[0];
     expect(updatedProps.evaluatedComponent).toBe(FakeMdxContent);
     expect(
       container.querySelector('[data-testid="trusted-preview"]')
@@ -283,8 +310,11 @@ describe('App', () => {
     unmountApp(root);
   });
 
-  it('opens external links on Ctrl/Cmd+click', () => {
-    appState.trustState = { canExecute: true };
+  it('dispatches modifier-clicked relative links by type and setting', () => {
+    appState.trustState = {
+      canExecute: true,
+      openMdxLinksInPreview: true,
+    };
     appState.content = {
       mode: 'safe',
       html: '<p>safe</p>',
@@ -293,17 +323,52 @@ describe('App', () => {
     const { container, root } = mountApp();
     const link = container.querySelector('a');
     expect(link).toBeTruthy();
+    link!.setAttribute('href', './guide.mdx?mode=full#intro');
 
     act(() => {
       link!.dispatchEvent(
         new MouseEvent('click', {
           bubbles: true,
+          cancelable: true,
           ctrlKey: true,
         })
       );
     });
 
-    expect(mockOpenExternal).toHaveBeenCalledWith('https://example.com');
+    expect(mockOpenPreview).toHaveBeenCalledWith('./guide.mdx');
+    expect(mockOpenDocument).not.toHaveBeenCalled();
+
+    appState.trustState = {
+      canExecute: true,
+      openMdxLinksInPreview: false,
+    };
+    act(() => {
+      root.render(createElement(App));
+    });
+    link!.setAttribute('href', '../guide.md#details');
+    act(() => {
+      link!.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          metaKey: true,
+        })
+      );
+    });
+    expect(mockOpenDocument).toHaveBeenCalledWith('../guide.md');
+
+    link!.setAttribute('href', './diagram.svg?raw=1');
+    act(() => {
+      link!.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+        })
+      );
+    });
+    expect(mockOpenDocument).toHaveBeenLastCalledWith('./diagram.svg');
+
     unmountApp(root);
   });
 });

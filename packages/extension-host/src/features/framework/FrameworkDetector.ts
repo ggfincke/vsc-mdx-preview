@@ -5,7 +5,11 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { WithSubscribers } from '../../app/services/SingletonService';
-import { getConfigManager, getErrorReporter } from '../../app/services';
+import {
+  getConfigManager,
+  getErrorReporter,
+  getPreviewManager,
+} from '../../app/services';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { ErrorContext } from '../../shared/errors';
 import {
@@ -19,10 +23,10 @@ import { readJsonSync, pathExists } from '../../shared/utils/file-utils';
 const log = createTaggedLogger(LogTags.FRAMEWORK);
 import { findUp } from '../../shared/utils/find-up';
 import { PathCache } from '../../shared/utils/cache';
-import type { FrameworkInfo } from '../types';
+import type { FrameworkInfo } from './types';
 
 // re-export canonical type definition from types/
-export type { FrameworkInfo } from '../types';
+export type { FrameworkInfo } from './types';
 
 // framework detection rules
 interface FrameworkRule {
@@ -279,15 +283,22 @@ export class FrameworkDetector extends WithSubscribers<
     log.debug('Cache invalidated for:', workspaceRoot);
   }
 
+  // clear detection results & package lookup memoization
+  clearCaches(): void {
+    this.cache.clear();
+    this.packageJsonDirMemo.clear();
+    log.debug('All caches invalidated');
+  }
+
   // invalidate all caches & notify subscribers
   private invalidateAllCaches(): void {
-    this.cache.clear();
-    log.debug('All caches invalidated');
+    this.clearCaches();
 
-    // notify subscribers w/ current framework for active editor
-    const editor = vscode.window.activeTextEditor;
-    if (editor) {
-      const info = this.getFramework(editor.document.uri);
+    const documentUri =
+      vscode.window.activeTextEditor?.document.uri ??
+      getPreviewManager().getCurrentPreview()?.doc.uri;
+    if (documentUri) {
+      const info = this.getFramework(documentUri);
       this.notifySubscribers(info);
     }
   }
@@ -301,28 +312,31 @@ export class FrameworkDetector extends WithSubscribers<
     const packageJsonDir = path.dirname(fsPath);
     this.invalidateCache(packageJsonDir);
 
-    // notify subscribers if this affects the active editor
-    const editor = vscode.window.activeTextEditor;
-    if (editor) {
+    // prioritize the active preview, then the active text editor
+    const documentUris = [
+      getPreviewManager().getCurrentPreview()?.doc.uri,
+      vscode.window.activeTextEditor?.document.uri,
+    ].filter((uri): uri is vscode.Uri => uri !== undefined);
+    for (const documentUri of documentUris) {
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(
         vscode.Uri.file(fsPath)
       );
-      const editorFolder = vscode.workspace.getWorkspaceFolder(
-        editor.document.uri
-      );
+      const documentFolder = vscode.workspace.getWorkspaceFolder(documentUri);
       // check if the changed package.json is in the same workspace
       if (
         workspaceFolder &&
-        editorFolder?.uri.fsPath === workspaceFolder.uri.fsPath
+        documentFolder?.uri.fsPath === workspaceFolder.uri.fsPath
       ) {
-        const info = this.getFramework(editor.document.uri);
+        const info = this.getFramework(documentUri);
         this.notifySubscribers(info);
+        return;
       }
     }
   }
 
   // clear file watcher, cache & subscriptions on dispose
   protected override onDispose(): void {
+    this.packageJsonDirMemo.clear();
     this.cache.dispose();
   }
 }

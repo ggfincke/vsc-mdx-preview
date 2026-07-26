@@ -12,6 +12,8 @@ import {
   LogTags,
   type ExtensionRPC,
   type Framework,
+  type ModuleDependency,
+  type ModuleDependencyKind,
   type TrustState,
   type WebviewRPC,
 } from '@mdx-preview/contracts';
@@ -76,6 +78,7 @@ function flushAfterTrustState(message: PendingMessage): void {
 
 const {
   createQueuedHandler,
+  createOptionalHandler,
   buildSimpleQueuedHandlers,
   buildOptionalHandlers,
 } = createHandlerFactories(
@@ -115,15 +118,25 @@ const simpleQueuedHandlers = buildSimpleQueuedHandlers(
 
 // optional handlers (all follow the same name-as-key pattern)
 const optionalHandlers = buildOptionalHandlers(
-  [
-    'setTheme',
-    'setNextraMeta',
-    'setSourceLineHighlight',
-    'setSourceLineHighlightColor',
-    'setScrollSync',
-    'setShimSideRail',
-    'setZoom',
-  ],
+  ['setTheme', 'setNextraMeta', 'setRuntimeConfig'],
+  log
+);
+
+const adjustZoom = createOptionalHandler<[number]>(
+  {
+    methodName: 'adjustZoom',
+    handlerKey: 'adjustZoom',
+    queueMode: 'all',
+  },
+  log
+);
+
+const resetZoom = createOptionalHandler<[]>(
+  {
+    methodName: 'resetZoom',
+    handlerKey: 'resetZoom',
+    queueMode: 'all',
+  },
   log
 );
 
@@ -136,12 +149,12 @@ const updatePreview = createQueuedHandler(
     toPayload: (code: unknown, entryFilePath: unknown, deps: unknown) => ({
       code: code as string,
       entryFilePath: entryFilePath as string,
-      dependencies: deps as string[],
+      dependencies: deps as ModuleDependency[],
     }),
     toHandlerArgs: (payload: {
       code: string;
       entryFilePath: string;
-      dependencies: string[];
+      dependencies: ModuleDependency[];
     }) => [payload.code, payload.entryFilePath, payload.dependencies],
     debugFormat: (code: unknown, entryFilePath: unknown) =>
       `updatePreview called, code length: ${(code as string).length}, path: ${entryFilePath}`,
@@ -174,11 +187,9 @@ class RPCWebviewHandle implements WebviewRPC {
   // optional handlers
   setTheme = optionalHandlers.setTheme;
   setNextraMeta = optionalHandlers.setNextraMeta;
-  setSourceLineHighlight = optionalHandlers.setSourceLineHighlight;
-  setSourceLineHighlightColor = optionalHandlers.setSourceLineHighlightColor;
-  setScrollSync = optionalHandlers.setScrollSync;
-  setShimSideRail = optionalHandlers.setShimSideRail;
-  setZoom = optionalHandlers.setZoom;
+  setRuntimeConfig = optionalHandlers.setRuntimeConfig;
+  adjustZoom = adjustZoom;
+  resetZoom = resetZoom;
 
   // direct handlers (execute immediately, no queuing)
   setCustomCss(css: string): void {
@@ -211,15 +222,11 @@ class RPCWebviewHandle implements WebviewRPC {
     });
   }
 
-  setFramework(framework: Framework): void {
+  setFramework(framework: Framework): Promise<void> {
     log.debug(`setFramework called: ${framework}`);
-    void loadModuleSystem()
-      .then(({ ensureFrameworkShimsLoaded }) => {
-        ensureFrameworkShimsLoaded(framework);
-      })
-      .catch((err) => {
-        log.error(`Failed to load framework shims for ${framework}:`, err);
-      });
+    return loadModuleSystem().then(({ ensureFrameworkShimsLoaded }) => {
+      return ensureFrameworkShimsLoaded(framework);
+    });
   }
 
   setUsedComponents(components: string[]): void {
@@ -309,8 +316,18 @@ export const ExtensionHandle: ExtensionHandle = {
   reportPerformance(evaluationDuration: number): void {
     getInitializedExtensionHandle().reportPerformance(evaluationDuration);
   },
-  fetch(request: string, isBare: boolean, parentId: string) {
-    return getInitializedExtensionHandle().fetch(request, isBare, parentId);
+  fetch(
+    request: string,
+    isBare: boolean,
+    parentId: string,
+    kind?: ModuleDependencyKind
+  ) {
+    return getInitializedExtensionHandle().fetch(
+      request,
+      isBare,
+      parentId,
+      kind
+    );
   },
   openSettings(settingId?: string): void {
     getInitializedExtensionHandle().openSettings(settingId);

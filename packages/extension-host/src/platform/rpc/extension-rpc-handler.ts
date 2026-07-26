@@ -3,7 +3,20 @@
 
 import { performance } from 'perf_hooks';
 import * as vscode from 'vscode';
-import { Preview } from '../../features/preview/preview-manager';
+import type {
+  ExtensionRPC,
+  FetchResult,
+  ModuleDependencyKind,
+  PreviewSourceLineReportResult,
+} from '@mdx-preview/contracts';
+import { LogTags } from '@mdx-preview/contracts';
+import {
+  extractErrorMessage,
+  getPlantUmlRenderEndpoints,
+  isValidModuleRequest,
+} from '@mdx-preview/runtime-utils';
+
+import type { Preview } from '../../features/preview/Preview';
 import {
   handlePreviewSourceLineReport,
   suppressEditorScrollSync,
@@ -14,15 +27,12 @@ import {
   tryRequireTrustedModeForDocument,
   tryRequireWorkspaceTrusted,
 } from '../../features/security/validateTrust';
+import {
+  validateAndResolveSecurePath,
+  reportTrustViolationError,
+} from '../../features/security/pathSecurity';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
-import {
-  extractErrorMessage,
-  getPlantUmlRenderEndpoints,
-} from '@mdx-preview/runtime-utils';
-
-const log = createTaggedLogger(LogTags.EXT_HANDLE);
 import { ErrorContext } from '../../shared/errors';
 import {
   validateString,
@@ -31,20 +41,14 @@ import {
   validateUrl,
   validateOptionalNumber,
 } from '../../shared/utils/validation';
-import {
-  validateAndResolveSecurePath,
-  reportTrustViolationError,
-} from '../../features/security/pathSecurity';
 import { MAX_FETCH_REQUEST_LENGTH } from '../../shared/constants';
-import { isValidModuleRequest } from '@mdx-preview/runtime-utils';
-import type {
-  ExtensionRPC,
-  FetchResult,
-  PreviewSourceLineReportResult,
-} from '@mdx-preview/contracts';
+import { AsyncLruCache } from '../../shared/utils/cache';
+
+const log = createTaggedLogger(LogTags.EXT_HANDLE);
 
 // allowed URL schemes for openExternal
 const ALLOWED_EXTERNAL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
+const PLANTUML_CACHE_MAX_ENTRIES = 64;
 
 // validate fetch request for security
 function validateFetchRequest(request: string): boolean {
@@ -66,10 +70,16 @@ function validateFetchRequest(request: string): boolean {
 // RPC handle exposed to webview (methods callable via Comlink)
 class ExtensionHandle implements ExtensionRPC {
   preview: Preview;
+  private readonly openPreviewCommand: () => Promise<void>;
+  private readonly plantUmlCache = new AsyncLruCache<string, string>({
+    maxEntries: PLANTUML_CACHE_MAX_ENTRIES,
+  });
+  private plantUmlServer: string | undefined;
 
-  constructor(preview: Preview) {
+  constructor(preview: Preview, openPreview: () => Promise<void>) {
     log.debug('ExtensionHandle created');
     this.preview = preview;
+    this.openPreviewCommand = openPreview;
   }
 
   // handshake to resolve when webview is ready
@@ -105,7 +115,8 @@ class ExtensionHandle implements ExtensionRPC {
   async fetch(
     request: string,
     isBare: boolean,
-    parentId: string
+    parentId: string,
+    dependencyKind?: ModuleDependencyKind
   ): Promise<FetchResult | undefined> {
     log.debug(`fetch: request=${request}, isBare=${isBare}`);
 
@@ -121,12 +132,22 @@ class ExtensionHandle implements ExtensionRPC {
       ...opts,
       allowEmpty: true,
     });
+    const validDependencyKind =
+      dependencyKind === undefined
+        ? 'require'
+        : dependencyKind === 'import' || dependencyKind === 'require'
+          ? dependencyKind
+          : undefined;
 
     if (
       validRequest === undefined ||
       validIsBare === undefined ||
-      validParentId === undefined
+      validParentId === undefined ||
+      validDependencyKind === undefined
     ) {
+      if (validDependencyKind === undefined) {
+        log.error('fetch: dependencyKind must be import or require');
+      }
       return undefined;
     }
 
@@ -152,7 +173,13 @@ class ExtensionHandle implements ExtensionRPC {
       return undefined;
     }
 
-    return fetchLocal(validRequest, validIsBare, validParentId, this.preview);
+    return fetchLocal(
+      validRequest,
+      validIsBare,
+      validParentId,
+      this.preview,
+      validDependencyKind
+    );
   }
 
   // open VS Code settings (optionally to specific setting)
@@ -277,11 +304,7 @@ class ExtensionHandle implements ExtensionRPC {
     const targetUri = vscode.Uri.file(securePathResult.resolvedPath);
     if (
       !tryRequireTrustedModeForDocument(targetUri, 'open preview', (error) =>
-        reportTrustViolationError(
-          securePathResult.resolvedPath,
-          error.message,
-          'openPreview'
-        )
+        reportTrustViolationError(securePathResult.resolvedPath, error.message)
       )
     ) {
       return;
@@ -294,11 +317,7 @@ class ExtensionHandle implements ExtensionRPC {
       );
       await vscode.window.showTextDocument(doc, { preview: false });
 
-      // dynamically import openPreview to avoid circular dependency
-      // openPreview() uses the active editor's document
-      const { openPreview } =
-        await import('../../features/preview/preview-manager');
-      await openPreview();
+      await this.openPreviewCommand();
     } catch {
       getErrorReporter().reportToUser(
         new Error(`Could not open preview: ${relativePath}`),
@@ -381,7 +400,28 @@ class ExtensionHandle implements ExtensionRPC {
       );
     }
 
-    const serverUrl = getConfigManager().get(SETTINGS.PLANTUML_SERVER);
+    const serverUrl = getConfigManager().get(
+      SETTINGS.PLANTUML_SERVER,
+      this.preview.doc.uri
+    );
+    if (
+      this.plantUmlServer !== undefined &&
+      this.plantUmlServer !== serverUrl
+    ) {
+      this.plantUmlCache.clear();
+    }
+    this.plantUmlServer = serverUrl;
+
+    const cacheKey = JSON.stringify([serverUrl, validCode]);
+    return this.plantUmlCache.getOrCreate(cacheKey, () =>
+      this.fetchPlantUml(validCode, serverUrl)
+    );
+  }
+
+  private async fetchPlantUml(
+    validCode: string,
+    serverUrl: string
+  ): Promise<string | undefined> {
     const endpoints = getPlantUmlRenderEndpoints(serverUrl);
     let lastError: unknown = null;
 

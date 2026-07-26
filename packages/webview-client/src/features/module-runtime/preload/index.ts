@@ -1,14 +1,9 @@
 // packages/webview-client/src/features/module-runtime/preload/index.ts
 // preload orchestration for core modules & shim registry
 
-import {
-  type FrameworkId,
-  LogTags,
-  PRELOADED_MODULE_IDS,
-} from '@mdx-preview/contracts';
+import { type FrameworkId, LogTags } from '@mdx-preview/contracts';
 import type { ModuleRegistry } from 'mdx-forge/browser/registry';
 import { preloadCoreModules } from './core';
-import { PRELOADED_SHIM_IDS } from '../../../generated/preload/aliases.generated';
 import {
   preloadGenericShims,
   GENERIC_SHIM_LOADERS,
@@ -23,13 +18,14 @@ import {
 } from './shimLoader';
 
 export { fallbackLayoutModule } from './core';
-export { PRELOADED_SHIM_IDS } from '../../../generated/preload/aliases.generated';
 
 // module-level tagged logger (avoids per-call allocation)
 const log = createTaggedLogger(LogTags.PRELOAD);
 
 // consolidated preload tracking state
 interface PreloadState {
+  registryGeneration: number | null;
+  requestedFramework: FrameworkId | null;
   // framework shim tracking
   loadedFramework: FrameworkId | null;
   frameworkLoadPromise: Promise<void> | null;
@@ -41,6 +37,8 @@ interface PreloadState {
 
 function createInitialState(): PreloadState {
   return {
+    registryGeneration: null,
+    requestedFramework: null,
     loadedFramework: null,
     frameworkLoadPromise: null,
     lastShimLoadResult: null,
@@ -51,12 +49,29 @@ function createInitialState(): PreloadState {
 
 const state = createInitialState();
 
+function reconcileRegistryGeneration(registry: ModuleRegistry): void {
+  if (state.registryGeneration === registry.generation) {
+    return;
+  }
+  state.registryGeneration = registry.generation;
+  state.loadedFramework = null;
+  state.frameworkLoadPromise = null;
+  state.lastShimLoadResult = null;
+  state.loadedGenericShims.clear();
+  state.genericShimsLoadPromise = null;
+}
+
+export function getRequestedFramework(): FrameworkId | null {
+  return state.requestedFramework;
+}
+
 // initialize preloaded modules in the registry
 // load core & generic modules eagerly, then framework shims lazily
 export function initPreloadedModules(
   registry: ModuleRegistry,
   vscodeMarkdownLayout: unknown
 ): void {
+  reconcileRegistryGeneration(registry);
   preloadCoreModules(registry, vscodeMarkdownLayout);
   preloadGenericShims(registry);
   for (const componentName of Object.keys(GENERIC_SHIM_LOADERS)) {
@@ -76,6 +91,9 @@ export async function ensureFrameworkShims(
   registry: ModuleRegistry,
   framework: FrameworkId
 ): Promise<void> {
+  reconcileRegistryGeneration(registry);
+  state.requestedFramework = framework;
+
   // already loaded this framework
   if (state.loadedFramework === framework) {
     log.debug(`Framework ${framework} shims already loaded`);
@@ -101,8 +119,9 @@ export async function ensureFrameworkShims(
 
   log.debug(`Loading ${framework} shims w/ retry...`);
 
+  const registryGeneration = registry.generation;
   // load CSS in parallel w/ resilient shim loading
-  state.frameworkLoadPromise = (async () => {
+  const frameworkLoadPromise = (async () => {
     const [shimResult] = await Promise.all([
       loadFrameworkShimsWithRetry(
         registry,
@@ -114,9 +133,15 @@ export async function ensureFrameworkShims(
       loadFrameworkCss(framework),
     ]);
 
+    if (
+      state.registryGeneration !== registryGeneration ||
+      registry.generation !== registryGeneration
+    ) {
+      return;
+    }
     state.lastShimLoadResult = shimResult;
 
-    if (shimResult.success) {
+    if (shimResult.success && !shimResult.usedFallback) {
       state.loadedFramework = framework;
     }
 
@@ -124,14 +149,17 @@ export async function ensureFrameworkShims(
       log.debug(`${framework} using generic fallback shims`);
     }
   })();
+  state.frameworkLoadPromise = frameworkLoadPromise;
 
   try {
-    await state.frameworkLoadPromise;
+    await frameworkLoadPromise;
   } finally {
-    state.frameworkLoadPromise = null;
+    if (state.frameworkLoadPromise === frameworkLoadPromise) {
+      state.frameworkLoadPromise = null;
+    }
   }
   log.debug(
-    `${framework} shims loaded (success=${state.lastShimLoadResult?.success})`
+    `${framework} shim load completed (success=${state.lastShimLoadResult?.success})`
   );
 }
 
@@ -142,6 +170,8 @@ export async function ensureGenericShims(
   registry: ModuleRegistry,
   componentNames: string[]
 ): Promise<void> {
+  reconcileRegistryGeneration(registry);
+
   // wait for any in-progress load to complete
   if (state.genericShimsLoadPromise) {
     await state.genericShimsLoadPromise;
@@ -158,14 +188,21 @@ export async function ensureGenericShims(
 
   log.debug(`Loading generic shims w/ retry: ${toLoad.join(', ')}`);
 
+  const registryGeneration = registry.generation;
   // use resilient loading w/ retry for each shim
-  state.genericShimsLoadPromise = (async () => {
+  const genericShimsLoadPromise = (async () => {
     const result = await loadGenericShimsWithRetry(
       registry,
       toLoad,
       GENERIC_SHIM_LOADERS
     );
 
+    if (
+      state.registryGeneration !== registryGeneration ||
+      registry.generation !== registryGeneration
+    ) {
+      return;
+    }
     // mark loaded shims
     for (const name of result.loaded) {
       state.loadedGenericShims.add(name);
@@ -177,15 +214,13 @@ export async function ensureGenericShims(
 
     log.debug(`Generic shims loaded: ${result.loaded.join(', ')}`);
   })();
+  state.genericShimsLoadPromise = genericShimsLoadPromise;
 
   try {
-    await state.genericShimsLoadPromise;
+    await genericShimsLoadPromise;
   } finally {
-    state.genericShimsLoadPromise = null;
+    if (state.genericShimsLoadPromise === genericShimsLoadPromise) {
+      state.genericShimsLoadPromise = null;
+    }
   }
-}
-
-// get list of all IDs that should be preserved during module reset
-export function getPreservedIds(): string[] {
-  return [...Object.values(PRELOADED_MODULE_IDS), ...PRELOADED_SHIM_IDS];
 }

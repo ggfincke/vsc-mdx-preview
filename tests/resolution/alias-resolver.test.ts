@@ -1,10 +1,8 @@
 // tests/resolution/alias-resolver.test.ts
-// Unit tests for framework alias resolution
+// unit tests for framework alias resolution
 
 import { describe, it, expect } from 'vitest';
-import {
-  resolveAlias,
-} from '../../packages/extension-host/src/features/module-runtime/resolution/alias-resolver';
+import { resolveAlias } from '../../packages/extension-host/src/features/module-runtime/resolution/alias-resolver';
 
 describe('resolveAlias()', () => {
   describe('Docusaurus aliases', () => {
@@ -26,7 +24,6 @@ describe('resolveAlias()', () => {
       expect(result).not.toBeNull();
       expect(result).toBe('/workspace/src/components/Button');
     });
-
   });
 
   describe('Starlight aliases', () => {
@@ -42,15 +39,17 @@ describe('resolveAlias()', () => {
     });
   });
 
-  describe('unknown aliases', () => {
-    it('returns null for unknown alias', () => {
-      const result = resolveAlias(
+  describe('generic and unknown aliases', () => {
+    it('resolves generic shims and rejects unknown aliases', () => {
+      const generic = resolveAlias('Callout', 'generic', '/workspace');
+      const unknown = resolveAlias(
         '@unknown/component',
         'docusaurus',
         '/workspace'
       );
 
-      expect(result).toBeNull();
+      expect(generic).toBe('@mdx-preview/shims/generic/Callout');
+      expect(unknown).toBeNull();
     });
   });
 });

@@ -6,9 +6,17 @@ import * as ReactDOM from 'react-dom';
 import * as ReactDOMClient from 'react-dom/client';
 import * as jsxRuntime from 'react/jsx-runtime';
 import { MDXProvider, useMDXComponents } from '@mdx-js/react';
-import { PRELOADED_MODULE_IDS } from '@mdx-preview/contracts';
-import { registerPreloadEntries, type PreloadEntry } from 'mdx-forge/browser';
+import {
+  PRELOADED_MODULE_IDS,
+  registerPreloadEntries,
+  type PreloadEntry,
+} from 'mdx-forge/browser';
 import type { ModuleRegistry } from 'mdx-forge/browser/registry';
+
+export type PreloadedModuleId =
+  (typeof PRELOADED_MODULE_IDS)[keyof typeof PRELOADED_MODULE_IDS];
+
+const registeredPreloadAliases = new Map<string, string>();
 
 export interface LayoutOptions {
   forceLightTheme?: boolean;
@@ -78,6 +86,19 @@ export function preloadEntry(
   entry: PreloadEntry
 ): void {
   registerPreloadEntries(registry, [entry]);
+  for (const alias of entry.aliases ?? []) {
+    registeredPreloadAliases.set(alias, entry.id);
+  }
+}
+
+export function resolveRegisteredPreloadAlias(
+  registry: ModuleRegistry,
+  specifier: string
+): string | undefined {
+  const moduleId = registeredPreloadAliases.get(specifier);
+  return moduleId !== undefined && registry.isPreloaded(moduleId)
+    ? moduleId
+    : undefined;
 }
 
 // initialize core preloaded modules in the registry

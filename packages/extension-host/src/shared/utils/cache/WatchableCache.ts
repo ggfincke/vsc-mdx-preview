@@ -1,10 +1,15 @@
 // packages/extension-host/src/shared/utils/cache/WatchableCache.ts
 // manage LRU cache entries w/ optional path watchers
 
+import * as path from 'path';
 import type * as vscode from 'vscode';
 import type { LogTag } from '@mdx-preview/contracts';
 import { LRUCache } from '@mdx-preview/runtime-utils';
-import { createFileWatcher } from '../createFileWatcher';
+import {
+  createExactFileWatcherPattern,
+  createFileWatcher,
+} from '../createFileWatcher';
+import { normalizePathForComparison } from '../path-utils';
 
 export type WatchEventType = 'change' | 'create' | 'delete';
 
@@ -31,6 +36,8 @@ export class WatchableCache<K, V> {
   private cache: LRUCache<K, V>;
   private watchers = new Map<string, vscode.FileSystemWatcher>();
   private handlers = new Map<string, WatchHandlers<K, V>>();
+  private retainedPathReferences = new Map<string, number>();
+  private persistentWatcherPaths = new Set<string>();
   private logTag: LogTag;
 
   constructor(options: WatchableCacheOptions) {
@@ -42,19 +49,14 @@ export class WatchableCache<K, V> {
   }
 
   get(key: K): V | undefined {
-    const value = this.cache.get(key);
-    if (value === null) {
+    if (!this.cache.has(key)) {
       return undefined;
     }
-    return value;
+    return this.cache.get(key) as V;
   }
 
   peek(key: K): V | undefined {
-    const value = this.cache.peek(key);
-    if (value === null) {
-      return undefined;
-    }
-    return value;
+    return this.cache.peek(key);
   }
 
   has(key: K): boolean {
@@ -94,12 +96,78 @@ export class WatchableCache<K, V> {
   }
 
   watchPath(pattern: string, handlers: WatchHandlers<K, V>): void {
+    this.persistentWatcherPaths.add(pattern);
+    this.createPathWatcher(pattern, handlers);
+  }
+
+  retainPath(
+    pattern: string,
+    handlers: WatchHandlers<K, V>
+  ): vscode.Disposable {
+    const referenceCount = this.retainedPathReferences.get(pattern) ?? 0;
+    this.retainedPathReferences.set(pattern, referenceCount + 1);
+    this.createPathWatcher(pattern, handlers);
+
+    let disposed = false;
+    return {
+      dispose: () => {
+        if (disposed) {
+          return;
+        }
+        disposed = true;
+        this.releasePath(pattern);
+      },
+    };
+  }
+
+  retainFile(
+    filePath: string,
+    handlers: WatchHandlers<K, V>
+  ): vscode.Disposable {
+    const watcherKey = normalizePathForComparison(path.resolve(filePath));
+    const referenceCount = this.retainedPathReferences.get(watcherKey) ?? 0;
+    this.retainedPathReferences.set(watcherKey, referenceCount + 1);
+    this.createPathWatcher(
+      watcherKey,
+      handlers,
+      createExactFileWatcherPattern(filePath)
+    );
+
+    let disposed = false;
+    return {
+      dispose: () => {
+        if (disposed) {
+          return;
+        }
+        disposed = true;
+        this.releasePath(watcherKey);
+      },
+    };
+  }
+
+  get retainedPathCount(): number {
+    return this.retainedPathReferences.size;
+  }
+
+  get size(): number {
+    return this.cache.size;
+  }
+
+  get watcherCount(): number {
+    return this.watchers.size;
+  }
+
+  private createPathWatcher(
+    pattern: string,
+    handlers: WatchHandlers<K, V>,
+    watcherPattern: vscode.GlobPattern = pattern
+  ): void {
     if (this.watchers.has(pattern)) {
       return;
     }
 
     const watcher = createFileWatcher({
-      pattern,
+      pattern: watcherPattern,
       logTag: this.logTag,
       onChange: (uri) => this.handleEvent(pattern, uri.fsPath, 'change'),
       onCreate: (uri) => this.handleEvent(pattern, uri.fsPath, 'create'),
@@ -117,6 +185,8 @@ export class WatchableCache<K, V> {
       this.watchers.delete(pattern);
       this.handlers.delete(pattern);
     }
+    this.retainedPathReferences.delete(pattern);
+    this.persistentWatcherPaths.delete(pattern);
   }
 
   dispose(): void {
@@ -125,7 +195,28 @@ export class WatchableCache<K, V> {
     }
     this.watchers.clear();
     this.handlers.clear();
+    this.retainedPathReferences.clear();
+    this.persistentWatcherPaths.clear();
     this.cache.clear();
+  }
+
+  private releasePath(pattern: string): void {
+    const referenceCount = this.retainedPathReferences.get(pattern);
+    if (referenceCount === undefined) {
+      return;
+    }
+    if (referenceCount > 1) {
+      this.retainedPathReferences.set(pattern, referenceCount - 1);
+      return;
+    }
+
+    this.retainedPathReferences.delete(pattern);
+    if (!this.persistentWatcherPaths.has(pattern)) {
+      const watcher = this.watchers.get(pattern);
+      watcher?.dispose();
+      this.watchers.delete(pattern);
+      this.handlers.delete(pattern);
+    }
   }
 
   private handleEvent(

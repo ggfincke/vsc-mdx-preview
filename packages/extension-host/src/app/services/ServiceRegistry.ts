@@ -5,7 +5,7 @@ import type { Disposable } from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { ServiceError, CircularDependencyError } from '../../shared/errors';
-import type { IService, ServiceFactory, ServiceRegistration } from '../types';
+import type { IService, ServiceFactory, ServiceRegistration } from './types';
 
 // module-level tagged logger for service registry
 const log = createTaggedLogger(LogTags.SERVICE_REGISTRY);
@@ -130,6 +130,11 @@ export class ServiceRegistry implements Disposable {
     }
 
     return registration.instance as T;
+  }
+
+  // return an initialized service w/o triggering its lazy factory
+  getIfInitialized<T extends IService>(name: string): T | undefined {
+    return this.services.get(name)?.instance as T | undefined;
   }
 
   // dispose all subsystems & services

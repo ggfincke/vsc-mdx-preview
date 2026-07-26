@@ -1,7 +1,11 @@
 // packages/webview-client/src/features/diagrams/ui/MermaidRenderer/MermaidRenderer.tsx
 // lazy-loaded mermaid diagram renderer w/ error handling & source toggle
 
-import { LogTags } from '@mdx-preview/contracts';
+import {
+  LogTags,
+  MERMAID_THEMES,
+  type MermaidTheme,
+} from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
 import { useEffect } from 'react';
@@ -11,16 +15,26 @@ import {
   registerDynamicIconPacks,
   setPendingDynamicPacks,
   getPendingDynamicPacks,
+  getMermaidIconPacksFingerprint,
 } from '../../utils/mermaidIconPacks';
 import './MermaidRenderer.css';
 
-// read mermaid theme & keep configured icon packs in sync for the renderer
-function useMermaidThemeValue(): string {
-  const { mermaidTheme, mermaidIconPacks } = useTheme();
+// read the mermaid theme
+function useMermaidThemeValue(): MermaidTheme {
+  return useTheme().mermaidTheme;
+}
+
+function isMermaidTheme(theme: string): theme is MermaidTheme {
+  return MERMAID_THEMES.some((candidate) => candidate === theme);
+}
+
+// keep icon packs in sync & expose their content fingerprint to the cache
+function useMermaidIconPacksFingerprint(): string {
+  const { mermaidIconPacks } = useTheme();
   useEffect(() => {
     setPendingDynamicPacks(mermaidIconPacks);
   }, [mermaidIconPacks]);
-  return mermaidTheme;
+  return getMermaidIconPacksFingerprint(mermaidIconPacks);
 }
 
 // check if mermaid theme is dark (needs dark background)
@@ -39,15 +53,19 @@ interface MermaidProps {
 
 // render a single mermaid diagram w/ error handling
 export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
+  cacheFamily: 'mermaid',
   classPrefix: 'mdx-preview-mermaid',
   errorLabel: 'Mermaid parse error',
   loadingText: 'Loading diagram...',
   logTag: LogTags.MERMAID_RENDERER,
   useThemeValue: useMermaidThemeValue,
+  useCacheKeyValue: useMermaidIconPacksFingerprint,
+  includeIdInCacheKey: true,
   toDataTheme: (theme) => (isDarkMermaidTheme(theme) ? 'dark' : 'light'),
   render: async (_props, signal, mermaidTheme) => {
     const { code, id } = _props;
-    const isDark = isDarkMermaidTheme(mermaidTheme);
+    const theme = isMermaidTheme(mermaidTheme) ? mermaidTheme : 'default';
+    const isDark = isDarkMermaidTheme(theme);
 
     const mermaid = await loadMermaid();
 
@@ -58,14 +76,14 @@ export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
 
     // only re-initialize if theme or dark state changed (perf optimization)
     const needsReinit =
-      lastInitializedTheme !== mermaidTheme || lastInitializedDark !== isDark;
+      lastInitializedTheme !== theme || lastInitializedDark !== isDark;
 
     if (needsReinit) {
       // initialize mermaid w/ strict config (no foreignObject)
       // theme is controlled by user setting (mdx-preview.preview.mermaidTheme)
       mermaid.default.initialize({
         startOnLoad: false,
-        theme: mermaidTheme,
+        theme,
         securityLevel: 'strict',
         // disable HTML labels at the root so node labels render as pure SVG text
         // the flowchart-scoped flag is deprecated & ignored; mermaid's root
@@ -94,7 +112,7 @@ export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
           }
         `,
       });
-      lastInitializedTheme = mermaidTheme;
+      lastInitializedTheme = theme;
       lastInitializedDark = isDark;
     }
 

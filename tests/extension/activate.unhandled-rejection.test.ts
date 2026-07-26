@@ -63,39 +63,29 @@ describe('registerUnhandledRejectionHandler', () => {
   it('registers one disposable process listener at a time', () => {
     const onSpy = vi.spyOn(process, 'on').mockImplementation(() => process);
     const offSpy = vi.spyOn(process, 'off').mockImplementation(() => process);
-    const context = { subscriptions: [] as Array<{ dispose: () => void }> };
+    const first = { subscriptions: [] as Array<{ dispose: () => void }> };
+    const second = { subscriptions: [] as Array<{ dispose: () => void }> };
 
-    registerUnhandledRejectionHandler(context as any);
-    registerUnhandledRejectionHandler(context as any);
+    registerUnhandledRejectionHandler(first as any);
+    registerUnhandledRejectionHandler(first as any);
 
     expect(onSpy).toHaveBeenCalledTimes(1);
     expect(onSpy).toHaveBeenCalledWith(
       'unhandledRejection',
       expect.any(Function)
     );
-    expect(context.subscriptions).toHaveLength(1);
+    expect(first.subscriptions).toHaveLength(1);
 
-    context.subscriptions[0].dispose();
+    first.subscriptions[0].dispose();
 
     expect(offSpy).toHaveBeenCalledTimes(1);
     expect(offSpy).toHaveBeenCalledWith(
       'unhandledRejection',
       expect.any(Function)
     );
-  });
 
-  it('can register again after disposal', () => {
-    const onSpy = vi.spyOn(process, 'on').mockImplementation(() => process);
-    vi.spyOn(process, 'off').mockImplementation(() => process);
-    const first = { subscriptions: [] as Array<{ dispose: () => void }> };
-    const second = { subscriptions: [] as Array<{ dispose: () => void }> };
-
-    registerUnhandledRejectionHandler(first as any);
-    first.subscriptions[0].dispose();
     registerUnhandledRejectionHandler(second as any);
-
     expect(onSpy).toHaveBeenCalledTimes(2);
-    expect(first.subscriptions).toHaveLength(1);
     expect(second.subscriptions).toHaveLength(1);
   });
 });

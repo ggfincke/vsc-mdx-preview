@@ -11,6 +11,8 @@ declare module 'sucrase' {
     transforms: string[];
     filePath?: string;
     disableESTransforms?: boolean;
+    jsxRuntime?: 'classic' | 'automatic' | 'preserve';
+    production?: boolean;
   }
 
   export interface TransformResult {

@@ -2,7 +2,7 @@
 // simple configuration toggle commands
 
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from '../types';
+import type { CommandDefinition } from './types';
 import { getConfigManager } from '../../app/services';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 

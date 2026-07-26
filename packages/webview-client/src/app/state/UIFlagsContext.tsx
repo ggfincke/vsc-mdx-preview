@@ -1,12 +1,9 @@
 // packages/webview-client/src/app/state/UIFlagsContext.tsx
 // React context for preview runtime UI flags
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { createTaggedLogger } from '../../shared/utils/createTaggedLogger';
-import {
-  clampToHundredths,
-  roundToHundredths,
-} from '../../shared/utils/clamp';
+import { clampToHundredths, roundToHundredths } from '../../shared/utils/clamp';
 import {
   getItem,
   setItem,
@@ -14,8 +11,8 @@ import {
 } from '../../shared/utils/safeLocalStorage';
 import {
   LogTags,
-  type PreviewScrollSyncValue,
-  type SourceLineHighlightColorValue,
+  SETTINGS_DEFAULTS,
+  type PreviewRuntimeConfig,
 } from '@mdx-preview/contracts';
 import { createContextProvider } from '../providers/createContextProvider';
 
@@ -46,16 +43,14 @@ function persistZoom(level: number): void {
 }
 
 interface UIFlagsContextValue {
-  sourceLineHighlightEnabled: boolean;
-  sourceLineHighlightColorMode: SourceLineHighlightColorValue;
-  scrollSyncMode: PreviewScrollSyncValue;
-  shimSideRailEnabled: boolean;
+  sourceLineHighlightEnabled: PreviewRuntimeConfig['sourceLineHighlight'];
+  sourceLineHighlightColorMode: PreviewRuntimeConfig['sourceLineHighlightColor'];
+  scrollSyncMode: PreviewRuntimeConfig['scrollSync'];
+  shimSideRailEnabled: PreviewRuntimeConfig['shimSideRail'];
   zoomLevel: number;
-  setSourceLineHighlight: (enabled: boolean) => void;
-  setSourceLineHighlightColor: (mode: SourceLineHighlightColorValue) => void;
-  setScrollSync: (mode: PreviewScrollSyncValue) => void;
-  setShimSideRail: (enabled: boolean) => void;
-  setZoomLevel: (level: number) => void;
+  setRuntimeConfig: (config: PreviewRuntimeConfig) => void;
+  adjustZoom: (delta: number) => void;
+  resetZoom: () => void;
 }
 
 // module-level tagged logger (avoids per-render allocation)
@@ -63,70 +58,52 @@ const log = createTaggedLogger(LogTags.APP);
 
 // hook that provides the UI flags context value
 function useUIFlagsProviderValue(): UIFlagsContextValue {
-  const [sourceLineHighlightEnabled, setSourceLineHighlightEnabledState] =
-    useState(true);
-  const [sourceLineHighlightColorMode, setSourceLineHighlightColorModeState] =
-    useState<SourceLineHighlightColorValue>('dependent');
-  const [scrollSyncMode, setScrollSyncMode] =
-    useState<PreviewScrollSyncValue>('off');
-  const [shimSideRailEnabled, setShimSideRailEnabledState] = useState(true);
+  const [runtimeConfig, setRuntimeConfigState] = useState<PreviewRuntimeConfig>(
+    {
+      sourceLineHighlight: SETTINGS_DEFAULTS['preview.sourceLineHighlight'],
+      sourceLineHighlightColor:
+        SETTINGS_DEFAULTS['preview.sourceLineHighlightColor'],
+      scrollSync: SETTINGS_DEFAULTS['preview.scrollSync'],
+      shimSideRail: SETTINGS_DEFAULTS['preview.shimSideRail'],
+    }
+  );
   const [zoomLevel, setZoomLevelState] = useState(readPersistedZoom);
 
-  const setSourceLineHighlight = useCallback((enabled: boolean) => {
-    log.debug('setSourceLineHighlight called', enabled);
-    setSourceLineHighlightEnabledState(enabled);
+  const setRuntimeConfig = useCallback((config: PreviewRuntimeConfig) => {
+    log.debug('setRuntimeConfig called', config);
+    setRuntimeConfigState(config);
   }, []);
 
-  const setSourceLineHighlightColor = useCallback(
-    (mode: SourceLineHighlightColorValue) => {
-      log.debug('setSourceLineHighlightColor called', mode);
-      setSourceLineHighlightColorModeState(mode);
-    },
-    []
-  );
-
-  const setShimSideRail = useCallback((enabled: boolean) => {
-    log.debug('setShimSideRail called', enabled);
-    setShimSideRailEnabledState(enabled);
+  const adjustZoom = useCallback((delta: number) => {
+    setZoomLevelState((level) => {
+      const adjusted = clampToHundredths(level + delta, ZOOM_MIN, ZOOM_MAX);
+      log.debug('adjustZoom called', adjusted);
+      return adjusted;
+    });
   }, []);
 
-  const setScrollSync = useCallback((mode: PreviewScrollSyncValue) => {
-    log.debug('setScrollSync called', mode);
-    setScrollSyncMode(mode);
+  const resetZoom = useCallback(() => {
+    log.debug('resetZoom called');
+    persistZoom(ZOOM_DEFAULT);
+    setZoomLevelState(ZOOM_DEFAULT);
   }, []);
 
-  const setZoomLevel = useCallback((level: number) => {
-    const clamped = clampToHundredths(level, ZOOM_MIN, ZOOM_MAX);
-    log.debug('setZoomLevel called', clamped);
-    setZoomLevelState(clamped);
-    persistZoom(clamped);
-  }, []);
+  useEffect(() => {
+    persistZoom(zoomLevel);
+  }, [zoomLevel]);
 
   return useMemo(
     () => ({
-      sourceLineHighlightEnabled,
-      sourceLineHighlightColorMode,
-      scrollSyncMode,
-      shimSideRailEnabled,
+      sourceLineHighlightEnabled: runtimeConfig.sourceLineHighlight,
+      sourceLineHighlightColorMode: runtimeConfig.sourceLineHighlightColor,
+      scrollSyncMode: runtimeConfig.scrollSync,
+      shimSideRailEnabled: runtimeConfig.shimSideRail,
       zoomLevel,
-      setSourceLineHighlight,
-      setSourceLineHighlightColor,
-      setScrollSync,
-      setShimSideRail,
-      setZoomLevel,
+      setRuntimeConfig,
+      adjustZoom,
+      resetZoom,
     }),
-    [
-      sourceLineHighlightEnabled,
-      sourceLineHighlightColorMode,
-      scrollSyncMode,
-      shimSideRailEnabled,
-      zoomLevel,
-      setSourceLineHighlight,
-      setSourceLineHighlightColor,
-      setScrollSync,
-      setShimSideRail,
-      setZoomLevel,
-    ]
+    [runtimeConfig, zoomLevel, setRuntimeConfig, adjustZoom, resetZoom]
   );
 }
 

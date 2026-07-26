@@ -1,5 +1,5 @@
 // packages/contracts/src/runtime/index.ts
-// barrel export for runtime constants & preloaded module IDs
+// barrel export for runtime constants
 
 export {
   EXTENSION_DISPLAY_NAME,
@@ -12,8 +12,3 @@ export {
   SHIM_LOAD_MAX_RETRIES,
   SHIM_LOAD_RETRY_DELAY_MS,
 } from './constants';
-
-export {
-  PRELOADED_MODULE_IDS,
-  type PreloadedModuleId,
-} from './preloaded-modules';

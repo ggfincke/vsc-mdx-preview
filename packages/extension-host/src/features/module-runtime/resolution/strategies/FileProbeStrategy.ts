@@ -10,8 +10,8 @@ import {
   type ResolutionContext,
   type ResolutionResult,
   type ResolutionMode,
-  type IResolutionStrategy,
-} from '../../../types';
+} from '../../types/module-system';
+import type { IResolutionStrategy } from '../../types/resolver/strategies';
 import { buildResolutionResult } from '../resolution-builders';
 import { probeModuleFile, probeModuleFileAsync } from '../file-prober';
 

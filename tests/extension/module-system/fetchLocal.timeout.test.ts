@@ -6,7 +6,6 @@ import * as os from 'os';
 import * as path from 'path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ErrorContext } from '../../../packages/extension-host/src/shared/errors';
-import { MODULE_FETCH_TIMEOUT_MS } from '../../../packages/extension-host/src/shared/constants';
 
 import { mockFrameworkDetector, mockErrorReporter } from '../../helpers/mock-services';
 
@@ -80,9 +79,7 @@ describe('fetchLocal timeout delegation', () => {
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('routes module file reads through readFileAsync w/ timeout metadata', async () => {
-    mockReadFileAsync.mockResolvedValueOnce('export const value = 1;');
-
+  it('reads module source once from disk & dispatches to the handler', async () => {
     const result = await fetchLocal(
       './module.js',
       false,
@@ -106,11 +103,13 @@ describe('fetchLocal timeout delegation', () => {
       code: 'compiled',
       dependencies: [],
     });
-    expect(mockReadFileAsync).toHaveBeenCalledWith(modulePath, 'utf-8', {
-      timeoutMs: MODULE_FETCH_TIMEOUT_MS,
-      timeoutMessage: `Module fetch timed out after ${MODULE_FETCH_TIMEOUT_MS / 1000}s: module.js`,
-      onError: expect.any(Function),
-    });
+    // buffered single-read pipeline: source text reaches the handler
+    expect(mockHandleByExtension).toHaveBeenCalledWith(
+      'export const value = 1;',
+      expect.any(String),
+      '.js',
+      expect.anything()
+    );
   });
 
   it('dispatches forward-slash fsPaths to the extension handler', async () => {
@@ -134,17 +133,9 @@ describe('fetchLocal timeout delegation', () => {
     expect(handlerPath).not.toContain('\\');
   });
 
-  it('reports errors when readFileAsync returns null after timeout', async () => {
-    mockReadFileAsync.mockImplementationOnce(
-      async (
-        _filePath: string,
-        _encoding: BufferEncoding,
-        options?: { onError?: (error: unknown) => void }
-      ) => {
-        options?.onError?.(new Error('timed out'));
-        return null;
-      }
-    );
+  it('reports errors when the module read fails', async () => {
+    // read failure (deleted between resolve & read) surfaces via error reporter
+    fs.rmSync(modulePath);
 
     const result = await fetchLocal(
       './module.js',

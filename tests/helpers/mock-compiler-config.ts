@@ -5,7 +5,7 @@ import type { UnknownBehaviorValue } from '@mdx-preview/contracts';
 import type {
   CompilerConfig,
   ResolvedConfig,
-} from '../../packages/extension-host/src/types';
+} from '../../packages/extension-host/src/shared/config/types';
 import type { MockPreview } from './mock-preview';
 
 type CompilerConfigOverrides = Partial<CompilerConfig>;

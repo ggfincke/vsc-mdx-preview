@@ -9,7 +9,7 @@ import { DOMPURIFY_CONFIG, ensureSafeModeStyles } from '../security';
 // handle sanitization & inject into container
 // use useLayoutEffect for synchronous DOM injection before paint
 export function useSafeModeProcessing(
-  containerRef: RefObject<HTMLDivElement>,
+  containerRef: RefObject<HTMLDivElement | null>,
   html: string
 ): void {
   useLayoutEffect(() => {

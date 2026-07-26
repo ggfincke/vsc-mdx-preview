@@ -6,10 +6,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { TailwindProcessor } from '../../../packages/extension-host/src/features/tailwind/TailwindProcessor';
-import type { TailwindConfig } from '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig';
+import type { TailwindConfig } from '../../../packages/extension-host/src/shared/config/types';
 import type { TrustState } from '@mdx-preview/contracts';
 import { createMockPreview } from '../../helpers/mock-preview';
-import { mockFrameworkDetector, mockErrorReporter } from '../../helpers/mock-services';
+import {
+  mockFrameworkDetector,
+  mockErrorReporter,
+} from '../../helpers/mock-services';
 
 function createTailwindConfig(
   overrides: Partial<TailwindConfig> = {}
@@ -147,6 +150,18 @@ describe('TailwindProcessor', () => {
     expect(result.profile).toBe('advanced');
     expect(result.css).toBe('/* compiled */');
     expect(result.watchFiles).toEqual([configPath, cssPath].sort());
+    expect(scanner.scan).toHaveBeenCalledWith(
+      '# Test',
+      expect.objectContaining({
+        resolutionContext: {
+          baseDir: tempDir,
+          tsConfig: undefined,
+          framework: 'generic',
+          workspaceRoot: tempDir,
+          shimsEnabled: true,
+        },
+      })
+    );
   });
 
   it('uses browser profile when workspace is CSS-first', async () => {
@@ -197,4 +212,49 @@ describe('TailwindProcessor', () => {
     expect(scanSpy).not.toHaveBeenCalled();
   });
 
+  it('reuses browser input when the entry CSS and inline styles are unchanged', async () => {
+    const processor = TailwindProcessor.getInstance();
+    const tempDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-tailwind-browser-cache-')
+    );
+    tempDirs.push(tempDir);
+    const cssPath = path.join(tempDir, 'tailwind.css');
+    fs.writeFileSync(cssPath, '@import "tailwindcss";', 'utf-8');
+    const preview = createMockPreview({
+      fsPath: path.join(tempDir, 'doc.mdx'),
+    }) as any;
+    const profileHint = {
+      profile: 'browser' as const,
+      reason: 'CSS-first workspace',
+      workspaceRoot: tempDir,
+      configPath: null,
+      entryCssPath: cssPath,
+      hasTailwindInput: true,
+      inlineTailwindStyles: ['.card { @apply p-4; }'],
+    };
+    const readSpy = vi.spyOn(fs.promises, 'readFile');
+    const options = {
+      preview,
+      mdxText: '# Test',
+      entryFilePath: preview.fsPath,
+      entryFileDependencies: [],
+      trustState: trustedState,
+      tailwindConfig: createTailwindConfig(),
+      profileHint,
+    };
+
+    const first = await processor.process(options);
+    const second = await processor.process(options);
+    const changed = await processor.process({
+      ...options,
+      profileHint: {
+        ...profileHint,
+        inlineTailwindStyles: ['.card { @apply p-8; }'],
+      },
+    });
+
+    expect(first.css).toBe(second.css);
+    expect(changed.css).toContain('@apply p-8');
+    expect(readSpy).toHaveBeenCalledTimes(2);
+  });
 });

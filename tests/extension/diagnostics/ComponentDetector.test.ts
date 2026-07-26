@@ -1,6 +1,7 @@
 // tests/extension/diagnostics/ComponentDetector.test.ts
 // unit tests for component detection
 
+import type * as vscode from 'vscode';
 import { describe, it, expect, afterEach } from 'vitest';
 import {
   detectComponents,
@@ -8,6 +9,10 @@ import {
   getUsedGenericComponents,
   clearComponentCache,
 } from '../../../packages/extension-host/src/features/diagnostics/ComponentDetector';
+import { extractMDXSymbols } from '../../../packages/extension-host/src/features/language/MDXSymbolProvider';
+import { clearMdxAnalysisCache } from '../../../packages/extension-host/src/shared/mdx-analysis/document-analysis';
+import { createMockDocument } from '../../helpers/mock-document';
+import { Range } from 'vscode';
 
 const mdxSample = `
 import { Foo } from './Foo';
@@ -23,7 +28,19 @@ import { Foo } from './Foo';
 
 afterEach(() => {
   clearComponentCache();
+  clearMdxAnalysisCache();
 });
+
+function createVersionedDocument(
+  content: string,
+  fsPath: string,
+  version: number
+): vscode.TextDocument {
+  return createMockDocument(content, {
+    fsPath,
+    version,
+  }) as vscode.TextDocument;
+}
 
 describe('detectComponents', () => {
   it('identifies unknown components', async () => {
@@ -59,18 +76,29 @@ describe('detectComponents', () => {
     expect(unknown).toEqual([]);
   });
 
-  it('treats default plus named imports as known', async () => {
+  it('treats imports & member-expression roots as known components', async () => {
     const result = await detectComponents(
-      "import Foo, { Bar } from './widgets';\n\n<Foo />\n<Bar />\n",
+      "import Foo, { Bar } from './widgets';\nimport * as Tabs from './tabs';\n\n<Foo />\n<Bar />\n<Tabs.Tab />\n<Table />\n",
       { detectImports: true, includePositions: false },
       new Set()
     );
 
     const unknown = getUnknownComponents(result).map((c) => c.name);
-    expect(unknown).toEqual([]);
+    expect(unknown).not.toEqual(
+      expect.arrayContaining(['Foo', 'Bar', 'Tabs.Tab'])
+    );
+    expect(result.components.map((component) => component.name)).toEqual([
+      'Foo',
+      'Bar',
+      'Tabs.Tab',
+      'Table',
+    ]);
+    expect(
+      result.components.find((component) => component.name === 'Tabs.Tab')
+    ).toMatchObject({ source: 'import' });
   });
 
-  it('includePositions returns the correct range for a known-line component', async () => {
+  it('returns only tag-name ranges for paired & self-closing elements', async () => {
     const result = await detectComponents(
       mdxSample,
       { detectImports: true, includePositions: true },
@@ -80,9 +108,22 @@ describe('detectComponents', () => {
     const custom = result.components.find((c) => c.name === 'CustomComponent');
     expect(custom).toBeDefined();
     expect(custom?.range.start.line).toBe(8);
-    expect(custom?.range.start.character).toBe(0);
+    expect(custom?.range.start.character).toBe(1);
     expect(custom?.range.end.line).toBe(8);
-    expect(custom?.range.end.character).toBe(19);
+    expect(custom?.range.end.character).toBe(16);
+    expect(custom?.tagNameRanges).toEqual([new Range(8, 1, 8, 16)]);
+
+    const paired = await detectComponents(
+      '<Frobnicate>\nimportant children\n</Frobnicate>\n<Widget />\n',
+      { detectImports: false, includePositions: true },
+      new Set()
+    );
+
+    expect(paired.components[0].tagNameRanges).toEqual([
+      new Range(0, 1, 0, 11),
+      new Range(2, 2, 2, 12),
+    ]);
+    expect(paired.components[1].tagNameRanges).toEqual([new Range(3, 1, 3, 7)]);
   });
 });
 
@@ -147,9 +188,11 @@ describe('frontmatter safety & positions', () => {
     expect(found?.range.start.line).toBe(4);
   });
 
-  it('reclassifies cached components for each framework', async () => {
-    const source = '<CodeBlock>code</CodeBlock>\n';
+  it('reuses exact versions while reclassifying & invalidating safely', async () => {
+    const source = '# Heading\n\n<CodeBlock />\n<Configured />\n';
     const uri = 'file:///workspace/doc.mdx';
+    const identity = { uri, version: 1 };
+    const document = createVersionedDocument(source, '/workspace/doc.mdx', 1);
 
     const docusaurus = await detectComponents(
       source,
@@ -159,18 +202,39 @@ describe('frontmatter safety & positions', () => {
         framework: 'docusaurus',
       },
       new Set(),
-      uri
+      identity
     );
-    const generic = await detectComponents(
+    const genericConfigured = await detectComponents(
       source,
       { detectImports: false, includePositions: false, framework: 'generic' },
-      new Set(),
-      uri
+      new Set(['Configured']),
+      identity
     );
+    extractMDXSymbols(document);
 
-    expect(getUnknownComponents(docusaurus).map((c) => c.name)).toEqual([]);
-    expect(getUnknownComponents(generic).map((c) => c.name)).toEqual([
+    expect(getUnknownComponents(docusaurus).map((c) => c.name)).toEqual([
+      'Configured',
+    ]);
+    expect(getUnknownComponents(genericConfigured).map((c) => c.name)).toEqual([
       'CodeBlock',
     ]);
+
+    const changed = await detectComponents('<Changed />', {}, new Set(), {
+      uri,
+      version: 2,
+    });
+    const otherIdentity = {
+      uri: 'file:///workspace/other.mdx',
+      version: 2,
+    };
+    const other = await detectComponents(
+      '<Other />',
+      {},
+      new Set(),
+      otherIdentity
+    );
+
+    expect(changed.components.map(({ name }) => name)).toEqual(['Changed']);
+    expect(other.components.map(({ name }) => name)).toEqual(['Other']);
   });
 });

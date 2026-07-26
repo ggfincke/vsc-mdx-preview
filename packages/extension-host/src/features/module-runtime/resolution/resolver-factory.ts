@@ -5,13 +5,14 @@ import * as fs from 'fs';
 import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve';
 import type { Resolver } from 'enhanced-resolve';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
+import { LogTags, type ModuleDependencyKind } from '@mdx-preview/contracts';
 import {
   RESOLVER_CACHE_TTL_MS,
   BROWSER_RESOLVE_EXTENSIONS,
   NODE_RESOLVE_EXTENSIONS,
 } from '../../../shared/constants';
 import { createResettableSingleton } from '../../../shared/utils/singleton-factory';
+import { clearPathSecurityCaches } from '../security/checkFsPath';
 import { clearStatCache } from './file-prober';
 import { clearCompiledIndexCache } from './strategies/TypeScriptPathStrategy';
 
@@ -31,7 +32,6 @@ type ResolverMode = 'browser' | 'node';
 
 // mode-specific configuration
 interface ModeConfig {
-  conditionNames: string[];
   mainFields: string[];
   aliasFields: string[];
   extensions: string[];
@@ -39,30 +39,30 @@ interface ModeConfig {
 
 const MODE_CONFIGS: Record<ResolverMode, ModeConfig> = {
   browser: {
-    // browser resolution: browser > import > require > default
-    conditionNames: ['browser', 'import', 'require', 'default'],
     mainFields: ['browser', 'module', 'main'],
     // support browser field aliasing
     aliasFields: ['browser'],
     extensions: [...BROWSER_RESOLVE_EXTENSIONS],
   },
   node: {
-    // node resolution: node > import > require > default
-    conditionNames: ['node', 'import', 'require', 'default'],
     mainFields: ['main', 'module'],
     aliasFields: [],
     extensions: [...NODE_RESOLVE_EXTENSIONS],
   },
 };
 
-// create a module resolver optimized for the specified mode
-function createResolver(mode: ResolverMode): Resolver {
+// create a module resolver for one mode & filesystem call style
+function createResolver(
+  mode: ResolverMode,
+  dependencyKind: ModuleDependencyKind,
+  useSyncFileSystemCalls: boolean
+): Resolver {
   const config = MODE_CONFIGS[mode];
 
   return ResolverFactory.createResolver({
     fileSystem: cachedFs,
     extensions: config.extensions,
-    conditionNames: config.conditionNames,
+    conditionNames: [mode, dependencyKind, 'default'],
     mainFields: config.mainFields,
     aliasFields: config.aliasFields,
     // esm exports/imports field support
@@ -72,24 +72,63 @@ function createResolver(mode: ResolverMode): Resolver {
     modules: ['node_modules'],
     mainFiles: ['index'],
     symlinks: true,
-    useSyncFileSystemCalls: true,
+    useSyncFileSystemCalls,
   });
 }
 
-// pre-created resolvers for common use cases (lazily initialized)
+// sync & async resolver instances for one condition mode
+interface ModeResolvers {
+  import: ResolverPair;
+  require: ResolverPair;
+}
+
+interface ResolverPair {
+  sync: Resolver;
+  async: Resolver;
+}
+
+// create paired resolvers so async callers never route through sync fs adapters
+function createModeResolvers(mode: ResolverMode): ModeResolvers {
+  return {
+    import: {
+      sync: createResolver(mode, 'import', true),
+      async: createResolver(mode, 'import', false),
+    },
+    require: {
+      sync: createResolver(mode, 'require', true),
+      async: createResolver(mode, 'require', false),
+    },
+  };
+}
+
+// lazily initialize mode-specific sync & async resolvers
 // exported for subsystem registration (resolver-subsystem.ts)
 export const browserResolverSingleton = createResettableSingleton(() =>
-  createResolver('browser')
+  createModeResolvers('browser')
 );
 export const nodeResolverSingleton = createResettableSingleton(() =>
-  createResolver('node')
+  createModeResolvers('node')
 );
 
 // get the shared browser resolver instance (used for resolving modules to be loaded in the webview)
-export const getBrowserResolver = browserResolverSingleton.get;
+export const getBrowserResolver = (
+  dependencyKind: ModuleDependencyKind = 'require'
+): Resolver => browserResolverSingleton.get()[dependencyKind].sync;
 
 // get the shared node resolver instance (used for resolving plugins to be loaded in the extension)
-export const getNodeResolver = nodeResolverSingleton.get;
+export const getNodeResolver = (
+  dependencyKind: ModuleDependencyKind = 'require'
+): Resolver => nodeResolverSingleton.get()[dependencyKind].sync;
+
+// get async browser resolver for the module fetch hot path
+export const getAsyncBrowserResolver = (
+  dependencyKind: ModuleDependencyKind = 'require'
+): Resolver => browserResolverSingleton.get()[dependencyKind].async;
+
+// get async node resolver for async plugin resolution
+export const getAsyncNodeResolver = (
+  dependencyKind: ModuleDependencyKind = 'require'
+): Resolver => nodeResolverSingleton.get()[dependencyKind].async;
 
 // clear enhanced-resolve fs + resolver singletons only
 // does NOT clear statCache or compiledIndexCache; use invalidateResolution() for full invalidation
@@ -111,6 +150,7 @@ export function invalidateResolution(): void {
   clearResolverCache();
   clearStatCache();
   clearCompiledIndexCache();
+  clearPathSecurityCaches();
 
   log.debug('Resolution fully invalidated');
 }

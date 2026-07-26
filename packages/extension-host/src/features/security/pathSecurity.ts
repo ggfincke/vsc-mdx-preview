@@ -42,7 +42,7 @@ export async function validateAndResolveSecurePath(
 
   // security check - ensure path is within workspace
   if (!(await checkFsPathAsync(entryDir, resolvedPath))) {
-    reportPathTraversalError(resolvedPath, context);
+    reportPathTraversalError(resolvedPath);
     return undefined;
   }
 
@@ -51,10 +51,7 @@ export async function validateAndResolveSecurePath(
 
 // report a path traversal security error
 // centralizes the error reporting pattern used across RPC methods
-export function reportPathTraversalError(
-  resolvedPath: string,
-  _context: string = 'path-validation'
-): void {
+export function reportPathTraversalError(resolvedPath: string): void {
   getErrorReporter().report(
     new SecurityError(
       'Cannot open file outside workspace folder',
@@ -69,8 +66,7 @@ export function reportPathTraversalError(
 // centralizes the error reporting pattern for trust-gated operations
 export function reportTrustViolationError(
   filePath: string,
-  reason: string,
-  _context: string = 'trust-validation'
+  reason: string
 ): void {
   getErrorReporter().report(
     new SecurityError(

@@ -21,6 +21,7 @@ import { canRenderTrusted } from '../platform/rpc/content-mode-guard';
 import { createTaggedLogger } from '../shared/utils/createTaggedLogger';
 import { LogTags } from '@mdx-preview/contracts';
 import { classifyLink } from '../shared/utils/linkHandler';
+import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import type { TrustedPreviewContent } from './types';
 import { useTheme } from '../features/theme/runtime';
 import { useTrust, usePreview, useLoading, useUIFlags } from './state';
@@ -65,29 +66,53 @@ function App() {
     `Render state: isLoading=${isLoading}, content=${content?.mode ?? 'null'}, error=${error ? 'yes' : 'no'}, isStale=${isStale}`
   );
 
-  // intercept external link clicks & route to extension
-  // (webview sandbox prevents direct navigation, so all external links go through openExternal)
-  const handleLinkClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement;
-    const anchor = target.closest('a');
-    if (!anchor) {
-      return;
-    }
+  // route webview link clicks through extension RPC
+  const handleLinkClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      const target = event.target as HTMLElement;
+      const anchor = target.closest('a');
+      if (!anchor) {
+        return;
+      }
 
-    const href = anchor.getAttribute('href');
-    if (!href) {
-      return;
-    }
+      const href = anchor.getAttribute('href');
+      if (!href) {
+        return;
+      }
 
-    const linkType = classifyLink(href);
+      const linkType = classifyLink(href);
 
-    // route all external links through extension
-    if (linkType === 'external') {
+      // route all external links through extension
+      if (linkType === 'external') {
+        event.preventDefault();
+        log.debug(`Opening external link: ${href}`);
+        ExtensionHandle.openExternal(href);
+        return;
+      }
+
+      if (linkType !== 'relative-file' || (!event.ctrlKey && !event.metaKey)) {
+        return;
+      }
+
+      const relativePath = href.split(/[?#]/, 1)[0];
+      if (!relativePath) {
+        return;
+      }
+
       event.preventDefault();
-      log.debug(`Opening external link: ${href}`);
-      ExtensionHandle.openExternal(href);
-    }
-  }, []);
+      const isMdxDocument = /\.mdx?$/i.test(relativePath);
+      const openPromise =
+        isMdxDocument && trustState.openMdxLinksInPreview
+          ? ExtensionHandle.openPreview(relativePath)
+          : ExtensionHandle.openDocument(relativePath);
+      void openPromise.catch((error: unknown) => {
+        log.error(
+          `Failed to open relative link ${relativePath}: ${extractErrorMessage(error)}`
+        );
+      });
+    },
+    [trustState.openMdxLinksInPreview]
+  );
 
   // stable boundary handler keeps ErrorBoundary's window listeners registered once
   const handleBoundaryError = useCallback(
@@ -98,8 +123,7 @@ function App() {
   // closure wrap - a bare component fn passed to useState runs as an updater
   // (MDXContent(null) throws above the boundary & unmounts the root)
   const handleComponentReady = useCallback(
-    (component: ComponentType | null) =>
-      setEvaluatedComponent(() => component),
+    (component: ComponentType | null) => setEvaluatedComponent(() => component),
     []
   );
 

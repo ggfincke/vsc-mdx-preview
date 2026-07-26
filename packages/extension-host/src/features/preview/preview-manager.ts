@@ -20,10 +20,8 @@ export {
 } from './Preview';
 export { openPreview, refreshPreview } from './preview-commands';
 
-// re-export canonical type definition from types/
-export type { WebviewAppUris } from '../types';
-
-import type { WebviewAppUris } from '../types';
+export type { WebviewAppUris } from './types/preview';
+import type { WebviewAppUris } from './types/preview';
 
 // * singleton manager for all preview instances
 // manage preview lifecycle, panel state, & subscriber notifications

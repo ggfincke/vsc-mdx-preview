@@ -43,7 +43,10 @@ describe('resolution cache invalidation (MR-1)', () => {
   });
 
   it('statCache survives clearResolverCache but is cleared by invalidateResolution', () => {
-    setCachedStat(STAT_PATH, { isFile: () => true, isDirectory: () => false } as never);
+    setCachedStat(STAT_PATH, {
+      isFile: () => true,
+      isDirectory: () => false,
+    } as never);
     expect(getCachedStat(STAT_PATH)).not.toBeNull();
 
     // bug: clearResolverCache does NOT clear statCache
@@ -66,5 +69,31 @@ describe('resolution cache invalidation (MR-1)', () => {
     // fix: invalidateResolution clears compiledIndexCache
     invalidateResolution();
     expect(getCompiledIndexCacheSize()).toBe(0);
+  });
+
+  it('keys compiled TypeScript paths by normalized baseUrl', () => {
+    const paths = { '@utils/*': ['src/*'] };
+    const configPath = '/workspace/tsconfig.json';
+
+    const first = getResolutionCandidates('@utils/helpers', {
+      baseDir: '/workspace',
+      tsConfig: {
+        configPath,
+        baseUrl: '/workspace/first',
+        paths,
+      },
+    });
+    const second = getResolutionCandidates('@utils/helpers', {
+      baseDir: '/workspace',
+      tsConfig: {
+        configPath,
+        baseUrl: '/workspace/second/../second',
+        paths,
+      },
+    });
+
+    expect(first?.candidates).toEqual(['/workspace/first/src/helpers']);
+    expect(second?.candidates).toEqual(['/workspace/second/src/helpers']);
+    expect(getCompiledIndexCacheSize()).toBe(2);
   });
 });

@@ -8,13 +8,17 @@ import {
   mockFrameworkDetector,
   mockErrorReporter,
 } from '../../helpers/mock-services';
-import type { PreviewRuntimeConfig } from '../../../packages/extension-host/src/types';
+import type {
+  ModuleDependency,
+  PreviewRuntimeConfig,
+} from '@mdx-preview/contracts';
 
 const {
   mockStatusBarMessage,
   mockEngine,
   mockBuildEffectivePreviewConfig,
   mockToCompilerConfig,
+  mockDetectComponents,
 } = vi.hoisted(() => ({
   mockStatusBarMessage: vi.fn(),
   mockEngine: {
@@ -24,6 +28,11 @@ const {
   },
   mockBuildEffectivePreviewConfig: vi.fn(),
   mockToCompilerConfig: vi.fn(() => ({ some: 'compiler-config' })),
+  mockDetectComponents: vi.fn(async () => ({
+    components: [],
+    imports: new Map(),
+    errors: [],
+  })),
 }));
 
 vi.mock('vscode', () => ({
@@ -43,7 +52,7 @@ vi.mock(
 );
 
 vi.mock(
-  '../../../packages/extension-host/src/shared/config/EffectivePreviewConfig',
+  '../../../packages/extension-host/src/features/preview/configuration/EffectivePreviewConfig',
   () => ({
     buildEffectivePreviewConfig: (...args: unknown[]) =>
       mockBuildEffectivePreviewConfig(...args),
@@ -54,7 +63,7 @@ vi.mock(
 vi.mock(
   '../../../packages/extension-host/src/features/diagnostics/ComponentDetector',
   () => ({
-    detectComponents: vi.fn(),
+    detectComponents: mockDetectComponents,
     getUsedGenericComponents: vi.fn(() => []),
   })
 );
@@ -72,11 +81,15 @@ vi.mock('mdx-forge/compiler', () => ({
 }));
 
 import evaluateInWebview from '../../../packages/extension-host/src/features/preview/evaluate-in-webview';
+import { PreviewWebviewBridge } from '../../../packages/extension-host/src/features/preview/PreviewWebviewBridge';
 
 type MockPreview = ReturnType<typeof createPreview>;
 
 function createPreview(): {
-  doc: { uri: { scheme: string; fsPath: string; toString: () => string } };
+  doc: {
+    uri: { scheme: string; fsPath: string; toString: () => string };
+    version: number;
+  };
   webviewHandle: {
     setTailwindBrowserCss: ReturnType<typeof vi.fn>;
     setTailwindCss: ReturnType<typeof vi.fn>;
@@ -86,10 +99,8 @@ function createPreview(): {
     updatePreview: ReturnType<typeof vi.fn>;
     setUsedComponents: ReturnType<typeof vi.fn>;
     setNextraMeta: ReturnType<typeof vi.fn>;
-    setSourceLineHighlight: ReturnType<typeof vi.fn>;
-    setSourceLineHighlightColor: ReturnType<typeof vi.fn>;
-    setScrollSync: ReturnType<typeof vi.fn>;
-    setShimSideRail: ReturnType<typeof vi.fn>;
+    setTheme: ReturnType<typeof vi.fn>;
+    setRuntimeConfig: ReturnType<typeof vi.fn>;
   };
   runtimeConfiguration: PreviewRuntimeConfig;
   webviewHandshakePromise: Promise<void>;
@@ -123,20 +134,11 @@ function createPreview(): {
     updatePreview: vi.fn(),
     setUsedComponents: vi.fn(),
     setNextraMeta: vi.fn(),
-    setSourceLineHighlight: vi.fn(),
-    setSourceLineHighlightColor: vi.fn(),
-    setScrollSync: vi.fn(),
-    setShimSideRail: vi.fn(),
+    setTheme: vi.fn(),
+    setRuntimeConfig: vi.fn(),
   };
   const pushRuntimeConfiguration = vi.fn(() => {
-    webviewHandle.setSourceLineHighlight(
-      runtimeConfiguration.sourceLineHighlight
-    );
-    webviewHandle.setSourceLineHighlightColor(
-      runtimeConfiguration.sourceLineHighlightColor
-    );
-    webviewHandle.setScrollSync(runtimeConfiguration.scrollSync);
-    webviewHandle.setShimSideRail(runtimeConfiguration.shimSideRail);
+    webviewHandle.setRuntimeConfig(runtimeConfiguration);
   });
 
   const preview = {
@@ -146,6 +148,7 @@ function createPreview(): {
         fsPath: '/workspace/doc.mdx',
         toString: () => 'file:///workspace/doc.mdx',
       },
+      version: 1,
     },
     webviewHandle,
     runtimeConfiguration,
@@ -255,22 +258,10 @@ describe('evaluate-in-webview Tailwind routing', () => {
     expect(mockEngine.evaluateSafe).not.toHaveBeenCalled();
   });
 
-  it('warns once for advanced profile in Safe Mode and clears Tailwind CSS channels', async () => {
+  it('skips Tailwind discovery in Safe Mode and clears CSS channels', async () => {
     mockSafeState();
 
     const preview = createPreview();
-    preview.markTailwindFallbackReason
-      .mockReturnValueOnce(true)
-      .mockReturnValueOnce(false);
-    mockTailwindProcessor.detectProfile.mockResolvedValue({
-      profile: 'advanced',
-      reason: 'tailwind.config.* detected at /workspace/tailwind.config.ts',
-      workspaceRoot: '/workspace',
-      configPath: '/workspace/tailwind.config.ts',
-      entryCssPath: '/workspace/tailwind.css',
-      hasTailwindInput: true,
-      inlineTailwindStyles: [],
-    });
 
     await evaluateInWebview(
       preview as unknown as MockPreview,
@@ -283,14 +274,8 @@ describe('evaluate-in-webview Tailwind routing', () => {
       '/workspace/doc.mdx'
     );
 
-    expect(mockStatusBarMessage).toHaveBeenCalledTimes(1);
-    expect(mockStatusBarMessage).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'advanced config detected (tailwind.config.* detected at /workspace/tailwind.config.ts)'
-      ),
-      10000
-    );
-
+    expect(mockTailwindProcessor.detectProfile).not.toHaveBeenCalled();
+    expect(mockStatusBarMessage).not.toHaveBeenCalled();
     expect(preview.webviewHandle.setTailwindBrowserCss).toHaveBeenCalledWith(
       ''
     );
@@ -298,38 +283,44 @@ describe('evaluate-in-webview Tailwind routing', () => {
     expect(mockEngine.evaluateSafe).toHaveBeenCalledTimes(2);
   });
 
-  it('pushes runtime configuration flags after evaluation', async () => {
+  it('sends only content on a second evaluation with unchanged state', async () => {
     mockTrustedState();
     const preview = createPreview();
-
-    preview.runtimeConfiguration.sourceLineHighlight = false;
-    preview.runtimeConfiguration.sourceLineHighlightColor = 'white';
-    preview.runtimeConfiguration.scrollSync = 'bidirectional';
-    preview.runtimeConfiguration.shimSideRail = false;
-    mockEngine.evaluateTrusted.mockResolvedValueOnce({
-      code: 'export default function Demo() { return null; }',
-      entryFilePath: '/workspace/doc.mdx',
-      dependencies: [],
-      frontmatter: undefined,
+    const rawHandle = preview.webviewHandle;
+    const bridge = new PreviewWebviewBridge();
+    bridge.setWebviewHandle(
+      rawHandle as never,
+      { get: vi.fn(() => undefined) } as never
+    );
+    preview.webviewHandle = bridge.getHandle() as typeof rawHandle;
+    preview.onWebviewReady.mockImplementation(() => {
+      bridge.onWebviewReady(preview.doc.uri as never);
+    });
+    preview.pushThemeState.mockImplementation((frontmatter) => {
+      bridge.pushThemeState(preview.doc.uri as never, frontmatter);
+    });
+    preview.pushRuntimeConfiguration.mockImplementation(() => {
+      bridge.pushRuntimeConfiguration(preview.runtimeConfiguration);
     });
 
     await evaluateInWebview(
       preview as unknown as MockPreview,
-      '# doc',
+      '# first',
       '/workspace/doc.mdx'
     );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    vi.clearAllMocks();
 
-    expect(preview.pushRuntimeConfiguration).toHaveBeenCalled();
-    expect(preview.webviewHandle.setSourceLineHighlight).toHaveBeenCalledWith(
-      false
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# second',
+      '/workspace/doc.mdx'
     );
-    expect(
-      preview.webviewHandle.setSourceLineHighlightColor
-    ).toHaveBeenCalledWith('white');
-    expect(preview.webviewHandle.setScrollSync).toHaveBeenCalledWith(
-      'bidirectional'
-    );
-    expect(preview.webviewHandle.setShimSideRail).toHaveBeenCalledWith(false);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(rawHandle.updatePreview).toHaveBeenCalledTimes(1);
+    expect(rawHandle.setTrustState).not.toHaveBeenCalled();
+    expect(rawHandle.setRuntimeConfig).not.toHaveBeenCalled();
   });
 
   it('awaits webview pushes before downstream preview work', async () => {
@@ -338,6 +329,9 @@ describe('evaluate-in-webview Tailwind routing', () => {
     const events: string[] = [];
     let resolveTrustState: (() => void) | undefined;
 
+    trustedPreview.pushRuntimeConfiguration.mockImplementation(() => {
+      events.push('setRuntimeConfig');
+    });
     trustedPreview.webviewHandle.setTrustState.mockImplementation(
       () =>
         new Promise<void>((resolve) => {
@@ -363,6 +357,7 @@ describe('evaluate-in-webview Tailwind routing', () => {
       '# doc',
       '/workspace/doc.mdx'
     );
+    trustedPreview.doc.version = 2;
 
     for (let i = 0; i < 5 && !resolveTrustState; i++) {
       await Promise.resolve();
@@ -377,6 +372,7 @@ describe('evaluate-in-webview Tailwind routing', () => {
     expect(events).toEqual([
       'setTrustState',
       'trustStateResolved',
+      'setRuntimeConfig',
       'evaluateTrusted',
     ]);
     expect(trustedPreview.syncEditorScrollToPreview).toHaveBeenCalledTimes(1);
@@ -384,6 +380,15 @@ describe('evaluate-in-webview Tailwind routing', () => {
       trustedPreview.webviewHandle.updatePreview.mock.invocationCallOrder[0]
     ).toBeLessThan(
       trustedPreview.syncEditorScrollToPreview.mock.invocationCallOrder[0]
+    );
+    expect(mockDetectComponents).toHaveBeenCalledWith(
+      '# doc',
+      { detectImports: true },
+      new Set(),
+      {
+        uri: 'file:///workspace/doc.mdx',
+        version: 1,
+      }
     );
 
     mockSafeState();
@@ -401,5 +406,95 @@ describe('evaluate-in-webview Tailwind routing', () => {
     ).toBeLessThan(
       safePreview.syncEditorScrollToPreview.mock.invocationCallOrder[0]
     );
+  });
+
+  it('drops a slow trusted result after a newer evaluation publishes', async () => {
+    mockTrustedState();
+    const preview = createPreview();
+    let resolveOld:
+      | ((result: {
+          code: string;
+          entryFilePath: string;
+          dependencies: ModuleDependency[];
+          frontmatter: undefined;
+        }) => void)
+      | undefined;
+
+    mockEngine.evaluateTrusted
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveOld = resolve;
+          })
+      )
+      .mockResolvedValueOnce({
+        code: 'NEW',
+        entryFilePath: '/workspace/new.mdx',
+        dependencies: [
+          {
+            specifier: '/workspace/new.tsx',
+            kind: 'import',
+            runtimeRequest: '\0mdx-forge:import\0/workspace/new.tsx',
+          },
+        ],
+        frontmatter: undefined,
+      });
+
+    let evaluationToken = 1;
+    const oldEvaluation = evaluateInWebview(
+      preview as unknown as MockPreview,
+      'OLD',
+      '/workspace/old.mdx',
+      () => evaluationToken === 1
+    );
+
+    for (
+      let i = 0;
+      i < 10 && mockEngine.evaluateTrusted.mock.calls.length === 0;
+      i++
+    ) {
+      await Promise.resolve();
+    }
+    expect(resolveOld).toBeDefined();
+
+    evaluationToken = 2;
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      'NEW',
+      '/workspace/new.mdx',
+      () => evaluationToken === 2
+    );
+
+    resolveOld!({
+      code: 'OLD',
+      entryFilePath: '/workspace/old.mdx',
+      dependencies: [
+        {
+          specifier: '/workspace/old.tsx',
+          kind: 'import',
+          runtimeRequest: '\0mdx-forge:import\0/workspace/old.tsx',
+        },
+      ],
+      frontmatter: undefined,
+    });
+    await oldEvaluation;
+
+    expect(preview.webviewHandle.updatePreview).toHaveBeenCalledTimes(1);
+    expect(preview.webviewHandle.updatePreview).toHaveBeenCalledWith(
+      'NEW',
+      '/workspace/new.mdx',
+      [
+        {
+          specifier: '/workspace/new.tsx',
+          kind: 'import',
+          runtimeRequest: '\0mdx-forge:import\0/workspace/new.tsx',
+        },
+      ]
+    );
+    expect(preview.updateDependencies).toHaveBeenCalledTimes(1);
+    expect(preview.updateDependencies).toHaveBeenCalledWith([
+      '/workspace/new.tsx',
+    ]);
+    expect(mockErrorReporter.report).not.toHaveBeenCalled();
   });
 });

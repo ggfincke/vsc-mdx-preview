@@ -15,7 +15,7 @@ import { ErrorContext } from '../../shared/errors';
 import { EXTENSION_DISPLAY_NAME } from '../../shared/constants';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { CommandNames } from './command-names';
-import type { CommandDefinition } from '../types';
+import type { CommandDefinition } from './types';
 
 const log = createTaggedLogger(LogTags.CMD);
 

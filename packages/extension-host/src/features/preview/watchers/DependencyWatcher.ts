@@ -6,7 +6,7 @@ import { DEP_WATCHER_MAX_ENTRIES } from '../../../shared/constants';
 import { LogTags } from '@mdx-preview/contracts';
 import { LRUCache } from '@mdx-preview/runtime-utils';
 import { getUnifiedResolver } from '../../module-runtime/resolution/UnifiedResolver';
-import type { ResolutionContext } from '../../types';
+import type { ResolutionContext } from '../../module-runtime/types/module-system';
 import { BaseWatcher } from './BaseWatcher';
 
 // watch local file dependencies for changes (LRU eviction to prevent unbounded growth)

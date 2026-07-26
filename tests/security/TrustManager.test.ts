@@ -2,7 +2,10 @@
 // verify representative workspace trust boundaries
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mockConfigManager } from '../helpers/mock-services';
+import {
+  mockConfigManager,
+  mockPreviewManager,
+} from '../helpers/mock-services';
 import { SETTINGS } from '../../packages/extension-host/src/shared/config/ConfigManager';
 
 const { mockWorkspace, mockEnv } = vi.hoisted(() => ({
@@ -37,6 +40,7 @@ import { TrustManager } from '../../packages/extension-host/src/features/securit
 
 describe('TrustManager', () => {
   let trustManager: TrustManager;
+  let configurationChange: ((affectedKeys: string[]) => void) | undefined;
 
   beforeEach(() => {
     mockWorkspace.isTrusted = true;
@@ -50,6 +54,12 @@ describe('TrustManager', () => {
       }
       return undefined;
     });
+    mockConfigManager.onDidChangeConfiguration.mockImplementation(
+      (callback) => {
+        configurationChange = callback;
+        return { dispose: vi.fn() };
+      }
+    );
     TrustManager['instance'] = undefined;
     trustManager = TrustManager.getInstance();
   });
@@ -108,5 +118,31 @@ describe('TrustManager', () => {
 
     expect(result.allowed).toBe(false);
     expect(result.reason).toContain('Unsupported document scheme');
+  });
+
+  it('pushes one link-policy update without recompiling content', async () => {
+    const setTrustState = vi.fn();
+    const updateWebview = vi.fn();
+    mockPreviewManager.getCurrentPreview.mockReturnValue({
+      active: true,
+      doc: {
+        uri: {
+          scheme: 'file',
+          fsPath: '/workspace/test.mdx',
+          path: '/workspace/test.mdx',
+        },
+      },
+      webviewHandle: { setTrustState },
+      updateWebview,
+    });
+
+    configurationChange?.([SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW]);
+    await Promise.resolve();
+
+    expect(setTrustState).toHaveBeenCalledTimes(1);
+    expect(setTrustState).toHaveBeenCalledWith(
+      expect.objectContaining({ openMdxLinksInPreview: true })
+    );
+    expect(updateWebview).not.toHaveBeenCalled();
   });
 });

@@ -5,8 +5,9 @@ import type { TrustState } from '@mdx-preview/contracts';
 import type {
   CompilerConfig,
   EffectivePreviewConfig,
-  TailwindProfileDetectionResult,
-} from '../../types';
+} from '../../../shared/config/types';
+import type { DocumentAnalysisIdentity } from '../../../shared/mdx-analysis/document-analysis';
+import type { TailwindProfileDetectionResult } from '../../tailwind/types/detector';
 import type {
   EvaluationEngine,
   SafeEvaluationResult,
@@ -16,6 +17,8 @@ import type { Preview } from '../Preview';
 
 export interface PreparedEvaluationContext {
   preview: Preview;
+  isCurrent: () => boolean;
+  documentIdentity: DocumentAnalysisIdentity;
   text: string;
   fsPath: string;
   engine: EvaluationEngine;
@@ -30,6 +33,9 @@ export interface PreparedEvaluationContext {
 export type PreparedEvaluationResult =
   | {
       kind: 'refresh-required';
+    }
+  | {
+      kind: 'superseded';
     }
   | {
       kind: 'ready';

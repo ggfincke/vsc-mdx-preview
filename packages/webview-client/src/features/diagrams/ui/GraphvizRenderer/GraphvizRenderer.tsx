@@ -5,7 +5,7 @@ import { LogTags } from '@mdx-preview/contracts';
 import { createDiagramRenderer } from '../DiagramRenderer/createDiagramRenderer';
 import { useTheme } from '../../../theme/runtime';
 import { loadGraphvizInstance } from '../../utils/graphvizLoader';
-import { sanitizeSvg } from '../../utils/sanitizeSvg';
+import { sanitizeSvg } from '../../../../shared/utils/sanitizeSvg';
 import './GraphvizRenderer.css';
 
 interface GraphvizProps {
@@ -16,11 +16,12 @@ interface GraphvizProps {
 
 // render a single Graphviz diagram w/ error handling
 export const GraphvizRenderer = createDiagramRenderer<GraphvizProps>({
+  cacheFamily: 'graphviz',
   classPrefix: 'mdx-preview-graphviz',
   errorLabel: 'Graphviz render error',
   loadingText: 'Rendering diagram...',
   logTag: LogTags.GRAPHVIZ_RENDERER,
-  useThemeValue: () => (useTheme().isDark ? 'dark' : 'light'),
+  useThemeValue: () => (useTheme().isPreviewContentLight ? 'light' : 'dark'),
   sanitize: sanitizeSvg,
   extraDeps: (props) => [props.language],
   render: async (props, signal) => {
