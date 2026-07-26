@@ -212,6 +212,10 @@ function createEsmSymbols(
 export function extractMDXSymbols(
   document: vscode.TextDocument
 ): vscode.DocumentSymbol[] {
+  const documentIdentity = {
+    uri: document.uri.toString(),
+    version: document.version,
+  };
   const text = document.getText();
   const {
     ast: tree,
@@ -219,7 +223,7 @@ export function extractMDXSymbols(
     frontmatterLineOffset,
     frontmatterColumnOffset,
     frontmatterEndLine,
-  } = analyzeMdxDocument(text);
+  } = analyzeMdxDocument(text, documentIdentity);
 
   const symbols: vscode.DocumentSymbol[] = [];
 

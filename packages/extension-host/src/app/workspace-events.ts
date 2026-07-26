@@ -5,7 +5,11 @@ import { workspace, window, ExtensionContext } from 'vscode';
 
 import { createTaggedLogger } from '../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
-import { getPreviewManager, getConfigManager } from './services';
+import {
+  getPreviewManager,
+  getConfigManager,
+  getFrameworkDetector,
+} from './services';
 import { handleDidChangeWorkspaceFolders } from '../features/module-runtime/security/checkFsPath';
 import { PREVIEW_CONFIG_KEYS, PREVIEW_SETTING_ACTIONS } from '../shared/config';
 import {
@@ -83,6 +87,17 @@ export function initWorkspaceHandlers(context: ExtensionContext): void {
           log.error('Failed to recompile after setting change', err);
         });
       }
+    })
+  );
+
+  // route package & manual framework transitions through full preview refresh
+  context.subscriptions.push(
+    getFrameworkDetector().subscribe(() => {
+      void getPreviewManager()
+        .refreshAllPreviews()
+        .catch((error: unknown) => {
+          log.error('Failed to refresh after framework change', error);
+        });
     })
   );
 

@@ -22,6 +22,7 @@ interface WatchHandlers {
   change?: (uri: vscode.Uri) => void;
   create?: (uri: vscode.Uri) => void;
   delete?: (uri: vscode.Uri) => void;
+  dispose?: ReturnType<typeof vi.fn>;
 }
 
 const tempDirs: string[] = [];
@@ -51,7 +52,7 @@ function captureWatchers(): Map<string, WatchHandlers> {
   const watchers = new Map<string, WatchHandlers>();
   vi.spyOn(vscode.workspace, 'createFileSystemWatcher').mockImplementation(
     (pattern) => {
-      const handlers: WatchHandlers = {};
+      const handlers: WatchHandlers = { dispose: vi.fn() };
       watchers.set(String(pattern), handlers);
       return {
         onDidChange: (handler) => {
@@ -66,7 +67,7 @@ function captureWatchers(): Map<string, WatchHandlers> {
           handlers.delete = handler;
           return { dispose: vi.fn() };
         },
-        dispose: vi.fn(),
+        dispose: handlers.dispose,
       } as vscode.FileSystemWatcher;
     }
   );
@@ -138,6 +139,33 @@ describe('MetaResolver', () => {
     );
 
     expect(result).toBeNull();
+    const stressWorkspaceRoot = createTempDir();
+    const watchers = captureWatchers();
+    const resolver = MetaResolver.getInstance();
+
+    for (let index = 0; index < 125; index += 1) {
+      const stressMdxPath = path.join(
+        stressWorkspaceRoot,
+        `section-${index}`,
+        'page.mdx'
+      );
+      writeFile(stressMdxPath, '# Page');
+      resolver.resolveNextraMeta(stressMdxPath, stressWorkspaceRoot);
+    }
+
+    expect((resolver as any).trackedDocuments.size).toBe(100);
+    expect((resolver as any).metaWatchTargets.size).toBe(101);
+    expect(watchers.size).toBe(1);
+    expect(
+      (resolver as any).metaWatchTargets.has(
+        path.join(stressWorkspaceRoot, 'section-0', '_meta.json')
+      )
+    ).toBe(false);
+    expect(
+      (resolver as any).metaWatchTargets.has(
+        path.join(stressWorkspaceRoot, 'section-124', '_meta.json')
+      )
+    ).toBe(true);
   });
 
   it('refreshes and publishes metadata across creation, shared edits, and deletion', async () => {
@@ -158,15 +186,13 @@ describe('MetaResolver', () => {
     expect(resolver.resolveNextraMeta(firstMdxPath, workspaceRoot)).toBeNull();
     expect(resolver.resolveNextraMeta(secondMdxPath, workspaceRoot)).toBeNull();
     const trackedTargets = (resolver as any).metaWatchTargets.size;
-    const trackedDocuments = (resolver as any).documentPathsByCacheKey.size;
+    const trackedDocuments = (resolver as any).trackedDocuments.size;
     resolver.clearCaches();
     expect((resolver as any).metaWatchTargets.size).toBe(trackedTargets);
-    expect((resolver as any).documentPathsByCacheKey.size).toBe(
-      trackedDocuments
-    );
+    expect((resolver as any).trackedDocuments.size).toBe(trackedDocuments);
 
     writeFile(metaPath, JSON.stringify({ page: 'Created' }));
-    watchers.get(metaPath)?.create?.(vscode.Uri.file(metaPath));
+    watchers.get('**/_meta.json')?.create?.(vscode.Uri.file(metaPath));
 
     expect(resolver.resolveNextraMeta(firstMdxPath, workspaceRoot)).toEqual({
       title: 'Created',
@@ -177,7 +203,7 @@ describe('MetaResolver', () => {
     expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalledTimes(1);
 
     writeFile(metaPath, JSON.stringify({ page: 'Shared Update' }));
-    watchers.get(metaPath)?.change?.(vscode.Uri.file(metaPath));
+    watchers.get('**/_meta.json')?.change?.(vscode.Uri.file(metaPath));
 
     expect(resolver.resolveNextraMeta(firstMdxPath, workspaceRoot)).toEqual({
       title: 'Shared Update',
@@ -187,13 +213,13 @@ describe('MetaResolver', () => {
     });
 
     fs.rmSync(metaPath);
-    watchers.get(metaPath)?.delete?.(vscode.Uri.file(metaPath));
+    watchers.get('**/_meta.json')?.delete?.(vscode.Uri.file(metaPath));
 
     expect(resolver.resolveNextraMeta(firstMdxPath, workspaceRoot)).toBeNull();
     expect(resolver.resolveNextraMeta(secondMdxPath, workspaceRoot)).toBeNull();
 
     writeFile(metaPath, JSON.stringify({ page: 'Recreated' }));
-    watchers.get(metaPath)?.create?.(vscode.Uri.file(metaPath));
+    watchers.get('**/_meta.json')?.create?.(vscode.Uri.file(metaPath));
     expect(resolver.resolveNextraMeta(firstMdxPath, workspaceRoot)).toEqual({
       title: 'Recreated',
     });
@@ -257,5 +283,32 @@ describe('MetaResolver', () => {
     expect(setNextraMeta.mock.invocationCallOrder[1]).toBeLessThan(
       updatePreviewSafe.mock.invocationCallOrder[1]
     );
+
+    mockFrameworkDetector.getFramework.mockReturnValue({
+      framework: 'generic',
+    });
+    await postPushArtifacts(context as never, stageResult);
+
+    mockFrameworkDetector.getFramework.mockReturnValue({
+      framework: 'nextra',
+    });
+    vi.spyOn(vscode.workspace, 'getWorkspaceFolder').mockReturnValue(undefined);
+    await postPushArtifacts(context as never, stageResult);
+
+    vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue({
+      uri: vscode.Uri.file(workspaceRoot),
+      name: 'site',
+      index: 0,
+    });
+    mockMetaResolver.resolveNextraMeta.mockImplementation(() => {
+      throw new Error('metadata read failed');
+    });
+    await postPushArtifacts(context as never, stageResult);
+
+    expect(setNextraMeta.mock.calls.slice(-3)).toEqual([
+      [null],
+      [null],
+      [null],
+    ]);
   });
 });

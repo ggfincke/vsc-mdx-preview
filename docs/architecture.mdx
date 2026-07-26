@@ -326,8 +326,8 @@ Each `Preview` instance is composed of specialized modules:
 | `PreviewConfiguration`   | Per-instance settings (updateMode, debounce, security)       |
 | `PreviewWebviewBridge`   | Webview communication and theme management                   |
 | `PreviewDocumentHandler` | Document tracking and version management                     |
-| `PreviewInitializer`     | Initial setup and handshake                                  |
-| `WatcherManager`         | Dependency and config file watchers                          |
+| `PreviewInitializer`     | Handshake plus preview-scoped config/Tailwind subscriptions  |
+| `WatcherManager`         | Per-preview watcher and event-subscription disposal          |
 | `EvaluationEngine`       | MDX compilation (safe/trusted) and async Tailwind processing |
 
 **Handshake Protocol:**
@@ -379,7 +379,7 @@ refresh orchestration inline:
    - trusted: `engine.evaluateTrusted(...)`
    - safe: `engine.evaluateSafe(...)`
 4. Post-push artifacts: `postPushArtifacts(...)`
-   - frontmatter theme override and Nextra meta push
+   - frontmatter theme override and complete Nextra meta snapshot (`null` outside Nextra or on resolution loss)
    - trusted branch: dependency updates, optional component detection, `updatePreview`, async Tailwind process
    - safe branch: Tailwind channel clear + `updatePreviewSafe`
 
@@ -459,9 +459,7 @@ interface ExtensionRPC {
 
   // Source-line navigation & preview → editor scroll sync
   openSourceLine(line: number): Promise<void>;
-  reportPreviewSourceLine(
-    line: number
-  ): Promise<PreviewSourceLineReportResult>; // 'accepted' | 'ignored' | 'retry'
+  reportPreviewSourceLine(line: number): Promise<PreviewSourceLineReportResult>; // 'accepted' | 'ignored' | 'retry'
 
   renderPlantUml(code: string): Promise<string | undefined>;
 }
@@ -492,11 +490,11 @@ The mode is part of the runtime configuration pushed to the webview (`PreviewCon
 
 **Shared tuning constants** (`packages/contracts/src/preview/scroll-sync.ts`):
 
-| Constant                                  | Value | Purpose                                                                 |
-| ----------------------------------------- | ----- | ----------------------------------------------------------------------- |
-| `SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO`    | 0.35  | Both sides target the top-third reading band instead of vertical center |
-| `SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS`    | 120   | Suppression window applied after a programmatic scroll dispatch         |
-| `SOURCE_LINE_SCROLL_SYNC_SETTLE_MS`       | 80    | Idle window before a final "settled" dispatch is sent                   |
+| Constant                               | Value | Purpose                                                                 |
+| -------------------------------------- | ----- | ----------------------------------------------------------------------- |
+| `SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO` | 0.35  | Both sides target the top-third reading band instead of vertical center |
+| `SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS` | 120   | Suppression window applied after a programmatic scroll dispatch         |
+| `SOURCE_LINE_SCROLL_SYNC_SETTLE_MS`    | 80    | Idle window before a final "settled" dispatch is sent                   |
 
 **Editor → preview pipeline** (`packages/extension-host/src/features/preview/scroll-sync.ts`):
 
@@ -975,16 +973,16 @@ Framework-specific components are loaded on-demand:
 
 The webview RPC layer is decomposed into focused orchestration modules:
 
-| Module                    | Responsibility                                                                  |
-| ------------------------- | ------------------------------------------------------------------------------- |
-| `rpc-message-queue.ts`    | Queue/optional buffering, trust/content validation, flush ordering, coalescing  |
-| `rpc-registration.ts`     | Handler registration retry/backoff, duplicate-register guard, warning threshold |
-| `rpc-bootstrap.ts`        | Comlink endpoint bootstrap + `ExtensionRPC` wrap/expose handshake               |
-| `handler-factory.ts`      | Factory functions for queued & optional handler patterns w/ shared types        |
+| Module                    | Responsibility                                                                                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rpc-message-queue.ts`    | Queue/optional buffering, trust/content validation, flush ordering, coalescing                                                                             |
+| `rpc-registration.ts`     | Handler registration retry/backoff, duplicate-register guard, warning threshold                                                                            |
+| `rpc-bootstrap.ts`        | Comlink endpoint bootstrap + `ExtensionRPC` wrap/expose handshake                                                                                          |
+| `handler-factory.ts`      | Factory functions for queued & optional handler patterns w/ shared types                                                                                   |
 | `content-mode-guard.ts`   | `canAcceptContentMode()` — webview-side trust gating that discards trusted RPC payloads when `canExecute` is false or before the trust handshake completes |
-| `module-system-loader.ts` | Lazy loader for the webview module-runtime import (deduped, retry-aware)        |
-| `export-html.ts`          | Serializes the live preview DOM (incl. injected styles) into a standalone HTML document for the export command |
-| `webview-rpc-client.ts`   | Thin composition root wiring queue/registration/bootstrap/handlers              |
+| `module-system-loader.ts` | Lazy loader for the webview module-runtime import (deduped, retry-aware)                                                                                   |
+| `export-html.ts`          | Serializes the live preview DOM (incl. injected styles) into a standalone HTML document for the export command                                             |
+| `webview-rpc-client.ts`   | Thin composition root wiring queue/registration/bootstrap/handlers                                                                                         |
 
 `acquireVsCodeApi()` is invoked lazily inside `initRPCWebviewSide()` (via `rpc-bootstrap.ts`), not at module import time. This allows RPC modules to be imported safely in tests without a global bootstrap shim.
 
@@ -1276,11 +1274,11 @@ The extension currently contributes 20 VS Code commands organized by category.
 
 ### Preview Commands
 
-| Command ID                                     | Description                                 |
-| ---------------------------------------------- | ------------------------------------------- |
-| `mdx-preview.commands.openPreview`             | Open MDX preview for active document        |
-| `mdx-preview.commands.refreshPreview`          | Refresh current preview                     |
-| `mdx-preview.commands.openPreviewFromExplorer` | Open preview for the selected Explorer item |
+| Command ID                                     | Description                                    |
+| ---------------------------------------------- | ---------------------------------------------- |
+| `mdx-preview.commands.openPreview`             | Open MDX preview for active document           |
+| `mdx-preview.commands.refreshPreview`          | Refresh current preview                        |
+| `mdx-preview.commands.openPreviewFromExplorer` | Open preview for the selected Explorer item    |
 | `mdx-preview.commands.exportToHtml`            | Export the rendered preview as standalone HTML |
 
 ### Config Toggle Commands
@@ -1314,9 +1312,9 @@ The extension currently contributes 20 VS Code commands organized by category.
 
 ### Cache Commands
 
-| Command ID                            | Description                                        |
-| ------------------------------------- | -------------------------------------------------- |
-| `mdx-preview.commands.clearAllCaches` | Clear registered extension & webview caches       |
+| Command ID                            | Description                                 |
+| ------------------------------------- | ------------------------------------------- |
+| `mdx-preview.commands.clearAllCaches` | Clear registered extension & webview caches |
 
 The `clearAllCaches` command clears:
 
@@ -1366,10 +1364,10 @@ The extension uses Vitest for all testing with different configurations.
 
 ### Test Types
 
-| Type    | Config                              | Environment          | Purpose                                           |
-| ------- | ----------------------------------- | -------------------- | ------------------------------------------------- |
-| Unit    | `tests/vitest.config.ts`            | Node + mocked vscode | Test isolated logic & VS Code API usage via mocks |
-| Webview | `tests/vitest.config.ts` (jsdom)    | jsdom                | Test React components & webview-side modules      |
+| Type    | Config                           | Environment          | Purpose                                           |
+| ------- | -------------------------------- | -------------------- | ------------------------------------------------- |
+| Unit    | `tests/vitest.config.ts`         | Node + mocked vscode | Test isolated logic & VS Code API usage via mocks |
+| Webview | `tests/vitest.config.ts` (jsdom) | jsdom                | Test React components & webview-side modules      |
 
 VS Code API integration is exercised through the mocked-vscode unit suite (`packages/extension-host/test/__mocks__/vscode.ts`); there is no separate Extension Development Host integration runner.
 
@@ -1640,17 +1638,33 @@ import DOMPurify from 'dompurify';
 // is excluded. Consumed once, via the useSafeModeProcessing hook.
 const DOMPURIFY_CONFIG = {
   // HTML + KaTeX/MathML + SVG (foreignObject excluded; 'use' allowed)
-  ALLOWED_TAGS: ['h1', 'p', 'a', 'pre', 'code', 'table', 'svg', 'use' /* ... */],
+  ALLOWED_TAGS: [
+    'h1',
+    'p',
+    'a',
+    'pre',
+    'code',
+    'table',
+    'svg',
+    'use' /* ... */,
+  ],
   // standard attrs + diagram data attributes
   ALLOWED_ATTR: [
-    'href', 'src', 'class', 'xlink:href',
-    'data-mermaid-chart', 'data-mermaid-id',
-    'data-plantuml-code', 'data-graphviz-code',
-    'data-admonition-type', 'data-source-line' /* ... */,
+    'href',
+    'src',
+    'class',
+    'xlink:href',
+    'data-mermaid-chart',
+    'data-mermaid-id',
+    'data-plantuml-code',
+    'data-graphviz-code',
+    'data-admonition-type',
+    'data-source-line' /* ... */,
   ],
   ADD_ATTR: ['target', 'rel'],
   ALLOW_UNKNOWN_PROTOCOLS: false,
-  ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+  ALLOWED_URI_REGEXP:
+    /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
 };
 
 // invoked in useSafeModeProcessing.ts
@@ -1690,17 +1704,18 @@ guide to all caches, invalidation triggers, and troubleshooting, see the
 
 **Automatic Cache Invalidation:**
 
-| Trigger                | Caches Cleared                              |
-| ---------------------- | ------------------------------------------- |
-| `package.json` change  | Resolver cache, Sass module cache           |
-| Config file change     | Preview refresh (dependencies re-evaluated) |
-| Dependency file change | Module cache entry invalidated              |
+| Trigger                | Caches Cleared                                              |
+| ---------------------- | ----------------------------------------------------------- |
+| `package.json` change  | Resolver/Sass/framework invalidation + full preview refresh |
+| Preview config change  | Nearest-config re-resolution + full preview refresh         |
+| Tailwind input create  | Scoped detection invalidation + one debounced update        |
+| Dependency file change | Module cache entry invalidated                              |
 
 **Manual Cache Commands:**
 
-| Command          | Effect                                           |
-| ---------------- | ------------------------------------------------ |
-| `clearAllCaches` | Clears resolver, Sass, and webview module caches |
+| Command          | Effect                                                                       |
+| ---------------- | ---------------------------------------------------------------------------- |
+| `clearAllCaches` | Runs every registered extension invalidator and clears active webview caches |
 
 ### Prewarm System
 

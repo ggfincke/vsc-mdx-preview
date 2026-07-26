@@ -15,6 +15,7 @@ const {
   mockEngine,
   mockBuildEffectivePreviewConfig,
   mockToCompilerConfig,
+  mockDetectComponents,
 } = vi.hoisted(() => ({
   mockStatusBarMessage: vi.fn(),
   mockEngine: {
@@ -24,6 +25,11 @@ const {
   },
   mockBuildEffectivePreviewConfig: vi.fn(),
   mockToCompilerConfig: vi.fn(() => ({ some: 'compiler-config' })),
+  mockDetectComponents: vi.fn(async () => ({
+    components: [],
+    imports: new Map(),
+    errors: [],
+  })),
 }));
 
 vi.mock('vscode', () => ({
@@ -54,7 +60,7 @@ vi.mock(
 vi.mock(
   '../../../packages/extension-host/src/features/diagnostics/ComponentDetector',
   () => ({
-    detectComponents: vi.fn(),
+    detectComponents: mockDetectComponents,
     getUsedGenericComponents: vi.fn(() => []),
   })
 );
@@ -77,7 +83,10 @@ import { PreviewWebviewBridge } from '../../../packages/extension-host/src/featu
 type MockPreview = ReturnType<typeof createPreview>;
 
 function createPreview(): {
-  doc: { uri: { scheme: string; fsPath: string; toString: () => string } };
+  doc: {
+    uri: { scheme: string; fsPath: string; toString: () => string };
+    version: number;
+  };
   webviewHandle: {
     setTailwindBrowserCss: ReturnType<typeof vi.fn>;
     setTailwindCss: ReturnType<typeof vi.fn>;
@@ -136,6 +145,7 @@ function createPreview(): {
         fsPath: '/workspace/doc.mdx',
         toString: () => 'file:///workspace/doc.mdx',
       },
+      version: 1,
     },
     webviewHandle,
     runtimeConfiguration,
@@ -374,6 +384,7 @@ describe('evaluate-in-webview Tailwind routing', () => {
       '# doc',
       '/workspace/doc.mdx'
     );
+    trustedPreview.doc.version = 2;
 
     for (let i = 0; i < 5 && !resolveTrustState; i++) {
       await Promise.resolve();
@@ -396,6 +407,15 @@ describe('evaluate-in-webview Tailwind routing', () => {
       trustedPreview.webviewHandle.updatePreview.mock.invocationCallOrder[0]
     ).toBeLessThan(
       trustedPreview.syncEditorScrollToPreview.mock.invocationCallOrder[0]
+    );
+    expect(mockDetectComponents).toHaveBeenCalledWith(
+      '# doc',
+      { detectImports: true },
+      new Set(),
+      {
+        uri: 'file:///workspace/doc.mdx',
+        version: 1,
+      }
     );
 
     mockSafeState();

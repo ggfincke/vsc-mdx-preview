@@ -3,7 +3,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { Preview } from '../../preview/preview-manager';
+import * as vscode from 'vscode';
+import type { Preview } from '../../preview/preview-manager';
 import { checkFsPathAsync } from '../security/checkFsPath';
 import {
   PathAccessDeniedError,
@@ -33,7 +34,10 @@ import {
 } from './utils';
 import { handleByExtension, getScriptHandler } from '../handlers';
 import { raceTimeout } from '../../../shared/utils/async-utils';
-import { normalizePathSeparators } from '../../../shared/utils/path-utils';
+import {
+  normalizePathForComparison,
+  normalizePathSeparators,
+} from '../../../shared/utils/path-utils';
 
 // module-level tagged logger for module fetcher
 const log = createTaggedLogger(LogTags.MODULE_SYSTEM);
@@ -63,6 +67,74 @@ function isBinaryBuffer(buffer: Buffer): boolean {
   return BINARY_SIGNATURES.some((signature) =>
     signature.every((byte, index) => buffer[index] === byte)
   );
+}
+
+// reject source buffers before allocation crosses the module limit
+function enforceModuleSize(fsPath: string, size: number): void {
+  if (size <= MAX_MODULE_FILE_SIZE_BYTES) {
+    return;
+  }
+
+  const sizeMB = (size / 1024 / 1024).toFixed(2);
+  const limitMB = (MAX_MODULE_FILE_SIZE_BYTES / 1024 / 1024).toFixed(0);
+  throw new Error(
+    `Module "${path.basename(fsPath)}" is ${sizeMB}MB, exceeds ${limitMB}MB limit`
+  );
+}
+
+// open once, validate size from the handle, & read at most the observed size
+async function readModuleFile(
+  fsPath: string,
+  includeContents: boolean
+): Promise<Buffer | null> {
+  const fileHandle = await fs.promises.open(fsPath, 'r');
+  try {
+    const stats = await fileHandle.stat();
+    enforceModuleSize(fsPath, stats.size);
+    if (!includeContents) {
+      return null;
+    }
+
+    const buffer = Buffer.alloc(stats.size);
+    let offset = 0;
+    while (offset < buffer.length) {
+      const { bytesRead } = await fileHandle.read(
+        buffer,
+        offset,
+        buffer.length - offset,
+        offset
+      );
+      if (bytesRead === 0) {
+        break;
+      }
+      offset += bytesRead;
+    }
+    return buffer.subarray(0, offset);
+  } finally {
+    await fileHandle.close();
+  }
+}
+
+// find any open document whose normalized filesystem path matches the module
+function findOpenDocument(fsPath: string): vscode.TextDocument | undefined {
+  const normalizedFsPath = normalizePathForComparison(fsPath);
+  return vscode.workspace.textDocuments.find(
+    (document) =>
+      normalizePathForComparison(document.uri.fsPath) === normalizedFsPath
+  );
+}
+
+// apply the fetch timeout across open, stat, bounded read, & close
+function readModuleFileWithTimeout(
+  fsPath: string,
+  includeContents: boolean
+): Promise<Buffer | null> {
+  return raceTimeout(readModuleFile(fsPath, includeContents), {
+    timeoutMs: MODULE_FETCH_TIMEOUT_MS,
+    errorMessage:
+      `Module fetch timed out after ${MODULE_FETCH_TIMEOUT_MS / 1000}s: ` +
+      `${path.basename(fsPath)}`,
+  });
 }
 
 export async function fetchLocal(
@@ -131,36 +203,25 @@ export async function fetchLocal(
       };
     }
 
-    let fsPath = resolution.fsPath;
+    const diskFsPath = resolution.fsPath;
 
-    if (!(await checkFsPathAsync(entryFsDirectory, fsPath))) {
+    if (!(await checkFsPathAsync(entryFsDirectory, diskFsPath))) {
       // fallback check for core modules that resolved to paths outside allowed directories
       if (isCoreModule(request)) {
         return buildNoopResult(normalizedRequest);
       }
-      throw new PathAccessDeniedError(fsPath);
+      throw new PathAccessDeniedError(diskFsPath);
     }
 
-    preview.dependentFsPaths.add(fsPath);
+    preview.dependentFsPaths.add(diskFsPath);
 
-    // check file size before reading (prevents memory exhaustion)
-    const stats = await fs.promises.stat(fsPath);
-    if (stats.size > MAX_MODULE_FILE_SIZE_BYTES) {
-      const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
-      const limitMB = (MAX_MODULE_FILE_SIZE_BYTES / 1024 / 1024).toFixed(0);
-      throw new Error(
-        `Module "${path.basename(fsPath)}" is ${sizeMB}MB, exceeds ${limitMB}MB limit`
-      );
-    }
-
-    const extname = path.extname(fsPath).toLowerCase();
-    if (path.sep === '\\') {
-      // always return forward slash paths for resolution (https://github.com/xyc/vscode-mdx-preview/issues/13)
-      fsPath = normalizePathSeparators(fsPath);
-    }
+    const extname = path.extname(diskFsPath).toLowerCase();
+    const fsPath =
+      path.sep === '\\' ? normalizePathSeparators(diskFsPath) : diskFsPath;
 
     // image handlers only need the validated path to create a webview URI
     if ((IMAGE_EXTENSIONS as readonly string[]).includes(extname)) {
+      await readModuleFileWithTimeout(diskFsPath, false);
       const imageResult = await handleByExtension(
         '',
         fsPath,
@@ -173,21 +234,18 @@ export async function fetchLocal(
     }
 
     let code: string;
-    // in onType mode, use in-memory document if available
-    if (
-      preview.configuration.updateMode === 'onType' &&
-      preview.editingDoc &&
-      preview.editingDoc.uri.fsPath === fsPath
-    ) {
-      code = preview.editingDoc.getText();
+    const openDocument =
+      preview.configuration.updateMode === 'onType'
+        ? findOpenDocument(diskFsPath)
+        : undefined;
+    if (openDocument) {
+      code = openDocument.getText();
+      enforceModuleSize(diskFsPath, Buffer.byteLength(code, 'utf8'));
     } else {
-      // read once, then sniff & decode the same bounded buffer
-      const buffer = await raceTimeout(fs.promises.readFile(fsPath), {
-        timeoutMs: MODULE_FETCH_TIMEOUT_MS,
-        errorMessage:
-          `Module fetch timed out after ${MODULE_FETCH_TIMEOUT_MS / 1000}s: ` +
-          `${path.basename(fsPath)}`,
-      });
+      const buffer = await readModuleFileWithTimeout(diskFsPath, true);
+      if (!buffer) {
+        throw new Error(`Module "${path.basename(fsPath)}" could not be read`);
+      }
 
       if (isBinaryBuffer(buffer)) {
         throw new Error(

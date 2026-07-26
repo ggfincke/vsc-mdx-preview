@@ -21,6 +21,7 @@ import {
 } from './typescript-transpile';
 import type { CompilerConfig } from '../../../shared/config/types';
 import type { ModuleExecutionContext } from '../types/handlers';
+import { hasLiteralDynamicImport } from '../dependencies/import-extractor';
 
 // lazy load Trusted Mode compiler - only loaded when Trusted Mode is actually used
 const getCompileTrustedModule = createLazyImport(
@@ -122,7 +123,10 @@ async function transform(
 
   // split on both separators: callers may pass forward-slash-normalized paths on Windows
   const isInNodeModules = fsPath.split(/[\\/]/).includes('node_modules');
-  if (!isInNodeModules || isModule(code)) {
+  const isEsm = isModule(code);
+  const needsLiteralDynamicImportTransform =
+    isInNodeModules && !isEsm && (await hasLiteralDynamicImport(code));
+  if (!isInNodeModules || isEsm || needsLiteralDynamicImportTransform) {
     const preferSucrase = isInNodeModules || useSucrase;
     log.debug(
       `Transpiling dependency: ${fsPath} (${preferSucrase ? 'Sucrase' : 'Babel'})`

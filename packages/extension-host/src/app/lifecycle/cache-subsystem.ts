@@ -16,6 +16,7 @@ import { clearBabelConfigCache } from '../../features/module-runtime/transform/b
 import { clearPostCSSCache } from '../../features/tailwind/TailwindCompiler';
 import { clearIconPackCache } from '../../features/themes/IconPackResolver';
 import { clearComponentCache } from '../../features/diagnostics/ComponentDetector';
+import { clearMdxAnalysisCache } from '../../shared/mdx-analysis/document-analysis';
 
 const log = createTaggedLogger(LogTags.CACHE_SUBSYSTEM);
 
@@ -43,6 +44,7 @@ function registerDefaultInvalidators(): void {
   registerCacheInvalidator('babel', clearBabelConfigCache);
   registerCacheInvalidator('postcss', clearPostCSSCache);
   registerCacheInvalidator('icon-packs', clearIconPackCache);
+  registerCacheInvalidator('mdx-analysis', clearMdxAnalysisCache);
   registerCacheInvalidator('preview-config', () => {
     registry.getIfInitialized<ConfigCache>(ServiceNames.CONFIG_CACHE)?.clear();
   });

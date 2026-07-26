@@ -6,6 +6,7 @@ import type {
   CompilerConfig,
   EffectivePreviewConfig,
 } from '../../../shared/config/types';
+import type { DocumentAnalysisIdentity } from '../../../shared/mdx-analysis/document-analysis';
 import type { TailwindProfileDetectionResult } from '../../tailwind/types/detector';
 import type {
   EvaluationEngine,
@@ -17,6 +18,7 @@ import type { Preview } from '../Preview';
 export interface PreparedEvaluationContext {
   preview: Preview;
   isCurrent: () => boolean;
+  documentIdentity: DocumentAnalysisIdentity;
   text: string;
   fsPath: string;
   engine: EvaluationEngine;

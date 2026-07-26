@@ -136,6 +136,12 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
     log.debug(`Updating diagnostics for ${document.uri}`);
 
     try {
+      const documentIdentity = {
+        uri: document.uri.toString(),
+        version: document.version,
+      };
+      const text = document.getText();
+
       // get config components
       const config = resolveConfig(document.uri.fsPath);
       const configComponents = new Set<string>(
@@ -147,10 +153,10 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
 
       // detect components in the document (pass URI for caching)
       const result = await detectComponents(
-        document.getText(),
+        text,
         { includePositions: true, detectImports: true, framework },
         configComponents,
-        document.uri.toString()
+        documentIdentity
       );
 
       const ctx: ClassifyContext = {

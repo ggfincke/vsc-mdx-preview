@@ -1,7 +1,12 @@
 // packages/extension-host/src/features/module-runtime/resolution/strategies/EnhancedResolveStrategy.ts
 // node.js-style resolution using enhanced-resolve
 
-import { getBrowserResolver, getNodeResolver } from '../resolver-factory';
+import {
+  getAsyncBrowserResolver,
+  getAsyncNodeResolver,
+  getBrowserResolver,
+  getNodeResolver,
+} from '../resolver-factory';
 import { createTaggedLogger } from '../../../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { createSingleton } from '../../../../shared/utils/singleton-factory';
@@ -24,6 +29,28 @@ const log = createTaggedLogger(LogTags.ENHANCED_RESOLVE);
 export class EnhancedResolveStrategy implements IResolutionStrategy {
   readonly name = 'EnhancedResolve';
 
+  private buildResult(
+    resolved: string | false,
+    specifier: string
+  ): ResolutionResult | null {
+    if (resolved === false) {
+      log.debug(`${specifier} -> ignored by browser field`);
+      return buildIgnoredResolutionResult(
+        specifier,
+        ResolutionStrategy.EnhancedResolve
+      );
+    }
+    if (typeof resolved === 'string') {
+      log.debug(`${specifier} -> ${resolved}`);
+      return buildResolutionResult(
+        resolved,
+        specifier,
+        ResolutionStrategy.EnhancedResolve
+      );
+    }
+    return null;
+  }
+
   resolve(
     specifier: string,
     context: ResolutionContext,
@@ -34,26 +61,32 @@ export class EnhancedResolveStrategy implements IResolutionStrategy {
 
     try {
       const resolved = resolver.resolveSync({}, context.baseDir, specifier);
-      if (resolved === false) {
-        log.debug(`${specifier} -> ignored by browser field`);
-        return buildIgnoredResolutionResult(
-          specifier,
-          ResolutionStrategy.EnhancedResolve
-        );
-      }
-      if (typeof resolved === 'string') {
-        log.debug(`${specifier} -> ${resolved}`);
-        return buildResolutionResult(
-          resolved,
-          specifier,
-          ResolutionStrategy.EnhancedResolve
-        );
-      }
+      return this.buildResult(resolved, specifier);
     } catch {
       // module not found - continue to next strategy
     }
 
     return null;
+  }
+
+  async resolveAsync(
+    specifier: string,
+    context: ResolutionContext,
+    mode: ResolutionMode
+  ): Promise<ResolutionResult | null> {
+    const resolver =
+      mode === 'node' ? getAsyncNodeResolver() : getAsyncBrowserResolver();
+
+    try {
+      const resolved = await resolver.resolvePromise(
+        {},
+        context.baseDir,
+        specifier
+      );
+      return this.buildResult(resolved, specifier);
+    } catch {
+      return null;
+    }
   }
 }
 

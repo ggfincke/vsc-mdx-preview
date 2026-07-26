@@ -1,13 +1,38 @@
 // tests/extension/diagnostics/ComponentDetector.test.ts
 // unit tests for component detection
 
-import { describe, it, expect, afterEach } from 'vitest';
+import type * as vscode from 'vscode';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
+
+const { parseSpy } = vi.hoisted(() => ({
+  parseSpy: vi.fn(),
+}));
+
+vi.mock('unified', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('unified')>();
+  return {
+    ...actual,
+    unified: () => {
+      const processor = actual.unified();
+      const parse = processor.parse.bind(processor);
+      processor.parse = ((...args: Parameters<typeof parse>) => {
+        parseSpy();
+        return parse(...args);
+      }) as typeof processor.parse;
+      return processor;
+    },
+  };
+});
+
 import {
   detectComponents,
   getUnknownComponents,
   getUsedGenericComponents,
   clearComponentCache,
 } from '../../../packages/extension-host/src/features/diagnostics/ComponentDetector';
+import { extractMDXSymbols } from '../../../packages/extension-host/src/features/language/MDXSymbolProvider';
+import { clearMdxAnalysisCache } from '../../../packages/extension-host/src/shared/mdx-analysis/document-analysis';
+import { createMockDocument } from '../../helpers/mock-document';
 import { Range } from 'vscode';
 
 const mdxSample = `
@@ -22,9 +47,25 @@ import { Foo } from './Foo';
 <Foo />
 `;
 
+beforeEach(() => {
+  parseSpy.mockClear();
+});
+
 afterEach(() => {
   clearComponentCache();
+  clearMdxAnalysisCache();
 });
+
+function createVersionedDocument(
+  content: string,
+  fsPath: string,
+  version: number
+): vscode.TextDocument {
+  return createMockDocument(content, {
+    fsPath,
+    version,
+  }) as vscode.TextDocument;
+}
 
 describe('detectComponents', () => {
   it('identifies unknown components', async () => {
@@ -107,9 +148,7 @@ describe('detectComponents', () => {
       new Range(0, 1, 0, 11),
       new Range(2, 2, 2, 12),
     ]);
-    expect(paired.components[1].tagNameRanges).toEqual([
-      new Range(3, 1, 3, 7),
-    ]);
+    expect(paired.components[1].tagNameRanges).toEqual([new Range(3, 1, 3, 7)]);
   });
 });
 
@@ -174,9 +213,11 @@ describe('frontmatter safety & positions', () => {
     expect(found?.range.start.line).toBe(4);
   });
 
-  it('reclassifies cached components for each framework', async () => {
-    const source = '<CodeBlock>code</CodeBlock>\n';
+  it('reuses exact versions while reclassifying & invalidating safely', async () => {
+    const source = '# Heading\n\n<CodeBlock />\n<Configured />\n';
     const uri = 'file:///workspace/doc.mdx';
+    const identity = { uri, version: 1 };
+    const document = createVersionedDocument(source, '/workspace/doc.mdx', 1);
 
     const docusaurus = await detectComponents(
       source,
@@ -186,18 +227,46 @@ describe('frontmatter safety & positions', () => {
         framework: 'docusaurus',
       },
       new Set(),
-      uri
+      identity
     );
-    const generic = await detectComponents(
+    const genericConfigured = await detectComponents(
       source,
       { detectImports: false, includePositions: false, framework: 'generic' },
-      new Set(),
-      uri
+      new Set(['Configured']),
+      identity
     );
+    extractMDXSymbols(document);
 
-    expect(getUnknownComponents(docusaurus).map((c) => c.name)).toEqual([]);
-    expect(getUnknownComponents(generic).map((c) => c.name)).toEqual([
+    expect(getUnknownComponents(docusaurus).map((c) => c.name)).toEqual([
+      'Configured',
+    ]);
+    expect(getUnknownComponents(genericConfigured).map((c) => c.name)).toEqual([
       'CodeBlock',
     ]);
+    expect(parseSpy).toHaveBeenCalledTimes(1);
+
+    const changed = await detectComponents('<Changed />', {}, new Set(), {
+      uri,
+      version: 2,
+    });
+    const otherIdentity = {
+      uri: 'file:///workspace/other.mdx',
+      version: 2,
+    };
+    const other = await detectComponents(
+      '<Other />',
+      {},
+      new Set(),
+      otherIdentity
+    );
+
+    expect(changed.components.map(({ name }) => name)).toEqual(['Changed']);
+    expect(other.components.map(({ name }) => name)).toEqual(['Other']);
+    expect(parseSpy).toHaveBeenCalledTimes(3);
+
+    clearComponentCache();
+    clearMdxAnalysisCache();
+    await detectComponents('<Other />', {}, new Set(), otherIdentity);
+    expect(parseSpy).toHaveBeenCalledTimes(4);
   });
 });

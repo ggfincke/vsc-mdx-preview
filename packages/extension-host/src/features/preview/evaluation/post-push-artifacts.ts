@@ -2,15 +2,15 @@
 // post-evaluation artifact pushes & shared side effects
 
 import * as vscode from 'vscode';
-import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
+import { LogTags, type NextraPageMeta } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
+import { extractNextraFrontmatter } from 'mdx-forge/compiler';
 import { getFrameworkDetector, getMetaResolver } from '../../../app/services';
+import { createTaggedLogger } from '../../../shared/logging/logger';
 import {
   detectComponents,
   getUsedGenericComponents,
 } from '../../diagnostics/ComponentDetector';
-import { extractNextraFrontmatter } from 'mdx-forge/compiler';
 import type { Preview } from '../Preview';
 import type {
   EvaluationStageResult,
@@ -119,7 +119,7 @@ async function detectAndPushUsedComponents(
       context.text,
       { detectImports: true },
       new Set(),
-      preview.doc.uri.toString()
+      context.documentIdentity
     );
     const usedGenericComponents = getUsedGenericComponents(detectionResult);
     if (usedGenericComponents.length === 0 || !context.isCurrent()) {
@@ -152,38 +152,34 @@ function sendNextraMetaIfNeeded(
 ): void {
   const preview = context.preview;
   const { webviewHandle } = preview;
+  let snapshot: NextraPageMeta | null = null;
 
   try {
     const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
-    if (frameworkInfo.framework !== 'nextra') {
-      return;
+    if (frameworkInfo.framework === 'nextra') {
+      const workspaceFolder = vscode.workspace.getWorkspaceFolder(
+        preview.doc.uri
+      );
+      if (workspaceFolder) {
+        const metaFromJson = getMetaResolver().resolveNextraMeta(
+          context.fsPath,
+          workspaceFolder.uri.fsPath
+        );
+
+        const metaFromFrontmatter = extractNextraFrontmatter(frontmatter ?? {});
+        const mergedMeta = getMetaResolver().mergeNextraMeta(
+          metaFromJson,
+          metaFromFrontmatter
+        );
+        snapshot = Object.keys(mergedMeta).length > 0 ? mergedMeta : null;
+      }
     }
-
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(
-      preview.doc.uri
-    );
-    if (!workspaceFolder) {
-      return;
-    }
-
-    const metaFromJson = getMetaResolver().resolveNextraMeta(
-      context.fsPath,
-      workspaceFolder.uri.fsPath
-    );
-
-    const metaFromFrontmatter = extractNextraFrontmatter(frontmatter ?? {});
-    const mergedMeta = getMetaResolver().mergeNextraMeta(
-      metaFromJson,
-      metaFromFrontmatter
-    );
-
-    const snapshot = Object.keys(mergedMeta).length > 0 ? mergedMeta : null;
-
-    log.debug('Sending Nextra meta to webview:', snapshot);
-    webviewHandle.setNextraMeta(snapshot);
   } catch (err) {
     log.debug(`Error resolving Nextra meta: ${extractErrorMessage(err)}`);
   }
+
+  log.debug('Sending Nextra meta to webview:', snapshot);
+  webviewHandle.setNextraMeta(snapshot);
 }
 
 // clear Tailwind CSS channels when Tailwind is disabled or in Safe Mode

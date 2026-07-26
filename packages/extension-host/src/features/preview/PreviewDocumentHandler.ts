@@ -30,7 +30,6 @@ export class PreviewDocumentHandler {
   private _dependentFsPaths: Set<string> = new Set();
   private _typescriptConfiguration?: TypeScriptConfiguration;
   private _mdxPreviewConfig?: ResolvedConfig;
-  private _editingDoc?: vscode.TextDocument;
 
   get doc(): vscode.TextDocument {
     return this._doc;
@@ -50,10 +49,6 @@ export class PreviewDocumentHandler {
 
   get mdxPreviewConfig(): ResolvedConfig | undefined {
     return this._mdxPreviewConfig;
-  }
-
-  get editingDoc(): vscode.TextDocument | undefined {
-    return this._editingDoc;
   }
 
   // set actions for document event handling (called once after construction)
@@ -85,7 +80,6 @@ export class PreviewDocumentHandler {
   // set the document & resolve related configurations
   setDoc(doc: vscode.TextDocument, watcherManager: WatcherManager): void {
     this._doc = doc;
-    this._editingDoc = undefined;
     this._dependentFsPaths = new Set([doc.uri.fsPath]);
 
     const configFile = findTsConfig(this.entryFsDirectory ?? '');
@@ -147,7 +141,7 @@ export class PreviewDocumentHandler {
   // handle text document change event
   async handleDidChangeTextDocument(
     fsPath: string,
-    doc: vscode.TextDocument,
+    _doc: vscode.TextDocument,
     active: boolean,
     updateMode: UpdateModeValue
   ): Promise<void> {
@@ -158,8 +152,6 @@ export class PreviewDocumentHandler {
     if (!this._dependentFsPaths.has(fsPath)) {
       return;
     }
-
-    this._editingDoc = doc;
 
     switch (updateMode) {
       case 'onType': {

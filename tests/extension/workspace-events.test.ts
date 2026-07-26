@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as vscode from 'vscode';
 import {
   mockConfigManager,
+  mockFrameworkDetector,
   mockPreviewManager,
 } from '../helpers/mock-services';
 import { initWorkspaceHandlers } from '../../packages/extension-host/src/app/workspace-events';
@@ -42,12 +43,18 @@ describe('workspace-events', () => {
     ((event: { document: vscode.TextDocument }) => void) | undefined;
   let visibleRangeCallback:
     ((event: { textEditor: vscode.TextEditor }) => void) | undefined;
+  let frameworkChangeCallback: (() => void) | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
     saveCallback = undefined;
     documentChangeCallback = undefined;
     visibleRangeCallback = undefined;
+    frameworkChangeCallback = undefined;
+    mockFrameworkDetector.subscribe.mockImplementation((callback) => {
+      frameworkChangeCallback = callback;
+      return { dispose: vi.fn() };
+    });
 
     (vscode.workspace as any).onDidSaveTextDocument = vi.fn(
       (callback: (event: { uri: vscode.Uri }) => void) => {
@@ -129,7 +136,7 @@ describe('workspace-events', () => {
 
     expect(mockConfigManager.onDidChangeConfiguration).toHaveBeenCalledTimes(1);
     expect(PREVIEW_SETTING_ACTIONS[SETTINGS.USE_SUCRASE]).toBe('recompile');
-    expect(context.subscriptions.length).toBe(5);
+    expect(context.subscriptions.length).toBe(6);
 
     // runtime-push key: config update only, no forced recompile
     changeCallback?.([SETTINGS.PREVIEW_THEME]);
@@ -140,6 +147,15 @@ describe('workspace-events', () => {
     changeCallback?.([SETTINGS.USE_SUCRASE]);
     expect(updateConfiguration).toHaveBeenCalledTimes(2);
     expect(updateWebview).toHaveBeenCalledWith(true);
+
+    // link behavior has one owner & pushes trust state without compilation
+    changeCallback?.([SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW]);
+    expect(updateConfiguration).toHaveBeenCalledTimes(2);
+    expect(updateWebview).toHaveBeenCalledTimes(1);
+
+    // framework detector owns both package & manual transition refreshes
+    frameworkChangeCallback?.();
+    expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalledTimes(1);
 
     // unrelated key: no preview work at all
     changeCallback?.(['debugOutput']);

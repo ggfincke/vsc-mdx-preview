@@ -6,6 +6,13 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
+const { initializeMermaid, renderMermaid } = vi.hoisted(() => ({
+  initializeMermaid: vi.fn(),
+  renderMermaid: vi.fn(async (id: string) => ({
+    svg: `<svg id="${id}"><marker id="${id}-arrow"></marker></svg>`,
+  })),
+}));
+
 vi.mock(
   '../../packages/webview-client/src/shared/utils/createTaggedLogger',
   () => ({
@@ -18,7 +25,38 @@ vi.mock(
   })
 );
 
+vi.mock('../../packages/webview-client/src/features/theme/runtime', () => ({
+  useTheme: () => ({
+    mermaidTheme: 'default',
+    mermaidIconPacks: [],
+  }),
+}));
+
+vi.mock(
+  '../../packages/webview-client/src/features/diagrams/utils/mermaidLoader',
+  () => ({
+    loadMermaid: async () => ({
+      default: {
+        initialize: initializeMermaid,
+        render: renderMermaid,
+      },
+    }),
+  })
+);
+
+vi.mock(
+  '../../packages/webview-client/src/features/diagrams/utils/mermaidIconPacks',
+  () => ({
+    registerBuiltinIconPacks: vi.fn(),
+    registerDynamicIconPacks: vi.fn(),
+    setPendingDynamicPacks: vi.fn(),
+    getPendingDynamicPacks: () => [],
+    getMermaidIconPacksFingerprint: () => 'no-icons',
+  })
+);
+
 import { createDiagramRenderer } from '../../packages/webview-client/src/features/diagrams/ui/DiagramRenderer/createDiagramRenderer';
+import { MermaidRenderer } from '../../packages/webview-client/src/features/diagrams/ui/MermaidRenderer/MermaidRenderer';
 import { resetDiagramResultCache } from '../../packages/webview-client/src/features/diagrams/utils/diagramResultCache';
 
 // mock DOM elements
@@ -206,8 +244,8 @@ const rendererState = {
   cacheValue: 'icons-a:server-a',
 };
 const renderDiagram = vi.fn(
-  async ({ code }: { code: string; id: string }) =>
-    `<svg data-source="${code}"><script>unsafe()</script></svg>`
+  async ({ code, id }: { code: string; id: string }) =>
+    `<svg data-source="${code}" data-id="${id}"><script>unsafe()</script></svg>`
 );
 const sanitizeDiagram = vi.fn((svg: string) =>
   svg.replace('<script>unsafe()</script>', '')
@@ -219,6 +257,19 @@ const TestDiagramRenderer = createDiagramRenderer({
   errorLabel: 'Diagram error',
   loadingText: 'Rendering...',
   logTag: 'test',
+  useThemeValue: () => rendererState.theme,
+  useCacheKeyValue: () => rendererState.cacheValue,
+  includeIdInCacheKey: true,
+  sanitize: sanitizeDiagram,
+  render: renderDiagram,
+});
+
+const SharedTestDiagramRenderer = createDiagramRenderer({
+  cacheFamily: 'shared-test',
+  classPrefix: 'shared-test-diagram',
+  errorLabel: 'Diagram error',
+  loadingText: 'Rendering...',
+  logTag: 'shared-test',
   useThemeValue: () => rendererState.theme,
   useCacheKeyValue: () => rendererState.cacheValue,
   sanitize: sanitizeDiagram,
@@ -261,9 +312,11 @@ describe('diagram result cache', () => {
     rendererState.cacheValue = 'icons-a:server-a';
     renderDiagram.mockReset();
     renderDiagram.mockImplementation(
-      async ({ code }: { code: string; id: string }) =>
-        `<svg data-source="${code}"><script>unsafe()</script></svg>`
+      async ({ code, id }: { code: string; id: string }) =>
+        `<svg data-source="${code}" data-id="${id}"><script>unsafe()</script></svg>`
     );
+    initializeMermaid.mockClear();
+    renderMermaid.mockClear();
     sanitizeDiagram.mockClear();
     resetDiagramResultCache();
   });
@@ -279,16 +332,64 @@ describe('diagram result cache', () => {
     ).IS_REACT_ACT_ENVIRONMENT = false;
   });
 
-  it('shares one sanitized render across replacement mounts', async () => {
+  it('isolates Mermaid ids while sharing id-independent adapters', async () => {
     const first = createMountedDiagram();
     const second = createMountedDiagram();
 
     await act(async () => {
       first.root.render(
-        createElement(TestDiagramRenderer, { code: 'same', id: 'first' })
+        createElement(MermaidRenderer, {
+          code: 'graph TD; A-->B',
+          id: 'first',
+        })
       );
       second.root.render(
-        createElement(TestDiagramRenderer, { code: 'same', id: 'second' })
+        createElement(MermaidRenderer, {
+          code: 'graph TD; A-->B',
+          id: 'second',
+        })
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(renderMermaid).toHaveBeenCalledTimes(2);
+    expect(first.host.innerHTML).toContain('mermaid-svg-first-arrow');
+    expect(second.host.innerHTML).toContain('mermaid-svg-second-arrow');
+    expect(first.host.innerHTML).not.toContain('mermaid-svg-second');
+
+    act(() => first.root.unmount());
+    mountedRoots.delete(first.root);
+    const replacement = createMountedDiagram();
+    await act(async () => {
+      replacement.root.render(
+        createElement(MermaidRenderer, {
+          code: 'graph TD; A-->B',
+          id: 'first',
+        })
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(renderMermaid).toHaveBeenCalledTimes(2);
+    expect(replacement.host.innerHTML).toContain('mermaid-svg-first-arrow');
+
+    resetDiagramResultCache();
+    const sharedFirst = createMountedDiagram();
+    const sharedSecond = createMountedDiagram();
+    await act(async () => {
+      sharedFirst.root.render(
+        createElement(SharedTestDiagramRenderer, {
+          code: 'same',
+          id: 'first',
+        })
+      );
+      sharedSecond.root.render(
+        createElement(SharedTestDiagramRenderer, {
+          code: 'same',
+          id: 'second',
+        })
       );
       await Promise.resolve();
       await Promise.resolve();
@@ -296,23 +397,7 @@ describe('diagram result cache', () => {
 
     expect(renderDiagram).toHaveBeenCalledTimes(1);
     expect(sanitizeDiagram).toHaveBeenCalledTimes(1);
-    expect(first.host.innerHTML).not.toContain('unsafe');
-    expect(second.host.innerHTML).toBe(first.host.innerHTML);
-    const cachedMarkup = first.host.innerHTML;
-
-    act(() => {
-      first.root.unmount();
-      second.root.unmount();
-    });
-    mountedRoots.delete(first.root);
-    mountedRoots.delete(second.root);
-
-    const replacement = createMountedDiagram();
-    await renderMountedDiagram(replacement, 'same', 'replacement');
-
-    expect(renderDiagram).toHaveBeenCalledTimes(1);
-    expect(sanitizeDiagram).toHaveBeenCalledTimes(1);
-    expect(replacement.host.innerHTML).toBe(cachedMarkup);
+    expect(sharedSecond.host.innerHTML).toBe(sharedFirst.host.innerHTML);
   });
 
   it('rerenders key changes & recovers from errors through the cache', async () => {

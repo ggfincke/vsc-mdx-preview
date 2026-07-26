@@ -9,6 +9,7 @@ const { cacheInvalidators } = vi.hoisted(() => ({
     components: vi.fn(),
     framework: vi.fn(),
     iconPacks: vi.fn(),
+    mdxAnalysis: vi.fn(),
     nextraMeta: vi.fn(),
     postcss: vi.fn(),
     resolution: vi.fn(),
@@ -48,6 +49,10 @@ vi.mock(
 vi.mock(
   '../../packages/extension-host/src/features/diagnostics/ComponentDetector',
   () => ({ clearComponentCache: cacheInvalidators.components })
+);
+vi.mock(
+  '../../packages/extension-host/src/shared/mdx-analysis/document-analysis',
+  () => ({ clearMdxAnalysisCache: cacheInvalidators.mdxAnalysis })
 );
 
 // Import after mocks
@@ -105,6 +110,7 @@ describe('ServiceRegistry subsystem registration', () => {
       expect(cacheInvalidators.babel).toHaveBeenCalledOnce();
       expect(cacheInvalidators.postcss).toHaveBeenCalledOnce();
       expect(cacheInvalidators.iconPacks).toHaveBeenCalledOnce();
+      expect(cacheInvalidators.mdxAnalysis).toHaveBeenCalledOnce();
       expect(configFactory).not.toHaveBeenCalled();
       expect(tailwindFactory).not.toHaveBeenCalled();
       expect(frameworkFactory).not.toHaveBeenCalled();

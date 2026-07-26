@@ -15,7 +15,10 @@ import {
   buildIgnoredResolutionResult,
   isIgnoredResolution,
 } from '../../packages/extension-host/src/features/module-runtime/resolution/resolution-builders';
-import { invalidateResolution } from '../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory';
+import {
+  cachedFs,
+  invalidateResolution,
+} from '../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory';
 import { fetchLocal } from '../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal';
 import { NOOP_MODULE } from '../../packages/extension-host/src/features/module-runtime/fetch/utils';
 import {
@@ -73,6 +76,18 @@ describe('UnifiedResolver', () => {
       'module.exports = "child";'
     );
     writeFixture(
+      'node_modules/@scope/pkg/dynamic.js',
+      "module.exports.load = () => import('./dynamic-child.js');"
+    );
+    writeFixture(
+      'node_modules/@scope/pkg/dynamic-child.js',
+      'module.exports = "dynamic-child";'
+    );
+    writeFixture(
+      'node_modules/@scope/pkg/computed.js',
+      'module.exports.load = (specifier) => import(specifier);'
+    );
+    writeFixture(
       'node_modules/browser-disabled/package.json',
       JSON.stringify({
         name: 'browser-disabled',
@@ -94,6 +109,7 @@ describe('UnifiedResolver', () => {
 
   afterEach(() => {
     setWorkspaceFolders();
+    vi.restoreAllMocks();
     invalidateResolution();
     resetUnifiedResolver();
     fs.rmSync(tempDir, { recursive: true, force: true });
@@ -155,6 +171,11 @@ describe('UnifiedResolver', () => {
       context,
       'browser'
     );
+    const statSyncSpy = vi
+      .spyOn(cachedFs, 'statSync')
+      .mockImplementation(() => {
+        throw new Error('sync filesystem path used');
+      });
     const packageEntry = await resolver.resolveAsync(
       '@scope/pkg',
       context,
@@ -173,9 +194,14 @@ describe('UnifiedResolver', () => {
       strategy: ResolutionStrategy.EnhancedResolve,
       isBuiltInShim: false,
     });
+    expect(statSyncSpy).not.toHaveBeenCalled();
+    statSyncSpy.mockRestore();
+    expect(resolver.resolveSync('@scope/pkg', context, 'browser')?.fsPath).toBe(
+      path.join(packageDir, 'browser.js')
+    );
   });
 
-  it('uses enhanced-resolve for relative children inside node_modules', async () => {
+  it('resolves package children & rewrites only literal dynamic imports', async () => {
     const result = await resolver.resolveAsync(
       './child.js',
       {
@@ -191,6 +217,54 @@ describe('UnifiedResolver', () => {
       strategy: ResolutionStrategy.EnhancedResolve,
       isBuiltInShim: false,
     });
+
+    const preview = {
+      entryFsDirectory: path.join(tempDir, 'docs'),
+      dependentFsPaths: new Set<string>(),
+      typescriptConfiguration: undefined,
+      configuration: {
+        updateMode: 'onSave',
+        useSucraseTranspiler: false,
+      },
+      doc: {
+        uri: vscode.Uri.file(path.join(tempDir, 'docs', 'entry.mdx')),
+      },
+      getWebviewUri: () => undefined,
+      webviewHandle: {},
+    } as never;
+
+    const literal = await fetchLocal(
+      './dynamic.js',
+      false,
+      path.join(packageDir, 'browser.js'),
+      preview
+    );
+    const computed = await fetchLocal(
+      './computed.js',
+      false,
+      path.join(packageDir, 'browser.js'),
+      preview
+    );
+
+    expect(literal?.code).toContain('module.exports.load');
+    expect(literal?.code).toContain("require('./dynamic-child.js')");
+    expect(literal?.code).not.toContain("import('./dynamic-child.js')");
+    expect(literal?.dependencies).toContain('./dynamic-child.js');
+    expect(computed?.code).toContain('import(specifier)');
+    expect(computed?.dependencies).toEqual([]);
+
+    const runtimeModule: {
+      exports: { load?: () => Promise<unknown> };
+    } = { exports: {} };
+    const runtimeRequire = vi.fn(() => 'dynamic-child');
+    new Function('module', 'exports', 'require', literal!.code)(
+      runtimeModule,
+      runtimeModule.exports,
+      runtimeRequire
+    );
+
+    await expect(runtimeModule.exports.load?.()).resolves.toBeDefined();
+    expect(runtimeRequire).toHaveBeenCalledWith('./dynamic-child.js');
   });
 
   it('returns a noop fetch for browser-field false mappings', async () => {

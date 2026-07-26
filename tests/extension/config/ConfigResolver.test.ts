@@ -2,6 +2,8 @@
 // config file resolution determines what plugins can execute
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import * as path from 'path';
+import * as vscode from 'vscode';
 import {
   mockConfigCache,
   mockErrorReporter,
@@ -32,12 +34,16 @@ vi.mock('../../../packages/extension-host/src/shared/utils/file-utils', () => ({
 import {
   getConfigCandidatePaths,
   resolveConfig,
+  watchConfigCandidates,
 } from '../../../packages/extension-host/src/features/preview/configuration/ConfigResolver';
+import { ConfigCache } from '../../../packages/extension-host/src/shared/config/ConfigCache';
 
 const configCache = mockConfigCache as typeof mockConfigCache & {
   watchConfigCandidate: typeof mockWatchConfigCandidate;
 };
-configCache.watchConfigCandidate = mockWatchConfigCandidate;
+configCache.watchConfigCandidate = mockWatchConfigCandidate.mockImplementation(
+  () => ({ dispose: vi.fn() })
+);
 
 describe('ConfigResolver', () => {
   beforeEach(() => {
@@ -67,10 +73,7 @@ describe('ConfigResolver', () => {
       );
       expect(mockConfigCache.set).toHaveBeenCalledWith('/workspace', null);
       expect(mockConfigCache.watchConfigPath).not.toHaveBeenCalled();
-      expect(mockWatchConfigCandidate).toHaveBeenCalledWith(
-        configPath,
-        expect.any(Object)
-      );
+      expect(mockWatchConfigCandidate).not.toHaveBeenCalled();
     });
 
     it('returns null & caches when no config file found', () => {
@@ -90,13 +93,63 @@ describe('ConfigResolver', () => {
 
       expect(result).toBeNull();
       expect(mockConfigCache.set).toHaveBeenCalledWith('/workspace', null);
+
+      const watcherDispose = vi.fn();
+      vi.spyOn(vscode.workspace, 'createFileSystemWatcher').mockReturnValue({
+        onDidChange: vi.fn(),
+        onDidCreate: vi.fn(),
+        onDidDelete: vi.fn(),
+        dispose: watcherDispose,
+      } as never);
+      const actualCache = ConfigCache.getInstance();
+      for (let index = 0; index < 125; index += 1) {
+        actualCache.set(`/workspace/docs-${index}`, null);
+      }
+      const candidateDir = path.join(
+        path.parse(process.cwd()).root,
+        'workspace',
+        'site[one]'
+      );
+      const candidatePath = [
+        candidateDir,
+        'nested',
+        '..',
+        '.mdx-previewrc.json',
+      ].join(path.sep);
+      const first = actualCache.watchConfigCandidate(candidatePath, {
+        onCreate: vi.fn(),
+      });
+      const second = actualCache.watchConfigCandidate(
+        path.join(candidateDir, '.mdx-previewrc.json'),
+        { onCreate: vi.fn() }
+      );
+      const watcherPattern = vi.mocked(vscode.workspace.createFileSystemWatcher)
+        .mock.calls[0][0] as vscode.RelativePattern;
+
+      expect(actualCache.entryCount).toBe(100);
+      expect(actualCache.get('/workspace/docs-0')).toBeUndefined();
+      expect(actualCache.retainedConfigPathCount).toBe(1);
+      expect(actualCache.watcherCount).toBe(1);
+      expect(watcherPattern).toBeInstanceOf(vscode.RelativePattern);
+      expect(watcherPattern.baseUri.fsPath).toBe(candidateDir);
+      expect(watcherPattern.pattern).toBe('.mdx-previewrc.json');
+      first.dispose();
+      expect(watcherDispose).not.toHaveBeenCalled();
+      second.dispose();
+      second.dispose();
+      expect(watcherDispose).toHaveBeenCalledTimes(1);
+      actualCache.dispose();
     });
 
     it('returns parsed config when file found & valid', () => {
+      mockCreateWorkspaceStopPredicate.mockReturnValue(
+        (dir: string) => dir === '/workspace'
+      );
       mockFindUp.mockReturnValue('/workspace/.mdx-previewrc.json');
       mockReadJsonSync.mockReturnValue({ remarkPlugins: [] });
 
       const result = resolveConfig('/workspace/src/doc.mdx');
+      const watch = watchConfigCandidates('/workspace/src/doc.mdx');
 
       expect(result).toEqual({
         config: { remarkPlugins: [] },
@@ -104,6 +157,19 @@ describe('ConfigResolver', () => {
         configDir: '/workspace',
       });
       expect(mockConfigCache.set).toHaveBeenCalled();
+      expect(
+        mockWatchConfigCandidate.mock.calls.map(([filePath]) => filePath)
+      ).toEqual([
+        '/workspace/src/.mdx-previewrc.json',
+        '/workspace/src/.mdx-previewrc',
+        '/workspace/.mdx-previewrc.json',
+        '/workspace/.mdx-previewrc',
+      ]);
+
+      watch.dispose();
+      for (const disposable of mockWatchConfigCandidate.mock.results) {
+        expect(disposable.value.dispose).toHaveBeenCalledTimes(1);
+      }
     });
 
     it('returns null & reports error on JSON parse failure', () => {

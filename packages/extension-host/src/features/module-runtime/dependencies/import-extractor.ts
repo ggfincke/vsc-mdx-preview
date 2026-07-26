@@ -33,6 +33,24 @@ async function ensureLexerInitialized(): Promise<void> {
   }
 }
 
+// detect dynamic imports whose specifiers can be resolved before evaluation
+export async function hasLiteralDynamicImport(code: string): Promise<boolean> {
+  if (!IMPORT_PATTERN.test(code)) {
+    return false;
+  }
+
+  await ensureLexerInitialized();
+  try {
+    const [imports] = parseImports(code);
+    return imports.some(
+      (imported) =>
+        imported.d >= 0 && imported.n !== undefined && imported.n !== null
+    );
+  } catch {
+    return false;
+  }
+}
+
 interface LocatedSpecifier {
   index: number;
   specifier: string;

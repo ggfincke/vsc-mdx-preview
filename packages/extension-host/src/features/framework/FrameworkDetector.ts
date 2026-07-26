@@ -5,7 +5,11 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { WithSubscribers } from '../../app/services/SingletonService';
-import { getConfigManager, getErrorReporter } from '../../app/services';
+import {
+  getConfigManager,
+  getErrorReporter,
+  getPreviewManager,
+} from '../../app/services';
 import { SETTINGS } from '../../shared/config/ConfigManager';
 import { ErrorContext } from '../../shared/errors';
 import {
@@ -290,10 +294,11 @@ export class FrameworkDetector extends WithSubscribers<
   private invalidateAllCaches(): void {
     this.clearCaches();
 
-    // notify subscribers w/ current framework for active editor
-    const editor = vscode.window.activeTextEditor;
-    if (editor) {
-      const info = this.getFramework(editor.document.uri);
+    const documentUri =
+      vscode.window.activeTextEditor?.document.uri ??
+      getPreviewManager().getCurrentPreview()?.doc.uri;
+    if (documentUri) {
+      const info = this.getFramework(documentUri);
       this.notifySubscribers(info);
     }
   }
@@ -307,22 +312,24 @@ export class FrameworkDetector extends WithSubscribers<
     const packageJsonDir = path.dirname(fsPath);
     this.invalidateCache(packageJsonDir);
 
-    // notify subscribers if this affects the active editor
-    const editor = vscode.window.activeTextEditor;
-    if (editor) {
+    // prioritize the active preview, then the active text editor
+    const documentUris = [
+      getPreviewManager().getCurrentPreview()?.doc.uri,
+      vscode.window.activeTextEditor?.document.uri,
+    ].filter((uri): uri is vscode.Uri => uri !== undefined);
+    for (const documentUri of documentUris) {
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(
         vscode.Uri.file(fsPath)
       );
-      const editorFolder = vscode.workspace.getWorkspaceFolder(
-        editor.document.uri
-      );
+      const documentFolder = vscode.workspace.getWorkspaceFolder(documentUri);
       // check if the changed package.json is in the same workspace
       if (
         workspaceFolder &&
-        editorFolder?.uri.fsPath === workspaceFolder.uri.fsPath
+        documentFolder?.uri.fsPath === workspaceFolder.uri.fsPath
       ) {
-        const info = this.getFramework(editor.document.uri);
+        const info = this.getFramework(documentUri);
         this.notifySubscribers(info);
+        return;
       }
     }
   }

@@ -58,6 +58,18 @@ export class Uri {
   }
 }
 
+export class RelativePattern {
+  baseUri: Uri;
+  base: string;
+  pattern: string;
+
+  constructor(base: Uri | string, pattern: string) {
+    this.baseUri = typeof base === 'string' ? Uri.file(base) : base;
+    this.base = this.baseUri.fsPath;
+    this.pattern = pattern;
+  }
+}
+
 export class Position {
   line: number;
   character: number;

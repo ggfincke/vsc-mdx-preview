@@ -56,8 +56,11 @@ const MODE_CONFIGS: Record<ResolverMode, ModeConfig> = {
   },
 };
 
-// create a module resolver optimized for the specified mode
-function createResolver(mode: ResolverMode): Resolver {
+// create a module resolver for one mode & filesystem call style
+function createResolver(
+  mode: ResolverMode,
+  useSyncFileSystemCalls: boolean
+): Resolver {
   const config = MODE_CONFIGS[mode];
 
   return ResolverFactory.createResolver({
@@ -73,24 +76,47 @@ function createResolver(mode: ResolverMode): Resolver {
     modules: ['node_modules'],
     mainFiles: ['index'],
     symlinks: true,
-    useSyncFileSystemCalls: true,
+    useSyncFileSystemCalls,
   });
 }
 
-// pre-created resolvers for common use cases (lazily initialized)
+// sync & async resolver instances for one condition mode
+interface ModeResolvers {
+  sync: Resolver;
+  async: Resolver;
+}
+
+// create paired resolvers so async callers never route through sync fs adapters
+function createModeResolvers(mode: ResolverMode): ModeResolvers {
+  return {
+    sync: createResolver(mode, true),
+    async: createResolver(mode, false),
+  };
+}
+
+// lazily initialize mode-specific sync & async resolvers
 // exported for subsystem registration (resolver-subsystem.ts)
 export const browserResolverSingleton = createResettableSingleton(() =>
-  createResolver('browser')
+  createModeResolvers('browser')
 );
 export const nodeResolverSingleton = createResettableSingleton(() =>
-  createResolver('node')
+  createModeResolvers('node')
 );
 
 // get the shared browser resolver instance (used for resolving modules to be loaded in the webview)
-export const getBrowserResolver = browserResolverSingleton.get;
+export const getBrowserResolver = (): Resolver =>
+  browserResolverSingleton.get().sync;
 
 // get the shared node resolver instance (used for resolving plugins to be loaded in the extension)
-export const getNodeResolver = nodeResolverSingleton.get;
+export const getNodeResolver = (): Resolver => nodeResolverSingleton.get().sync;
+
+// get async browser resolver for the module fetch hot path
+export const getAsyncBrowserResolver = (): Resolver =>
+  browserResolverSingleton.get().async;
+
+// get async node resolver for async plugin resolution
+export const getAsyncNodeResolver = (): Resolver =>
+  nodeResolverSingleton.get().async;
 
 // clear enhanced-resolve fs + resolver singletons only
 // does NOT clear statCache or compiledIndexCache; use invalidateResolution() for full invalidation

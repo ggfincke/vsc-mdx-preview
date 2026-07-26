@@ -60,6 +60,7 @@ export const MermaidRenderer = createDiagramRenderer<MermaidProps>({
   logTag: LogTags.MERMAID_RENDERER,
   useThemeValue: useMermaidThemeValue,
   useCacheKeyValue: useMermaidIconPacksFingerprint,
+  includeIdInCacheKey: true,
   toDataTheme: (theme) => (isDarkMermaidTheme(theme) ? 'dark' : 'light'),
   render: async (_props, signal, mermaidTheme) => {
     const { code, id } = _props;

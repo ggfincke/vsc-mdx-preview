@@ -4,8 +4,10 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Preview } from '../../../packages/extension-host/src/features/preview/preview-manager';
+import { MAX_MODULE_FILE_SIZE_BYTES } from '../../../packages/extension-host/src/shared/constants';
 import {
   mockErrorReporter,
   mockFrameworkDetector,
@@ -57,9 +59,11 @@ describe('fetchLocal', () => {
   let tempDir: string;
 
   beforeEach(() => {
+    vi.clearAllMocks();
     tempDir = fs.mkdtempSync(
       path.join(os.tmpdir(), 'mdx-preview-fetch-local-')
     );
+    vscode.workspace.textDocuments.length = 0;
     mockCheckFsPathAsync.mockResolvedValue(true);
     mockResolver.resolveAsync.mockImplementation(async (request: string) => ({
       fsPath: path.join(tempDir, request.replace(/^\.\//, '')),
@@ -74,10 +78,12 @@ describe('fetchLocal', () => {
   });
 
   afterEach(() => {
+    vscode.workspace.textDocuments.length = 0;
+    vi.restoreAllMocks();
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('dispatches binary image fixtures to ImageHandler without reading them', async () => {
+  it('routes images without source reads & rejects other binary files', async () => {
     const fixtures = [
       ['image.png', [0x89, 0x50, 0x4e, 0x47]],
       ['image.jpg', [0xff, 0xd8, 0xff]],
@@ -117,12 +123,10 @@ describe('fetchLocal', () => {
       },
       'browser'
     );
-  });
 
-  it('still rejects a non-image binary after its single read', async () => {
     const binaryPath = path.join(tempDir, 'archive.bin');
     fs.writeFileSync(binaryPath, Buffer.from([0x50, 0x4b, 0x03, 0x04]));
-    const readSpy = vi.spyOn(fs.promises, 'readFile');
+    const openSpy = vi.spyOn(fs.promises, 'open');
 
     await expect(
       fetchLocal(
@@ -132,7 +136,7 @@ describe('fetchLocal', () => {
         createPreview(tempDir)
       )
     ).resolves.toBeUndefined();
-    expect(readSpy).toHaveBeenCalledTimes(1);
+    expect(openSpy).toHaveBeenCalledTimes(1);
     expect(mockErrorReporter.report).toHaveBeenCalledWith(
       expect.objectContaining({
         message: expect.stringContaining('Cannot import binary file'),
@@ -162,10 +166,22 @@ describe('fetchLocal', () => {
     expect(mockResolver.resolveAsync).not.toHaveBeenCalled();
   });
 
-  it('performs one stat & one read for a cold source fetch', async () => {
+  it('opens once, stats, reads the bounded source, & closes', async () => {
     fs.writeFileSync(path.join(tempDir, 'data.json'), '{"answer":42}');
-    const statSpy = vi.spyOn(fs.promises, 'stat');
-    const readSpy = vi.spyOn(fs.promises, 'readFile');
+    const source = Buffer.from('{"answer":42}');
+    const stat = vi.fn().mockResolvedValue({ size: source.length });
+    const read = vi
+      .fn()
+      .mockImplementation(async (buffer: Buffer, offset: number) => {
+        source.copy(buffer, offset);
+        return { bytesRead: source.length, buffer };
+      });
+    const close = vi.fn().mockResolvedValue(undefined);
+    const openSpy = vi.spyOn(fs.promises, 'open').mockResolvedValue({
+      stat,
+      read,
+      close,
+    } as never);
 
     const result = await fetchLocal(
       './data.json',
@@ -175,7 +191,102 @@ describe('fetchLocal', () => {
     );
 
     expect(result?.code).toBe('module.exports = {"answer":42}');
-    expect(statSpy).toHaveBeenCalledTimes(1);
-    expect(readSpy).toHaveBeenCalledTimes(1);
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    expect(stat).toHaveBeenCalledTimes(1);
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(close).toHaveBeenCalledTimes(1);
+    openSpy.mockRestore();
+
+    const failingStat = vi.fn().mockResolvedValue({ size: 13 });
+    const readError = new Error('read failed');
+    const failingRead = vi.fn().mockRejectedValue(readError);
+    const closeAfterError = vi.fn().mockResolvedValue(undefined);
+    vi.spyOn(fs.promises, 'open').mockResolvedValue({
+      stat: failingStat,
+      read: failingRead,
+      close: closeAfterError,
+    } as never);
+
+    await expect(
+      fetchLocal(
+        './data.json',
+        false,
+        path.join(tempDir, 'entry.mdx'),
+        createPreview(tempDir)
+      )
+    ).resolves.toBeUndefined();
+
+    expect(closeAfterError).toHaveBeenCalledTimes(1);
+    expect(mockErrorReporter.report).toHaveBeenCalledWith(
+      readError,
+      expect.any(Object)
+    );
+  });
+
+  it('uses all normalized open dependencies & enforces their UTF-8 limit', async () => {
+    const firstPath = path.join(tempDir, 'first.json');
+    const secondPath = path.join(tempDir, 'second.json');
+    fs.writeFileSync(firstPath, '{"source":"disk-first"}');
+    fs.writeFileSync(secondPath, '{"source":"disk-second"}');
+    vscode.workspace.textDocuments.push(
+      {
+        uri: vscode.Uri.file(path.join(tempDir, 'nested', '..', 'first.json')),
+        getText: () => '{"source":"memory-first"}',
+      },
+      {
+        uri: vscode.Uri.file(secondPath),
+        getText: () => '{"source":"memory-second"}',
+      }
+    );
+    const preview = createPreview(tempDir);
+    preview.configuration.updateMode = 'onType';
+    const openSpy = vi.spyOn(fs.promises, 'open');
+
+    const [first, second] = await Promise.all([
+      fetchLocal(
+        './first.json',
+        false,
+        path.join(tempDir, 'entry.mdx'),
+        preview
+      ),
+      fetchLocal(
+        './second.json',
+        false,
+        path.join(tempDir, 'entry.mdx'),
+        preview
+      ),
+    ]);
+
+    expect(first?.code).toBe('module.exports = {"source":"memory-first"}');
+    expect(second?.code).toBe('module.exports = {"source":"memory-second"}');
+    expect(openSpy).not.toHaveBeenCalled();
+
+    const modulePath = path.join(tempDir, 'oversized.json');
+    fs.writeFileSync(modulePath, '{}');
+    const oversizedText = `"${'é'.repeat(
+      Math.floor(MAX_MODULE_FILE_SIZE_BYTES / 2) + 1
+    )}"`;
+    vscode.workspace.textDocuments.push({
+      uri: vscode.Uri.file(modulePath),
+      getText: () => oversizedText,
+    });
+    const oversizedPreview = createPreview(tempDir);
+    oversizedPreview.configuration.updateMode = 'onType';
+
+    await expect(
+      fetchLocal(
+        './oversized.json',
+        false,
+        path.join(tempDir, 'entry.mdx'),
+        oversizedPreview
+      )
+    ).resolves.toBeUndefined();
+
+    expect(mockErrorReporter.report).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining('exceeds 5MB limit'),
+      }),
+      expect.any(Object)
+    );
   });
 });

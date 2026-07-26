@@ -4,11 +4,7 @@
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { FRAMEWORK_IDS, LogTags } from '@mdx-preview/contracts';
-import {
-  getConfigManager,
-  getFrameworkDetector,
-  getPreviewManager,
-} from '../../app/services';
+import { getConfigManager, getFrameworkDetector } from '../../app/services';
 import {
   type FrameworkId,
   type FrameworkSetting,
@@ -72,9 +68,6 @@ const selectFramework = async (): Promise<void> => {
       selected.value as FrameworkSetting,
       vscode.ConfigurationTarget.Workspace
     );
-
-    // refresh previews to apply framework changes
-    getPreviewManager().refreshAllPreviews();
 
     vscode.window.showInformationMessage(
       `MDX framework set to ${selected.label}.`

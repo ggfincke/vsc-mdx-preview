@@ -6,7 +6,6 @@ import {
   HIGHLIGHT_ACTIVE_CLASS,
   HIGHLIGHT_LINE_CLASS,
   collectSourceLineEntries,
-  type SourceLineEntry,
 } from '../utils/sourceLineElements';
 
 const INTERACTIVE_SELECTOR = [
@@ -38,6 +37,35 @@ function isSourceNavigationClick(event: MouseEvent): boolean {
   return event.button === 0 && (event.ctrlKey || event.metaKey);
 }
 
+function clearHighlightClasses(container: HTMLElement): void {
+  container
+    .querySelectorAll(`.${HIGHLIGHT_LINE_CLASS}, .${HIGHLIGHT_ACTIVE_CLASS}`)
+    .forEach((element) => {
+      element.classList.remove(HIGHLIGHT_LINE_CLASS);
+      element.classList.remove(HIGHLIGHT_ACTIVE_CLASS);
+    });
+}
+
+function findRegisteredOwner(
+  target: EventTarget | null,
+  container: HTMLElement,
+  registeredOwners: ReadonlySet<Element>
+): Element | null {
+  if (!(target instanceof Element)) {
+    return null;
+  }
+
+  let current: Element | null = target;
+  while (current && current !== container) {
+    if (registeredOwners.has(current)) {
+      return current;
+    }
+    current = current.parentElement;
+  }
+
+  return null;
+}
+
 interface UseSourceLineHighlightOptions {
   containerRef: RefObject<HTMLElement | null>;
   trigger?: unknown;
@@ -57,14 +85,9 @@ export function useSourceLineHighlight({
       return;
     }
 
+    clearHighlightClasses(container);
+
     if (!enabled) {
-      const existingHighlights = Array.from(
-        container.getElementsByClassName(HIGHLIGHT_LINE_CLASS)
-      );
-      existingHighlights.forEach((element) => {
-        element.classList.remove(HIGHLIGHT_LINE_CLASS);
-        element.classList.remove(HIGHLIGHT_ACTIVE_CLASS);
-      });
       return;
     }
 
@@ -77,14 +100,14 @@ export function useSourceLineHighlight({
       return;
     }
 
-    const addedEventsSet = new Set<Element>();
+    const entriesByOwner = new Map(
+      sourceLineEntries.map(({ highlightElement, sourceLine }) => [
+        highlightElement,
+        sourceLine,
+      ])
+    );
+    const registeredOwners = new Set(entriesByOwner.keys());
     let currentHighlightElement: Element | null = null;
-    const listeners: Array<{
-      element: Element;
-      onMouseEnter: EventListener;
-      onMouseLeave: EventListener;
-      onClick: EventListener | undefined;
-    }> = [];
 
     const applySingleHighlight = (highlightElement: Element | null): void => {
       if (currentHighlightElement === highlightElement) {
@@ -104,90 +127,91 @@ export function useSourceLineHighlight({
       }
     };
 
-    const findRegisteredOwner = (
-      target: EventTarget | null
-    ): Element | null => {
-      if (!(target instanceof Element)) {
-        return null;
+    const onPointerOver: EventListener = (event) => {
+      const pointerEvent = event as PointerEvent;
+      const nextOwner = findRegisteredOwner(
+        pointerEvent.target,
+        container,
+        registeredOwners
+      );
+      const previousOwner = findRegisteredOwner(
+        pointerEvent.relatedTarget,
+        container,
+        registeredOwners
+      );
+      if (nextOwner !== previousOwner) {
+        applySingleHighlight(nextOwner);
       }
-
-      let current: Element | null = target;
-      while (current && current !== container) {
-        if (addedEventsSet.has(current)) {
-          return current;
-        }
-        current = current.parentElement;
-      }
-
-      return null;
     };
 
-    const bindEntry = ({ highlightElement, sourceLine }: SourceLineEntry) => {
-      // addedEventsSet powers findRegisteredOwner's ancestor lookup on mouseleave
-      addedEventsSet.add(highlightElement);
-
-      const onMouseEnter: EventListener = () => {
-        applySingleHighlight(highlightElement);
-      };
-
-      const onMouseLeave: EventListener = (event) => {
-        const nextOwner = findRegisteredOwner(
-          (event as MouseEvent).relatedTarget
-        );
-        if (nextOwner) {
-          applySingleHighlight(nextOwner);
-          return;
-        }
-
-        if (currentHighlightElement === highlightElement) {
-          applySingleHighlight(null);
-        }
-        highlightElement.classList.remove(HIGHLIGHT_ACTIVE_CLASS);
-      };
-
-      const onClick: EventListener | undefined =
-        onOpenSourceLine && sourceLine !== null
-          ? (event) => {
-              const mouseEvent = event as MouseEvent;
-              if (
-                !isSourceNavigationClick(mouseEvent) ||
-                isInteractiveTarget(mouseEvent.target, container)
-              ) {
-                return;
-              }
-
-              mouseEvent.preventDefault();
-              mouseEvent.stopPropagation();
-              highlightElement.classList.add(HIGHLIGHT_ACTIVE_CLASS);
-              onOpenSourceLine(sourceLine);
-            }
-          : undefined;
-
-      highlightElement.addEventListener('mouseenter', onMouseEnter);
-      highlightElement.addEventListener('mouseleave', onMouseLeave);
-      if (onClick) {
-        highlightElement.addEventListener('click', onClick);
+    const onPointerOut: EventListener = (event) => {
+      const pointerEvent = event as PointerEvent;
+      const previousOwner = findRegisteredOwner(
+        pointerEvent.target,
+        container,
+        registeredOwners
+      );
+      const nextOwner = findRegisteredOwner(
+        pointerEvent.relatedTarget,
+        container,
+        registeredOwners
+      );
+      if (previousOwner === nextOwner) {
+        return;
       }
-      listeners.push({
-        element: highlightElement,
-        onMouseEnter,
-        onMouseLeave,
-        onClick,
-      });
+
+      previousOwner?.classList.remove(HIGHLIGHT_ACTIVE_CLASS);
+      applySingleHighlight(nextOwner);
     };
 
-    sourceLineEntries.forEach(bindEntry);
+    const onClick: EventListener = (event) => {
+      if (!onOpenSourceLine) {
+        return;
+      }
+
+      const mouseEvent = event as MouseEvent;
+      const owner = findRegisteredOwner(
+        mouseEvent.target,
+        container,
+        registeredOwners
+      );
+      const sourceLine = owner ? entriesByOwner.get(owner) : null;
+      if (
+        !owner ||
+        sourceLine === null ||
+        sourceLine === undefined ||
+        !isSourceNavigationClick(mouseEvent) ||
+        isInteractiveTarget(mouseEvent.target, container)
+      ) {
+        return;
+      }
+
+      mouseEvent.preventDefault();
+      mouseEvent.stopPropagation();
+      container
+        .querySelectorAll(`.${HIGHLIGHT_ACTIVE_CLASS}`)
+        .forEach((element) => element.classList.remove(HIGHLIGHT_ACTIVE_CLASS));
+      owner.classList.add(HIGHLIGHT_ACTIVE_CLASS);
+      onOpenSourceLine(sourceLine);
+    };
+
+    container.addEventListener('pointerover', onPointerOver);
+    container.addEventListener('pointerout', onPointerOut);
+    if (onOpenSourceLine) {
+      container.addEventListener('click', onClick);
+    }
 
     return () => {
-      listeners.forEach(({ element, onMouseEnter, onMouseLeave, onClick }) => {
-        element.removeEventListener('mouseenter', onMouseEnter);
-        element.removeEventListener('mouseleave', onMouseLeave);
-        if (onClick) {
-          element.removeEventListener('click', onClick);
-        }
-        element.classList.remove(HIGHLIGHT_LINE_CLASS);
-        element.classList.remove(HIGHLIGHT_ACTIVE_CLASS);
+      container.removeEventListener('pointerover', onPointerOver);
+      container.removeEventListener('pointerout', onPointerOut);
+      if (onOpenSourceLine) {
+        container.removeEventListener('click', onClick);
+      }
+      registeredOwners.forEach((owner) => {
+        owner.classList.remove(HIGHLIGHT_LINE_CLASS);
+        owner.classList.remove(HIGHLIGHT_ACTIVE_CLASS);
       });
+      clearHighlightClasses(container);
       currentHighlightElement = null;
     };
   }, [containerRef, trigger, enabled, onOpenSourceLine]);

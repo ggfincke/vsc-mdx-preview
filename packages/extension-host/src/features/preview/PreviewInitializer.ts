@@ -17,6 +17,7 @@ import { WatcherManager } from './watchers/WatcherManager';
 import {
   getConfigCandidatePaths,
   onConfigChange,
+  watchConfigCandidates,
 } from './configuration/ConfigResolver';
 import { onTypeScriptConfigChange } from './configuration/TypeScriptConfigResolver';
 import { getTailwindProcessor } from '../../app/services';
@@ -159,13 +160,21 @@ export class PreviewInitializer {
 
     const configSubscriptionWatcher = new EventSubscriptionWatcher({
       logTag: LogTags.CONFIG_SUBSCRIPTION,
-      subscribe: () =>
-        onConfigChange((event) => {
+      subscribe: () => {
+        const candidateWatch = watchConfigCandidates(documentPath);
+        const changeSubscription = onConfigChange((event) => {
           if (configCandidatePaths.has(event.configPath)) {
             log.debug('MDX config file changed, reloading...');
             onConfigChanged();
           }
-        }),
+        });
+        return {
+          dispose: () => {
+            changeSubscription.dispose();
+            candidateWatch.dispose();
+          },
+        };
+      },
     });
 
     watcherManager.register('config', configSubscriptionWatcher);
@@ -256,6 +265,43 @@ export class PreviewInitializer {
 
     watcherManager.register('tailwind', tailwindWatcher);
     tailwindWatcher.start();
+  }
+
+  // subscribe empty Tailwind profiles to config & entry CSS creation
+  setupTailwindDetectionWatcher(
+    watcherManager: WatcherManager,
+    docScheme: string,
+    workspaceRoot: string | undefined,
+    onChange: (changedPaths: string[]) => void,
+    isAlreadyWatched: (changedPath: string) => boolean
+  ): void {
+    watcherManager.unregister('tailwindDetection');
+
+    if (docScheme !== 'file' || !workspaceRoot) {
+      return;
+    }
+
+    const detectionWatcher = new EventSubscriptionWatcher({
+      logTag: LogTags.TAILWIND_WATCHER,
+      subscribe: () =>
+        getTailwindProcessor().onDidChangeDetectionInputs(
+          workspaceRoot,
+          (changedPaths) => {
+            const newDetectionInputs = changedPaths.filter(
+              (changedPath) => !isAlreadyWatched(changedPath)
+            );
+            if (newDetectionInputs.length === 0) {
+              return;
+            }
+            log.debug('Tailwind detection input created, reloading...');
+            getTailwindProcessor().invalidateVersionCache(workspaceRoot);
+            onChange(newDetectionInputs);
+          }
+        ),
+    });
+
+    watcherManager.register('tailwindDetection', detectionWatcher);
+    detectionWatcher.start();
   }
 
   dispose(): void {

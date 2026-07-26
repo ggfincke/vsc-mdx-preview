@@ -43,6 +43,7 @@ import {
   supportsEditorToPreviewScrollSync,
   syncPreviewScrollFromActiveEditor,
 } from './scroll-sync';
+import { normalizePathForComparison } from '../../shared/utils/path-utils';
 
 // re-export types for consumers
 export type { StyleConfiguration, WebviewHandle };
@@ -81,6 +82,7 @@ export class Preview {
   // performance tracking (development only)
   private _performanceObserver?: PerformanceObserver;
   private _tailwindWatchSet = '';
+  private _tailwindWatchFiles = new Set<string>();
   private _evaluationDuration = 0;
   private _previewDuration = 0;
 
@@ -133,10 +135,6 @@ export class Preview {
   // delegate getters to composed modules
   get doc(): vscode.TextDocument {
     return this.documentHandler.doc;
-  }
-
-  get editingDoc(): vscode.TextDocument | undefined {
-    return this.documentHandler.editingDoc;
   }
 
   get dependentFsPaths(): Set<string> {
@@ -276,6 +274,7 @@ export class Preview {
     this.documentHandler.setDoc(doc, this.watcherManager);
     this.setupConfigWatcher();
     this.setupTypeScriptConfigWatcher();
+    this.setupTailwindDetectionWatcher();
     this.initializer.setupCustomCssWatcher(
       this.watcherManager,
       this.configuration.customCss,
@@ -319,13 +318,36 @@ export class Preview {
     );
   }
 
+  private setupTailwindDetectionWatcher(): void {
+    const workspaceRoot = vscode.workspace.getWorkspaceFolder(this.doc.uri)?.uri
+      .fsPath;
+    this.initializer.setupTailwindDetectionWatcher(
+      this.watcherManager,
+      this.doc.uri.scheme,
+      workspaceRoot,
+      () => {
+        if (!this.active) {
+          return;
+        }
+        this.updateWebview(true).catch((err) =>
+          log.error('Failed to refresh after Tailwind input creation', err)
+        );
+      },
+      (changedPath) => this._tailwindWatchFiles.has(changedPath)
+    );
+  }
+
   updateTailwindWatchFiles(watchFiles: string[]): void {
     // keep the existing watcher when the canonical path set is unchanged
-    const nextWatchSet = [...new Set(watchFiles)].sort().join('\0');
+    const normalizedWatchFiles = new Set(
+      watchFiles.map(normalizePathForComparison)
+    );
+    const nextWatchSet = [...normalizedWatchFiles].sort().join('\0');
     if (nextWatchSet === this._tailwindWatchSet) {
       return;
     }
     this._tailwindWatchSet = nextWatchSet;
+    this._tailwindWatchFiles = normalizedWatchFiles;
     // setup tailwind watcher directly via initializer (coordinator was removed)
     this.initializer.setupTailwindConfigWatcher(
       this.watcherManager,
@@ -417,21 +439,32 @@ export class Preview {
     if (this.disposed) {
       return;
     }
+    const doc = this.doc;
+    const documentIdentity = {
+      uri: doc.uri.toString(),
+      version: doc.version,
+    };
     // monotonic id: stale evaluations must not push over newer ones
     const evaluationId = ++this.evaluationSeq;
     const isCurrent = () => evaluationId === this.evaluationSeq;
 
     await runPreviewUpdateFlow({
       force,
-      doc: this.doc,
-      text: this.text,
+      doc,
+      text: doc.getText(),
       entryFsDirectory: this.entryFsDirectory,
       updateMode: this.configuration.updateMode,
       isCurrent,
       getDocumentTracker: () =>
         this.watcherManager.get<DocumentTracker>('document'),
       evaluate: (content, targetFsPath) =>
-        evaluateInWebview(this, content, targetFsPath, isCurrent),
+        evaluateInWebview(
+          this,
+          content,
+          targetFsPath,
+          isCurrent,
+          documentIdentity
+        ),
     });
 
     if (!isCurrent()) {

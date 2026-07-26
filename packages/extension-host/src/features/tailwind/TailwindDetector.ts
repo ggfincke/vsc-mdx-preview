@@ -4,9 +4,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import debounce from 'lodash.debounce';
 import {
   LogTags,
   SETTINGS_DEFAULTS,
+  STANDARD_DEBOUNCE_MS,
   STANDARD_CACHE_TTL_MS,
 } from '@mdx-preview/contracts';
 import { LRUCache, extractErrorMessage } from '@mdx-preview/runtime-utils';
@@ -17,7 +19,11 @@ import {
   readFileAsync,
   readJsonSync,
 } from '../../shared/utils/file-utils';
-import { isPathWithin, toAbsolutePath } from '../../shared/utils/path-utils';
+import {
+  isPathWithin,
+  normalizePathForComparison,
+  toAbsolutePath,
+} from '../../shared/utils/path-utils';
 import { findUp } from '../../shared/utils/find-up';
 import { PathCache } from '../../shared/utils/cache';
 import {
@@ -54,6 +60,11 @@ const INLINE_TAILWIND_STYLE_RE =
 interface EntryCssInspection {
   stamp: string;
   hasPluginDirective: boolean;
+}
+
+interface DetectionInputSubscriber {
+  workspaceRoot: string;
+  callback: (changedPaths: string[]) => void;
 }
 
 // common CSS file locations to check before doing a full workspace scan
@@ -132,6 +143,22 @@ export class TailwindDetector {
     maxEntries: DETECTOR_VERSION_CACHE_MAX_ENTRIES,
     ttlMs: STANDARD_CACHE_TTL_MS,
   });
+  private detectionInputSubscribers = new Set<DetectionInputSubscriber>();
+  private pendingDetectionInputChanges = new Set<string>();
+  private pendingDetectionInputInspections = new Set<Promise<void>>();
+  private notifyDetectionInputChanges = debounce(async () => {
+    await Promise.all([...this.pendingDetectionInputInspections]);
+    const changedPaths = [...this.pendingDetectionInputChanges];
+    this.pendingDetectionInputChanges.clear();
+    for (const subscriber of this.detectionInputSubscribers) {
+      const scopedChanges = changedPaths.filter((changedPath) =>
+        isPathWithin(changedPath, subscriber.workspaceRoot)
+      );
+      if (scopedChanges.length > 0) {
+        subscriber.callback(scopedChanges);
+      }
+    }
+  }, STANDARD_DEBOUNCE_MS);
 
   constructor() {
     const clearOnDetectionChange = {
@@ -139,21 +166,46 @@ export class TailwindDetector {
       onCreate: (_eventPath: string, cache: { clear(): void }) => cache.clear(),
       onDelete: (_eventPath: string, cache: { clear(): void }) => cache.clear(),
     };
-    this.configCache.watchPath(CONFIG_WATCH_PATTERN, clearOnDetectionChange);
-    this.entryCssCache.watchPath(CSS_WATCH_PATTERN, {
-      onChange: (_eventPath, cache) => {
+    this.configCache.watchPath(CONFIG_WATCH_PATTERN, {
+      ...clearOnDetectionChange,
+      onCreate: (eventPath, cache) => {
         cache.clear();
-        this.entryCssInspectionCache.clear();
+        this.queueDetectionInputChange(eventPath);
       },
-      onCreate: (_eventPath, cache) => {
+    });
+    this.entryCssCache.watchPath(CSS_WATCH_PATTERN, {
+      onChange: (eventPath, cache) => {
         cache.clear();
         this.entryCssInspectionCache.clear();
+        this.inspectCssDetectionInput(eventPath);
+      },
+      onCreate: (eventPath, cache) => {
+        cache.clear();
+        this.entryCssInspectionCache.clear();
+        this.inspectCssDetectionInput(eventPath);
       },
       onDelete: (_eventPath, cache) => {
         cache.clear();
         this.entryCssInspectionCache.clear();
       },
     });
+  }
+
+  // subscribe one workspace to newly created detection inputs
+  onDidChangeDetectionInputs(
+    workspaceRoot: string,
+    callback: (changedPaths: string[]) => void
+  ): vscode.Disposable {
+    const subscriber = {
+      workspaceRoot: normalizePathForComparison(workspaceRoot),
+      callback,
+    };
+    this.detectionInputSubscribers.add(subscriber);
+    return {
+      dispose: () => {
+        this.detectionInputSubscribers.delete(subscriber);
+      },
+    };
   }
 
   resolveWorkspaceRoot(options: ResolveWorkspaceRootOptions): string | null {
@@ -559,8 +611,34 @@ export class TailwindDetector {
   }
 
   dispose(): void {
+    this.notifyDetectionInputChanges.cancel();
+    this.pendingDetectionInputChanges.clear();
+    this.pendingDetectionInputInspections.clear();
+    this.detectionInputSubscribers.clear();
     this.clearCaches();
     this.configCache.dispose();
     this.entryCssCache.dispose();
+  }
+
+  private queueDetectionInputChange(eventPath: string): void {
+    this.pendingDetectionInputChanges.add(
+      normalizePathForComparison(eventPath)
+    );
+    this.notifyDetectionInputChanges();
+  }
+
+  private inspectCssDetectionInput(eventPath: string): void {
+    const inspection = readFileAsync(eventPath).then((content) => {
+      if (isTailwindEntryCss(content)) {
+        this.pendingDetectionInputChanges.add(
+          normalizePathForComparison(eventPath)
+        );
+      }
+    });
+    this.pendingDetectionInputInspections.add(inspection);
+    void inspection.finally(() => {
+      this.pendingDetectionInputInspections.delete(inspection);
+    });
+    this.notifyDetectionInputChanges();
   }
 }

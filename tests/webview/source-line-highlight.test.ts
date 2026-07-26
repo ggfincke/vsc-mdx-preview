@@ -3,7 +3,13 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, createElement, useRef, type ReactNode } from 'react';
+import {
+  act,
+  createElement,
+  useLayoutEffect,
+  useRef,
+  type ReactNode,
+} from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import {
   SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
@@ -52,7 +58,38 @@ function Harness({ children, onOpenSourceLine, enabled = true }: HarnessProps) {
     onOpenSourceLine,
   });
 
-  return createElement('div', { ref }, children);
+  return createElement(
+    'div',
+    { ref, 'data-source-highlight-root': 'true' },
+    children
+  );
+}
+
+function SafeReplacementHarness({
+  html,
+  enabled,
+  onOpenSourceLine,
+}: {
+  html: string;
+  enabled: boolean;
+  onOpenSourceLine: (line: number) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (ref.current) {
+      ref.current.innerHTML = html;
+    }
+  }, [html]);
+
+  useSourceLineHighlight({
+    containerRef: ref,
+    trigger: html,
+    enabled,
+    onOpenSourceLine,
+  });
+
+  return createElement('div', { ref });
 }
 
 function ScrollSyncHarness({ children }: { children: ReactNode }) {
@@ -68,8 +105,7 @@ function ScrollSyncHarness({ children }: { children: ReactNode }) {
 
 let mountedRoot: Root | undefined;
 let originalRequestAnimationFrame:
-  | typeof window.requestAnimationFrame
-  | undefined;
+  typeof window.requestAnimationFrame | undefined;
 
 async function mountHarness(
   children: ReactNode,
@@ -134,7 +170,9 @@ function renderMappedPreview(): HTMLElement {
   return document.querySelector('.markdown-body') as HTMLElement;
 }
 
-function installAnimationFrameQueue(fakeTimers = false): FrameRequestCallback[] {
+function installAnimationFrameQueue(
+  fakeTimers = false
+): FrameRequestCallback[] {
   if (fakeTimers) {
     vi.useFakeTimers();
   }
@@ -192,15 +230,53 @@ describe('useSourceLineHighlight', () => {
   });
 
   it('opens the source line on Ctrl-click for mapped elements', async () => {
+    const addedTypes: string[] = [];
+    const removedTypes: string[] = [];
+    const originalAddEventListener = HTMLElement.prototype.addEventListener;
+    const originalRemoveEventListener =
+      HTMLElement.prototype.removeEventListener;
+    vi.spyOn(HTMLElement.prototype, 'addEventListener').mockImplementation(
+      function (
+        this: HTMLElement,
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: boolean | AddEventListenerOptions
+      ): void {
+        if (this.dataset.sourceHighlightRoot === 'true') {
+          addedTypes.push(type);
+        }
+        originalAddEventListener.call(this, type, listener, options);
+      }
+    );
+    vi.spyOn(HTMLElement.prototype, 'removeEventListener').mockImplementation(
+      function (
+        this: HTMLElement,
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: boolean | EventListenerOptions
+      ): void {
+        if (this.dataset.sourceHighlightRoot === 'true') {
+          removedTypes.push(type);
+        }
+        originalRemoveEventListener.call(this, type, listener, options);
+      }
+    );
+
     const onOpenSourceLine = vi.fn();
     const host = await mountHarness(
-      createElement('p', { 'data-source-line': '12' }, 'Mapped paragraph'),
+      Array.from({ length: 1_000 }, (_, index) =>
+        createElement(
+          'p',
+          { key: index, 'data-source-line': String(index + 12) },
+          `Mapped paragraph ${index + 1}`
+        )
+      ),
       onOpenSourceLine
     );
-    const paragraph = host.querySelector('p')!;
+    const paragraph = host.querySelector('[data-source-line="12"]')!;
 
     act(() => {
-      paragraph.dispatchEvent(new MouseEvent('mouseenter'));
+      paragraph.dispatchEvent(new MouseEvent('pointerover', { bubbles: true }));
     });
     act(() => {
       paragraph.dispatchEvent(
@@ -216,24 +292,76 @@ describe('useSourceLineHighlight', () => {
     expect(onOpenSourceLine).toHaveBeenCalledWith(12);
     expect(paragraph.classList.contains('highlight-line')).toBe(true);
     expect(paragraph.classList.contains('highlight-active')).toBe(true);
+
+    expect(addedTypes).toEqual(['pointerover', 'pointerout', 'click']);
+
+    act(() => {
+      mountedRoot?.unmount();
+    });
+    mountedRoot = undefined;
+
+    expect(removedTypes).toEqual(['pointerover', 'pointerout', 'click']);
   });
 
-  it('promotes child source lines to their highlight owner', async () => {
+  it('promotes child mappings & resolves the nearest nested owner', async () => {
     const onOpenSourceLine = vi.fn();
     const host = await mountHarness(
-      createElement(
-        'p',
-        null,
-        createElement('img', {
-          src: 'data:image/png;base64,abc',
-          'data-source-line': '27',
-        })
-      ),
+      [
+        createElement(
+          'section',
+          { key: 'nested', id: 'outer-owner', 'data-source-line': '10' },
+          createElement(
+            'span',
+            { id: 'inner-owner', 'data-source-line': '11' },
+            'Nested'
+          )
+        ),
+        createElement(
+          'p',
+          { key: 'image' },
+          createElement('img', {
+            src: 'data:image/png;base64,abc',
+            'data-source-line': '27',
+          })
+        ),
+      ],
       onOpenSourceLine
     );
+    const outer = host.querySelector('#outer-owner')!;
+    const inner = host.querySelector('#inner-owner')!;
     const paragraph = host.querySelector('p')!;
 
     act(() => {
+      outer.dispatchEvent(new MouseEvent('pointerover', { bubbles: true }));
+    });
+    expect(outer.classList.contains('highlight-line')).toBe(true);
+
+    act(() => {
+      inner.dispatchEvent(
+        new MouseEvent('pointerover', {
+          bubbles: true,
+          relatedTarget: outer,
+        })
+      );
+    });
+    expect(outer.classList.contains('highlight-line')).toBe(false);
+    expect(inner.classList.contains('highlight-line')).toBe(true);
+
+    act(() => {
+      inner.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          metaKey: true,
+          button: 0,
+        })
+      );
+      inner.dispatchEvent(
+        new MouseEvent('pointerout', {
+          bubbles: true,
+          relatedTarget: outer,
+        })
+      );
       paragraph.dispatchEvent(
         new MouseEvent('click', {
           bubbles: true,
@@ -244,10 +372,13 @@ describe('useSourceLineHighlight', () => {
       );
     });
 
-    expect(onOpenSourceLine).toHaveBeenCalledWith(27);
+    expect(onOpenSourceLine.mock.calls).toEqual([[11], [27]]);
+    expect(inner.classList.contains('highlight-active')).toBe(false);
+    expect(inner.classList.contains('highlight-line')).toBe(false);
+    expect(outer.classList.contains('highlight-line')).toBe(true);
   });
 
-  it('ignores non-navigation and interactive clicks', async () => {
+  it('gates clicks & cleans Safe replacement interactions', async () => {
     const onOpenSourceLine = vi.fn();
     const host = await mountHarness(
       createElement(
@@ -273,6 +404,16 @@ describe('useSourceLineHighlight', () => {
       );
     });
     act(() => {
+      paragraph.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+          button: 1,
+        })
+      );
+    });
+    act(() => {
       link.dispatchEvent(
         new MouseEvent('click', {
           bubbles: true,
@@ -284,6 +425,76 @@ describe('useSourceLineHighlight', () => {
     });
 
     expect(onOpenSourceLine).not.toHaveBeenCalled();
+
+    await act(async () => {
+      mountedRoot?.render(
+        createElement(SafeReplacementHarness, {
+          html: '<p data-source-line="4">First</p>',
+          enabled: true,
+          onOpenSourceLine,
+        })
+      );
+    });
+
+    const first = host.querySelector('p')!;
+    act(() => {
+      first.dispatchEvent(new MouseEvent('pointerover', { bubbles: true }));
+      first.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+          button: 0,
+        })
+      );
+    });
+    expect(first.classList.contains('highlight-active')).toBe(true);
+
+    await act(async () => {
+      mountedRoot?.render(
+        createElement(SafeReplacementHarness, {
+          html: '<p data-source-line="9">Replacement</p>',
+          enabled: true,
+          onOpenSourceLine,
+        })
+      );
+    });
+
+    const replacement = host.querySelector('p')!;
+    expect(first.isConnected).toBe(false);
+    expect(first.classList.contains('highlight-line')).toBe(false);
+    expect(first.classList.contains('highlight-active')).toBe(false);
+    expect(replacement.classList.contains('highlight-line')).toBe(false);
+
+    act(() => {
+      replacement.dispatchEvent(
+        new MouseEvent('pointerover', { bubbles: true })
+      );
+    });
+    expect(replacement.classList.contains('highlight-line')).toBe(true);
+
+    await act(async () => {
+      mountedRoot?.render(
+        createElement(SafeReplacementHarness, {
+          html: '<p data-source-line="9">Replacement</p>',
+          enabled: false,
+          onOpenSourceLine,
+        })
+      );
+    });
+
+    expect(replacement.classList.contains('highlight-line')).toBe(false);
+    act(() => {
+      replacement.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+          button: 0,
+        })
+      );
+    });
+    expect(onOpenSourceLine).toHaveBeenCalledTimes(1);
   });
 
   it('animates, coalesces, and defers source-line scroll targets', () => {

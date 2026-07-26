@@ -13,6 +13,7 @@ import { HandshakeTimeoutError } from './PreviewInitializer';
 import { postPushArtifacts } from './evaluation/post-push-artifacts';
 import { prepareEvaluationContext } from './evaluation/prepare-evaluation-context';
 import type { PreparedEvaluationContext } from './evaluation/types';
+import type { DocumentAnalysisIdentity } from '../../shared/mdx-analysis/document-analysis';
 import type { Preview } from './Preview';
 
 const log = createTaggedLogger(LogTags.EVALUATE);
@@ -44,7 +45,11 @@ export default async function evaluateInWebview(
   preview: Preview,
   text: string,
   fsPath: string,
-  isCurrent?: () => boolean
+  isCurrent?: () => boolean,
+  documentIdentity: DocumentAnalysisIdentity = {
+    uri: preview.doc.uri.toString(),
+    version: preview.doc.version,
+  }
 ): Promise<void> {
   log.debug(`evaluateInWebview called for: ${fsPath}`);
   const engine = getEvaluationEngine();
@@ -57,7 +62,8 @@ export default async function evaluateInWebview(
       text,
       fsPath,
       engine,
-      current
+      current,
+      documentIdentity
     );
     if (prepared.kind === 'superseded') {
       return;

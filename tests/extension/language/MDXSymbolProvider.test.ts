@@ -1,8 +1,9 @@
 // tests/extension/language/MDXSymbolProvider.test.ts
 // unit tests for MDX document symbol provider
 
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect } from 'vitest';
 import { MDXSymbolProvider } from '../../../packages/extension-host/src/features/language/MDXSymbolProvider';
+import { clearMdxAnalysisCache } from '../../../packages/extension-host/src/shared/mdx-analysis/document-analysis';
 import { Position, SymbolKind, type CancellationToken } from 'vscode';
 import { createMockDocument } from '../../helpers/mock-document';
 
@@ -10,6 +11,10 @@ const provider = new MDXSymbolProvider();
 const token = {} as CancellationToken;
 
 describe('MDXSymbolProvider', () => {
+  beforeEach(() => {
+    clearMdxAnalysisCache();
+  });
+
   describe('headings', () => {
     it('returns heading symbols for h1-h6', () => {
       const doc = createMockDocument(
@@ -90,9 +95,7 @@ describe('MDXSymbolProvider', () => {
     });
 
     it('offsets positions correctly w/ frontmatter', () => {
-      const doc = createMockDocument(
-        '---\ntitle: Hello\n---\n\n# Heading\n'
-      );
+      const doc = createMockDocument('---\ntitle: Hello\n---\n\n# Heading\n');
       const symbols = provider.provideDocumentSymbols(doc, token);
 
       expect(symbols).toBeDefined();
@@ -106,16 +109,12 @@ describe('MDXSymbolProvider', () => {
 
   describe('imports & exports', () => {
     it('detects import statements as Module symbols', () => {
-      const doc = createMockDocument(
-        "import Foo from './Foo'\n\n# Content\n"
-      );
+      const doc = createMockDocument("import Foo from './Foo'\n\n# Content\n");
       const symbols = provider.provideDocumentSymbols(doc, token);
 
       expect(symbols).toBeDefined();
 
-      const importSymbol = symbols!.find(
-        (s) => s.kind === SymbolKind.Module
-      );
+      const importSymbol = symbols!.find((s) => s.kind === SymbolKind.Module);
       expect(importSymbol).toBeDefined();
       expect(importSymbol!.name).toBe('Foo');
       expect(importSymbol!.detail).toBe('import');
@@ -129,9 +128,7 @@ describe('MDXSymbolProvider', () => {
 
       expect(symbols).toBeDefined();
 
-      const exportSymbol = symbols!.find(
-        (s) => s.kind === SymbolKind.Variable
-      );
+      const exportSymbol = symbols!.find((s) => s.kind === SymbolKind.Variable);
       expect(exportSymbol).toBeDefined();
       expect(exportSymbol!.name).toBe('config');
       expect(exportSymbol!.detail).toBe('export');
@@ -145,9 +142,7 @@ describe('MDXSymbolProvider', () => {
 
       expect(symbols).toBeDefined();
 
-      const importSymbol = symbols!.find(
-        (s) => s.kind === SymbolKind.Module
-      );
+      const importSymbol = symbols!.find((s) => s.kind === SymbolKind.Module);
       expect(importSymbol).toBeDefined();
       expect(importSymbol!.name).toBe('Foo, Bar');
     });

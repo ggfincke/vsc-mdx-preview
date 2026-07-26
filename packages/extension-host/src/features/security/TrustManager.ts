@@ -55,11 +55,13 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
           return;
         }
 
-        this.notifyTrustStateChange();
-        if (linkBehaviorChanged) {
+        const state = this.notifyTrustStateChange();
+        if (linkBehaviorChanged && !scriptsChanged) {
           const preview = getPreviewManager().getCurrentPreview();
           if (preview?.active) {
-            void preview.updateWebview(true).catch((error) => {
+            void Promise.resolve(
+              preview.webviewHandle.setTrustState(state)
+            ).catch((error) => {
               log.error('Failed to update preview link behavior', error);
             });
           }
@@ -163,8 +165,10 @@ export class TrustManager extends WithSubscribers<TrustManager, TrustState> {
   }
 
   // notify subscribers of trust state change
-  private notifyTrustStateChange(): void {
+  private notifyTrustStateChange(): TrustState {
     const docUri = getPreviewManager().getCurrentPreview()?.doc.uri;
-    this.notifySubscribers(this.getState(docUri));
+    const state = this.getState(docUri);
+    this.notifySubscribers(state);
+    return state;
   }
 }

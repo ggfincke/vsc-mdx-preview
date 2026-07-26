@@ -2,6 +2,7 @@
 // lifecycle-managed config cache preserving missing vs no-config state
 
 import * as path from 'path';
+import type * as vscode from 'vscode';
 import { LogTags } from '@mdx-preview/contracts';
 import { WithSubscribers } from '../../app/services/SingletonService';
 import { createTaggedLogger } from '../logging/logger';
@@ -97,13 +98,25 @@ export class ConfigCache extends WithSubscribers<
   watchConfigCandidate(
     configPath: string,
     handlers: Parameters<PathCache<CacheWrapper>['watchPath']>[1]
-  ): void {
-    this.cache.watchPath(configPath, handlers);
+  ): vscode.Disposable {
+    return this.cache.retainFile(configPath, handlers);
   }
 
   // unregister a watcher for a config path
   unwatchConfigPath(configPath: string): void {
     this.cache.unwatchPath(configPath);
+  }
+
+  get retainedConfigPathCount(): number {
+    return this.cache.retainedPathCount;
+  }
+
+  get entryCount(): number {
+    return this.cache.size;
+  }
+
+  get watcherCount(): number {
+    return this.cache.watcherCount;
   }
 
   // dispatch config change notifications to subscribers

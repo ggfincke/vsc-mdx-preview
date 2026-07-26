@@ -58,6 +58,8 @@ export interface DiagramRendererConfig<P extends DiagramRendererBaseProps> {
   useThemeValue: () => string;
   // optional hook for renderer state beyond theme (e.g. icon packs or server)
   useCacheKeyValue?: () => string;
+  // include the renderer DOM id when generated SVG ids depend on it
+  includeIdInCacheKey?: boolean;
   // convert theme value to data-theme attribute (default: identity)
   toDataTheme?: (themeValue: string) => string;
   // extra deps for useAsyncEffect beyond [code, id, themeValue]
@@ -79,7 +81,11 @@ export function createDiagramRenderer<
     const renderedResultRef = useRef<string | null>(null);
     const themeValue = config.useThemeValue();
     const cacheKeyValue = useCacheKeyValue();
-    const resultCacheKey = JSON.stringify([code, themeValue, cacheKeyValue]);
+    const resultCacheKey = JSON.stringify(
+      config.includeIdInCacheKey
+        ? [code, themeValue, cacheKeyValue, id]
+        : [code, themeValue, cacheKeyValue]
+    );
     const dataTheme = resolveDataTheme(themeValue);
     const [error, setError] = useState<string | null>(null);
     const [showSource, setShowSource] = useState(false);

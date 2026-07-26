@@ -80,5 +80,8 @@ export const PATH_CACHE_MAX_ENTRIES = 200;
 // config file cache - resolved .mdx-previewrc.json configs
 export const CONFIG_CACHE_MAX_ENTRIES = 100;
 
+// Nextra metadata cache & tracked document limit
+export const META_CACHE_MAX_ENTRIES = 100;
+
 // component detection cache - parsed JSX component results
 export const COMPONENT_CACHE_MAX_ENTRIES = 50;

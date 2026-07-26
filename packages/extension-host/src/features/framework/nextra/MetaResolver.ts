@@ -2,23 +2,24 @@
 // resolve Nextra _meta.json files for page-level settings
 
 import * as path from 'path';
-import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
-import type { NextraPageMeta } from '@mdx-preview/contracts';
-
-const log = createTaggedLogger(LogTags.NEXTRA_META);
+import { LogTags, type NextraPageMeta } from '@mdx-preview/contracts';
+import { LRUCache } from '@mdx-preview/runtime-utils';
+import { getPreviewManager } from '../../../app/services';
+import { SingletonService } from '../../../app/services/SingletonService';
+import { META_CACHE_MAX_ENTRIES } from '../../../shared/constants/runtime';
 import { readJsonSync } from '../../../shared/utils/file-utils';
 import {
   findUp,
   createContainmentStopPredicate,
 } from '../../../shared/utils/find-up';
-import { SingletonService } from '../../../app/services/SingletonService';
+import { createTaggedLogger } from '../../../shared/logging/logger';
 import { PathCache } from '../../../shared/utils/cache';
-import { getPreviewManager } from '../../../app/services';
 import {
   isPathWithin,
   normalizePathForComparison,
 } from '../../../shared/utils/path-utils';
+
+const log = createTaggedLogger(LogTags.NEXTRA_META);
 
 // raw _meta.json entry structure (simplified to preview-relevant fields)
 type MetaEntry =
@@ -40,6 +41,13 @@ interface MetaWatchTarget {
   cacheKeys: Set<string>;
 }
 
+interface TrackedMetaDocument {
+  documentPath: string;
+  targetKeys: Set<string>;
+}
+
+const META_WATCH_PATTERN = '**/_meta.json';
+
 // * Nextra _meta.json resolver - resolve page-level settings from _meta.json files
 export class MetaResolver extends SingletonService<MetaResolver> {
   protected static override instance: MetaResolver | undefined;
@@ -48,9 +56,15 @@ export class MetaResolver extends SingletonService<MetaResolver> {
   // cache resolved meta (cache key -> resolved meta or null)
   private metaCache = new PathCache<NextraPageMeta | null>({
     logTag: LogTags.NEXTRA_META,
+    maxEntries: META_CACHE_MAX_ENTRIES,
   });
   private metaWatchTargets = new Map<string, MetaWatchTarget>();
-  private documentPathsByCacheKey = new Map<string, string>();
+  private trackedDocuments = new LRUCache<string, TrackedMetaDocument>({
+    maxEntries: META_CACHE_MAX_ENTRIES,
+    onEvict: (cacheKey, tracked) => {
+      this.pruneTrackedDocument(cacheKey, tracked);
+    },
+  });
 
   protected constructor() {
     super();
@@ -68,14 +82,14 @@ export class MetaResolver extends SingletonService<MetaResolver> {
       normalizePathForComparison(workspaceRoot),
       normalizePathForComparison(mdxFilePath),
     ]);
+    const candidates = this.getMetaCandidates(documentDir, workspaceRoot);
+    this.trackMetaCandidates(cacheKey, mdxFilePath, candidates);
+
     const cached = this.metaCache.get(cacheKey);
     if (cached !== undefined) {
       log.debug(`Cache hit for ${cacheKey}`);
       return cached;
     }
-
-    const candidates = this.getMetaCandidates(documentDir, workspaceRoot);
-    this.trackMetaCandidates(cacheKey, mdxFilePath, candidates);
 
     // search upward to find _meta.json
     const metaPath = this.findMetaFile(documentDir, workspaceRoot);
@@ -195,31 +209,42 @@ export class MetaResolver extends SingletonService<MetaResolver> {
     mdxFilePath: string,
     candidates: string[]
   ): void {
-    this.documentPathsByCacheKey.set(
-      cacheKey,
-      normalizePathForComparison(mdxFilePath)
-    );
+    if (candidates.length === 0) {
+      return;
+    }
+
+    const tracked = this.trackedDocuments.get(cacheKey);
+    if (tracked) {
+      return;
+    }
+
+    const documentPath = normalizePathForComparison(mdxFilePath);
+    const targetKeys = new Set<string>();
 
     for (const candidate of candidates) {
       const targetKey = normalizePathForComparison(candidate);
+      targetKeys.add(targetKey);
       let target = this.metaWatchTargets.get(targetKey);
       if (!target) {
         target = { path: candidate, cacheKeys: new Set() };
         this.metaWatchTargets.set(targetKey, target);
       }
       target.cacheKeys.add(cacheKey);
-      this.setupMetaWatcher(targetKey, target.path);
     }
+
+    this.setupMetaWatcher();
+    this.trackedDocuments.set(cacheKey, { documentPath, targetKeys });
   }
 
-  // keep candidate watchers armed so deletion can be followed by recreation
-  private setupMetaWatcher(targetKey: string, metaPath: string): void {
-    if (this.metaCache.hasWatcher(metaPath)) {
+  // retain one workspace glob so missing metadata creation stays detectable
+  private setupMetaWatcher(): void {
+    if (this.metaCache.hasWatcher(META_WATCH_PATTERN)) {
       return;
     }
 
-    const handleChange = () => this.handleMetaChange(targetKey);
-    this.metaCache.watchPath(metaPath, {
+    const handleChange = (eventPath: string) =>
+      this.handleMetaChange(normalizePathForComparison(eventPath));
+    this.metaCache.watchPath(META_WATCH_PATTERN, {
       onChange: handleChange,
       onCreate: handleChange,
       onDelete: handleChange,
@@ -254,7 +279,8 @@ export class MetaResolver extends SingletonService<MetaResolver> {
       );
       const isAffected = [...cacheKeys].some(
         (cacheKey) =>
-          this.documentPathsByCacheKey.get(cacheKey) === currentDocumentPath
+          this.trackedDocuments.peek(cacheKey)?.documentPath ===
+          currentDocumentPath
       );
       if (!isAffected) {
         return;
@@ -270,6 +296,26 @@ export class MetaResolver extends SingletonService<MetaResolver> {
     }
   }
 
+  // prune historical indexes & watchers when the document LRU evicts
+  private pruneTrackedDocument(
+    cacheKey: string,
+    tracked: TrackedMetaDocument
+  ): void {
+    this.metaCache.delete(cacheKey);
+
+    for (const targetKey of tracked.targetKeys) {
+      const target = this.metaWatchTargets.get(targetKey);
+      if (!target) {
+        continue;
+      }
+      target.cacheKeys.delete(cacheKey);
+      if (target.cacheKeys.size > 0) {
+        continue;
+      }
+      this.metaWatchTargets.delete(targetKey);
+    }
+  }
+
   // clear resolved metadata while preserving armed watcher tracking
   clearCaches(): void {
     this.metaCache.clear();
@@ -278,9 +324,9 @@ export class MetaResolver extends SingletonService<MetaResolver> {
 
   // clean up all file watchers & caches on dispose
   protected override onDispose(): void {
+    this.trackedDocuments.clearWithEviction();
     this.metaCache.dispose();
     this.metaWatchTargets.clear();
-    this.documentPathsByCacheKey.clear();
     log.debug('Disposed');
   }
 }

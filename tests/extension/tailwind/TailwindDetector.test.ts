@@ -76,6 +76,7 @@ vi.mock(
 );
 
 import { TailwindDetector } from '../../../packages/extension-host/src/features/tailwind/TailwindDetector';
+import { STANDARD_DEBOUNCE_MS } from '@mdx-preview/contracts';
 
 const tempDirs: string[] = [];
 
@@ -242,5 +243,80 @@ describe('TailwindDetector entry CSS scan scope', () => {
     expect(mockFindUp).toHaveBeenCalledTimes(2);
 
     detector.dispose();
+    mockWatchers.length = 0;
+    const creationWorkspaceRoot = makeTempDir();
+    const siblingRoot = makeTempDir();
+    const creationDetector = new TailwindDetector();
+    const onWorkspaceChange = vi.fn();
+    const onSiblingChange = vi.fn();
+    creationDetector.onDidChangeDetectionInputs(
+      creationWorkspaceRoot,
+      onWorkspaceChange
+    );
+    creationDetector.onDidChangeDetectionInputs(siblingRoot, onSiblingChange);
+
+    const configPath = path.join(creationWorkspaceRoot, 'tailwind.config.ts');
+    const createdCssPath = path.join(
+      creationWorkspaceRoot,
+      'styles',
+      'created.css'
+    );
+    const existingCssPath = path.join(
+      creationWorkspaceRoot,
+      'styles',
+      'existing.css'
+    );
+    const irrelevantCssPath = path.join(
+      creationWorkspaceRoot,
+      'styles',
+      'irrelevant.css'
+    );
+    const emptyThenWrittenCssPath = path.join(
+      creationWorkspaceRoot,
+      'styles',
+      'empty-then-written.css'
+    );
+    const detectionConfigWatcher = mockWatchers.find((watcher) =>
+      watcher.pattern.includes('tailwind.config')
+    );
+    const detectionCssWatcher = mockWatchers.find(
+      (watcher) => watcher.pattern === '**/*.css'
+    );
+
+    writeFile(emptyThenWrittenCssPath, '');
+    detectionCssWatcher?.create?.({ fsPath: emptyThenWrittenCssPath });
+    await new Promise((resolve) =>
+      setTimeout(resolve, STANDARD_DEBOUNCE_MS + 25)
+    );
+    expect(onWorkspaceChange).not.toHaveBeenCalled();
+
+    writeFile(emptyThenWrittenCssPath, '@import "tailwindcss";');
+    writeFile(existingCssPath, 'body { color: black; }');
+    detectionCssWatcher?.change?.({ fsPath: emptyThenWrittenCssPath });
+    writeFile(existingCssPath, '@tailwind utilities;');
+    detectionCssWatcher?.change?.({ fsPath: existingCssPath });
+    writeFile(createdCssPath, '@import "tailwindcss/theme";');
+    detectionCssWatcher?.create?.({ fsPath: createdCssPath });
+    detectionCssWatcher?.change?.({ fsPath: createdCssPath });
+    writeFile(irrelevantCssPath, 'body { color: rebeccapurple; }');
+    detectionCssWatcher?.change?.({ fsPath: irrelevantCssPath });
+    detectionConfigWatcher?.create?.({ fsPath: configPath });
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, STANDARD_DEBOUNCE_MS + 25)
+    );
+
+    expect(onWorkspaceChange).toHaveBeenCalledTimes(1);
+    expect(new Set(onWorkspaceChange.mock.calls[0][0])).toEqual(
+      new Set([
+        emptyThenWrittenCssPath,
+        existingCssPath,
+        createdCssPath,
+        configPath,
+      ])
+    );
+    expect(onSiblingChange).not.toHaveBeenCalled();
+
+    creationDetector.dispose();
   });
 });

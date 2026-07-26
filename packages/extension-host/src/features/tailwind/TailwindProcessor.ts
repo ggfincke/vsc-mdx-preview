@@ -4,6 +4,7 @@
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import type * as vscode from 'vscode';
 import { performance } from 'perf_hooks';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { SingletonService } from '../../app/services/SingletonService';
@@ -305,6 +306,14 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   // invalidate Tailwind detection caches for config & entry CSS paths
   invalidateDetectionCaches(changedPaths: string[]): void {
     this.detector.invalidateDetectionCaches(changedPaths);
+  }
+
+  // subscribe previews to newly created Tailwind config or entry CSS inputs
+  onDidChangeDetectionInputs(
+    workspaceRoot: string,
+    callback: (changedPaths: string[]) => void
+  ): vscode.Disposable {
+    return this.detector.onDidChangeDetectionInputs(workspaceRoot, callback);
   }
 
   // clear every Tailwind result & detection cache

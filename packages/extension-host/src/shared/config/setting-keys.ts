@@ -126,7 +126,10 @@ export type PreviewSettingAction =
 
 type PreviewResourceSettingKey = Exclude<
   SettingKey,
-  typeof SETTINGS.DEBUG_OUTPUT | typeof SETTINGS.WATCHER_DEBOUNCE_MS
+  | typeof SETTINGS.DEBUG_OUTPUT
+  | typeof SETTINGS.WATCHER_DEBOUNCE_MS
+  | typeof SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW
+  | typeof SETTINGS.FRAMEWORK
 >;
 
 // route every resource-scoped setting that changes compilation or presentation
@@ -135,7 +138,6 @@ export const PREVIEW_SETTING_ACTIONS = {
   [SETTINGS.UPDATE_MODE]: 'runtime-push',
   [SETTINGS.DEBOUNCE_DELAY]: 'runtime-push',
   [SETTINGS.SECURITY]: 'full-webview-refresh',
-  [SETTINGS.OPEN_MDX_LINKS_IN_PREVIEW]: 'recompile',
   [SETTINGS.USE_SUCRASE]: 'recompile',
   [SETTINGS.USE_VSCODE_MARKDOWN_STYLES]: 'full-webview-refresh',
   [SETTINGS.USE_WHITE_BACKGROUND]: 'full-webview-refresh',
@@ -153,7 +155,6 @@ export const PREVIEW_SETTING_ACTIONS = {
   [SETTINGS.AUTO_THEME]: 'runtime-push',
   [SETTINGS.PLANTUML_SERVER]: 'runtime-push',
   [SETTINGS.MERMAID_ICON_PACKS]: 'runtime-push',
-  [SETTINGS.FRAMEWORK]: 'recompile',
   [SETTINGS.FRAMEWORK_SHIMS]: 'recompile',
   [SETTINGS.COMPONENTS_BUILTINS]: 'recompile',
   [SETTINGS.COMPONENTS_UNKNOWN_BEHAVIOR]: 'recompile',

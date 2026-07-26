@@ -43,11 +43,11 @@ const RELATIVE_CHAIN: readonly StrategyDescriptor[] = [
   { getStrategy: getFileProbeStrategy, preferAsync: true },
 ];
 const NODE_MODULE_RELATIVE_CHAIN: readonly StrategyDescriptor[] = [
-  { getStrategy: getEnhancedResolveStrategy, preferAsync: false },
+  { getStrategy: getEnhancedResolveStrategy, preferAsync: true },
 ];
 const BARE_TS_CHAIN: readonly StrategyDescriptor[] = [
   { getStrategy: getTypeScriptPathStrategy, preferAsync: true },
-  { getStrategy: getEnhancedResolveStrategy, preferAsync: false },
+  { getStrategy: getEnhancedResolveStrategy, preferAsync: true },
 ];
 const BARE_CHAIN: readonly StrategyDescriptor[] = [BARE_TS_CHAIN[1]];
 

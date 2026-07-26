@@ -6,6 +6,7 @@ import { act, createElement, useRef, type JSX, type RefObject } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useCodeBlockEnhancement } from '../../packages/webview-client/src/features/code-block/hooks/useCodeBlockEnhancement';
 import { useSafeModeProcessing } from '../../packages/webview-client/src/features/preview/safe/hooks/useSafeModeProcessing';
 import { STYLE_IDS } from '../../packages/webview-client/src/shared/utils/StyleInjector';
 
@@ -25,6 +26,29 @@ function SafeModeHarness({ html, onRef }: HarnessProps): JSX.Element {
   }
 
   return createElement('div', { ref: containerRef });
+}
+
+function EnhancedSafeModeHarness({ html }: { html: string }): JSX.Element {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useSafeModeProcessing(containerRef, html);
+  useCodeBlockEnhancement({ containerRef, trigger: html });
+  return createElement('div', {
+    ref: containerRef,
+    'data-code-block-root': 'true',
+  });
+}
+
+function codeBlockHtml(
+  index: number,
+  language = 'ts',
+  highlightLines = '2'
+): string {
+  return [
+    `<div class="mdx-preview-codeblock-shiki" data-code="code-${index}"`,
+    ` data-language="${language}" data-highlight-lines="${highlightLines}">`,
+    '<pre><code><span class="line">first</span>',
+    '<span class="line">second</span></code></pre></div>',
+  ].join('');
 }
 
 function createMount(): {
@@ -54,8 +78,11 @@ function createMount(): {
 }
 
 describe('useSafeModeProcessing', () => {
+  let originalClipboard: Clipboard | undefined;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    originalClipboard = navigator.clipboard;
     document.body.innerHTML = '';
     document
       .querySelectorAll(`#${SAFE_MODE_STYLE_ID}`)
@@ -66,6 +93,10 @@ describe('useSafeModeProcessing', () => {
   });
 
   afterEach(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: originalClipboard,
+    });
     (
       globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
     ).IS_REACT_ACT_ENVIRONMENT = false;
@@ -73,6 +104,8 @@ describe('useSafeModeProcessing', () => {
     document
       .querySelectorAll(`#${SAFE_MODE_STYLE_ID}`)
       .forEach((node) => node.remove());
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('injects sanitized HTML & reuses the Safe Mode style', async () => {
@@ -133,5 +166,119 @@ describe('useSafeModeProcessing', () => {
     expect(img?.getAttribute('alt')).toBe('cat');
 
     await unmount();
+  });
+
+  it('delegates code-copy feedback across Safe replacements', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn(async (_text: string) => undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+
+    const rootListenerTypes: string[] = [];
+    const buttonListenerTypes: string[] = [];
+    const originalAddEventListener = HTMLElement.prototype.addEventListener;
+    vi.spyOn(HTMLElement.prototype, 'addEventListener').mockImplementation(
+      function (
+        this: HTMLElement,
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: boolean | AddEventListenerOptions
+      ): void {
+        if (this.dataset.codeBlockRoot === 'true') {
+          rootListenerTypes.push(type);
+        }
+        if (this.classList.contains('mdx-preview-codeblock-copy')) {
+          buttonListenerTypes.push(type);
+        }
+        originalAddEventListener.call(this, type, listener, options);
+      }
+    );
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    const render = async (html: string): Promise<void> => {
+      await act(async () => {
+        root.render(createElement(EnhancedSafeModeHarness, { html }));
+      });
+    };
+
+    await render(
+      Array.from({ length: 200 }, (_, index) => codeBlockHtml(index)).join('')
+    );
+
+    expect(host.querySelectorAll('.mdx-preview-codeblock-copy')).toHaveLength(
+      200
+    );
+    expect(host.querySelectorAll('.mdx-preview-codeblock-lang')).toHaveLength(
+      200
+    );
+    expect(host.querySelectorAll('.line.highlighted')).toHaveLength(200);
+    expect(
+      Array.from(
+        host.querySelectorAll<HTMLButtonElement>('.mdx-preview-codeblock-copy')
+      ).every((button) => button.type === 'button')
+    ).toBe(true);
+    expect(rootListenerTypes).toEqual(['click']);
+    expect(buttonListenerTypes).toEqual([]);
+
+    const firstButton = host.querySelector<HTMLButtonElement>(
+      '.mdx-preview-codeblock-copy'
+    )!;
+    const originalMarkup = firstButton.innerHTML;
+    await act(async () => {
+      firstButton
+        .querySelector('path')!
+        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(writeText).toHaveBeenCalledWith('code-0');
+    expect(firstButton.classList.contains('copied')).toBe(true);
+    expect(firstButton.innerHTML).not.toBe(originalMarkup);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+    expect(firstButton.classList.contains('copied')).toBe(false);
+    expect(firstButton.innerHTML).toBe(originalMarkup);
+
+    writeText.mockRejectedValueOnce(new Error('clipboard unavailable'));
+    await act(async () => {
+      firstButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(writeText).toHaveBeenCalledTimes(2);
+    expect(firstButton.classList.contains('copied')).toBe(false);
+
+    await act(async () => {
+      firstButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+    expect(firstButton.classList.contains('copied')).toBe(true);
+
+    await render(codeBlockHtml(999, 'js', '1'));
+    const detachedMarkup = firstButton.innerHTML;
+    expect(firstButton.isConnected).toBe(false);
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    expect(host.querySelectorAll('.mdx-preview-codeblock-copy')).toHaveLength(
+      1
+    );
+    expect(host.querySelector('.mdx-preview-codeblock-lang')?.textContent).toBe(
+      'js'
+    );
+    expect(host.querySelector('.line.highlighted')?.textContent).toBe('first');
+
+    act(() => {
+      vi.runAllTimers();
+    });
+    expect(firstButton.innerHTML).toBe(detachedMarkup);
+
+    await act(async () => {
+      root.unmount();
+    });
   });
 });

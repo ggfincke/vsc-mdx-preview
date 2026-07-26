@@ -42,7 +42,6 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
   const configPath = findConfigFile(documentDir);
   if (!configPath) {
     cache.set(documentDir, null);
-    setupCandidateWatchers(documentPath);
     return null;
   }
 
@@ -58,7 +57,6 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
       configPath
     );
     cache.set(documentDir, null);
-    setupCandidateWatchers(documentPath);
     return null;
   }
 
@@ -74,7 +72,6 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
       configPath
     );
     cache.set(documentDir, null);
-    setupCandidateWatchers(documentPath);
     return null;
   }
 
@@ -85,7 +82,6 @@ export function resolveConfig(documentPath: string): ResolvedConfig | null {
   };
 
   cache.set(documentDir, resolved);
-  setupConfigWatcher(configPath);
 
   log.info(`Loaded MDX config from ${configPath}`);
   log.debug('Config contents:', config);
@@ -137,51 +133,43 @@ export function getConfigCandidatePaths(documentPath: string): string[] {
   return candidatePaths;
 }
 
-// watch every path that could become the nearest config
-function setupCandidateWatchers(documentPath: string): void {
-  for (const candidatePath of getConfigCandidatePaths(documentPath)) {
-    setupConfigWatcher(candidatePath, true);
-  }
-}
-
 // validate config structure using centralized validation
 function validateConfig(config: unknown): string[] {
   const result = validateConfigSchema(config, { context: 'config' });
   return result.errors;
 }
 
-// setup file watcher for config file changes
-function setupConfigWatcher(configPath: string, candidate = false): void {
+// retain every candidate while its preview is active
+export function watchConfigCandidates(documentPath: string): vscode.Disposable {
   const cache = getConfigCache();
+  const retainedPaths = getConfigCandidatePaths(documentPath).map(
+    (configPath) =>
+      cache.watchConfigCandidate(configPath, {
+        onChange: () => {
+          log.debug(`File changed: ${configPath}`);
+          cache.invalidate(configPath);
+          cache.notifyChange(configPath, ConfigChangeType.FileChanged);
+        },
+        onCreate: () => {
+          log.debug(`File created: ${configPath}`);
+          cache.invalidate(configPath);
+          cache.notifyChange(configPath, ConfigChangeType.FileCreated);
+        },
+        onDelete: () => {
+          log.debug(`File deleted: ${configPath}`);
+          cache.invalidate(configPath);
+          cache.notifyChange(configPath, ConfigChangeType.FileDeleted);
+        },
+      })
+  );
 
-  // already watching
-  if (cache.hasWatcher(configPath)) {
-    return;
-  }
-
-  const handlers = {
-    onChange: () => {
-      log.debug(`File changed: ${configPath}`);
-      cache.invalidate(configPath);
-      cache.notifyChange(configPath, ConfigChangeType.FileChanged);
-    },
-    onCreate: () => {
-      log.debug(`File created: ${configPath}`);
-      cache.invalidate(configPath);
-      cache.notifyChange(configPath, ConfigChangeType.FileCreated);
-    },
-    onDelete: () => {
-      log.debug(`File deleted: ${configPath}`);
-      cache.invalidate(configPath);
-      cache.notifyChange(configPath, ConfigChangeType.FileDeleted);
+  return {
+    dispose: () => {
+      for (const retainedPath of retainedPaths) {
+        retainedPath.dispose();
+      }
     },
   };
-
-  if (candidate) {
-    cache.watchConfigCandidate(configPath, handlers);
-  } else {
-    cache.watchConfigPath(configPath, handlers);
-  }
 }
 
 // subscribe to config file changes

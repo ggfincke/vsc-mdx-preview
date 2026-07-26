@@ -4,20 +4,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { ModuleExecutionContext } from '../../../packages/extension-host/src/features/module-runtime/types/handlers';
 
-const { mockGet, mockClear } = vi.hoisted(() => ({
-  mockGet: vi.fn(),
-  mockClear: vi.fn(),
+const { mockLoadModuleWithEsmFallback } = vi.hoisted(() => ({
+  mockLoadModuleWithEsmFallback: vi.fn(),
 }));
 
 vi.mock(
   '../../../packages/extension-host/src/shared/utils/lazy-import',
-  () => ({
-    createKeyedLazyImport: vi.fn(() => ({
-      get: mockGet,
-      clear: mockClear,
-    })),
-    loadModuleWithEsmFallback: vi.fn(),
-  })
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import('../../../packages/extension-host/src/shared/utils/lazy-import')
+      >();
+    return {
+      ...actual,
+      loadModuleWithEsmFallback: mockLoadModuleWithEsmFallback,
+    };
+  }
 );
 
 vi.mock(
@@ -33,6 +35,20 @@ import {
   SassHandler,
   clearSassCache,
 } from '../../../packages/extension-host/src/features/module-runtime/handlers/SassHandler';
+import { createKeyedLazyImport } from '../../../packages/extension-host/src/shared/utils/lazy-import';
+
+interface Deferred<T> {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+}
+
+function createDeferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((settle) => {
+    resolve = settle;
+  });
+  return { promise, resolve };
+}
 
 function createContext(entryFsDirectory: string): ModuleExecutionContext {
   return {
@@ -48,16 +64,14 @@ describe('SassHandler', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGet.mockReset();
-    mockClear.mockReset();
+    mockLoadModuleWithEsmFallback.mockReset();
+    clearSassCache();
   });
 
-  it('handles .scss and .sass extensions', () => {
+  it('handles Sass extensions & explains a missing workspace root', async () => {
     expect(handler.extensions).toContain('.scss');
     expect(handler.extensions).toContain('.sass');
-  });
 
-  it('returns helper CSS when workspace root is unavailable', async () => {
     const result = await handler.handle(
       '',
       '/tmp/styles/main.scss',
@@ -73,7 +87,7 @@ describe('SassHandler', () => {
     const compileAsync = vi.fn().mockResolvedValue({
       css: '.compiled{color:red;}',
     });
-    mockGet.mockResolvedValueOnce({ compileAsync });
+    mockLoadModuleWithEsmFallback.mockResolvedValueOnce({ compileAsync });
 
     const fsPath = '/workspace/styles/main.scss';
     const result = await handler.handle(
@@ -98,7 +112,7 @@ describe('SassHandler', () => {
     const compileAsync = vi
       .fn()
       .mockRejectedValueOnce(new Error('Undefined variable'));
-    mockGet.mockResolvedValueOnce({ compileAsync });
+    mockLoadModuleWithEsmFallback.mockResolvedValueOnce({ compileAsync });
 
     const result = await handler.handle(
       '',
@@ -110,5 +124,62 @@ describe('SassHandler', () => {
     expect(result.css).toContain('Undefined variable');
     expect(result.css).toContain('main.scss');
     expect(result.code).toBe('');
+  });
+
+  it('fences stale Sass loads after clear & keyed loads after clearKey', async () => {
+    const oldLoad = createDeferred<{
+      compileAsync: ReturnType<typeof vi.fn>;
+    }>();
+    const freshLoad = createDeferred<{
+      compileAsync: ReturnType<typeof vi.fn>;
+    }>();
+    const oldCompile = vi.fn().mockResolvedValue({ css: '.old{}' });
+    const freshCompile = vi.fn().mockResolvedValue({ css: '.fresh{}' });
+    mockLoadModuleWithEsmFallback
+      .mockReturnValueOnce(oldLoad.promise)
+      .mockReturnValueOnce(freshLoad.promise);
+    const context = createContext('/workspace');
+    const fsPath = '/workspace/styles/main.scss';
+
+    const oldResult = handler.handle('', fsPath, context);
+    await vi.waitFor(() =>
+      expect(mockLoadModuleWithEsmFallback).toHaveBeenCalledTimes(1)
+    );
+    clearSassCache();
+    const freshResult = handler.handle('', fsPath, context);
+    await vi.waitFor(() =>
+      expect(mockLoadModuleWithEsmFallback).toHaveBeenCalledTimes(2)
+    );
+
+    freshLoad.resolve({ compileAsync: freshCompile });
+    await expect(freshResult).resolves.toMatchObject({ css: '.fresh{}' });
+    oldLoad.resolve({ compileAsync: oldCompile });
+    await expect(oldResult).resolves.toMatchObject({ css: '.old{}' });
+    await expect(handler.handle('', fsPath, context)).resolves.toMatchObject({
+      css: '.fresh{}',
+    });
+
+    expect(mockLoadModuleWithEsmFallback).toHaveBeenCalledTimes(2);
+    expect(freshCompile).toHaveBeenCalledTimes(2);
+
+    const oldKeyLoad = createDeferred<string | null>();
+    const freshKeyLoad = createDeferred<string | null>();
+    const loadFn = vi
+      .fn()
+      .mockReturnValueOnce(oldKeyLoad.promise)
+      .mockReturnValueOnce(freshKeyLoad.promise);
+    const loader = createKeyedLazyImport({ loadFn });
+    const oldKeyResult = loader.get('/workspace');
+    await vi.waitFor(() => expect(loadFn).toHaveBeenCalledTimes(1));
+    loader.clearKey('/workspace');
+    const freshKeyResult = loader.get('/workspace');
+    await vi.waitFor(() => expect(loadFn).toHaveBeenCalledTimes(2));
+
+    freshKeyLoad.resolve('fresh-key');
+    await expect(freshKeyResult).resolves.toBe('fresh-key');
+    oldKeyLoad.resolve('old-key');
+    await expect(oldKeyResult).resolves.toBe('old-key');
+    await expect(loader.get('/workspace')).resolves.toBe('fresh-key');
+    expect(loadFn).toHaveBeenCalledTimes(2);
   });
 });

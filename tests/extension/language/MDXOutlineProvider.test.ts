@@ -1,19 +1,20 @@
 // tests/extension/language/MDXOutlineProvider.test.ts
 // unit tests for MDX preview outline tree data provider
 
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import {
   MDXOutlineProvider,
   SymbolTreeItem,
 } from '../../../packages/extension-host/src/features/language/MDXOutlineProvider';
-import {
-  SymbolKind,
-  TreeItemCollapsibleState,
-  ThemeIcon,
-} from 'vscode';
+import { clearMdxAnalysisCache } from '../../../packages/extension-host/src/shared/mdx-analysis/document-analysis';
+import { SymbolKind, TreeItemCollapsibleState, ThemeIcon } from 'vscode';
 import { createMockDocument } from '../../helpers/mock-document';
 
 describe('MDXOutlineProvider', () => {
+  beforeEach(() => {
+    clearMdxAnalysisCache();
+  });
+
   it('returns root symbols from MDX document', () => {
     const provider = new MDXOutlineProvider();
     const doc = createMockDocument('# Hello\n\n## World\n');

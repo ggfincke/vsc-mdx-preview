@@ -10,6 +10,7 @@ import {
   toCompilerConfig,
 } from '../configuration/EffectivePreviewConfig';
 import { EXTENSION_DISPLAY_NAME } from '../../../shared/constants';
+import type { DocumentAnalysisIdentity } from '../../../shared/mdx-analysis/document-analysis';
 import type { EvaluationEngine } from '../EvaluationEngine';
 import type { Preview } from '../Preview';
 import type { TailwindProfileDetectionResult } from '../../tailwind/types/detector';
@@ -25,7 +26,8 @@ export async function prepareEvaluationContext(
   text: string,
   fsPath: string,
   engine: EvaluationEngine,
-  isCurrent: () => boolean
+  isCurrent: () => boolean,
+  documentIdentity: DocumentAnalysisIdentity
 ): Promise<PreparedEvaluationResult> {
   const trustState = getTrustManager().getStateForDocument(preview.doc.uri);
   log.debug(formatTrustStateForDebug(trustState));
@@ -89,6 +91,7 @@ export async function prepareEvaluationContext(
   const context: PreparedEvaluationContext = {
     preview,
     isCurrent,
+    documentIdentity,
     text,
     fsPath,
     engine,
