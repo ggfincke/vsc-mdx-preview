@@ -3,6 +3,8 @@
 
 export {
   type FetchResult,
+  type ModuleDependency,
+  type ModuleDependencyKind,
   type TrustState,
   type PreviewError,
   isPreviewError,

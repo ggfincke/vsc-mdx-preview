@@ -13,7 +13,11 @@ import {
 } from '../../../shared/errors';
 import { getErrorReporter } from '../../../app/services';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { type FetchResult, LogTags } from '@mdx-preview/contracts';
+import {
+  type FetchResult,
+  LogTags,
+  type ModuleDependencyKind,
+} from '@mdx-preview/contracts';
 import {
   MAX_MODULE_FILE_SIZE_BYTES,
   MAX_DEPENDENCIES_PER_MODULE,
@@ -141,7 +145,8 @@ export async function fetchLocal(
   request: string,
   isBare: boolean,
   parentId: string,
-  preview: Preview
+  preview: Preview,
+  dependencyKind: ModuleDependencyKind = 'require'
 ): Promise<FetchResult | undefined> {
   try {
     const entryFsDirectory = preview.entryFsDirectory;
@@ -164,6 +169,7 @@ export async function fetchLocal(
       tsConfig: preview.typescriptConfiguration,
       documentUri: preview.doc.uri,
       entryFsDirectory,
+      dependencyKind,
     });
     const executionContext: ModuleExecutionContext = {
       documentUri: preview.doc.uri,

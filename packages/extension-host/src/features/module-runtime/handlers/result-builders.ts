@@ -225,7 +225,7 @@ export function buildModuleExportResult(
 export function buildScriptResult(
   fsPath: string,
   code: string,
-  dependencies: string[]
+  dependencies: FetchResult['dependencies']
 ): FetchResult {
   return {
     fsPath,

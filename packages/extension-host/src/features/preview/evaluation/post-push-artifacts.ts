@@ -40,11 +40,14 @@ async function postTrustedArtifacts(
   const preview = context.preview;
   const { webviewHandle } = preview;
   const { result } = stageResult;
+  const dependencySpecifiers = [
+    ...new Set(result.dependencies.map(({ specifier }) => specifier)),
+  ];
 
   if (!context.isCurrent()) {
     return;
   }
-  preview.updateDependencies(result.dependencies);
+  preview.updateDependencies(dependencySpecifiers);
   applyFrontmatterAndMeta(context, result.frontmatter);
 
   await detectAndPushUsedComponents(context);
@@ -75,7 +78,7 @@ async function postTrustedArtifacts(
     {
       mdxText: context.text,
       entryFilePath: result.entryFilePath,
-      entryFileDependencies: result.dependencies,
+      entryFileDependencies: dependencySpecifiers,
       trustState: context.trustState,
       tailwindConfig: context.effectiveConfig.tailwind,
       profileHint: context.tailwindProfileHint,

@@ -9,12 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Preview runtime updates are atomic**: trust, link behavior, PlantUML settings, and other runtime flags now cross the extension/webview boundary as one configuration object; unchanged theme, flag, Tailwind, and icon channels are no longer resent on every edit
+- **Preview runtime updates are atomic**: source-line highlighting, highlight color, scroll synchronization, and shim side rail now cross the extension/webview boundary as one configuration object; unchanged runtime config, theme, Tailwind, and icon channels are no longer resent on every edit
+- **Shared MDX analysis is versioned**: diagnostics, symbols, component detection, and preview evaluation reuse one bounded AST/frontmatter result only for the exact document URI and version, with explicit change and cache-clear invalidation
 - **Cache clearing is exhaustive**: the Clear All Caches command now invalidates resolution, Sass, component, TypeScript, Babel, PostCSS, icon, preview-config, Tailwind, framework, and Nextra metadata caches without eagerly creating unused services
 - **Zoom has one persisted owner**: zoom commands now adjust the webview's persisted zoom value directly, so the first zoom after a reload no longer jumps from stale extension state
 
 ### Fixed
 
+- **Conditional package exports**: Trusted Mode preserves whether each dependency came from ESM import syntax or CommonJS `require()`, selects the matching browser/node export condition, and keeps distinct runtime identities when one module uses both branches of the same package; literal dynamic imports in CommonJS preserve enumerable named exports plus the whole default export, while computed dynamic imports retain native semantics
+- **Unsaved dependency edits**: on-type module fetches read each matching open dependency buffer, so multiple dirty imports participate in the same preview instead of only the active preview document
+- **Module-load race fencing**: cleared Sass and keyed lazy-import loads cannot repopulate newer cache generations, and cached real paths are reused only while the followed symlink target retains the same filesystem identity
+- **Watcher creation and bounds**: exact config and Tailwind watchers escape glob syntax and release by reference count; newly created preview configs, Tailwind configs, and qualifying Tailwind CSS inputs refresh affected previews
 - **Document and configuration lifecycle**: switching between documents with equal version numbers renders immediately; resource-scoped settings refresh for the new document; missing, malformed, created, repaired, or deleted preview configs invalidate correctly; tsconfig changes refresh parsed preview state; compilation/presentation settings invalidate every affected preview
 - **Safe configuration edits**: the Add to Config quick fix targets the nearest applicable config and never replaces malformed JSON with an empty object; async save, workspace, dependency, debounce, and startup-handshake failures are contained at their event boundaries
 - **Multi-root styling and settings**: custom CSS resolves from the document's workspace folder and clears when emptied; trust, link, and PlantUML settings use the document resource; stale async theme/icon work cannot overwrite a newer preview state
@@ -23,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workspace-aware module assets**: aliases and Sass resolve from the owning workspace root; imported CSS/Sass URLs resolve from the stylesheet; package/lockfile creation and deletion invalidate negative resolution state; the cold fetch path uses async resolution and avoids redundant file access
 - **Nextra metadata**: lookup cannot escape the workspace or confuse prefix siblings; creation, deletion, empty metadata, and sibling changes update every affected preview and clear stale webview state
 - **Webview recovery and links**: pre-registration messages preserve real event order; diagram renderers recover after invalid source; relative MDX links can open in preview; failed framework fallbacks retry real chunks; changed Mermaid icon packs re-register; diagram contrast follows the preview theme; KaTeX CSS failures no longer replace usable content
+- **Bounded webview interactions**: code-copy and source-line behavior delegate from stable roots across Safe Mode replacements, and Mermaid cache keys include render IDs so reused SVG cannot reference another diagram instance's generated IDs
 - **Lightbox and rendered errors**: direct-child images join galleries, delayed close work cannot erase a newly opened image, and Error-like objects render their message instead of `[object Object]`
 
 ### Performance

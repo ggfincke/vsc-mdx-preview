@@ -3,12 +3,16 @@
 
 import * as fs from 'fs';
 import { transformEntry } from '../module-runtime/transform/transform';
-import { extractImportSpecifiers } from '../module-runtime/dependencies/import-extractor';
+import { extractModuleDependencies } from '../module-runtime/dependencies/import-extractor';
 import { createLazyImport } from '../../shared/utils/lazy-import';
 import { createSingleton } from '../../shared/utils/singleton-factory';
 import { raceTimeout } from '../../shared/utils/async-utils';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags, SETTINGS_DEFAULTS } from '@mdx-preview/contracts';
+import {
+  LogTags,
+  SETTINGS_DEFAULTS,
+  type ModuleDependency,
+} from '@mdx-preview/contracts';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.ENGINE);
@@ -33,7 +37,7 @@ export interface TrustedEvaluationResult {
   // resolved file path
   entryFilePath: string;
   // extracted dependencies
-  dependencies: string[];
+  dependencies: ModuleDependency[];
   // parsed frontmatter
   frontmatter: Record<string, unknown> | undefined;
 }
@@ -90,8 +94,10 @@ export class EvaluationEngine {
     const entryFilePath = await fs.promises.realpath(fsPath);
 
     // extract dependencies from ESM code (before CommonJS conversion for better parsing)
-    const dependencies = await extractImportSpecifiers(esmCode);
-    log.debug(`Dependencies: ${dependencies.join(', ')}`);
+    const dependencies = await extractModuleDependencies(esmCode);
+    log.debug(
+      `Dependencies: ${dependencies.map(({ specifier }) => specifier).join(', ')}`
+    );
 
     return {
       code,

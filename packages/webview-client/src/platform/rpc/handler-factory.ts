@@ -3,6 +3,7 @@
 
 import type {
   TaggedLogger,
+  ModuleDependency,
   NextraPageMeta,
   PreviewError,
   PreviewRuntimeConfig,
@@ -21,7 +22,7 @@ export interface RequiredStateHandlers {
   setTrustedContent: (
     code: string,
     entryFilePath: string,
-    dependencies: string[]
+    dependencies: ModuleDependency[]
   ) => void;
   setError: (error: PreviewError) => void;
   setStale: (isStale: boolean) => void;
@@ -79,7 +80,11 @@ export type PendingMessage =
   | { type: 'safe'; payload: { html: string } }
   | {
       type: 'trusted';
-      payload: { code: string; entryFilePath: string; dependencies: string[] };
+      payload: {
+        code: string;
+        entryFilePath: string;
+        dependencies: ModuleDependency[];
+      };
     }
   | { type: 'error'; payload: PreviewError }
   | { type: 'stale'; payload: boolean };

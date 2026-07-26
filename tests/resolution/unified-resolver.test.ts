@@ -6,6 +6,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { configureRuntime, loadModule, registry } from 'mdx-forge/browser';
 import {
   UnifiedResolver,
   getUnifiedResolver,
@@ -21,6 +22,8 @@ import {
 } from '../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory';
 import { fetchLocal } from '../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal';
 import { NOOP_MODULE } from '../../packages/extension-host/src/features/module-runtime/fetch/utils';
+import { getScriptHandler } from '../../packages/extension-host/src/features/module-runtime/handlers';
+import { createImportRuntimeRequest } from '../../packages/extension-host/src/features/module-runtime/dependencies/import-extractor';
 import {
   ResolutionStrategy,
   type ResolutionContext,
@@ -86,6 +89,52 @@ describe('UnifiedResolver', () => {
     writeFixture(
       'node_modules/@scope/pkg/computed.js',
       'module.exports.load = (specifier) => import(specifier);'
+    );
+    writeFixture(
+      'node_modules/@scope/pkg/mixed.js',
+      [
+        "module.exports.loadLiteral = () => import('./dynamic-child.js');",
+        'module.exports.loadComputed = (specifier) => import(specifier);',
+      ].join('\n')
+    );
+    writeFixture(
+      'node_modules/conditional-package/package.json',
+      JSON.stringify({
+        name: 'conditional-package',
+        exports: {
+          '.': {
+            browser: {
+              import: './browser-import.js',
+              require: './browser-require.cjs',
+            },
+            node: {
+              import: './node-import.js',
+              require: './node-require.cjs',
+            },
+            default: './default.js',
+          },
+        },
+      })
+    );
+    writeFixture(
+      'node_modules/conditional-package/browser-import.js',
+      'export const value = "browser-import";'
+    );
+    writeFixture(
+      'node_modules/conditional-package/browser-require.cjs',
+      'module.exports = { value: "browser-require" };'
+    );
+    writeFixture(
+      'node_modules/conditional-package/node-import.js',
+      'export const value = "node-import";'
+    );
+    writeFixture(
+      'node_modules/conditional-package/node-require.cjs',
+      'module.exports = { value: "node-require" };'
+    );
+    writeFixture(
+      'node_modules/conditional-package/default.js',
+      'module.exports = { value: "default" };'
     );
     writeFixture(
       'node_modules/browser-disabled/package.json',
@@ -199,6 +248,33 @@ describe('UnifiedResolver', () => {
     expect(resolver.resolveSync('@scope/pkg', context, 'browser')?.fsPath).toBe(
       path.join(packageDir, 'browser.js')
     );
+
+    const conditionalPackageDir = path.join(
+      tempDir,
+      'node_modules',
+      'conditional-package'
+    );
+    const conditionalCases = [
+      ['browser', 'import'],
+      ['browser', 'require'],
+      ['node', 'import'],
+      ['node', 'require'],
+    ] as const;
+    const conditionalResults = await Promise.all(
+      conditionalCases.map(([mode, dependencyKind]) =>
+        resolver.resolveAsync(
+          'conditional-package',
+          { ...context, dependencyKind },
+          mode
+        )
+      )
+    );
+    expect(conditionalResults.map((result) => result?.fsPath)).toEqual([
+      path.join(conditionalPackageDir, 'browser-import.js'),
+      path.join(conditionalPackageDir, 'browser-require.cjs'),
+      path.join(conditionalPackageDir, 'node-import.js'),
+      path.join(conditionalPackageDir, 'node-require.cjs'),
+    ]);
   });
 
   it('resolves package children & rewrites only literal dynamic imports', async () => {
@@ -245,18 +321,34 @@ describe('UnifiedResolver', () => {
       path.join(packageDir, 'browser.js'),
       preview
     );
+    const mixed = await fetchLocal(
+      './mixed.js',
+      false,
+      path.join(packageDir, 'browser.js'),
+      preview
+    );
 
     expect(literal?.code).toContain('module.exports.load');
-    expect(literal?.code).toContain("require('./dynamic-child.js')");
+    expect(literal?.code).toContain('require("\\u0000mdx-forge:import');
     expect(literal?.code).not.toContain("import('./dynamic-child.js')");
-    expect(literal?.dependencies).toContain('./dynamic-child.js');
+    expect(literal?.dependencies).toEqual([
+      {
+        specifier: './dynamic-child.js',
+        kind: 'import',
+        runtimeRequest: createImportRuntimeRequest('./dynamic-child.js'),
+      },
+    ]);
     expect(computed?.code).toContain('import(specifier)');
     expect(computed?.dependencies).toEqual([]);
+    expect(mixed?.code).toContain('require("\\u0000mdx-forge:import');
+    expect(mixed?.code).toContain('import(specifier)');
+    expect(mixed?.dependencies).toEqual(literal?.dependencies);
 
     const runtimeModule: {
       exports: { load?: () => Promise<unknown> };
     } = { exports: {} };
-    const runtimeRequire = vi.fn(() => 'dynamic-child');
+    const dynamicChildExports = { named: 'dynamic-child' };
+    const runtimeRequire = vi.fn(() => dynamicChildExports);
     new Function('module', 'exports', 'require', literal!.code)(
       runtimeModule,
       runtimeModule.exports,
@@ -264,7 +356,83 @@ describe('UnifiedResolver', () => {
     );
 
     await expect(runtimeModule.exports.load?.()).resolves.toBeDefined();
-    expect(runtimeRequire).toHaveBeenCalledWith('./dynamic-child.js');
+    expect(runtimeRequire).toHaveBeenCalledWith(
+      createImportRuntimeRequest('./dynamic-child.js')
+    );
+
+    const mixedRuntimeModule: {
+      exports: {
+        loadLiteral?: () => Promise<{ default: unknown }>;
+        loadComputed?: (specifier: string) => Promise<{ default: unknown }>;
+      };
+    } = { exports: {} };
+    new Function('module', 'exports', 'require', mixed!.code)(
+      mixedRuntimeModule,
+      mixedRuntimeModule.exports,
+      runtimeRequire
+    );
+    await expect(mixedRuntimeModule.exports.loadLiteral?.()).resolves.toEqual({
+      named: 'dynamic-child',
+      default: dynamicChildExports,
+    });
+    await expect(
+      mixedRuntimeModule.exports.loadComputed?.(
+        'data:text/javascript,export default "computed"'
+      )
+    ).rejects.toMatchObject({
+      code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING',
+    });
+
+    registry.clear();
+    configureRuntime({
+      maxConcurrentFetches: 8,
+      maxModuleLoadDepth: 100,
+      preloadAliases: {},
+      runtime: {
+        Fragment: null,
+        jsx: () => null,
+        jsxs: () => null,
+      },
+    });
+    const entryPath = writeFixture('docs/conditional-entry.js', '');
+    const entryResult = await getScriptHandler().handle(
+      [
+        "import { value as imported } from 'conditional-package';",
+        "const required = require('conditional-package');",
+        'module.exports = { imported, required: required.value };',
+      ].join('\n'),
+      entryPath,
+      {
+        documentUri: preview.doc.uri,
+        entryFsDirectory: tempDir,
+        useSucraseTranspiler: false,
+        getWebviewUri: () => undefined,
+      }
+    );
+    expect(entryResult.dependencies).toEqual([
+      {
+        specifier: 'conditional-package',
+        kind: 'import',
+        runtimeRequest: createImportRuntimeRequest('conditional-package'),
+      },
+      {
+        specifier: 'conditional-package',
+        kind: 'require',
+        runtimeRequest: 'conditional-package',
+      },
+    ]);
+
+    const loadedEntry = await loadModule(
+      entryPath,
+      entryResult.code,
+      entryResult.dependencies,
+      (request, isBare, parentId, kind) =>
+        fetchLocal(request, isBare, parentId, preview, kind)
+    );
+    expect(loadedEntry.exports).toEqual({
+      imported: 'browser-import',
+      required: 'browser-require',
+    });
   });
 
   it('returns a noop fetch for browser-field false mappings', async () => {

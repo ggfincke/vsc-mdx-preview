@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import type {
   ExtensionRPC,
   FetchResult,
+  ModuleDependencyKind,
   PreviewSourceLineReportResult,
 } from '@mdx-preview/contracts';
 import { LogTags } from '@mdx-preview/contracts';
@@ -114,7 +115,8 @@ class ExtensionHandle implements ExtensionRPC {
   async fetch(
     request: string,
     isBare: boolean,
-    parentId: string
+    parentId: string,
+    dependencyKind?: ModuleDependencyKind
   ): Promise<FetchResult | undefined> {
     log.debug(`fetch: request=${request}, isBare=${isBare}`);
 
@@ -130,12 +132,22 @@ class ExtensionHandle implements ExtensionRPC {
       ...opts,
       allowEmpty: true,
     });
+    const validDependencyKind =
+      dependencyKind === undefined
+        ? 'require'
+        : dependencyKind === 'import' || dependencyKind === 'require'
+          ? dependencyKind
+          : undefined;
 
     if (
       validRequest === undefined ||
       validIsBare === undefined ||
-      validParentId === undefined
+      validParentId === undefined ||
+      validDependencyKind === undefined
     ) {
+      if (validDependencyKind === undefined) {
+        log.error('fetch: dependencyKind must be import or require');
+      }
       return undefined;
     }
 
@@ -161,7 +173,13 @@ class ExtensionHandle implements ExtensionRPC {
       return undefined;
     }
 
-    return fetchLocal(validRequest, validIsBare, validParentId, this.preview);
+    return fetchLocal(
+      validRequest,
+      validIsBare,
+      validParentId,
+      this.preview,
+      validDependencyKind
+    );
   }
 
   // open VS Code settings (optionally to specific setting)

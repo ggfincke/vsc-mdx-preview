@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve';
 import type { Resolver } from 'enhanced-resolve';
 import { createTaggedLogger } from '../../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
+import { LogTags, type ModuleDependencyKind } from '@mdx-preview/contracts';
 import {
   RESOLVER_CACHE_TTL_MS,
   BROWSER_RESOLVE_EXTENSIONS,
@@ -32,7 +32,6 @@ type ResolverMode = 'browser' | 'node';
 
 // mode-specific configuration
 interface ModeConfig {
-  conditionNames: string[];
   mainFields: string[];
   aliasFields: string[];
   extensions: string[];
@@ -40,16 +39,12 @@ interface ModeConfig {
 
 const MODE_CONFIGS: Record<ResolverMode, ModeConfig> = {
   browser: {
-    // browser resolution: browser > import > require > default
-    conditionNames: ['browser', 'import', 'require', 'default'],
     mainFields: ['browser', 'module', 'main'],
     // support browser field aliasing
     aliasFields: ['browser'],
     extensions: [...BROWSER_RESOLVE_EXTENSIONS],
   },
   node: {
-    // node resolution: node > import > require > default
-    conditionNames: ['node', 'import', 'require', 'default'],
     mainFields: ['main', 'module'],
     aliasFields: [],
     extensions: [...NODE_RESOLVE_EXTENSIONS],
@@ -59,6 +54,7 @@ const MODE_CONFIGS: Record<ResolverMode, ModeConfig> = {
 // create a module resolver for one mode & filesystem call style
 function createResolver(
   mode: ResolverMode,
+  dependencyKind: ModuleDependencyKind,
   useSyncFileSystemCalls: boolean
 ): Resolver {
   const config = MODE_CONFIGS[mode];
@@ -66,7 +62,7 @@ function createResolver(
   return ResolverFactory.createResolver({
     fileSystem: cachedFs,
     extensions: config.extensions,
-    conditionNames: config.conditionNames,
+    conditionNames: [mode, dependencyKind, 'default'],
     mainFields: config.mainFields,
     aliasFields: config.aliasFields,
     // esm exports/imports field support
@@ -82,6 +78,11 @@ function createResolver(
 
 // sync & async resolver instances for one condition mode
 interface ModeResolvers {
+  import: ResolverPair;
+  require: ResolverPair;
+}
+
+interface ResolverPair {
   sync: Resolver;
   async: Resolver;
 }
@@ -89,8 +90,14 @@ interface ModeResolvers {
 // create paired resolvers so async callers never route through sync fs adapters
 function createModeResolvers(mode: ResolverMode): ModeResolvers {
   return {
-    sync: createResolver(mode, true),
-    async: createResolver(mode, false),
+    import: {
+      sync: createResolver(mode, 'import', true),
+      async: createResolver(mode, 'import', false),
+    },
+    require: {
+      sync: createResolver(mode, 'require', true),
+      async: createResolver(mode, 'require', false),
+    },
   };
 }
 
@@ -104,19 +111,24 @@ export const nodeResolverSingleton = createResettableSingleton(() =>
 );
 
 // get the shared browser resolver instance (used for resolving modules to be loaded in the webview)
-export const getBrowserResolver = (): Resolver =>
-  browserResolverSingleton.get().sync;
+export const getBrowserResolver = (
+  dependencyKind: ModuleDependencyKind = 'require'
+): Resolver => browserResolverSingleton.get()[dependencyKind].sync;
 
 // get the shared node resolver instance (used for resolving plugins to be loaded in the extension)
-export const getNodeResolver = (): Resolver => nodeResolverSingleton.get().sync;
+export const getNodeResolver = (
+  dependencyKind: ModuleDependencyKind = 'require'
+): Resolver => nodeResolverSingleton.get()[dependencyKind].sync;
 
 // get async browser resolver for the module fetch hot path
-export const getAsyncBrowserResolver = (): Resolver =>
-  browserResolverSingleton.get().async;
+export const getAsyncBrowserResolver = (
+  dependencyKind: ModuleDependencyKind = 'require'
+): Resolver => browserResolverSingleton.get()[dependencyKind].async;
 
 // get async node resolver for async plugin resolution
-export const getAsyncNodeResolver = (): Resolver =>
-  nodeResolverSingleton.get().async;
+export const getAsyncNodeResolver = (
+  dependencyKind: ModuleDependencyKind = 'require'
+): Resolver => nodeResolverSingleton.get()[dependencyKind].async;
 
 // clear enhanced-resolve fs + resolver singletons only
 // does NOT clear statCache or compiledIndexCache; use invalidateResolution() for full invalidation

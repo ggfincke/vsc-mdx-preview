@@ -8,7 +8,10 @@ import {
   mockFrameworkDetector,
   mockErrorReporter,
 } from '../../helpers/mock-services';
-import type { PreviewRuntimeConfig } from '@mdx-preview/contracts';
+import type {
+  ModuleDependency,
+  PreviewRuntimeConfig,
+} from '@mdx-preview/contracts';
 
 const {
   mockStatusBarMessage,
@@ -442,7 +445,7 @@ describe('evaluate-in-webview Tailwind routing', () => {
       | ((result: {
           code: string;
           entryFilePath: string;
-          dependencies: string[];
+          dependencies: ModuleDependency[];
           frontmatter: undefined;
         }) => void)
       | undefined;
@@ -457,7 +460,13 @@ describe('evaluate-in-webview Tailwind routing', () => {
       .mockResolvedValueOnce({
         code: 'NEW',
         entryFilePath: '/workspace/new.mdx',
-        dependencies: ['/workspace/new.tsx'],
+        dependencies: [
+          {
+            specifier: '/workspace/new.tsx',
+            kind: 'import',
+            runtimeRequest: '\0mdx-forge:import\0/workspace/new.tsx',
+          },
+        ],
         frontmatter: undefined,
       });
 
@@ -489,7 +498,13 @@ describe('evaluate-in-webview Tailwind routing', () => {
     resolveOld!({
       code: 'OLD',
       entryFilePath: '/workspace/old.mdx',
-      dependencies: ['/workspace/old.tsx'],
+      dependencies: [
+        {
+          specifier: '/workspace/old.tsx',
+          kind: 'import',
+          runtimeRequest: '\0mdx-forge:import\0/workspace/old.tsx',
+        },
+      ],
       frontmatter: undefined,
     });
     await oldEvaluation;
@@ -498,7 +513,13 @@ describe('evaluate-in-webview Tailwind routing', () => {
     expect(preview.webviewHandle.updatePreview).toHaveBeenCalledWith(
       'NEW',
       '/workspace/new.mdx',
-      ['/workspace/new.tsx']
+      [
+        {
+          specifier: '/workspace/new.tsx',
+          kind: 'import',
+          runtimeRequest: '\0mdx-forge:import\0/workspace/new.tsx',
+        },
+      ]
     );
     expect(preview.updateDependencies).toHaveBeenCalledTimes(1);
     expect(preview.updateDependencies).toHaveBeenCalledWith([

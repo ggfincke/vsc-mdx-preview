@@ -2,6 +2,7 @@
 // build canonical module resolution context from preview-owned inputs
 
 import * as vscode from 'vscode';
+import type { ModuleDependencyKind } from '@mdx-preview/contracts';
 import { getFrameworkDetector } from '../../../app/services';
 import type {
   ResolutionContext,
@@ -14,6 +15,7 @@ interface BuildResolutionContextOptions {
   entryFsDirectory: string | null;
   tsConfig?: TypeScriptConfiguration;
   workspaceRoot?: string | null;
+  dependencyKind?: ModuleDependencyKind;
 }
 
 export function buildResolutionContext(
@@ -33,5 +35,8 @@ export function buildResolutionContext(
     framework: frameworkInfo.framework,
     workspaceRoot,
     shimsEnabled: frameworkDetector.areShimsEnabled(options.documentUri),
+    ...(options.dependencyKind
+      ? { dependencyKind: options.dependencyKind }
+      : {}),
   };
 }

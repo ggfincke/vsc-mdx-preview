@@ -16,6 +16,8 @@ import type { ModuleRegistry } from 'mdx-forge/browser/registry';
 export type PreloadedModuleId =
   (typeof PRELOADED_MODULE_IDS)[keyof typeof PRELOADED_MODULE_IDS];
 
+const registeredPreloadAliases = new Map<string, string>();
+
 export interface LayoutOptions {
   forceLightTheme?: boolean;
 }
@@ -84,6 +86,19 @@ export function preloadEntry(
   entry: PreloadEntry
 ): void {
   registerPreloadEntries(registry, [entry]);
+  for (const alias of entry.aliases ?? []) {
+    registeredPreloadAliases.set(alias, entry.id);
+  }
+}
+
+export function resolveRegisteredPreloadAlias(
+  registry: ModuleRegistry,
+  specifier: string
+): string | undefined {
+  const moduleId = registeredPreloadAliases.get(specifier);
+  return moduleId !== undefined && registry.isPreloaded(moduleId)
+    ? moduleId
+    : undefined;
 }
 
 // initialize core preloaded modules in the registry

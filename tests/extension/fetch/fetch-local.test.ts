@@ -116,6 +116,7 @@ describe('fetchLocal', () => {
       './image.png',
       {
         baseDir: tempDir,
+        dependencyKind: 'require',
         tsConfig: undefined,
         framework: 'generic',
         workspaceRoot: tempDir,

@@ -56,7 +56,11 @@ describe('automatic JSX runtime', () => {
         createContext(useSucrase)
       );
 
-      expect(result.dependencies).toContain('react/jsx-runtime');
+      expect(result.dependencies).toContainEqual({
+        specifier: 'react/jsx-runtime',
+        kind: 'require',
+        runtimeRequest: 'react/jsx-runtime',
+      });
 
       const runtime = {
         jsx: (type: string, props: Record<string, unknown>) => ({

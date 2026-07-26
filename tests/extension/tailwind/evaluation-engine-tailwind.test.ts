@@ -8,15 +8,12 @@ import {
   mockErrorReporter,
 } from '../../helpers/mock-services';
 
-const {
-  mockRaceTimeout,
-  mockTransformEntry,
-  mockExtractImportSpecifiers,
-} = vi.hoisted(() => ({
-  mockRaceTimeout: vi.fn(),
-  mockTransformEntry: vi.fn(),
-  mockExtractImportSpecifiers: vi.fn(),
-}));
+const { mockRaceTimeout, mockTransformEntry, mockExtractModuleDependencies } =
+  vi.hoisted(() => ({
+    mockRaceTimeout: vi.fn(),
+    mockTransformEntry: vi.fn(),
+    mockExtractModuleDependencies: vi.fn(),
+  }));
 
 vi.mock(
   '../../../packages/extension-host/src/shared/utils/async-utils',
@@ -35,7 +32,7 @@ vi.mock(
 vi.mock(
   '../../../packages/extension-host/src/features/module-runtime/dependencies/import-extractor',
   () => ({
-    extractImportSpecifiers: mockExtractImportSpecifiers,
+    extractModuleDependencies: mockExtractModuleDependencies,
   })
 );
 

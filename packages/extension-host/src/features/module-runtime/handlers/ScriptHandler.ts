@@ -7,7 +7,7 @@ import type {
   ModuleExecutionContext,
 } from '../types/handlers';
 import { transform } from '../transform/transform';
-import { extractImportSpecifiers } from '../dependencies/import-extractor';
+import { extractModuleDependencies } from '../dependencies/import-extractor';
 import { buildScriptResult } from './result-builders';
 import { SCRIPTABLE_EXTENSIONS } from '../../../shared/constants';
 
@@ -30,13 +30,28 @@ export class ScriptHandler implements FileTypeHandler {
     );
 
     // retain source imports & append helpers emitted by the transpiler
-    const sourceDependencies = await extractImportSpecifiers(esmCode);
+    const sourceDependencies = await extractModuleDependencies(esmCode);
     const transformedDependencies =
-      await extractImportSpecifiers(transformedCode);
-    const dependencies = [
-      ...new Set([...sourceDependencies, ...transformedDependencies]),
-    ];
+      await extractModuleDependencies(transformedCode);
+    const dependencies = dedupeDependencies([
+      ...sourceDependencies,
+      ...transformedDependencies,
+    ]);
 
     return buildScriptResult(fsPath, transformedCode, dependencies);
   }
+}
+
+function dedupeDependencies(
+  dependencies: FetchResult['dependencies']
+): FetchResult['dependencies'] {
+  const seen = new Set<string>();
+  return dependencies.filter((dependency) => {
+    const key = JSON.stringify([dependency.specifier, dependency.kind]);
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }

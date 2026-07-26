@@ -3,11 +3,19 @@
 
 import type { ModuleErrorData } from '../errors';
 
+export type ModuleDependencyKind = 'import' | 'require';
+
+export interface ModuleDependency {
+  specifier: string;
+  kind: ModuleDependencyKind;
+  runtimeRequest: string;
+}
+
 // fetch result w/ module code & dependencies
 export interface FetchResult {
   fsPath: string;
   code: string;
-  dependencies: string[];
+  dependencies: ModuleDependency[];
   css?: string;
 }
 

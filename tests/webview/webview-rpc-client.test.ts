@@ -3,6 +3,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ModuleDependency } from '@mdx-preview/contracts';
 import { createRpcMessageQueue } from '../../packages/webview-client/src/platform/rpc/rpc-message-queue';
 
 const {
@@ -105,6 +106,18 @@ describe('webview-rpc-client', () => {
     module.ExtensionHandle.openExternal('https://example.com');
     expect(mockExtensionHandle.openExternal).toHaveBeenCalledWith(
       'https://example.com'
+    );
+    await module.ExtensionHandle.fetch(
+      'conditional-package',
+      true,
+      '/entry.js',
+      'import'
+    );
+    expect(mockExtensionHandle.fetch).toHaveBeenCalledWith(
+      'conditional-package',
+      true,
+      '/entry.js',
+      'import'
     );
 
     await expect(
@@ -248,6 +261,13 @@ describe('webview-rpc-client', () => {
   });
 
   it('gates trusted content for queued and direct handler paths', async () => {
+    const dependencies: ModuleDependency[] = [
+      {
+        specifier: '/dep.ts',
+        kind: 'import',
+        runtimeRequest: '\0mdx-forge:import\0/dep.ts',
+      },
+    ];
     let scenario = await setupRpcScenario();
     let handlers = createStateHandlers();
 
@@ -288,12 +308,12 @@ describe('webview-rpc-client', () => {
     scenario.exposedHandle.updatePreview(
       'export default function Demo() {}',
       '/doc.mdx',
-      ['/dep.ts']
+      dependencies
     );
     expect(handlers.setTrustedContent).toHaveBeenCalledWith(
       'export default function Demo() {}',
       '/doc.mdx',
-      ['/dep.ts']
+      dependencies
     );
 
     scenario = await setupRpcScenario();
@@ -302,7 +322,7 @@ describe('webview-rpc-client', () => {
     scenario.exposedHandle.updatePreview(
       'export default function Demo() {}',
       '/doc.mdx',
-      ['/dep.ts']
+      dependencies
     );
 
     expect(handlers.setTrustedContent).not.toHaveBeenCalled();
@@ -313,7 +333,7 @@ describe('webview-rpc-client', () => {
     expect(handlers.setTrustedContent).toHaveBeenCalledWith(
       'export default function Demo() {}',
       '/doc.mdx',
-      ['/dep.ts']
+      dependencies
     );
 
     scenario = await setupRpcScenario();
@@ -321,7 +341,7 @@ describe('webview-rpc-client', () => {
     scenario.exposedHandle.updatePreview(
       'export default function Demo() {}',
       '/doc.mdx',
-      ['/dep.ts']
+      dependencies
     );
     scenario.module.registerWebviewHandlers(handlers as any);
 
@@ -332,7 +352,7 @@ describe('webview-rpc-client', () => {
     expect(handlers.setTrustedContent).toHaveBeenCalledWith(
       'export default function Demo() {}',
       '/doc.mdx',
-      ['/dep.ts']
+      dependencies
     );
   });
 });
@@ -342,7 +362,7 @@ interface ExposedHandle {
   updatePreview: (
     code: string,
     entryFilePath: string,
-    dependencies: string[]
+    dependencies: ModuleDependency[]
   ) => void;
 }
 

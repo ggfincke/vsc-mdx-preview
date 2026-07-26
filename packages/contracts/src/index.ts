@@ -34,6 +34,8 @@ export { DEFAULT_PLANTUML_SERVER } from './diagrams';
 // preview types
 export {
   type FetchResult,
+  type ModuleDependency,
+  type ModuleDependencyKind,
   type TrustState,
   type PreviewError,
   isPreviewError,

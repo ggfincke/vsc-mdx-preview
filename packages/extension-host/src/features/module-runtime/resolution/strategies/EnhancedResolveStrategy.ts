@@ -57,7 +57,11 @@ export class EnhancedResolveStrategy implements IResolutionStrategy {
     mode: ResolutionMode
   ): ResolutionResult | null {
     // fetch per call so resolver-factory singleton resets take effect
-    const resolver = mode === 'node' ? getNodeResolver() : getBrowserResolver();
+    const dependencyKind = context.dependencyKind ?? 'require';
+    const resolver =
+      mode === 'node'
+        ? getNodeResolver(dependencyKind)
+        : getBrowserResolver(dependencyKind);
 
     try {
       const resolved = resolver.resolveSync({}, context.baseDir, specifier);
@@ -74,8 +78,11 @@ export class EnhancedResolveStrategy implements IResolutionStrategy {
     context: ResolutionContext,
     mode: ResolutionMode
   ): Promise<ResolutionResult | null> {
+    const dependencyKind = context.dependencyKind ?? 'require';
     const resolver =
-      mode === 'node' ? getAsyncNodeResolver() : getAsyncBrowserResolver();
+      mode === 'node'
+        ? getAsyncNodeResolver(dependencyKind)
+        : getAsyncBrowserResolver(dependencyKind);
 
     try {
       const resolved = await resolver.resolvePromise(

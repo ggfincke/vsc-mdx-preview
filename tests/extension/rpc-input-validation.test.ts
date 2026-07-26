@@ -72,6 +72,7 @@ vi.mock(
 );
 
 import ExtensionHandle from '../../packages/extension-host/src/platform/rpc/extension-rpc-handler';
+import { fetchLocal } from '../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal';
 import { MAX_FETCH_REQUEST_LENGTH } from '../../packages/extension-host/src/shared/constants';
 
 const openPreview = vi.fn(async () => {});
@@ -212,7 +213,28 @@ describe('RPC Input Validation', () => {
     expect(preview.completeHandshake).toHaveBeenCalledWith(7);
   });
 
-  it('rejects fetch requests when trusted execution is unavailable', async () => {
+  it('validates fetch kinds & requires trusted execution', async () => {
+    const invalidKind = await handle.fetch(
+      './module.ts',
+      false,
+      '/entry.mdx',
+      'invalid' as never
+    );
+
+    expect(invalidKind).toBeUndefined();
+    expect(fetchLocal).not.toHaveBeenCalled();
+
+    await handle.fetch('./module.ts', false, '/entry.mdx', 'import');
+
+    expect(fetchLocal).toHaveBeenCalledWith(
+      './module.ts',
+      false,
+      '/entry.mdx',
+      preview,
+      'import'
+    );
+    vi.mocked(fetchLocal).mockClear();
+
     mockTrustManager.getStateForDocument.mockReturnValue({
       workspaceTrusted: false,
       scriptsEnabled: true,
@@ -220,9 +242,15 @@ describe('RPC Input Validation', () => {
       openMdxLinksInPreview: true,
     });
 
-    const result = await handle.fetch('./module.ts', false, '/entry.mdx');
+    const result = await handle.fetch(
+      './module.ts',
+      false,
+      '/entry.mdx',
+      'require'
+    );
 
     expect(result).toBeUndefined();
+    expect(fetchLocal).not.toHaveBeenCalled();
   });
 
   it('handles safe commands and rejects unsafe external URLs', () => {

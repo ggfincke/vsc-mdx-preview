@@ -12,6 +12,8 @@ import {
   LogTags,
   type ExtensionRPC,
   type Framework,
+  type ModuleDependency,
+  type ModuleDependencyKind,
   type TrustState,
   type WebviewRPC,
 } from '@mdx-preview/contracts';
@@ -147,12 +149,12 @@ const updatePreview = createQueuedHandler(
     toPayload: (code: unknown, entryFilePath: unknown, deps: unknown) => ({
       code: code as string,
       entryFilePath: entryFilePath as string,
-      dependencies: deps as string[],
+      dependencies: deps as ModuleDependency[],
     }),
     toHandlerArgs: (payload: {
       code: string;
       entryFilePath: string;
-      dependencies: string[];
+      dependencies: ModuleDependency[];
     }) => [payload.code, payload.entryFilePath, payload.dependencies],
     debugFormat: (code: unknown, entryFilePath: unknown) =>
       `updatePreview called, code length: ${(code as string).length}, path: ${entryFilePath}`,
@@ -314,8 +316,18 @@ export const ExtensionHandle: ExtensionHandle = {
   reportPerformance(evaluationDuration: number): void {
     getInitializedExtensionHandle().reportPerformance(evaluationDuration);
   },
-  fetch(request: string, isBare: boolean, parentId: string) {
-    return getInitializedExtensionHandle().fetch(request, isBare, parentId);
+  fetch(
+    request: string,
+    isBare: boolean,
+    parentId: string,
+    kind?: ModuleDependencyKind
+  ) {
+    return getInitializedExtensionHandle().fetch(
+      request,
+      isBare,
+      parentId,
+      kind
+    );
   },
   openSettings(settingId?: string): void {
     getInitializedExtensionHandle().openSettings(settingId);

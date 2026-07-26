@@ -4,6 +4,8 @@
 import type { Framework } from '../frameworks';
 import type {
   FetchResult,
+  ModuleDependency,
+  ModuleDependencyKind,
   TrustState,
   PreviewError,
   NextraPageMeta,
@@ -20,7 +22,8 @@ export interface ExtensionRPC {
   fetch(
     request: string,
     isBare: boolean,
-    parentId: string
+    parentId: string,
+    kind?: ModuleDependencyKind
   ): Promise<FetchResult | undefined>;
   openSettings(settingId?: string): void;
   manageTrust(): void;
@@ -45,7 +48,7 @@ export interface WebviewRPC {
   updatePreview(
     code: string,
     entryFilePath: string,
-    entryFileDependencies: string[]
+    entryFileDependencies: ModuleDependency[]
   ): void;
   updatePreviewSafe(html: string): void;
   showPreviewError(error: PreviewError): void;

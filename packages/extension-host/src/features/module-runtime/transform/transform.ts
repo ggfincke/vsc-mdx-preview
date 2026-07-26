@@ -21,7 +21,12 @@ import {
 } from './typescript-transpile';
 import type { CompilerConfig } from '../../../shared/config/types';
 import type { ModuleExecutionContext } from '../types/handlers';
-import { hasLiteralDynamicImport } from '../dependencies/import-extractor';
+import {
+  protectComputedDynamicImports,
+  restoreComputedDynamicImports,
+  rewriteImportRuntimeRequests,
+  rewriteLiteralDynamicImportsToRequire,
+} from '../dependencies/import-extractor';
 
 // lazy load Trusted Mode compiler - only loaded when Trusted Mode is actually used
 const getCompileTrustedModule = createLazyImport(
@@ -44,6 +49,15 @@ async function compileMdxTrusted(
     opts.isEntry,
     toMdxForgeCompilerConfig(opts.compilerConfig)
   );
+}
+
+async function transpilePreservingComputedImports(
+  code: string,
+  options: Parameters<typeof transpileWithFallback>[1]
+): Promise<string> {
+  const protectedCode = await protectComputedDynamicImports(code);
+  const transformed = await transpileWithFallback(protectedCode.code, options);
+  return restoreComputedDynamicImports(transformed, protectedCode.marker);
 }
 
 // transform entry file (MDX -> TS -> Babel/Sucrase)
@@ -76,14 +90,16 @@ async function transformEntry(
     `Transpiler: ${useSucrase ? 'Sucrase' : 'Babel'} selected for entry`
   );
 
-  if (isTypeScriptLanguage(languageId) && !useSucrase) {
+  if (isTypeScriptLanguage(languageId)) {
     code = transpileTypeScript(code, fsPath);
   }
+
+  code = await rewriteImportRuntimeRequests(code);
 
   // I.1: capture ESM code before CommonJS transformation
   const esmCode = code;
 
-  code = await transpileWithFallback(code, {
+  code = await transpilePreservingComputedImports(code, {
     useSucrase,
     context: 'entry',
     filePath: fsPath,
@@ -114,9 +130,11 @@ async function transform(
   }
 
   const useSucrase = context.useSucraseTranspiler;
-  if (isTypeScriptExtension(extname) && !useSucrase) {
+  if (isTypeScriptExtension(extname)) {
     code = transpileTypeScript(code, fsPath);
   }
+
+  code = await rewriteImportRuntimeRequests(code);
 
   // I.1: capture ESM code before CommonJS transformation
   const esmCode = code;
@@ -124,14 +142,14 @@ async function transform(
   // split on both separators: callers may pass forward-slash-normalized paths on Windows
   const isInNodeModules = fsPath.split(/[\\/]/).includes('node_modules');
   const isEsm = isModule(code);
-  const needsLiteralDynamicImportTransform =
-    isInNodeModules && !isEsm && (await hasLiteralDynamicImport(code));
-  if (!isInNodeModules || isEsm || needsLiteralDynamicImportTransform) {
+  if (isInNodeModules && !isEsm) {
+    code = await rewriteLiteralDynamicImportsToRequire(code);
+  } else {
     const preferSucrase = isInNodeModules || useSucrase;
     log.debug(
       `Transpiling dependency: ${fsPath} (${preferSucrase ? 'Sucrase' : 'Babel'})`
     );
-    code = await transpileWithFallback(code, {
+    code = await transpilePreservingComputedImports(code, {
       useSucrase: preferSucrase,
       context: 'dependency',
       filePath: fsPath,

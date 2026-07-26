@@ -400,7 +400,7 @@ interface WebviewRPC {
   updatePreview(
     code: string,
     entryFilePath: string,
-    entryFileDependencies: string[]
+    entryFileDependencies: ModuleDependency[]
   ): void;
   updatePreviewSafe(html: string): void;
   showPreviewError(error: PreviewError): void;
@@ -441,7 +441,8 @@ interface ExtensionRPC {
   fetch(
     request: string,
     isBare: boolean,
-    parentId: string
+    parentId: string,
+    kind?: ModuleDependencyKind
   ): Promise<FetchResult | undefined>;
 
   // Settings & trust
@@ -556,7 +557,7 @@ sequenceDiagram
     Extension->>Handler: handleByExtension(code, fsPath, ".tsx")
     Handler->>Transpiler: transform(code, fsPath)
     Transpiler-->>Handler: { code, esmCode }
-    Handler->>Handler: extractImportSpecifiers(esmCode)
+    Handler->>Handler: Extract structured dependencies from esmCode & transformedCode
     Handler-->>Extension: { code, dependencies, css? }
 
     Extension-->>Webview: FetchResult
@@ -599,6 +600,7 @@ interface ResolutionContext {
   framework?: FrameworkId; // docusaurus, starlight, nextra, nextjs
   workspaceRoot?: string;
   shimsEnabled?: boolean; // Whether to use built-in component shims
+  dependencyKind?: ModuleDependencyKind; // import or require export condition
 }
 ```
 
@@ -669,29 +671,22 @@ The `transpileWithFallback()` function in `selector.ts` handles both entry files
 
 ### Dependency Extraction
 
-Imports are extracted from ESM code using `es-module-lexer`:
+Executable dependencies retain their authored syntax and source order. Static ESM and literal dynamic imports use `es-module-lexer`; a lexical CommonJS scanner ignores comments, strings, regular expressions, and template raw text while descending into executable template expressions.
 
 ```typescript title="packages/extension-host/src/features/module-runtime/dependencies/import-extractor.ts"
-// Fast pre-check regex
-const IMPORT_PATTERN =
-  /\b(import\s|import\s*\(|require\s*\(|export\s+[*{]|export\s+type\s+\{|from\s+['"`])/;
-
-async function extractImportSpecifiers(code: string): Promise<string[]> {
-  // 1. Fast pre-check - skip parsing if no import patterns
-  if (!IMPORT_PATTERN.test(code)) return [];
-
-  // 2. Parse with es-module-lexer
-  const [imports] = await parse(code);
-
-  // 3. Extract specifier names
-  return imports.map((imp) => imp.n).filter(Boolean);
+interface ModuleDependency {
+  specifier: string;
+  kind: 'import' | 'require';
+  runtimeRequest: string;
 }
+
+async function extractModuleDependencies(
+  code: string
+): Promise<ModuleDependency[]>;
 ```
 
 > [!NOTE]
-> The pre-check regex is an optimization that may have false negatives for minified code
-> (e.g., `export{foo}from'bar'` without spaces). This is acceptable since minified code
-> in user source files is rare, and the optimization significantly improves performance.
+> TypeScript-only imports are removed before extraction. Computed dynamic imports remain native runtime expressions and are not prefetched; literal imports receive collision-safe runtime request identities so `import` and `require` can select distinct conditional package exports.
 
 ---
 
