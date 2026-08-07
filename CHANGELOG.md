@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **VS Code support floor**: the minimum supported VS Code version is now 1.104, and the extension API types match that compatibility baseline
+
 ## [1.7.5] - 2026-07-26
 
 Includes [#118](https://github.com/ggfincke/vsc-mdx-preview/pull/118),
