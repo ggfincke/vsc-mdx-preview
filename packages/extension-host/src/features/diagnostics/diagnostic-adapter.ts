@@ -86,7 +86,7 @@ export function toVsDiagnostic(d: Diagnostic): vscode.Diagnostic {
   // clickable code recovers the readability lost from the opaque MDXF id
   diagnostic.code = { value: d.code, target: docsUriForCode(d.code) };
 
-  // Diagnostic.data is runtime-supported but absent from @types/vscode 1.90; cast
+  // Diagnostic.data is runtime-supported but absent from @types/vscode 1.104; cast
   if (d.data !== undefined) {
     (diagnostic as vscode.Diagnostic & { data?: unknown }).data = d.data;
   }
