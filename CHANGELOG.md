@@ -7,9 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.6] - 2026-08-07
+
+Includes [#126](https://github.com/ggfincke/vsc-mdx-preview/pull/126),
+[#127](https://github.com/ggfincke/vsc-mdx-preview/pull/127), and
+[#129](https://github.com/ggfincke/vsc-mdx-preview/pull/129).
+
 ### Changed
 
 - **VS Code support floor**: the minimum supported VS Code version is now 1.104, and the extension API types match that compatibility baseline
+- **Preview runtime dependencies**: `mdx-forge` ^0.9.1 -> ^0.10.1 across the extension host, webview, and codegen; `enhanced-resolve` 5.24.3 -> 5.24.5, PostCSS 8.5.23 -> 8.5.26, Shiki 4.3.1 -> 4.4.2, DOMPurify 3.4.11 -> 3.4.13, Mermaid 11.16.0 -> 11.16.1, Viz.js 3.26.0 -> 3.29.0, and the Iconify Logos collection 1.2.0 -> 1.2.12
+
+### Infrastructure
+
+- **Build and test tooling**: jsdom 29.1.1 -> 30.0.1, Vite 8.1.3 -> 8.2.1, dependency-cruiser 18.0.0 -> 18.1.1, `tsx` 4.23.0 -> 4.23.11, `typescript-eslint` 8.65.0 -> 8.66.0, `globals` 17.7.0 -> 17.9.0, and supporting type/tool patches
+- **Dependency automation**: `@types/vscode` now stays pinned to the declared VS Code compatibility floor, while the `@types/node` override follows its direct dependency range so automated patch updates cannot conflict with the root override
 
 ## [1.7.5] - 2026-07-26
 
