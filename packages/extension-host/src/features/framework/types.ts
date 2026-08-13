@@ -13,3 +13,8 @@ export interface FrameworkInfo {
   detected: boolean;
   version?: string;
 }
+
+// framework cache invalidation scope; omitted root means all workspaces
+export interface FrameworkChangeEvent {
+  affectedRoot?: string;
+}

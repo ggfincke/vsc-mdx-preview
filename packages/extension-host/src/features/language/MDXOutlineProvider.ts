@@ -30,7 +30,8 @@ function symbolKindToIcon(kind: vscode.SymbolKind): string {
 export class SymbolTreeItem extends vscode.TreeItem {
   constructor(
     public readonly symbol: vscode.DocumentSymbol,
-    public readonly documentUri: vscode.Uri
+    public readonly documentUri: vscode.Uri,
+    public readonly snapshotGeneration: number
   ) {
     super(
       symbol.name,
@@ -58,35 +59,49 @@ export class MDXOutlineProvider implements vscode.TreeDataProvider<SymbolTreeIte
 
   private symbols: vscode.DocumentSymbol[] = [];
   private documentUri?: vscode.Uri;
+  private snapshotGeneration = 0;
 
   getTreeItem(element: SymbolTreeItem): vscode.TreeItem {
     return element;
   }
 
   getChildren(element?: SymbolTreeItem): SymbolTreeItem[] {
-    if (!this.documentUri) {
+    if (
+      !this.documentUri ||
+      (element && element.snapshotGeneration !== this.snapshotGeneration)
+    ) {
       return [];
     }
 
     const children = element ? element.symbol.children : this.symbols;
-    return children.map((sym) => new SymbolTreeItem(sym, this.documentUri!));
+    return children.map(
+      (sym) =>
+        new SymbolTreeItem(sym, this.documentUri!, this.snapshotGeneration)
+    );
   }
 
   // refresh outline from source document
   update(document: vscode.TextDocument): void {
+    let symbols: vscode.DocumentSymbol[];
+
     try {
-      this.documentUri = document.uri;
-      this.symbols = extractMDXSymbols(document);
-      this._onDidChangeTreeData.fire();
+      symbols = extractMDXSymbols(document);
     } catch {
       log.debug('Failed to extract symbols for outline');
+      symbols = [];
     }
+
+    this.documentUri = document.uri;
+    this.symbols = symbols;
+    this.snapshotGeneration += 1;
+    this._onDidChangeTreeData.fire();
   }
 
   // clear outline (e.g., when preview is closed)
   clear(): void {
     this.symbols = [];
     this.documentUri = undefined;
+    this.snapshotGeneration += 1;
     this._onDidChangeTreeData.fire();
   }
 

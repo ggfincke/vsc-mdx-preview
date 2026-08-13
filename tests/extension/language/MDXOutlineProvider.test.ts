@@ -45,18 +45,58 @@ describe('MDXOutlineProvider', () => {
     expect(h3Children[0].label).toBe('Grandchild');
   });
 
-  it('fires onDidChangeTreeData on update and clear', () => {
+  it('publishes each current snapshot across parse failure, repair & clear', () => {
     const provider = new MDXOutlineProvider();
     const handler = vi.fn();
     provider.onDidChangeTreeData(handler);
 
-    const doc = createMockDocument('# Test\n');
-    provider.update(doc);
+    const validA = createMockDocument('# A\n\n## A Child\n', {
+      fsPath: '/workspace/a.mdx',
+    });
+    provider.update(validA);
     expect(handler).toHaveBeenCalledTimes(1);
-    expect(provider.getChildren().length).toBeGreaterThan(0);
+    const staleA = provider.getChildren()[0];
+    expect(staleA.label).toBe('A');
+    expect(provider.getChildren(staleA).map((item) => item.label)).toEqual([
+      'A Child',
+    ]);
+
+    const malformedB = createMockDocument('<Broken', {
+      fsPath: '/workspace/b.mdx',
+    });
+    provider.update(malformedB);
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect(provider.getChildren()).toEqual([]);
+    expect(provider.getChildren(staleA)).toEqual([]);
+    expect((provider as unknown as { documentUri?: unknown }).documentUri).toBe(
+      malformedB.uri
+    );
+
+    const repairedB = createMockDocument('# B\n\n## B Child\n', {
+      fsPath: '/workspace/b.mdx',
+      version: 2,
+    });
+    provider.update(repairedB);
+    expect(handler).toHaveBeenCalledTimes(3);
+    const staleB = provider.getChildren()[0];
+    expect(staleB.label).toBe('B');
+    expect(staleB.documentUri).toBe(repairedB.uri);
+    expect(provider.getChildren(staleB).map((item) => item.label)).toEqual([
+      'B Child',
+    ]);
+
+    provider.update(
+      createMockDocument('{', {
+        fsPath: '/workspace/b.mdx',
+        version: 3,
+      })
+    );
+    expect(handler).toHaveBeenCalledTimes(4);
+    expect(provider.getChildren()).toEqual([]);
+    expect(provider.getChildren(staleB)).toEqual([]);
 
     provider.clear();
     expect(provider.getChildren()).toEqual([]);
-    expect(handler).toHaveBeenCalledTimes(2);
+    expect(handler).toHaveBeenCalledTimes(5);
   });
 });

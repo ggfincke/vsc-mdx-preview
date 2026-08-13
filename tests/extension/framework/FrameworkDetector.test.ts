@@ -7,10 +7,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { FrameworkDetector } from '../../../packages/extension-host/src/features/framework/FrameworkDetector';
 import * as vscode from 'vscode';
-import {
-  mockConfigManager,
-  mockPreviewManager,
-} from '../../helpers/mock-services';
+import { mockConfigManager } from '../../helpers/mock-services';
 
 const tempDirs: string[] = [];
 
@@ -123,18 +120,27 @@ describe('FrameworkDetector', () => {
       onFrameworkSettingChange = callback;
       return { dispose: vi.fn() };
     });
-    const workspaceRoot = fs.mkdtempSync(
+    const activeWorkspaceRoot = fs.mkdtempSync(
       path.join(os.tmpdir(), 'mdx-preview-fw-')
     );
-    tempDirs.push(workspaceRoot);
-    const packagePath = path.join(workspaceRoot, 'package.json');
+    const changedWorkspaceRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'mdx-preview-fw-')
+    );
+    tempDirs.push(activeWorkspaceRoot, changedWorkspaceRoot);
+    const packagePath = path.join(changedWorkspaceRoot, 'package.json');
     fs.writeFileSync(packagePath, '{"dependencies":{}}', 'utf-8');
-    const docUri = vscode.Uri.file(path.join(workspaceRoot, 'page.mdx'));
+    const activeDocUri = vscode.Uri.file(
+      path.join(activeWorkspaceRoot, 'page.mdx')
+    );
+    const changedDocUri = vscode.Uri.file(
+      path.join(changedWorkspaceRoot, 'page.mdx')
+    );
     vscode.workspace.workspaceFolders = [
-      { uri: vscode.Uri.file(workspaceRoot) },
+      { uri: vscode.Uri.file(activeWorkspaceRoot) },
+      { uri: vscode.Uri.file(changedWorkspaceRoot) },
     ];
     (vscode.window as any).activeTextEditor = {
-      document: { uri: docUri },
+      document: { uri: activeDocUri },
     };
     let onPackageChange: ((uri: vscode.Uri) => void) | undefined;
     vi.spyOn(vscode.workspace, 'createFileSystemWatcher').mockReturnValue({
@@ -150,7 +156,9 @@ describe('FrameworkDetector', () => {
     const subscriber = vi.fn();
     packageDetector.subscribe(subscriber);
 
-    expect(packageDetector.getFramework(docUri).framework).toBe('generic');
+    expect(packageDetector.getFramework(changedDocUri).framework).toBe(
+      'generic'
+    );
     fs.writeFileSync(
       packagePath,
       JSON.stringify({ dependencies: { nextra: '^4.0.0' } }),
@@ -159,19 +167,18 @@ describe('FrameworkDetector', () => {
     onPackageChange?.(vscode.Uri.file(packagePath));
 
     expect(subscriber).toHaveBeenCalledTimes(1);
-    expect(packageDetector.getFramework(docUri).framework).toBe('nextra');
+    expect(subscriber).toHaveBeenLastCalledWith({
+      affectedRoot: changedWorkspaceRoot,
+    });
+    expect(packageDetector.getFramework(changedDocUri).framework).toBe(
+      'nextra'
+    );
 
     (vscode.window as any).activeTextEditor = undefined;
-    mockPreviewManager.getCurrentPreview.mockReturnValue({
-      doc: { uri: docUri },
-    });
     mockConfigManager.get.mockReturnValue('starlight');
     onFrameworkSettingChange?.();
 
     expect(subscriber).toHaveBeenCalledTimes(2);
-    expect(subscriber).toHaveBeenLastCalledWith({
-      framework: 'starlight',
-      detected: false,
-    });
+    expect(subscriber).toHaveBeenLastCalledWith({});
   });
 });
