@@ -28,6 +28,8 @@ interface FramePatternDescriptor {
   lineGroup: number;
   // capture group index for column number
   colGroup: number;
+  // require a path-shaped capture when no stack syntax surrounds it
+  bareLocation?: boolean;
 }
 
 // frame patterns in priority order (Chrome first, then Firefox/Safari, then simple)
@@ -55,8 +57,33 @@ const FRAME_PATTERNS: readonly FramePatternDescriptor[] = [
     fileGroup: 1,
     lineGroup: 2,
     colGroup: 3,
+    bareLocation: true,
   },
 ];
+
+const ABSOLUTE_PATH_PATTERN = /^(?:[a-zA-Z]:[\\/]|\/|\.{1,2}[\\/])/;
+const URL_PATH_PATTERN = /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//;
+const FILE_NAME_PATTERN = /(?:^|[\\/])[^\\/\s]+\.[a-zA-Z][a-zA-Z\d]*$/;
+
+function isBareFilePath(filePath: string): boolean {
+  const pathWithoutSuffix = filePath.split(/[?#]/, 1)[0];
+  if (
+    ABSOLUTE_PATH_PATTERN.test(pathWithoutSuffix) ||
+    URL_PATH_PATTERN.test(pathWithoutSuffix)
+  ) {
+    return true;
+  }
+
+  if (/\s/.test(pathWithoutSuffix)) {
+    return false;
+  }
+
+  return (
+    pathWithoutSuffix.includes('/') ||
+    pathWithoutSuffix.includes('\\') ||
+    FILE_NAME_PATTERN.test(pathWithoutSuffix)
+  );
+}
 
 // parse a single stack trace line
 function parseStackLine(line: string): StackFrame {
@@ -68,9 +95,10 @@ function parseStackLine(line: string): StackFrame {
     fileGroup,
     lineGroup,
     colGroup,
+    bareLocation,
   } of FRAME_PATTERNS) {
     const match = trimmed.match(pattern);
-    if (match) {
+    if (match && (!bareLocation || isBareFilePath(match[fileGroup]))) {
       return {
         raw: line,
         functionName:
@@ -126,16 +154,6 @@ export function parseStackTrace(stack: string): StackFrame[] {
   for (const line of lines) {
     // skip empty lines
     if (!line.trim()) {
-      continue;
-    }
-
-    // skip the error message line (usually the first line w/o "at")
-    if (!line.includes('at ') && !line.includes('@')) {
-      // but still include it as non-navigable context
-      frames.push({
-        raw: line,
-        isNavigable: false,
-      });
       continue;
     }
 

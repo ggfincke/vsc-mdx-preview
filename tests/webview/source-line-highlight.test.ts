@@ -15,6 +15,7 @@ import {
   SOURCE_LINE_SCROLL_SYNC_ANCHOR_RATIO,
   SOURCE_LINE_SCROLL_SYNC_ANIMATION_MS,
   SOURCE_LINE_SCROLL_SYNC_SETTLE_MS,
+  type PreviewSourceLineReportResult,
 } from '@mdx-preview/contracts';
 
 const { mockReportPreviewSourceLine } = vi.hoisted(() => ({
@@ -188,6 +189,18 @@ function installAnimationFrameQueue(
   });
 
   return frames;
+}
+
+function createDeferredReport(): {
+  promise: Promise<PreviewSourceLineReportResult>;
+  resolve: (result: PreviewSourceLineReportResult) => void;
+} {
+  let resolve!: (result: PreviewSourceLineReportResult) => void;
+  const promise = new Promise<PreviewSourceLineReportResult>((settle) => {
+    resolve = settle;
+  });
+
+  return { promise, resolve };
 }
 
 describe('useSourceLineHighlight', () => {
@@ -694,27 +707,41 @@ describe('useSourceLineHighlight', () => {
     expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(24);
   });
 
-  it('keeps ignored preview reports retryable with backoff', async () => {
+  it('bounds ignored retries & isolates newer scroll work', async () => {
     const frames = installAnimationFrameQueue(true);
+    const resetHarness = (): void => {
+      act(() => {
+        mountedRoot?.unmount();
+      });
+      mountedRoot = undefined;
+      document.body.innerHTML = '';
+      frames.length = 0;
+      mockReportPreviewSourceLine.mockReset();
+    };
+
     mockReportPreviewSourceLine
       .mockResolvedValueOnce('ignored')
       .mockResolvedValue('accepted');
-
-    const host = await mountScrollSyncHarness(
+    const environmentHost = await mountScrollSyncHarness(
       createElement('p', { id: 'line-12', 'data-source-line': '12' }, 'A')
     );
-    setElementTop(host.querySelector('#line-12')!, 250);
+    setElementTop(environmentHost.querySelector('#line-12')!, 250);
 
     await act(async () => {
       frames.shift()?.(0);
       await Promise.resolve();
     });
-
     expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(1);
-    expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(12);
 
+    act(() => {
+      window.dispatchEvent(new Event('focus'));
+    });
     await act(async () => {
-      vi.advanceTimersByTime(249);
+      frames.shift()?.(16);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(49);
       await Promise.resolve();
     });
     expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(1);
@@ -726,13 +753,264 @@ describe('useSourceLineHighlight', () => {
     expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(2);
     expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(12);
 
+    resetHarness();
+    mockReportPreviewSourceLine
+      .mockResolvedValueOnce('ignored')
+      .mockResolvedValueOnce('ignored')
+      .mockResolvedValueOnce('ignored')
+      .mockResolvedValueOnce('ignored')
+      .mockResolvedValue('accepted');
+    const lineChangeHost = await mountScrollSyncHarness(
+      createElement('div', null, [
+        createElement(
+          'p',
+          { key: 'a', id: 'line-12', 'data-source-line': '12' },
+          'A'
+        ),
+        createElement(
+          'p',
+          { key: 'b', id: 'line-24', 'data-source-line': '24' },
+          'B'
+        ),
+      ])
+    );
+    setElementTop(lineChangeHost.querySelector('#line-12')!, 250);
+    setElementTop(lineChangeHost.querySelector('#line-24')!, 520);
+
+    await act(async () => {
+      frames.shift()?.(100);
+      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(1_750);
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(4);
+    expect(mockReportPreviewSourceLine.mock.calls).toEqual([
+      [12],
+      [12],
+      [12],
+      [12],
+    ]);
+
+    setElementTop(lineChangeHost.querySelector('#line-12')!, -40);
+    setElementTop(lineChangeHost.querySelector('#line-24')!, 250);
     act(() => {
-      window.dispatchEvent(new Event('scroll'));
+      lineChangeHost
+        .querySelector('#line-24')!
+        .setAttribute('style', 'transform: translateY(1px)');
     });
     await act(async () => {
-      frames.shift()?.(300);
+      await Promise.resolve();
+      frames.shift()?.(2_000);
       await Promise.resolve();
     });
-    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      vi.advanceTimersByTime(49);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(4);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+      vi.advanceTimersByTime(2_000);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(5);
+    expect(mockReportPreviewSourceLine).toHaveBeenLastCalledWith(24);
+
+    resetHarness();
+    const staleIgnoredReport = createDeferredReport();
+    mockReportPreviewSourceLine
+      .mockImplementationOnce(() => staleIgnoredReport.promise)
+      .mockResolvedValue('ignored');
+    const ignoredSettlementHost = await mountScrollSyncHarness(
+      createElement('div', null, [
+        createElement(
+          'p',
+          { key: 'a', id: 'line-12', 'data-source-line': '12' },
+          'A'
+        ),
+        createElement(
+          'p',
+          { key: 'b', id: 'line-24', 'data-source-line': '24' },
+          'B'
+        ),
+      ])
+    );
+    setElementTop(ignoredSettlementHost.querySelector('#line-12')!, 250);
+    setElementTop(ignoredSettlementHost.querySelector('#line-24')!, 520);
+
+    await act(async () => {
+      frames.shift()?.(3_000);
+      await Promise.resolve();
+    });
+    setElementTop(ignoredSettlementHost.querySelector('#line-12')!, -40);
+    setElementTop(ignoredSettlementHost.querySelector('#line-24')!, 250);
+    act(() => {
+      ignoredSettlementHost
+        .querySelector('#line-24')!
+        .setAttribute('style', 'transform: translateY(1px)');
+    });
+    await act(async () => {
+      await Promise.resolve();
+      frames.shift()?.(3_016);
+      await Promise.resolve();
+      staleIgnoredReport.resolve('ignored');
+      await Promise.resolve();
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(49);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+      await vi.runAllTimersAsync();
+    });
+    expect(mockReportPreviewSourceLine.mock.calls).toEqual([
+      [12],
+      [24],
+      [24],
+      [24],
+      [24],
+      [24],
+    ]);
+
+    await act(async () => {
+      vi.advanceTimersByTime(60_000);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(6);
+
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await act(async () => {
+      frames.shift()?.(4_000);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(7);
+
+    act(() => {
+      mountedRoot?.unmount();
+    });
+    mountedRoot = undefined;
+    await act(async () => {
+      vi.advanceTimersByTime(60_000);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(7);
+
+    resetHarness();
+    const staleRetryReport = createDeferredReport();
+    mockReportPreviewSourceLine
+      .mockImplementationOnce(() => staleRetryReport.promise)
+      .mockResolvedValue('accepted');
+    const retrySettlementHost = await mountScrollSyncHarness(
+      createElement('div', null, [
+        createElement(
+          'p',
+          { key: 'a', id: 'line-12', 'data-source-line': '12' },
+          'A'
+        ),
+        createElement(
+          'p',
+          { key: 'b', id: 'line-24', 'data-source-line': '24' },
+          'B'
+        ),
+      ])
+    );
+    setElementTop(retrySettlementHost.querySelector('#line-12')!, 250);
+    setElementTop(retrySettlementHost.querySelector('#line-24')!, 520);
+
+    await act(async () => {
+      frames.shift()?.(5_000);
+      await Promise.resolve();
+    });
+    setElementTop(retrySettlementHost.querySelector('#line-12')!, -40);
+    setElementTop(retrySettlementHost.querySelector('#line-24')!, 250);
+    act(() => {
+      retrySettlementHost
+        .querySelector('#line-24')!
+        .setAttribute('style', 'transform: translateY(1px)');
+    });
+    await act(async () => {
+      await Promise.resolve();
+      frames.shift()?.(5_016);
+      await Promise.resolve();
+      staleRetryReport.resolve('retry');
+      await Promise.resolve();
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(49);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+      vi.advanceTimersByTime(120);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine.mock.calls).toEqual([[12], [24]]);
+
+    resetHarness();
+    const currentLineReport = createDeferredReport();
+    mockReportPreviewSourceLine
+      .mockImplementationOnce(() => currentLineReport.promise)
+      .mockResolvedValue('accepted');
+    const returnHost = await mountScrollSyncHarness(
+      createElement('div', null, [
+        createElement(
+          'p',
+          { key: 'a', id: 'line-12', 'data-source-line': '12' },
+          'A'
+        ),
+        createElement(
+          'p',
+          { key: 'b', id: 'line-24', 'data-source-line': '24' },
+          'B'
+        ),
+      ])
+    );
+    setElementTop(returnHost.querySelector('#line-12')!, 250);
+    setElementTop(returnHost.querySelector('#line-24')!, 520);
+
+    await act(async () => {
+      frames.shift()?.(6_000);
+      await Promise.resolve();
+    });
+    setElementTop(returnHost.querySelector('#line-12')!, -40);
+    setElementTop(returnHost.querySelector('#line-24')!, 250);
+    act(() => {
+      returnHost
+        .querySelector('#line-24')!
+        .setAttribute('style', 'transform: translateY(1px)');
+    });
+    await act(async () => {
+      await Promise.resolve();
+      frames.shift()?.(6_016);
+      await Promise.resolve();
+    });
+
+    setElementTop(returnHost.querySelector('#line-12')!, 250);
+    setElementTop(returnHost.querySelector('#line-24')!, 520);
+    act(() => {
+      returnHost
+        .querySelector('#line-12')!
+        .setAttribute('style', 'transform: translateY(1px)');
+    });
+    await act(async () => {
+      await Promise.resolve();
+      frames.shift()?.(6_032);
+      await Promise.resolve();
+      currentLineReport.resolve('accepted');
+      await Promise.resolve();
+      vi.advanceTimersByTime(1_000);
+      await Promise.resolve();
+    });
+    expect(mockReportPreviewSourceLine.mock.calls).toEqual([[12]]);
   });
 });

@@ -1,5 +1,5 @@
 // tests/webview/module-runtime-compat.test.ts
-// verify old & structured Forge dependency contracts at the webview boundary
+// verify installed Forge contracts at the webview boundary
 
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -7,40 +7,21 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
 import { describe, expect, it, vi } from 'vitest';
-import type {
-  FetchResult,
-  ModuleDependency,
-  ModuleDependencyKind,
-} from '@mdx-preview/contracts';
-import { createForgeRuntimeAdapter } from '../../packages/webview-client/src/features/module-runtime';
+import {
+  createImportRuntimeRequest,
+  type FetchResult,
+  type ModuleDependency,
+  type ModuleDependencyKind,
+  type PreloadEntry,
+} from 'mdx-forge/browser';
 
-const IMPORT_RUNTIME_PREFIX = '\0mdx-forge:import\0';
-
-type ForgeRuntime = Parameters<typeof createForgeRuntimeAdapter>[0];
-type ForgeFetcher = Parameters<ForgeRuntime['setModuleFetcher']>[0];
-
-interface PreloadEntry {
-  id: string;
-  exports: unknown;
-  aliases?: string[];
-}
-
-interface InstalledForgeRuntime extends ForgeRuntime {
-  clearAllCaches(): void;
-  setHostPreloadCallbacks(callbacks: {
-    initPreloadedModules(
-      registry: ForgeRuntime['registry'],
-      layout: unknown
-    ): void;
-  }): void;
-  setPreloadEntries(entries: PreloadEntry[]): void;
-}
+type InstalledForgeRuntime = typeof import('mdx-forge/browser');
 
 function importDependency(specifier: string): ModuleDependency {
   return {
     specifier,
     kind: 'import',
-    runtimeRequest: `${IMPORT_RUNTIME_PREFIX}${specifier}`,
+    runtimeRequest: createImportRuntimeRequest(specifier),
   };
 }
 
@@ -64,6 +45,7 @@ async function loadInstalledForgeRuntime(): Promise<InstalledForgeRuntime> {
 
 async function runProductionPairingProbe(): Promise<{
   frameworkShim: string;
+  genericCacheReady: boolean;
   genericShim: string;
   initialReady: boolean;
   sameReact: boolean;
@@ -85,16 +67,20 @@ async function runProductionPairingProbe(): Promise<{
       contents: `
         import React from 'react';
         import {
+          createImportRuntimeRequest,
+          PRELOADED_MODULE_IDS,
+          registry,
+        } from 'mdx-forge/browser';
+        import {
           clearAllCaches,
           ensureFrameworkShimsLoaded,
           evaluateModuleToComponent,
         } from './packages/webview-client/src/features/module-runtime/index.ts';
 
-        const prefix = '\\0mdx-forge:import\\0';
         const dependency = (specifier) => ({
           specifier,
           kind: 'import',
-          runtimeRequest: prefix + specifier,
+          runtimeRequest: createImportRuntimeRequest(specifier),
         });
 
         export async function probe() {
@@ -127,8 +113,14 @@ async function runProductionPairingProbe(): Promise<{
           const initial = await evaluate();
           clearAllCaches();
           const restored = await evaluate();
+          ensureFrameworkShimsLoaded('generic');
+          clearAllCaches();
+          const genericCacheReady =
+            registry.isPreloaded(PRELOADED_MODULE_IDS.react) &&
+            registry.isPreloaded('npm://@mdx-preview/shims-generic/Tabs');
           return {
             frameworkShim: restored.frameworkShim,
+            genericCacheReady,
             genericShim: restored.genericShim,
             initialReady:
               initial.genericShim === 'function' &&
@@ -155,6 +147,7 @@ async function runProductionPairingProbe(): Promise<{
     const bundledModule = (await import(pathToFileURL(modulePath).href)) as {
       probe(): Promise<{
         frameworkShim: string;
+        genericCacheReady: boolean;
         genericShim: string;
         initialReady: boolean;
         sameReact: boolean;
@@ -166,8 +159,8 @@ async function runProductionPairingProbe(): Promise<{
   }
 }
 
-describe('module runtime Forge compatibility', () => {
-  it('runs the installed runtime across nested conditional branches', async () => {
+describe('module runtime Forge pairing', () => {
+  it('runs structured dependencies through installed Forge', async () => {
     const runtime = await loadInstalledForgeRuntime();
     runtime.clearAllCaches();
     const reactDefault = {};
@@ -187,18 +180,6 @@ describe('module runtime Forge compatibility', () => {
         registry.preload(reactEntry.id, reactEntry.exports);
       },
     });
-    const preloadAliases = new Map(
-      (reactEntry.aliases ?? []).map((alias) => [alias, reactEntry.id])
-    );
-    const resolvePreloadAlias = vi.fn((specifier: string) => {
-      const moduleId = preloadAliases.get(specifier);
-      return moduleId !== undefined && runtime.registry.isPreloaded(moduleId)
-        ? moduleId
-        : undefined;
-    });
-    expect(resolvePreloadAlias('react')).toBeUndefined();
-    resolvePreloadAlias.mockClear();
-
     const nestedDependencies = Object.freeze([
       importDependency('./leaf'),
       requireDependency('./leaf'),
@@ -242,11 +223,7 @@ describe('module runtime Forge compatibility', () => {
         }
       }
     );
-    const adapter = createForgeRuntimeAdapter(
-      runtime,
-      extensionFetch,
-      resolvePreloadAlias
-    );
+    runtime.setModuleFetcher(extensionFetch);
     const entryDependencies = [
       importDependency('react'),
       importDependency('dual'),
@@ -271,7 +248,7 @@ describe('module runtime Forge compatibility', () => {
       '};',
     ].join('\n');
 
-    const component = await adapter.evaluateModuleToComponent(
+    const component = await runtime.evaluateModuleToComponent(
       entryCode,
       '/entry.mdx',
       entryDependencies
@@ -285,17 +262,12 @@ describe('module runtime Forge compatibility', () => {
     expect(result.react).toBe(reactDefault);
     expect(result.useState).toBe(useState);
     expect(result.value).toBe('import/require/import-leaf/require-leaf');
-    if (typeof runtime.createImportRuntimeRequest === 'function') {
-      expect(resolvePreloadAlias).not.toHaveBeenCalled();
-    } else {
-      expect(resolvePreloadAlias).toHaveBeenCalledWith('react');
-      expect(
-        runtime.registry.getResolution(
-          '/entry.mdx',
-          entryDependencies[0].runtimeRequest
-        )
-      ).toBe(reactEntry.id);
-    }
+    expect(
+      runtime.registry.getResolution(
+        '/entry.mdx',
+        entryDependencies[0].runtimeRequest
+      )
+    ).toBe(reactEntry.id);
     expect(extensionFetch).toHaveBeenCalledTimes(5);
     expect(extensionFetch).not.toHaveBeenCalledWith(
       'react',
@@ -331,66 +303,10 @@ describe('module runtime Forge compatibility', () => {
     expect(nestedResult.dependencies[0]).toEqual(importDependency('./leaf'));
   });
 
-  it('leaves structured dependencies & fetch results intact for final Forge', async () => {
-    let registeredFetcher: ForgeFetcher | undefined;
-    const evaluate = vi.fn(async () => () => 'structured');
-    const runtime: ForgeRuntime = {
-      createImportRuntimeRequest: (specifier) =>
-        `${IMPORT_RUNTIME_PREFIX}${specifier}`,
-      evaluateModuleToComponent: evaluate,
-      registry: {
-        isPreloaded: () => false,
-      } as ForgeRuntime['registry'],
-      setModuleFetcher: (fetcher) => {
-        registeredFetcher = fetcher;
-      },
-    };
-    const dependencies = [importDependency('dual'), requireDependency('dual')];
-    const fetchResult: FetchResult = {
-      fsPath: '/dual-import.js',
-      code: 'module.exports = {};',
-      dependencies: [importDependency('./nested')],
-    };
-    const extensionFetch = vi.fn(async () => fetchResult);
-    const resolvePreloadAlias = vi.fn(() => undefined);
-    const adapter = createForgeRuntimeAdapter(
-      runtime,
-      extensionFetch,
-      resolvePreloadAlias
-    );
-
-    const component = await adapter.evaluateModuleToComponent(
-      'module.exports = { default: () => null };',
-      '/entry.mdx',
-      dependencies
-    );
-    const returned = await registeredFetcher?.(
-      'dual',
-      true,
-      '/entry.mdx',
-      'import'
-    );
-
-    expect(component()).toBe('structured');
-    expect(evaluate).toHaveBeenCalledWith(
-      'module.exports = { default: () => null };',
-      '/entry.mdx',
-      dependencies
-    );
-    expect(extensionFetch).toHaveBeenCalledWith(
-      'dual',
-      true,
-      '/entry.mdx',
-      'import'
-    );
-    expect(returned).toBe(fetchResult);
-    expect(returned?.dependencies[0]).toEqual(importDependency('./nested'));
-    expect(resolvePreloadAlias).not.toHaveBeenCalled();
-  });
-
   it('runs production preload callbacks against installed Forge', async () => {
     await expect(runProductionPairingProbe()).resolves.toEqual({
       frameworkShim: 'function',
+      genericCacheReady: true,
       genericShim: 'function',
       initialReady: true,
       sameReact: true,
