@@ -44,6 +44,7 @@ import { ErrorReporter, ErrorContext, ErrorSeverity } from '../shared/errors';
 import { PackageJsonWatcher } from '../features/module-runtime/resolution/PackageJsonWatcher';
 import { invalidateResolution } from '../features/module-runtime/resolution/resolver-factory';
 import { clearSassCache } from '../features/module-runtime/handlers';
+import { refreshWatchedTypeScriptConfigs } from '../features/preview/configuration/TypeScriptConfigResolver';
 import { registerResolverSubsystem } from '../features/module-runtime/resolution/resolver-subsystem';
 import { registerCacheSubsystem } from '../app/lifecycle/cache-subsystem';
 import { ConfigManager, ConfigCache } from '../shared/config';
@@ -295,8 +296,9 @@ export async function activate(
   const packageJsonWatcher = new PackageJsonWatcher(() => {
     invalidateResolution();
     clearSassCache();
+    refreshWatchedTypeScriptConfigs();
     watcherLog.debug(
-      'Resolver & Sass caches cleared due to package file change'
+      'Resolver, Sass, & TypeScript config state refreshed due to package file change'
     );
   });
   void packageJsonWatcher.start().catch((error) => {

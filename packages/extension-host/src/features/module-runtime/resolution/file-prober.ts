@@ -125,6 +125,11 @@ export interface ParsedProbingOptions {
   skipNodeModules: boolean;
 }
 
+export interface FileProbeCandidatePaths {
+  exactAndExtensionPaths: string[];
+  indexPaths: string[];
+}
+
 // default options for file probing (Required to ensure defaults are always present)
 export const DEFAULT_PROBING_OPTIONS: Required<FileProbingOptions> = {
   extensions: FILE_PROBE_EXTENSIONS,
@@ -141,6 +146,28 @@ export function parseProbingOptions(
     indexFiles: options.indexFiles ?? DEFAULT_PROBING_OPTIONS.indexFiles,
     skipNodeModules:
       options.skipNodeModules ?? DEFAULT_PROBING_OPTIONS.skipNodeModules,
+  };
+}
+
+// enumerate every exact path the file probe can select for one base path
+export function getFileProbeCandidatePaths(
+  basePath: string,
+  options: Partial<FileProbingOptions> = {}
+): FileProbeCandidatePaths {
+  const { extensions, indexFiles, skipNodeModules } =
+    parseProbingOptions(options);
+
+  if (shouldSkipPath(basePath, skipNodeModules)) {
+    return { exactAndExtensionPaths: [], indexPaths: [] };
+  }
+
+  return {
+    exactAndExtensionPaths: extensions.map((extension) =>
+      path.normalize(basePath + extension)
+    ),
+    indexPaths: indexFiles.map((indexFile) =>
+      path.normalize(path.join(basePath, indexFile))
+    ),
   };
 }
 

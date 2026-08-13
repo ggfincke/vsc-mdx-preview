@@ -7,7 +7,10 @@ import * as path from 'path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ErrorContext } from '../../../packages/extension-host/src/shared/errors';
 
-import { mockFrameworkDetector, mockErrorReporter } from '../../helpers/mock-services';
+import {
+  mockFrameworkDetector,
+  mockErrorReporter,
+} from '../../helpers/mock-services';
 
 const {
   mockCheckFsPathAsync,
@@ -50,6 +53,31 @@ vi.mock(
 
 import { fetchLocal } from '../../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal';
 
+function createPreviewStub(tempDir: string) {
+  const dependentFsPaths = new Set<string>();
+  return {
+    entryFsDirectory: tempDir,
+    dependentFsPaths,
+    dependencyGeneration: 1,
+    commitModuleDependencySnapshot: vi.fn(
+      (ownerFsPath, _dependencies, watchFiles) => {
+        dependentFsPaths.add(ownerFsPath);
+        for (const watchFile of watchFiles ?? []) {
+          dependentFsPaths.add(watchFile);
+        }
+      }
+    ),
+    typescriptConfiguration: undefined,
+    configuration: {
+      updateMode: 'onSave',
+    },
+    doc: {
+      uri: { fsPath: path.join(tempDir, 'entry.mdx') },
+    },
+    webviewHandle: {},
+  };
+}
+
 describe('fetchLocal timeout delegation', () => {
   let tempDir: string;
   let modulePath: string;
@@ -84,18 +112,7 @@ describe('fetchLocal timeout delegation', () => {
       './module.js',
       false,
       path.join(tempDir, 'entry.mdx'),
-      {
-        entryFsDirectory: tempDir,
-        dependentFsPaths: new Set<string>(),
-        typescriptConfiguration: undefined,
-        configuration: {
-          updateMode: 'onSave',
-        },
-        doc: {
-          uri: { fsPath: path.join(tempDir, 'entry.mdx') },
-        },
-        webviewHandle: {},
-      } as any
+      createPreviewStub(tempDir) as any
     );
 
     expect(result).toEqual({
@@ -115,18 +132,12 @@ describe('fetchLocal timeout delegation', () => {
   it('dispatches forward-slash fsPaths to the extension handler', async () => {
     mockReadFileAsync.mockResolvedValueOnce('export const value = 1;');
 
-    await fetchLocal('./module.js', false, path.join(tempDir, 'entry.mdx'), {
-      entryFsDirectory: tempDir,
-      dependentFsPaths: new Set<string>(),
-      typescriptConfiguration: undefined,
-      configuration: {
-        updateMode: 'onSave',
-      },
-      doc: {
-        uri: { fsPath: path.join(tempDir, 'entry.mdx') },
-      },
-      webviewHandle: {},
-    } as any);
+    await fetchLocal(
+      './module.js',
+      false,
+      path.join(tempDir, 'entry.mdx'),
+      createPreviewStub(tempDir) as any
+    );
 
     // normalizePathSeparators keeps resolution paths backslash-free (xyc/vscode-mdx-preview#13)
     const handlerPath = mockHandleByExtension.mock.calls[0]?.[1];
@@ -141,18 +152,7 @@ describe('fetchLocal timeout delegation', () => {
       './module.js',
       false,
       path.join(tempDir, 'entry.mdx'),
-      {
-        entryFsDirectory: tempDir,
-        dependentFsPaths: new Set<string>(),
-        typescriptConfiguration: undefined,
-        configuration: {
-          updateMode: 'onSave',
-        },
-        doc: {
-          uri: { fsPath: path.join(tempDir, 'entry.mdx') },
-        },
-        webviewHandle: {},
-      } as any
+      createPreviewStub(tempDir) as any
     );
 
     expect(result).toBeUndefined();

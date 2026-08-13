@@ -1,5 +1,5 @@
 // packages/extension-host/src/features/module-runtime/resolution/strategies/TypeScriptPathStrategy.ts
-// TypeScript path alias resolution using compiled pattern index for O(1) exact matches
+// TypeScript path alias & baseUrl resolution w/ indexed exact matches
 
 import * as path from 'path';
 import { createTaggedLogger } from '../../../../shared/logging/logger';
@@ -210,7 +210,7 @@ export function getResolutionCandidates(
   context: ResolutionContext
 ): CandidateResolutionSetup | null {
   const tsConfig = context.tsConfig;
-  if (!tsConfig?.paths) {
+  if (!tsConfig || (!tsConfig.paths && tsConfig.baseUrl === undefined)) {
     return null;
   }
 
@@ -220,18 +220,29 @@ export function getResolutionCandidates(
     context.baseDir
   );
 
-  const compiledIndex = getCompiledIndex(
-    tsConfig.paths,
-    absoluteBaseUrl,
-    tsConfig.configPath
-  );
+  if (tsConfig.paths) {
+    const compiledIndex = getCompiledIndex(
+      tsConfig.paths,
+      absoluteBaseUrl,
+      tsConfig.configPath
+    );
 
-  const candidates = matchTsPathsOptimized(specifier, compiledIndex);
-  if (!candidates) {
+    const candidates = matchTsPathsOptimized(specifier, compiledIndex);
+    if (candidates) {
+      return { candidates, absoluteBaseUrl };
+    }
+  }
+
+  if (tsConfig.baseUrl === undefined) {
     return null;
   }
 
-  return { candidates, absoluteBaseUrl };
+  return {
+    candidates: [
+      normalizePathSeparators(path.join(absoluteBaseUrl, specifier)),
+    ],
+    absoluteBaseUrl,
+  };
 }
 
 // process probed candidate & build result if valid
@@ -257,7 +268,7 @@ function processCandidate(
   );
 }
 
-// TypeScript path resolution strategy (tsconfig.json paths)
+// TypeScript path resolution strategy (tsconfig.json paths & baseUrl)
 // use custom pattern matching instead of TypeScript compiler for performance
 // patterns compiled once per tsconfig & cached
 export class TypeScriptPathStrategy implements IResolutionStrategy {

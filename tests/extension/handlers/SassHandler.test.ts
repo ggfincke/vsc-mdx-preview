@@ -1,11 +1,14 @@
 // tests/extension/handlers/SassHandler.test.ts
 // focused tests for SASS handler critical behavior
 
+import * as path from 'path';
+import { pathToFileURL } from 'url';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { ModuleExecutionContext } from '../../../packages/extension-host/src/features/module-runtime/types/handlers';
 
-const { mockLoadModuleWithEsmFallback } = vi.hoisted(() => ({
+const { mockLoadModuleWithEsmFallback, mockResolveSync } = vi.hoisted(() => ({
   mockLoadModuleWithEsmFallback: vi.fn(),
+  mockResolveSync: vi.fn(() => undefined as string | undefined),
 }));
 
 vi.mock(
@@ -26,7 +29,7 @@ vi.mock(
   '../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory',
   () => ({
     getBrowserResolver: () => ({
-      resolveSync: vi.fn(() => undefined),
+      resolveSync: mockResolveSync,
     }),
   })
 );
@@ -83,36 +86,93 @@ describe('SassHandler', () => {
     expect(result.dependencies).toEqual([]);
   });
 
-  it('compiles SCSS via workspace sass module', async () => {
-    const compileAsync = vi.fn().mockResolvedValue({
-      css: '.compiled{color:red;}',
-    });
-    mockLoadModuleWithEsmFallback.mockResolvedValueOnce({ compileAsync });
-
+  it('compiles live SCSS & indented Sass w/ watch-only loaded URLs', async () => {
     const fsPath = '/workspace/styles/main.scss';
+    const partialPath = '/workspace/styles/_theme.scss';
+    const nestedPath = '/workspace/styles/tokens/_colors.scss';
+    const sassPath = '/workspace/styles/main.sass';
+    const scssSource = '$tone: blue; .live { color: $tone; }';
+    const sassSource = '$tone: blue\n.live\n  color: $tone';
+    const compileStringAsync = vi
+      .fn()
+      .mockResolvedValueOnce({
+        css: '.live{color:blue;}',
+        loadedUrls: [
+          pathToFileURL(fsPath),
+          pathToFileURL(partialPath),
+          pathToFileURL(nestedPath),
+          pathToFileURL(partialPath),
+          new URL('https://example.com/theme.scss'),
+        ],
+      })
+      .mockResolvedValueOnce({
+        css: '.live{color:blue;}',
+        loadedUrls: [pathToFileURL(sassPath)],
+      });
+    mockLoadModuleWithEsmFallback.mockResolvedValueOnce({
+      compileStringAsync,
+    });
+
     const result = await handler.handle(
-      '',
+      scssSource,
       fsPath,
       createContext('/workspace')
     );
 
-    expect(compileAsync).toHaveBeenCalledTimes(1);
-    expect(compileAsync).toHaveBeenCalledWith(
-      fsPath,
+    expect(compileStringAsync).toHaveBeenNthCalledWith(
+      1,
+      scssSource,
       expect.objectContaining({
+        url: pathToFileURL(fsPath),
+        syntax: 'scss',
         importers: expect.any(Array),
       })
     );
-    expect(result.css).toBe('.compiled{color:red;}');
+    expect(result.css).toBe('.live{color:blue;}');
     expect(result.code).toBe('');
     expect(result.dependencies).toEqual([]);
+    expect(result.watchFiles).toEqual([
+      path.normalize(partialPath),
+      path.normalize(nestedPath),
+    ]);
+
+    const options = compileStringAsync.mock.calls[0][1] as {
+      importers: Array<{ findFileUrl: (url: string) => URL | null }>;
+    };
+    const resolvedImportPath = '/workspace/shared/_tokens.scss';
+    mockResolveSync.mockReturnValueOnce(resolvedImportPath);
+    expect(options.importers[0].findFileUrl('@shared/tokens')).toEqual(
+      pathToFileURL(resolvedImportPath)
+    );
+    expect(mockResolveSync).toHaveBeenCalledWith(
+      {},
+      path.dirname(fsPath),
+      '@shared/tokens'
+    );
+
+    const sassResult = await handler.handle(
+      sassSource,
+      sassPath,
+      createContext('/workspace')
+    );
+    expect(compileStringAsync).toHaveBeenNthCalledWith(
+      2,
+      sassSource,
+      expect.objectContaining({
+        url: pathToFileURL(sassPath),
+        syntax: 'indented',
+      })
+    );
+    expect(sassResult.watchFiles).toEqual([]);
   });
 
   it('returns CSS error comment when sass compilation fails', async () => {
-    const compileAsync = vi
+    const compileStringAsync = vi
       .fn()
       .mockRejectedValueOnce(new Error('Undefined variable'));
-    mockLoadModuleWithEsmFallback.mockResolvedValueOnce({ compileAsync });
+    mockLoadModuleWithEsmFallback.mockResolvedValueOnce({
+      compileStringAsync,
+    });
 
     const result = await handler.handle(
       '',
@@ -124,17 +184,24 @@ describe('SassHandler', () => {
     expect(result.css).toContain('Undefined variable');
     expect(result.css).toContain('main.scss');
     expect(result.code).toBe('');
+    expect(result).not.toHaveProperty('watchFiles');
   });
 
   it('fences stale Sass loads after clear & keyed loads after clearKey', async () => {
     const oldLoad = createDeferred<{
-      compileAsync: ReturnType<typeof vi.fn>;
+      compileStringAsync: ReturnType<typeof vi.fn>;
     }>();
     const freshLoad = createDeferred<{
-      compileAsync: ReturnType<typeof vi.fn>;
+      compileStringAsync: ReturnType<typeof vi.fn>;
     }>();
-    const oldCompile = vi.fn().mockResolvedValue({ css: '.old{}' });
-    const freshCompile = vi.fn().mockResolvedValue({ css: '.fresh{}' });
+    const oldCompile = vi.fn().mockResolvedValue({
+      css: '.old{}',
+      loadedUrls: [],
+    });
+    const freshCompile = vi.fn().mockResolvedValue({
+      css: '.fresh{}',
+      loadedUrls: [],
+    });
     mockLoadModuleWithEsmFallback
       .mockReturnValueOnce(oldLoad.promise)
       .mockReturnValueOnce(freshLoad.promise);
@@ -151,9 +218,9 @@ describe('SassHandler', () => {
       expect(mockLoadModuleWithEsmFallback).toHaveBeenCalledTimes(2)
     );
 
-    freshLoad.resolve({ compileAsync: freshCompile });
+    freshLoad.resolve({ compileStringAsync: freshCompile });
     await expect(freshResult).resolves.toMatchObject({ css: '.fresh{}' });
-    oldLoad.resolve({ compileAsync: oldCompile });
+    oldLoad.resolve({ compileStringAsync: oldCompile });
     await expect(oldResult).resolves.toMatchObject({ css: '.old{}' });
     await expect(handler.handle('', fsPath, context)).resolves.toMatchObject({
       css: '.fresh{}',

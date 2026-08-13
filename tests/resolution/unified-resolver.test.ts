@@ -20,6 +20,7 @@ import {
   cachedFs,
   invalidateResolution,
 } from '../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory';
+import { getEnhancedResolveStrategy } from '../../packages/extension-host/src/features/module-runtime/resolution/strategies';
 import { fetchLocal } from '../../packages/extension-host/src/features/module-runtime/fetch/fetchLocal';
 import { NOOP_MODULE } from '../../packages/extension-host/src/features/module-runtime/fetch/utils';
 import { getScriptHandler } from '../../packages/extension-host/src/features/module-runtime/handlers';
@@ -164,7 +165,45 @@ describe('UnifiedResolver', () => {
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('resolves built-in shims and passes the document workspace root to fetches', async () => {
+  it('enforces request policy, resolves shims, & passes the workspace root', async () => {
+    const context: ResolutionContext = {
+      baseDir: tempDir,
+      workspaceRoot: tempDir,
+    };
+    const enhancedResolveSpy = vi.spyOn(
+      getEnhancedResolveStrategy(),
+      'resolveAsync'
+    );
+    const rejectedRequests = [
+      '',
+      null,
+      undefined,
+      'https://example.com/card.js',
+      'HTTPS://example.com/card.js',
+      'file:///tmp/card.js',
+      'DATA:text/javascript,export default null',
+      'npm://react',
+      'NPM://react',
+      'NODE:fs',
+      'invalid\0request',
+    ];
+    const rejectedResults = await Promise.all(
+      rejectedRequests.map((request) =>
+        resolver.resolveAsync(request as string, context)
+      )
+    );
+
+    expect(rejectedResults.every((result) => result === null)).toBe(true);
+    expect(
+      rejectedRequests.every((request) => !resolver.shouldResolve(request))
+    ).toBe(true);
+    expect(enhancedResolveSpy).not.toHaveBeenCalled();
+
+    expect(resolver.shouldResolve('node:fs')).toBe(true);
+    await resolver.resolveAsync('node:fs', context);
+    expect(enhancedResolveSpy).toHaveBeenCalledTimes(1);
+    enhancedResolveSpy.mockRestore();
+
     const shim = resolver.resolveSync('@theme/Tabs', {
       baseDir: path.join(tempDir, 'docs'),
       workspaceRoot: tempDir,
@@ -188,6 +227,8 @@ describe('UnifiedResolver', () => {
     await fetchLocal('workspace-root-check', true, documentPath, {
       entryFsDirectory: path.dirname(documentPath),
       dependentFsPaths: new Set<string>(),
+      dependencyGeneration: 1,
+      commitModuleDependencySnapshot: vi.fn(),
       typescriptConfiguration: undefined,
       configuration: { updateMode: 'onSave' },
       doc: { uri: vscode.Uri.file(documentPath) },
@@ -210,13 +251,18 @@ describe('UnifiedResolver', () => {
       workspaceRoot: tempDir,
       tsConfig: {
         configPath: path.join(tempDir, 'tsconfig.json'),
-        baseUrl: '.',
-        paths: { '@app/*': ['src/lib/*'] },
+        baseUrl: 'src',
+        paths: { '@app/*': ['lib/*'] },
       },
     };
 
     const widget = await resolver.resolveAsync(
       '@app/widget',
+      context,
+      'browser'
+    );
+    const baseUrlWidget = await resolver.resolveAsync(
+      'lib/widget',
       context,
       'browser'
     );
@@ -234,6 +280,12 @@ describe('UnifiedResolver', () => {
     expect(widget).toEqual({
       fsPath: path.join(tempDir, 'src', 'lib', 'widget.ts'),
       specifier: '@app/widget',
+      strategy: ResolutionStrategy.TypeScript,
+      isBuiltInShim: false,
+    });
+    expect(baseUrlWidget).toEqual({
+      fsPath: path.join(tempDir, 'src', 'lib', 'widget.ts'),
+      specifier: 'lib/widget',
       strategy: ResolutionStrategy.TypeScript,
       isBuiltInShim: false,
     });
@@ -297,6 +349,8 @@ describe('UnifiedResolver', () => {
     const preview = {
       entryFsDirectory: path.join(tempDir, 'docs'),
       dependentFsPaths: new Set<string>(),
+      dependencyGeneration: 1,
+      commitModuleDependencySnapshot: vi.fn(),
       typescriptConfiguration: undefined,
       configuration: {
         updateMode: 'onSave',
@@ -458,6 +512,8 @@ describe('UnifiedResolver', () => {
       {
         entryFsDirectory: path.join(tempDir, 'docs'),
         dependentFsPaths: new Set<string>(),
+        dependencyGeneration: 1,
+        commitModuleDependencySnapshot: vi.fn(),
         typescriptConfiguration: undefined,
         configuration: { updateMode: 'onSave' },
         doc: { uri: vscode.Uri.file(path.join(tempDir, 'docs', 'entry.mdx')) },
@@ -516,17 +572,38 @@ describe('UnifiedResolver', () => {
     ).toBe(true);
   });
 
-  it('keeps node_modules-like workspace paths on file probing', async () => {
+  it('preserves relative file-probe scope & JSON precedence', async () => {
     const baseDir = path.join(tempDir, 'node_modules-tools');
     const expectedPath = writeFixture(
       'node_modules-tools/widget.ts',
       'export {};'
     );
+    const jsonDir = path.join(tempDir, 'json');
+    const directJson = writeFixture('json/data.json', '{"direct":true}');
+    const indexJson = writeFixture('json/config/index.json', '{"index":true}');
+    const explicitJson = writeFixture(
+      'json/explicit.json',
+      '{"explicit":true}'
+    );
+    const sourceCollision = writeFixture(
+      'json/collision.ts',
+      'export const source = true;'
+    );
+    writeFixture('json/collision.json', '{"source":false}');
 
     const result = await resolver.resolveAsync('./widget', {
       baseDir,
       workspaceRoot: tempDir,
     });
+    const jsonResults = await Promise.all(
+      ['./data', './config', './explicit.json', './collision'].map(
+        (specifier) =>
+          resolver.resolveAsync(specifier, {
+            baseDir: jsonDir,
+            workspaceRoot: tempDir,
+          })
+      )
+    );
     const missing = await resolver.resolveAsync('missing-package', {
       baseDir: tempDir,
       workspaceRoot: tempDir,
@@ -538,6 +615,17 @@ describe('UnifiedResolver', () => {
       strategy: ResolutionStrategy.FileProbe,
       isBuiltInShim: false,
     });
+    expect(jsonResults.map((jsonResult) => jsonResult?.fsPath)).toEqual([
+      directJson,
+      indexJson,
+      explicitJson,
+      sourceCollision,
+    ]);
+    expect(
+      jsonResults.every(
+        (jsonResult) => jsonResult?.strategy === ResolutionStrategy.FileProbe
+      )
+    ).toBe(true);
     expect(missing).toBeNull();
   });
 });

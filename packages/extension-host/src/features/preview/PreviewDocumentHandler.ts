@@ -3,13 +3,14 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import type { UpdateModeValue } from '@mdx-preview/contracts';
+import type { ModuleDependency, UpdateModeValue } from '@mdx-preview/contracts';
 import {
   findTsConfig,
   resolveTypescriptConfig,
 } from './configuration/TypeScriptConfigResolver';
 import { resolveConfig } from './configuration/ConfigResolver';
 import type { TypeScriptConfiguration } from '../module-runtime/types/module-system';
+import { buildResolutionContext } from '../module-runtime/resolution/resolution-context';
 import type { ResolvedConfig } from '../../shared/config/types';
 import { DocumentTracker } from './watchers/DocumentTracker';
 import { DependencyWatcher } from './watchers/DependencyWatcher';
@@ -97,13 +98,11 @@ export class PreviewDocumentHandler {
       this._mdxPreviewConfig = undefined;
     }
 
-    // update dependency watcher's document directory
     const dependencyWatcher =
       watcherManager.get<DependencyWatcher>('dependency');
-    if (this.entryFsDirectory && dependencyWatcher) {
-      dependencyWatcher.setDocumentDir(this.entryFsDirectory);
-      // clear old dependencies when switching documents
+    if (dependencyWatcher) {
       dependencyWatcher.clear();
+      this.refreshDependencyResolutionContext(watcherManager);
     }
   }
 
@@ -112,11 +111,12 @@ export class PreviewDocumentHandler {
     this._mdxPreviewConfig = resolveConfig(this._doc.uri.fsPath) ?? undefined;
   }
 
-  reloadTypescriptConfig(): void {
+  reloadTypescriptConfig(watcherManager: WatcherManager): void {
     const configFile = findTsConfig(this.entryFsDirectory ?? '');
     this._typescriptConfiguration = configFile
       ? (resolveTypescriptConfig(configFile) ?? undefined)
       : undefined;
+    this.refreshDependencyResolutionContext(watcherManager);
   }
 
   // reset rendered version tracking (called when panel is disposed to force re-render)
@@ -132,10 +132,50 @@ export class PreviewDocumentHandler {
   }
 
   // update dependency watcher w/ new imports (called from evaluate-in-webview)
-  updateDependencies(imports: string[], watcherManager: WatcherManager): void {
+  updateDependencies(
+    dependencies: readonly ModuleDependency[],
+    watcherManager: WatcherManager
+  ): void {
+    this.refreshDependencyResolutionContext(watcherManager);
     const dependencyWatcher =
       watcherManager.get<DependencyWatcher>('dependency');
-    dependencyWatcher?.updateDependencies(imports);
+    dependencyWatcher?.updateDependencies(dependencies);
+    this.reconcileDependentFsPaths(dependencyWatcher);
+  }
+
+  getDependencyGeneration(watcherManager: WatcherManager): number {
+    return (
+      watcherManager.get<DependencyWatcher>('dependency')?.getGeneration() ?? 0
+    );
+  }
+
+  // commit one current fetched module snapshot atomically
+  commitModuleDependencySnapshot(
+    ownerFsPath: string,
+    dependencies: readonly ModuleDependency[],
+    watchFiles: string[] | undefined,
+    watcherManager: WatcherManager,
+    generation = this.getDependencyGeneration(watcherManager)
+  ): void {
+    const dependencyWatcher =
+      watcherManager.get<DependencyWatcher>('dependency');
+    dependencyWatcher?.commitModuleDependencySnapshot(
+      ownerFsPath,
+      dependencies,
+      watchFiles,
+      generation
+    );
+    this.reconcileDependentFsPaths(dependencyWatcher);
+  }
+
+  // include every cache owner when an exact dependency changes
+  getDependencyInvalidationPaths(
+    fsPath: string,
+    watcherManager: WatcherManager
+  ): string[] {
+    const dependencyWatcher =
+      watcherManager.get<DependencyWatcher>('dependency');
+    return dependencyWatcher?.getInvalidationPaths(fsPath) ?? [fsPath];
   }
 
   // handle text document change event
@@ -193,5 +233,39 @@ export class PreviewDocumentHandler {
       await this.actions!.invalidate(fsPath);
     }
     await this.actions!.updateWebview();
+  }
+
+  // rebuild framework, shim, workspace, & tsconfig inputs from active state
+  private refreshDependencyResolutionContext(
+    watcherManager: WatcherManager
+  ): void {
+    const dependencyWatcher =
+      watcherManager.get<DependencyWatcher>('dependency');
+    const entryFsDirectory = this.entryFsDirectory;
+    if (!dependencyWatcher) {
+      return;
+    }
+    if (!entryFsDirectory) {
+      dependencyWatcher.setResolutionContext(null);
+      return;
+    }
+
+    dependencyWatcher.setResolutionContext(
+      buildResolutionContext({
+        baseDir: entryFsDirectory,
+        documentUri: this._doc.uri,
+        entryFsDirectory,
+        tsConfig: this._typescriptConfiguration,
+      })
+    );
+  }
+
+  private reconcileDependentFsPaths(
+    dependencyWatcher: DependencyWatcher | undefined
+  ): void {
+    this._dependentFsPaths = new Set([
+      this.fsPath,
+      ...(dependencyWatcher?.getOwnedFsPaths() ?? []),
+    ]);
   }
 }

@@ -19,6 +19,7 @@ import {
   resetPreviewScrollSync,
   syncPreviewScrollFromActiveEditor,
 } from '../../packages/extension-host/src/features/preview/scroll-sync';
+import type { FrameworkChangeEvent } from '../../packages/extension-host/src/features/framework/types';
 
 const { mockWorkspaceLog } = vi.hoisted(() => ({
   mockWorkspaceLog: {
@@ -43,7 +44,8 @@ describe('workspace-events', () => {
     ((event: { document: vscode.TextDocument }) => void) | undefined;
   let visibleRangeCallback:
     ((event: { textEditor: vscode.TextEditor }) => void) | undefined;
-  let frameworkChangeCallback: (() => void) | undefined;
+  let frameworkChangeCallback:
+    ((event: FrameworkChangeEvent) => void) | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -103,7 +105,9 @@ describe('workspace-events', () => {
     const handleDidChangeTextDocument = vi.fn().mockRejectedValue(changeError);
     const updateConfiguration = vi.fn();
     const updateWebview = vi.fn().mockResolvedValue(undefined);
+    const previewUri = vscode.Uri.file('/workspace-a-copy/test.mdx');
     mockPreviewManager.getCurrentPreview.mockReturnValue({
+      doc: { uri: previewUri },
       handleDidSaveTextDocument,
       handleDidChangeTextDocument,
       updateConfiguration,
@@ -113,7 +117,7 @@ describe('workspace-events', () => {
     const context = { subscriptions: [] as Array<{ dispose: () => void }> };
     initWorkspaceHandlers(context as any);
 
-    const uri = vscode.Uri.file('/workspace/test.mdx');
+    const uri = previewUri;
     saveCallback?.({ uri });
     documentChangeCallback?.({
       document: { uri } as vscode.TextDocument,
@@ -154,8 +158,14 @@ describe('workspace-events', () => {
     expect(updateWebview).toHaveBeenCalledTimes(1);
 
     // framework detector owns both package & manual transition refreshes
-    frameworkChangeCallback?.();
+    frameworkChangeCallback?.({ affectedRoot: '/workspace-a' });
+    expect(mockPreviewManager.refreshAllPreviews).not.toHaveBeenCalled();
+
+    frameworkChangeCallback?.({});
     expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalledTimes(1);
+
+    frameworkChangeCallback?.({ affectedRoot: '/workspace-a-copy' });
+    expect(mockPreviewManager.refreshAllPreviews).toHaveBeenCalledTimes(2);
 
     // unrelated key: no preview work at all
     changeCallback?.(['debugOutput']);

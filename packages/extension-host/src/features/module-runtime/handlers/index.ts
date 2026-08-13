@@ -1,9 +1,9 @@
 // packages/extension-host/src/features/module-runtime/handlers/index.ts
 // file type handler registry & dispatch for module fetching
 
-import type { FetchResult } from '@mdx-preview/contracts';
 import type {
   FileTypeHandler,
+  FileTypeHandlerResult,
   ModuleExecutionContext,
 } from '../types/handlers';
 
@@ -57,7 +57,7 @@ export async function handleByExtension(
   fsPath: string,
   extname: string,
   context: ModuleExecutionContext
-): Promise<FetchResult | undefined> {
+): Promise<FileTypeHandlerResult | undefined> {
   const handler = getHandler(extname);
   if (handler) {
     return handler.handle(code, fsPath, context);

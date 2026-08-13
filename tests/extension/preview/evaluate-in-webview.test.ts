@@ -7,6 +7,7 @@ import {
   mockTailwindProcessor,
   mockFrameworkDetector,
   mockErrorReporter,
+  mockThemeManager,
 } from '../../helpers/mock-services';
 import type {
   ModuleDependency,
@@ -101,10 +102,12 @@ function createPreview(): {
     setNextraMeta: ReturnType<typeof vi.fn>;
     setTheme: ReturnType<typeof vi.fn>;
     setRuntimeConfig: ReturnType<typeof vi.fn>;
+    setCustomCss: ReturnType<typeof vi.fn>;
   };
   runtimeConfiguration: PreviewRuntimeConfig;
   webviewHandshakePromise: Promise<void>;
   onWebviewReady: ReturnType<typeof vi.fn>;
+  applyFrontmatterTheme: ReturnType<typeof vi.fn>;
   pushThemeState: ReturnType<typeof vi.fn>;
   pushRuntimeConfiguration: ReturnType<typeof vi.fn>;
   updateDependencies: ReturnType<typeof vi.fn>;
@@ -136,6 +139,7 @@ function createPreview(): {
     setNextraMeta: vi.fn(),
     setTheme: vi.fn(),
     setRuntimeConfig: vi.fn(),
+    setCustomCss: vi.fn(),
   };
   const pushRuntimeConfiguration = vi.fn(() => {
     webviewHandle.setRuntimeConfig(runtimeConfiguration);
@@ -154,6 +158,7 @@ function createPreview(): {
     runtimeConfiguration,
     webviewHandshakePromise: Promise.resolve(),
     onWebviewReady: vi.fn(),
+    applyFrontmatterTheme: vi.fn(),
     pushThemeState: vi.fn(),
     pushRuntimeConfiguration,
     updateDependencies: vi.fn(),
@@ -281,10 +286,32 @@ describe('evaluate-in-webview Tailwind routing', () => {
     );
     expect(preview.webviewHandle.setTailwindCss).toHaveBeenCalledWith('');
     expect(mockEngine.evaluateSafe).toHaveBeenCalledTimes(2);
+    expect(preview.updateDependencies).toHaveBeenNthCalledWith(1, []);
+    expect(preview.updateDependencies).toHaveBeenNthCalledWith(2, []);
   });
 
-  it('sends only content on a second evaluation with unchanged state', async () => {
+  it('retains effective theme inputs across unchanged state & failure', async () => {
     mockTrustedState();
+    let codeBlockTheme = 'github-dark';
+    mockThemeManager.extractThemeFromFrontmatter.mockImplementation(
+      (frontmatter) => ({
+        ...(typeof frontmatter.previewTheme === 'string'
+          ? { previewTheme: frontmatter.previewTheme }
+          : {}),
+      })
+    );
+    mockThemeManager.getWebviewThemeState.mockImplementation(
+      (_docUri, overrides = {}) => ({
+        previewTheme: overrides.previewTheme ?? 'github-light',
+        codeBlockTheme,
+      })
+    );
+    mockEngine.evaluateTrusted.mockResolvedValue({
+      code: 'export default function Demo() { return null; }',
+      entryFilePath: '/workspace/doc.mdx',
+      dependencies: [],
+      frontmatter: { previewTheme: 'github-dark' },
+    });
     const preview = createPreview();
     const rawHandle = preview.webviewHandle;
     const bridge = new PreviewWebviewBridge();
@@ -296,8 +323,11 @@ describe('evaluate-in-webview Tailwind routing', () => {
     preview.onWebviewReady.mockImplementation(() => {
       bridge.onWebviewReady(preview.doc.uri as never);
     });
-    preview.pushThemeState.mockImplementation((frontmatter) => {
-      bridge.pushThemeState(preview.doc.uri as never, frontmatter);
+    preview.applyFrontmatterTheme.mockImplementation((frontmatter) => {
+      bridge.applyFrontmatterTheme(preview.doc.uri as never, frontmatter);
+    });
+    preview.pushThemeState.mockImplementation(() => {
+      bridge.pushThemeState(preview.doc.uri as never);
     });
     preview.pushRuntimeConfiguration.mockImplementation(() => {
       bridge.pushRuntimeConfiguration(preview.runtimeConfiguration);
@@ -318,9 +348,133 @@ describe('evaluate-in-webview Tailwind routing', () => {
     );
     await new Promise((resolve) => setTimeout(resolve, 0));
 
+    expect(preview.onWebviewReady).not.toHaveBeenCalled();
     expect(rawHandle.updatePreview).toHaveBeenCalledTimes(1);
     expect(rawHandle.setTrustState).not.toHaveBeenCalled();
     expect(rawHandle.setRuntimeConfig).not.toHaveBeenCalled();
+    expect(rawHandle.setTheme).not.toHaveBeenCalled();
+
+    codeBlockTheme = 'monokai';
+    mockEngine.evaluateTrusted.mockRejectedValueOnce(
+      new Error('current evaluation failed')
+    );
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# malformed',
+      '/workspace/doc.mdx'
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(rawHandle.setTheme).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        previewTheme: 'github-dark',
+        codeBlockTheme: 'monokai',
+      })
+    );
+
+    mockEngine.evaluateTrusted.mockResolvedValueOnce({
+      code: 'export default function Demo() { return null; }',
+      entryFilePath: '/workspace/doc.mdx',
+      dependencies: [],
+      frontmatter: undefined,
+    });
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# recovered',
+      '/workspace/doc.mdx'
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(rawHandle.setTheme).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        previewTheme: 'github-light',
+        codeBlockTheme: 'monokai',
+      })
+    );
+
+    rawHandle.setTheme.mockClear();
+    preview.applyFrontmatterTheme.mockClear();
+    mockEngine.evaluateTrusted.mockResolvedValueOnce({
+      code: 'export default function Demo() { return null; }',
+      entryFilePath: '/workspace/doc.mdx',
+      dependencies: [],
+      frontmatter: { previewTheme: 'github-dark' },
+    });
+    rawHandle.updatePreview.mockRejectedValueOnce(
+      new Error('content commit failed')
+    );
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# failed commit',
+      '/workspace/doc.mdx'
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(preview.applyFrontmatterTheme).not.toHaveBeenCalled();
+    bridge.beginHandshake();
+    bridge.onWebviewReady(preview.doc.uri as never);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(rawHandle.setTheme).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        previewTheme: 'github-light',
+        codeBlockTheme: 'monokai',
+      })
+    );
+
+    rawHandle.setTheme.mockClear();
+    rawHandle.updatePreview.mockClear();
+    rawHandle.setNextraMeta.mockClear();
+    preview.applyFrontmatterTheme.mockClear();
+    preview.updateDependencies.mockClear();
+    let resolveStaleDetection: (() => void) | undefined;
+    mockDetectComponents.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveStaleDetection = () =>
+            resolve({ components: [], imports: new Map(), errors: [] });
+        })
+    );
+    mockEngine.evaluateTrusted
+      .mockResolvedValueOnce({
+        code: 'export default function Stale() { return null; }',
+        entryFilePath: '/workspace/doc.mdx',
+        dependencies: [],
+        frontmatter: { previewTheme: 'github-dark' },
+      })
+      .mockRejectedValueOnce(new Error('newer evaluation failed'));
+    let evaluationToken = 1;
+    const staleEvaluation = evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# stale success',
+      '/workspace/doc.mdx',
+      () => evaluationToken === 1
+    );
+    for (let i = 0; i < 10 && !resolveStaleDetection; i++) {
+      await Promise.resolve();
+    }
+    expect(resolveStaleDetection).toBeDefined();
+
+    evaluationToken = 2;
+    await evaluateInWebview(
+      preview as unknown as MockPreview,
+      '# newer failure',
+      '/workspace/doc.mdx',
+      () => evaluationToken === 2
+    );
+    resolveStaleDetection?.();
+    await staleEvaluation;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(preview.applyFrontmatterTheme).not.toHaveBeenCalled();
+    expect(preview.updateDependencies).not.toHaveBeenCalled();
+    expect(rawHandle.updatePreview).not.toHaveBeenCalled();
+    expect(rawHandle.setNextraMeta).not.toHaveBeenCalled();
+    bridge.beginHandshake();
+    bridge.onWebviewReady(preview.doc.uri as never);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(rawHandle.setTheme).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        previewTheme: 'github-light',
+        codeBlockTheme: 'monokai',
+      })
+    );
   });
 
   it('awaits webview pushes before downstream preview work', async () => {
@@ -493,7 +647,11 @@ describe('evaluate-in-webview Tailwind routing', () => {
     );
     expect(preview.updateDependencies).toHaveBeenCalledTimes(1);
     expect(preview.updateDependencies).toHaveBeenCalledWith([
-      '/workspace/new.tsx',
+      {
+        specifier: '/workspace/new.tsx',
+        kind: 'import',
+        runtimeRequest: '\0mdx-forge:import\0/workspace/new.tsx',
+      },
     ]);
     expect(mockErrorReporter.report).not.toHaveBeenCalled();
   });

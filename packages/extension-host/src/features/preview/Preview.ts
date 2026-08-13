@@ -8,7 +8,7 @@ import {
   performance,
 } from 'perf_hooks';
 import { createTaggedLogger } from '../../shared/logging/logger';
-import { LogTags } from '@mdx-preview/contracts';
+import { LogTags, type ModuleDependency } from '@mdx-preview/contracts';
 import { PreviewTailwindState } from './PreviewTailwindState';
 
 // module-level tagged logger
@@ -106,8 +106,10 @@ export class Preview {
 
     const arrivedAfterTimeout = this.initializer.consumeHandshakeTimeout();
     this.resolveWebviewHandshakePromise();
-    // race already settled rejected on timeout; re-arm so future updates succeed
-    this.webviewHandshakePromise = Promise.resolve();
+    // a timed-out race stays rejected, so late recovery needs a resolved gate
+    if (arrivedAfterTimeout) {
+      this.webviewHandshakePromise = Promise.resolve();
+    }
     this.watcherManager.setReadyGate(this.webviewHandshakePromise);
 
     if (arrivedAfterTimeout) {
@@ -117,11 +119,6 @@ export class Preview {
       );
     }
     return true;
-  }
-
-  // cancel pending handshake timeout (call when reusing panel to prevent stale timeouts)
-  cancelHandshakeTimeout(): void {
-    this.initializer.cancelHandshakeTimeout();
   }
 
   get evaluationDuration(): number {
@@ -139,6 +136,10 @@ export class Preview {
 
   get dependentFsPaths(): Set<string> {
     return this.documentHandler.dependentFsPaths;
+  }
+
+  get dependencyGeneration(): number {
+    return this.documentHandler.getDependencyGeneration(this.watcherManager);
   }
 
   get fsPath(): string {
@@ -206,7 +207,7 @@ export class Preview {
         if (!this.active) {
           return;
         }
-        await this.webviewBridge.invalidate(fsPath);
+        await this.invalidateDependency(fsPath);
         await this.updateWebview(true);
       },
       this.webviewHandshakePromise
@@ -215,7 +216,7 @@ export class Preview {
     // set document handler actions (provides callbacks w/out per-call injection)
     this.documentHandler.setActions({
       markStale: () => this.markStale(),
-      invalidate: (fsPath) => this.webviewBridge.invalidate(fsPath),
+      invalidate: (fsPath) => this.invalidateDependency(fsPath),
       debouncedUpdate: () => this.configManager.debouncedUpdateWebview(),
       updateWebview: () => this.updateWebview(),
     });
@@ -246,6 +247,8 @@ export class Preview {
     if (this.disposed) {
       return;
     }
+    this.evaluationSeq += 1;
+    this.webviewBridge.beginHandshake();
     this.webviewHandshakeId += 1;
     const handshake = this.initializer.createHandshake();
     this.webviewHandshakePromise = handshake.promise;
@@ -268,6 +271,7 @@ export class Preview {
     this.evaluationSeq += 1;
     this.webviewBridge.invalidateThemeRequests();
     if (documentChanged) {
+      this.webviewBridge.clearFrontmatterTheme();
       this.tailwindState.resetForDocument();
     }
     this.configManager.setDocument(doc.uri, () => this.updateWebview());
@@ -279,7 +283,7 @@ export class Preview {
       this.watcherManager,
       this.configuration.customCss,
       this.entryFsDirectory,
-      this.webviewBridge.getHandle()
+      this.webviewBridge
     );
     if (documentChanged) {
       this.updateTailwindWatchFiles([]);
@@ -309,13 +313,19 @@ export class Preview {
     this.initializer.setupTypeScriptConfigWatcher(
       this.watcherManager,
       this.doc.uri.scheme,
+      this.doc.uri.fsPath,
       () => {
-        this.documentHandler.reloadTypescriptConfig();
-        this.updateWebview(true).catch((err) =>
+        this.handleTypeScriptConfigChange().catch((err) =>
           log.error('Failed to refresh after TypeScript config change', err)
         );
       }
     );
+  }
+
+  private async handleTypeScriptConfigChange(): Promise<void> {
+    this.documentHandler.reloadTypescriptConfig(this.watcherManager);
+    await this.clearAllCaches();
+    await this.updateWebview(true);
   }
 
   private setupTailwindDetectionWatcher(): void {
@@ -401,8 +411,14 @@ export class Preview {
     this.webviewBridge.onWebviewReady(this.doc.uri);
   }
 
-  pushThemeState(frontmatter?: Record<string, unknown>): void {
-    this.webviewBridge.pushThemeState(this.doc.uri, frontmatter);
+  applyFrontmatterTheme(
+    frontmatter: Record<string, unknown> | undefined
+  ): void {
+    this.webviewBridge.applyFrontmatterTheme(this.doc.uri, frontmatter);
+  }
+
+  pushThemeState(): void {
+    this.webviewBridge.pushThemeState(this.doc.uri);
   }
 
   pushRuntimeConfiguration(): void {
@@ -430,8 +446,23 @@ export class Preview {
     this.documentHandler.markStale(this.watcherManager);
   }
 
-  updateDependencies(imports: string[]): void {
-    this.documentHandler.updateDependencies(imports, this.watcherManager);
+  updateDependencies(dependencies: readonly ModuleDependency[]): void {
+    this.documentHandler.updateDependencies(dependencies, this.watcherManager);
+  }
+
+  commitModuleDependencySnapshot(
+    ownerFsPath: string,
+    dependencies: readonly ModuleDependency[],
+    watchFiles: string[] | undefined,
+    generation: number
+  ): void {
+    this.documentHandler.commitModuleDependencySnapshot(
+      ownerFsPath,
+      dependencies,
+      watchFiles,
+      this.watcherManager,
+      generation
+    );
   }
 
   // update webview w/ current document content (force bypasses version tracking)
@@ -508,6 +539,17 @@ export class Preview {
     );
   }
 
+  private async invalidateDependency(fsPath: string): Promise<void> {
+    const invalidationPaths =
+      this.documentHandler.getDependencyInvalidationPaths(
+        fsPath,
+        this.watcherManager
+      );
+    for (const invalidationPath of invalidationPaths) {
+      await this.webviewBridge.invalidate(invalidationPath);
+    }
+  }
+
   updateConfiguration(): void {
     if (this.disposed) {
       return;
@@ -534,7 +576,7 @@ export class Preview {
         this.watcherManager,
         this.configuration.customCss,
         this.entryFsDirectory,
-        this.webviewBridge.getHandle()
+        this.webviewBridge
       );
     }
 

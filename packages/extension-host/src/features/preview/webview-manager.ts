@@ -145,8 +145,6 @@ export async function createOrShowPanel(
       manager.setPanelDoc(preview.doc);
     } else {
       log.debug('Same doc, just revealing panel');
-      // cancel stale handshake timeout to prevent errors on reuse
-      preview.cancelHandshakeTimeout();
     }
     panel.reveal(previewColumn);
 

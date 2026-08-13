@@ -50,6 +50,7 @@ export const mockErrorReporter = {
 
 export const mockPreviewManager = {
   getCurrentPreview: vi.fn(),
+  setCurrentPreview: vi.fn(),
   refreshAllPreviews: vi.fn(async () => {}),
   clearAllWebviewCaches: vi.fn(async () => {}),
   getPanel: vi.fn(),

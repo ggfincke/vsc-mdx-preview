@@ -5,7 +5,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { ContentHashCache } from '@mdx-preview/runtime-utils';
 import { TailwindProcessor } from '../../../packages/extension-host/src/features/tailwind/TailwindProcessor';
+import { DependencyScanner } from '../../../packages/extension-host/src/features/tailwind/scanning/DependencyScanner';
+import { invalidateResolution } from '../../../packages/extension-host/src/features/module-runtime/resolution/resolver-factory';
+import type { ResolutionContext } from '../../../packages/extension-host/src/features/module-runtime/types/module-system';
 import type { TailwindConfig } from '../../../packages/extension-host/src/shared/config/types';
 import type { TrustState } from '@mdx-preview/contracts';
 import { createMockPreview } from '../../helpers/mock-preview';
@@ -28,6 +32,17 @@ function createTailwindConfig(
   };
 }
 
+function writeFixture(
+  root: string,
+  relativePath: string,
+  contents: string
+): string {
+  const fsPath = path.join(root, relativePath);
+  fs.mkdirSync(path.dirname(fsPath), { recursive: true });
+  fs.writeFileSync(fsPath, contents);
+  return fsPath;
+}
+
 const trustedState: TrustState = {
   workspaceTrusted: true,
   scriptsEnabled: true,
@@ -45,6 +60,7 @@ const safeState: TrustState = {
 const tempDirs: string[] = [];
 
 afterEach(() => {
+  invalidateResolution();
   while (tempDirs.length > 0) {
     const dir = tempDirs.pop();
     if (dir) {
@@ -63,41 +79,36 @@ describe('TailwindProcessor', () => {
     TailwindProcessor.reset();
   });
 
-  it('returns disabled when trust state blocks execution', async () => {
-    const processor = TailwindProcessor.getInstance();
-    const preview = createMockPreview() as any;
+  it('returns disabled when trust or configuration blocks execution', async () => {
+    const disabledCases = [
+      {
+        trustState: safeState,
+        tailwindConfig: createTailwindConfig(),
+      },
+      {
+        trustState: trustedState,
+        tailwindConfig: createTailwindConfig({ enabled: 'disabled' }),
+      },
+    ];
 
-    const result = await processor.process({
-      preview,
-      mdxText: '# Test',
-      entryFilePath: preview.fsPath,
-      entryFileDependencies: [],
-      trustState: safeState,
-      tailwindConfig: createTailwindConfig(),
-    });
+    for (const disabledCase of disabledCases) {
+      TailwindProcessor.reset();
+      const processor = TailwindProcessor.getInstance();
+      const preview = createMockPreview() as any;
+      const result = await processor.process({
+        preview,
+        mdxText: '# Test',
+        entryFilePath: preview.fsPath,
+        entryFileDependencies: [],
+        trustState: disabledCase.trustState,
+        tailwindConfig: disabledCase.tailwindConfig,
+      });
 
-    expect(result.enabled).toBe(false);
-    expect(result.profile).toBe('disabled');
-    expect(result.css).toBe('');
-    expect(result.watchFiles).toEqual([]);
-  });
-
-  it('returns disabled when tailwind is disabled', async () => {
-    const processor = TailwindProcessor.getInstance();
-    const preview = createMockPreview() as any;
-
-    const result = await processor.process({
-      preview,
-      mdxText: '# Test',
-      entryFilePath: preview.fsPath,
-      entryFileDependencies: [],
-      trustState: trustedState,
-      tailwindConfig: createTailwindConfig({ enabled: 'disabled' }),
-    });
-
-    expect(result.enabled).toBe(false);
-    expect(result.profile).toBe('disabled');
-    expect(result.css).toBe('');
+      expect(result.enabled).toBe(false);
+      expect(result.profile).toBe('disabled');
+      expect(result.css).toBe('');
+      expect(result.watchFiles).toEqual([]);
+    }
   });
 
   it('returns compiled CSS and watch files when config is present', async () => {
@@ -162,6 +173,149 @@ describe('TailwindProcessor', () => {
         },
       })
     );
+  });
+
+  it('scans local aliases & baseUrl while excluding package targets', async () => {
+    invalidateResolution();
+    const tempDir = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-tailwind-alias-'))
+    );
+    tempDirs.push(tempDir);
+
+    const entryFilePath = writeFixture(tempDir, 'docs/entry.mdx', '# Entry');
+    const aliasPath = writeFixture(
+      tempDir,
+      'src/components/AliasCard.tsx',
+      'export const AliasCard = () => <div className="alias-card p-4" />;'
+    );
+    const baseUrlPath = writeFixture(
+      tempDir,
+      'src/shared/BaseCard.tsx',
+      'export const BaseCard = () => <div className="base-card" />;'
+    );
+    const sitePath = writeFixture(
+      tempDir,
+      'src/site/SiteCard.tsx',
+      'export const SiteCard = () => <div className="site-card" />;'
+    );
+    writeFixture(
+      tempDir,
+      'node_modules/external-package/package.json',
+      JSON.stringify({ name: 'external-package', main: 'index.js' })
+    );
+    writeFixture(
+      tempDir,
+      'node_modules/external-package/index.js',
+      'module.exports = `<div className="package-only" />`;'
+    );
+    writeFixture(
+      tempDir,
+      'node_modules/vendor/VendorCard.tsx',
+      'export const VendorCard = () => <div className="vendor-only" />;'
+    );
+    const symlinkedPackagePath = writeFixture(
+      tempDir,
+      'workspace-packages/symlinked-package/index.js',
+      'module.exports = `<div className="symlink-package-only" />`;'
+    );
+    writeFixture(
+      tempDir,
+      'workspace-packages/symlinked-package/package.json',
+      JSON.stringify({ name: 'symlinked-package', main: 'index.js' })
+    );
+    fs.symlinkSync(
+      path.dirname(symlinkedPackagePath),
+      path.join(tempDir, 'node_modules', 'symlinked-package'),
+      process.platform === 'win32' ? 'junction' : 'dir'
+    );
+
+    const outsideDir = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-tailwind-outside-'))
+    );
+    tempDirs.push(outsideDir);
+    const escapedPath = writeFixture(
+      outsideDir,
+      'EscapeCard.tsx',
+      'export const EscapeCard = () => <div className="escaped-only" />;'
+    );
+    fs.symlinkSync(
+      outsideDir,
+      path.join(tempDir, 'src', 'escaped'),
+      process.platform === 'win32' ? 'junction' : 'dir'
+    );
+
+    const context: ResolutionContext = {
+      baseDir: path.dirname(entryFilePath),
+      workspaceRoot: tempDir,
+      framework: 'docusaurus',
+      shimsEnabled: true,
+      tsConfig: {
+        configPath: path.join(tempDir, 'tsconfig.json'),
+        baseUrl: 'src',
+        paths: {
+          '@components/*': ['components/*'],
+          '@vendor/*': ['../node_modules/vendor/*'],
+          '@escape/*': ['escaped/*'],
+        },
+      },
+    };
+    const extractFromText = vi.fn(
+      (text: string, classSet: Set<string>): void => {
+        for (const match of text.matchAll(/className="([^"]+)"/g)) {
+          const classNames = match[1];
+          if (!classNames) {
+            continue;
+          }
+          for (const className of classNames.split(/\s+/)) {
+            classSet.add(className);
+          }
+        }
+      }
+    );
+    const scanCache = new ContentHashCache<string[]>({
+      maxEntries: 10,
+      ttlMs: 60_000,
+    });
+    const scanner = new DependencyScanner();
+    const scan = () =>
+      scanner.scanDependencies(
+        entryFilePath,
+        [
+          '@components/AliasCard',
+          'shared/BaseCard',
+          '@site/src/site/SiteCard',
+          'external-package',
+          '@vendor/VendorCard',
+          '@escape/EscapeCard',
+          'symlinked-package',
+          '@theme/Tabs',
+          'node:fs',
+          'npm://external-package',
+          'NPM://external-package',
+          'https://example.com/Card.js',
+          'HTTPS://example.com/Card.js',
+          'file:///tmp/Card.js',
+          'DATA:text/javascript,export default null',
+        ],
+        1024 * 1024,
+        extractFromText,
+        context,
+        scanCache
+      );
+
+    const first = await scan();
+    const second = await scan();
+
+    expect(first.classes).toEqual(
+      new Set(['alias-card', 'p-4', 'base-card', 'site-card'])
+    );
+    expect([...first.scannedFiles].sort()).toEqual(
+      [aliasPath, baseUrlPath, sitePath].sort()
+    );
+    expect(first.scannedFiles).not.toContain(symlinkedPackagePath);
+    expect(first.scannedFiles).not.toContain(escapedPath);
+    expect(second).toEqual(first);
+    expect(extractFromText).toHaveBeenCalledTimes(3);
   });
 
   it('uses browser profile when workspace is CSS-first', async () => {

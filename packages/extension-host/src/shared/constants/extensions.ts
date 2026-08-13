@@ -49,6 +49,7 @@ export const FILE_PROBE_EXTENSIONS = [
   ...TS_EXTENSIONS,
   ...JS_EXTENSIONS,
   ...MDX_EXTENSIONS,
+  ...JSON_EXTENSIONS,
 ] as const;
 
 // enhanced-resolve extensions
@@ -76,4 +77,5 @@ export const FILE_PROBE_INDEX_FILES = [
   'index.tsx',
   'index.js',
   'index.jsx',
+  'index.json',
 ] as const;

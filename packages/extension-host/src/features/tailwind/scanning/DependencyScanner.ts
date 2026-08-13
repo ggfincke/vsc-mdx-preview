@@ -4,7 +4,9 @@
 import * as path from 'path';
 import { ContentHashCache, Semaphore } from '@mdx-preview/runtime-utils';
 import { getUnifiedResolver } from '../../module-runtime/resolution/UnifiedResolver';
+import { getEligibleLocalResolutionPath } from '../../module-runtime/resolution/local-resolution-policy';
 import type { ResolutionContext } from '../../module-runtime/types/module-system';
+import { resolveRealPath } from '../../../shared/utils/path-utils';
 import type { TextExtractor } from '../types/scanning';
 import { FileScanValidator } from '../FileScanValidator';
 import { TAILWIND_DEPENDENCY_RESOLUTION_LIMIT } from '../constants';
@@ -91,13 +93,12 @@ export class DependencyScanner {
       ? { ...providedContext, baseDir: entryDir }
       : { baseDir: entryDir };
 
-    // filter to resolvable relative imports
-    const toResolve = imports.filter((specifier) => {
-      return (
-        this.resolver.shouldResolve(specifier) &&
-        this.resolver.isRelativeImport(specifier)
-      );
-    });
+    const canonicalWorkspaceRoot = context.workspaceRoot
+      ? await resolveRealPath(context.workspaceRoot)
+      : null;
+    const toResolve = imports.filter((specifier) =>
+      this.resolver.shouldResolve(specifier)
+    );
 
     // resolve w/ concurrency limit to prevent resource exhaustion
     const resolutionPromises = toResolve.map(async (specifier) => {
@@ -108,7 +109,16 @@ export class DependencyScanner {
           context,
           'dependency'
         );
-        return result && !result.isBuiltInShim ? result.fsPath : null;
+        const canonicalPath = result
+          ? await resolveRealPath(result.fsPath)
+          : null;
+        return getEligibleLocalResolutionPath(
+          specifier,
+          result,
+          context.workspaceRoot,
+          canonicalPath,
+          canonicalWorkspaceRoot
+        );
       } finally {
         resolveSemaphore.release();
       }

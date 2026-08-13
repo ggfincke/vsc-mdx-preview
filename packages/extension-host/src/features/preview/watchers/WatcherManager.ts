@@ -9,10 +9,16 @@ import { LogTags } from '@mdx-preview/contracts';
 const log = createTaggedLogger(LogTags.WATCHER_MANAGER);
 import type { IWatcher } from '../types/watcher';
 
+interface ReadyGate {
+  promise: Promise<void>;
+  superseded: Promise<void>;
+  supersede: () => void;
+}
+
 // coordinate all watchers w/ unified lifecycle management
 export class WatcherManager implements Disposable {
   private watchers = new Map<string, IWatcher>();
-  private readyGate: Promise<void> | null = null;
+  private readyGate: ReadyGate | null = null;
 
   // register a watcher w/ a unique name
   register(name: string, watcher: IWatcher): void {
@@ -61,14 +67,24 @@ export class WatcherManager implements Disposable {
   }
 
   // set ready gate to prevent callbacks from firing before webview is ready
-  setReadyGate(gate: Promise<void>): void {
-    this.readyGate = gate;
+  setReadyGate(promise: Promise<void>): void {
+    let supersede!: () => void;
+    const superseded = new Promise<void>((resolve) => {
+      supersede = resolve;
+    });
+    const previousGate = this.readyGate;
+    this.readyGate = { promise, superseded, supersede };
+    previousGate?.supersede();
   }
 
   // wait for ready gate (watcher callbacks call before processing events)
   async waitForGate(): Promise<void> {
-    if (this.readyGate) {
-      await this.readyGate;
+    while (this.readyGate) {
+      const gate = this.readyGate;
+      await Promise.race([gate.promise, gate.superseded]);
+      if (gate === this.readyGate) {
+        return;
+      }
     }
   }
 
@@ -84,6 +100,9 @@ export class WatcherManager implements Disposable {
 
   // dispose all watchers & clear the registry
   dispose(): void {
+    const readyGate = this.readyGate;
+    this.readyGate = null;
+    readyGate?.supersede();
     for (const [name, watcher] of this.watchers) {
       log.debug(`Disposing: ${name}`);
       watcher.dispose();

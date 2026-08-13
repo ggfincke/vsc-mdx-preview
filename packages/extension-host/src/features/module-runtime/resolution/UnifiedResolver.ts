@@ -4,7 +4,10 @@
 import { resolveAlias, isBuiltInShim } from './alias-resolver';
 import { createTaggedLogger } from '../../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
-import { isNpmModuleId } from '@mdx-preview/runtime-utils';
+import {
+  isNpmModuleId,
+  isValidModuleRequest,
+} from '@mdx-preview/runtime-utils';
 import { createResettableSingleton } from '../../../shared/utils/singleton-factory';
 import { buildShimResolutionResult } from './resolution-builders';
 import { isNodeModulesPath } from './file-prober';
@@ -119,18 +122,14 @@ export class UnifiedResolver {
     return isRelativeImport(specifier);
   }
 
-  // check if specifier should be resolved (not a URL or npm: protocol)
-  shouldResolve(specifier: string): boolean {
-    if (!specifier) {
-      return false;
-    }
-    if (specifier.startsWith('http://') || specifier.startsWith('https://')) {
-      return false;
-    }
-    if (isNpmModuleId(specifier)) {
-      return false;
-    }
-    return true;
+  // apply the shared request policy before any strategy can observe the value
+  shouldResolve(specifier: unknown): specifier is string {
+    return (
+      typeof specifier === 'string' &&
+      specifier.length > 0 &&
+      isValidModuleRequest(specifier) &&
+      !isNpmModuleId(specifier)
+    );
   }
 
   // prepare alias resolution & strategy chain (shared between sync & async)

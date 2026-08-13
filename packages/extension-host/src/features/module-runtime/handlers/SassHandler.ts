@@ -3,12 +3,12 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { pathToFileURL } from 'url';
-import type { FetchResult } from '@mdx-preview/contracts';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { LogTags } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import type {
   FileTypeHandler,
+  FileTypeHandlerResult,
   ModuleExecutionContext,
 } from '../types/handlers';
 import { getBrowserResolver } from '../resolution/resolver-factory';
@@ -19,6 +19,7 @@ import {
   createKeyedLazyImport,
   loadModuleWithEsmFallback,
 } from '../../../shared/utils/lazy-import';
+import { normalizePathForComparison } from '../../../shared/utils/path-utils';
 
 // module-level tagged logger for SASS handler
 const log = createTaggedLogger(LogTags.SASS_HANDLER);
@@ -35,12 +36,12 @@ const sassLoader = createKeyedLazyImport<SassModule>({
   },
 
   validate(mod) {
-    return typeof mod.compileAsync === 'function';
+    return typeof mod.compileStringAsync === 'function';
   },
 
   onValidationFailed(key) {
     const sassPath = path.join(key, 'node_modules', 'sass');
-    log.warn(`sass at ${sassPath} missing compileAsync`);
+    log.warn(`sass at ${sassPath} missing compileStringAsync`);
   },
 
   onLoaded(key) {
@@ -81,7 +82,7 @@ ${body}
 function buildSassNotInstalledResult(
   fsPath: string,
   context: ModuleExecutionContext
-): FetchResult {
+): FileTypeHandlerResult {
   const fileName = path.basename(fsPath);
   const body = `   The file "${fileName}" could not be compiled because the 'sass'
    package is not installed in your workspace.
@@ -103,15 +104,45 @@ function buildSassNotInstalledResult(
   return buildCssResult(fsPath, helpfulCss, context);
 }
 
+// keep only canonical local imports that need host-side invalidation
+function collectSassWatchFiles(
+  loadedUrls: readonly URL[],
+  entryFsPath: string
+): string[] {
+  const entryKey = normalizePathForComparison(entryFsPath);
+  const watchFiles = new Map<string, string>();
+
+  for (const loadedUrl of loadedUrls) {
+    if (loadedUrl.protocol !== 'file:') {
+      continue;
+    }
+
+    let loadedFsPath: string;
+    try {
+      loadedFsPath = path.normalize(fileURLToPath(loadedUrl));
+    } catch {
+      continue;
+    }
+
+    const loadedKey = normalizePathForComparison(loadedFsPath);
+    if (loadedKey === entryKey) {
+      continue;
+    }
+    watchFiles.set(loadedKey, loadedFsPath);
+  }
+
+  return [...watchFiles.values()];
+}
+
 // handler for .scss & .sass files - compile SASS/SCSS to CSS using workspace's sass
 export class SassHandler implements FileTypeHandler {
   extensions = [...SASS_EXTENSIONS];
 
   async handle(
-    _code: string,
+    code: string,
     fsPath: string,
     context: ModuleExecutionContext
-  ): Promise<FetchResult> {
+  ): Promise<FileTypeHandlerResult> {
     const workspaceRoot =
       vscode.workspace.getWorkspaceFolder(context.documentUri)?.uri.fsPath ??
       context.entryFsDirectory;
@@ -133,11 +164,15 @@ export class SassHandler implements FileTypeHandler {
       return buildSassNotInstalledResult(fsPath, context);
     }
 
-    // compile SCSS using workspace's sass
+    // compile the selected live source while retaining the file import base
     try {
       const browserResolver = getBrowserResolver();
+      const entryUrl = pathToFileURL(fsPath);
 
-      const result: CompileResult = await sass.compileAsync(fsPath, {
+      const result: CompileResult = await sass.compileStringAsync(code, {
+        url: entryUrl,
+        syntax:
+          path.extname(fsPath).toLowerCase() === '.sass' ? 'indented' : 'scss',
         importers: [
           {
             findFileUrl: (url: string) => {
@@ -156,7 +191,12 @@ export class SassHandler implements FileTypeHandler {
         ],
       });
 
-      return buildCssResult(fsPath, result.css, context);
+      return buildCssResult(
+        fsPath,
+        result.css,
+        context,
+        collectSassWatchFiles(result.loadedUrls, fsPath)
+      );
     } catch (error: unknown) {
       // sass compilation error - return error as CSS comment for visibility
       const errorMessage = extractErrorMessage(error);

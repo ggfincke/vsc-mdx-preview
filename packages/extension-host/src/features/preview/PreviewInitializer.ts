@@ -19,7 +19,7 @@ import {
   onConfigChange,
   watchConfigCandidates,
 } from './configuration/ConfigResolver';
-import { onTypeScriptConfigChange } from './configuration/TypeScriptConfigResolver';
+import { watchTypeScriptConfig } from './configuration/TypeScriptConfigResolver';
 import { getTailwindProcessor } from '../../app/services';
 
 export interface HandshakeResult {
@@ -43,6 +43,7 @@ export class PreviewInitializer {
   // timeout ID for handshake timeout (used for cancellation)
   private handshakeTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private handshakeTimedOut = false;
+  private supersedeCurrentHandshake: (() => void) | null = null;
 
   // report & clear whether the current handshake already timed out
   consumeHandshakeTimeout(): boolean {
@@ -52,8 +53,7 @@ export class PreviewInitializer {
   }
 
   // cancel any pending handshake timeout
-  // call this when reusing a panel to prevent stale timeouts from firing
-  cancelHandshakeTimeout(): void {
+  private cancelHandshakeTimeout(): void {
     if (this.handshakeTimeoutId) {
       log.debug('Cancelling existing handshake timeout');
       clearTimeout(this.handshakeTimeoutId);
@@ -65,23 +65,53 @@ export class PreviewInitializer {
   createHandshake(): HandshakeResult {
     log.debug('initWebviewHandshakePromise called');
 
-    // cancel any existing timeout before creating a new one
-    this.cancelHandshakeTimeout();
+    // settle the old generation before replacing its timeout & resolver
+    this.supersedeCurrentHandshake?.();
     this.handshakeTimedOut = false;
 
-    let resolveHandshake: () => void;
+    let settlePromise!: () => void;
+    let settled = false;
+
+    const clearCurrentHandshake = () => {
+      if (this.supersedeCurrentHandshake === supersedeHandshake) {
+        this.supersedeCurrentHandshake = null;
+      }
+    };
 
     const handshakePromise = new Promise<void>((resolve) => {
-      resolveHandshake = () => {
-        log.debug('Handshake resolved!');
-        // clear timeout on successful handshake
-        this.cancelHandshakeTimeout();
-        resolve();
-      };
+      settlePromise = resolve;
     });
+
+    const resolveHandshake = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearCurrentHandshake();
+      log.debug('Handshake resolved!');
+      this.cancelHandshakeTimeout();
+      settlePromise();
+    };
+
+    const supersedeHandshake = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearCurrentHandshake();
+      log.debug('Handshake superseded');
+      this.cancelHandshakeTimeout();
+      settlePromise();
+    };
+    this.supersedeCurrentHandshake = supersedeHandshake;
 
     const timeoutPromise = new Promise<void>((_, reject) => {
       this.handshakeTimeoutId = setTimeout(() => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearCurrentHandshake();
         log.debug('Handshake TIMEOUT after 10 seconds');
         this.handshakeTimeoutId = null;
         this.handshakeTimedOut = true;
@@ -93,7 +123,7 @@ export class PreviewInitializer {
 
     return {
       promise,
-      resolve: resolveHandshake!,
+      resolve: resolveHandshake,
     };
   }
 
@@ -184,6 +214,7 @@ export class PreviewInitializer {
   setupTypeScriptConfigWatcher(
     watcherManager: WatcherManager,
     docScheme: string,
+    documentPath: string,
     onConfigChanged: () => void
   ): void {
     watcherManager.unregister('typescriptConfig');
@@ -195,7 +226,7 @@ export class PreviewInitializer {
     const configSubscriptionWatcher = new EventSubscriptionWatcher({
       logTag: LogTags.TS_CONFIG,
       subscribe: () =>
-        onTypeScriptConfigChange(() => {
+        watchTypeScriptConfig(documentPath, () => {
           log.debug('TypeScript config file changed, reloading...');
           onConfigChanged();
         }),
@@ -210,10 +241,11 @@ export class PreviewInitializer {
     watcherManager: WatcherManager,
     cssPath: string,
     entryFsDirectory: string | null,
-    webviewHandle?: { setCustomCss(css: string): void }
+    cssNotifier?: { setCustomCss(css: string): void }
   ): void {
     // remove existing CSS watcher
     watcherManager.unregister('customCss');
+    cssNotifier?.setCustomCss('');
 
     if (!cssPath) {
       return;
@@ -225,9 +257,9 @@ export class PreviewInitializer {
       entryFsDirectory
     );
 
-    // connect notifier if webview handle exists
-    if (webviewHandle) {
-      customCssWatcher.setNotifier(webviewHandle);
+    // connect notifier if the preview has a CSS snapshot owner
+    if (cssNotifier) {
+      customCssWatcher.setNotifier(cssNotifier);
     }
 
     watcherManager.register('customCss', customCssWatcher);
@@ -305,6 +337,7 @@ export class PreviewInitializer {
   }
 
   dispose(): void {
+    this.supersedeCurrentHandshake?.();
     this.cancelHandshakeTimeout();
   }
 }
