@@ -2,12 +2,64 @@
 // Vite build config for webview React app
 
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 
+const MODULE_PROVENANCE_FILE = '.vite/module-provenance.json';
+
+// retain module IDs after bundling so size checks do not depend on chunk names
+function moduleProvenancePlugin(): Plugin {
+  return {
+    name: 'module-provenance',
+    generateBundle: {
+      order: 'post',
+      handler(_options, bundle) {
+        const manifest = Object.values(bundle).find(
+          (output) =>
+            output.type === 'asset' && output.fileName === '.vite/manifest.json'
+        );
+        if (!manifest) {
+          throw new Error('Vite manifest asset is unavailable for provenance');
+        }
+        const manifestSha256 = createHash('sha256')
+          .update(manifest.source)
+          .digest('hex');
+        const chunks: Record<
+          string,
+          {
+            sha256: string;
+            modules: string[];
+          }
+        > = {};
+        for (const output of Object.values(bundle)) {
+          if (output.type !== 'chunk') {
+            continue;
+          }
+          chunks[output.fileName] = {
+            sha256: createHash('sha256').update(output.code).digest('hex'),
+            modules: Object.keys(output.modules).sort(),
+          };
+        }
+
+        const sortedChunks = Object.fromEntries(
+          Object.entries(chunks).sort(([left], [right]) =>
+            left.localeCompare(right)
+          )
+        );
+        this.emitFile({
+          type: 'asset',
+          fileName: MODULE_PROVENANCE_FILE,
+          source: `${JSON.stringify({ version: 2, manifestSha256, chunks: sortedChunks }, null, 2)}\n`,
+        });
+      },
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), moduleProvenancePlugin()],
   resolve: {
     alias: [
       {
@@ -45,9 +97,6 @@ export default defineConfig({
           // exports when forced into a JS chunk (katex_min_exports bug)
           if (id.endsWith('.css')) {
             return;
-          }
-          if (id.includes('node_modules/mermaid/')) {
-            return 'mermaid';
           }
           if (id.includes('node_modules/@viz-js/viz/')) {
             return 'graphviz';

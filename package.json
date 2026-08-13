@@ -772,7 +772,7 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run build:extension:prod && npm run build:webview-client",
+    "vscode:prepublish": "npm run build:extension:prod && npm run build:webview-client && npm run size:report",
     "vscode:package": "npm run test:all && vsce package --no-dependencies",
     "generate:preload": "tsx packages/codegen/src/cli/generate-preload.ts",
     "generate:schema": "tsx packages/codegen/src/cli/generate-schema.ts",

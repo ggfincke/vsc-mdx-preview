@@ -8,7 +8,7 @@ import type {
   IconifyIconPack,
   ResolvedMermaidIconPack,
 } from '@mdx-preview/contracts';
-import logosIcons from '@iconify-json/logos/icons.json';
+import { createLazyValueLoader } from '@mdx-preview/runtime-utils';
 import type { MermaidModule } from './mermaidLoader';
 
 // re-sanitize icon bodies in the webview — never trust host RPC data blindly
@@ -82,6 +82,10 @@ function sanitizeIconPack(
 // bundled "logos" pack includes AWS service logos (logos:aws-lambda etc)
 // loaded locally (not via CDN) so it works offline & under the webview CSP
 let builtinRegistered = false;
+const builtinIconPackLoader = createLazyValueLoader(
+  async () => (await import('@iconify-json/logos/icons.json')).default,
+  { allowRetry: true }
+);
 
 // content fingerprints of dynamic packs already registered by name
 const registeredDynamicPacks = new Map<string, string>();
@@ -137,7 +141,7 @@ export function registerBuiltinIconPacks(mermaid: MermaidModule): void {
   mermaid.default.registerIconPacks([
     {
       name: 'logos',
-      loader: async () => logosIcons,
+      loader: () => builtinIconPackLoader.load(),
     },
   ]);
   builtinRegistered = true;
@@ -194,6 +198,7 @@ export function registerDynamicIconPacks(
 // reset guards (used by tests & module-cache resets)
 export function resetMermaidIconPacks(): void {
   builtinRegistered = false;
+  builtinIconPackLoader.reset();
   registeredDynamicPacks.clear();
   pendingDynamicPacks = [];
 }
