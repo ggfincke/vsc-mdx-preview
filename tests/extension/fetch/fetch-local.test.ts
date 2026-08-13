@@ -41,9 +41,19 @@ import {
 } from '../../../packages/extension-host/src/features/module-runtime/fetch/utils';
 
 function createPreview(tempDir: string): Preview {
+  const dependentFsPaths = new Set<string>();
   return {
     entryFsDirectory: tempDir,
-    dependentFsPaths: new Set<string>(),
+    dependentFsPaths,
+    dependencyGeneration: 1,
+    commitModuleDependencySnapshot: vi.fn(
+      (ownerFsPath, _dependencies, watchFiles) => {
+        dependentFsPaths.add(ownerFsPath);
+        for (const watchFile of watchFiles ?? []) {
+          dependentFsPaths.add(watchFile);
+        }
+      }
+    ),
     typescriptConfiguration: undefined,
     configuration: {
       updateMode: 'onSave',

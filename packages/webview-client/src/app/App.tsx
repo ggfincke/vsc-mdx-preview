@@ -20,7 +20,11 @@ import { ExtensionHandle } from '../platform/rpc/webview-rpc-client';
 import { canRenderTrusted } from '../platform/rpc/content-mode-guard';
 import { createTaggedLogger } from '../shared/utils/createTaggedLogger';
 import { LogTags } from '@mdx-preview/contracts';
-import { classifyLink } from '../shared/utils/linkHandler';
+import {
+  classifyLink,
+  getRelativeFilePath,
+  normalizeExternalHref,
+} from '../shared/utils/linkHandler';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import type { TrustedPreviewContent } from './types';
 import { useTheme } from '../features/theme/runtime';
@@ -80,21 +84,22 @@ function App() {
         return;
       }
 
-      const linkType = classifyLink(href);
+      const externalHref = normalizeExternalHref(href);
 
       // route all external links through extension
-      if (linkType === 'external') {
+      if (externalHref) {
         event.preventDefault();
-        log.debug(`Opening external link: ${href}`);
-        ExtensionHandle.openExternal(href);
+        log.debug(`Opening external link: ${externalHref}`);
+        ExtensionHandle.openExternal(externalHref);
         return;
       }
 
+      const linkType = classifyLink(href);
       if (linkType !== 'relative-file' || (!event.ctrlKey && !event.metaKey)) {
         return;
       }
 
-      const relativePath = href.split(/[?#]/, 1)[0];
+      const relativePath = getRelativeFilePath(href);
       if (!relativePath) {
         return;
       }

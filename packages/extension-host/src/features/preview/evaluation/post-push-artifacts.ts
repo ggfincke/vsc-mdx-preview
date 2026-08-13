@@ -47,14 +47,13 @@ async function postTrustedArtifacts(
   if (!context.isCurrent()) {
     return;
   }
-  preview.updateDependencies(dependencySpecifiers);
-  applyFrontmatterAndMeta(context, result.frontmatter);
 
   await detectAndPushUsedComponents(context);
 
   if (!context.isCurrent()) {
     return;
   }
+  sendNextraMetaIfNeeded(context, result.frontmatter);
   log.debug('Calling webviewHandle.updatePreview');
   await webviewHandle.updatePreview(
     result.code,
@@ -65,6 +64,8 @@ async function postTrustedArtifacts(
   if (!context.isCurrent()) {
     return;
   }
+  preview.updateDependencies(result.dependencies);
+  applyFrontmatterTheme(context, result.frontmatter);
   preview.syncEditorScrollToPreview();
 
   if (!context.tailwindEnabled) {
@@ -98,9 +99,7 @@ async function postSafeArtifacts(
   if (!context.isCurrent()) {
     return;
   }
-  clearTailwindChannels(context.preview, webviewHandle);
-
-  applyFrontmatterAndMeta(context, stageResult.result.frontmatter);
+  sendNextraMetaIfNeeded(context, stageResult.result.frontmatter);
 
   log.debug('Calling webviewHandle.updatePreviewSafe');
   await webviewHandle.updatePreviewSafe(stageResult.result.html);
@@ -108,6 +107,9 @@ async function postSafeArtifacts(
   if (!context.isCurrent()) {
     return;
   }
+  preview.updateDependencies([]);
+  clearTailwindChannels(context.preview, webviewHandle);
+  applyFrontmatterTheme(context, stageResult.result.frontmatter);
   preview.syncEditorScrollToPreview();
 }
 
@@ -137,16 +139,12 @@ async function detectAndPushUsedComponents(
   }
 }
 
-function applyFrontmatterAndMeta(
+function applyFrontmatterTheme(
   context: PreparedEvaluationContext,
   frontmatter: Record<string, unknown> | undefined
 ): void {
-  const { preview } = context;
-
   // always push the effective state so removing an override restores the base
-  preview.pushThemeState(frontmatter);
-
-  sendNextraMetaIfNeeded(context, frontmatter);
+  context.preview.applyFrontmatterTheme(frontmatter);
 }
 
 function sendNextraMetaIfNeeded(

@@ -24,6 +24,8 @@ export interface MockPreview {
   fsPath: string;
   entryFsDirectory: string | null;
   dependentFsPaths: Set<string>;
+  dependencyGeneration: number;
+  commitModuleDependencySnapshot: ReturnType<typeof vi.fn>;
   configuration: MockConfigurationState;
   mdxPreviewConfig: MockResolvedConfig | undefined;
   typescriptConfiguration: MockTypeScriptConfig | undefined;
@@ -31,6 +33,7 @@ export interface MockPreview {
   active?: boolean;
   refreshWebview?: ReturnType<typeof vi.fn>;
   dispose?: ReturnType<typeof vi.fn>;
+  applyFrontmatterTheme?: ReturnType<typeof vi.fn>;
   pushThemeState?: ReturnType<typeof vi.fn>;
   clearAllCaches?: ReturnType<typeof vi.fn>;
   completeHandshake?: ReturnType<typeof vi.fn>;
@@ -68,6 +71,7 @@ export interface MockPreviewOptions {
   active?: boolean;
   refreshWebview?: ReturnType<typeof vi.fn>;
   dispose?: ReturnType<typeof vi.fn>;
+  applyFrontmatterTheme?: ReturnType<typeof vi.fn>;
   pushThemeState?: ReturnType<typeof vi.fn>;
   clearAllCaches?: ReturnType<typeof vi.fn>;
   completeHandshake?: ReturnType<typeof vi.fn>;
@@ -101,6 +105,7 @@ export function createMockPreview(
     active,
     refreshWebview,
     dispose,
+    applyFrontmatterTheme,
     pushThemeState,
     clearAllCaches,
     completeHandshake,
@@ -116,6 +121,15 @@ export function createMockPreview(
     fsPath,
     entryFsDirectory: fsPath.substring(0, fsPath.lastIndexOf('/')),
     dependentFsPaths: new Set<string>(),
+    dependencyGeneration: 0,
+    commitModuleDependencySnapshot: vi.fn(
+      (ownerFsPath: string, _dependencies, watchFiles?: string[]) => {
+        preview.dependentFsPaths.add(ownerFsPath);
+        for (const watchFile of watchFiles ?? []) {
+          preview.dependentFsPaths.add(watchFile);
+        }
+      }
+    ),
     configuration: { ...DEFAULT_CONFIGURATION, ...configuration },
     mdxPreviewConfig,
     typescriptConfiguration,
@@ -130,6 +144,9 @@ export function createMockPreview(
   }
   if (dispose) {
     preview.dispose = dispose;
+  }
+  if (applyFrontmatterTheme) {
+    preview.applyFrontmatterTheme = applyFrontmatterTheme;
   }
   if (pushThemeState) {
     preview.pushThemeState = pushThemeState;

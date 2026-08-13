@@ -27,7 +27,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: '24.19.0'
           cache: 'npm'
 
       - name: Install dependencies
@@ -47,6 +47,9 @@ jobs:
 
       - name: Build extension
         run: npm run build
+
+      - name: Check bundle size and provenance
+        run: npm run size:report
 
       - name: Check import.meta.url CJS shim
         run: npm run check:import-meta-shim

@@ -9,8 +9,12 @@ import { LogTags } from '@mdx-preview/contracts';
 const log = createTaggedLogger(LogTags.PREVIEW);
 import { getThemeManager } from '../../app/services';
 import { resolveMermaidIconPacks } from '../themes/IconPackResolver';
+import type { ThemeOverrides } from '../themes/types';
 import type { DocumentTracker } from './watchers/DocumentTracker';
-import type { CustomCssWatcher } from './watchers/CustomCssWatcher';
+import type {
+  CssNotifier,
+  CustomCssWatcher,
+} from './watchers/CustomCssWatcher';
 import type { WatcherManager } from './watchers/WatcherManager';
 import type { WebviewHandleType } from '../../platform/rpc/extension-endpoint';
 import type {
@@ -22,9 +26,12 @@ import type {
 export type WebviewHandle = WebviewHandleType;
 
 // manage webview communication & theme state for a preview instance
-export class PreviewWebviewBridge {
+export class PreviewWebviewBridge implements CssNotifier {
   private webviewHandle?: WebviewHandle;
   private webview?: vscode.Webview;
+  private webviewReady = false;
+  private customCss = '';
+  private themeOverrides: ThemeOverrides = {};
   private themeRequestSeq = 0;
   private lastSentState = new Map<string, unknown>();
 
@@ -51,51 +58,66 @@ export class PreviewWebviewBridge {
     handle: WebviewHandle,
     watcherManager: WatcherManager
   ): void {
-    this.themeRequestSeq += 1;
-    this.resetLastSentState();
+    this.beginHandshake();
     this.webviewHandle = this.createDeltaHandle(handle);
     const docTracker = watcherManager.get<DocumentTracker>('document');
     docTracker?.setNotifier(handle);
     const cssWatcher = watcherManager.get<CustomCssWatcher>('customCss');
-    cssWatcher?.setNotifier(handle);
+    cssWatcher?.setNotifier(this);
+  }
+
+  // suspend outbound snapshot updates while replacement HTML initializes
+  beginHandshake(): void {
+    this.webviewReady = false;
+    this.themeRequestSeq += 1;
+    this.resetLastSentState();
   }
 
   // called after webview handshake completes to push initial configuration
   onWebviewReady(docUri: vscode.Uri): void {
     log.debug('onWebviewReady - pushing initial config');
     this.resetLastSentState();
+    this.webviewReady = true;
+    this.pushThemeState(docUri);
+    this.webviewHandle?.setCustomCss(this.customCss);
+  }
+
+  // retain CSS as part of the preview snapshot & publish only to a ready webview
+  setCustomCss(css: string): void {
+    this.customCss = css;
+    if (this.webviewReady) {
+      this.webviewHandle?.setCustomCss(css);
+    }
+  }
+
+  // replace the retained frontmatter inputs after a successful evaluation
+  applyFrontmatterTheme(
+    docUri: vscode.Uri,
+    frontmatter: Record<string, unknown> | undefined
+  ): void {
+    this.themeOverrides = frontmatter
+      ? getThemeManager().extractThemeFromFrontmatter(frontmatter)
+      : {};
     this.pushThemeState(docUri);
   }
 
+  // clear document-owned theme inputs before another document takes ownership
+  clearFrontmatterTheme(): void {
+    this.themeOverrides = {};
+    this.invalidateThemeRequests();
+  }
+
   // push theme state to webview (public for theme refresh w/out full webview refresh)
-  pushThemeState(
-    docUri: vscode.Uri,
-    frontmatter?: Record<string, unknown>
-  ): void {
+  pushThemeState(docUri: vscode.Uri): void {
     const webviewHandle = this.webviewHandle;
     if (!webviewHandle) {
       return;
     }
     const themeManager = getThemeManager();
-    let themeState = themeManager.getWebviewThemeState(docUri);
-
-    // apply frontmatter theme overrides if present
-    if (frontmatter) {
-      const frontmatterTheme =
-        themeManager.extractThemeFromFrontmatter(frontmatter);
-      if (frontmatterTheme.previewTheme) {
-        themeState = {
-          ...themeState,
-          previewTheme: frontmatterTheme.previewTheme,
-        };
-      }
-      if (frontmatterTheme.codeBlockTheme) {
-        themeState = {
-          ...themeState,
-          codeBlockTheme: frontmatterTheme.codeBlockTheme,
-        };
-      }
-    }
+    const themeState = themeManager.getWebviewThemeState(
+      docUri,
+      this.themeOverrides
+    );
 
     // resolve configured mermaid icon packs (async file reads) then push
     const iconPackConfig =
@@ -174,6 +196,9 @@ export class PreviewWebviewBridge {
   dispose(): void {
     this.invalidateThemeRequests();
     this.resetLastSentState();
+    this.webviewReady = false;
+    this.customCss = '';
+    this.themeOverrides = {};
     this.webviewHandle = undefined;
     this.webview = undefined;
   }
@@ -187,6 +212,7 @@ export class PreviewWebviewBridge {
       'setTailwindBrowserCss',
       'setTheme',
       'setRuntimeConfig',
+      'setCustomCss',
     ]);
 
     return new Proxy(handle, {

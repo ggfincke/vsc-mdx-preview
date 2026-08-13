@@ -87,23 +87,49 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     const severity =
       options.severity ?? inferSeverity(normalizedError, options.context);
 
-    // check for duplicate suppression
-    if (this.isDuplicate(normalizedError, options.dedupeWindow)) {
-      log.debug(`Suppressed duplicate: ${normalizedError.message}`);
+    // logs & user destinations have independent suppression state
+    if (
+      this.isDuplicate(
+        normalizedError,
+        'log',
+        options.context,
+        severity,
+        options.dedupeWindow
+      )
+    ) {
+      log.debug(`Suppressed duplicate log: ${normalizedError.message}`);
+    } else {
+      this.logError(normalizedError, severity, options);
+    }
+
+    // webview errors are state transitions & must always be delivered
+    if (options.showInWebview && options.webviewHandle) {
+      sendToWebview(normalizedError, options.webviewHandle, options.context);
       return;
     }
 
-    // always log (level based on severity)
-    this.logError(normalizedError, severity, options);
-
-    // handle notifications based on severity & options
-    if (options.showInWebview && options.webviewHandle) {
-      sendToWebview(normalizedError, options.webviewHandle, options.context);
-    } else if (
-      shouldNotify(severity, options.showNotification, options.showInWebview)
+    if (
+      !shouldNotify(severity, options.showNotification, options.showInWebview)
     ) {
-      showNotification(normalizedError, severity, options.context);
+      return;
     }
+
+    if (
+      this.isDuplicate(
+        normalizedError,
+        'notification',
+        options.context,
+        severity,
+        options.dedupeWindow
+      )
+    ) {
+      log.debug(
+        `Suppressed duplicate notification: ${normalizedError.message}`
+      );
+      return;
+    }
+
+    showNotification(normalizedError, severity, options.context);
   }
 
   // convenience method for background/silent errors - log only, never show to user
@@ -207,9 +233,15 @@ export class ErrorReporter extends SingletonService<ErrorReporter> {
     }
   }
 
-  // check for duplicate errors using LRU cache w/ auto-eviction
-  private isDuplicate(error: Error, dedupeWindow?: number): boolean {
-    const key = `${error.constructor.name}:${error.message}`;
+  // check destination-specific duplicates using LRU auto-eviction
+  private isDuplicate(
+    error: Error,
+    destination: 'log' | 'notification',
+    context: ErrorContext,
+    severity: ErrorSeverity,
+    dedupeWindow?: number
+  ): boolean {
+    const key = `${destination}:${context}:${severity}:${error.constructor.name}:${error.message}`;
     const now = Date.now();
     const window = dedupeWindow ?? ERROR_DEDUPE_WINDOW_DEFAULT_MS;
 

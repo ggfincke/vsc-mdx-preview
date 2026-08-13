@@ -9,9 +9,11 @@ import {
   findGraphvizContainers,
   type GraphvizDiagramInfo,
 } from '../utils/findGraphvizContainers';
-import { MermaidRenderer } from '../ui/MermaidRenderer/MermaidRenderer';
-import { PlantUMLRenderer } from '../ui/PlantUMLRenderer/PlantUMLRenderer';
-import { GraphvizRenderer } from '../ui/GraphvizRenderer/GraphvizRenderer';
+import {
+  LazyGraphvizRenderer,
+  LazyMermaidRenderer,
+  LazyPlantUMLRenderer,
+} from '../ui/LazyDiagramRenderers/LazyDiagramRenderers';
 
 // adapter contract for scan coordinator
 export interface DiagramScanAdapter {
@@ -29,14 +31,14 @@ export const DIAGRAM_SCAN_ADAPTERS: readonly DiagramScanAdapter[] = [
     key: 'mermaid',
     findContainers: findMermaidContainers,
     renderElement: (diagram) => (
-      <MermaidRenderer id={diagram.id} code={diagram.code} />
+      <LazyMermaidRenderer id={diagram.id} code={diagram.code} />
     ),
   },
   {
     key: 'plantuml',
     findContainers: findPlantUMLContainers,
     renderElement: (diagram) => (
-      <PlantUMLRenderer id={diagram.id} code={diagram.code} />
+      <LazyPlantUMLRenderer id={diagram.id} code={diagram.code} />
     ),
   },
   {
@@ -45,7 +47,7 @@ export const DIAGRAM_SCAN_ADAPTERS: readonly DiagramScanAdapter[] = [
     renderElement: (diagram) => {
       const graphvizDiagram = diagram as GraphvizDiagramInfo;
       return (
-        <GraphvizRenderer
+        <LazyGraphvizRenderer
           id={graphvizDiagram.id}
           code={graphvizDiagram.code}
           language={graphvizDiagram.language}

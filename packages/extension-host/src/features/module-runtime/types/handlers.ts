@@ -4,6 +4,11 @@
 import type * as vscode from 'vscode';
 import type { FetchResult } from '@mdx-preview/contracts';
 
+// transformed module plus extension-host-only watch metadata
+export interface FileTypeHandlerResult extends FetchResult {
+  watchFiles?: string[];
+}
+
 // capabilities needed while executing one fetched module
 export interface ModuleExecutionContext {
   documentUri: vscode.Uri;
@@ -23,5 +28,5 @@ export interface FileTypeHandler {
     code: string,
     fsPath: string,
     context: ModuleExecutionContext
-  ): Promise<FetchResult>;
+  ): Promise<FileTypeHandlerResult>;
 }

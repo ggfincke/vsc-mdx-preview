@@ -11,6 +11,7 @@ import type {
   CodeBlockTheme,
   MermaidTheme,
   ThemeConfiguration,
+  ThemeOverrides,
   WebviewThemeState,
 } from './types';
 import { getOppositeTheme, isLightPreviewTheme } from './types';
@@ -133,8 +134,11 @@ export class ThemeManager extends WithSubscribers<
   }
 
   // get the complete webview theme state
-  getWebviewThemeState(docUri?: vscode.Uri): WebviewThemeState {
-    const config = this.getThemeConfiguration(docUri);
+  getWebviewThemeState(
+    docUri?: vscode.Uri,
+    overrides: ThemeOverrides = {}
+  ): WebviewThemeState {
+    const config = { ...this.getThemeConfiguration(docUri), ...overrides };
     const effectivePreviewTheme = this.getEffectivePreviewTheme(config);
     const effectiveCodeBlockTheme = this.getEffectiveCodeBlockTheme(
       config.codeBlockTheme,
@@ -155,8 +159,8 @@ export class ThemeManager extends WithSubscribers<
   // extract theme configuration from frontmatter (uses canonical override metadata)
   extractThemeFromFrontmatter(
     frontmatter: Record<string, unknown>
-  ): Partial<ThemeConfiguration> {
-    const result: Partial<ThemeConfiguration> = {};
+  ): ThemeOverrides {
+    const result: ThemeOverrides = {};
 
     for (const [key, descriptor] of FRONTMATTER_OVERRIDE_MAP) {
       const value = frontmatter[key];

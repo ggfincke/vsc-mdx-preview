@@ -29,6 +29,8 @@ const PREVIEW_SCROLL_HYSTERESIS_PX = 24;
 const PREVIEW_SOURCE_REPORT_INTERVAL_MS = 50;
 const PREVIEW_SOURCE_REPORT_RETRY_MS = 120;
 const PREVIEW_SOURCE_REPORT_IGNORED_RETRY_MS = 250;
+const PREVIEW_SOURCE_REPORT_IGNORED_MAX_RETRY_MS = 2_000;
+const PREVIEW_SOURCE_REPORT_IGNORED_MAX_RETRIES = 4;
 const MIN_VISIBLE_HEIGHT_PX = 1;
 const USER_SCROLL_INTERRUPT_KEYS = new Set([
   ' ',
@@ -173,6 +175,8 @@ export function usePreviewScrollSync({
     let lastSentAtMs = 0;
     let pendingLine: number | undefined;
     let inFlightLine: number | undefined;
+    let ignoredLine: number | undefined;
+    let ignoredRetryCount = 0;
     let sourceLineEntries = collectSourceLineTargetEntries(container);
     let sourceLineEntriesDirty = false;
 
@@ -202,6 +206,20 @@ export function usePreviewScrollSync({
     const getStickyLine = (): number | undefined =>
       pendingLine ?? inFlightLine ?? lastAcceptedLine;
 
+    const rearmIgnoredReports = (): void => {
+      ignoredLine = undefined;
+      ignoredRetryCount = 0;
+    };
+
+    const rearmIgnoredReportsFromEnvironment = (): void => {
+      const hasPendingIgnoredBackoff =
+        reportTimer !== undefined && pendingLine === ignoredLine;
+      rearmIgnoredReports();
+      if (hasPendingIgnoredBackoff) {
+        clearReportTimer();
+      }
+    };
+
     const scheduleReport = (minimumDelayMs?: number): void => {
       if (disposed || inFlightLine !== undefined || pendingLine === undefined) {
         return;
@@ -227,6 +245,14 @@ export function usePreviewScrollSync({
     };
 
     const queueLine = (line: number): void => {
+      if (line === ignoredLine) {
+        if (ignoredRetryCount >= PREVIEW_SOURCE_REPORT_IGNORED_MAX_RETRIES) {
+          return;
+        }
+      } else {
+        rearmIgnoredReports();
+      }
+
       if (
         line === lastAcceptedLine &&
         pendingLine === undefined &&
@@ -234,11 +260,23 @@ export function usePreviewScrollSync({
       ) {
         return;
       }
-      if (line === pendingLine || line === inFlightLine) {
+      if (line === pendingLine) {
+        scheduleReport();
+        return;
+      }
+      if (line === inFlightLine) {
+        if (pendingLine !== undefined) {
+          pendingLine = undefined;
+          clearReportTimer();
+        }
         return;
       }
 
+      const replacesPendingLine = pendingLine !== undefined;
       pendingLine = line;
+      if (replacesPendingLine) {
+        clearReportTimer();
+      }
       scheduleReport();
     };
 
@@ -247,6 +285,7 @@ export function usePreviewScrollSync({
       result: PreviewSourceLineReportResult
     ): void => {
       let retryDelayMs: number | undefined;
+      const ownsPendingWork = pendingLine === undefined || pendingLine === line;
       const queueRetry = (delayMs: number): void => {
         if (pendingLine === undefined && line !== lastAcceptedLine) {
           pendingLine = line;
@@ -256,12 +295,24 @@ export function usePreviewScrollSync({
 
       if (result === 'accepted') {
         lastAcceptedLine = line;
-      } else if (result === 'retry') {
+      }
+
+      if (ownsPendingWork && result === 'accepted') {
+        rearmIgnoredReports();
+      } else if (ownsPendingWork && result === 'retry') {
         // editor reveal is briefly suppressed
+        rearmIgnoredReports();
         queueRetry(PREVIEW_SOURCE_REPORT_RETRY_MS);
-      } else {
-        // ignored reports may be transient when the editor is hidden or RPC fails
-        queueRetry(PREVIEW_SOURCE_REPORT_IGNORED_RETRY_MS);
+      } else if (ownsPendingWork && result === 'ignored') {
+        ignoredLine = line;
+        if (ignoredRetryCount < PREVIEW_SOURCE_REPORT_IGNORED_MAX_RETRIES) {
+          const retryDelayMs = Math.min(
+            PREVIEW_SOURCE_REPORT_IGNORED_RETRY_MS * 2 ** ignoredRetryCount,
+            PREVIEW_SOURCE_REPORT_IGNORED_MAX_RETRY_MS
+          );
+          ignoredRetryCount += 1;
+          queueRetry(retryDelayMs);
+        }
       }
 
       inFlightLine = undefined;
@@ -323,6 +374,17 @@ export function usePreviewScrollSync({
       frame = scheduleFrame(flush);
     };
 
+    const scheduleFromEnvironment = (): void => {
+      rearmIgnoredReportsFromEnvironment();
+      schedule();
+    };
+
+    const handleVisibilityChange = (): void => {
+      if (document.visibilityState === 'visible') {
+        scheduleFromEnvironment();
+      }
+    };
+
     const scheduleSuppressedFlush = (): void => {
       if (disposed || suppressedFlushTimer) {
         return;
@@ -357,6 +419,7 @@ export function usePreviewScrollSync({
       );
       if (hasEntryMutation) {
         sourceLineEntriesDirty = true;
+        rearmIgnoredReportsFromEnvironment();
       }
       schedule();
     };
@@ -378,8 +441,12 @@ export function usePreviewScrollSync({
       subtree: true,
     });
 
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
+    window.addEventListener('scroll', scheduleFromEnvironment, {
+      passive: true,
+    });
+    window.addEventListener('resize', scheduleFromEnvironment);
+    window.addEventListener('focus', scheduleFromEnvironment);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('wheel', handleUserScrollIntent, {
       passive: true,
     });
@@ -395,8 +462,10 @@ export function usePreviewScrollSync({
     return () => {
       disposed = true;
       mutationObserver?.disconnect();
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', scheduleFromEnvironment);
+      window.removeEventListener('resize', scheduleFromEnvironment);
+      window.removeEventListener('focus', scheduleFromEnvironment);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('wheel', handleUserScrollIntent);
       window.removeEventListener('touchmove', handleUserScrollIntent);
       window.removeEventListener('mousedown', handleUserScrollIntent);

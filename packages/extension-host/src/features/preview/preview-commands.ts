@@ -7,7 +7,11 @@ import { LogTags } from '@mdx-preview/contracts';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { getPreviewManager, getErrorReporter } from '../../app/services';
 import { ErrorContext } from '../../shared/errors/ErrorReporter';
-import { createOrShowPanel, refreshPanel } from './webview-manager';
+import {
+  createOrShowPanel,
+  ensureWebviewResourcesReady,
+  refreshPanel,
+} from './webview-manager';
 import { Preview } from './Preview';
 import { showSafeModeNotificationIfNeeded } from './safe-mode-notification';
 
@@ -18,6 +22,7 @@ const log = createTaggedLogger(LogTags.PREVIEW);
 async function openPreviewForDoc(doc: vscode.TextDocument): Promise<void> {
   log.debug(`Opening preview for: ${doc.uri.fsPath}`);
   const manager = getPreviewManager();
+  await ensureWebviewResourcesReady();
   let currentPreview = manager.getCurrentPreview();
 
   if (!currentPreview) {

@@ -5,6 +5,7 @@ import * as path from 'path';
 import type { FetchResult } from '@mdx-preview/contracts';
 import type {
   FileTypeHandler,
+  FileTypeHandlerResult,
   ModuleExecutionContext,
 } from '../types/handlers';
 
@@ -199,13 +200,15 @@ function rewriteCssReferences(
 export function buildCssResult(
   fsPath: string,
   css: string,
-  context?: ModuleExecutionContext
-): FetchResult {
+  context?: ModuleExecutionContext,
+  watchFiles?: string[]
+): FileTypeHandlerResult {
   return {
     fsPath,
     css: context ? rewriteCssReferences(css, fsPath, context) : css,
     code: '',
     dependencies: [],
+    ...(watchFiles !== undefined ? { watchFiles } : {}),
   };
 }
 

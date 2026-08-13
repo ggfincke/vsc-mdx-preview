@@ -22,6 +22,7 @@ import { createTaggedLogger } from '../../shared/logging/logger';
 import { getErrorReporter, getFrameworkDetector } from '../../app/services';
 import { ErrorContext } from '../../shared/errors/ErrorReporter';
 import { SingletonService } from '../../app/services/SingletonService';
+import { isPathWithin } from '../../shared/utils/path-utils';
 
 const log = createTaggedLogger(LogTags.COMPONENT_DIAGNOSTICS);
 
@@ -81,8 +82,8 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
     );
 
     this.addDisposable(
-      getFrameworkDetector().subscribe(() => {
-        this.scheduleOpenDocumentUpdates();
+      getFrameworkDetector().subscribe(({ affectedRoot }) => {
+        this.scheduleOpenDocumentUpdates(affectedRoot);
       })
     );
 
@@ -119,9 +120,12 @@ export class ComponentDiagnostics extends SingletonService<ComponentDiagnostics>
     this.documentTimers.set(uriString, timer);
   }
 
-  private scheduleOpenDocumentUpdates(): void {
+  private scheduleOpenDocumentUpdates(affectedRoot?: string): void {
     for (const document of vscode.workspace.textDocuments) {
-      if (this.isMdxDocument(document)) {
+      if (
+        this.isMdxDocument(document) &&
+        (!affectedRoot || isPathWithin(document.uri.fsPath, affectedRoot))
+      ) {
         this.scheduleUpdate(document);
       }
     }

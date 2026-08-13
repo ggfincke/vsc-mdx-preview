@@ -29,7 +29,10 @@ import {
 import { getUnifiedResolver } from '../resolution/UnifiedResolver';
 import { isIgnoredResolution } from '../resolution/resolution-builders';
 import { buildResolutionContext } from '../resolution/resolution-context';
-import type { ModuleExecutionContext } from '../types/handlers';
+import type {
+  FileTypeHandlerResult,
+  ModuleExecutionContext,
+} from '../types/handlers';
 import {
   normalizeNodePrefix,
   isCoreModule,
@@ -141,6 +144,23 @@ function readModuleFileWithTimeout(
   });
 }
 
+// retain host-only watch paths without exposing them to the browser runtime
+function finalizeHandlerResult(
+  result: FileTypeHandlerResult,
+  preview: Preview,
+  ownerFsPath: string,
+  dependencyGeneration: number
+): FetchResult {
+  const { watchFiles, ...fetchResult } = result;
+  preview.commitModuleDependencySnapshot(
+    ownerFsPath,
+    result.dependencies,
+    watchFiles,
+    dependencyGeneration
+  );
+  return fetchResult;
+}
+
 export async function fetchLocal(
   request: string,
   isBare: boolean,
@@ -157,6 +177,7 @@ export async function fetchLocal(
         dependencies: [],
       };
     }
+    const dependencyGeneration = preview.dependencyGeneration;
 
     // check for Node.js core modules early (handles both `fs` & `node:fs` forms)
     const normalizedRequest = normalizeNodePrefix(request);
@@ -219,8 +240,6 @@ export async function fetchLocal(
       throw new PathAccessDeniedError(diskFsPath);
     }
 
-    preview.dependentFsPaths.add(diskFsPath);
-
     const extname = path.extname(diskFsPath).toLowerCase();
     const fsPath =
       path.sep === '\\' ? normalizePathSeparators(diskFsPath) : diskFsPath;
@@ -235,7 +254,12 @@ export async function fetchLocal(
         executionContext
       );
       if (imageResult) {
-        return imageResult;
+        return finalizeHandlerResult(
+          imageResult,
+          preview,
+          diskFsPath,
+          dependencyGeneration
+        );
       }
     }
 
@@ -287,7 +311,12 @@ export async function fetchLocal(
       );
     }
 
-    return result;
+    return finalizeHandlerResult(
+      result,
+      preview,
+      diskFsPath,
+      dependencyGeneration
+    );
   } catch (error: unknown) {
     // report error via centralized ErrorReporter w/ helpful context
     getErrorReporter().report(error, {

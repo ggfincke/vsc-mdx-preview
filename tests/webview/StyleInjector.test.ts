@@ -9,7 +9,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 const { initializeMermaid, renderMermaid } = vi.hoisted(() => ({
   initializeMermaid: vi.fn(),
   renderMermaid: vi.fn(async (id: string) => ({
-    svg: `<svg id="${id}"><marker id="${id}-arrow"></marker></svg>`,
+    svg: `<svg id="${id}"><defs><marker id="${id}-arrow"></marker></defs><path marker-end="url(#${id}-arrow)"></path></svg>`,
   })),
 }));
 
@@ -357,6 +357,14 @@ describe('diagram result cache', () => {
     expect(first.host.innerHTML).toContain('mermaid-svg-first-arrow');
     expect(second.host.innerHTML).toContain('mermaid-svg-second-arrow');
     expect(first.host.innerHTML).not.toContain('mermaid-svg-second');
+    expect(first.host.querySelector('path')?.getAttribute('marker-end')).toBe(
+      'url(#mermaid-svg-first-arrow)'
+    );
+    expect(first.host.querySelector('#mermaid-svg-first-arrow')).toBeTruthy();
+    expect(second.host.querySelector('path')?.getAttribute('marker-end')).toBe(
+      'url(#mermaid-svg-second-arrow)'
+    );
+    expect(second.host.querySelector('#mermaid-svg-second-arrow')).toBeTruthy();
 
     act(() => first.root.unmount());
     mountedRoots.delete(first.root);

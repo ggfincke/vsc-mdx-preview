@@ -82,49 +82,83 @@ function collectFileHeaderViolations(filePath, text, output) {
   }
 }
 
-function collectCommentBlockLengthViolations(filePath, text, output) {
-  const lines = text.split(/\r?\n/);
-  let blockStartLine = 0;
-  let blockLength = 0;
+function collectAllowedBlockDocPositions(sourceFile, text) {
+  const positions = new Set();
 
-  const flushBlock = () => {
-    if (blockLength > 3) {
-      output.push({
-        file: filePath,
-        line: blockStartLine,
-        rule: 'comment-block-length',
-        detail: `${blockLength} consecutive // lines`,
-      });
-    }
-    blockStartLine = 0;
-    blockLength = 0;
-  };
-
-  lines.forEach((lineText, index) => {
-    if (/^\s*\/\//.test(lineText)) {
-      if (blockLength === 0) {
-        blockStartLine = index + 1;
+  function visit(node) {
+    if (
+      ts.isClassDeclaration(node) ||
+      ts.isClassExpression(node) ||
+      ts.isInterfaceDeclaration(node) ||
+      ts.isEnumDeclaration(node)
+    ) {
+      const leadingComments =
+        ts.getLeadingCommentRanges(text, node.getFullStart()) ?? [];
+      for (const range of leadingComments) {
+        const isBlockDoc =
+          range.kind === ts.SyntaxKind.MultiLineCommentTrivia &&
+          text.startsWith('/**', range.pos);
+        const gap = text.slice(range.end, node.getStart(sourceFile));
+        const newlineCount = gap.match(/\r?\n/g)?.length ?? 0;
+        const isAttached = !/\S/.test(gap) && newlineCount === 1;
+        if (isBlockDoc && isAttached) {
+          positions.add(range.pos);
+        }
       }
-      blockLength += 1;
-      return;
     }
 
-    flushBlock();
-  });
+    ts.forEachChild(node, visit);
+  }
 
-  flushBlock();
+  visit(sourceFile);
+  return positions;
 }
 
-function collectCommentViolations(filePath, sourceFile, text, range, output) {
+function isSentenceStyleBlockDoc(text, range) {
+  const lines = text
+    .slice(range.pos + 3, range.end - 2)
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*\*?\s?/, '').trim());
+  const summaryLines = [];
+  for (const line of lines) {
+    if (!line || line.startsWith('@')) {
+      if (summaryLines.length > 0) {
+        break;
+      }
+      continue;
+    }
+    summaryLines.push(line);
+  }
+  const summary = summaryLines.join(' ');
+  return /^[A-Z]/.test(summary) && /\.(?:[`'"\])}]*)$/.test(summary);
+}
+
+function collectCommentViolations(
+  filePath,
+  sourceFile,
+  text,
+  range,
+  allowedBlockDocs,
+  output
+) {
   const line = sourceFile.getLineAndCharacterOfPosition(range.pos).line + 1;
 
   if (range.kind === ts.SyntaxKind.MultiLineCommentTrivia) {
-    output.push({
-      file: filePath,
-      line,
-      rule: 'block-comment',
-      detail: 'use // comments only',
-    });
+    if (!allowedBlockDocs.has(range.pos)) {
+      output.push({
+        file: filePath,
+        line,
+        rule: 'block-comment-scope',
+        detail: 'use block docs only on classes, interfaces, or enums',
+      });
+    } else if (!isSentenceStyleBlockDoc(text, range)) {
+      output.push({
+        file: filePath,
+        line,
+        rule: 'block-doc-style',
+        detail: 'capitalize & terminate the block-doc sentence',
+      });
+    }
     return;
   }
 
@@ -141,15 +175,6 @@ function collectCommentViolations(filePath, sourceFile, text, range, output) {
 
   if (!commentText) {
     return;
-  }
-
-  if (/\b(and|with)\b/i.test(commentText)) {
-    output.push({
-      file: filePath,
-      line,
-      rule: 'wording',
-      detail: formatSnippet(commentText),
-    });
   }
 
   if (/[→⇒]/.test(commentText)) {
@@ -176,7 +201,6 @@ function scanFile(rootDir, relativePath) {
   const text = readFileSync(absolutePath, 'utf-8');
   const violations = [];
   collectFileHeaderViolations(relativePath, text, violations);
-  collectCommentBlockLengthViolations(relativePath, text, violations);
   const sourceFile = ts.createSourceFile(
     relativePath,
     text,
@@ -184,6 +208,7 @@ function scanFile(rootDir, relativePath) {
     false,
     getScriptKind(relativePath)
   );
+  const allowedBlockDocs = collectAllowedBlockDocPositions(sourceFile, text);
   const seenCommentPositions = new Set();
 
   function recordComment(range) {
@@ -192,7 +217,14 @@ function scanFile(rootDir, relativePath) {
     }
 
     seenCommentPositions.add(range.pos);
-    collectCommentViolations(relativePath, sourceFile, text, range, violations);
+    collectCommentViolations(
+      relativePath,
+      sourceFile,
+      text,
+      range,
+      allowedBlockDocs,
+      violations
+    );
   }
 
   function visit(node) {
@@ -246,7 +278,7 @@ try {
       `Comment style check FAILED (${violations.length} violation(s))`
     );
     console.error(
-      'Rules: require file headers, no block comments, no inline comments, max 3 // lines, use &/w/, no trailing punctuation'
+      'Rules: require file headers, no inline comments, ASCII arrows, no trailing plain-comment punctuation, block docs only on large types'
     );
     console.error('');
 

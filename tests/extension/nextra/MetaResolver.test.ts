@@ -199,6 +199,7 @@ describe('MetaResolver', () => {
 
     const setNextraMeta = vi.fn();
     const updatePreviewSafe = vi.fn();
+    const updateDependencies = vi.fn();
     const serviceMetaResolver = mockMetaResolver as unknown as {
       resolveNextraMeta: ReturnType<typeof vi.fn>;
       mergeNextraMeta: ReturnType<typeof vi.fn>;
@@ -227,8 +228,10 @@ describe('MetaResolver', () => {
         setTailwindCss: vi.fn(),
         updatePreviewSafe,
       },
+      applyFrontmatterTheme: vi.fn(),
       pushThemeState: vi.fn(),
       nextTailwindRequestId: vi.fn(),
+      updateDependencies,
       updateTailwindWatchFiles: vi.fn(),
       syncEditorScrollToPreview: vi.fn(),
     };
@@ -282,6 +285,13 @@ describe('MetaResolver', () => {
       [null],
       [null],
       [null],
+    ]);
+    expect(updateDependencies.mock.calls).toEqual([
+      [[]],
+      [[]],
+      [[]],
+      [[]],
+      [[]],
     ]);
   });
 });

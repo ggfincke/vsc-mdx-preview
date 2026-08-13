@@ -3,7 +3,7 @@ build/
 dist/
 node_modules/
 
-# Examples (outdated, not maintained)
+# Example fixtures (preserve framework-native formatting)
 examples/
 
 # Package locks

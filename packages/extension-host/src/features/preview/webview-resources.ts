@@ -2,6 +2,9 @@
 // webview resource initialization & Vite manifest loading
 
 import * as vscode from 'vscode';
+import { LogTags } from '@mdx-preview/contracts';
+import { createLazyValueLoader } from '@mdx-preview/runtime-utils';
+
 import { getPreviewManager } from '../../app/services';
 import type { WebviewAppUris } from './preview-manager';
 import { createTaggedLogger } from '../../shared/logging/logger';
@@ -11,42 +14,48 @@ import {
   VITE_MANIFEST_FILE,
   WEBVIEW_BUILD_DIR,
 } from '../../shared/constants';
-import { LogTags } from '@mdx-preview/contracts';
 
 const log = createTaggedLogger(LogTags.WEBVIEW_MGR);
 
 const TAILWIND_BROWSER_RUNTIME_PATH = 'vendor/tailwind-browser.min.js';
 
-// module-level promise for background resource loading
-let webviewResourcesPromise: Promise<void> | null = null;
-let webviewResourcesError: Error | null = null;
+let webviewResourcesContext: vscode.ExtensionContext | undefined;
+
+const webviewResourcesLoader = createLazyValueLoader(
+  () => loadWebviewAppHTMLResources(webviewResourcesContext!),
+  { allowRetry: true }
+);
 
 // initialize webview HTML resources in background (call during activation w/out awaiting)
 export function initWebviewAppHTMLResourcesAsync(
   context: vscode.ExtensionContext
 ): void {
   log.debug('Starting background webview resource initialization');
-  webviewResourcesPromise = initWebviewAppHTMLResources(context)
+  void initWebviewAppHTMLResources(context)
     .then(() => {
       log.debug('Background resource initialization complete');
     })
     .catch((err) => {
-      webviewResourcesError = err;
       log.debug('Background resource initialization failed:', err);
     });
 }
 
 // ensure webview resources are ready (only blocks when creating panel)
-export async function ensureWebviewResourcesReady(): Promise<void> {
-  if (webviewResourcesPromise) {
-    await webviewResourcesPromise;
+export function ensureWebviewResourcesReady(): Promise<void> {
+  if (!webviewResourcesContext) {
+    return Promise.resolve();
   }
-  if (webviewResourcesError) {
-    throw webviewResourcesError;
-  }
+  return webviewResourcesLoader.load();
 }
 
-export async function initWebviewAppHTMLResources(
+export function initWebviewAppHTMLResources(
+  context: vscode.ExtensionContext
+): Promise<void> {
+  webviewResourcesContext = context;
+  return webviewResourcesLoader.load();
+}
+
+async function loadWebviewAppHTMLResources(
   context: vscode.ExtensionContext
 ): Promise<void> {
   log.debug('initWebviewAppHTMLResources called');

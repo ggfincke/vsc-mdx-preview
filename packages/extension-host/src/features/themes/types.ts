@@ -37,3 +37,7 @@ export interface ThemeConfiguration {
   plantUmlServer: string;
   mermaidIconPacks: MermaidIconPackSetting[];
 }
+
+export type ThemeOverrides = Partial<
+  Pick<ThemeConfiguration, 'previewTheme' | 'codeBlockTheme'>
+>;

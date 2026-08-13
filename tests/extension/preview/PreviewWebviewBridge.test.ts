@@ -14,6 +14,7 @@ function createMockHandle() {
     setTailwindBrowserCss: vi.fn(),
     setTheme: vi.fn(),
     setRuntimeConfig: vi.fn(),
+    setCustomCss: vi.fn(),
     adjustZoom: vi.fn(),
     resetZoom: vi.fn(),
     scrollToLine: vi.fn(),
@@ -49,11 +50,22 @@ describe('PreviewWebviewBridge', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     bridge = new PreviewWebviewBridge();
-    mockThemeManager.getWebviewThemeState.mockReturnValue({
-      previewTheme: 'github-light',
-      codeBlockTheme: 'auto',
-    });
-    mockThemeManager.extractThemeFromFrontmatter.mockReturnValue({});
+    mockThemeManager.getWebviewThemeState.mockImplementation(
+      (_docUri, overrides = {}) => ({
+        previewTheme: overrides.previewTheme ?? 'github-light',
+        codeBlockTheme: overrides.codeBlockTheme ?? 'auto',
+      })
+    );
+    mockThemeManager.extractThemeFromFrontmatter.mockImplementation(
+      (frontmatter) => ({
+        ...(typeof frontmatter.previewTheme === 'string'
+          ? { previewTheme: frontmatter.previewTheme }
+          : {}),
+        ...(typeof frontmatter.codeBlockTheme === 'string'
+          ? { codeBlockTheme: frontmatter.codeBlockTheme }
+          : {}),
+      })
+    );
   });
 
   it('connects watcher notifiers when a handle is attached', () => {
@@ -66,7 +78,7 @@ describe('PreviewWebviewBridge', () => {
       handle
     );
     expect(watcherManager.mockCssWatcher.setNotifier).toHaveBeenCalledWith(
-      handle
+      bridge
     );
   });
 
@@ -86,9 +98,10 @@ describe('PreviewWebviewBridge', () => {
     });
   });
 
-  it('sends unchanged state once per handshake', async () => {
+  it('sends snapshots & unchanged state once per handshake', async () => {
     const handle = createMockHandle();
     const watcherManager = createWatcherManager();
+    bridge.setCustomCss('.initial { color: red; }');
     bridge.setWebviewHandle(handle as never, watcherManager as never);
     const deltaHandle = bridge.getHandle()!;
     const trustState = {
@@ -113,6 +126,7 @@ describe('PreviewWebviewBridge', () => {
     bridge.pushRuntimeConfiguration(runtimeConfig);
     bridge.pushRuntimeConfiguration({ ...runtimeConfig });
 
+    expect(handle.setCustomCss).not.toHaveBeenCalled();
     expect(handle.setTrustState).toHaveBeenCalledTimes(1);
     expect(handle.setTailwindBrowserCss).toHaveBeenCalledTimes(1);
     expect(handle.setTailwindCss).toHaveBeenCalledTimes(1);
@@ -121,24 +135,39 @@ describe('PreviewWebviewBridge', () => {
     bridge.onWebviewReady(mockDocUri as never);
     deltaHandle.setTrustState(trustState);
     await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(handle.setCustomCss).toHaveBeenCalledTimes(1);
+    expect(handle.setCustomCss).toHaveBeenLastCalledWith(
+      '.initial { color: red; }'
+    );
     expect(handle.setTrustState).toHaveBeenCalledTimes(2);
+
+    bridge.beginHandshake();
+    bridge.setCustomCss('.intermediate { color: blue; }');
+    bridge.setCustomCss('.latest { color: green; }');
+    expect(handle.setCustomCss).toHaveBeenCalledTimes(1);
+
+    bridge.onWebviewReady(mockDocUri as never);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(handle.setCustomCss).toHaveBeenCalledTimes(2);
+    expect(handle.setCustomCss).toHaveBeenLastCalledWith(
+      '.latest { color: green; }'
+    );
   });
 
-  it('pushes the base theme when a frontmatter override is removed', async () => {
+  it('retains, replays, replaces & clears frontmatter theme inputs', async () => {
     const handle = createMockHandle();
     const watcherManager = createWatcherManager();
     bridge.setWebviewHandle(handle as never, watcherManager as never);
-    mockThemeManager.extractThemeFromFrontmatter
-      .mockReturnValueOnce({ previewTheme: 'github-dark' })
-      .mockReturnValue({});
 
-    bridge.pushThemeState(mockDocUri as never, {
+    bridge.applyFrontmatterTheme(mockDocUri as never, {
       previewTheme: 'github-dark',
     });
     await new Promise((resolve) => setTimeout(resolve, 0));
-    bridge.pushThemeState(mockDocUri as never, {});
+    bridge.pushThemeState(mockDocUri as never);
     await new Promise((resolve) => setTimeout(resolve, 0));
-    bridge.pushThemeState(mockDocUri as never, {});
+
+    bridge.beginHandshake();
+    bridge.onWebviewReady(mockDocUri as never);
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(handle.setTheme).toHaveBeenCalledTimes(2);
@@ -148,6 +177,25 @@ describe('PreviewWebviewBridge', () => {
     );
     expect(handle.setTheme).toHaveBeenNthCalledWith(
       2,
+      expect.objectContaining({ previewTheme: 'github-dark' })
+    );
+
+    bridge.applyFrontmatterTheme(mockDocUri as never, undefined);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(handle.setTheme).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({ previewTheme: 'github-light' })
+    );
+
+    bridge.applyFrontmatterTheme(mockDocUri as never, {
+      previewTheme: 'github-dark',
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    bridge.beginHandshake();
+    bridge.clearFrontmatterTheme();
+    bridge.onWebviewReady(mockDocUri as never);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(handle.setTheme).toHaveBeenLastCalledWith(
       expect.objectContaining({ previewTheme: 'github-light' })
     );
   });

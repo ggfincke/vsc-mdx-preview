@@ -1,22 +1,23 @@
 // packages/extension-host/src/shared/utils/createFileWatcher.ts
-// standalone file watcher factory w/ error wrapping
-// debouncing owned by BaseWatcher.createDebouncedHandler()
+// standalone watcher factory w/ error wrapping & external debounce ownership
 
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { createTaggedLogger } from '../logging/logger';
 import { type LogTag, LogTags } from '@mdx-preview/contracts';
 
+type FileWatcherHandler = (uri: vscode.Uri) => void | Promise<void>;
+
 // options for creating a file watcher
 export interface FileWatcherConfig {
   // glob pattern or relative pattern to watch
   pattern: string | vscode.GlobPattern;
   // handler called when a watched file changes
-  onChange?: (uri: vscode.Uri) => void;
+  onChange?: FileWatcherHandler;
   // handler called when a watched file is created
-  onCreate?: (uri: vscode.Uri) => void;
+  onCreate?: FileWatcherHandler;
   // handler called when a watched file is deleted
-  onDelete?: (uri: vscode.Uri) => void;
+  onDelete?: FileWatcherHandler;
   // skip firing create events (default: false)
   ignoreCreateEvents?: boolean;
   // skip firing change events (default: false)
@@ -76,21 +77,21 @@ export function createFileWatcher(
 
   // helper to wrap handler w/ event logging & error handling
   const wrapHandler = (
-    handler: ((uri: vscode.Uri) => void) | undefined,
+    handler: FileWatcherHandler | undefined,
     eventType: string
-  ): ((uri: vscode.Uri) => void) | undefined => {
+  ): ((uri: vscode.Uri) => Promise<void>) | undefined => {
     if (!handler) {
       return undefined;
     }
 
-    return (uri: vscode.Uri) => {
+    return async (uri: vscode.Uri) => {
       try {
         if (enableEventLogging) {
           logger.debug(`File ${eventType}: ${uri.fsPath}`);
         }
-        handler(uri);
+        await handler(uri);
       } catch (error: unknown) {
-        logger.debug(`Error in file ${eventType} handler: ${error}`);
+        logger.error(`Error in file ${eventType} handler`, error);
       }
     };
   };

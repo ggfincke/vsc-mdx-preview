@@ -14,7 +14,6 @@ const {
   mockOpenExternal,
   mockOpenDocument,
   mockOpenPreview,
-  mockClassifyLink,
   mockTrustedPreviewRenderer,
 } = vi.hoisted(() => ({
   appState: {
@@ -36,13 +35,6 @@ const {
   mockOpenExternal: vi.fn(),
   mockOpenDocument: vi.fn(async () => undefined),
   mockOpenPreview: vi.fn(async () => undefined),
-  mockClassifyLink: vi.fn((href: string) =>
-    href.startsWith('http')
-      ? 'external'
-      : href.startsWith('#')
-        ? 'anchor'
-        : 'relative-file'
-  ),
   mockTrustedPreviewRenderer: vi.fn(() =>
     createElement('div', { 'data-testid': 'trusted-preview' }, 'trusted')
   ),
@@ -151,10 +143,6 @@ vi.mock(
     },
   })
 );
-
-vi.mock('../../packages/webview-client/src/shared/utils/linkHandler', () => ({
-  classifyLink: (...args: any[]) => mockClassifyLink(...args),
-}));
 
 import App from '../../packages/webview-client/src/app/App';
 
@@ -310,7 +298,7 @@ describe('App', () => {
     unmountApp(root);
   });
 
-  it('dispatches modifier-clicked relative links by type and setting', () => {
+  it('dispatches preview links by destination and setting', () => {
     appState.trustState = {
       canExecute: true,
       openMdxLinksInPreview: true,
@@ -368,6 +356,56 @@ describe('App', () => {
       );
     });
     expect(mockOpenDocument).toHaveBeenLastCalledWith('./diagram.svg');
+
+    link!.setAttribute('href', './guide%20one.mdx#intro');
+    act(() => {
+      link!.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+        })
+      );
+    });
+    expect(mockOpenDocument).toHaveBeenLastCalledWith('./guide one.mdx');
+
+    link!.setAttribute('href', 'file:///workspace/guide%20one.mdx#intro');
+    act(() => {
+      link!.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+        })
+      );
+    });
+    expect(mockOpenDocument).toHaveBeenLastCalledWith(
+      '/workspace/guide one.mdx'
+    );
+
+    const cases = [
+      ['https://example.com/a b?q=x y', 'https://example.com/a%20b?q=x%20y'],
+      ['//cdn.example.com/a b?q=x y', 'https://cdn.example.com/a%20b?q=x%20y'],
+      [
+        'mailto:docs team@example.com?subject=hello world',
+        'mailto:docs%20team@example.com?subject=hello%20world',
+      ],
+      ['tel:+1 212 555 0100', 'tel:+1%20212%20555%200100'],
+    ] as const;
+
+    for (const [href, expected] of cases) {
+      link!.setAttribute('href', href);
+      act(() => {
+        link!.dispatchEvent(
+          new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      });
+      expect(mockOpenExternal).toHaveBeenLastCalledWith(expected);
+    }
+    expect(mockOpenExternal).toHaveBeenCalledTimes(cases.length);
 
     unmountApp(root);
   });

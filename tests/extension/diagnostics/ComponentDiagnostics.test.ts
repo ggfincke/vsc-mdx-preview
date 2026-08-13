@@ -1,7 +1,7 @@
 // tests/extension/diagnostics/ComponentDiagnostics.test.ts
 // adapter tests: code locks, range mapping, composed update, publisher merge
 
-import { afterEach, describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import {
   ComponentDiagnostics,
   DIAGNOSTIC_CODES,
@@ -20,8 +20,17 @@ import { createMockDocument } from '../../helpers/mock-document';
 import {
   mockConfigCache,
   mockErrorReporter,
+  mockFrameworkDetector,
 } from '../../helpers/mock-services';
-import { Diagnostic, DiagnosticSeverity, Range, Uri, languages } from 'vscode';
+import {
+  Diagnostic,
+  DiagnosticSeverity,
+  Range,
+  Uri,
+  languages,
+  workspace,
+} from 'vscode';
+import type { FrameworkChangeEvent } from '../../../packages/extension-host/src/features/framework/types';
 
 const sampleDiagnostic: MdxDiagnostic = {
   code: 'MDXF001',
@@ -36,6 +45,8 @@ const sampleDiagnostic: MdxDiagnostic = {
 
 afterEach(() => {
   ComponentDiagnostics.reset();
+  (workspace as unknown as { textDocuments: unknown[] }).textDocuments = [];
+  vi.useRealTimers();
 });
 
 function withCode(code: unknown): Diagnostic {
@@ -99,6 +110,13 @@ describe('toVsDiagnostic', () => {
 describe('ComponentDiagnostics.updateDiagnostics', () => {
   it('publishes MDXF001 diagnostics on both paired tag-name tokens', async () => {
     mockConfigCache.get.mockReturnValue(null);
+    (workspace as unknown as { textDocuments: unknown[] }).textDocuments = [];
+    let frameworkChangeCallback:
+      ((event: FrameworkChangeEvent) => void) | undefined;
+    mockFrameworkDetector.subscribe.mockImplementation((callback) => {
+      frameworkChangeCallback = callback;
+      return { dispose: vi.fn() };
+    });
 
     const service = ComponentDiagnostics.getInstance();
     const document = createMockDocument(
@@ -123,6 +141,40 @@ describe('ComponentDiagnostics.updateDiagnostics', () => {
       suggestions: [],
       tagNameRanges: [new Range(0, 1, 0, 11), new Range(2, 2, 2, 12)],
     });
+
+    const rootADocument = createMockDocument('# A', {
+      fsPath: '/workspace-a/docs/a.mdx',
+    });
+    const rootBDocument = createMockDocument('# B', {
+      fsPath: '/workspace-b/docs/b.mdx',
+    });
+    const nonMdxDocument = createMockDocument('plain text', {
+      fsPath: '/workspace-b/docs/readme.md',
+      languageId: 'markdown',
+    });
+    (workspace as unknown as { textDocuments: unknown[] }).textDocuments = [
+      rootADocument,
+      rootBDocument,
+      nonMdxDocument,
+    ];
+    vi.useFakeTimers();
+    const updateSpy = vi
+      .spyOn(service, 'updateDiagnostics')
+      .mockResolvedValue(undefined);
+
+    frameworkChangeCallback?.({ affectedRoot: '/workspace-b' });
+    vi.advanceTimersByTime(500);
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenLastCalledWith(rootBDocument);
+
+    updateSpy.mockClear();
+    frameworkChangeCallback?.({});
+    vi.advanceTimersByTime(500);
+    expect(updateSpy).toHaveBeenCalledTimes(2);
+    expect(updateSpy.mock.calls.map(([updated]) => updated)).toEqual([
+      rootADocument,
+      rootBDocument,
+    ]);
   });
 });
 

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Development toolchain**: local builds, CI, and releases now use Node.js 24.19.0 with npm 11.17.0, while the packaged extension retains compatibility with VS Code's Node.js 22.18 host, ES2022 output, and the extension bundle's `node20` target
+- **TypeScript bridge**: TypeScript 7.0.2 owns the compiler CLI, TypeScript 6 remains the parser and tooling API required by typescript-eslint, and Node ambient types now match the VS Code 1.104 runtime line
+- **Dependency refresh**: update dependency-cruiser, esbuild, ESLint, React Refresh linting, get-tsconfig, globals, KaTeX, tsx, and typescript-eslint to their current compatible patch releases; remove the unused direct Shiki dependency now owned by mdx-forge
+
 ## [1.7.6] - 2026-08-07
 
 Includes [#126](https://github.com/ggfincke/vsc-mdx-preview/pull/126),

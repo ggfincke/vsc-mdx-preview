@@ -30,6 +30,7 @@ import {
   ErrorContext,
   ErrorReporter,
   ErrorSeverity,
+  type WebviewErrorHandle,
 } from '../../../packages/extension-host/src/shared/errors';
 
 describe('ErrorReporter', () => {
@@ -42,8 +43,9 @@ describe('ErrorReporter', () => {
     vi.useRealTimers();
   });
 
-  it('shows user-facing errors for error severity', () => {
+  it('routes inferred & explicitly overridden severities to notifications', () => {
     const showErrorMessage = vi.spyOn(vscode.window, 'showErrorMessage');
+    const showWarningMessage = vi.spyOn(vscode.window, 'showWarningMessage');
     const reporter = ErrorReporter.getInstance();
 
     reporter.report(new Error('err'), {
@@ -60,13 +62,9 @@ describe('ErrorReporter', () => {
     expect(showErrorMessage).toHaveBeenCalledWith(
       expect.stringContaining('user-facing')
     );
-  });
 
-  it('allows explicit severity to override context inference', () => {
-    const showWarningMessage = vi.spyOn(vscode.window, 'showWarningMessage');
-    const showErrorMessage = vi.spyOn(vscode.window, 'showErrorMessage');
-
-    ErrorReporter.getInstance().report(new Error('override'), {
+    showErrorMessage.mockClear();
+    reporter.report(new Error('override'), {
       context: ErrorContext.Security,
       severity: ErrorSeverity.Warning,
     });
@@ -75,7 +73,7 @@ describe('ErrorReporter', () => {
     expect(showErrorMessage).not.toHaveBeenCalled();
   });
 
-  it('suppresses duplicate errors inside the dedupe window', () => {
+  it('scopes duplicate logs by context & severity inside the window', () => {
     vi.useFakeTimers();
     const reporter = ErrorReporter.getInstance();
     const error = new Error('dup');
@@ -93,6 +91,73 @@ describe('ErrorReporter', () => {
     expect(mockTaggedDebug).toHaveBeenCalledWith(
       expect.stringContaining('Suppressed duplicate')
     );
+
+    reporter.report(error, {
+      context: ErrorContext.Config,
+      severity: ErrorSeverity.Debug,
+    });
+    reporter.report(error, {
+      context: ErrorContext.Config,
+      severity: ErrorSeverity.Warning,
+      showNotification: false,
+    });
+
+    expect(mockLogDebug).toHaveBeenCalledTimes(1);
+    expect(mockLogWarn).toHaveBeenCalledTimes(1);
+  });
+
+  it('dedupes logs & notifications without suppressing webview state', () => {
+    vi.useFakeTimers();
+    const reporter = ErrorReporter.getInstance();
+    const showErrorMessage = vi.spyOn(vscode.window, 'showErrorMessage');
+    let visibleMessage: string | undefined;
+    const showPreviewError = vi.fn<WebviewErrorHandle['showPreviewError']>(
+      (previewError) => {
+        visibleMessage = previewError.message;
+      }
+    );
+    const replacementShowPreviewError =
+      vi.fn<WebviewErrorHandle['showPreviewError']>();
+    const recurringError = new Error('recurring');
+
+    reporter.report(recurringError, {
+      context: ErrorContext.Transpile,
+      severity: ErrorSeverity.Error,
+      showInWebview: true,
+      webviewHandle: { showPreviewError },
+    });
+    expect(visibleMessage).toBe('recurring');
+
+    // successful content clears the current webview error
+    visibleMessage = undefined;
+    reporter.report(recurringError, {
+      context: ErrorContext.Transpile,
+      severity: ErrorSeverity.Error,
+      showInWebview: true,
+      webviewHandle: { showPreviewError },
+    });
+    expect(visibleMessage).toBe('recurring');
+    expect(showPreviewError).toHaveBeenCalledTimes(2);
+
+    reporter.report(recurringError, {
+      context: ErrorContext.Transpile,
+      severity: ErrorSeverity.Error,
+      showInWebview: true,
+      webviewHandle: { showPreviewError: replacementShowPreviewError },
+    });
+    expect(replacementShowPreviewError).toHaveBeenCalledTimes(1);
+    expect(showErrorMessage).not.toHaveBeenCalled();
+
+    mockLogDebug.mockClear();
+    mockLogError.mockClear();
+    const destinationError = new Error('destination-specific');
+    reporter.reportSilent(destinationError, ErrorContext.Extension);
+    reporter.reportToUser(destinationError, ErrorContext.Extension);
+    reporter.reportToUser(destinationError, ErrorContext.Extension);
+
+    expect(mockLogDebug).toHaveBeenCalledTimes(1);
+    expect(mockLogError).toHaveBeenCalledTimes(1);
+    expect(showErrorMessage).toHaveBeenCalledTimes(1);
   });
 
   it('logs silent reports without showing notifications', () => {

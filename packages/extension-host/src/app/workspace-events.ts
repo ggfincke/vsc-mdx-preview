@@ -16,6 +16,7 @@ import {
   disposeEditorPreviewScrollSync,
   handleEditorVisibleRangesChange,
 } from '../features/preview/scroll-sync';
+import { isPathWithin } from '../shared/utils/path-utils';
 
 // module-level tagged logger
 const log = createTaggedLogger(LogTags.WORKSPACE);
@@ -92,12 +93,20 @@ export function initWorkspaceHandlers(context: ExtensionContext): void {
 
   // route package & manual framework transitions through full preview refresh
   context.subscriptions.push(
-    getFrameworkDetector().subscribe(() => {
-      void getPreviewManager()
-        .refreshAllPreviews()
-        .catch((error: unknown) => {
-          log.error('Failed to refresh after framework change', error);
-        });
+    getFrameworkDetector().subscribe(({ affectedRoot }) => {
+      const previewManager = getPreviewManager();
+      const currentPreview = previewManager.getCurrentPreview();
+      if (
+        affectedRoot &&
+        (!currentPreview ||
+          !isPathWithin(currentPreview.doc.uri.fsPath, affectedRoot))
+      ) {
+        return;
+      }
+
+      void previewManager.refreshAllPreviews().catch((error: unknown) => {
+        log.error('Failed to refresh after framework change', error);
+      });
     })
   );
 
