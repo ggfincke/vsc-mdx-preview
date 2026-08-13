@@ -1,36 +1,47 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "deps:"
+      prefix: 'deps:'
     open-pull-requests-limit: 5
     groups:
       minor-and-patch:
         update-types:
-          - "minor"
-          - "patch"
+          - 'minor'
+          - 'patch'
     ignore:
-      - dependency-name: "@types/vscode"
-      - dependency-name: "eslint"
+      - dependency-name: '@types/vscode'
+      - dependency-name: '@types/node'
         update-types:
-          - "version-update:semver-major"
-      - dependency-name: "@eslint/js"
+          - 'version-update:semver-major'
+          - 'version-update:semver-minor'
+      - dependency-name: '@typescript/native'
         update-types:
-          - "version-update:semver-major"
+          - 'version-update:semver-major'
+      - dependency-name: 'typescript'
+        update-types:
+          - 'version-update:semver-major'
+          - 'version-update:semver-minor'
+      - dependency-name: 'eslint'
+        update-types:
+          - 'version-update:semver-major'
+      - dependency-name: '@eslint/js'
+        update-types:
+          - 'version-update:semver-major'
     labels:
-      - "dependencies"
+      - 'dependencies'
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: 'weekly'
+      day: 'monday'
     commit-message:
-      prefix: "ci:"
+      prefix: 'ci:'
     open-pull-requests-limit: 3
     labels:
-      - "ci"
+      - 'ci'

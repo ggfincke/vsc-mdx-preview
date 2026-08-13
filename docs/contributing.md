@@ -6,9 +6,15 @@ This document covers the current development workflow for the `vsc-mdx-preview` 
 
 ## Prerequisites
 
-- Node.js 18+
-- npm 9+
-- VS Code 1.90+
+- Node.js 24.19.0 for reproducible local builds, CI, and releases
+- npm 11.17.0
+- VS Code 1.104+
+
+The contributor toolchain runs on Node.js 24.19.0. The packaged extension still
+runs inside VS Code's Node.js 22.18 extension host, and the extension bundle
+retains its `node20` esbuild target for runtime compatibility. The root
+`engines.node` range describes npm installation support for the development
+graph; `engines.vscode` and the bundle target govern the extension runtime.
 
 ---
 
@@ -75,19 +81,19 @@ vsc-mdx-preview/
 
 ### Core Build and Test
 
-| Script                         | Description                                              |
-| ------------------------------ | -------------------------------------------------------- |
-| `npm run build`                | Build extension and webview                              |
-| `npm run build:extension`      | Build extension host only                                |
-| `npm run build:webview-client` | Build webview client directly                            |
-| `npm run build:webview-app`    | Legacy alias for `build:webview-client`                  |
-| `npm run watch`                | Watch extension host changes                             |
-| `npm run start:webview-client` | Run the webview Vite dev server                          |
-| `npm run start:webview-app`    | Legacy alias for `start:webview-client`                  |
-| `npm test`                     | Run the production-critical suite (extension + webview)  |
-| `npm run test:watch`           | Watch mode for the production-critical suite             |
-| `npm run test:webview`         | Run only the `tests/webview/` subdirectory               |
-| `npm run test:all`             | Alias for `npm test` — same vitest config & files        |
+| Script                         | Description                                             |
+| ------------------------------ | ------------------------------------------------------- |
+| `npm run build`                | Build extension and webview                             |
+| `npm run build:extension`      | Build extension host only                               |
+| `npm run build:webview-client` | Build webview client directly                           |
+| `npm run build:webview-app`    | Legacy alias for `build:webview-client`                 |
+| `npm run watch`                | Watch extension host changes                            |
+| `npm run start:webview-client` | Run the webview Vite dev server                         |
+| `npm run start:webview-app`    | Legacy alias for `start:webview-client`                 |
+| `npm test`                     | Run the production-critical suite (extension + webview) |
+| `npm run test:watch`           | Watch mode for the production-critical suite            |
+| `npm run test:webview`         | Run only the `tests/webview/` subdirectory              |
+| `npm run test:all`             | Alias for `npm test` — same vitest config & files       |
 
 ### Quality and Guardrails
 
