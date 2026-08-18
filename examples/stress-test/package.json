@@ -1,0 +1,10 @@
+{
+  "name": "mdx-preview-stress-test-example",
+  "description": "Deliberately heavy MDX Preview fixture for compile and render stress testing",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
+}

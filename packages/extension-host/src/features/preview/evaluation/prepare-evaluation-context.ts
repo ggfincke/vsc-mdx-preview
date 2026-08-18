@@ -80,7 +80,10 @@ export async function prepareEvaluationContext(
   }
 
   const needsBrowserRuntime =
-    tailwindProfileHint?.profile === 'browser' && shouldProcessTailwind;
+    tailwindProfileHint?.profile === 'browser' &&
+    shouldProcessTailwind &&
+    (effectiveConfig.tailwind.enabled === 'enabled' ||
+      tailwindProfileHint.hasTailwindInput);
   if (!isCurrent()) {
     return { kind: 'superseded' };
   }
