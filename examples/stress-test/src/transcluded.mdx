@@ -1,0 +1,1841 @@
+# Transcluded Stress Appendix
+
+This content lives in a separate MDX module so the stress fixture also exercises
+trusted module resolution, recursive MDX compilation, caching, and dependency
+watching. Edit `APPENDIX_EDIT_MARKER_0001` to measure transcluded refresh latency.
+
+> [!IMPORTANT]
+> Reaching this appendix means the main 150 KB-class document compiled and the
+> local MDX dependency loaded successfully.
+
+**Appendix edit marker:** `APPENDIX_EDIT_MARKER_0001`
+
+## Appendix segment 01 — alpha
+
+Segment 01 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `9e3779b1` and its inline math probe is $y^2 + 1y + 3$.
+
+### Appendix checkpoint 01.1
+
+- alpha item 01.1
+  - nested payload 101
+  - nested payload 211
+    - deep payload 307
+    - deep payload 401
+- alpha item 01.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 1 | alpha | 17 | 29 | 43 | ready |
+| 49 | beta | 53 | 67 | 79 | warm |
+| 97 | gamma | 83 | 97 | 109 | queued |
+
+> Appendix segment 01 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 01.2
+
+<dl>
+  <dt>Segment 01</dt>
+  <dd>Transcluded alpha payload with checksum 7919.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-01-13</code></dd>
+</dl>
+
+- [x] Resolve segment 01
+- [x] Compile alpha payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 02 — beta
+
+Segment 02 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `3c6ef362` and its inline math probe is $y^2 + 2y + 6$.
+
+### Appendix checkpoint 02.1
+
+- beta item 02.1
+  - nested payload 202
+  - nested payload 422
+    - deep payload 614
+    - deep payload 802
+- beta item 02.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 2 | beta | 34 | 58 | 86 | ready |
+| 50 | gamma | 106 | 134 | 158 | warm |
+| 98 | delta | 166 | 194 | 218 | queued |
+
+> Appendix segment 02 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 02.2
+
+<dl>
+  <dt>Segment 02</dt>
+  <dd>Transcluded beta payload with checksum 15838.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-02-26</code></dd>
+</dl>
+
+- [x] Resolve segment 02
+- [x] Compile beta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 03 — gamma
+
+Segment 03 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `daa66d13` and its inline math probe is $y^2 + 3y + 9$.
+
+### Appendix checkpoint 03.1
+
+- gamma item 03.1
+  - nested payload 303
+  - nested payload 633
+    - deep payload 921
+    - deep payload 1203
+- gamma item 03.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 3 | gamma | 51 | 87 | 129 | ready |
+| 51 | delta | 159 | 201 | 237 | warm |
+| 99 | epsilon | 249 | 291 | 327 | queued |
+
+> Appendix segment 03 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 03.2
+
+<dl>
+  <dt>Segment 03</dt>
+  <dd>Transcluded gamma payload with checksum 23757.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-03-39</code></dd>
+</dl>
+
+- [x] Resolve segment 03
+- [x] Compile gamma payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 04 — delta
+
+Segment 04 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `78dde6c4` and its inline math probe is $y^2 + 4y + 12$.
+
+### Appendix checkpoint 04.1
+
+- delta item 04.1
+  - nested payload 404
+  - nested payload 844
+    - deep payload 1228
+    - deep payload 1604
+- delta item 04.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 4 | delta | 68 | 116 | 172 | ready |
+| 52 | epsilon | 212 | 268 | 316 | warm |
+| 100 | zeta | 332 | 388 | 436 | queued |
+
+> Appendix segment 04 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 04.2
+
+<dl>
+  <dt>Segment 04</dt>
+  <dd>Transcluded delta payload with checksum 31676.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-04-52</code></dd>
+</dl>
+
+- [x] Resolve segment 04
+- [x] Compile delta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 05 — epsilon
+
+Segment 05 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `17156075` and its inline math probe is $y^2 + 5y + 15$.
+
+### Appendix checkpoint 05.1
+
+- epsilon item 05.1
+  - nested payload 505
+  - nested payload 1055
+    - deep payload 1535
+    - deep payload 2005
+- epsilon item 05.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 5 | epsilon | 85 | 145 | 215 | ready |
+| 53 | zeta | 265 | 335 | 395 | warm |
+| 101 | alpha | 415 | 485 | 545 | queued |
+
+> Appendix segment 05 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 05.2
+
+<dl>
+  <dt>Segment 05</dt>
+  <dd>Transcluded epsilon payload with checksum 39595.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-05-65</code></dd>
+</dl>
+
+- [x] Resolve segment 05
+- [x] Compile epsilon payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 06 — zeta
+
+Segment 06 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `b54cda26` and its inline math probe is $y^2 + 6y + 18$.
+
+### Appendix checkpoint 06.1
+
+- zeta item 06.1
+  - nested payload 606
+  - nested payload 1266
+    - deep payload 1842
+    - deep payload 2406
+- zeta item 06.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 6 | zeta | 102 | 174 | 258 | ready |
+| 54 | alpha | 318 | 402 | 474 | warm |
+| 102 | beta | 498 | 582 | 654 | queued |
+
+> Appendix segment 06 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 06.2
+
+<dl>
+  <dt>Segment 06</dt>
+  <dd>Transcluded zeta payload with checksum 47514.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-06-78</code></dd>
+</dl>
+
+- [x] Resolve segment 06
+- [x] Compile zeta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 07 — alpha
+
+Segment 07 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `538453d7` and its inline math probe is $y^2 + 7y + 21$.
+
+### Appendix checkpoint 07.1
+
+- alpha item 07.1
+  - nested payload 707
+  - nested payload 1477
+    - deep payload 2149
+    - deep payload 2807
+- alpha item 07.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 7 | alpha | 119 | 203 | 301 | ready |
+| 55 | beta | 371 | 469 | 553 | warm |
+| 103 | gamma | 581 | 679 | 763 | queued |
+
+> Appendix segment 07 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 07.2
+
+<dl>
+  <dt>Segment 07</dt>
+  <dd>Transcluded alpha payload with checksum 55433.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-07-91</code></dd>
+</dl>
+
+- [x] Resolve segment 07
+- [x] Compile alpha payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 08 — beta
+
+Segment 08 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `f1bbcd88` and its inline math probe is $y^2 + 8y + 24$.
+
+### Appendix checkpoint 08.1
+
+- beta item 08.1
+  - nested payload 808
+  - nested payload 1688
+    - deep payload 2456
+    - deep payload 3208
+- beta item 08.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 8 | beta | 136 | 232 | 344 | ready |
+| 56 | gamma | 424 | 536 | 632 | warm |
+| 104 | delta | 664 | 776 | 872 | queued |
+
+> Appendix segment 08 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 08.2
+
+<dl>
+  <dt>Segment 08</dt>
+  <dd>Transcluded beta payload with checksum 63352.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-08-104</code></dd>
+</dl>
+
+- [x] Resolve segment 08
+- [x] Compile beta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 09 — gamma
+
+Segment 09 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `8ff34739` and its inline math probe is $y^2 + 9y + 27$.
+
+### Appendix checkpoint 09.1
+
+- gamma item 09.1
+  - nested payload 909
+  - nested payload 1899
+    - deep payload 2763
+    - deep payload 3609
+- gamma item 09.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 9 | gamma | 153 | 261 | 387 | ready |
+| 57 | delta | 477 | 603 | 711 | warm |
+| 105 | epsilon | 747 | 873 | 981 | queued |
+
+> Appendix segment 09 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 09.2
+
+<dl>
+  <dt>Segment 09</dt>
+  <dd>Transcluded gamma payload with checksum 71271.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-09-117</code></dd>
+</dl>
+
+- [x] Resolve segment 09
+- [x] Compile gamma payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 10 — delta
+
+Segment 10 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `2e2ac0ea` and its inline math probe is $y^2 + 10y + 30$.
+
+### Appendix checkpoint 10.1
+
+- delta item 10.1
+  - nested payload 1010
+  - nested payload 2110
+    - deep payload 3070
+    - deep payload 4010
+- delta item 10.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 10 | delta | 170 | 290 | 430 | ready |
+| 58 | epsilon | 530 | 670 | 790 | warm |
+| 106 | zeta | 830 | 970 | 1090 | queued |
+
+> Appendix segment 10 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 10.2
+
+<dl>
+  <dt>Segment 10</dt>
+  <dd>Transcluded delta payload with checksum 79190.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-10-130</code></dd>
+</dl>
+
+- [x] Resolve segment 10
+- [x] Compile delta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 11 — epsilon
+
+Segment 11 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `cc623a9b` and its inline math probe is $y^2 + 11y + 33$.
+
+### Appendix checkpoint 11.1
+
+- epsilon item 11.1
+  - nested payload 1111
+  - nested payload 2321
+    - deep payload 3377
+    - deep payload 4411
+- epsilon item 11.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 11 | epsilon | 187 | 319 | 473 | ready |
+| 59 | zeta | 583 | 737 | 869 | warm |
+| 107 | alpha | 913 | 1067 | 1199 | queued |
+
+> Appendix segment 11 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 11.2
+
+<dl>
+  <dt>Segment 11</dt>
+  <dd>Transcluded epsilon payload with checksum 87109.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-11-143</code></dd>
+</dl>
+
+- [x] Resolve segment 11
+- [x] Compile epsilon payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 12 — zeta
+
+Segment 12 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `6a99b44c` and its inline math probe is $y^2 + 12y + 36$.
+
+### Appendix checkpoint 12.1
+
+- zeta item 12.1
+  - nested payload 1212
+  - nested payload 2532
+    - deep payload 3684
+    - deep payload 4812
+- zeta item 12.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 12 | zeta | 204 | 348 | 516 | ready |
+| 60 | alpha | 636 | 804 | 948 | warm |
+| 108 | beta | 996 | 1164 | 1308 | queued |
+
+> Appendix segment 12 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 12.2
+
+<dl>
+  <dt>Segment 12</dt>
+  <dd>Transcluded zeta payload with checksum 95028.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-12-156</code></dd>
+</dl>
+
+- [x] Resolve segment 12
+- [x] Compile zeta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 13 — alpha
+
+Segment 13 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `08d12dfd` and its inline math probe is $y^2 + 13y + 39$.
+
+### Appendix checkpoint 13.1
+
+- alpha item 13.1
+  - nested payload 1313
+  - nested payload 2743
+    - deep payload 3991
+    - deep payload 5213
+- alpha item 13.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 13 | alpha | 221 | 377 | 559 | ready |
+| 61 | beta | 689 | 871 | 1027 | warm |
+| 109 | gamma | 1079 | 1261 | 1417 | queued |
+
+> Appendix segment 13 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 13.2
+
+<dl>
+  <dt>Segment 13</dt>
+  <dd>Transcluded alpha payload with checksum 102947.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-13-169</code></dd>
+</dl>
+
+- [x] Resolve segment 13
+- [x] Compile alpha payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 14 — beta
+
+Segment 14 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `a708a7ae` and its inline math probe is $y^2 + 14y + 42$.
+
+### Appendix checkpoint 14.1
+
+- beta item 14.1
+  - nested payload 1414
+  - nested payload 2954
+    - deep payload 4298
+    - deep payload 5614
+- beta item 14.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 14 | beta | 238 | 406 | 602 | ready |
+| 62 | gamma | 742 | 938 | 1106 | warm |
+| 110 | delta | 1162 | 1358 | 1526 | queued |
+
+> Appendix segment 14 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 14.2
+
+<dl>
+  <dt>Segment 14</dt>
+  <dd>Transcluded beta payload with checksum 110866.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-14-182</code></dd>
+</dl>
+
+- [x] Resolve segment 14
+- [x] Compile beta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 15 — gamma
+
+Segment 15 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `4540215f` and its inline math probe is $y^2 + 15y + 45$.
+
+### Appendix checkpoint 15.1
+
+- gamma item 15.1
+  - nested payload 1515
+  - nested payload 3165
+    - deep payload 4605
+    - deep payload 6015
+- gamma item 15.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 15 | gamma | 255 | 435 | 645 | ready |
+| 63 | delta | 795 | 1005 | 1185 | warm |
+| 111 | epsilon | 1245 | 1455 | 1635 | queued |
+
+> Appendix segment 15 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 15.2
+
+<dl>
+  <dt>Segment 15</dt>
+  <dd>Transcluded gamma payload with checksum 118785.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-15-195</code></dd>
+</dl>
+
+- [x] Resolve segment 15
+- [x] Compile gamma payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 16 — delta
+
+Segment 16 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `e3779b10` and its inline math probe is $y^2 + 16y + 48$.
+
+### Appendix checkpoint 16.1
+
+- delta item 16.1
+  - nested payload 1616
+  - nested payload 3376
+    - deep payload 4912
+    - deep payload 6416
+- delta item 16.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 16 | delta | 272 | 464 | 688 | ready |
+| 64 | epsilon | 848 | 1072 | 1264 | warm |
+| 112 | zeta | 1328 | 1552 | 1744 | queued |
+
+> Appendix segment 16 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 16.2
+
+<dl>
+  <dt>Segment 16</dt>
+  <dd>Transcluded delta payload with checksum 126704.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-16-208</code></dd>
+</dl>
+
+- [x] Resolve segment 16
+- [x] Compile delta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 17 — epsilon
+
+Segment 17 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `81af14c1` and its inline math probe is $y^2 + 17y + 51$.
+
+### Appendix checkpoint 17.1
+
+- epsilon item 17.1
+  - nested payload 1717
+  - nested payload 3587
+    - deep payload 5219
+    - deep payload 6817
+- epsilon item 17.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 17 | epsilon | 289 | 493 | 731 | ready |
+| 65 | zeta | 901 | 1139 | 1343 | warm |
+| 113 | alpha | 1411 | 1649 | 1853 | queued |
+
+> Appendix segment 17 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 17.2
+
+<dl>
+  <dt>Segment 17</dt>
+  <dd>Transcluded epsilon payload with checksum 134623.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-17-221</code></dd>
+</dl>
+
+- [x] Resolve segment 17
+- [x] Compile epsilon payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 18 — zeta
+
+Segment 18 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `1fe68e72` and its inline math probe is $y^2 + 18y + 54$.
+
+### Appendix checkpoint 18.1
+
+- zeta item 18.1
+  - nested payload 1818
+  - nested payload 3798
+    - deep payload 5526
+    - deep payload 7218
+- zeta item 18.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 18 | zeta | 306 | 522 | 774 | ready |
+| 66 | alpha | 954 | 1206 | 1422 | warm |
+| 114 | beta | 1494 | 1746 | 1962 | queued |
+
+> Appendix segment 18 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 18.2
+
+<dl>
+  <dt>Segment 18</dt>
+  <dd>Transcluded zeta payload with checksum 142542.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-18-234</code></dd>
+</dl>
+
+- [x] Resolve segment 18
+- [x] Compile zeta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 19 — alpha
+
+Segment 19 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `be1e0823` and its inline math probe is $y^2 + 19y + 57$.
+
+### Appendix checkpoint 19.1
+
+- alpha item 19.1
+  - nested payload 1919
+  - nested payload 4009
+    - deep payload 5833
+    - deep payload 7619
+- alpha item 19.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 19 | alpha | 323 | 551 | 817 | ready |
+| 67 | beta | 1007 | 1273 | 1501 | warm |
+| 115 | gamma | 1577 | 1843 | 2071 | queued |
+
+> Appendix segment 19 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 19.2
+
+<dl>
+  <dt>Segment 19</dt>
+  <dd>Transcluded alpha payload with checksum 150461.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-19-247</code></dd>
+</dl>
+
+- [x] Resolve segment 19
+- [x] Compile alpha payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 20 — beta
+
+Segment 20 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `5c5581d4` and its inline math probe is $y^2 + 20y + 60$.
+
+### Appendix checkpoint 20.1
+
+- beta item 20.1
+  - nested payload 2020
+  - nested payload 4220
+    - deep payload 6140
+    - deep payload 8020
+- beta item 20.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 20 | beta | 340 | 580 | 860 | ready |
+| 68 | gamma | 1060 | 1340 | 1580 | warm |
+| 116 | delta | 1660 | 1940 | 2180 | queued |
+
+> Appendix segment 20 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 20.2
+
+<dl>
+  <dt>Segment 20</dt>
+  <dd>Transcluded beta payload with checksum 158380.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-20-260</code></dd>
+</dl>
+
+- [x] Resolve segment 20
+- [x] Compile beta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 21 — gamma
+
+Segment 21 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `fa8cfb85` and its inline math probe is $y^2 + 21y + 63$.
+
+### Appendix checkpoint 21.1
+
+- gamma item 21.1
+  - nested payload 2121
+  - nested payload 4431
+    - deep payload 6447
+    - deep payload 8421
+- gamma item 21.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 21 | gamma | 357 | 609 | 903 | ready |
+| 69 | delta | 1113 | 1407 | 1659 | warm |
+| 117 | epsilon | 1743 | 2037 | 2289 | queued |
+
+> Appendix segment 21 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 21.2
+
+<dl>
+  <dt>Segment 21</dt>
+  <dd>Transcluded gamma payload with checksum 166299.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-21-273</code></dd>
+</dl>
+
+- [x] Resolve segment 21
+- [x] Compile gamma payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 22 — delta
+
+Segment 22 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `98c47536` and its inline math probe is $y^2 + 22y + 66$.
+
+### Appendix checkpoint 22.1
+
+- delta item 22.1
+  - nested payload 2222
+  - nested payload 4642
+    - deep payload 6754
+    - deep payload 8822
+- delta item 22.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 22 | delta | 374 | 638 | 946 | ready |
+| 70 | epsilon | 1166 | 1474 | 1738 | warm |
+| 118 | zeta | 1826 | 2134 | 2398 | queued |
+
+> Appendix segment 22 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 22.2
+
+<dl>
+  <dt>Segment 22</dt>
+  <dd>Transcluded delta payload with checksum 174218.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-22-286</code></dd>
+</dl>
+
+- [x] Resolve segment 22
+- [x] Compile delta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 23 — epsilon
+
+Segment 23 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `36fbeee7` and its inline math probe is $y^2 + 23y + 69$.
+
+### Appendix checkpoint 23.1
+
+- epsilon item 23.1
+  - nested payload 2323
+  - nested payload 4853
+    - deep payload 7061
+    - deep payload 9223
+- epsilon item 23.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 23 | epsilon | 391 | 667 | 989 | ready |
+| 71 | zeta | 1219 | 1541 | 1817 | warm |
+| 119 | alpha | 1909 | 2231 | 2507 | queued |
+
+> Appendix segment 23 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 23.2
+
+<dl>
+  <dt>Segment 23</dt>
+  <dd>Transcluded epsilon payload with checksum 182137.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-23-299</code></dd>
+</dl>
+
+- [x] Resolve segment 23
+- [x] Compile epsilon payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 24 — zeta
+
+Segment 24 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `d5336898` and its inline math probe is $y^2 + 24y + 72$.
+
+### Appendix checkpoint 24.1
+
+- zeta item 24.1
+  - nested payload 2424
+  - nested payload 5064
+    - deep payload 7368
+    - deep payload 9624
+- zeta item 24.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 24 | zeta | 408 | 696 | 1032 | ready |
+| 72 | alpha | 1272 | 1608 | 1896 | warm |
+| 120 | beta | 1992 | 2328 | 2616 | queued |
+
+> Appendix segment 24 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 24.2
+
+<dl>
+  <dt>Segment 24</dt>
+  <dd>Transcluded zeta payload with checksum 190056.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-24-312</code></dd>
+</dl>
+
+- [x] Resolve segment 24
+- [x] Compile zeta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 25 — alpha
+
+Segment 25 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `736ae249` and its inline math probe is $y^2 + 25y + 75$.
+
+### Appendix checkpoint 25.1
+
+- alpha item 25.1
+  - nested payload 2525
+  - nested payload 5275
+    - deep payload 7675
+    - deep payload 10025
+- alpha item 25.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 25 | alpha | 425 | 725 | 1075 | ready |
+| 73 | beta | 1325 | 1675 | 1975 | warm |
+| 121 | gamma | 2075 | 2425 | 2725 | queued |
+
+> Appendix segment 25 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 25.2
+
+<dl>
+  <dt>Segment 25</dt>
+  <dd>Transcluded alpha payload with checksum 197975.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-25-325</code></dd>
+</dl>
+
+- [x] Resolve segment 25
+- [x] Compile alpha payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 26 — beta
+
+Segment 26 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `11a25bfa` and its inline math probe is $y^2 + 26y + 78$.
+
+### Appendix checkpoint 26.1
+
+- beta item 26.1
+  - nested payload 2626
+  - nested payload 5486
+    - deep payload 7982
+    - deep payload 10426
+- beta item 26.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 26 | beta | 442 | 754 | 1118 | ready |
+| 74 | gamma | 1378 | 1742 | 2054 | warm |
+| 122 | delta | 2158 | 2522 | 2834 | queued |
+
+> Appendix segment 26 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 26.2
+
+<dl>
+  <dt>Segment 26</dt>
+  <dd>Transcluded beta payload with checksum 205894.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-26-338</code></dd>
+</dl>
+
+- [x] Resolve segment 26
+- [x] Compile beta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 27 — gamma
+
+Segment 27 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `afd9d5ab` and its inline math probe is $y^2 + 27y + 81$.
+
+### Appendix checkpoint 27.1
+
+- gamma item 27.1
+  - nested payload 2727
+  - nested payload 5697
+    - deep payload 8289
+    - deep payload 10827
+- gamma item 27.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 27 | gamma | 459 | 783 | 1161 | ready |
+| 75 | delta | 1431 | 1809 | 2133 | warm |
+| 123 | epsilon | 2241 | 2619 | 2943 | queued |
+
+> Appendix segment 27 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 27.2
+
+<dl>
+  <dt>Segment 27</dt>
+  <dd>Transcluded gamma payload with checksum 213813.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-27-351</code></dd>
+</dl>
+
+- [x] Resolve segment 27
+- [x] Compile gamma payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 28 — delta
+
+Segment 28 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `4e114f5c` and its inline math probe is $y^2 + 28y + 84$.
+
+### Appendix checkpoint 28.1
+
+- delta item 28.1
+  - nested payload 2828
+  - nested payload 5908
+    - deep payload 8596
+    - deep payload 11228
+- delta item 28.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 28 | delta | 476 | 812 | 1204 | ready |
+| 76 | epsilon | 1484 | 1876 | 2212 | warm |
+| 124 | zeta | 2324 | 2716 | 3052 | queued |
+
+> Appendix segment 28 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 28.2
+
+<dl>
+  <dt>Segment 28</dt>
+  <dd>Transcluded delta payload with checksum 221732.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-28-364</code></dd>
+</dl>
+
+- [x] Resolve segment 28
+- [x] Compile delta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 29 — epsilon
+
+Segment 29 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `ec48c90d` and its inline math probe is $y^2 + 29y + 87$.
+
+### Appendix checkpoint 29.1
+
+- epsilon item 29.1
+  - nested payload 2929
+  - nested payload 6119
+    - deep payload 8903
+    - deep payload 11629
+- epsilon item 29.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 29 | epsilon | 493 | 841 | 1247 | ready |
+| 77 | zeta | 1537 | 1943 | 2291 | warm |
+| 125 | alpha | 2407 | 2813 | 3161 | queued |
+
+> Appendix segment 29 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 29.2
+
+<dl>
+  <dt>Segment 29</dt>
+  <dd>Transcluded epsilon payload with checksum 229651.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-29-377</code></dd>
+</dl>
+
+- [x] Resolve segment 29
+- [x] Compile epsilon payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 30 — zeta
+
+Segment 30 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `8a8042be` and its inline math probe is $y^2 + 30y + 90$.
+
+### Appendix checkpoint 30.1
+
+- zeta item 30.1
+  - nested payload 3030
+  - nested payload 6330
+    - deep payload 9210
+    - deep payload 12030
+- zeta item 30.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 30 | zeta | 510 | 870 | 1290 | ready |
+| 78 | alpha | 1590 | 2010 | 2370 | warm |
+| 126 | beta | 2490 | 2910 | 3270 | queued |
+
+> Appendix segment 30 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 30.2
+
+<dl>
+  <dt>Segment 30</dt>
+  <dd>Transcluded zeta payload with checksum 237570.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-30-390</code></dd>
+</dl>
+
+- [x] Resolve segment 30
+- [x] Compile zeta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 31 — alpha
+
+Segment 31 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `28b7bc6f` and its inline math probe is $y^2 + 31y + 93$.
+
+### Appendix checkpoint 31.1
+
+- alpha item 31.1
+  - nested payload 3131
+  - nested payload 6541
+    - deep payload 9517
+    - deep payload 12431
+- alpha item 31.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 31 | alpha | 527 | 899 | 1333 | ready |
+| 79 | beta | 1643 | 2077 | 2449 | warm |
+| 127 | gamma | 2573 | 3007 | 3379 | queued |
+
+> Appendix segment 31 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 31.2
+
+<dl>
+  <dt>Segment 31</dt>
+  <dd>Transcluded alpha payload with checksum 245489.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-31-403</code></dd>
+</dl>
+
+- [x] Resolve segment 31
+- [x] Compile alpha payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 32 — beta
+
+Segment 32 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `c6ef3620` and its inline math probe is $y^2 + 32y + 96$.
+
+### Appendix checkpoint 32.1
+
+- beta item 32.1
+  - nested payload 3232
+  - nested payload 6752
+    - deep payload 9824
+    - deep payload 12832
+- beta item 32.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 32 | beta | 544 | 928 | 1376 | ready |
+| 80 | gamma | 1696 | 2144 | 2528 | warm |
+| 128 | delta | 2656 | 3104 | 3488 | queued |
+
+> Appendix segment 32 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 32.2
+
+<dl>
+  <dt>Segment 32</dt>
+  <dd>Transcluded beta payload with checksum 253408.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-32-416</code></dd>
+</dl>
+
+- [x] Resolve segment 32
+- [x] Compile beta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 33 — gamma
+
+Segment 33 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `6526afd1` and its inline math probe is $y^2 + 33y + 99$.
+
+### Appendix checkpoint 33.1
+
+- gamma item 33.1
+  - nested payload 3333
+  - nested payload 6963
+    - deep payload 10131
+    - deep payload 13233
+- gamma item 33.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 33 | gamma | 561 | 957 | 1419 | ready |
+| 81 | delta | 1749 | 2211 | 2607 | warm |
+| 129 | epsilon | 2739 | 3201 | 3597 | queued |
+
+> Appendix segment 33 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 33.2
+
+<dl>
+  <dt>Segment 33</dt>
+  <dd>Transcluded gamma payload with checksum 261327.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-33-429</code></dd>
+</dl>
+
+- [x] Resolve segment 33
+- [x] Compile gamma payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 34 — delta
+
+Segment 34 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `035e2982` and its inline math probe is $y^2 + 34y + 102$.
+
+### Appendix checkpoint 34.1
+
+- delta item 34.1
+  - nested payload 3434
+  - nested payload 7174
+    - deep payload 10438
+    - deep payload 13634
+- delta item 34.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 34 | delta | 578 | 986 | 1462 | ready |
+| 82 | epsilon | 1802 | 2278 | 2686 | warm |
+| 130 | zeta | 2822 | 3298 | 3706 | queued |
+
+> Appendix segment 34 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 34.2
+
+<dl>
+  <dt>Segment 34</dt>
+  <dd>Transcluded delta payload with checksum 269246.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-34-442</code></dd>
+</dl>
+
+- [x] Resolve segment 34
+- [x] Compile delta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 35 — epsilon
+
+Segment 35 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `a195a333` and its inline math probe is $y^2 + 35y + 105$.
+
+### Appendix checkpoint 35.1
+
+- epsilon item 35.1
+  - nested payload 3535
+  - nested payload 7385
+    - deep payload 10745
+    - deep payload 14035
+- epsilon item 35.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 35 | epsilon | 595 | 1015 | 1505 | ready |
+| 83 | zeta | 1855 | 2345 | 2765 | warm |
+| 131 | alpha | 2905 | 3395 | 3815 | queued |
+
+> Appendix segment 35 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 35.2
+
+<dl>
+  <dt>Segment 35</dt>
+  <dd>Transcluded epsilon payload with checksum 277165.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-35-455</code></dd>
+</dl>
+
+- [x] Resolve segment 35
+- [x] Compile epsilon payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 36 — zeta
+
+Segment 36 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `3fcd1ce4` and its inline math probe is $y^2 + 36y + 108$.
+
+### Appendix checkpoint 36.1
+
+- zeta item 36.1
+  - nested payload 3636
+  - nested payload 7596
+    - deep payload 11052
+    - deep payload 14436
+- zeta item 36.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 36 | zeta | 612 | 1044 | 1548 | ready |
+| 84 | alpha | 1908 | 2412 | 2844 | warm |
+| 132 | beta | 2988 | 3492 | 3924 | queued |
+
+> Appendix segment 36 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 36.2
+
+<dl>
+  <dt>Segment 36</dt>
+  <dd>Transcluded zeta payload with checksum 285084.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-36-468</code></dd>
+</dl>
+
+- [x] Resolve segment 36
+- [x] Compile zeta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 37 — alpha
+
+Segment 37 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `de049695` and its inline math probe is $y^2 + 37y + 111$.
+
+### Appendix checkpoint 37.1
+
+- alpha item 37.1
+  - nested payload 3737
+  - nested payload 7807
+    - deep payload 11359
+    - deep payload 14837
+- alpha item 37.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 37 | alpha | 629 | 1073 | 1591 | ready |
+| 85 | beta | 1961 | 2479 | 2923 | warm |
+| 133 | gamma | 3071 | 3589 | 4033 | queued |
+
+> Appendix segment 37 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 37.2
+
+<dl>
+  <dt>Segment 37</dt>
+  <dd>Transcluded alpha payload with checksum 293003.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-37-481</code></dd>
+</dl>
+
+- [x] Resolve segment 37
+- [x] Compile alpha payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 38 — beta
+
+Segment 38 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `7c3c1046` and its inline math probe is $y^2 + 38y + 114$.
+
+### Appendix checkpoint 38.1
+
+- beta item 38.1
+  - nested payload 3838
+  - nested payload 8018
+    - deep payload 11666
+    - deep payload 15238
+- beta item 38.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 38 | beta | 646 | 1102 | 1634 | ready |
+| 86 | gamma | 2014 | 2546 | 3002 | warm |
+| 134 | delta | 3154 | 3686 | 4142 | queued |
+
+> Appendix segment 38 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 38.2
+
+<dl>
+  <dt>Segment 38</dt>
+  <dd>Transcluded beta payload with checksum 300922.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-38-494</code></dd>
+</dl>
+
+- [x] Resolve segment 38
+- [x] Compile beta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 39 — gamma
+
+Segment 39 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `1a7389f7` and its inline math probe is $y^2 + 39y + 117$.
+
+### Appendix checkpoint 39.1
+
+- gamma item 39.1
+  - nested payload 3939
+  - nested payload 8229
+    - deep payload 11973
+    - deep payload 15639
+- gamma item 39.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 39 | gamma | 663 | 1131 | 1677 | ready |
+| 87 | delta | 2067 | 2613 | 3081 | warm |
+| 135 | epsilon | 3237 | 3783 | 4251 | queued |
+
+> Appendix segment 39 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 39.2
+
+<dl>
+  <dt>Segment 39</dt>
+  <dd>Transcluded gamma payload with checksum 308841.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-39-507</code></dd>
+</dl>
+
+- [x] Resolve segment 39
+- [x] Compile gamma payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 40 — delta
+
+Segment 40 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `b8ab03a8` and its inline math probe is $y^2 + 40y + 120$.
+
+### Appendix checkpoint 40.1
+
+- delta item 40.1
+  - nested payload 4040
+  - nested payload 8440
+    - deep payload 12280
+    - deep payload 16040
+- delta item 40.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 40 | delta | 680 | 1160 | 1720 | ready |
+| 88 | epsilon | 2120 | 2680 | 3160 | warm |
+| 136 | zeta | 3320 | 3880 | 4360 | queued |
+
+> Appendix segment 40 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 40.2
+
+<dl>
+  <dt>Segment 40</dt>
+  <dd>Transcluded delta payload with checksum 316760.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-40-520</code></dd>
+</dl>
+
+- [x] Resolve segment 40
+- [x] Compile delta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 41 — epsilon
+
+Segment 41 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `56e27d59` and its inline math probe is $y^2 + 41y + 123$.
+
+### Appendix checkpoint 41.1
+
+- epsilon item 41.1
+  - nested payload 4141
+  - nested payload 8651
+    - deep payload 12587
+    - deep payload 16441
+- epsilon item 41.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 41 | epsilon | 697 | 1189 | 1763 | ready |
+| 89 | zeta | 2173 | 2747 | 3239 | warm |
+| 137 | alpha | 3403 | 3977 | 4469 | queued |
+
+> Appendix segment 41 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 41.2
+
+<dl>
+  <dt>Segment 41</dt>
+  <dd>Transcluded epsilon payload with checksum 324679.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-41-533</code></dd>
+</dl>
+
+- [x] Resolve segment 41
+- [x] Compile epsilon payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 42 — zeta
+
+Segment 42 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `f519f70a` and its inline math probe is $y^2 + 42y + 126$.
+
+### Appendix checkpoint 42.1
+
+- zeta item 42.1
+  - nested payload 4242
+  - nested payload 8862
+    - deep payload 12894
+    - deep payload 16842
+- zeta item 42.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 42 | zeta | 714 | 1218 | 1806 | ready |
+| 90 | alpha | 2226 | 2814 | 3318 | warm |
+| 138 | beta | 3486 | 4074 | 4578 | queued |
+
+> Appendix segment 42 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 42.2
+
+<dl>
+  <dt>Segment 42</dt>
+  <dd>Transcluded zeta payload with checksum 332598.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-42-546</code></dd>
+</dl>
+
+- [x] Resolve segment 42
+- [x] Compile zeta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 43 — alpha
+
+Segment 43 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `935170bb` and its inline math probe is $y^2 + 43y + 129$.
+
+### Appendix checkpoint 43.1
+
+- alpha item 43.1
+  - nested payload 4343
+  - nested payload 9073
+    - deep payload 13201
+    - deep payload 17243
+- alpha item 43.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 43 | alpha | 731 | 1247 | 1849 | ready |
+| 91 | beta | 2279 | 2881 | 3397 | warm |
+| 139 | gamma | 3569 | 4171 | 4687 | queued |
+
+> Appendix segment 43 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 43.2
+
+<dl>
+  <dt>Segment 43</dt>
+  <dd>Transcluded alpha payload with checksum 340517.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-43-559</code></dd>
+</dl>
+
+- [x] Resolve segment 43
+- [x] Compile alpha payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 44 — beta
+
+Segment 44 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `3188ea6c` and its inline math probe is $y^2 + 44y + 132$.
+
+### Appendix checkpoint 44.1
+
+- beta item 44.1
+  - nested payload 4444
+  - nested payload 9284
+    - deep payload 13508
+    - deep payload 17644
+- beta item 44.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 44 | beta | 748 | 1276 | 1892 | ready |
+| 92 | gamma | 2332 | 2948 | 3476 | warm |
+| 140 | delta | 3652 | 4268 | 4796 | queued |
+
+> Appendix segment 44 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 44.2
+
+<dl>
+  <dt>Segment 44</dt>
+  <dd>Transcluded beta payload with checksum 348436.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-44-572</code></dd>
+</dl>
+
+- [x] Resolve segment 44
+- [x] Compile beta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 45 — gamma
+
+Segment 45 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `cfc0641d` and its inline math probe is $y^2 + 45y + 135$.
+
+### Appendix checkpoint 45.1
+
+- gamma item 45.1
+  - nested payload 4545
+  - nested payload 9495
+    - deep payload 13815
+    - deep payload 18045
+- gamma item 45.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 45 | gamma | 765 | 1305 | 1935 | ready |
+| 93 | delta | 2385 | 3015 | 3555 | warm |
+| 141 | epsilon | 3735 | 4365 | 4905 | queued |
+
+> Appendix segment 45 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 45.2
+
+<dl>
+  <dt>Segment 45</dt>
+  <dd>Transcluded gamma payload with checksum 356355.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-45-585</code></dd>
+</dl>
+
+- [x] Resolve segment 45
+- [x] Compile gamma payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 46 — delta
+
+Segment 46 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `6df7ddce` and its inline math probe is $y^2 + 46y + 138$.
+
+### Appendix checkpoint 46.1
+
+- delta item 46.1
+  - nested payload 4646
+  - nested payload 9706
+    - deep payload 14122
+    - deep payload 18446
+- delta item 46.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 46 | delta | 782 | 1334 | 1978 | ready |
+| 94 | epsilon | 2438 | 3082 | 3634 | warm |
+| 142 | zeta | 3818 | 4462 | 5014 | queued |
+
+> Appendix segment 46 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 46.2
+
+<dl>
+  <dt>Segment 46</dt>
+  <dd>Transcluded delta payload with checksum 364274.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-46-598</code></dd>
+</dl>
+
+- [x] Resolve segment 46
+- [x] Compile delta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 47 — epsilon
+
+Segment 47 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `0c2f577f` and its inline math probe is $y^2 + 47y + 141$.
+
+### Appendix checkpoint 47.1
+
+- epsilon item 47.1
+  - nested payload 4747
+  - nested payload 9917
+    - deep payload 14429
+    - deep payload 18847
+- epsilon item 47.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 47 | epsilon | 799 | 1363 | 2021 | ready |
+| 95 | zeta | 2491 | 3149 | 3713 | warm |
+| 143 | alpha | 3901 | 4559 | 5123 | queued |
+
+> Appendix segment 47 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 47.2
+
+<dl>
+  <dt>Segment 47</dt>
+  <dd>Transcluded epsilon payload with checksum 372193.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-47-611</code></dd>
+</dl>
+
+- [x] Resolve segment 47
+- [x] Compile epsilon payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+## Appendix segment 48 — zeta
+
+Segment 48 adds a separately compiled heading, paragraph, table, list, and
+quotation. Its deterministic checksum is `aa66d130` and its inline math probe is $y^2 + 48y + 144$.
+
+### Appendix checkpoint 48.1
+
+- zeta item 48.1
+  - nested payload 4848
+  - nested payload 10128
+    - deep payload 14736
+    - deep payload 19248
+- zeta item 48.2
+
+| Segment | Lane | Metric A | Metric B | Metric C | State |
+|---:|---|---:|---:|---:|---|
+| 48 | zeta | 816 | 1392 | 2064 | ready |
+| 96 | alpha | 2544 | 3216 | 3792 | warm |
+| 144 | beta | 3984 | 4656 | 5232 | queued |
+
+> Appendix segment 48 keeps its quotation deliberately long enough to wrap
+> across multiple visual lines and create distinct source-position metadata.
+
+### Appendix checkpoint 48.2
+
+<dl>
+  <dt>Segment 48</dt>
+  <dd>Transcluded zeta payload with checksum 380112.</dd>
+  <dt>Refresh token</dt>
+  <dd><code>appendix-refresh-48-624</code></dd>
+</dl>
+
+- [x] Resolve segment 48
+- [x] Compile zeta payload
+- [ ] Edit and observe dependency refresh
+
+---
+
+# Appendix end marker
+
+The imported module reached its final node.
+
+**Appendix final token:** `APPENDIX_END_MARKER_4848`

@@ -298,9 +298,11 @@ export class TailwindDetector {
       this.entryCssCache.delete(cacheKey);
     }
 
+    const scanRoot = this.resolveEntryCssScanRoot(workspaceRoot, entryDir);
+
     // first, check common locations for faster detection
     const commonResult = await this.findEntryCssInCommonLocations(
-      workspaceRoot,
+      scanRoot,
       entryDir
     );
     if (commonResult) {
@@ -309,7 +311,6 @@ export class TailwindDetector {
       return commonResult;
     }
 
-    const scanRoot = this.resolveEntryCssScanRoot(workspaceRoot, entryDir);
     log.debug(`Entry CSS not in common locations, scanning: ${scanRoot}`);
     const include = new vscode.RelativePattern(scanRoot, '**/*.css');
     const exclude = '**/node_modules/**';
@@ -321,10 +322,15 @@ export class TailwindDetector {
 
     for (const uri of candidates) {
       const content = await readFileAsync(uri.fsPath);
-      if (isTailwindEntryCss(content)) {
-        this.entryCssCache.set(cacheKey, uri.fsPath);
-        return uri.fsPath;
+      if (
+        !isTailwindEntryCss(content) ||
+        !this.isEntryCssCandidateInScanPackage(uri.fsPath, scanRoot)
+      ) {
+        continue;
       }
+
+      this.entryCssCache.set(cacheKey, uri.fsPath);
+      return uri.fsPath;
     }
 
     this.entryCssCache.set(cacheKey, null);
@@ -351,6 +357,25 @@ export class TailwindDetector {
     }
 
     return workspaceRoot;
+  }
+
+  // keep auto-detected entry CSS inside the package that owns the document
+  private isEntryCssCandidateInScanPackage(
+    candidatePath: string,
+    scanRoot: string
+  ): boolean {
+    const candidatePackageRoot = findUp({
+      filename: 'package.json',
+      startDir: path.dirname(candidatePath),
+      stopAt: scanRoot,
+      returnType: 'directory',
+    });
+
+    return (
+      !candidatePackageRoot ||
+      normalizePathForComparison(candidatePackageRoot) ===
+        normalizePathForComparison(scanRoot)
+    );
   }
 
   // route workspace to browser or advanced Tailwind profile
@@ -502,22 +527,25 @@ export class TailwindDetector {
   // check common CSS file locations for Tailwind entry CSS
   // this is faster than scanning the entire workspace
   private async findEntryCssInCommonLocations(
-    workspaceRoot: string,
+    scanRoot: string,
     entryDir: string | null
   ): Promise<string | null> {
-    // build list of directories to check (entryDir first if different from workspace)
+    // build list of directories to check (entryDir first if different from package)
     const dirsToCheck: string[] = [];
-    if (entryDir && entryDir !== workspaceRoot) {
+    if (entryDir && entryDir !== scanRoot) {
       dirsToCheck.push(entryDir);
     }
-    dirsToCheck.push(workspaceRoot);
+    dirsToCheck.push(scanRoot);
 
     for (const baseDir of dirsToCheck) {
       // check all common locations in parallel for this directory
       const checks = COMMON_CSS_LOCATIONS.map(async (relativePath) => {
         const fullPath = path.join(baseDir, relativePath);
         const content = await readFileAsync(fullPath);
-        return isTailwindEntryCss(content) ? fullPath : null;
+        return isTailwindEntryCss(content) &&
+          this.isEntryCssCandidateInScanPackage(fullPath, scanRoot)
+          ? fullPath
+          : null;
       });
 
       const results = await Promise.all(checks);
