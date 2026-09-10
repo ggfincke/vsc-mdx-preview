@@ -1,7 +1,7 @@
 // packages/contracts/src/rpc/types.ts
 // shared RPC interface contracts between extension & webview
 
-import type { Framework } from '../frameworks';
+import type { FrameworkId } from '../frameworks';
 import type {
   FetchResult,
   ModuleDependency,
@@ -42,7 +42,7 @@ export interface ExtensionRPC {
 // webview-exposed RPC methods
 export interface WebviewRPC {
   setTrustState(state: TrustState): void;
-  setFramework(framework: Framework): void;
+  setFramework(framework: FrameworkId): void;
   // used components
   setUsedComponents(components: string[]): void;
   updatePreview(

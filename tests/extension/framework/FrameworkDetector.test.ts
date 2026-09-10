@@ -7,7 +7,10 @@ import * as path from 'path';
 import * as os from 'os';
 import { FrameworkDetector } from '../../../packages/extension-host/src/features/framework/FrameworkDetector';
 import * as vscode from 'vscode';
-import { mockConfigManager } from '../../helpers/mock-services';
+import {
+  mockConfigCache,
+  mockConfigManager,
+} from '../../helpers/mock-services';
 
 const tempDirs: string[] = [];
 
@@ -25,6 +28,7 @@ afterEach(() => {
 describe('FrameworkDetector', () => {
   beforeEach(() => {
     FrameworkDetector.reset();
+    mockConfigCache.get.mockReturnValue(null);
     mockConfigManager.get.mockReturnValue('auto');
   });
 

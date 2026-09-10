@@ -136,6 +136,21 @@ describe('webview-rpc-client', () => {
     await expect(exposedHandle.setFramework('docusaurus')).rejects.toThrow(
       'framework shim failed'
     );
+    let finishPreload!: () => void;
+    mockEnsureFrameworkShimsLoaded.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishPreload = resolve;
+        })
+    );
+    const settled = vi.fn();
+    const genericReady = exposedHandle.setFramework('generic').then(settled);
+    await vi.waitFor(() => expect(finishPreload).toBeDefined());
+    expect(settled).not.toHaveBeenCalled();
+    expect(mockEnsureFrameworkShimsLoaded).toHaveBeenLastCalledWith('generic');
+    finishPreload();
+    await genericReady;
+    expect(settled).toHaveBeenCalledTimes(1);
   });
 
   it('flushes buffered state and keeps only the latest preview outcome', async () => {

@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { LogTags, type NextraPageMeta } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
 import { extractNextraFrontmatter } from 'mdx-forge/compiler';
-import { getFrameworkDetector, getMetaResolver } from '../../../app/services';
+import { getMetaResolver } from '../../../app/services';
 import { createTaggedLogger } from '../../../shared/logging/logger';
 import {
   detectComponents,
@@ -156,8 +156,7 @@ function sendNextraMetaIfNeeded(
   let snapshot: NextraPageMeta | null = null;
 
   try {
-    const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
-    if (frameworkInfo.framework === 'nextra') {
+    if (context.framework === 'nextra') {
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(
         preview.doc.uri
       );

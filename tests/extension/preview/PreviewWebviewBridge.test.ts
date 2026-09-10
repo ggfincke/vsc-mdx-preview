@@ -132,6 +132,25 @@ describe('PreviewWebviewBridge', () => {
     expect(handle.setTailwindCss).toHaveBeenCalledTimes(1);
     expect(handle.setRuntimeConfig).toHaveBeenCalledTimes(1);
 
+    let finishPreload!: () => void;
+    const frameworkReady = new Promise<void>((resolve) => {
+      finishPreload = resolve;
+    });
+    handle.setFramework.mockReturnValue(frameworkReady);
+    const firstFramework = deltaHandle.setFramework('docusaurus');
+    const nextFramework = deltaHandle.setFramework('docusaurus');
+    expect(firstFramework).toBe(frameworkReady);
+    expect(nextFramework).toBe(frameworkReady);
+    finishPreload();
+    await Promise.all([firstFramework, nextFramework]);
+
+    handle.setFramework.mockRejectedValueOnce(new Error('preload failed'));
+    await expect(deltaHandle.setFramework('generic')).rejects.toThrow(
+      'preload failed'
+    );
+    await expect(deltaHandle.setFramework('generic')).resolves.toBeUndefined();
+    expect(handle.setFramework).toHaveBeenCalledTimes(4);
+
     bridge.onWebviewReady(mockDocUri as never);
     deltaHandle.setTrustState(trustState);
     await new Promise((resolve) => setTimeout(resolve, 0));

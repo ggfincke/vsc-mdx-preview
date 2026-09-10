@@ -22,6 +22,7 @@ vi.mock('../../../packages/extension-host/src/shared/utils/file-utils', () => ({
 }));
 
 import { runPreviewUpdateFlow } from '../../../packages/extension-host/src/features/preview/preview-update-flow';
+import { DocumentTracker } from '../../../packages/extension-host/src/features/preview/watchers/DocumentTracker';
 
 function createDoc(overrides: Partial<any> = {}) {
   return {
@@ -51,6 +52,7 @@ describe('runPreviewUpdateFlow', () => {
         (documentUri: string) => documentUri === 'file:///workspace/doc.mdx'
       ),
       markRendered: vi.fn(),
+      getDirtyGeneration: () => 0,
     };
 
     await runPreviewUpdateFlow({
@@ -94,6 +96,7 @@ describe('runPreviewUpdateFlow', () => {
     const docTracker = {
       hasRenderedVersion: vi.fn(() => false),
       markRendered: vi.fn(),
+      getDirtyGeneration: () => 0,
     };
 
     await runPreviewUpdateFlow({
@@ -118,6 +121,7 @@ describe('runPreviewUpdateFlow', () => {
     const docTracker = {
       hasRenderedVersion: vi.fn(() => false),
       markRendered: vi.fn(),
+      getDirtyGeneration: () => 0,
     };
 
     await runPreviewUpdateFlow({
@@ -151,27 +155,55 @@ describe('runPreviewUpdateFlow', () => {
     ).rejects.toBe(readError);
   });
 
-  it('marks rendered only after successful evaluation', async () => {
+  it('marks rendered only after a successful current evaluation', async () => {
     const evaluate = vi.fn(async () => {
       throw new Error('boom');
     });
-    const docTracker = {
-      hasRenderedVersion: vi.fn(() => false),
-      markRendered: vi.fn(),
+    const docTracker = new DocumentTracker();
+    const markRendered = vi.spyOn(docTracker, 'markRendered');
+    const input = {
+      doc: createDoc(),
+      text: '# current',
+      entryFsDirectory: '/workspace',
+      updateMode: 'onType' as const,
+      getDocumentTracker: () => docTracker,
     };
 
     await expect(
       runPreviewUpdateFlow({
-        force: false,
-        doc: createDoc(),
-        text: '# current',
-        entryFsDirectory: '/workspace',
-        updateMode: 'onType',
-        getDocumentTracker: () => docTracker,
+        ...input,
         evaluate,
       })
     ).rejects.toThrow('boom');
 
-    expect(docTracker.markRendered).not.toHaveBeenCalled();
+    expect(markRendered).not.toHaveBeenCalled();
+
+    docTracker.markStale();
+    let finish!: () => void;
+    const pending = runPreviewUpdateFlow({
+      ...input,
+      evaluate: () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    });
+    docTracker.markStale();
+    finish();
+    await pending;
+    expect(markRendered).not.toHaveBeenCalled();
+    expect(docTracker.isStale()).toBe(true);
+
+    await runPreviewUpdateFlow({
+      ...input,
+      isCurrent: () => false,
+      evaluate: async () => {},
+    });
+    expect(markRendered).not.toHaveBeenCalled();
+
+    await runPreviewUpdateFlow({ ...input, evaluate: async () => {} });
+    expect(docTracker.isStale()).toBe(false);
+    expect(docTracker.hasRenderedVersion(input.doc.uri.toString(), 7)).toBe(
+      true
+    );
   });
 });

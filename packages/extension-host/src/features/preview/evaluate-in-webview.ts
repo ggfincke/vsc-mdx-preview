@@ -7,7 +7,7 @@ import { createTaggedLogger } from '../../shared/logging/logger';
 import { ErrorContext } from '../../shared/errors';
 import { LogTags } from '@mdx-preview/contracts';
 import { extractErrorMessage } from '@mdx-preview/runtime-utils';
-import { getErrorReporter, getFrameworkDetector } from '../../app/services';
+import { getErrorReporter } from '../../app/services';
 import { getEvaluationEngine } from './EvaluationEngine';
 import { HandshakeTimeoutError } from './PreviewInitializer';
 import { postPushArtifacts } from './evaluation/post-push-artifacts';
@@ -158,12 +158,7 @@ async function waitForHandshakeAndPushBaseState(
   }
   preview.pushRuntimeConfiguration();
 
-  const frameworkInfo = getFrameworkDetector().getFramework(preview.doc.uri);
-  if (frameworkInfo.framework === 'generic') {
-    return true;
-  }
-
-  log.debug(`Sending framework to webview: ${frameworkInfo.framework}`);
-  webviewHandle.setFramework(frameworkInfo.framework);
-  return true;
+  log.debug(`Sending framework to webview: ${context.framework}`);
+  await webviewHandle.setFramework(context.framework);
+  return isCurrent();
 }

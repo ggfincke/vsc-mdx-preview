@@ -11,6 +11,7 @@ const log = createTaggedLogger(LogTags.PREVIEW);
 
 interface RenderedVersionTracker {
   hasRenderedVersion(documentUri: string, version: number): boolean;
+  getDirtyGeneration(): number;
   markRendered(documentUri: string, version: number): void;
 }
 
@@ -47,6 +48,7 @@ export async function runPreviewUpdateFlow(
   const currentVersion = doc.version;
   const documentUri = uri.toString();
   const docTracker = getDocumentTracker();
+  const dirtyGeneration = docTracker?.getDirtyGeneration();
 
   if (!force && docTracker?.hasRenderedVersion(documentUri, currentVersion)) {
     log.debug('Skipping update - same version');
@@ -90,6 +92,11 @@ export async function runPreviewUpdateFlow(
   // stale flow: a newer evaluation started mid-flight; don't rewind version tracking
   if (input.isCurrent?.() === false) {
     log.debug('Skipping markRendered - stale evaluation');
+    return;
+  }
+
+  if (docTracker?.getDirtyGeneration() !== dirtyGeneration) {
+    log.debug('Skipping markRendered - content changed during evaluation');
     return;
   }
 

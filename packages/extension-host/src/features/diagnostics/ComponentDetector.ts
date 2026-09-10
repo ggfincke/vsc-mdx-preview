@@ -3,7 +3,11 @@
 
 import * as vscode from 'vscode';
 import { visit } from 'unist-util-visit';
-import { classifyComponentSource } from 'mdx-forge/diagnostics/analyze';
+import {
+  classifyComponentSource,
+  collectMdxBindings,
+  getComponentNameInfo,
+} from 'mdx-forge/diagnostics/analyze';
 import { LogTags } from '@mdx-preview/contracts';
 import { extractErrorMessage, LRUCache } from '@mdx-preview/runtime-utils';
 import {
@@ -34,26 +38,12 @@ const log = createTaggedLogger(LogTags.COMPONENT_DETECTOR);
 interface CachedDetectionResult {
   version: number;
   result: ComponentDetectionResult;
+  locals: ReadonlySet<string>;
 }
 
 const parseCache = new LRUCache<string, CachedDetectionResult>({
   maxEntries: COMPONENT_CACHE_MAX_ENTRIES,
 });
-
-// check if name is PascalCase (React component convention)
-function isPascalCase(name: string): boolean {
-  return /^[A-Z][a-zA-Z0-9]*$/.test(name);
-}
-
-// classify member expressions by the identifier JSX resolves at runtime
-function getComponentRoot(name: string): string {
-  return name.split('.')[0] ?? name;
-}
-
-// lowercase roots are JSX intrinsics regardless of the HTML registry
-function isIntrinsic(name: string): boolean {
-  return /^[a-z]/.test(getComponentRoot(name));
-}
 
 // narrow an element position to its opening & optional closing name tokens
 function getTagNameRanges(
@@ -91,24 +81,27 @@ function getTagNameRanges(
   return ranges;
 }
 
-// extract component imports from ESM node (PascalCase local names only)
-function extractImports(esmNode: MdxjsEsmNode): Map<string, string> {
+// preserve module paths for bindings identified by the shared ESTree walker
+function extractImports(
+  esmNode: MdxjsEsmNode,
+  importNames: ReadonlySet<string>
+): Map<string, string> {
   const imports = new Map<string, string>();
 
   for (const parsed of parseEsmImports(
     esmNode.value,
     esmNode.data?.estree ?? undefined
   )) {
-    if (parsed.defaultImport && isPascalCase(parsed.defaultImport)) {
+    if (parsed.defaultImport && importNames.has(parsed.defaultImport)) {
       imports.set(parsed.defaultImport, parsed.path);
     }
 
-    if (parsed.namespaceImport && isPascalCase(parsed.namespaceImport)) {
+    if (parsed.namespaceImport && importNames.has(parsed.namespaceImport)) {
       imports.set(parsed.namespaceImport, parsed.path);
     }
 
     for (const binding of parsed.named) {
-      if (isPascalCase(binding.local)) {
+      if (importNames.has(binding.local)) {
         imports.set(binding.local, parsed.path);
       }
     }
@@ -146,6 +139,7 @@ export async function detectComponents(
       log.debug(`Cache hit for ${identity.uri}`);
       return prepareDetectionResult(
         cached.result,
+        cached.locals,
         includePositions,
         detectImports,
         configComponents,
@@ -156,6 +150,7 @@ export async function detectComponents(
 
   const components: DetectedComponent[] = [];
   const imports = new Map<string, string>();
+  const locals = new Set<string>();
   const errors: string[] = [];
 
   try {
@@ -167,7 +162,15 @@ export async function detectComponents(
 
     visit(tree, 'mdxjsEsm', (node) => {
       const esmNode = node as unknown as MdxjsEsmNode;
-      const nodeImports = extractImports(esmNode);
+      const program = esmNode.data?.estree;
+      if (!program) {
+        return;
+      }
+      const bindings = collectMdxBindings(program);
+      for (const name of bindings.locals) {
+        locals.add(name);
+      }
+      const nodeImports = extractImports(esmNode, bindings.imports);
       for (const [name, path] of nodeImports) {
         imports.set(name, path);
       }
@@ -186,12 +189,7 @@ export async function detectComponents(
       const jsxNode = node as unknown as MdxJsxElement;
       const name = jsxNode.name;
 
-      if (!name || isIntrinsic(name)) {
-        return;
-      }
-
-      const root = getComponentRoot(name);
-      if (!isPascalCase(root)) {
+      if (!name || !getComponentNameInfo(name)) {
         return;
       }
 
@@ -232,12 +230,14 @@ export async function detectComponents(
     parseCache.set(identity.uri, {
       version: identity.version,
       result,
+      locals,
     });
     log.debug(`Cached result for ${identity.uri}`);
   }
 
   return prepareDetectionResult(
     result,
+    locals,
     includePositions,
     detectImports,
     configComponents,
@@ -247,13 +247,14 @@ export async function detectComponents(
 
 function prepareDetectionResult(
   result: ComponentDetectionResult,
+  locals: ReadonlySet<string>,
   includePositions: boolean,
   detectImports: boolean,
   configComponents: ReadonlySet<string>,
   framework: FrameworkId
 ): ComponentDetectionResult {
   const imports = detectImports ? new Map(result.imports) : new Map();
-  const importNames = new Set(imports.keys());
+  const boundNames = new Set([...imports.keys(), ...locals]);
   return {
     components: result.components.map((component) => {
       const range = includePositions
@@ -266,8 +267,8 @@ function prepareDetectionResult(
           ? [...component.tagNameRanges]
           : [range],
         source: classifyComponent(
-          getComponentRoot(component.name),
-          importNames,
+          getComponentNameInfo(component.name)?.root ?? component.name,
+          boundNames,
           configComponents,
           framework
         ),

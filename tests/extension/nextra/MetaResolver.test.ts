@@ -9,7 +9,6 @@ import * as vscode from 'vscode';
 import { MetaResolver } from '../../../packages/extension-host/src/features/framework/nextra/MetaResolver';
 import { postPushArtifacts } from '../../../packages/extension-host/src/features/preview/evaluation/post-push-artifacts';
 import {
-  mockFrameworkDetector,
   mockMetaResolver,
   mockPreviewManager,
 } from '../../helpers/mock-services';
@@ -211,9 +210,6 @@ describe('MetaResolver', () => {
     serviceMetaResolver.mergeNextraMeta = vi.fn(
       (meta: { title: string } | null) => meta ?? {}
     );
-    mockFrameworkDetector.getFramework.mockReturnValue({
-      framework: 'nextra',
-    });
     vi.spyOn(vscode.workspace, 'getWorkspaceFolder').mockReturnValue({
       uri: vscode.Uri.file(workspaceRoot),
       name: 'site',
@@ -239,6 +235,7 @@ describe('MetaResolver', () => {
       preview,
       isCurrent: () => true,
       fsPath: firstMdxPath,
+      framework: 'nextra',
     };
     const stageResult = {
       kind: 'safe' as const,
@@ -260,14 +257,10 @@ describe('MetaResolver', () => {
       updatePreviewSafe.mock.invocationCallOrder[1]
     );
 
-    mockFrameworkDetector.getFramework.mockReturnValue({
-      framework: 'generic',
-    });
+    context.framework = 'generic';
     await postPushArtifacts(context as never, stageResult);
 
-    mockFrameworkDetector.getFramework.mockReturnValue({
-      framework: 'nextra',
-    });
+    context.framework = 'nextra';
     vi.spyOn(vscode.workspace, 'getWorkspaceFolder').mockReturnValue(undefined);
     await postPushArtifacts(context as never, stageResult);
 

@@ -205,9 +205,9 @@ export class PreviewWebviewBridge implements CssNotifier {
 
   // suppress unchanged single-value RPC state within one webview handshake
   private createDeltaHandle(handle: WebviewHandle): WebviewHandle {
+    // framework calls must retain their preload promise even for the same value
     const deltaMethods = new Set([
       'setTrustState',
-      'setFramework',
       'setTailwindCss',
       'setTailwindBrowserCss',
       'setTheme',

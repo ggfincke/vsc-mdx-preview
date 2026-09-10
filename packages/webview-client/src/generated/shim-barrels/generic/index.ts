@@ -15,7 +15,7 @@ export type {
 
 export { Callout, Alert, Admonition } from 'mdx-forge/components/generic';
 
-export { Collapsible, Accordion } from 'mdx-forge/components/generic';
+export { Collapsible, Details, Accordion } from 'mdx-forge/components/generic';
 
 export { Tabs, useGenericTabsContext } from 'mdx-forge/components/generic';
 export type { TabsProps } from 'mdx-forge/components/generic';

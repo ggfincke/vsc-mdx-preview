@@ -2,12 +2,15 @@
 // unit tests for Tailwind profile routing in evaluate-in-webview
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vscode from 'vscode';
 import {
   mockTrustManager,
   mockTailwindProcessor,
   mockFrameworkDetector,
   mockErrorReporter,
   mockThemeManager,
+  mockConfigCache,
+  mockConfigManager,
 } from '../../helpers/mock-services';
 import type {
   ModuleDependency,
@@ -36,14 +39,17 @@ const {
   })),
 }));
 
-vi.mock('vscode', () => ({
-  window: {
-    setStatusBarMessage: mockStatusBarMessage,
-  },
-  workspace: {
-    getWorkspaceFolder: vi.fn(() => undefined),
-  },
-}));
+vi.mock('vscode', async (importOriginal) => {
+  const original = await importOriginal<typeof import('vscode')>();
+  return {
+    ...original,
+    window: { ...original.window, setStatusBarMessage: mockStatusBarMessage },
+    workspace: {
+      ...original.workspace,
+      getWorkspaceFolder: vi.fn(() => undefined),
+    },
+  };
+});
 
 vi.mock(
   '../../../packages/extension-host/src/features/preview/EvaluationEngine',
@@ -83,6 +89,9 @@ vi.mock('mdx-forge/compiler', () => ({
 
 import evaluateInWebview from '../../../packages/extension-host/src/features/preview/evaluate-in-webview';
 import { PreviewWebviewBridge } from '../../../packages/extension-host/src/features/preview/PreviewWebviewBridge';
+import { FrameworkDetector } from '../../../packages/extension-host/src/features/framework/FrameworkDetector';
+import { buildResolutionContext } from '../../../packages/extension-host/src/features/module-runtime/resolution/resolution-context';
+import { resolveFrameworkAliasStep } from '../../../packages/extension-host/src/features/module-runtime/resolution/UnifiedResolver';
 
 type MockPreview = ReturnType<typeof createPreview>;
 
@@ -234,7 +243,7 @@ describe('evaluate-in-webview Tailwind routing', () => {
     });
   });
 
-  it('refreshes webview when browser runtime toggle changes', async () => {
+  it('routes effective framework selection and browser runtime changes', async () => {
     mockTrustedState();
 
     const preview = createPreview();
@@ -261,6 +270,70 @@ describe('evaluate-in-webview Tailwind routing', () => {
     expect(preview.webviewHandle.setTrustState).not.toHaveBeenCalled();
     expect(mockEngine.evaluateTrusted).not.toHaveBeenCalled();
     expect(mockEngine.evaluateSafe).not.toHaveBeenCalled();
+
+    FrameworkDetector.reset();
+    const detector = FrameworkDetector.getInstance();
+    const configRead = vi.spyOn(mockConfigCache, 'get').mockReturnValue({
+      config: { framework: 'docusaurus' },
+      configPath: '/workspace/.mdx-previewrc.json',
+      configDir: '/workspace',
+    });
+    vi.spyOn(mockConfigManager, 'get').mockReturnValue('auto');
+    vi.spyOn(mockFrameworkDetector, 'getFramework').mockImplementation(
+      (...args: unknown[]) => ({
+        ...detector.getFramework(args[0] as vscode.Uri),
+        confidence: 1,
+      })
+    );
+    const frameworkPreview = createPreview();
+    const resolutionContext = () =>
+      buildResolutionContext({
+        baseDir: '/workspace',
+        documentUri: frameworkPreview.doc.uri as vscode.Uri,
+        entryFsDirectory: '/workspace',
+      });
+    try {
+      expect(
+        resolveFrameworkAliasStep('@theme/Tabs', resolutionContext())
+          .earlyResult?.fsPath
+      ).toBe('@mdx-preview/shims/docusaurus/Tabs');
+      let finishPreload!: () => void;
+      frameworkPreview.webviewHandle.setFramework.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishPreload = resolve;
+          })
+      );
+      const pending = evaluateInWebview(
+        frameworkPreview as unknown as MockPreview,
+        '# doc',
+        '/workspace/doc.mdx'
+      );
+      await vi.waitFor(() => expect(finishPreload).toBeDefined());
+      expect(mockEngine.evaluateTrusted).not.toHaveBeenCalled();
+      configRead.mockReturnValue(null);
+      finishPreload();
+      await pending;
+      expect(
+        frameworkPreview.webviewHandle.setFramework
+      ).toHaveBeenLastCalledWith('docusaurus');
+      expect(mockEngine.evaluateTrusted).toHaveBeenCalledTimes(1);
+
+      expect(
+        resolveFrameworkAliasStep('@theme/Tabs', resolutionContext())
+          .earlyResult
+      ).toBeUndefined();
+      await evaluateInWebview(
+        frameworkPreview as unknown as MockPreview,
+        '# doc',
+        '/workspace/doc.mdx'
+      );
+      expect(
+        frameworkPreview.webviewHandle.setFramework
+      ).toHaveBeenLastCalledWith('generic');
+    } finally {
+      detector.dispose();
+    }
   });
 
   it('skips Tailwind discovery in Safe Mode and clears CSS channels', async () => {

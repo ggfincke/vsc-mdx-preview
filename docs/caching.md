@@ -98,7 +98,13 @@ If a module doesn't reflect recent edits:
 
 1. The DependencyWatcher should auto-detect changes
 2. If not, run `MDX: Clear All Caches`
-3. Check that the file is saved (unsaved changes won't trigger watcher)
+3. In on-type mode, edits to open imported files refresh the preview without
+   saving. In on-save or manual mode, save or explicitly refresh as configured.
+
+An unchanged entry version is skipped only while the preview is clean. Imported
+edits mark it stale independently of the entry's version, and an older evaluation
+cannot clear a newer stale generation. Reopening the same document preserves its
+dependency ownership.
 
 ## Cache Architecture Details
 

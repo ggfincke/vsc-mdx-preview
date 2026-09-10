@@ -11,7 +11,7 @@ import { StyleInjector, STYLE_IDS } from '../../shared/utils/StyleInjector';
 import {
   LogTags,
   type ExtensionRPC,
-  type Framework,
+  type FrameworkId,
   type ModuleDependency,
   type ModuleDependencyKind,
   type TrustState,
@@ -222,7 +222,7 @@ class RPCWebviewHandle implements WebviewRPC {
     });
   }
 
-  setFramework(framework: Framework): Promise<void> {
+  setFramework(framework: FrameworkId): Promise<void> {
     log.debug(`setFramework called: ${framework}`);
     return loadModuleSystem().then(({ ensureFrameworkShimsLoaded }) => {
       return ensureFrameworkShimsLoaded(framework);

@@ -4,7 +4,11 @@
 import * as vscode from 'vscode';
 import { createTaggedLogger } from '../../../shared/logging/logger';
 import { LogTags, formatTrustStateForDebug } from '@mdx-preview/contracts';
-import { getTailwindProcessor, getTrustManager } from '../../../app/services';
+import {
+  getFrameworkDetector,
+  getTailwindProcessor,
+  getTrustManager,
+} from '../../../app/services';
 import {
   buildEffectivePreviewConfig,
   toCompilerConfig,
@@ -40,6 +44,9 @@ export async function prepareEvaluationContext(
     docUri: preview.doc.uri,
     docFsPath: fsPath,
   });
+  const framework = getFrameworkDetector().getFramework(
+    preview.doc.uri
+  ).framework;
 
   const canExecute = trustState.canExecute && effectiveConfig.enableScripts;
   log.debug(
@@ -100,6 +107,7 @@ export async function prepareEvaluationContext(
     engine,
     trustState,
     effectiveConfig,
+    framework,
     compilerConfig,
     canExecute,
     tailwindEnabled,

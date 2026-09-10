@@ -19,6 +19,7 @@ import { readJsonSync, pathExists } from '../../shared/utils/file-utils';
 const log = createTaggedLogger(LogTags.FRAMEWORK);
 import { findUp } from '../../shared/utils/find-up';
 import { PathCache } from '../../shared/utils/cache';
+import { resolveConfig } from '../preview/configuration/ConfigResolver';
 import type { FrameworkChangeEvent, FrameworkInfo } from './types';
 
 // re-export canonical type definition from types/
@@ -188,10 +189,18 @@ export class FrameworkDetector extends WithSubscribers<
     return workspaceRoot;
   }
 
-  // get framework for document (respects manual override)
+  // get framework for document (file config > setting > package detection)
   getFramework(documentUri: vscode.Uri): FrameworkInfo {
     // G.2 optimization: lazy init file watcher on first use
     this.ensureFileWatcher();
+
+    const fileFramework =
+      documentUri.scheme === 'file'
+        ? resolveConfig(documentUri.fsPath)?.config.framework
+        : undefined;
+    if (fileFramework) {
+      return { framework: fileFramework, detected: false };
+    }
 
     // check manual override setting first
     const manualFramework = getConfigManager().get(

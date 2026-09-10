@@ -76,26 +76,96 @@ describe('detectComponents', () => {
     expect(unknown).toEqual([]);
   });
 
-  it('treats imports & member-expression roots as known components', async () => {
+  it('shares binding and JSX name semantics while retaining exact tokens', async () => {
+    const source = [
+      "import Foo, { Bar, Odd_Name as _Imported } from './widgets';",
+      "import * as Tabs from './tabs';",
+      'export const Local = () => null;',
+      'export { Foo };',
+      '',
+      '<Foo />',
+      '<Bar />',
+      '<Tabs.Tab />',
+      '<_Imported />',
+      '<Local>children</Local>',
+      '<Frobnicate_Thing>content</Frobnicate_Thing>',
+      '<$Widget />',
+      '<_Unknown.Part />',
+      '<widgets.Part />',
+      '<Table />',
+      '<div />',
+      '<custom-element />',
+      '<svg:path />',
+    ].join('\n');
+    const identity = { uri: 'file:///workspace/bindings.mdx', version: 1 };
     const result = await detectComponents(
-      "import Foo, { Bar } from './widgets';\nimport * as Tabs from './tabs';\n\n<Foo />\n<Bar />\n<Tabs.Tab />\n<Table />\n",
-      { detectImports: true, includePositions: false },
-      new Set()
+      source,
+      { detectImports: true, includePositions: true },
+      new Set(),
+      identity
     );
 
     const unknown = getUnknownComponents(result).map((c) => c.name);
-    expect(unknown).not.toEqual(
-      expect.arrayContaining(['Foo', 'Bar', 'Tabs.Tab'])
-    );
+    expect(result.errors).toEqual([]);
+    expect(unknown).toEqual([
+      'Frobnicate_Thing',
+      '$Widget',
+      '_Unknown.Part',
+      'widgets.Part',
+      'Table',
+    ]);
     expect(result.components.map((component) => component.name)).toEqual([
       'Foo',
       'Bar',
       'Tabs.Tab',
+      '_Imported',
+      'Local',
+      'Frobnicate_Thing',
+      '$Widget',
+      '_Unknown.Part',
+      'widgets.Part',
       'Table',
     ]);
+    expect(result.imports).toEqual(
+      new Map([
+        ['Foo', './widgets'],
+        ['Bar', './widgets'],
+        ['_Imported', './widgets'],
+        ['Tabs', './tabs'],
+      ])
+    );
     expect(
       result.components.find((component) => component.name === 'Tabs.Tab')
     ).toMatchObject({ source: 'import' });
+    expect(result.components[4]).toMatchObject({
+      source: 'import',
+      hasChildren: true,
+    });
+    expect(result.components[5].tagNameRanges).toEqual([
+      new Range(10, 1, 10, 17),
+      new Range(10, 27, 10, 43),
+    ]);
+    expect(result.components[6].tagNameRanges).toEqual([
+      new Range(11, 1, 11, 8),
+    ]);
+
+    const withoutImports = await detectComponents(
+      source,
+      { detectImports: false },
+      new Set(),
+      identity
+    );
+    expect(withoutImports.imports.size).toBe(0);
+    expect(
+      getUnknownComponents(withoutImports).map(({ name }) => name)
+    ).toEqual(['Foo', 'Bar', '_Imported', ...unknown]);
+    expect(withoutImports.components[4]).toMatchObject({
+      source: 'import',
+      hasChildren: true,
+    });
+    expect(withoutImports.components[5].tagNameRanges).toEqual(
+      result.components[5].tagNameRanges
+    );
   });
 
   it('returns only tag-name ranges for paired & self-closing elements', async () => {

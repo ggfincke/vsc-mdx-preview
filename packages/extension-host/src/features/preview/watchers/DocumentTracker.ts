@@ -13,6 +13,7 @@ export class DocumentTracker implements IWatcher {
   private lastRenderedDocumentUri?: string;
   private lastRenderedVersion = -1;
   private _isStale = false;
+  private dirtyGeneration = 0;
   private notifier?: StaleNotifier;
 
   // set notifier for stale state changes (webview handle)
@@ -28,13 +29,19 @@ export class DocumentTracker implements IWatcher {
   // check if version has already been rendered
   hasRenderedVersion(documentUri: string, version: number): boolean {
     return (
+      !this._isStale &&
       documentUri === this.lastRenderedDocumentUri &&
       version === this.lastRenderedVersion
     );
   }
 
+  getDirtyGeneration(): number {
+    return this.dirtyGeneration;
+  }
+
   // mark document as stale (changed but not rendered)
   markStale(): void {
+    this.dirtyGeneration += 1;
     if (!this._isStale) {
       this._isStale = true;
       this.notifier?.setStale?.(true);
@@ -53,6 +60,7 @@ export class DocumentTracker implements IWatcher {
 
   // reset rendered version (force re-render on next update)
   resetRenderedVersion(): void {
+    this.dirtyGeneration += 1;
     this.lastRenderedDocumentUri = undefined;
     this.lastRenderedVersion = -1;
   }

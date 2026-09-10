@@ -265,6 +265,10 @@ export class Preview {
       return;
     }
     const nextDocumentUri = doc.uri.toString();
+    if (this.documentUri === nextDocumentUri) {
+      this.documentHandler.setDoc(doc, this.watcherManager);
+      return;
+    }
     const documentChanged =
       this.documentUri !== undefined && this.documentUri !== nextDocumentUri;
     this.documentUri = nextDocumentUri;

@@ -3,15 +3,42 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import {
+  SETTINGS_DEFAULTS,
+  type ModuleDependency,
+} from '@mdx-preview/contracts';
 
-import { mockPreviewManager } from '../../helpers/mock-services';
+import {
+  mockConfigManager,
+  mockPreviewManager,
+} from '../../helpers/mock-services';
 
 const previewModuleMocks = vi.hoisted(() => ({
   createOrShowPanel: vi.fn(),
   ensureWebviewResourcesReady: vi.fn(async () => {}),
   refreshPanel: vi.fn(),
   showSafeModeNotificationIfNeeded: vi.fn(async () => {}),
+  evaluateInWebview: vi.fn(),
 }));
+
+vi.mock(
+  '../../../packages/extension-host/src/features/preview/evaluate-in-webview',
+  () => ({ default: previewModuleMocks.evaluateInWebview })
+);
+
+vi.mock(
+  '../../../packages/extension-host/src/shared/utils/find-up',
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    createWorkspaceStopPredicate: () => (dir: string) =>
+      vscode.workspace.workspaceFolders?.some(
+        ({ uri }) => uri.fsPath === dir
+      ) ?? false,
+  })
+);
 
 vi.mock(
   '../../../packages/extension-host/src/features/preview/webview-manager',
@@ -213,5 +240,115 @@ describe('PreviewManager', () => {
 
     expect(Preview).not.toHaveBeenCalled();
     expect(mockPreviewManager.setCurrentPreview).not.toHaveBeenCalled();
+  });
+
+  it('refreshes unsaved imports and retains their ownership when reopening', async () => {
+    const { Preview: ActualPreview } = await vi.importActual<
+      typeof import('../../../packages/extension-host/src/features/preview/Preview')
+    >('../../../packages/extension-host/src/features/preview/Preview');
+    const root = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-preview-refresh-'))
+    );
+    const entryPath = path.join(root, 'entry.mdx');
+    const widgetPath = path.join(root, 'Widget.tsx');
+    const childPath = path.join(root, 'Child.tsx');
+    const entryText = 'import Widget from "./Widget.tsx"\n\n<Widget />';
+    fs.writeFileSync(entryPath, entryText);
+    fs.writeFileSync(widgetPath, 'export default function Widget() {}');
+    fs.writeFileSync(childPath, 'export default function Child() {}');
+    let widgetText = 'widget saved';
+    let childText = 'child saved';
+    const doc = {
+      uri: vscode.Uri.file(entryPath),
+      version: 1,
+      languageId: 'mdx',
+      getText: () => entryText,
+    } as vscode.TextDocument;
+    const widget = {
+      uri: vscode.Uri.file(widgetPath),
+      getText: () => widgetText,
+    } as vscode.TextDocument;
+    const child = {
+      uri: vscode.Uri.file(childPath),
+      getText: () => childText,
+    } as vscode.TextDocument;
+    const dependency = (specifier: string): ModuleDependency => ({
+      specifier,
+      runtimeRequest: specifier,
+      kind: 'import',
+    });
+    const priorFolders = vscode.workspace.workspaceFolders;
+    vscode.workspace.workspaceFolders = [
+      { uri: vscode.Uri.file(root), name: 'fixture', index: 0 },
+    ];
+    mockConfigManager.getAll.mockReturnValue({
+      ...SETTINGS_DEFAULTS,
+      'preview.debounceDelay': 1,
+    });
+    const rendered: string[] = [];
+    const stale = vi.fn();
+    let preview: Preview | undefined;
+    try {
+      preview = new ActualPreview(doc);
+      preview.active = true;
+      preview.setWebviewHandle({
+        invalidate: vi.fn(async () => {}),
+        setStale: stale,
+      } as never);
+      preview.completeHandshake(preview.getWebviewHandshakeId());
+      previewModuleMocks.evaluateInWebview.mockImplementation(
+        async (current: Preview, text: string) => {
+          expect(text).toBe(entryText);
+          current.updateDependencies([dependency('./Widget.tsx')]);
+          current.commitModuleDependencySnapshot(
+            widgetPath,
+            [dependency('./Child.tsx')],
+            undefined,
+            current.dependencyGeneration
+          );
+          rendered.push(`${widget.getText()} / ${child.getText()}`);
+        }
+      );
+      mockPreviewManager.getCurrentPreview.mockReturnValue(preview);
+      vscode.window.activeTextEditor = { document: doc } as vscode.TextEditor;
+      await openPreview();
+
+      widgetText = 'widget unsaved';
+      await preview.handleDidChangeTextDocument(widgetPath, widget);
+      await vi.waitFor(() => expect(rendered).toHaveLength(2));
+      expect(stale).toHaveBeenLastCalledWith(false);
+
+      const reopenedDoc = { ...doc } as vscode.TextDocument;
+      vscode.window.activeTextEditor = {
+        document: reopenedDoc,
+      } as vscode.TextEditor;
+      await openPreview();
+      expect(preview.doc).toBe(reopenedDoc);
+      expect(rendered).toHaveLength(2);
+      expect(preview.dependentFsPaths).toEqual(
+        new Set([entryPath, widgetPath, childPath])
+      );
+
+      childText = 'child unsaved';
+      await preview.handleDidChangeTextDocument(childPath, child);
+      await vi.waitFor(() =>
+        expect(rendered).toEqual([
+          'widget saved / child saved',
+          'widget unsaved / child saved',
+          'widget unsaved / child unsaved',
+        ])
+      );
+      expect(stale).toHaveBeenLastCalledWith(false);
+      expect(preview.dependentFsPaths).toEqual(
+        new Set([entryPath, widgetPath, childPath])
+      );
+      await preview.updateWebview();
+      expect(rendered).toHaveLength(3);
+    } finally {
+      preview?.dispose();
+      vscode.workspace.workspaceFolders = priorFolders;
+      mockConfigManager.getAll.mockReturnValue({});
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });

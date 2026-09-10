@@ -80,7 +80,11 @@ export class PreviewDocumentHandler {
 
   // set the document & resolve related configurations
   setDoc(doc: vscode.TextDocument, watcherManager: WatcherManager): void {
+    const sameDocument = this._doc?.uri.toString() === doc.uri.toString();
     this._doc = doc;
+    if (sameDocument) {
+      return;
+    }
     this._dependentFsPaths = new Set([doc.uri.fsPath]);
 
     const configFile = findTsConfig(this.entryFsDirectory ?? '');
@@ -230,6 +234,7 @@ export class PreviewDocumentHandler {
     }
 
     if (fsPath !== this.fsPath) {
+      this.actions!.markStale();
       await this.actions!.invalidate(fsPath);
     }
     await this.actions!.updateWebview();

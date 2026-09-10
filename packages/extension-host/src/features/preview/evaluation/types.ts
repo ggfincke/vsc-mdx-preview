@@ -1,7 +1,7 @@
 // packages/extension-host/src/features/preview/evaluation/types.ts
 // stage contract types for evaluate-in-webview orchestration
 
-import type { TrustState } from '@mdx-preview/contracts';
+import type { FrameworkId, TrustState } from '@mdx-preview/contracts';
 import type {
   CompilerConfig,
   EffectivePreviewConfig,
@@ -24,6 +24,7 @@ export interface PreparedEvaluationContext {
   engine: EvaluationEngine;
   trustState: TrustState;
   effectiveConfig: EffectivePreviewConfig;
+  framework: FrameworkId;
   compilerConfig: CompilerConfig;
   canExecute: boolean;
   tailwindEnabled: boolean;

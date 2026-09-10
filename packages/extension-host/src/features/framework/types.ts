@@ -9,7 +9,7 @@ export type { FrameworkId } from '@mdx-preview/contracts';
 // framework detection result
 export interface FrameworkInfo {
   framework: FrameworkId;
-  // true = auto-detected, false = from setting
+  // true = auto-detected, false = from setting or file config
   detected: boolean;
   version?: string;
 }

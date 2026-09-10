@@ -90,6 +90,11 @@ Icon packs require a trusted workspace. Each entry is `{ "name": "...", "source"
 | `components.builtins`        | boolean | `true`          | Enable built-in generic components such as `Callout` and `Tabs`                              |
 | `components.unknownBehavior` | string  | `"placeholder"` | Safe Mode unknown component behavior: `"strip"`, `"placeholder"`, `"raw"`                    |
 
+A `framework` value in the applicable project configuration file takes precedence
+over the VS Code setting. Without a file override, the explicit setting wins,
+followed by package detection and the generic fallback. Resolution, component
+classification, and preview framework assets use this same selection.
+
 ### Advanced Settings
 
 | Setting                      | Type    | Default | Description                                                    |
