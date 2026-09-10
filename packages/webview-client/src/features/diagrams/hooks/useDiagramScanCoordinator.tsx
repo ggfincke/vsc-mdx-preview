@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
   type ReactNode,
-  type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
 import type { BaseDiagramInfo } from '../utils/createDiagramContainerFinder';
@@ -67,18 +66,16 @@ function areGroupsEqual(
 }
 
 export function useDiagramScanCoordinator(
-  containerRef: RefObject<HTMLElement | null>,
+  container: HTMLElement | null,
   options: UseDiagramScanCoordinatorOptions
 ): UseDiagramScanCoordinatorResult {
   const { mode = 'after-paint', filterStale = false, adapters } = options;
   const [groups, setGroups] = useState<DiagramGroupState[]>([]);
-  const observerRef = useRef<MutationObserver | null>(null);
   const rafIdRef = useRef<number | null>(null);
 
   const runScan = useCallback(() => {
-    const container = containerRef.current;
     if (!container) {
-      setGroups([]);
+      setGroups((prev) => (prev.length === 0 ? prev : []));
       return;
     }
 
@@ -96,7 +93,7 @@ export function useDiagramScanCoordinator(
 
     // one state update per scan batch; keep prev state when structurally unchanged
     setGroups((prev) => (areGroupsEqual(prev, nextGroups) ? prev : nextGroups));
-  }, [adapters, containerRef, filterStale]);
+  }, [adapters, container, filterStale]);
 
   const scheduleScan = useCallback(() => {
     if (rafIdRef.current !== null) {
@@ -121,44 +118,47 @@ export function useDiagramScanCoordinator(
   const renderPortals = useCallback(
     (): ReactNode[] =>
       groups.flatMap((group) =>
-        group.diagrams.map((diagram) =>
-          createPortal(
-            group.renderElement(diagram),
-            diagram.el,
-            `${group.adapterKey}:${diagram.id}`
+        group.diagrams
+          .filter((diagram) => container?.contains(diagram.el))
+          .map((diagram) =>
+            createPortal(
+              group.renderElement(diagram),
+              diagram.el,
+              `${group.adapterKey}:${diagram.id}`
+            )
           )
-        )
       ),
-    [groups]
+    [container, groups]
   );
 
   const useEffectHook = mode === 'before-paint' ? useLayoutEffect : useEffect;
 
   useEffectHook(() => {
-    const container = containerRef.current;
+    runScan();
     if (!container) {
       return;
     }
 
-    runScan();
-
-    observerRef.current = new MutationObserver(() => {
-      scheduleScan();
+    let active = true;
+    const observer = new MutationObserver(() => {
+      if (active) {
+        scheduleScan();
+      }
     });
-    observerRef.current.observe(container, {
+    observer.observe(container, {
       childList: true,
       subtree: true,
     });
 
     return () => {
-      observerRef.current?.disconnect();
-      observerRef.current = null;
+      active = false;
+      observer.disconnect();
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
         rafIdRef.current = null;
       }
     };
-  }, [containerRef, runScan, scheduleScan]);
+  }, [container, runScan, scheduleScan]);
 
   return {
     renderPortals,

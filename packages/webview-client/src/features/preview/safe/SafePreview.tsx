@@ -17,10 +17,11 @@ interface SafePreviewRendererProps {
 export const SafePreviewRenderer = memo(
   function SafePreviewRenderer({ html }: SafePreviewRendererProps) {
     // shared preview setup (container ref, diagram rendering, image lightbox)
-    const { containerRef, handleImageClick, renderPortals } = usePreviewSetup({
-      diagramMode: 'before-paint',
-      filterStale: true,
-    });
+    const { containerRef, attachContainer, handleImageClick, renderPortals } =
+      usePreviewSetup({
+        diagramMode: 'before-paint',
+        filterStale: true,
+      });
 
     // sanitize & inject Safe Mode HTML
     useSafeModeProcessing(containerRef, html);
@@ -33,7 +34,7 @@ export const SafePreviewRenderer = memo(
 
     return (
       <PreviewContainer
-        containerRef={containerRef}
+        containerRef={attachContainer}
         mode="safe"
         onImageClick={handleImageClick}
         diagramPortals={renderPortals()}

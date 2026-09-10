@@ -3,14 +3,10 @@
 
 import {
   memo,
-  useLayoutEffect,
   useMemo,
   useState,
-  isValidElement,
-  cloneElement,
   createElement,
   type ComponentType,
-  type ReactNode,
 } from 'react';
 import { evaluateModuleToComponent } from '../../module-runtime';
 import { usePreviewSetup } from '../shared/hooks/usePreviewSetup';
@@ -23,42 +19,6 @@ import {
   shallowArrayEquals,
   createFieldComparator,
 } from '../../../shared/utils/memoCompare';
-
-// resolve MDX export to renderable React node
-// handle both function components & pre-rendered React elements
-// defensive approach fixes React #130 errors when MDX module returns element object
-function resolveMdxNode(
-  exp: unknown,
-  props: Record<string, unknown> = {}
-): ReactNode {
-  let v = exp;
-
-  // unwrap nested default exports, but don't unwrap React elements
-  for (let i = 0; i < 5; i++) {
-    if (v && typeof v === 'object' && 'default' in v && !isValidElement(v)) {
-      v = (v as { default: unknown }).default;
-      continue;
-    }
-    break;
-  }
-
-  // clone React element w/ props
-  if (isValidElement(v)) {
-    return cloneElement(v, props);
-  }
-
-  // function component or string - create element
-  if (isMdxComponent(v) || typeof v === 'string') {
-    return createElement(v, props);
-  }
-
-  // invalid export
-  const keys = v && typeof v === 'object' ? Object.keys(v).join(', ') : '';
-  throw new Error(
-    `Invalid MDX export. Expected function or React element, got: ${typeof v}` +
-      (keys ? ` (keys: ${keys})` : '')
-  );
-}
 
 function isMdxComponent(value: unknown): value is ComponentType {
   return typeof value === 'function';
@@ -95,7 +55,7 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   // shared preview setup (container ref, diagram rendering, image lightbox)
-  const { containerRef, handleImageClick, renderPortals, scan } =
+  const { containerRef, attachContainer, handleImageClick, renderPortals } =
     usePreviewSetup({
       diagramMode: 'before-paint',
       filterStale: true,
@@ -125,14 +85,6 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
     }
   );
 
-  // trigger diagram scan when component becomes available
-  // (hook's initial scan runs before container is rendered during loading state)
-  useLayoutEffect(() => {
-    if (evaluatedComponent && containerRef.current) {
-      scan();
-    }
-  }, [containerRef, evaluatedComponent, scan]);
-
   usePreviewInteractions({
     mode: 'trusted',
     containerRef,
@@ -142,7 +94,7 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
   // memoize resolved element so unrelated re-renders keep element identity
   // & React bails out of the unchanged MDX subtree
   const mdxNode = useMemo(
-    () => (evaluatedComponent ? resolveMdxNode(evaluatedComponent) : null),
+    () => (evaluatedComponent ? createElement(evaluatedComponent) : null),
     [evaluatedComponent]
   );
 
@@ -158,7 +110,7 @@ export const TrustedPreviewRenderer = memo(function TrustedPreviewRenderer({
 
   return (
     <PreviewContainer
-      containerRef={containerRef}
+      containerRef={attachContainer}
       mode="trusted"
       onImageClick={handleImageClick}
       diagramPortals={renderPortals()}

@@ -1,7 +1,7 @@
 // packages/webview-client/src/features/preview/shared/ui/PreviewContainer/PreviewContainer.tsx
 // shared container component for SafePreview & TrustedPreview
 
-import type { ReactNode, RefObject, MouseEvent } from 'react';
+import type { ReactNode, Ref, MouseEvent } from 'react';
 import {
   SAFE_PREVIEW_CLASS,
   TRUSTED_PREVIEW_CLASS,
@@ -11,7 +11,7 @@ import './PreviewContainer.css';
 
 export interface PreviewContainerProps {
   // container ref
-  containerRef: RefObject<HTMLDivElement | null>;
+  containerRef: Ref<HTMLDivElement>;
   // mode attribute
   mode: 'safe' | 'trusted';
   // image click handler
