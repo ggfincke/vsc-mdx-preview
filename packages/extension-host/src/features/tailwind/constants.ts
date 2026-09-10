@@ -27,7 +27,7 @@ export const DETECTOR_ENTRY_CSS_CACHE_MAX_ENTRIES = 20;
 export const DETECTOR_VERSION_CACHE_MAX_ENTRIES = 10;
 
 // cache schema version - bump when cache key structure or compilation behavior changes
-export const TAILWIND_CACHE_SCHEMA_VERSION = 1;
+export const TAILWIND_CACHE_SCHEMA_VERSION = 2;
 
 // processing limits
 

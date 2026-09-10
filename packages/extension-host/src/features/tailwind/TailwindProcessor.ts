@@ -12,7 +12,11 @@ import { getErrorReporter } from '../../app/services';
 import { ErrorContext, ErrorSeverity } from '../../shared/errors';
 import { TailwindDetector } from './TailwindDetector';
 import { TailwindScanner } from './TailwindScanner';
-import { TailwindCompiler, type TailwindVersion } from './TailwindCompiler';
+import {
+  TailwindCompiler,
+  type TailwindCompileOptions,
+  type TailwindVersion,
+} from './TailwindCompiler';
 import {
   MIN_SUPPORTED_TAILWIND_VERSION,
   MAX_KNOWN_TAILWIND_VERSION,
@@ -162,7 +166,13 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       tailwindConfig,
     } = options;
 
-    const { reason, workspaceRoot, configPath, entryCssPath } = profile;
+    const {
+      reason,
+      workspaceRoot,
+      configPath,
+      entryCssPath,
+      inlineTailwindStyles,
+    } = profile;
 
     const versionInfo =
       this.detector.getWorkspaceTailwindVersion(workspaceRoot);
@@ -223,12 +233,16 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     );
 
     const content = scanResult.classList.join(' ');
-    const cacheKey = await this.buildCacheKey(
+    const compileOptions: TailwindCompileOptions = {
       tailwindVersion,
       content,
       configPath,
-      entryCssPath
-    );
+      entryCssPath,
+      inlineTailwindStyles,
+      inputFilePath: `${entryFilePath}.tailwind.css`,
+      baseDir,
+    };
+    const cacheKey = await this.buildCacheKey(compileOptions);
 
     // LRUCache.get() returns string | null (null = expired or missing)
     const cached = this.cache.get(cacheKey);
@@ -245,13 +259,7 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
     const compileStart = performance.now();
     try {
       log.debug('Compiling CSS...');
-      const css = await this.compiler.compile({
-        tailwindVersion,
-        configPath,
-        entryCssPath,
-        content,
-        baseDir,
-      });
+      const css = await this.compiler.compile(compileOptions);
       const compileDuration = performance.now() - compileStart;
       log.debug(
         `Compiled in ${Math.round(compileDuration)}ms (classes=${scanResult.classList.length})`
@@ -406,11 +414,17 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
   }
 
   private async buildCacheKey(
-    version: TailwindVersion,
-    content: string,
-    configPath: string | null,
-    entryCssPath: string | null
+    options: TailwindCompileOptions
   ): Promise<string> {
+    const {
+      tailwindVersion: version,
+      content,
+      configPath = null,
+      entryCssPath = null,
+      inlineTailwindStyles,
+      inputFilePath,
+      baseDir,
+    } = options;
     const [configStamp, entryStamp] = await Promise.all([
       this.getFileStamp(configPath),
       this.getFileStamp(entryCssPath),
@@ -424,6 +438,9 @@ export class TailwindProcessor extends SingletonService<TailwindProcessor> {
       configStamp,
       entryCssPath,
       entryStamp,
+      inlineTailwindStyles,
+      inputFilePath,
+      baseDir,
     });
 
     return crypto.createHash('sha1').update(payload).digest('hex');

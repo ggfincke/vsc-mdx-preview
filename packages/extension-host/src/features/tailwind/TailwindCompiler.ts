@@ -1,12 +1,16 @@
 // packages/extension-host/src/features/tailwind/TailwindCompiler.ts
 // compile Tailwind CSS via PostCSS w/ lazy-loading for startup performance
 
+import * as path from 'path';
 import { createTaggedLogger } from '../../shared/logging/logger';
 import { LogTags } from '@mdx-preview/contracts';
 import { TailwindError } from '../../shared/errors';
 import { MAX_INLINE_SOURCE_CHUNK_SIZE } from './constants';
 import { loadModuleWithEsmFallback } from '../../shared/utils/lazy-import';
-import { readFileRequiredAsync } from '../../shared/utils/file-utils';
+import {
+  pathExists,
+  readFileRequiredAsync,
+} from '../../shared/utils/file-utils';
 
 const log = createTaggedLogger(LogTags.TAILWIND);
 
@@ -48,13 +52,16 @@ export interface TailwindCompileOptions {
   tailwindVersion: TailwindVersion;
   configPath?: string | null;
   entryCssPath?: string | null;
+  inlineTailwindStyles: readonly string[];
+  inputFilePath: string;
   content: string;
   baseDir?: string | null;
 }
 
 export class TailwindCompiler {
   async compile(options: TailwindCompileOptions): Promise<string> {
-    let inputCss = await this.loadInputCss(options);
+    const postcss = await getPostCSS();
+    let inputCss = await this.loadInputCss(options, postcss);
     const plugin = await this.loadTailwindPlugin();
 
     // v4 uses @source inline() directives for content discovery
@@ -63,14 +70,11 @@ export class TailwindCompiler {
     }
 
     const pluginOptions = {
-      ...(options.configPath ? { config: options.configPath } : {}),
       ...(options.baseDir ? { base: options.baseDir } : {}),
     };
 
-    // lazy-load postcss (deferred until first Tailwind compilation)
-    const postcss = await getPostCSS();
     const result = await postcss([plugin(pluginOptions)]).process(inputCss, {
-      from: options.entryCssPath ?? undefined,
+      from: options.inputFilePath,
     });
 
     log.debug(
@@ -79,18 +83,57 @@ export class TailwindCompiler {
     return result.css;
   }
 
-  private async loadInputCss(options: TailwindCompileOptions): Promise<string> {
+  private async loadInputCss(
+    options: TailwindCompileOptions,
+    postcss: PostCSSFn
+  ): Promise<string> {
+    const inlineStyles = options.inlineTailwindStyles
+      .map((style) => style.trim())
+      .filter(Boolean);
+    const segments: string[] = [];
+    const authoredInputs = inlineStyles.map((css) => ({
+      css,
+      from: options.inputFilePath,
+    }));
+
     if (options.entryCssPath) {
-      return readFileRequiredAsync(options.entryCssPath, 'utf-8');
+      const entryCssPath = path.resolve(options.entryCssPath);
+      authoredInputs.push({
+        css: await readFileRequiredAsync(entryCssPath, 'utf-8'),
+        from: entryCssPath,
+      });
+      // retain the entry file as an import so its relative paths keep their base
+      segments.push(`@import "${this.escapeCssString(entryCssPath)}";`);
+    } else {
+      // skip preflight to avoid overriding markdown styles in previews
+      const bundledThemePath = path.join(__dirname, 'tailwind-theme.css');
+      const themeModuleId = 'tailwindcss/theme';
+      const themePath = this.escapeCssString(
+        pathExists(bundledThemePath)
+          ? bundledThemePath
+          : require.resolve(themeModuleId)
+      );
+      segments.push(
+        `@import "${themePath}";`,
+        '@tailwind components;',
+        '@tailwind utilities;'
+      );
     }
 
-    // v4: skip preflight to avoid overriding markdown styles in previews
-    return [
-      '@import "tailwindcss/theme";',
-      '@tailwind components;',
-      '@tailwind utilities;',
-      '',
-    ].join('\n');
+    let hasAuthoredConfig = false;
+    for (const input of authoredInputs) {
+      postcss
+        .parse(input.css, { from: input.from })
+        .walkAtRules('config', () => {
+          hasAuthoredConfig = true;
+        });
+    }
+    if (options.configPath && !hasAuthoredConfig) {
+      const configPath = this.escapeCssString(path.resolve(options.configPath));
+      segments.push(`@config "${configPath}";`);
+    }
+
+    return [...segments, ...inlineStyles].join('\n\n');
   }
 
   // build @source inline() directives for content discovery
@@ -118,13 +161,13 @@ export class TailwindCompiler {
     return (
       '\n' +
       chunks
-        .map((chunk) => `@source inline("${this.escapeInline(chunk)}");`)
+        .map((chunk) => `@source inline("${this.escapeCssString(chunk)}");`)
         .join('\n') +
       '\n'
     );
   }
 
-  private escapeInline(value: string): string {
+  private escapeCssString(value: string): string {
     return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   }
 

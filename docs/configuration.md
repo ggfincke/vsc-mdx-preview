@@ -81,6 +81,13 @@ Icon packs require a trusted workspace. Each entry is `{ "name": "...", "source"
 - `"enabled"` — always compile, falling back to the bundled `@import "tailwindcss"` when the project has no Tailwind entry. Use this to style MDX with Tailwind classes in a project that doesn't otherwise use Tailwind (the pre-1.7.0 default behavior).
 - `"disabled"` — never compile.
 
+Advanced Tailwind processing includes inline `<style type="text/tailwindcss">`
+blocks as well as the selected entry stylesheet. Relative directives in inline
+blocks resolve beside the MDX document; directives inside an imported stylesheet
+retain that stylesheet's location. A selected JavaScript config is loaded with
+Tailwind v4's `@config` directive unless the authored entry or inline CSS already
+provides one. Authored blocks retain their document order.
+
 ### Framework and Component Settings
 
 | Setting                      | Type    | Default         | Description                                                                                  |

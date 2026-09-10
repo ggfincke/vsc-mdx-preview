@@ -4,6 +4,7 @@
 import * as esbuild from 'esbuild';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createRequire } from 'module';
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
@@ -69,6 +70,13 @@ const buildOptions = {
 
 async function build() {
   try {
+    const outputDirectory = path.dirname(buildOptions.outfile);
+    await fs.promises.mkdir(outputDirectory, { recursive: true });
+    await fs.promises.copyFile(
+      createRequire(import.meta.url).resolve('tailwindcss/theme'),
+      path.join(outputDirectory, 'tailwind-theme.css')
+    );
+
     if (watch) {
       const ctx = await esbuild.context(buildOptions);
       await ctx.watch();

@@ -63,6 +63,9 @@ The Tailwind CSS cache key is a SHA-1 hash of:
 - `configStamp`: mtime of config file
 - `entryCssPath`: Absolute path to entry CSS file
 - `entryStamp`: mtime of entry CSS file
+- `inlineTailwindStyles`: Inline CSS blocks in document order
+- `inputFilePath`: Virtual CSS input location beside the MDX document
+- `baseDir`: Package base used to resolve Tailwind dependencies
 
 When any of these values change, a new cache key is generated, ensuring stale
 CSS is not served.

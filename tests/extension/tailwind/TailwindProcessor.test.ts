@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { createRequire } from 'module';
 import { ContentHashCache } from '@mdx-preview/runtime-utils';
 import { TailwindProcessor } from '../../../packages/extension-host/src/features/tailwind/TailwindProcessor';
 import { DependencyScanner } from '../../../packages/extension-host/src/features/tailwind/scanning/DependencyScanner';
@@ -111,26 +112,42 @@ describe('TailwindProcessor', () => {
     }
   });
 
-  it('returns compiled CSS and watch files when config is present', async () => {
+  it('compiles config and inline inputs and invalidates same-class edits', async () => {
     const processor = TailwindProcessor.getInstance();
     const tempDir = fs.mkdtempSync(
       path.join(os.tmpdir(), 'mdx-preview-tailwind-')
     );
     tempDirs.push(tempDir);
 
-    const configPath = path.join(tempDir, 'tailwind.config.js');
-    const cssPath = path.join(tempDir, 'tailwind.css');
-    fs.writeFileSync(configPath, 'module.exports = {}', 'utf-8');
-    fs.writeFileSync(cssPath, '@tailwind base;', 'utf-8');
+    const configPath = writeFixture(
+      tempDir,
+      'config/tailwind.config.cjs',
+      'module.exports = { theme: { extend: { colors: { brand: "#123456" } } } };'
+    );
+    const themePath = createRequire(import.meta.url).resolve(
+      'tailwindcss/theme.css'
+    );
+    const cssPath = writeFixture(
+      tempDir,
+      'styles/tailwind.css',
+      [
+        '/* @config "./comment-only.cjs"; */',
+        `@import ${JSON.stringify(themePath)};`,
+        '@import "./entry.css";',
+        '@tailwind utilities;',
+      ].join('\n')
+    );
+    writeFixture(tempDir, 'styles/entry.css', '.from-entry { color: coral; }');
+    writeFixture(tempDir, 'docs/inline.css', '.from-inline { color: teal; }');
+    const entryFilePath = writeFixture(tempDir, 'docs/doc.mdx', '# Test');
 
     const preview = createMockPreview({
-      fsPath: path.join(tempDir, 'doc.mdx'),
+      fsPath: entryFilePath,
     }) as any;
 
     const detector = (processor as any).detector;
     const scanner = (processor as any).scanner;
     const compiler = (processor as any).compiler;
-    const cache = (processor as any).cache;
 
     vi.spyOn(detector, 'resolveWorkspaceRoot').mockReturnValue(tempDir);
     vi.spyOn(detector, 'resolveConfigPath').mockReturnValue(configPath);
@@ -139,33 +156,55 @@ describe('TailwindProcessor', () => {
       version: '4.0.0',
       major: 4,
     });
-    vi.spyOn(scanner, 'scan').mockResolvedValue({
-      classList: ['text-red-500'],
-      scannedFiles: [],
-    });
-    vi.spyOn(compiler, 'compile').mockResolvedValue('/* compiled */');
-    vi.spyOn(cache, 'get').mockReturnValue(null);
-    vi.spyOn(cache, 'set').mockImplementation(() => undefined);
-    vi.spyOn(processor as any, 'getFileStamp').mockResolvedValue('stamp');
+    const scanSpy = vi.spyOn(scanner, 'scan');
+    const compileSpy = vi.spyOn(compiler, 'compile');
+    const mdxText = [
+      '<div className="text-brand card">Preview</div>',
+      '<style type="text/tailwindcss">',
+      '@import "./inline.css";',
+      '.card { @apply p-4; color: red; }',
+      '</style>',
+    ].join('\n');
 
-    const result = await processor.process({
+    const options = {
       preview,
-      mdxText: '# Test',
+      mdxText,
       entryFilePath: preview.fsPath,
       entryFileDependencies: [],
       trustState: trustedState,
       tailwindConfig: createTailwindConfig(),
+    };
+    const result = await processor.process(options);
+    const cached = await processor.process(options);
+    const changed = await processor.process({
+      ...options,
+      mdxText: mdxText.replace('color: red', 'color: blue'),
     });
 
     expect(result.enabled).toBe(true);
     expect(result.profile).toBe('advanced');
-    expect(result.css).toBe('/* compiled */');
+    expect(result.css).toContain('.text-brand');
+    expect(result.css).toContain('#123456');
+    expect(result.css).toContain('.card');
+    expect(result.css).toContain('padding:');
+    expect(result.css).toContain('color: red');
+    expect(result.css).toContain('.from-entry');
+    expect(result.css).toContain('.from-inline');
+    expect(cached.css).toBe(result.css);
+    expect(changed.css).toContain('color: blue');
+    expect(changed.css).not.toContain('color: red');
+    expect(compileSpy).toHaveBeenCalledTimes(2);
+    expect(compileSpy.mock.calls[0][0].content).toBe(
+      compileSpy.mock.calls[1][0].content
+    );
+    expect(fs.existsSync(`${entryFilePath}.tailwind.css`)).toBe(false);
     expect(result.watchFiles).toEqual([configPath, cssPath].sort());
-    expect(scanner.scan).toHaveBeenCalledWith(
-      '# Test',
+    expect(changed.watchFiles).toEqual(result.watchFiles);
+    expect(scanSpy).toHaveBeenCalledWith(
+      mdxText,
       expect.objectContaining({
         resolutionContext: {
-          baseDir: tempDir,
+          baseDir: path.dirname(entryFilePath),
           tsConfig: undefined,
           framework: 'generic',
           workspaceRoot: tempDir,
@@ -173,6 +212,17 @@ describe('TailwindProcessor', () => {
         },
       })
     );
+
+    vi.mocked(detector.resolveEntryCssPath).mockResolvedValue(null);
+    const bundled = await processor.process(options);
+    expect(bundled.enabled).toBe(true);
+    expect(bundled.css).toContain('.text-brand');
+    expect(bundled.css).toContain('#123456');
+    expect(bundled.css).toContain('padding:');
+    expect(bundled.css).toContain('.from-inline');
+    expect(bundled.watchFiles).toEqual([configPath]);
+    expect(fs.existsSync(path.join(tempDir, 'node_modules'))).toBe(false);
+    expect(fs.existsSync(`${entryFilePath}.tailwind.css`)).toBe(false);
   });
 
   it('scans local aliases & baseUrl while excluding package targets', async () => {
