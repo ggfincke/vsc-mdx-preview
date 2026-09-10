@@ -2,6 +2,7 @@
 // unit tests for framework alias resolution
 
 import { describe, it, expect } from 'vitest';
+import { resolveFrameworkAliasStep } from '../../packages/extension-host/src/features/module-runtime/resolution/UnifiedResolver';
 import { resolveAlias } from '../../packages/extension-host/src/features/module-runtime/resolution/alias-resolver';
 
 describe('resolveAlias()', () => {
@@ -36,6 +37,22 @@ describe('resolveAlias()', () => {
 
       expect(result).not.toBeNull();
       expect(result).toContain('@mdx-preview/shims');
+      for (const request of [
+        '@astrojs/starlight/components',
+        '@astrojs/starlight/components/Icon',
+        '@astrojs/starlight/components/LinkButton',
+      ]) {
+        expect(resolveAlias(request, 'generic', '/workspace')).toContain(
+          '@mdx-preview/shims/starlight'
+        );
+        expect(
+          resolveFrameworkAliasStep(request, {
+            baseDir: '/workspace',
+            framework: 'generic',
+            shimsEnabled: false,
+          }).earlyResult
+        ).toBeUndefined();
+      }
     });
   });
 

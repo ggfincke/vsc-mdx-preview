@@ -3,7 +3,8 @@
   "description": "MDX Preview example for Astro Starlight projects",
   "private": true,
   "dependencies": {
-    "@astrojs/starlight": "^0.20.0",
-    "astro": "^4.0.0"
+    "@astrojs/starlight": "0.42.0",
+    "astro": "7.2.10",
+    "@astrojs/markdown-remark": "7.3.0"
   }
 }

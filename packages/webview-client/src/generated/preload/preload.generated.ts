@@ -195,6 +195,8 @@ export async function loadStarlightShims(
     starlight_TabItem,
     starlight_FileTree,
     starlight_Code,
+    starlight_Icon,
+    starlight_LinkButton,
   ] = await Promise.all([
     import('mdx-forge/components/starlight'),
     import('mdx-forge/components/starlight').then((m) => m.Card),
@@ -207,6 +209,8 @@ export async function loadStarlightShims(
     import('mdx-forge/components/starlight').then((m) => m.TabItem),
     import('mdx-forge/components/starlight').then((m) => m.FileTree),
     import('mdx-forge/components/starlight').then((m) => m.Code),
+    import('mdx-forge/components/starlight').then((m) => m.Icon),
+    import('mdx-forge/components/starlight').then((m) => m.LinkButton),
   ]);
 
   preloadEntry(registry, {
@@ -222,6 +226,8 @@ export async function loadStarlightShims(
       'TabItem',
       'FileTree',
       'Code',
+      'Icon',
+      'LinkButton',
     ]),
     aliases: ['@astrojs/starlight/components', '@mdx-preview/shims/starlight'],
   });
@@ -303,6 +309,22 @@ export async function loadStarlightShims(
     aliases: [
       '@astrojs/starlight/components/Code',
       '@mdx-preview/shims/starlight/Code',
+    ],
+  });
+  preloadEntry(registry, {
+    id: 'npm://@mdx-preview/shims-starlight/Icon',
+    exports: createComponentModule(starlight_Icon, ['Icon']),
+    aliases: [
+      '@astrojs/starlight/components/Icon',
+      '@mdx-preview/shims/starlight/Icon',
+    ],
+  });
+  preloadEntry(registry, {
+    id: 'npm://@mdx-preview/shims-starlight/LinkButton',
+    exports: createComponentModule(starlight_LinkButton, ['LinkButton']),
+    aliases: [
+      '@astrojs/starlight/components/LinkButton',
+      '@mdx-preview/shims/starlight/LinkButton',
     ],
   });
 }

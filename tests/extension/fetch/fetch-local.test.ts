@@ -154,6 +154,29 @@ describe('fetchLocal', () => {
       }),
       expect.any(Object)
     );
+    openSpy.mockClear();
+    for (const enabled of [true, false]) {
+      mockFrameworkDetector.areShimsEnabled.mockReturnValue(enabled);
+      await expect(
+        fetchLocal(
+          './Custom.astro',
+          false,
+          path.join(tempDir, 'entry.mdx'),
+          createPreview(tempDir)
+        )
+      ).resolves.toBeUndefined();
+      expect(mockErrorReporter.report).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining(
+            enabled
+              ? 'replace this custom Astro'
+              : 'Enable mdx-preview.framework.componentShims'
+          ),
+        }),
+        expect.any(Object)
+      );
+    }
+    expect(openSpy).not.toHaveBeenCalled();
   });
 
   it('returns noop stubs for builtin subpaths without prefix false positives', async () => {

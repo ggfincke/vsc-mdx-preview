@@ -2,6 +2,12 @@
 // Source: mdx-forge/src/components/registry/shim-config.ts
 // generated/shim-barrels/starlight/index.ts
 
+export { Icon } from 'mdx-forge/components/starlight';
+export type { StarlightIconProps } from 'mdx-forge/components/starlight';
+
+export { LinkButton } from 'mdx-forge/components/starlight';
+export type { LinkButtonProps } from 'mdx-forge/components/starlight';
+
 export { Card } from 'mdx-forge/components/starlight';
 export type { CardProps } from 'mdx-forge/components/starlight';
 

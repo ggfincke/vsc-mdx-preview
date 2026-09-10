@@ -76,6 +76,12 @@ export function resolveAlias(
     }
   }
 
+  // explicit Starlight imports identify their own framework
+  const starlightAlias = resolveFrameworkAlias(request, 'starlight');
+  if (starlightAlias) {
+    return starlightAlias;
+  }
+
   const frameworkKey = toAliasFrameworkKey(framework);
   if (!frameworkKey) {
     return null;

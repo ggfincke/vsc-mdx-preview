@@ -1,0 +1,18 @@
+---
+title: Starlight shim compatibility
+---
+
+import { Icon, LinkButton, Tabs, TabItem } from '@astrojs/starlight/components';
+
+# Starlight imports in any detected framework
+
+<Icon name="star" label="Favorite" size="2rem" />
+
+<LinkButton href="https://starlight.astro.build" icon="external" variant="secondary">
+  Starlight documentation
+</LinkButton>
+
+<Tabs>
+  <TabItem label="Overview">The first panel works.</TabItem>
+  <TabItem label="Details">The second panel works.</TabItem>
+</Tabs>

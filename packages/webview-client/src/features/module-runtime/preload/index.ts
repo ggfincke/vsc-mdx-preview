@@ -89,10 +89,13 @@ export function initPreloadedModules(
 // use resilient loading w/ retry & fallback to generic shims
 export async function ensureFrameworkShims(
   registry: ModuleRegistry,
-  framework: FrameworkId
+  framework: FrameworkId,
+  recordRequestedFramework = true
 ): Promise<void> {
   reconcileRegistryGeneration(registry);
-  state.requestedFramework = framework;
+  if (recordRequestedFramework) {
+    state.requestedFramework = framework;
+  }
 
   // already loaded this framework
   if (state.loadedFramework === framework) {

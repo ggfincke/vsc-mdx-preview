@@ -241,6 +241,14 @@ export async function fetchLocal(
     }
 
     const extname = path.extname(diskFsPath).toLowerCase();
+    if (extname === '.astro') {
+      const guidance = resolutionContext.shimsEnabled
+        ? 'Use a supported Starlight component shim or replace this custom Astro component with a React/MDX component.'
+        : 'Enable mdx-preview.framework.componentShims for supported Starlight imports. Custom Astro components require a React/MDX replacement.';
+      throw new Error(
+        `Cannot preview Astro module "${diskFsPath}". ${guidance}`
+      );
+    }
     const fsPath =
       path.sep === '\\' ? normalizePathSeparators(diskFsPath) : diskFsPath;
 

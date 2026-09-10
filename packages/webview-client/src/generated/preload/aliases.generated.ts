@@ -23,6 +23,8 @@ export const PRELOADED_SHIM_IDS: string[] = [
   'npm://@mdx-preview/shims-starlight/TabItem',
   'npm://@mdx-preview/shims-starlight/FileTree',
   'npm://@mdx-preview/shims-starlight/Code',
+  'npm://@mdx-preview/shims-starlight/Icon',
+  'npm://@mdx-preview/shims-starlight/LinkButton',
   'npm://@mdx-preview/shims-nextjs/Image',
   'npm://@mdx-preview/shims-nextjs/Link',
   'npm://@mdx-preview/shims-nextra/components',

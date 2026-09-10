@@ -10,9 +10,18 @@ import {
   getRequestedFramework,
 } from './preload';
 
-forgeBrowser.setModuleFetcher((request, isBare, parentId, kind) =>
-  ExtensionHandle.fetch(request, isBare, parentId, kind)
-);
+forgeBrowser.setModuleFetcher(async (request, isBare, parentId, kind) => {
+  const result = await ExtensionHandle.fetch(request, isBare, parentId, kind);
+  // load explicit Starlight imports only after the host grants shim resolution
+  if (
+    result &&
+    (result.fsPath === '@mdx-preview/shims/starlight' ||
+      result.fsPath.startsWith('@mdx-preview/shims/starlight/'))
+  ) {
+    await ensureFrameworkShims(forgeBrowser.registry, 'starlight', false);
+  }
+  return result;
+});
 
 // configure VS Code-specific preload behavior
 forgeBrowser.setHostPreloadCallbacks({
