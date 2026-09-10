@@ -5,111 +5,104 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.19.0'
+          cache: npm
+      - run: npm install --global npm@11.17.0
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: node scripts/release-artifact.mjs exercise
+      - name: Find a retained artifact before preparing bytes
+        id: retained
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" > "$RUNNER_TEMP/artifacts.json"
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const artifacts = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + "/artifacts.json")).artifacts;
+            const artifact = artifacts.find(item => item.name === "release-" + process.env.GITHUB_SHA);
+            if (artifact?.expired) throw new Error("Retained release artifact expired; do not rebuild a partially published release");
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, "id=" + (artifact?.id ?? "") + "\n");
+          '
+      - uses: actions/download-artifact@v8
+        if: steps.retained.outputs.id != ''
+        with:
+          artifact-ids: ${{ steps.retained.outputs.id }}
+          path: ${{ runner.temp }}/release
+      - name: Verify retained bytes
+        if: steps.retained.outputs.id != ''
+        run: node scripts/release-artifact.mjs verify "$RUNNER_TEMP/release" "${GITHUB_REF#refs/tags/v}"
+      - name: Validate release and package the artifact once
+        if: steps.retained.outputs.id == ''
+        run: node scripts/release-artifact.mjs prepare "$RUNNER_TEMP/release"
+      - id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v7
+        if: steps.retained.outputs.id == ''
+        with:
+          name: release-${{ github.sha }}
+          path: ${{ runner.temp }}/release/
+          if-no-files-found: error
+          retention-days: 90
+
   publish:
+    needs: prepare
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Verify tag is on main
-        run: |
-          if ! git merge-base --is-ancestor ${{ github.sha }} origin/main; then
-            echo "::error::Release tags must be on the main branch"
-            exit 1
-          fi
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24.19.0'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run linting
-        run: npm run lint
-
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Run type checking
-        run: npm run typecheck
-
-      - name: Run all tests
-        run: npm run test:all
-
-      - name: Build extension
-        run: npm run build
-
-      - name: Check bundle size and provenance
-        run: npm run size:report
-
-      - name: Check import.meta.url CJS shim
-        run: npm run check:import-meta-shim
-
-      - name: Package extension
-        run: npm run vscode:package -- --no-yarn
-
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Check if version exists on VS Code Marketplace
-        id: check-vsce
-        run: |
-          if npx vsce show ggfincke.vsc-mdx-preview --json 2>/dev/null | grep -q "\"${{ steps.version.outputs.VERSION }}\""; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Version ${{ steps.version.outputs.VERSION }} already published to VS Code Marketplace, skipping"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-        continue-on-error: true
-
-      - name: Publish to VS Code Marketplace
-        if: steps.check-vsce.outputs.exists != 'true'
-        run: npx vsce publish --no-yarn
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-
-      - name: Check if version exists on Open VSX
-        id: check-ovsx
-        run: |
-          if curl -s "https://open-vsx.org/api/ggfincke/vsc-mdx-preview/${{ steps.version.outputs.VERSION }}" 2>/dev/null | grep -q "\"version\""; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Version ${{ steps.version.outputs.VERSION }} already published to Open VSX, skipping"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-        continue-on-error: true
-
-      - name: Publish to Open VSX
-        if: steps.check-ovsx.outputs.exists != 'true'
-        run: npx ovsx publish *.vsix --pat $OVSX_PAT
-        continue-on-error: true
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-
-      - name: Extract release notes from changelog
-        run: |
-          VERSION="${GITHUB_REF#refs/tags/v}"
-          awk "/^## \\[$VERSION\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" CHANGELOG.md > release-notes.md
-          echo "" >> release-notes.md
-          echo "**Full Changelog**: https://github.com/ggfincke/vsc-mdx-preview/commits/v$VERSION" >> release-notes.md
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+          cache: npm
+      - run: npm install --global npm@11.17.0
+      - run: npm ci
+      - uses: actions/download-artifact@v8
         with:
-          name: v${{ steps.version.outputs.VERSION }}
-          files: '*.vsix'
-          body_path: release-notes.md
-          draft: false
-          prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
+          name: release-${{ github.sha }}
+          path: ${{ runner.temp }}/release
+      - name: Publish retained bytes and reconcile completed destinations
+        run: node scripts/release-artifact.mjs publish "$RUNNER_TEMP/release" "$RELEASE_VERSION"
         env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Report destination status
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/release/publication.json"; then
+            cat "$RUNNER_TEMP/release/publication.json" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Publication did not start; inspect artifact verification or setup failure.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: publication-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release/publication.json
+          if-no-files-found: warn
+          retention-days: 90
