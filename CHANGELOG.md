@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Recognize locally declared MDX components and share compiler identifier/member-name semantics without reparsing editor documents.
+- Refresh changed imports even when the entry document version is unchanged, and preserve dependency tracking when reopening the same document.
+- Apply document framework overrides consistently and restore generic preloads when an override is removed.
+- Compile inline Tailwind CSS in document order, honor JavaScript configuration through CSS directives, and resolve stylesheet imports from their authored locations.
+- Keep HTML export responsive when an asset's response body stalls after headers; preserve the rest of the export when that asset times out.
+- Observe diagrams added after Trusted Mode finishes loading and release diagram observers when the preview container is replaced.
+
+### Performance
+
+- Reuse fetched and encoded image/font assets across repeated image and stylesheet references within each HTML export.
+
+## [1.7.8] - Unreleased
+
+### Fixed
+
+- Resolve explicit Starlight component imports even when framework detection is Generic; load their shims and CSS before evaluation.
+- Explain unsupported Astro imports before attempting JavaScript transpilation, respecting disabled shims.
+
 ## [1.7.7] - 2026-08-18
 
 ### Changed
