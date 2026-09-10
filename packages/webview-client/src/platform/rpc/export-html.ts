@@ -14,6 +14,8 @@ const CSS_URL_REGEX =
   /url\(\s*(?:"([^"]+)"|'([^']+)'|([^'")\s][^'")]*)?)\s*\)/g;
 const FETCH_TIMEOUT_MS = 10_000;
 
+type AssetCache = Map<string, Promise<string | null>>;
+
 export async function createExportableHtml(): Promise<string> {
   const root = document.querySelector<HTMLElement>(PREVIEW_ROOT_SELECTOR);
   const content = root?.querySelector<HTMLElement>(PREVIEW_CONTENT_SELECTOR);
@@ -27,11 +29,13 @@ export async function createExportableHtml(): Promise<string> {
   removeRuntimeOnlyStyles(exportRoot);
   removeExecutableContent(exportRoot);
 
+  const assets: AssetCache = new Map();
+
   // run image inlining & stylesheet collection in parallel
   // avoid serial fetch latency for remote-heavy documents
   const [, styleBlocks] = await Promise.all([
-    inlineImages(contentClone),
-    collectStyleBlocks(),
+    inlineImages(contentClone, assets),
+    collectStyleBlocks(assets),
   ]);
 
   const cssVariables = collectCssVariables(styleBlocks);
@@ -75,7 +79,7 @@ function removeExecutableContent(root: HTMLElement): void {
   }
 }
 
-async function collectStyleBlocks(): Promise<string[]> {
+async function collectStyleBlocks(assets: AssetCache): Promise<string[]> {
   const nodes = Array.from(
     document.querySelectorAll<HTMLStyleElement | HTMLLinkElement>(
       'style, link[rel="stylesheet"]'
@@ -93,7 +97,7 @@ async function collectStyleBlocks(): Promise<string[]> {
       }
       const baseUrl =
         node instanceof HTMLLinkElement ? node.href : document.baseURI;
-      return inlineCssUrls(rawCss, baseUrl);
+      return inlineCssUrls(rawCss, baseUrl, assets);
     })
   );
 
@@ -106,18 +110,11 @@ async function readStylesheet(link: HTMLLinkElement): Promise<string | null> {
     return sheetCss;
   }
 
-  const response = await fetchWithTimeout(link.href);
-  if (!response || !response.ok) {
-    if (!response) {
-      log.warn(`Stylesheet fetch failed or timed out: ${link.href}`);
-    }
-    return null;
+  const css = await fetchWithTimeout(link.href, (response) => response.text());
+  if (css === null) {
+    log.warn(`Stylesheet fetch failed or timed out: ${link.href}`);
   }
-  try {
-    return await response.text();
-  } catch {
-    return null;
-  }
+  return css;
 }
 
 function readStylesheetRules(sheet: CSSStyleSheet | null): string | null {
@@ -160,7 +157,10 @@ function collectCssVariables(styleBlocks: string[]): string {
   return `:root {\n${declarations.join('\n')}\n}`;
 }
 
-async function inlineImages(root: HTMLElement): Promise<void> {
+async function inlineImages(
+  root: HTMLElement,
+  assets: AssetCache
+): Promise<void> {
   const images = Array.from(root.querySelectorAll<HTMLImageElement>('img'));
   const sources = Array.from(
     root.querySelectorAll<HTMLSourceElement>('picture source[srcset]')
@@ -179,7 +179,7 @@ async function inlineImages(root: HTMLElement): Promise<void> {
         return;
       }
 
-      const dataUri = await fetchAsDataUri(src, document.baseURI);
+      const dataUri = await fetchAsDataUri(src, document.baseURI, assets);
       if (!dataUri) {
         failed++;
         return;
@@ -195,7 +195,11 @@ async function inlineImages(root: HTMLElement): Promise<void> {
   }
 }
 
-async function inlineCssUrls(css: string, baseUrl: string): Promise<string> {
+async function inlineCssUrls(
+  css: string,
+  baseUrl: string,
+  assets: AssetCache
+): Promise<string> {
   const matches = Array.from(css.matchAll(CSS_URL_REGEX));
   if (matches.length === 0) {
     return css;
@@ -212,7 +216,7 @@ async function inlineCssUrls(css: string, baseUrl: string): Promise<string> {
         return { start, end, value: match[0] };
       }
 
-      const dataUri = await fetchAsDataUri(trimmedUrl, baseUrl);
+      const dataUri = await fetchAsDataUri(trimmedUrl, baseUrl, assets);
       if (!dataUri) {
         failed++;
         return { start, end, value: match[0] };
@@ -247,7 +251,8 @@ function shouldInlineUrl(url: string): boolean {
 
 async function fetchAsDataUri(
   src: string,
-  baseUrl: string
+  baseUrl: string,
+  assets: AssetCache
 ): Promise<string | null> {
   let url: string;
   try {
@@ -255,27 +260,38 @@ async function fetchAsDataUri(
   } catch {
     return null;
   }
-  const response = await fetchWithTimeout(url);
-  if (!response || !response.ok) {
-    return null;
+  const cached = assets.get(url);
+  if (cached) {
+    return cached;
   }
-  try {
+
+  const pending = fetchWithTimeout(url, async (response) => {
     const blob = await response.blob();
-    return await blobToDataUri(blob);
-  } catch {
-    return null;
-  }
+    return blobToDataUri(blob);
+  });
+  assets.set(url, pending);
+  return pending;
 }
 
-// return null on timeout or network error
-// let callers preserve partial export progress
-async function fetchWithTimeout(url: string): Promise<Response | null> {
+// keep the deadline through body consumption so partial exports always settle
+async function fetchWithTimeout<T>(
+  url: string,
+  consume: (response: Response) => Promise<T>
+): Promise<T | null> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>((resolve) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      resolve(null);
+    }, FETCH_TIMEOUT_MS);
+  });
   try {
-    return await fetch(url, { signal: controller.signal });
-  } catch {
-    return null;
+    const operation = (async () => {
+      const response = await fetch(url, { signal: controller.signal });
+      return response.ok ? consume(response) : null;
+    })().catch(() => null);
+    return await Promise.race([operation, timeout]);
   } finally {
     clearTimeout(timer);
   }

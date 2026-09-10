@@ -15,6 +15,8 @@ describe('createExportableHtml', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -66,11 +68,14 @@ describe('createExportableHtml', () => {
   });
 
   it('inlines linked stylesheets and image sources when fetch succeeds', async () => {
+    const binaryReads = new Map<string, ReturnType<typeof vi.fn>>();
+    const encode = vi.spyOn(globalThis, 'btoa');
     const fetchMock = vi.fn(async (url: string | URL | Request) => {
       const value = String(url);
       if (value.endsWith('app.css')) {
         return new Response(
-          '.from-link { background: url("./font.woff2"); color: red; }'
+          '.from-link { background: url("./font.woff2"); color: red; }' +
+            '.logo { background-image: url("./photo.png"); }'
         );
       }
 
@@ -80,20 +85,28 @@ describe('createExportableHtml', () => {
         });
       }
 
-      return new Response('abc', {
-        headers: { 'Content-Type': 'image/png' },
-      });
+      const response = new Response(
+        value.includes('other.example.com') ? 'other' : 'abc',
+        {
+          headers: { 'Content-Type': 'image/png' },
+        }
+      );
+      binaryReads.set(value, vi.spyOn(response, 'blob'));
+      return response;
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    document.head.innerHTML =
-      '<link rel="stylesheet" href="https://example.com/app.css">';
+    document.head.innerHTML = `
+      <link rel="stylesheet" href="https://example.com/app.css">
+      <link rel="stylesheet" href="https://other.example.com/app.css">
+    `;
     document.body.innerHTML = `
       <div class="mdx-preview-container">
         <div class="mdx-preview-content">
           <div class="markdown-body">
             <h1>Assets</h1>
             <img src="https://example.com/photo.png" srcset="photo-2x.png 2x">
+            <img src="https://example.com/photo.png" alt="Repeated logo">
           </div>
         </div>
       </div>
@@ -105,7 +118,80 @@ describe('createExportableHtml', () => {
       '.from-link { background: url("data:font/woff2;base64,Zm9udA=="); color: red; }'
     );
     expect(html).toContain('src="data:image/png;base64,YWJj"');
+    expect(html).toContain('url("data:image/png;base64,YWJj")');
+    expect(html).toContain('url("data:image/png;base64,b3RoZXI=")');
+    expect(
+      fetchMock.mock.calls.filter(
+        ([url]) => String(url) === 'https://example.com/photo.png'
+      )
+    ).toHaveLength(1);
+    expect(
+      binaryReads.get('https://example.com/photo.png')
+    ).toHaveBeenCalledTimes(1);
+    expect(encode.mock.calls.filter(([bytes]) => bytes === 'abc')).toHaveLength(
+      1
+    );
+    expect(binaryReads.has('https://other.example.com/photo.png')).toBe(true);
     expect(html).not.toContain('srcset=');
+  });
+
+  it('settles a partial export when response bodies stall after headers', async () => {
+    vi.useFakeTimers();
+    const stalledSignals: AbortSignal[] = [];
+    const readStalledStylesheet = vi.fn();
+    const readStalledImage = vi.fn(() => new Promise<Blob>(() => {}));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, options: RequestInit) => {
+        if (url.endsWith('ready.png')) {
+          return new Response('ready', {
+            headers: { 'Content-Type': 'image/png' },
+          });
+        }
+        const signal = options.signal as AbortSignal;
+        stalledSignals.push(signal);
+        if (url.endsWith('stalled.css')) {
+          readStalledStylesheet.mockImplementation(
+            () =>
+              new Promise<string>((_resolve, reject) => {
+                signal.addEventListener('abort', () => {
+                  reject(new Error('body aborted'));
+                });
+              })
+          );
+          return { ok: true, text: readStalledStylesheet };
+        }
+        return { ok: true, blob: readStalledImage };
+      })
+    );
+    document.head.innerHTML =
+      '<link rel="stylesheet" href="https://example.com/stalled.css">';
+    document.body.innerHTML = `
+      <div class="mdx-preview-container">
+        <div class="mdx-preview-content">
+          <h1>Partial export</h1>
+          <p>Preserved content</p>
+          <img src="https://example.com/stalled.png">
+          <img src="https://example.com/ready.png">
+        </div>
+      </div>
+    `;
+
+    const pending = createExportableHtml();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(readStalledStylesheet).toHaveBeenCalledTimes(1);
+    expect(readStalledImage).toHaveBeenCalledTimes(1);
+    expect(stalledSignals.every((signal) => !signal.aborted)).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    const html = await pending;
+
+    expect(stalledSignals).toHaveLength(2);
+    expect(stalledSignals.every((signal) => signal.aborted)).toBe(true);
+    expect(html).toContain('<p>Preserved content</p>');
+    expect(html).toContain('src="https://example.com/stalled.png"');
+    expect(html).toContain('src="data:image/png;base64,cmVhZHk="');
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('throws when no rendered preview content exists', async () => {

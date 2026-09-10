@@ -692,6 +692,17 @@ Command Palette > Developer: Reload Window
 
 **Solution:** Use absolute `https:` image URLs (or inline `data:` images) in your MDX when you intend to share the exported HTML outside VS Code.
 
+### An export completes with some assets missing
+
+Each fetched asset has a ten-second deadline covering its response body as well
+as its initial connection. If an image cannot be read, the export retains its
+original reference; an unreadable linked stylesheet is omitted. Other content
+and successfully loaded assets are still saved. Check the MDX Preview output
+for failed asset messages and retry after those resources are available.
+
+Repeated references to the same absolute image or font URL share one read and
+encoding operation within that export. A later export fetches its assets again.
+
 ---
 
 ## Editor ↔ Preview Sync Issues
