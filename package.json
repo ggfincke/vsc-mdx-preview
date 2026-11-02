@@ -825,7 +825,7 @@
     "@types/node": "~22.18.13",
     "@types/vscode": "1.104.0",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "@vscode/vsce": "^3.9.2",
+    "@vscode/vsce": "^4.1.0",
     "concurrently": "^10.0.3",
     "dependency-cruiser": "^18.2.0",
     "dompurify": "^3.4.13",
